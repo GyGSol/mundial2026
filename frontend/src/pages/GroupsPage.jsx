@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CircleHelp } from 'lucide-react';
 import { competitionGroupsApi } from '../api/client.js';
+import FormField from '../components/FormField.jsx';
 import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -287,32 +288,37 @@ export default function GroupsPage() {
                 />
               </InfoPanel>
               <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-                  <div className="md:col-span-4">
-                    <label className="mb-1 block text-sm font-medium">Nombre del grupo</label>
-                    <p className="mb-1 text-xs text-muted-foreground">
-                      Visible para todos. Ej: “Familia López”, “Trabajo 2026”.
-                    </p>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:items-end md:gap-3">
+                  <FormField
+                    className="md:col-span-4"
+                    label="Nombre del grupo"
+                    hint='Visible para todos. Ej: "Familia López", "Trabajo 2026".'
+                  >
                     <Input
                       placeholder="Ej: Amigos del Mundial"
                       value={newGroupName}
                       onChange={(e) => setNewGroupName(e.target.value)}
                       required
                     />
-                  </div>
+                  </FormField>
 
-                  <div className="md:col-span-5">
-                    <label className="mb-1 block text-sm font-medium">Descripción (opcional)</label>
+                  <FormField
+                    className="md:col-span-5"
+                    label="Descripción (opcional)"
+                    hint="Breve texto para quienes se unan al grupo."
+                  >
                     <Input
                       placeholder="Ej: Pronósticos entre amigos de la oficina"
                       value={newGroupDescription}
                       onChange={(e) => setNewGroupDescription(e.target.value)}
                     />
-                  </div>
+                  </FormField>
 
-                  <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm font-medium">Puestos premiados</label>
-                    <p className="mb-1 text-xs text-muted-foreground">0 = sin premios. Máximo 10.</p>
+                  <FormField
+                    className="md:col-span-2"
+                    label="Puestos premiados"
+                    hint="0 = sin premios. Máximo 10."
+                  >
                     <Input
                       type="number"
                       min={0}
@@ -324,10 +330,10 @@ export default function GroupsPage() {
                         setNewPrizes((prev) => normalizePrizeRows(count, prev));
                       }}
                     />
-                  </div>
+                  </FormField>
 
-                  <div className="md:col-span-1 md:self-end">
-                    <Button type="submit" disabled={savingGroup} className="w-full">
+                  <div className="md:col-span-1">
+                    <Button type="submit" disabled={savingGroup} className="h-9 w-full">
                       {savingGroup ? 'Guardando...' : 'Crear'}
                     </Button>
                   </div>
