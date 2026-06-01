@@ -359,8 +359,9 @@ export async function listUserCompetitionGroups(userId) {
 
   return groups.map((group) => {
     const isCreator = group.createdBy && String(group.createdBy) === String(userId);
-    const isLegacyAdmin = !group.createdBy && roleByGroup[group._id.toString()];
-    const role = roleByGroup[group._id.toString()] || (isCreator ? 'owner' : 'member');
+    const membershipRole = roleByGroup[group._id.toString()];
+    const isLegacyAdmin = !group.createdBy && membershipRole;
+    const role = isCreator ? 'owner' : membershipRole || 'member';
     return {
       ...serializeGroup(group),
       role,

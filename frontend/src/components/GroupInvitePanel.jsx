@@ -5,7 +5,7 @@ import InfoPanel, { InfoList } from './InfoPanel.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 
-export default function GroupInvitePanel({ group, compact = false }) {
+export default function GroupInvitePanel({ group, compact = false, showFullHelp = true }) {
   const [copied, setCopied] = useState(false);
   const inviteUrl = buildGroupInviteUrl(group.id);
 
@@ -50,7 +50,7 @@ export default function GroupInvitePanel({ group, compact = false }) {
         </Link>
       </p>
 
-      {!compact && (
+      {!compact && showFullHelp && (
         <InfoPanel title="Cómo invitar (sin email automático)">
           <InfoList
             items={[

@@ -260,7 +260,7 @@ export default function GroupsPage() {
               'Sin grupo: igual podés jugar; en Ranking aparecés como “Sin grupo” con tus puntos.',
               'Administrador: solo quien creó el grupo puede Editar o Eliminar. Los demás solo participan.',
               'Premios: informativos en la ficha del grupo (no se pagan desde la app).',
-              'Invitar amigos (admin): copiá el enlace de invitación en “Mis grupos” y enviálo por WhatsApp, email, etc. Sin emails automáticos desde la app.',
+              'Invitar amigos: en “Mis grupos”, debajo de cada liga, copiá el enlace “Invitar jugadores” y enviálo por WhatsApp, email, etc.',
               'Unirse sin enlace: buscá el nombre exacto en “Unirse a un grupo” o en “Todos los grupos”.',
             ]}
           />
@@ -387,7 +387,7 @@ export default function GroupsPage() {
                     'Editar grupo (solo admin): nombre, descripción y tabla de premios.',
                     'Eliminar (solo admin): borra la liga; los jugadores conservan puntos y pueden seguir en otros grupos.',
                     'Si no sos admin: solo podés usar el grupo o sumarte a otros desde abajo.',
-                    'Invitar (solo admin): enlace copiable en cada grupo que administrás; no enviamos emails desde la app.',
+                    'Invitar: en cada grupo verás “Invitar jugadores” con enlace para copiar (cualquier integrante puede compartirlo).',
                   ]}
                 />
               </InfoPanel>
@@ -579,7 +579,13 @@ export default function GroupsPage() {
                         </Button>
                       )}
                     </div>
-                    {isOwner && !rowEdit && <GroupInvitePanel group={group} compact />}
+                    {!rowEdit && (
+                      <GroupInvitePanel
+                        group={group}
+                        compact
+                        showFullHelp={isOwner}
+                      />
+                    )}
                   </div>
                 );
               })}
