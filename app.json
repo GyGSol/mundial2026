@@ -1,0 +1,57 @@
+{
+  "name": "mundial2026-pred",
+  "description": "Mundial 2026 — juego de predicciones con ranking en tiempo real",
+  "repository": "https://github.com/gonzalomlopolito/mundial2026",
+  "keywords": ["node", "react", "mongodb", "worldcup"],
+  "stack": "heroku-24",
+  "buildpacks": [
+    { "url": "heroku/nodejs" }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "env": {
+    "JWT_SECRET": {
+      "description": "Secreto para firmar tokens JWT",
+      "generator": "secret"
+    },
+    "MONGODB_URI": {
+      "description": "URI de MongoDB Atlas (requerido en producción)",
+      "required": true
+    },
+    "CLIENT_ORIGIN": {
+      "description": "URL pública de la app (https://mundial2026-pred.herokuapp.com)",
+      "required": true
+    },
+    "WORLD_CUP_API_URL": {
+      "description": "API del mundial",
+      "value": "https://worldcup26.ir"
+    },
+    "WORLD_CUP_SYNC_EMAIL": {
+      "description": "Email registrado en worldcup26.ir",
+      "required": false
+    },
+    "WORLD_CUP_SYNC_PASSWORD": {
+      "description": "Password de sync worldcup26.ir",
+      "required": false
+    },
+    "SYNC_INTERVAL_MS": {
+      "description": "Intervalo de sync automático",
+      "value": "60000"
+    },
+    "SIMULATION_ENABLED": {
+      "description": "Habilitar motor de simulación",
+      "value": "true"
+    },
+    "NODE_ENV": {
+      "description": "Entorno Node",
+      "value": "production"
+    }
+  },
+  "scripts": {
+    "postdeploy": "npm run sync -w backend || true"
+  }
+}

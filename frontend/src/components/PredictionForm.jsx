@@ -1,0 +1,163 @@
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button.jsx';
+import { Input } from '@/components/ui/input.jsx';
+import TeamHeader from './TeamHeader.jsx';
+
+function ScoreCell({ children }) {
+  return <div className="flex justify-center">{children}</div>;
+}
+
+function ScoreValue({ value, label }) {
+  return (
+    <div className="w-16 text-center">
+      {label && (
+        <span className="mb-0.5 block text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+      )}
+      <p className="text-xl font-bold tabular-nums text-foreground">{value}</p>
+    </div>
+  );
+}
+
+function MatchScoreboard({
+  homeTeam,
+  awayTeam,
+  showActualScores,
+  homeScore,
+  awayScore,
+  homePrediction,
+  awayPrediction,
+  homeInput,
+  awayInput,
+}) {
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <div className="grid grid-cols-2 gap-3">
+        <TeamHeader team={homeTeam} />
+        <TeamHeader team={awayTeam} />
+      </div>
+
+      {showActualScores && (
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <ScoreCell>
+            <ScoreValue value={homeScore} label="Resultado" />
+          </ScoreCell>
+          <span className="text-lg font-medium text-muted-foreground">-</span>
+          <ScoreCell>
+            <ScoreValue value={awayScore} label="Resultado" />
+          </ScoreCell>
+        </div>
+      )}
+
+      {(homePrediction != null || awayPrediction != null || homeInput || awayInput) && (
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <ScoreCell>
+            {homeInput ?? <ScoreValue value={homePrediction} label={showActualScores ? 'Tu predicción' : null} />}
+          </ScoreCell>
+          <span className="text-lg font-medium text-muted-foreground">-</span>
+          <ScoreCell>
+            {awayInput ?? <ScoreValue value={awayPrediction} label={showActualScores ? 'Tu predicción' : null} />}
+          </ScoreCell>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function PredictionForm({ match, onSave, saving }) {
+  const locked = !match.predictionOpen;
+  const hasPrediction = match.hasPrediction || Boolean(match.prediction);
+  const [editing, setEditing] = useState(!hasPrediction && !locked);
+  const [home, setHome] = useState(match.prediction?.homeGoals ?? 0);
+  const [away, setAway] = useState(match.prediction?.awayGoals ?? 0);
+
+  useEffect(() => {
+    setHome(match.prediction?.homeGoals ?? 0);
+    setAway(match.prediction?.awayGoals ?? 0);
+    setEditing(!hasPrediction && !locked);
+  }, [match.id, match.prediction?.homeGoals, match.prediction?.awayGoals, hasPrediction, locked]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onSave(match.id, Number(home), Number(away));
+    setEditing(false);
+  };
+
+  const showActualScores = match.status !== 'upcoming';
+  const prediction = match.prediction;
+
+  const inputProps = (side) => ({
+    type: 'number',
+    min: 0,
+    max: 20,
+    value: side === 'home' ? home : away,
+    onChange: (e) => (side === 'home' ? setHome : setAway)(e.target.value),
+    className: 'w-16 text-center text-xl font-bold tabular-nums',
+    'aria-label': side === 'home' ? 'Goles local' : 'Goles visitante',
+  });
+
+  if (locked) {
+    return (
+      <div className="flex flex-col items-center gap-3">
+        <MatchScoreboard
+          homeTeam={match.homeTeam}
+          awayTeam={match.awayTeam}
+          showActualScores={showActualScores}
+          homeScore={match.homeScore}
+          awayScore={match.awayScore}
+          homePrediction={prediction?.homeGoals}
+          awayPrediction={prediction?.awayGoals}
+        />
+        {prediction?.pointsEarned != null && (
+          <p className="text-sm font-medium text-foreground">+{prediction.pointsEarned} pts</p>
+        )}
+        {!prediction && <p className="text-sm text-muted-foreground">Predicción cerrada</p>}
+      </div>
+    );
+  }
+
+  if (hasPrediction && !editing) {
+    return (
+      <div className="flex flex-col items-center gap-4">
+        <MatchScoreboard
+          homeTeam={match.homeTeam}
+          awayTeam={match.awayTeam}
+          showActualScores={showActualScores}
+          homeScore={match.homeScore}
+          awayScore={match.awayScore}
+          homePrediction={prediction.homeGoals}
+          awayPrediction={prediction.awayGoals}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+          Editar
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
+      <MatchScoreboard
+        homeTeam={match.homeTeam}
+        awayTeam={match.awayTeam}
+        showActualScores={showActualScores}
+        homeScore={match.homeScore}
+        awayScore={match.awayScore}
+        homeInput={<Input {...inputProps('home')} />}
+        awayInput={<Input {...inputProps('away')} />}
+      />
+
+      <div className="flex flex-col items-center gap-2">
+        <Button type="submit" size="sm" disabled={saving} className="min-w-28">
+          {saving ? '...' : 'Guardar'}
+        </Button>
+        {hasPrediction && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+            Cancelar
+          </Button>
+        )}
+      </div>
+    </form>
+  );
+}

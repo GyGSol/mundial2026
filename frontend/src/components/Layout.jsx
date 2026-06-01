@@ -1,0 +1,73 @@
+import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+import { Button } from '@/components/ui/button.jsx';
+
+const navClass = ({ isActive }) =>
+  isActive
+    ? 'text-foreground font-medium'
+    : 'text-muted-foreground hover:text-foreground';
+
+export default function Layout() {
+  const { user, logout, isAuthenticated } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+          <Link to="/" className="text-lg font-semibold tracking-tight">
+            Mundial 2026
+          </Link>
+
+          <nav className="flex flex-wrap items-center gap-4 text-sm">
+            <NavLink to="/" end className={navClass}>
+              Ranking
+            </NavLink>
+            <NavLink to="/predictions" className={navClass}>
+              Predicciones
+            </NavLink>
+            <NavLink to="/mundial" className={navClass}>
+              Mundial
+            </NavLink>
+            <NavLink to="/simulation" className={navClass}>
+              Simulación
+            </NavLink>
+            <NavLink to="/rules" className={navClass}>
+              Reglas
+            </NavLink>
+          </nav>
+
+          <div className="flex items-center gap-3 text-sm">
+            {isAuthenticated ? (
+              <>
+                <span className="text-muted-foreground">
+                  {user.name}
+                  {user.competitionGroup?.name && (
+                    <span className="text-foreground"> · {user.competitionGroup.name}</span>
+                  )}
+                </span>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  Salir
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    Ingresar
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="sm">Registrarse</Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 py-8">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
