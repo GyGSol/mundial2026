@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
@@ -19,10 +19,23 @@ function formatLastUpdated(date) {
   return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 
+/** Opciones del ranking: un solo grupo por vista (sin modo general). */
+function buildRankingGroupOptions(groups) {
+  const real = (groups ?? []).filter((g) => g.id !== '__nogroup' && !g.isVirtual);
+  return [{ id: '__nogroup', name: 'Sin grupo' }, ...real];
+}
+
 export default function LeaderboardPage() {
   const { user, isAuthenticated } = useAuth();
   const [groups, setGroups] = useState([]);
-  const [selectedGroupId, setSelectedGroupId] = useState('__all__');
+  const [selectedGroupId, setSelectedGroupId] = useState('__nogroup');
+
+  const rankingGroupOptions = useMemo(() => buildRankingGroupOptions(groups), [groups]);
+
+  const selectedGroup = useMemo(
+    () => rankingGroupOptions.find((g) => g.id === selectedGroupId) ?? rankingGroupOptions[0],
+    [rankingGroupOptions, selectedGroupId]
+  );
 
   useEffect(() => {
     competitionGroupsApi
@@ -32,25 +45,36 @@ export default function LeaderboardPage() {
   }, []);
 
   useEffect(() => {
-    if (user?.competitionGroup?.id) setSelectedGroupId(user.competitionGroup.id);
-  }, [user?.competitionGroup?.id]);
+    if (!rankingGroupOptions.length) return;
+
+    const preferredId = user?.competitionGroup?.id;
+    const preferredExists = preferredId && rankingGroupOptions.some((g) => g.id === preferredId);
+    const currentExists = rankingGroupOptions.some((g) => g.id === selectedGroupId);
+
+    if (preferredExists) {
+      setSelectedGroupId(preferredId);
+    } else if (!currentExists) {
+      setSelectedGroupId(rankingGroupOptions[0].id);
+    }
+  }, [rankingGroupOptions, user?.competitionGroup?.id]);
+
+  const effectiveGroupId = selectedGroup?.id ?? '__nogroup';
 
   const fetchLeaderboard = useCallback(async () => {
     const [leaderboardData, liveData] = await Promise.all([
-      leaderboardApi.list(selectedGroupId === '__all__' ? '' : selectedGroupId),
+      leaderboardApi.list(effectiveGroupId),
       matchesApi.list({ status: 'live' }),
     ]);
     return {
       ...leaderboardData,
       liveMatches: liveData.matches ?? [],
     };
-  }, [selectedGroupId]);
+  }, [effectiveGroupId]);
 
-  const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [selectedGroupId]);
+  const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId]);
 
-  const activeGroup = data?.group || groups.find((g) => g.id === selectedGroupId);
-  const isGeneralMode = selectedGroupId === '__all__' || !activeGroup;
-  const isNoGroupMode = selectedGroupId === '__nogroup';
+  const displayGroup = data?.group || selectedGroup;
+  const isNoGroupMode = effectiveGroupId === '__nogroup';
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,32 +83,24 @@ export default function LeaderboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isNoGroupMode
-              ? 'Ranking · Sin grupo'
-              : isGeneralMode
-                ? 'Ranking general'
-                : `Ranking · ${activeGroup.name}`}
+            Ranking · {displayGroup?.name ?? 'Sin grupo'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {activeGroup
-              ? `Grupo: ${activeGroup.name} · ranking independiente`
-              : isNoGroupMode
-                ? 'Jugadores sin grupo actual'
-                : 'Tabla general de todos los jugadores'}
+            {isNoGroupMode
+              ? 'Solo jugadores que no participan en ningún grupo de competencia'
+              : `Tabla del grupo ${displayGroup?.name}`}
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {groups.length > 0 ? (
-            <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+          {rankingGroupOptions.length > 0 ? (
+            <Select value={effectiveGroupId} onValueChange={setSelectedGroupId}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Elegir grupo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">General (todos)</SelectItem>
-                <SelectItem value="__nogroup">Sin grupo</SelectItem>
-                {groups.map((group) => (
+                {rankingGroupOptions.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.name}
                   </SelectItem>
@@ -92,20 +108,20 @@ export default function LeaderboardPage() {
               </SelectContent>
             </Select>
           ) : (
-            <Link to="/groups/new">
+            <Link to="/groups">
               <Button variant="outline" size="sm">
-                Crear primer grupo
+                Ver grupos
               </Button>
             </Link>
           )}
         </div>
       </div>
 
-      {selectedGroupId === '__all__' && !loading && !isAuthenticated && (
+      {!loading && !isAuthenticated && (
         <p className="text-sm text-muted-foreground">
-          También podés filtrar por grupo cuando inicies sesión o crear uno en{' '}
-          <Link to="/groups/new" className="text-foreground underline">
-            Crear grupo
+          Iniciá sesión para aparecer en el ranking si te unís a un grupo en{' '}
+          <Link to="/groups" className="text-foreground underline">
+            Grupos
           </Link>
           .
         </p>
@@ -114,7 +130,7 @@ export default function LeaderboardPage() {
       {loading && <p className="text-muted-foreground">Cargando ranking...</p>}
       {error && <p className="text-destructive">{error}</p>}
 
-      <LeaderboardTable leaderboard={data?.leaderboard} showGroupName={isGeneralMode && !isNoGroupMode} />
+      <LeaderboardTable leaderboard={data?.leaderboard} showGroupName={false} />
     </div>
   );
 }
