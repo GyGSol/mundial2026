@@ -16,12 +16,12 @@
     "reset-db": "npm run reset-db -w backend",
     "prepare-package": "node scripts/prepare-package.js",
     "start": "node backend/src/index.js",
-    "heroku-postbuild": "npm install && npm run build"
+    "heroku-postbuild": "npm install --include=dev && npm run build"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": "24.x"
   }
 }
