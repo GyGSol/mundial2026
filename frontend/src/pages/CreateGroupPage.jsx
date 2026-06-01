@@ -18,8 +18,8 @@ export default function CreateGroupPage() {
     setSaving(true);
 
     try {
-      const data = await competitionGroupsApi.create(name, description);
-      navigate(`/register?groupId=${data.group.id}`);
+      await competitionGroupsApi.create(name, description);
+      navigate(`/groups`);
     } catch (err) {
       setError(err.message);
     } finally {

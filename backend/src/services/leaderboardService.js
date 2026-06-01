@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { Prediction } from '../models/Prediction.js';
+import { UserGroupMembership } from '../models/UserGroupMembership.js';
 
 function emptyStats() {
   return { pa: 0, gl: 0, gv: 0, gt: 0, pb: 0 };
@@ -50,11 +51,15 @@ export function compareRankingEntries(a, b) {
 export const compareLeaderboardEntries = compareRankingEntries;
 
 export async function getLeaderboard(competitionGroupId, limit = 100) {
-  const filter = competitionGroupId
-    ? { competitionGroupId: new mongoose.Types.ObjectId(competitionGroupId) }
-    : {};
+  let filter = {};
+  if (competitionGroupId) {
+    const memberUserIds = await UserGroupMembership.find({
+      groupId: new mongoose.Types.ObjectId(competitionGroupId),
+    }).distinct('userId');
+    filter = { _id: { $in: memberUserIds } };
+  }
 
-  const users = await User.find(filter).select('name totalPoints createdAt competitionGroupId');
+  const users = await User.find(filter).select('name totalPoints createdAt activeCompetitionGroupId');
   const statsMap = await getPredictionStatsByUser(users.map((u) => u._id));
 
   const rows = users.map((user) => {

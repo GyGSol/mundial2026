@@ -8,15 +8,17 @@ const router = Router();
 
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const groupId = req.query.groupId || req.user?.competitionGroupId?.toString();
+    const groupId = req.query.groupId || null;
 
     if (!groupId) {
-      const lastSyncAt = await getLastSyncAt();
+      const [leaderboard, lastSyncAt] = await Promise.all([
+        getLeaderboard(null),
+        getLastSyncAt(),
+      ]);
       return res.json({
-        leaderboard: [],
+        leaderboard,
         group: null,
         lastSyncAt,
-        message: 'Seleccioná un grupo para ver el ranking',
       });
     }
 

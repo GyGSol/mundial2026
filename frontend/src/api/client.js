@@ -19,7 +19,7 @@ async function request(path, options = {}) {
 }
 
 export const authApi = {
-  register: (name, email, password, competitionGroupId) =>
+  register: (name, email, password, competitionGroupId = null) =>
     request('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email, password, competitionGroupId }),
@@ -34,10 +34,25 @@ export const authApi = {
 
 export const competitionGroupsApi = {
   list: () => request('/competition-groups'),
+  my: () => request('/competition-groups/my'),
   create: (name, description = '') =>
     request('/competition-groups', {
       method: 'POST',
       body: JSON.stringify({ name, description }),
+    }),
+  join: (groupId) =>
+    request(`/competition-groups/${groupId}/join`, {
+      method: 'POST',
+    }),
+  update: (groupId, name, description = '') =>
+    request(`/competition-groups/${groupId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, description }),
+    }),
+  setActive: (groupId) =>
+    request('/competition-groups/active', {
+      method: 'POST',
+      body: JSON.stringify({ groupId }),
     }),
 };
 

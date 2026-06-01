@@ -44,11 +44,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (!competitionGroupId) {
-      setError('Seleccioná un grupo de competencia');
-      return;
-    }
-
     try {
       await register(name, email, password, competitionGroupId);
       navigate('/');
@@ -62,7 +57,7 @@ export default function RegisterPage() {
       <CardHeader>
         <CardTitle>Registrarse</CardTitle>
         <CardDescription>
-          Elegí un grupo existente para competir en su ranking separado.
+          Creá tu cuenta para ingresar a la app. Podés sumarte a grupos después.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -89,7 +84,7 @@ export default function RegisterPage() {
           />
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Grupo de competencia</label>
+            <label className="text-sm font-medium">Grupo inicial (opcional)</label>
             {loadingGroups ? (
               <p className="text-sm text-muted-foreground">Cargando grupos...</p>
             ) : groups.length === 0 ? (
@@ -116,7 +111,7 @@ export default function RegisterPage() {
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={!groups.length}>
+          <Button type="submit">
             Crear cuenta
           </Button>
           <p className="text-sm text-muted-foreground">

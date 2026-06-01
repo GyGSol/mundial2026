@@ -6,6 +6,11 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const refreshUser = async () => {
+    const data = await authApi.me();
+    setUser(data.user);
+    return data.user;
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -32,11 +37,14 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         return data.user;
       },
-      async register(name, email, password, competitionGroupId) {
+      async register(name, email, password, competitionGroupId = null) {
         const data = await authApi.register(name, email, password, competitionGroupId);
         localStorage.setItem('token', data.token);
         setUser(data.user);
         return data.user;
+      },
+      async refreshUser() {
+        return refreshUser();
       },
       logout() {
         localStorage.removeItem('token');

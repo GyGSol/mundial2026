@@ -22,7 +22,7 @@ function formatLastUpdated(date) {
 export default function LeaderboardPage() {
   const { user, isAuthenticated } = useAuth();
   const [groups, setGroups] = useState([]);
-  const [selectedGroupId, setSelectedGroupId] = useState(user?.competitionGroup?.id || '');
+  const [selectedGroupId, setSelectedGroupId] = useState('__all__');
 
   useEffect(() => {
     competitionGroupsApi
@@ -32,14 +32,12 @@ export default function LeaderboardPage() {
   }, []);
 
   useEffect(() => {
-    if (user?.competitionGroup?.id) {
-      setSelectedGroupId(user.competitionGroup.id);
-    }
+    if (user?.competitionGroup?.id) setSelectedGroupId(user.competitionGroup.id);
   }, [user?.competitionGroup?.id]);
 
   const fetchLeaderboard = useCallback(async () => {
     const [leaderboardData, liveData] = await Promise.all([
-      leaderboardApi.list(selectedGroupId),
+      leaderboardApi.list(selectedGroupId === '__all__' ? '' : selectedGroupId),
       matchesApi.list({ status: 'live' }),
     ]);
     return {
@@ -62,7 +60,7 @@ export default function LeaderboardPage() {
           <p className="text-sm text-muted-foreground">
             {activeGroup
               ? `Grupo: ${activeGroup.name} · ranking independiente`
-              : 'Cada grupo compite por separado'}
+              : 'Tabla general de todos los jugadores'}
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
           </p>
         </div>
@@ -74,6 +72,7 @@ export default function LeaderboardPage() {
                 <SelectValue placeholder="Elegir grupo" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__all__">General (todos)</SelectItem>
                 {groups.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.name}
@@ -91,16 +90,13 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {!selectedGroupId && !loading && (
+      {selectedGroupId === '__all__' && !loading && !isAuthenticated && (
         <p className="text-sm text-muted-foreground">
-          {isAuthenticated
-            ? 'Tu cuenta no tiene grupo asignado. Creá uno o registrate nuevamente.'
-            : 'Seleccioná un grupo para ver su ranking, o '}
-          {!isAuthenticated && (
-            <Link to="/register" className="text-foreground underline">
-              registrate en uno existente
-            </Link>
-          )}
+          También podés filtrar por grupo cuando inicies sesión o crear uno en{' '}
+          <Link to="/groups/new" className="text-foreground underline">
+            Crear grupo
+          </Link>
+          .
         </p>
       )}
 

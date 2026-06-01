@@ -31,6 +31,9 @@ export default function Layout() {
             <NavLink to="/simulation" className={navClass}>
               Simulación
             </NavLink>
+            <NavLink to="/groups" className={navClass}>
+              Grupos
+            </NavLink>
             <NavLink to="/rules" className={navClass}>
               Reglas
             </NavLink>

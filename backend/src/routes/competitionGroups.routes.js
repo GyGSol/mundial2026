@@ -1,8 +1,12 @@
 import { Router } from 'express';
-import { optionalAuth } from '../middleware/auth.middleware.js';
+import { authMiddleware, optionalAuth } from '../middleware/auth.middleware.js';
 import {
   createCompetitionGroup,
+  joinCompetitionGroup,
   listCompetitionGroups,
+  listUserCompetitionGroups,
+  setActiveCompetitionGroup,
+  updateCompetitionGroup,
 } from '../services/competitionGroupService.js';
 
 const router = Router();
@@ -24,6 +28,53 @@ router.post('/', optionalAuth, async (req, res, next) => {
       createdBy: req.user?._id ?? null,
     });
     res.status(201).json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/my', authMiddleware, async (req, res, next) => {
+  try {
+    const groups = await listUserCompetitionGroups(req.user._id);
+    res.json({ groups });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:groupId/join', authMiddleware, async (req, res, next) => {
+  try {
+    const group = await joinCompetitionGroup({
+      userId: req.user._id,
+      groupId: req.params.groupId,
+    });
+    res.status(201).json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/active', authMiddleware, async (req, res, next) => {
+  try {
+    const group = await setActiveCompetitionGroup({
+      userId: req.user._id,
+      groupId: req.body.groupId,
+    });
+    res.json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/:groupId', authMiddleware, async (req, res, next) => {
+  try {
+    const group = await updateCompetitionGroup({
+      groupId: req.params.groupId,
+      name: req.body.name,
+      description: req.body.description,
+      userId: req.user._id,
+    });
+    res.json({ group });
   } catch (err) {
     next(err);
   }

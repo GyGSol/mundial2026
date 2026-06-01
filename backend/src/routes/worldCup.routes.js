@@ -14,6 +14,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const groupId =
       req.query.groupId ||
+      req.user?.activeCompetitionGroupId?.toString?.() ||
       req.user?.competitionGroupId?.toString?.() ||
       req.user?.competitionGroup?.id;
 

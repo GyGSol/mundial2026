@@ -3,14 +3,30 @@ import bcrypt from 'bcryptjs';
 import { User } from '../models/User.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { authMiddleware, signToken } from '../middleware/auth.middleware.js';
-import { getCompetitionGroupById } from '../services/competitionGroupService.js';
+import {
+  getCompetitionGroupById,
+  joinCompetitionGroup,
+  listUserCompetitionGroups,
+} from '../services/competitionGroupService.js';
+import { UserGroupMembership } from '../models/UserGroupMembership.js';
 
 const router = Router();
 
 async function serializeUser(user) {
-  const group = user.competitionGroupId
-    ? await getCompetitionGroupById(user.competitionGroupId)
+  // Backfill memberships for legacy users (single-group mode).
+  if (user.competitionGroupId) {
+    await UserGroupMembership.findOneAndUpdate(
+      { userId: user._id, groupId: user.competitionGroupId },
+      { $setOnInsert: { role: 'member' } },
+      { upsert: true }
+    );
+  }
+
+  const activeGroupId = user.activeCompetitionGroupId || user.competitionGroupId || null;
+  const group = activeGroupId
+    ? await getCompetitionGroupById(activeGroupId)
     : null;
+  const groups = await listUserCompetitionGroups(user._id);
 
   return {
     id: user._id.toString(),
@@ -18,21 +34,17 @@ async function serializeUser(user) {
     email: user.email,
     totalPoints: user.totalPoints,
     competitionGroup: group,
+    competitionGroups: groups,
   };
 }
 
 router.post('/register', async (req, res, next) => {
   try {
     const { name, email, password, competitionGroupId } = req.body;
-    if (!name?.trim() || !email?.trim() || !password || !competitionGroupId) {
+    if (!name?.trim() || !email?.trim() || !password) {
       return res.status(400).json({
-        error: 'Nombre, email, contraseña y grupo de competencia son obligatorios',
+        error: 'Nombre, email y contraseña son obligatorios',
       });
-    }
-
-    const group = await CompetitionGroup.findById(competitionGroupId);
-    if (!group) {
-      return res.status(400).json({ error: 'El grupo seleccionado no existe' });
     }
 
     const existing = await User.findOne({ email: email.toLowerCase().trim() });
@@ -43,8 +55,17 @@ router.post('/register', async (req, res, next) => {
       name: name.trim(),
       email: email.toLowerCase().trim(),
       passwordHash,
-      competitionGroupId: group._id,
+      competitionGroupId: null,
+      activeCompetitionGroupId: null,
     });
+
+    if (competitionGroupId) {
+      const group = await CompetitionGroup.findById(competitionGroupId);
+      if (!group) {
+        return res.status(400).json({ error: 'El grupo seleccionado no existe' });
+      }
+      await joinCompetitionGroup({ userId: user._id, groupId: competitionGroupId });
+    }
 
     const token = signToken(user._id);
     res.status(201).json({
