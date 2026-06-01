@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { matchInvolvesArgentina } from '@/lib/teamMeta';
+import { formatMatchDate } from '@/lib/dateFormat';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -59,7 +60,7 @@ export default function MatchCard({ match, onSave, savingId }) {
             )}
           </div>
           <CardDescription>
-            Grupo {match.group} · {match.localDate}
+            Grupo {match.group} · {formatMatchDate(match)}
           </CardDescription>
         </div>
       </CardHeader>

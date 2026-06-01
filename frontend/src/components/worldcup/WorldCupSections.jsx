@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table.jsx';
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta';
+import { formatMatchDate } from '@/lib/dateFormat';
 
 function TeamCell({ team, fallback = '—' }) {
   const name = team?.nameEn || fallback;
@@ -211,7 +212,7 @@ export function KnockoutSection({ phases }) {
                 <MatchScore match={match} />
                 <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-muted-foreground">
                   <Badge variant="secondary">{match.status}</Badge>
-                  {match.localDate && <span>{match.localDate}</span>}
+                  {formatMatchDate(match) && <span>{formatMatchDate(match)}</span>}
                   {match.stadium?.nameEn && (
                     <span>
                       {match.stadium.nameEn}
@@ -304,8 +305,8 @@ export function StatsSection({ stats, teams, stadiums }) {
                 {stats.goals.highestScoringMatch.awayScore}
               </strong>{' '}
               ({stats.goals.highestScoringMatch.totalGoals} goles)
-              {stats.goals.highestScoringMatch.localDate &&
-                ` · ${stats.goals.highestScoringMatch.localDate}`}
+              {formatMatchDate(stats.goals.highestScoringMatch) &&
+                ` · ${formatMatchDate(stats.goals.highestScoringMatch)}`}
             </p>
           ) : (
             'Sin partidos finalizados todavía.'
@@ -389,7 +390,7 @@ export function TeamsSection({ teams }) {
 }
 
 function getMatchMetaParts(match) {
-  const localDate = match.localDate?.trim();
+  const localDate = formatMatchDate(match);
   const localDateHasGroupAndMatchday =
     localDate &&
     /fecha\s+\S+/i.test(localDate) &&
