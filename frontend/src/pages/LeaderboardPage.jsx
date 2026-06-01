@@ -49,6 +49,7 @@ export default function LeaderboardPage() {
   const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [selectedGroupId]);
 
   const activeGroup = data?.group || groups.find((g) => g.id === selectedGroupId);
+  const isGeneralMode = selectedGroupId === '__all__' || !activeGroup;
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,7 +57,9 @@ export default function LeaderboardPage() {
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Tabla de posiciones</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {isGeneralMode ? 'Ranking general' : `Ranking · ${activeGroup.name}`}
+          </h1>
           <p className="text-sm text-muted-foreground">
             {activeGroup
               ? `Grupo: ${activeGroup.name} · ranking independiente`
