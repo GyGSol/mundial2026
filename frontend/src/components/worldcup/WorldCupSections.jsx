@@ -30,6 +30,40 @@ function TeamCell({ team, fallback = '—' }) {
   );
 }
 
+function StandingsTeamCell({ team, fallback = '—' }) {
+  const name = team?.nameEn || fallback;
+  const flagUrl = getTeamFlag(team);
+  const flag = flagUrl ? (
+    <img src={flagUrl} alt="" className="size-4 shrink-0 rounded-sm border border-border/60 object-cover sm:size-5" />
+  ) : team?.flag ? (
+    <span className="shrink-0 text-sm">{team.flag}</span>
+  ) : null;
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5 sm:hidden">
+        {flag}
+        <span className="font-medium">{team?.fifaCode || name.slice(0, 3).toUpperCase()}</span>
+      </div>
+      <div className="hidden min-w-0 items-center gap-1.5 sm:flex">
+        {flag}
+        <span className="truncate font-medium" title={name}>
+          {name}
+        </span>
+        {team?.fifaCode && (
+          <span className="shrink-0 text-xs text-muted-foreground">{team.fifaCode}</span>
+        )}
+      </div>
+    </>
+  );
+}
+
+const standingsStatHead =
+  'w-7 px-0.5 text-center text-[10px] font-medium sm:w-8 sm:px-1 sm:text-xs md:w-9';
+const standingsStatCell =
+  'w-7 px-0.5 py-1.5 text-center tabular-nums text-xs sm:w-8 sm:px-1 sm:py-2 sm:text-sm md:w-9';
+const standingsOptionalCol = 'hidden sm:table-cell';
+
 function MatchScore({ match }) {
   const statusClass =
     match.status === 'live'
@@ -77,52 +111,59 @@ export function GroupStandingsSection({ groups }) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {groups.map((group) => (
-        <Card key={group.group}>
+        <Card key={group.group} className="min-w-0">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between text-base">
               <span>Grupo {group.group}</span>
               <Badge variant="outline">{group.source === 'api' ? 'API' : 'Calculada'}</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-0 pb-2">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-8 px-2">#</TableHead>
-                  <TableHead>Equipo</TableHead>
-                  <TableHead className="px-2 text-center">PJ</TableHead>
-                  <TableHead className="px-2 text-center">PG</TableHead>
-                  <TableHead className="px-2 text-center">PE</TableHead>
-                  <TableHead className="px-2 text-center">PP</TableHead>
-                  <TableHead className="px-2 text-center">GF</TableHead>
-                  <TableHead className="px-2 text-center">GC</TableHead>
-                  <TableHead className="px-2 text-center">DG</TableHead>
-                  <TableHead className="px-2 text-center">Pts</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          <CardContent className="px-2 pb-2 sm:px-4">
+            <table className="w-full table-fixed caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border">
+                  <th className="h-9 w-7 px-0.5 text-center align-middle text-[10px] font-medium text-muted-foreground sm:w-8 sm:text-xs">
+                    #
+                  </th>
+                  <th className="h-9 min-w-0 px-1 text-left align-middle text-xs font-medium text-muted-foreground sm:px-2 sm:text-sm">
+                    Equipo
+                  </th>
+                  <th className={standingsStatHead}>PJ</th>
+                  <th className={standingsStatHead}>PG</th>
+                  <th className={cn(standingsStatHead, standingsOptionalCol)}>PE</th>
+                  <th className={cn(standingsStatHead, standingsOptionalCol)}>PP</th>
+                  <th className={standingsStatHead}>GF</th>
+                  <th className={cn(standingsStatHead, standingsOptionalCol)}>GC</th>
+                  <th className={standingsStatHead}>DG</th>
+                  <th className={cn(standingsStatHead, 'font-semibold text-foreground')}>Pts</th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
                 {group.standings.map((row) => (
-                  <TableRow key={row.teamId || row.rank}>
-                    <TableCell className="px-2 text-center text-muted-foreground">{row.rank}</TableCell>
-                    <TableCell className="px-2">
-                      <TeamCell team={row} fallback={row.nameEn} />
-                    </TableCell>
-                    <TableCell className="px-2 text-center tabular-nums">{row.played}</TableCell>
-                    <TableCell className="px-2 text-center tabular-nums">{row.won}</TableCell>
-                    <TableCell className="px-2 text-center tabular-nums">{row.drawn}</TableCell>
-                    <TableCell className="px-2 text-center tabular-nums">{row.lost}</TableCell>
-                    <TableCell className="px-2 text-center tabular-nums">{row.goalsFor}</TableCell>
-                    <TableCell className="px-2 text-center tabular-nums">{row.goalsAgainst}</TableCell>
-                    <TableCell className="px-2 text-center tabular-nums">{row.goalDiff}</TableCell>
-                    <TableCell className="px-2 text-center font-semibold tabular-nums">
-                      {row.points}
-                    </TableCell>
-                  </TableRow>
+                  <tr
+                    key={row.teamId || row.rank}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="w-7 px-0.5 py-1.5 text-center align-middle text-xs text-muted-foreground sm:w-8 sm:py-2">
+                      {row.rank}
+                    </td>
+                    <td className="min-w-0 px-1 py-1.5 align-middle sm:px-2 sm:py-2">
+                      <StandingsTeamCell team={row} fallback={row.nameEn} />
+                    </td>
+                    <td className={standingsStatCell}>{row.played}</td>
+                    <td className={standingsStatCell}>{row.won}</td>
+                    <td className={cn(standingsStatCell, standingsOptionalCol)}>{row.drawn}</td>
+                    <td className={cn(standingsStatCell, standingsOptionalCol)}>{row.lost}</td>
+                    <td className={standingsStatCell}>{row.goalsFor}</td>
+                    <td className={cn(standingsStatCell, standingsOptionalCol)}>{row.goalsAgainst}</td>
+                    <td className={standingsStatCell}>{row.goalDiff}</td>
+                    <td className={cn(standingsStatCell, 'font-semibold')}>{row.points}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </CardContent>
         </Card>
       ))}
