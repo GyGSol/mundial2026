@@ -171,6 +171,49 @@ export function computeGroupStandings(teams, matches, groupDocs = []) {
     .filter((entry) => entry.standings.length > 0);
 }
 
+function compareThirdPlaces(a, b) {
+  if (b.points !== a.points) return b.points - a.points;
+  if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+  if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+  return (a.group || '').localeCompare(b.group || '');
+}
+
+/** Mundial 2026: top 2 per group + 8 best third places → round of 32. */
+export function annotateGroupQualification(groupStandings) {
+  const thirdCandidates = groupStandings
+    .map((groupTable) => (groupTable.standings[2] ? { ...groupTable.standings[2], group: groupTable.group } : null))
+    .filter(Boolean);
+
+  const groupStageComplete = groupStandings.every((groupTable) =>
+    groupTable.standings.every((row) => row.played >= 3)
+  );
+
+  const qualifiedThirdIds = groupStageComplete
+    ? new Set(
+        [...thirdCandidates]
+          .sort(compareThirdPlaces)
+          .slice(0, 8)
+          .map((row) => row.teamId)
+      )
+    : null;
+
+  return groupStandings.map((groupTable) => ({
+    ...groupTable,
+    standings: groupTable.standings.map((row) => {
+      if (row.rank <= 2) {
+        return { ...row, qualificationZone: 'direct' };
+      }
+      if (row.rank === 3) {
+        if (qualifiedThirdIds?.has(row.teamId)) {
+          return { ...row, qualificationZone: 'direct' };
+        }
+        return { ...row, qualificationZone: 'third_possible' };
+      }
+      return { ...row, qualificationZone: null };
+    }),
+  }));
+}
+
 function formatTeamRef(team) {
   if (!team) return null;
   return {
@@ -367,7 +410,7 @@ export async function buildWorldCupOverview({
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
   const stadiumMap = Object.fromEntries(stadiums.map((s) => [s.externalId, s]));
 
-  const groupStandings = computeGroupStandings(teams, matches, groups);
+  const groupStandings = annotateGroupQualification(computeGroupStandings(teams, matches, groups));
   const knockout = buildKnockoutPhases(matches, teamMap, stadiumMap);
   const stats = computeTournamentStats(matches, teams);
 

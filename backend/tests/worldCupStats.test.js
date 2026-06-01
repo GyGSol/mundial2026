@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  annotateGroupQualification,
   computeGroupStandings,
   buildKnockoutPhases,
   computeTournamentStats,
@@ -158,5 +159,25 @@ describe('worldCupStatsService', () => {
     expect(stats.goals.total).toBe(6);
     expect(stats.goals.averagePerMatch).toBe(3);
     expect(stats.goals.topScoringTeams[0].teamId).toBe('1');
+  });
+
+  it('marca zonas de clasificación por puesto en el grupo', () => {
+    const standings = [
+      {
+        group: 'A',
+        standings: [
+          { teamId: '1', rank: 1, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
+          { teamId: '2', rank: 2, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
+          { teamId: '3', rank: 3, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
+          { teamId: '4', rank: 4, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
+        ],
+      },
+    ];
+
+    const annotated = annotateGroupQualification(standings);
+    expect(annotated[0].standings[0].qualificationZone).toBe('direct');
+    expect(annotated[0].standings[1].qualificationZone).toBe('direct');
+    expect(annotated[0].standings[2].qualificationZone).toBe('third_possible');
+    expect(annotated[0].standings[3].qualificationZone).toBeNull();
   });
 });
