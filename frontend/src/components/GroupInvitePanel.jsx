@@ -5,7 +5,7 @@ import InfoPanel, { InfoList } from './InfoPanel.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 
-export default function GroupInvitePanel({ group, compact = false, showFullHelp = true }) {
+export default function GroupInvitePanel({ group, compact = false }) {
   const [copied, setCopied] = useState(false);
   const inviteUrl = buildGroupInviteUrl(group.id);
 
@@ -31,8 +31,9 @@ export default function GroupInvitePanel({ group, compact = false, showFullHelp 
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium">Invitar jugadores</p>
         <p className="text-xs text-muted-foreground">
-          Compartí el enlace por WhatsApp, email o el canal que prefieras. Quien lo abra podrá
-          registrarse e ingresar a <strong className="text-foreground">{group.name}</strong>.
+          Solo el administrador del grupo puede compartir este enlace. Enviálo por WhatsApp, email u
+          otro canal; quien lo abra podrá unirse a{' '}
+          <strong className="text-foreground">{group.name}</strong>.
         </p>
       </div>
 
@@ -50,7 +51,7 @@ export default function GroupInvitePanel({ group, compact = false, showFullHelp 
         </Link>
       </p>
 
-      {!compact && showFullHelp && (
+      {!compact && (
         <InfoPanel title="Cómo invitar (sin email automático)">
           <InfoList
             items={[

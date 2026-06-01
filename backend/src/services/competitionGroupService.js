@@ -360,12 +360,19 @@ export async function listUserCompetitionGroups(userId) {
   return groups.map((group) => {
     const isCreator = group.createdBy && String(group.createdBy) === String(userId);
     const membershipRole = roleByGroup[group._id.toString()];
-    const isLegacyAdmin = !group.createdBy && membershipRole;
     const role = isCreator ? 'owner' : membershipRole || 'member';
+
+    if (isCreator && membershipRole !== 'owner') {
+      void UserGroupMembership.updateOne(
+        { userId, groupId: group._id },
+        { $set: { role: 'owner' } }
+      );
+    }
+
     return {
       ...serializeGroup(group),
       role,
-      isAdmin: role === 'owner' || isCreator || Boolean(isLegacyAdmin),
+      isAdmin: isCreator,
     };
   });
 }

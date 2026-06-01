@@ -258,9 +258,9 @@ export default function GroupsPage() {
               'Varios grupos: una sola cuenta, mismos pronósticos, rankings independientes por grupo.',
               'Grupo activo (Usar): referencia visual en el encabezado y filtro en Ranking cuando elegís un grupo.',
               'Sin grupo: igual podés jugar; en Ranking aparecés como “Sin grupo” con tus puntos.',
-              'Administrador: solo quien creó el grupo puede Editar o Eliminar. Los demás solo participan.',
+              'Administrador: solo quien creó el grupo puede invitar, editar o eliminar. Los demás son miembros.',
               'Premios: informativos en la ficha del grupo (no se pagan desde la app).',
-              'Invitar amigos: en “Mis grupos”, debajo de cada liga, copiá el enlace “Invitar jugadores” y enviálo por WhatsApp, email, etc.',
+              'Invitar (solo admin): debajo del grupo que creaste verás “Invitar jugadores” con el enlace para copiar.',
               'Unirse sin enlace: buscá el nombre exacto en “Unirse a un grupo” o en “Todos los grupos”.',
             ]}
           />
@@ -387,7 +387,7 @@ export default function GroupsPage() {
                     'Editar grupo (solo admin): nombre, descripción y tabla de premios.',
                     'Eliminar (solo admin): borra la liga; los jugadores conservan puntos y pueden seguir en otros grupos.',
                     'Si no sos admin: solo podés usar el grupo o sumarte a otros desde abajo.',
-                    'Invitar: en cada grupo verás “Invitar jugadores” con enlace para copiar (cualquier integrante puede compartirlo).',
+                    'Invitar (solo quien creó el grupo): enlace copiable debajo de ese grupo en la lista.',
                   ]}
                 />
               </InfoPanel>
@@ -398,15 +398,16 @@ export default function GroupsPage() {
                 </p>
               )}
               {myGroups.map((group) => {
-                const isOwner = Boolean(group.isAdmin || group.role === 'owner');
+                const isOwner = Boolean(group.isAdmin);
                 const isActive = user?.competitionGroup?.id === group.id;
                 const rowEdit = editing[group.id];
                 return (
                   <div
                     key={group.id}
-                    className="flex flex-col gap-2 rounded-lg border border-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-lg border border-border/70 p-3"
                   >
-                    <div className="min-w-0">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
                       {rowEdit ? (
                         <div className="flex flex-col gap-2">
                           <Input
@@ -579,12 +580,9 @@ export default function GroupsPage() {
                         </Button>
                       )}
                     </div>
-                    {!rowEdit && (
-                      <GroupInvitePanel
-                        group={group}
-                        compact
-                        showFullHelp={isOwner}
-                      />
+                    </div>
+                    {isOwner && !rowEdit && (
+                      <GroupInvitePanel group={group} compact={false} />
                     )}
                   </div>
                 );
