@@ -64,6 +64,8 @@ export async function createCompetitionGroup({
   createdBy = null,
   prizesWinnersCount = 0,
   prizes = [],
+  /** Grupos creados por el motor de simulación (sin usuario humano). */
+  internal = false,
 }) {
   const trimmedName = name?.trim();
   if (!trimmedName) {
@@ -79,7 +81,7 @@ export async function createCompetitionGroup({
     throw error;
   }
 
-  if (!createdBy) {
+  if (!createdBy && !internal) {
     const error = new Error('Debés iniciar sesión para crear grupos');
     error.status = 401;
     throw error;

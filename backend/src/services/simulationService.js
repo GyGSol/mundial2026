@@ -428,6 +428,7 @@ export async function setupSimulation({
       mode === 'full'
         ? 'Mundial completo: 72 partidos de grupos + fase final con cruces'
         : 'Demo rápida de predicciones',
+    internal: true,
   });
 
   const passwordHash = await bcrypt.hash(SIM_PASSWORD, 10);
