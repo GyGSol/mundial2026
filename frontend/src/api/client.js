@@ -44,6 +44,11 @@ export const competitionGroupsApi = {
     request(`/competition-groups/${groupId}/join`, {
       method: 'POST',
     }),
+  leave: (groupId) =>
+    request(`/competition-groups/${groupId}/leave`, {
+      method: 'POST',
+    }),
+  members: (groupId) => request(`/competition-groups/${groupId}/members`),
   update: (groupId, name, description = '', prizesWinnersCount = 0, prizes = []) =>
     request(`/competition-groups/${groupId}`, {
       method: 'PUT',

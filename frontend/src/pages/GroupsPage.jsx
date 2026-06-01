@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { CircleHelp } from 'lucide-react';
 import { competitionGroupsApi } from '../api/client.js';
+import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -38,6 +39,7 @@ export default function GroupsPage() {
   const [editing, setEditing] = useState({});
   const [joinGroupId, setJoinGroupId] = useState(undefined);
   const [joinLoading, setJoinLoading] = useState('');
+  const [leaveLoading, setLeaveLoading] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
   const [showHelp, setShowHelp] = useState(
     Boolean(location.state?.welcome || location.state?.created)
@@ -76,9 +78,11 @@ export default function GroupsPage() {
 
   const myIds = useMemo(() => new Set(myGroups.map((group) => group.id)), [myGroups]);
   const joinableGroups = useMemo(
-    () => allGroups.filter((group) => !myIds.has(group.id)),
+    () => allGroups.filter((group) => !group.isVirtual && !myIds.has(group.id)),
     [allGroups, myIds]
   );
+
+  const isNoGroupParticipant = isAuthenticated && myGroups.length === 0;
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -119,6 +123,28 @@ export default function GroupsPage() {
       setError(err.message);
     } finally {
       setJoinLoading('');
+    }
+  };
+
+  const handleLeave = async (groupId) => {
+    if (!isAuthenticated) return;
+    const group = allGroups.find((row) => row.id === groupId);
+    const ok = window.confirm(
+      `¿Salir de "${group?.name || 'este grupo'}"?\n\nSeguirás con tus puntos y pronósticos. Si no tenés otro grupo, pasás a Sin grupo.`
+    );
+    if (!ok) return;
+
+    setError('');
+    setSuccessMessage('');
+    setLeaveLoading(groupId);
+    try {
+      await competitionGroupsApi.leave(groupId);
+      setSuccessMessage('Saliste del grupo. Podés unirte de nuevo cuando quieras.');
+      await Promise.all([loadData(), refreshUser()]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLeaveLoading('');
     }
   };
 
@@ -513,9 +539,29 @@ export default function GroupsPage() {
                         </>
                       )}
                       {!isOwner && !rowEdit && (
-                        <span className="self-center text-xs text-muted-foreground">
-                          Miembro · solo el administrador edita el grupo
-                        </span>
+                        <>
+                          <span className="self-center text-xs text-muted-foreground">
+                            Miembro
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={leaveLoading === group.id}
+                            onClick={() => handleLeave(group.id)}
+                          >
+                            {leaveLoading === group.id ? 'Saliendo...' : 'Salir'}
+                          </Button>
+                        </>
+                      )}
+                      {isOwner && !rowEdit && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={leaveLoading === group.id}
+                          onClick={() => handleLeave(group.id)}
+                        >
+                          {leaveLoading === group.id ? 'Saliendo...' : 'Salir'}
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -538,7 +584,7 @@ export default function GroupsPage() {
               </p>
               {joinableGroups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  {allGroups.length === 0
+                  {allGroups.filter((g) => !g.isVirtual).length === 0
                     ? 'No hay grupos todavía. Creá el primero arriba.'
                     : 'Ya participás en todos los grupos disponibles.'}
                 </p>
@@ -575,40 +621,27 @@ export default function GroupsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Todos los grupos</CardTitle>
-          <CardDescription>Listado público de grupos de competencia.</CardDescription>
+          <CardDescription>
+            Listado público de competencia. Hacé clic en un grupo para ver los emails de sus
+            jugadores. Incluye Sin grupo (sin liga asignada).
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {allGroups.length === 0 && (
             <p className="text-sm text-muted-foreground">Todavía no hay grupos creados.</p>
           )}
           {allGroups.map((group) => (
-            <div
+            <GroupDirectoryRow
               key={group.id}
-              className="flex items-center justify-between rounded-lg border border-border/70 p-3"
-            >
-              <div>
-                <p className="font-medium">{group.name}</p>
-                <p className="text-sm text-muted-foreground">{group.memberCount} jugadores</p>
-              </div>
-              {!isAuthenticated ? (
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/login">Ingresar para unirme</Link>
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={myIds.has(group.id) || joinLoading === group.id}
-                  onClick={() => handleJoin(group.id)}
-                >
-                  {myIds.has(group.id)
-                    ? 'Ya participás'
-                    : joinLoading === group.id
-                      ? 'Uniendo...'
-                      : 'Unirme'}
-                </Button>
-              )}
-            </div>
+              group={group}
+              isAuthenticated={isAuthenticated}
+              isMember={myIds.has(group.id)}
+              isNoGroupParticipant={isNoGroupParticipant}
+              joinLoading={joinLoading === group.id}
+              leaveLoading={leaveLoading === group.id}
+              onJoin={handleJoin}
+              onLeave={handleLeave}
+            />
           ))}
         </CardContent>
       </Card>

@@ -47,15 +47,76 @@ async function isGroupAdmin({ userId, group }) {
   return Boolean(ownerMembership);
 }
 
+export async function countNoGroupMembers() {
+  const memberUserIds = await UserGroupMembership.distinct('userId');
+  return User.countDocuments({ _id: { $nin: memberUserIds } });
+}
+
+function buildNoGroupEntry(memberCount) {
+  return {
+    id: '__nogroup',
+    name: 'Sin grupo',
+    description: 'Jugadores registrados que no participan en ningún grupo de competencia.',
+    prizesWinnersCount: 0,
+    prizes: [],
+    memberCount,
+    isVirtual: true,
+    createdAt: null,
+  };
+}
+
 export async function listCompetitionGroups() {
-  const groups = await CompetitionGroup.find().sort({ name: 1 }).lean();
-  return Promise.all([
-    ...groups.map(async (group) => ({
+  const [noGroupCount, groups] = await Promise.all([
+    countNoGroupMembers(),
+    CompetitionGroup.find().sort({ name: 1 }).lean(),
+  ]);
+
+  const serialized = await Promise.all(
+    groups.map(async (group) => ({
       ...serializeGroup(group),
       memberCount: await UserGroupMembership.countDocuments({ groupId: group._id }),
+      isVirtual: false,
       createdAt: group.createdAt,
-    })),
-  ]);
+    }))
+  );
+
+  return [buildNoGroupEntry(noGroupCount), ...serialized];
+}
+
+export async function listCompetitionGroupMembers(groupId) {
+  if (groupId === '__nogroup') {
+    const memberUserIds = await UserGroupMembership.distinct('userId');
+    const users = await User.find({ _id: { $nin: memberUserIds } })
+      .select('name email')
+      .sort({ name: 1 })
+      .lean();
+    return users.map((user) => ({
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+    }));
+  }
+
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const memberUserIds = await UserGroupMembership.find({ groupId: group._id }).distinct('userId');
+  if (!memberUserIds.length) return [];
+
+  const users = await User.find({ _id: { $in: memberUserIds } })
+    .select('name email')
+    .sort({ name: 1 })
+    .lean();
+
+  return users.map((user) => ({
+    id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+  }));
 }
 
 export async function createCompetitionGroup({
@@ -120,7 +181,54 @@ export async function getCompetitionGroupById(groupId) {
   return serializeGroup(group);
 }
 
+export async function leaveCompetitionGroup({ userId, groupId }) {
+  if (groupId === '__nogroup') {
+    const error = new Error('No podés salir del grupo Sin grupo');
+    error.status = 400;
+    throw error;
+  }
+
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const membership = await UserGroupMembership.findOne({ userId, groupId: group._id });
+  if (!membership) {
+    const error = new Error('No participás en ese grupo');
+    error.status = 404;
+    throw error;
+  }
+
+  await UserGroupMembership.deleteOne({ _id: membership._id });
+
+  const user = await User.findById(userId).select('activeCompetitionGroupId competitionGroupId');
+  const wasActive =
+    String(user?.activeCompetitionGroupId || user?.competitionGroupId || '') === String(group._id);
+
+  if (wasActive) {
+    const remaining = await UserGroupMembership.findOne({ userId }).sort({ createdAt: 1 }).lean();
+    const nextGroupId = remaining?.groupId || null;
+    await User.findByIdAndUpdate(userId, {
+      $set: {
+        activeCompetitionGroupId: nextGroupId,
+        competitionGroupId: nextGroupId,
+      },
+    });
+  }
+
+  return { left: true, groupId: group._id.toString() };
+}
+
 export async function joinCompetitionGroup({ userId, groupId }) {
+  if (groupId === '__nogroup') {
+    const error = new Error('No podés unirte al grupo Sin grupo');
+    error.status = 400;
+    throw error;
+  }
+
   const group = await CompetitionGroup.findById(groupId);
   if (!group) {
     const error = new Error('Grupo no encontrado');

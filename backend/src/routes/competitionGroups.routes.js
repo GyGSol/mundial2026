@@ -4,6 +4,8 @@ import {
   createCompetitionGroup,
   deleteCompetitionGroup,
   joinCompetitionGroup,
+  leaveCompetitionGroup,
+  listCompetitionGroupMembers,
   listCompetitionGroups,
   listUserCompetitionGroups,
   setActiveCompetitionGroup,
@@ -52,6 +54,27 @@ router.post('/active', authMiddleware, async (req, res, next) => {
       groupId: req.body.groupId,
     });
     res.json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:groupId/members', async (req, res, next) => {
+  try {
+    const members = await listCompetitionGroupMembers(req.params.groupId);
+    res.json({ members });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:groupId/leave', authMiddleware, async (req, res, next) => {
+  try {
+    const result = await leaveCompetitionGroup({
+      userId: req.user._id,
+      groupId: req.params.groupId,
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }
