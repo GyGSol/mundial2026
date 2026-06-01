@@ -260,3 +260,39 @@ export async function setActiveCompetitionGroup({ userId, groupId }) {
 
   return getCompetitionGroupById(group._id);
 }
+
+export async function deleteCompetitionGroup({ groupId, userId }) {
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  if (!(await isGroupAdmin({ userId, group }))) {
+    const error = new Error('Solo el administrador puede eliminar el grupo');
+    error.status = 403;
+    throw error;
+  }
+
+  const memberUserIds = await UserGroupMembership.find({ groupId: group._id }).distinct('userId');
+
+  await UserGroupMembership.deleteMany({ groupId: group._id });
+
+  for (const memberUserId of memberUserIds) {
+    const remainingMembership = await UserGroupMembership.findOne({ userId: memberUserId })
+      .sort({ createdAt: 1 })
+      .lean();
+    const nextGroupId = remainingMembership?.groupId || null;
+    await User.findByIdAndUpdate(memberUserId, {
+      $set: {
+        activeCompetitionGroupId: nextGroupId,
+        competitionGroupId: nextGroupId,
+      },
+    });
+  }
+
+  await CompetitionGroup.deleteOne({ _id: group._id });
+
+  return { deleted: true, groupId };
+}

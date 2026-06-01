@@ -26,6 +26,7 @@ export default function GroupsPage() {
   const [newPrizesWinnersCount, setNewPrizesWinnersCount] = useState(0);
   const [newPrizes, setNewPrizes] = useState([]);
   const [editing, setEditing] = useState({});
+  const [joinGroupId, setJoinGroupId] = useState('');
   const [joinLoading, setJoinLoading] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -77,6 +78,13 @@ export default function GroupsPage() {
     } finally {
       setJoinLoading('');
     }
+  };
+
+  const handleJoinSpecific = async (e) => {
+    e.preventDefault();
+    if (!joinGroupId) return;
+    await handleJoin(joinGroupId);
+    setJoinGroupId('');
   };
 
   const handleSetActive = async (groupId) => {
@@ -140,6 +148,7 @@ export default function GroupsPage() {
             <p>- Podés participar en varios grupos con la misma cuenta y los mismos pronósticos.</p>
             <p>- El botón <strong>Usar</strong> define el grupo activo para vistas filtradas.</p>
             <p>- En ranking podés ver el modo general (todos) o un grupo puntual.</p>
+            <p>- Si quedás sin grupo, seguís en “Ranking · Sin grupo” con tus puntos intactos.</p>
             <p>
               - El <strong>administrador del grupo</strong> (creador) es quien puede editar nombre,
               descripción y premios.
@@ -371,6 +380,27 @@ export default function GroupsPage() {
                       Editar grupo
                     </Button>
                   )}
+                  {isOwner && !rowEdit && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={async () => {
+                        const ok = window.confirm(
+                          `¿Eliminar definitivamente el grupo \"${group.name}\"?\n\nLos jugadores quedarán sin grupo (sin perder puntos).`
+                        );
+                        if (!ok) return;
+                        setError('');
+                        try {
+                          await competitionGroupsApi.remove(group.id);
+                          await Promise.all([loadData(), refreshUser()]);
+                        } catch (err) {
+                          setError(err.message);
+                        }
+                      }}
+                    >
+                      Eliminar grupo
+                    </Button>
+                  )}
                   {!isOwner && (
                     <span className="self-center text-xs text-muted-foreground">
                       Solo el administrador puede editar
@@ -394,6 +424,41 @@ export default function GroupsPage() {
               </div>
             );
           })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Unirse a un grupo específico</CardTitle>
+          <CardDescription>
+            Si no lo creaste vos, podés unirte seleccionándolo por nombre.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleJoinSpecific} className="grid grid-cols-1 gap-3 md:grid-cols-12">
+            <Input
+              className="md:col-span-10"
+              list="groups-options"
+              placeholder="Escribí o pegá el ID del grupo, o elegilo por nombre abajo"
+              value={joinGroupId}
+              onChange={(e) => setJoinGroupId(e.target.value)}
+            />
+            <datalist id="groups-options">
+              {allGroups
+                .filter((group) => !myIds.has(group.id))
+                .map((group) => (
+                  <option key={`join-${group.id}`} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+            </datalist>
+            <Button type="submit" className="md:col-span-2" disabled={!joinGroupId}>
+              Unirme
+            </Button>
+          </form>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Consejo: también podés unirte desde la lista “Todos los grupos”.
+          </p>
         </CardContent>
       </Card>
 

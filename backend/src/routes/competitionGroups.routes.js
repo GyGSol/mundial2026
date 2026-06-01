@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import {
   createCompetitionGroup,
+  deleteCompetitionGroup,
   joinCompetitionGroup,
   listCompetitionGroups,
   listUserCompetitionGroups,
@@ -79,6 +80,18 @@ router.put('/:groupId', authMiddleware, async (req, res, next) => {
       prizes: req.body.prizes,
     });
     res.json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:groupId', authMiddleware, async (req, res, next) => {
+  try {
+    const result = await deleteCompetitionGroup({
+      groupId: req.params.groupId,
+      userId: req.user._id,
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }

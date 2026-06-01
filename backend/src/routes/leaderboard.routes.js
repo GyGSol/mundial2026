@@ -22,6 +22,18 @@ router.get('/', optionalAuth, async (req, res, next) => {
       });
     }
 
+    if (groupId === '__nogroup') {
+      const [leaderboard, lastSyncAt] = await Promise.all([
+        getLeaderboard('__nogroup'),
+        getLastSyncAt(),
+      ]);
+      return res.json({
+        leaderboard,
+        group: { id: '__nogroup', name: 'Sin grupo' },
+        lastSyncAt,
+      });
+    }
+
     const [leaderboard, lastSyncAt, group] = await Promise.all([
       getLeaderboard(groupId),
       getLastSyncAt(),

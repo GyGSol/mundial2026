@@ -50,6 +50,7 @@ export default function LeaderboardPage() {
 
   const activeGroup = data?.group || groups.find((g) => g.id === selectedGroupId);
   const isGeneralMode = selectedGroupId === '__all__' || !activeGroup;
+  const isNoGroupMode = selectedGroupId === '__nogroup';
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,12 +59,18 @@ export default function LeaderboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isGeneralMode ? 'Ranking general' : `Ranking · ${activeGroup.name}`}
+            {isNoGroupMode
+              ? 'Ranking · Sin grupo'
+              : isGeneralMode
+                ? 'Ranking general'
+                : `Ranking · ${activeGroup.name}`}
           </h1>
           <p className="text-sm text-muted-foreground">
             {activeGroup
               ? `Grupo: ${activeGroup.name} · ranking independiente`
-              : 'Tabla general de todos los jugadores'}
+              : isNoGroupMode
+                ? 'Jugadores sin grupo actual'
+                : 'Tabla general de todos los jugadores'}
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
           </p>
         </div>
@@ -76,6 +83,7 @@ export default function LeaderboardPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">General (todos)</SelectItem>
+                <SelectItem value="__nogroup">Sin grupo</SelectItem>
                 {groups.map((group) => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.name}
@@ -106,7 +114,7 @@ export default function LeaderboardPage() {
       {loading && <p className="text-muted-foreground">Cargando ranking...</p>}
       {error && <p className="text-destructive">{error}</p>}
 
-      <LeaderboardTable leaderboard={data?.leaderboard} showGroupName={isGeneralMode} />
+      <LeaderboardTable leaderboard={data?.leaderboard} showGroupName={isGeneralMode && !isNoGroupMode} />
     </div>
   );
 }

@@ -54,6 +54,10 @@ export const competitionGroupsApi = {
       method: 'POST',
       body: JSON.stringify({ groupId }),
     }),
+  remove: (groupId) =>
+    request(`/competition-groups/${groupId}`, {
+      method: 'DELETE',
+    }),
 };
 
 export const matchesApi = {

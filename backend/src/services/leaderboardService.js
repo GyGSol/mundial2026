@@ -53,7 +53,10 @@ export const compareLeaderboardEntries = compareRankingEntries;
 
 export async function getLeaderboard(competitionGroupId, limit = 100) {
   let filter = {};
-  if (competitionGroupId) {
+  if (competitionGroupId === '__nogroup') {
+    const memberUserIds = await UserGroupMembership.distinct('userId');
+    filter = { _id: { $nin: memberUserIds } };
+  } else if (competitionGroupId) {
     const memberUserIds = await UserGroupMembership.find({
       groupId: new mongoose.Types.ObjectId(competitionGroupId),
     }).distinct('userId');
