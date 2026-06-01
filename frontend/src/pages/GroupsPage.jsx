@@ -5,6 +5,13 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Input } from '@/components/ui/input.jsx';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select.jsx';
 
 function normalizePrizeRows(count, existing = []) {
   const safeCount = Math.max(0, Math.min(Number(count || 0), 10));
@@ -436,22 +443,22 @@ export default function GroupsPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleJoinSpecific} className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            <Input
-              className="md:col-span-10"
-              list="groups-options"
-              placeholder="Escribí o pegá el ID del grupo, o elegilo por nombre abajo"
-              value={joinGroupId}
-              onChange={(e) => setJoinGroupId(e.target.value)}
-            />
-            <datalist id="groups-options">
-              {allGroups
-                .filter((group) => !myIds.has(group.id))
-                .map((group) => (
-                  <option key={`join-${group.id}`} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-            </datalist>
+            <div className="md:col-span-10">
+              <Select value={joinGroupId} onValueChange={setJoinGroupId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccioná un grupo por nombre" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allGroups
+                    .filter((group) => !myIds.has(group.id))
+                    .map((group) => (
+                      <SelectItem key={`join-${group.id}`} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button type="submit" className="md:col-span-2" disabled={!joinGroupId}>
               Unirme
             </Button>
