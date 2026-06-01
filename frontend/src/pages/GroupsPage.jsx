@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { CircleHelp } from 'lucide-react';
 import { competitionGroupsApi } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -27,6 +28,7 @@ export default function GroupsPage() {
   const [editing, setEditing] = useState({});
   const [joinLoading, setJoinLoading] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [error, setError] = useState('');
 
   const loadData = async () => {
@@ -109,12 +111,46 @@ export default function GroupsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Grupos</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Grupos</h1>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => setShowHelp((value) => !value)}
+            title="Ayuda de grupos"
+            aria-label="Mostrar ayuda de grupos"
+          >
+            <CircleHelp className="size-4" />
+          </Button>
+        </div>
         <p className="text-sm text-muted-foreground">
           Participá en varios grupos con tus pronósticos y elegí cuál usar como contexto activo.
           Solo el creador (administrador) puede editar los datos del grupo.
         </p>
       </div>
+
+      {showHelp && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">¿Cómo funcionan los grupos?</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>- Podés participar en varios grupos con la misma cuenta y los mismos pronósticos.</p>
+            <p>- El botón <strong>Usar</strong> define el grupo activo para vistas filtradas.</p>
+            <p>- En ranking podés ver el modo general (todos) o un grupo puntual.</p>
+            <p>
+              - El <strong>administrador del grupo</strong> (creador) es quien puede editar nombre,
+              descripción y premios.
+            </p>
+            <p>
+              - Premios: definís cuántos puestos ganan premio y opcionalmente qué premio recibe cada
+              puesto.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -124,32 +160,34 @@ export default function GroupsPage() {
           <CardDescription>Podrás editarlo luego si sos el creador.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCreate} className="flex flex-col gap-3 md:flex-row">
+          <form onSubmit={handleCreate} className="grid grid-cols-1 gap-3 md:grid-cols-12">
             <Input
               placeholder="Nombre del grupo"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               required
+              className="md:col-span-4"
             />
             <Input
               placeholder="Descripción opcional"
               value={newGroupDescription}
               onChange={(e) => setNewGroupDescription(e.target.value)}
+              className="md:col-span-5"
             />
             <Input
               type="number"
               min={0}
               max={10}
-              placeholder="Puestos premiados"
+              placeholder="Cantidad de puestos con premio"
               value={newPrizesWinnersCount}
               onChange={(e) => {
                 const count = Number(e.target.value || 0);
                 setNewPrizesWinnersCount(count);
                 setNewPrizes((prev) => normalizePrizeRows(count, prev));
               }}
-              className="md:max-w-[180px]"
+              className="md:col-span-2"
             />
-            <Button type="submit" disabled={savingGroup}>
+            <Button type="submit" disabled={savingGroup} className="md:col-span-1">
               {savingGroup ? 'Guardando...' : 'Crear'}
             </Button>
           </form>
@@ -310,6 +348,11 @@ export default function GroupsPage() {
                     >
                       Editar grupo
                     </Button>
+                  )}
+                  {!isOwner && (
+                    <span className="self-center text-xs text-muted-foreground">
+                      Solo el administrador puede editar
+                    </span>
                   )}
                   {isOwner && rowEdit && (
                     <>

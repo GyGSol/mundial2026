@@ -34,6 +34,11 @@ function serializeGroup(group) {
 
 async function isGroupAdmin({ userId, group }) {
   if (group.createdBy && String(group.createdBy) === String(userId)) return true;
+  if (!group.createdBy) {
+    // Legacy groups created before admin tracking: any current member can claim admin on first edit.
+    const membership = await UserGroupMembership.findOne({ userId, groupId: group._id });
+    return Boolean(membership);
+  }
   const ownerMembership = await UserGroupMembership.findOne({
     userId,
     groupId: group._id,
@@ -177,6 +182,15 @@ export async function updateCompetitionGroup({
 
   group.name = trimmedName;
   group.description = description?.trim() || '';
+  if (!group.createdBy) {
+    // Claim admin ownership for legacy groups without explicit creator.
+    group.createdBy = userId;
+    await UserGroupMembership.findOneAndUpdate(
+      { userId, groupId: group._id },
+      { $set: { role: 'owner' } },
+      { upsert: true }
+    );
+  }
   const normalizedPrizes = normalizePrizes({ winnersCount: prizesWinnersCount, prizes });
   group.prizesWinnersCount = normalizedPrizes.winnersCount;
   group.prizes = normalizedPrizes.prizes;
@@ -212,11 +226,12 @@ export async function listUserCompetitionGroups(userId) {
 
   return groups.map((group) => {
     const isCreator = group.createdBy && String(group.createdBy) === String(userId);
+    const isLegacyAdmin = !group.createdBy && roleByGroup[group._id.toString()];
     const role = roleByGroup[group._id.toString()] || (isCreator ? 'owner' : 'member');
     return {
       ...serializeGroup(group),
       role,
-      isAdmin: role === 'owner' || isCreator,
+      isAdmin: role === 'owner' || isCreator || Boolean(isLegacyAdmin),
     };
   });
 }
