@@ -5,12 +5,25 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Input } from '@/components/ui/input.jsx';
 
+function normalizePrizeRows(count, existing = []) {
+  const safeCount = Math.max(0, Math.min(Number(count || 0), 10));
+  const byPos = Object.fromEntries(
+    (Array.isArray(existing) ? existing : []).map((row) => [Number(row.position), row.prize || ''])
+  );
+  return Array.from({ length: safeCount }, (_, index) => ({
+    position: index + 1,
+    prize: byPos[index + 1] || '',
+  }));
+}
+
 export default function GroupsPage() {
   const { user, refreshUser } = useAuth();
   const [allGroups, setAllGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [newPrizesWinnersCount, setNewPrizesWinnersCount] = useState(0);
+  const [newPrizes, setNewPrizes] = useState([]);
   const [editing, setEditing] = useState({});
   const [joinLoading, setJoinLoading] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
@@ -33,9 +46,16 @@ export default function GroupsPage() {
     setError('');
     setSavingGroup(true);
     try {
-      await competitionGroupsApi.create(newGroupName, newGroupDescription);
+      await competitionGroupsApi.create(
+        newGroupName,
+        newGroupDescription,
+        newPrizesWinnersCount,
+        newPrizes
+      );
       setNewGroupName('');
       setNewGroupDescription('');
+      setNewPrizesWinnersCount(0);
+      setNewPrizes([]);
       await Promise.all([loadData(), refreshUser()]);
     } catch (err) {
       setError(err.message);
@@ -73,6 +93,13 @@ export default function GroupsPage() {
     setError('');
     try {
       await competitionGroupsApi.update(groupId, row.name, row.description || '');
+      await competitionGroupsApi.update(
+        groupId,
+        row.name,
+        row.description || '',
+        row.prizesWinnersCount || 0,
+        row.prizes || []
+      );
       await loadData();
       setEditing((prev) => ({ ...prev, [groupId]: null }));
     } catch (err) {
@@ -86,6 +113,7 @@ export default function GroupsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Grupos</h1>
         <p className="text-sm text-muted-foreground">
           Participá en varios grupos con tus pronósticos y elegí cuál usar como contexto activo.
+          Solo el creador (administrador) puede editar los datos del grupo.
         </p>
       </div>
 
@@ -109,10 +137,41 @@ export default function GroupsPage() {
               value={newGroupDescription}
               onChange={(e) => setNewGroupDescription(e.target.value)}
             />
+            <Input
+              type="number"
+              min={0}
+              max={10}
+              placeholder="Puestos premiados"
+              value={newPrizesWinnersCount}
+              onChange={(e) => {
+                const count = Number(e.target.value || 0);
+                setNewPrizesWinnersCount(count);
+                setNewPrizes((prev) => normalizePrizeRows(count, prev));
+              }}
+              className="md:max-w-[180px]"
+            />
             <Button type="submit" disabled={savingGroup}>
               {savingGroup ? 'Guardando...' : 'Crear'}
             </Button>
           </form>
+          {newPrizesWinnersCount > 0 && (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {newPrizes.map((row) => (
+                <Input
+                  key={`new-prize-${row.position}`}
+                  placeholder={`Premio puesto ${row.position} (opcional)`}
+                  value={row.prize}
+                  onChange={(e) =>
+                    setNewPrizes((prev) =>
+                      prev.map((item) =>
+                        item.position === row.position ? { ...item, prize: e.target.value } : item
+                      )
+                    )
+                  }
+                />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -156,12 +215,69 @@ export default function GroupsPage() {
                           }))
                         }
                       />
+                      <Input
+                        type="number"
+                        min={0}
+                        max={10}
+                        placeholder="Puestos premiados"
+                        value={rowEdit.prizesWinnersCount || 0}
+                        onChange={(e) => {
+                          const count = Number(e.target.value || 0);
+                          setEditing((prev) => ({
+                            ...prev,
+                            [group.id]: {
+                              ...rowEdit,
+                              prizesWinnersCount: count,
+                              prizes: normalizePrizeRows(count, rowEdit.prizes),
+                            },
+                          }));
+                        }}
+                      />
+                      {(rowEdit.prizesWinnersCount || 0) > 0 && (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {(rowEdit.prizes || []).map((prizeRow) => (
+                            <Input
+                              key={`edit-prize-${group.id}-${prizeRow.position}`}
+                              placeholder={`Premio puesto ${prizeRow.position} (opcional)`}
+                              value={prizeRow.prize}
+                              onChange={(e) =>
+                                setEditing((prev) => ({
+                                  ...prev,
+                                  [group.id]: {
+                                    ...rowEdit,
+                                    prizes: rowEdit.prizes.map((item) =>
+                                      item.position === prizeRow.position
+                                        ? { ...item, prize: e.target.value }
+                                        : item
+                                    ),
+                                  },
+                                }))
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>
                       <p className="font-medium">{group.name}</p>
                       {group.description && (
                         <p className="text-sm text-muted-foreground">{group.description}</p>
+                      )}
+                      {(group.prizesWinnersCount || 0) > 0 && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Premian {group.prizesWinnersCount} puesto(s)
+                          {group.prizes?.some((row) => row.prize) && (
+                            <span>
+                              {' '}
+                              ·{' '}
+                              {group.prizes
+                                .filter((row) => row.prize)
+                                .map((row) => `${row.position}°: ${row.prize}`)
+                                .join(' · ')}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </>
                   )}
@@ -181,7 +297,12 @@ export default function GroupsPage() {
                       onClick={() =>
                         setEditing((prev) => ({
                           ...prev,
-                          [group.id]: { name: group.name, description: group.description || '' },
+                          [group.id]: {
+                            name: group.name,
+                            description: group.description || '',
+                            prizesWinnersCount: group.prizesWinnersCount || 0,
+                            prizes: normalizePrizeRows(group.prizesWinnersCount || 0, group.prizes),
+                          },
                         }))
                       }
                     >

@@ -35,19 +35,19 @@ export const authApi = {
 export const competitionGroupsApi = {
   list: () => request('/competition-groups'),
   my: () => request('/competition-groups/my'),
-  create: (name, description = '') =>
+  create: (name, description = '', prizesWinnersCount = 0, prizes = []) =>
     request('/competition-groups', {
       method: 'POST',
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify({ name, description, prizesWinnersCount, prizes }),
     }),
   join: (groupId) =>
     request(`/competition-groups/${groupId}/join`, {
       method: 'POST',
     }),
-  update: (groupId, name, description = '') =>
+  update: (groupId, name, description = '', prizesWinnersCount = 0, prizes = []) =>
     request(`/competition-groups/${groupId}`, {
       method: 'PUT',
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify({ name, description, prizesWinnersCount, prizes }),
     }),
   setActive: (groupId) =>
     request('/competition-groups/active', {

@@ -2,20 +2,64 @@ import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 
+function normalizePrizes({ winnersCount, prizes = [] }) {
+  const count = Math.max(0, Math.min(Number(winnersCount || 0), 10));
+  const rawByPosition = new Map(
+    (Array.isArray(prizes) ? prizes : [])
+      .filter((item) => Number.isInteger(Number(item?.position)))
+      .map((item) => [Number(item.position), String(item?.prize || '').trim()])
+  );
+
+  const normalized = [];
+  for (let position = 1; position <= count; position += 1) {
+    normalized.push({
+      position,
+      prize: rawByPosition.get(position) || '',
+    });
+  }
+  return { winnersCount: count, prizes: normalized };
+}
+
+function serializeGroup(group) {
+  return {
+    id: group._id.toString(),
+    name: group.name,
+    description: group.description,
+    prizesWinnersCount: group.prizesWinnersCount || 0,
+    prizes: (group.prizes || [])
+      .sort((a, b) => a.position - b.position)
+      .map((row) => ({ position: row.position, prize: row.prize || '' })),
+  };
+}
+
+async function isGroupAdmin({ userId, group }) {
+  if (group.createdBy && String(group.createdBy) === String(userId)) return true;
+  const ownerMembership = await UserGroupMembership.findOne({
+    userId,
+    groupId: group._id,
+    role: 'owner',
+  });
+  return Boolean(ownerMembership);
+}
+
 export async function listCompetitionGroups() {
   const groups = await CompetitionGroup.find().sort({ name: 1 }).lean();
   return Promise.all([
     ...groups.map(async (group) => ({
-      id: group._id.toString(),
-      name: group.name,
-      description: group.description,
+      ...serializeGroup(group),
       memberCount: await UserGroupMembership.countDocuments({ groupId: group._id }),
       createdAt: group.createdAt,
     })),
   ]);
 }
 
-export async function createCompetitionGroup({ name, description, createdBy = null }) {
+export async function createCompetitionGroup({
+  name,
+  description,
+  createdBy = null,
+  prizesWinnersCount = 0,
+  prizes = [],
+}) {
   const trimmedName = name?.trim();
   if (!trimmedName) {
     const error = new Error('El nombre del grupo es obligatorio');
@@ -30,10 +74,19 @@ export async function createCompetitionGroup({ name, description, createdBy = nu
     throw error;
   }
 
+  if (!createdBy) {
+    const error = new Error('Debés iniciar sesión para crear grupos');
+    error.status = 401;
+    throw error;
+  }
+
+  const normalizedPrizes = normalizePrizes({ winnersCount: prizesWinnersCount, prizes });
   const group = await CompetitionGroup.create({
     name: trimmedName,
     description: description?.trim() || '',
     createdBy,
+    prizesWinnersCount: normalizedPrizes.winnersCount,
+    prizes: normalizedPrizes.prizes,
   });
 
   if (createdBy) {
@@ -51,21 +104,13 @@ export async function createCompetitionGroup({ name, description, createdBy = nu
     });
   }
 
-  return {
-    id: group._id.toString(),
-    name: group.name,
-    description: group.description,
-  };
+  return serializeGroup(group);
 }
 
 export async function getCompetitionGroupById(groupId) {
   const group = await CompetitionGroup.findById(groupId);
   if (!group) return null;
-  return {
-    id: group._id.toString(),
-    name: group.name,
-    description: group.description,
-  };
+  return serializeGroup(group);
 }
 
 export async function joinCompetitionGroup({ userId, groupId }) {
@@ -92,7 +137,14 @@ export async function joinCompetitionGroup({ userId, groupId }) {
   return getCompetitionGroupById(group._id);
 }
 
-export async function updateCompetitionGroup({ groupId, name, description, userId }) {
+export async function updateCompetitionGroup({
+  groupId,
+  name,
+  description,
+  userId,
+  prizesWinnersCount = 0,
+  prizes = [],
+}) {
   const group = await CompetitionGroup.findById(groupId);
   if (!group) {
     const error = new Error('Grupo no encontrado');
@@ -100,7 +152,7 @@ export async function updateCompetitionGroup({ groupId, name, description, userI
     throw error;
   }
 
-  if (group.createdBy && String(group.createdBy) !== String(userId)) {
+  if (!(await isGroupAdmin({ userId, group }))) {
     const error = new Error('Solo el creador puede editar el grupo');
     error.status = 403;
     throw error;
@@ -125,12 +177,27 @@ export async function updateCompetitionGroup({ groupId, name, description, userI
 
   group.name = trimmedName;
   group.description = description?.trim() || '';
+  const normalizedPrizes = normalizePrizes({ winnersCount: prizesWinnersCount, prizes });
+  group.prizesWinnersCount = normalizedPrizes.winnersCount;
+  group.prizes = normalizedPrizes.prizes;
   await group.save();
   return getCompetitionGroupById(group._id);
 }
 
 export async function listUserCompetitionGroups(userId) {
-  const memberships = await UserGroupMembership.find({ userId }).lean();
+  let memberships = await UserGroupMembership.find({ userId }).lean();
+  if (!memberships.length) {
+    // Legacy bootstrap for users created before multi-group memberships.
+    const user = await User.findById(userId).select('competitionGroupId');
+    if (user?.competitionGroupId) {
+      await UserGroupMembership.findOneAndUpdate(
+        { userId, groupId: user.competitionGroupId },
+        { $setOnInsert: { role: 'member' } },
+        { upsert: true }
+      );
+      memberships = await UserGroupMembership.find({ userId }).lean();
+    }
+  }
   if (!memberships.length) return [];
 
   const groups = await CompetitionGroup.find({
@@ -144,10 +211,10 @@ export async function listUserCompetitionGroups(userId) {
   );
 
   return groups.map((group) => ({
-    id: group._id.toString(),
-    name: group.name,
-    description: group.description,
-    role: roleByGroup[group._id.toString()] || 'member',
+    ...serializeGroup(group),
+    role:
+      roleByGroup[group._id.toString()] ||
+      (group.createdBy && String(group.createdBy) === String(userId) ? 'owner' : 'member'),
   }));
 }
 

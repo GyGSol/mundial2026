@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authMiddleware, optionalAuth } from '../middleware/auth.middleware.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 import {
   createCompetitionGroup,
   joinCompetitionGroup,
@@ -20,12 +20,14 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', optionalAuth, async (req, res, next) => {
+router.post('/', authMiddleware, async (req, res, next) => {
   try {
     const group = await createCompetitionGroup({
       name: req.body.name,
       description: req.body.description,
-      createdBy: req.user?._id ?? null,
+      createdBy: req.user._id,
+      prizesWinnersCount: req.body.prizesWinnersCount,
+      prizes: req.body.prizes,
     });
     res.status(201).json({ group });
   } catch (err) {
@@ -73,6 +75,8 @@ router.put('/:groupId', authMiddleware, async (req, res, next) => {
       name: req.body.name,
       description: req.body.description,
       userId: req.user._id,
+      prizesWinnersCount: req.body.prizesWinnersCount,
+      prizes: req.body.prizes,
     });
     res.json({ group });
   } catch (err) {
