@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { joinGroupAfterAuth } from '../lib/joinGroupAfterAuth.js';
+import { buildAuthPathWithJoin } from '../lib/inviteLink.js';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const joinGroupId = searchParams.get('joinGroup');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +24,21 @@ export default function RegisterPage() {
 
     try {
       await register(name, email, password);
+
+      if (joinGroupId) {
+        const group = await joinGroupAfterAuth(joinGroupId);
+        await refreshUser();
+        navigate('/groups', {
+          replace: true,
+          state: {
+            successMessage: group
+              ? `Cuenta creada y te uniste a ${group.name}.`
+              : 'Cuenta creada. Ya estás en el grupo de la invitación.',
+          },
+        });
+        return;
+      }
+
       navigate('/groups', {
         replace: true,
         state: { welcome: true },
@@ -35,8 +54,9 @@ export default function RegisterPage() {
         <CardHeader>
           <CardTitle>Registro de jugador</CardTitle>
           <CardDescription>
-            Creá tu cuenta personal para cargar pronósticos y competir en el ranking del Mundial
-            2026.
+            {joinGroupId
+              ? 'Creá tu cuenta para aceptar la invitación al grupo.'
+              : 'Creá tu cuenta personal para cargar pronósticos y competir en el ranking del Mundial 2026.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -89,10 +109,15 @@ export default function RegisterPage() {
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit">Crear cuenta</Button>
+            <Button type="submit">
+              {joinGroupId ? 'Crear cuenta y unirme' : 'Crear cuenta'}
+            </Button>
             <p className="text-sm text-muted-foreground">
               ¿Ya tenés cuenta?{' '}
-              <Link to="/login" className="text-foreground underline">
+              <Link
+                to={joinGroupId ? buildAuthPathWithJoin('/login', joinGroupId) : '/login'}
+                className="text-foreground underline"
+              >
                 Ingresá
               </Link>
             </p>
@@ -100,27 +125,29 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
 
-      <InfoPanel title="¿Qué pasa después del registro?">
-        <InfoList
-          items={[
-            'No elegís grupo acá: primero creás la cuenta y después definís en qué grupos competís.',
-            'En la pestaña Grupos podés crear un grupo nuevo (quedás como administrador) o unirte a uno existente por nombre.',
-            'Podés participar en varios grupos a la vez con la misma cuenta y los mismos pronósticos.',
-            'Tus puntos se calculan una sola vez; cada grupo tiene su propio ranking.',
-            'En Predicciones cargás resultados; en Ranking ves posiciones generales o por grupo.',
-          ]}
-        />
-      </InfoPanel>
-
-      <InfoPanel title="Grupos: conceptos clave">
-        <InfoList
-          items={[
-            'Grupo de competencia: liga privada (oficina, amigos, familia) con ranking propio.',
-            'Administrador: quien creó el grupo; puede editar nombre, descripción y premios.',
-            'Grupo activo: el que usás como referencia en algunas vistas (botón Usar en Grupos).',
-          ]}
-        />
-      </InfoPanel>
+      {joinGroupId ? (
+        <InfoPanel title="Invitación por enlace">
+          <InfoList
+            items={[
+              'Al terminar el registro entrás al grupo automáticamente.',
+              'No hace falta buscar el grupo por nombre en la pestaña Grupos.',
+              'Después podés sumarte a otros grupos si querés.',
+            ]}
+          />
+        </InfoPanel>
+      ) : (
+        <>
+          <InfoPanel title="¿Qué pasa después del registro?">
+            <InfoList
+              items={[
+                'En la pestaña Grupos podés crear un grupo (administrador) o unirte a uno existente.',
+                'Si te pasan un enlace de invitación, abrilo y registrate desde ahí.',
+                'Podés participar en varios grupos con la misma cuenta y los mismos pronósticos.',
+              ]}
+            />
+          </InfoPanel>
+        </>
+      )}
     </div>
   );
 }

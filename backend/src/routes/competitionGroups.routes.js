@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.middleware.js';
 import {
   createCompetitionGroup,
   deleteCompetitionGroup,
+  getCompetitionGroupInvitePreview,
   joinCompetitionGroup,
   leaveCompetitionGroup,
   listCompetitionGroupMembers,
@@ -53,6 +54,15 @@ router.post('/active', authMiddleware, async (req, res, next) => {
       userId: req.user._id,
       groupId: req.body.groupId,
     });
+    res.json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:groupId/invite', async (req, res, next) => {
+  try {
+    const group = await getCompetitionGroupInvitePreview(req.params.groupId);
     res.json({ group });
   } catch (err) {
     next(err);

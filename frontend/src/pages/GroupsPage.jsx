@@ -4,6 +4,7 @@ import { CircleHelp } from 'lucide-react';
 import { competitionGroupsApi } from '../api/client.js';
 import FormField from '../components/FormField.jsx';
 import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
+import GroupInvitePanel from '../components/GroupInvitePanel.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -47,11 +48,14 @@ export default function GroupsPage() {
   );
   const [pageLoading, setPageLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState(() => {
+    if (location.state?.successMessage) {
+      return location.state.successMessage;
+    }
     if (location.state?.welcome) {
       return 'Cuenta creada. Ahora creá un grupo o unite a uno existente para aparecer en un ranking.';
     }
     if (location.state?.created) {
-      return 'Grupo creado. Compartí el nombre con tus amigos para que se unan desde esta misma página.';
+      return 'Grupo creado. Copiá el enlace de invitación en "Mis grupos" y compartilo con quien quieras sumar.';
     }
     return '';
   });
@@ -102,7 +106,9 @@ export default function GroupsPage() {
       setNewGroupDescription('');
       setNewPrizesWinnersCount(0);
       setNewPrizes([]);
-      setSuccessMessage('Grupo creado. Ya participás como administrador.');
+      setSuccessMessage(
+        'Grupo creado. Ya participás como administrador: copiá el enlace de invitación abajo en “Mis grupos”.'
+      );
       await Promise.all([loadData(), refreshUser()]);
     } catch (err) {
       setError(err.message);
@@ -254,7 +260,8 @@ export default function GroupsPage() {
               'Sin grupo: igual podés jugar; en Ranking aparecés como “Sin grupo” con tus puntos.',
               'Administrador: solo quien creó el grupo puede Editar o Eliminar. Los demás solo participan.',
               'Premios: informativos en la ficha del grupo (no se pagan desde la app).',
-              'Invitar amigos: deciles el nombre exacto del grupo; buscan en “Unirse a un grupo” o en “Todos los grupos”.',
+              'Invitar amigos (admin): copiá el enlace de invitación en “Mis grupos” y enviálo por WhatsApp, email, etc. Sin emails automáticos desde la app.',
+              'Unirse sin enlace: buscá el nombre exacto en “Unirse a un grupo” o en “Todos los grupos”.',
             ]}
           />
         </InfoPanel>
@@ -284,6 +291,7 @@ export default function GroupsPage() {
                     'Quedás como administrador: podés editar nombre, descripción y premios después.',
                     'Al crear, el grupo pasa a ser tu grupo activo automáticamente.',
                     'Los premios son opcionales y sirven para documentar qué se lleva cada puesto.',
+                    'Después de crear, copiá el enlace de invitación en “Mis grupos” para sumar jugadores.',
                   ]}
                 />
               </InfoPanel>
@@ -379,6 +387,7 @@ export default function GroupsPage() {
                     'Editar grupo (solo admin): nombre, descripción y tabla de premios.',
                     'Eliminar (solo admin): borra la liga; los jugadores conservan puntos y pueden seguir en otros grupos.',
                     'Si no sos admin: solo podés usar el grupo o sumarte a otros desde abajo.',
+                    'Invitar (solo admin): enlace copiable en cada grupo que administrás; no enviamos emails desde la app.',
                   ]}
                 />
               </InfoPanel>
@@ -570,6 +579,7 @@ export default function GroupsPage() {
                         </Button>
                       )}
                     </div>
+                    {isOwner && !rowEdit && <GroupInvitePanel group={group} compact />}
                   </div>
                 );
               })}
@@ -584,9 +594,17 @@ export default function GroupsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
+              <InfoPanel title="¿Te pasaron un enlace?">
+                <InfoList
+                  items={[
+                    'Abrí el link en el celular o la compu: verás el nombre del grupo y podrás registrarte o ingresar.',
+                    'No hace falta buscar el grupo por nombre si entraste por invitación.',
+                  ]}
+                />
+              </InfoPanel>
               <p className="text-sm text-muted-foreground">
-                Pedí el nombre exacto al administrador del grupo. Después de unirte, tus pronósticos
-                ya cargados cuentan para ese ranking.
+                Si no tenés enlace, pedí el nombre exacto al administrador. Después de unirte, tus
+                pronósticos ya cargados cuentan para ese ranking.
               </p>
               {joinableGroups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">

@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage.jsx';
 
 import CreateGroupPage from './pages/CreateGroupPage.jsx';
 import GroupsPage from './pages/GroupsPage.jsx';
+import InviteJoinPage from './pages/InviteJoinPage.jsx';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="leaderboard" element={<Navigate to="/" replace />} />
             <Route path="groups/new" element={<CreateGroupPage />} />
             <Route path="groups" element={<GroupsPage />} />
+            <Route path="invite/:groupId" element={<InviteJoinPage />} />
             <Route path="mundial" element={<WorldCupPage />} />
             <Route path="simulation" element={<SimulationPage />} />
             <Route path="rules" element={<RulesPage />} />

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
@@ -179,6 +180,28 @@ export async function getCompetitionGroupById(groupId) {
   const group = await CompetitionGroup.findById(groupId);
   if (!group) return null;
   return serializeGroup(group);
+}
+
+export async function getCompetitionGroupInvitePreview(groupId) {
+  if (groupId === '__nogroup' || !mongoose.Types.ObjectId.isValid(groupId)) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const memberCount = await UserGroupMembership.countDocuments({ groupId: group._id });
+
+  return {
+    ...serializeGroup(group),
+    memberCount,
+  };
 }
 
 export async function leaveCompetitionGroup({ userId, groupId }) {

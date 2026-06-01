@@ -4,6 +4,7 @@ import { User } from '../src/models/User.js';
 import { UserGroupMembership } from '../src/models/UserGroupMembership.js';
 import {
   createCompetitionGroup,
+  getCompetitionGroupInvitePreview,
   joinCompetitionGroup,
   leaveCompetitionGroup,
   listCompetitionGroupMembers,
@@ -19,6 +20,15 @@ describe('competitionGroupService', () => {
 
   it('expone listCompetitionGroups como función', () => {
     expect(typeof listCompetitionGroups).toBe('function');
+  });
+
+  it('rechaza vista previa de invitación para Sin grupo o id inválido', async () => {
+    await expect(getCompetitionGroupInvitePreview('__nogroup')).rejects.toMatchObject({
+      status: 404,
+    });
+    await expect(getCompetitionGroupInvitePreview('not-a-valid-id')).rejects.toMatchObject({
+      status: 404,
+    });
   });
 
   describe('multi-grupo', () => {
