@@ -47,15 +47,14 @@ export default function LeaderboardPage() {
   useEffect(() => {
     if (!rankingGroupOptions.length) return;
 
-    const preferredId = user?.competitionGroup?.id;
-    const preferredExists = preferredId && rankingGroupOptions.some((g) => g.id === preferredId);
-    const currentExists = rankingGroupOptions.some((g) => g.id === selectedGroupId);
-
-    if (preferredExists) {
-      setSelectedGroupId(preferredId);
-    } else if (!currentExists) {
-      setSelectedGroupId(rankingGroupOptions[0].id);
-    }
+    setSelectedGroupId((current) => {
+      if (rankingGroupOptions.some((g) => g.id === current)) return current;
+      const preferredId = user?.competitionGroup?.id;
+      if (preferredId && rankingGroupOptions.some((g) => g.id === preferredId)) {
+        return preferredId;
+      }
+      return rankingGroupOptions[0].id;
+    });
   }, [rankingGroupOptions, user?.competitionGroup?.id]);
 
   const effectiveGroupId = selectedGroup?.id ?? '__nogroup';
