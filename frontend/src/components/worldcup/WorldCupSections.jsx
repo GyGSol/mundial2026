@@ -115,10 +115,7 @@ export function GroupStandingsSection({ groups }) {
       {groups.map((group) => (
         <Card key={group.group} className="min-w-0">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-base">
-              <span>Grupo {group.group}</span>
-              <Badge variant="outline">{group.source === 'api' ? 'API' : 'Calculada'}</Badge>
-            </CardTitle>
+            <CardTitle className="text-base">Grupo {group.group}</CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-2 sm:px-4">
             <table className="w-full table-fixed caption-bottom text-sm">
