@@ -157,46 +157,67 @@ export default function GroupsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Crear grupo</CardTitle>
-          <CardDescription>Podrás editarlo luego si sos el creador.</CardDescription>
+          <CardDescription>
+            Definí nombre, descripción y premios del grupo. Como creador quedás como administrador
+            y luego podés editar estos datos.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCreate} className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            <Input
-              placeholder="Nombre del grupo"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              required
-              className="md:col-span-4"
-            />
-            <Input
-              placeholder="Descripción opcional"
-              value={newGroupDescription}
-              onChange={(e) => setNewGroupDescription(e.target.value)}
-              className="md:col-span-5"
-            />
-            <Input
-              type="number"
-              min={0}
-              max={10}
-              placeholder="Cantidad de puestos con premio"
-              value={newPrizesWinnersCount}
-              onChange={(e) => {
-                const count = Number(e.target.value || 0);
-                setNewPrizesWinnersCount(count);
-                setNewPrizes((prev) => normalizePrizeRows(count, prev));
-              }}
-              className="md:col-span-2"
-            />
-            <Button type="submit" disabled={savingGroup} className="md:col-span-1">
-              {savingGroup ? 'Guardando...' : 'Crear'}
-            </Button>
-          </form>
+          <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+              <div className="md:col-span-4">
+                <label className="mb-1 block text-sm font-medium">Nombre del grupo</label>
+                <Input
+                  placeholder="Ej: Amigos del Mundial"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="md:col-span-5">
+                <label className="mb-1 block text-sm font-medium">Descripción (opcional)</label>
+                <Input
+                  placeholder="Ej: Pronósticos entre amigos de la oficina"
+                  value={newGroupDescription}
+                  onChange={(e) => setNewGroupDescription(e.target.value)}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-1 block text-sm font-medium">Puestos premiados</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={newPrizesWinnersCount}
+                  onChange={(e) => {
+                    const count = Number(e.target.value || 0);
+                    setNewPrizesWinnersCount(count);
+                    setNewPrizes((prev) => normalizePrizeRows(count, prev));
+                  }}
+                />
+              </div>
+
+              <div className="md:col-span-1 md:self-end">
+                <Button type="submit" disabled={savingGroup} className="w-full">
+                  {savingGroup ? 'Guardando...' : 'Crear'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-border/70 bg-muted/20 p-3 text-xs text-muted-foreground">
+              Si ponés <strong>0</strong>, el grupo queda sin premios. Si ponés <strong>3</strong>,
+              podrás definir premio para 1°, 2° y 3° (opcional en cada puesto).
+            </div>
+
           {newPrizesWinnersCount > 0 && (
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <p className="sm:col-span-2 text-sm font-medium">Detalle de premios por puesto</p>
               {newPrizes.map((row) => (
                 <Input
                   key={`new-prize-${row.position}`}
-                  placeholder={`Premio puesto ${row.position} (opcional)`}
+                  placeholder={`Puesto ${row.position}: ej. $20 / Camiseta / Cena (opcional)`}
                   value={row.prize}
                   onChange={(e) =>
                     setNewPrizes((prev) =>
@@ -209,6 +230,7 @@ export default function GroupsPage() {
               ))}
             </div>
           )}
+          </form>
         </CardContent>
       </Card>
 
