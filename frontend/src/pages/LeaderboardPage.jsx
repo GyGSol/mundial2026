@@ -106,7 +106,7 @@ export default function LeaderboardPage() {
       {loading && <p className="text-muted-foreground">Cargando ranking...</p>}
       {error && <p className="text-destructive">{error}</p>}
 
-      <LeaderboardTable leaderboard={data?.leaderboard} />
+      <LeaderboardTable leaderboard={data?.leaderboard} showGroupName={isGeneralMode} />
     </div>
   );
 }

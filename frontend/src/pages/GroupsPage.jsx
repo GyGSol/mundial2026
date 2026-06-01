@@ -92,7 +92,6 @@ export default function GroupsPage() {
     if (!row?.name?.trim()) return;
     setError('');
     try {
-      await competitionGroupsApi.update(groupId, row.name, row.description || '');
       await competitionGroupsApi.update(
         groupId,
         row.name,
@@ -186,7 +185,7 @@ export default function GroupsPage() {
             </p>
           )}
           {myGroups.map((group) => {
-            const isOwner = group.role === 'owner';
+            const isOwner = Boolean(group.isAdmin || group.role === 'owner');
             const isActive = user?.competitionGroup?.id === group.id;
             const rowEdit = editing[group.id];
             return (
@@ -261,6 +260,9 @@ export default function GroupsPage() {
                   ) : (
                     <>
                       <p className="font-medium">{group.name}</p>
+                      {isOwner && (
+                        <p className="text-xs text-emerald-600">Administrador del grupo</p>
+                      )}
                       {group.description && (
                         <p className="text-sm text-muted-foreground">{group.description}</p>
                       )}
@@ -306,7 +308,7 @@ export default function GroupsPage() {
                         }))
                       }
                     >
-                      Editar
+                      Editar grupo
                     </Button>
                   )}
                   {isOwner && rowEdit && (

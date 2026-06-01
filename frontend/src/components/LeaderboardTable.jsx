@@ -15,7 +15,7 @@ const statColumns = [
   { key: 'gt', label: 'GT', title: 'Goles totales' },
 ];
 
-export default function LeaderboardTable({ leaderboard }) {
+export default function LeaderboardTable({ leaderboard, showGroupName = false }) {
   if (!leaderboard?.length) {
     return <p className="text-muted-foreground">Aún no hay jugadores en el ranking.</p>;
   }
@@ -43,7 +43,14 @@ export default function LeaderboardTable({ leaderboard }) {
             {leaderboard.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="text-muted-foreground">{row.rank}</TableCell>
-                <TableCell className="font-medium">{row.name}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{row.name}</span>
+                    {showGroupName && row.groupName ? (
+                      <span className="text-xs font-normal text-muted-foreground">{row.groupName}</span>
+                    ) : null}
+                  </div>
+                </TableCell>
                 {statColumns.map((col) => (
                   <TableCell key={col.key} className="text-center tabular-nums">
                     {row[col.key] ?? 0}

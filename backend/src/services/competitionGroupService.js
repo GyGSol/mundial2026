@@ -210,12 +210,15 @@ export async function listUserCompetitionGroups(userId) {
     memberships.map((membership) => [membership.groupId.toString(), membership.role])
   );
 
-  return groups.map((group) => ({
-    ...serializeGroup(group),
-    role:
-      roleByGroup[group._id.toString()] ||
-      (group.createdBy && String(group.createdBy) === String(userId) ? 'owner' : 'member'),
-  }));
+  return groups.map((group) => {
+    const isCreator = group.createdBy && String(group.createdBy) === String(userId);
+    const role = roleByGroup[group._id.toString()] || (isCreator ? 'owner' : 'member');
+    return {
+      ...serializeGroup(group),
+      role,
+      isAdmin: role === 'owner' || isCreator,
+    };
+  });
 }
 
 export async function setActiveCompetitionGroup({ userId, groupId }) {

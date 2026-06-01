@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
+import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 function emptyStats() {
   return { pa: 0, gl: 0, gv: 0, gt: 0, pb: 0 };
@@ -59,14 +60,27 @@ export async function getLeaderboard(competitionGroupId, limit = 100) {
     filter = { _id: { $in: memberUserIds } };
   }
 
-  const users = await User.find(filter).select('name totalPoints createdAt activeCompetitionGroupId');
+  const users = await User.find(filter).select(
+    'name totalPoints createdAt activeCompetitionGroupId competitionGroupId'
+  );
   const statsMap = await getPredictionStatsByUser(users.map((u) => u._id));
+  const groupIds = [
+    ...new Set(
+      users
+        .map((user) => user.activeCompetitionGroupId || user.competitionGroupId)
+        .filter(Boolean)
+        .map((id) => id.toString())
+    ),
+  ];
+  const groups = await CompetitionGroup.find({ _id: { $in: groupIds } }).select('name').lean();
+  const groupNameById = Object.fromEntries(groups.map((group) => [group._id.toString(), group.name]));
 
   const rows = users.map((user) => {
     const stats = statsMap[user._id.toString()] ?? emptyStats();
     return {
       id: user._id.toString(),
       name: user.name,
+      groupName: groupNameById[(user.activeCompetitionGroupId || user.competitionGroupId)?.toString()] || null,
       totalPoints: user.totalPoints,
       pa: stats.pa ?? 0,
       gl: stats.gl ?? 0,
