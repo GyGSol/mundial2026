@@ -19,6 +19,7 @@ import {
 import { calculatePoints } from './scoringService.js';
 import { recalculateConsolationBonuses } from './consolationBonusService.js';
 import { GROUP_LETTERS, organizeTeamsByGroup } from './simulationTournamentService.js';
+import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import { env } from '../config/env.js';
 import {
   notifyLeaderboardUpdated,
@@ -75,13 +76,27 @@ async function upsertStadiums() {
   }
 }
 
+async function buildStadiumTimezoneMap() {
+  const stadiums = await Stadium.find().select('externalId timezone city country nameEn').lean();
+  const map = {};
+  for (const stadium of stadiums) {
+    map[stadium.externalId] =
+      stadium.timezone || resolveStadiumTimezone(stadium) || null;
+  }
+  return map;
+}
+
 async function upsertMatches() {
   const data = await fetchGames();
   const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
   const finishedIds = [];
+  const stadiumTimezones = await buildStadiumTimezoneMap();
 
   for (const item of list) {
-    const doc = normalizeGame(item);
+    const stadiumId = String(item.stadium_id ?? item.stadiumId ?? '');
+    const doc = normalizeGame(item, {
+      stadiumTimezone: stadiumTimezones[stadiumId] || undefined,
+    });
     const existing = await Match.findOne({ externalId: doc.externalId });
     const wasFinished = existing?.status === 'finished';
     const match = await Match.findOneAndUpdate(
@@ -163,9 +178,9 @@ export async function seedDemoDataIfEmpty() {
       awayScore: 0,
       group: 'A',
       matchday: '1',
-      localDate: 'June 11, 2026',
+      localDate: '06/11/2026 13:00',
       status: 'upcoming',
-      kickoffAt: new Date('2026-06-11T19:00:00Z'),
+      kickoffAt: new Date('2026-06-11T19:00:00.000Z'),
     },
     {
       externalId: 'demo-2',

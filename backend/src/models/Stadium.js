@@ -7,6 +7,8 @@ const stadiumSchema = new mongoose.Schema(
     nameFa: String,
     city: String,
     country: String,
+    /** IANA zone for interpreting local_date wall-clock times (e.g. America/Mexico_City). */
+    timezone: String,
     capacity: Number,
     raw: mongoose.Schema.Types.Mixed,
   },

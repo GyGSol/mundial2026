@@ -14,6 +14,8 @@ const matchSchema = new mongoose.Schema(
     type: { type: String, default: 'group' },
     status: { type: String, enum: ['upcoming', 'live', 'finished'], default: 'upcoming' },
     kickoffAt: Date,
+    /** IANA zone used to derive kickoffAt from localDate (stadium local time). */
+    kickoffTimezone: String,
     lastSyncedAt: Date,
     raw: mongoose.Schema.Types.Mixed,
   },

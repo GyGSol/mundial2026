@@ -1,4 +1,6 @@
 import { env } from '../config/env.js';
+import { resolveKickoffAt } from './kickoffTimeService.js';
+import { resolveStadiumTimezone } from './stadiumTimezones.js';
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -78,12 +80,21 @@ export async function fetchStadiums() {
 
 export function normalizeStadium(stadium) {
   const id = String(stadium.id ?? stadium._id ?? stadium.idStadium ?? '');
+  const city = stadium.city ?? stadium.city_en ?? '';
+  const country = stadium.country ?? stadium.country_en ?? '';
+  const nameEn = stadium.name_en ?? stadium.name ?? stadium.nameEn ?? '';
+  const timezone =
+    stadium.timezone ??
+    stadium.time_zone ??
+    resolveStadiumTimezone({ city, country, nameEn });
+
   return {
     externalId: id,
-    nameEn: stadium.name_en ?? stadium.name ?? stadium.nameEn ?? '',
+    nameEn,
     nameFa: stadium.name_fa ?? stadium.nameFa ?? '',
-    city: stadium.city ?? stadium.city_en ?? '',
-    country: stadium.country ?? stadium.country_en ?? '',
+    city,
+    country,
+    timezone: timezone || undefined,
     capacity: Number(stadium.capacity ?? stadium.seats ?? 0) || null,
     raw: stadium,
   };
@@ -113,18 +124,16 @@ export function mapGameStatus(game) {
   return 'upcoming';
 }
 
-export function parseKickoffAt(game) {
-  if (game.kickoff_at) return new Date(game.kickoff_at);
-  if (game.utc_date) return new Date(game.utc_date);
-  if (game.local_date) {
-    const parsed = new Date(game.local_date);
-    if (!Number.isNaN(parsed.getTime())) return parsed;
-  }
-  return new Date('2026-06-11T00:00:00Z');
+/** @deprecated Use resolveKickoffAt from kickoffTimeService.js */
+export function parseKickoffAt(game, options = {}) {
+  return resolveKickoffAt(game, options);
 }
 
-export function normalizeGame(game) {
+export function normalizeGame(game, options = {}) {
   const id = String(game.id ?? game._id ?? game.idGame);
+  const kickoffAt = resolveKickoffAt(game, options);
+  const stadiumTimezone = options.stadiumTimezone ?? null;
+
   return {
     externalId: id,
     homeTeamId: String(game.home_team_id ?? game.homeTeamId ?? ''),
@@ -135,9 +144,10 @@ export function normalizeGame(game) {
     matchday: String(game.matchday ?? game.match_day ?? ''),
     localDate: game.local_date ?? game.localDate ?? '',
     stadiumId: String(game.stadium_id ?? game.stadiumId ?? ''),
+    kickoffTimezone: stadiumTimezone || undefined,
     type: game.type ?? game.round ?? 'group',
     status: mapGameStatus(game),
-    kickoffAt: parseKickoffAt(game),
+    kickoffAt,
     raw: game,
   };
 }

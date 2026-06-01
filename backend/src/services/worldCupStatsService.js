@@ -249,6 +249,7 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
     localDate: match.localDate,
     status: match.status,
     kickoffAt: match.kickoffAt,
+    kickoffTimezone: match.kickoffTimezone || stadium?.timezone || null,
     type: match.type,
     phaseLabel: phase?.label ?? (normalizePhaseKey(match.type) === 'group' ? 'Fase de grupos' : match.type),
     homeTeam: formatTeamRef(teamMap[match.homeTeamId]),
@@ -259,6 +260,7 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
           nameEn: stadium.nameEn,
           city: stadium.city,
           country: stadium.country,
+          timezone: stadium.timezone,
         }
       : match.stadiumId
         ? { externalId: match.stadiumId }

@@ -18,33 +18,41 @@ function tryFormatFromDate(value) {
   return formatInUserTimezone(date);
 }
 
-function parseMdyDateAsUtc(raw) {
-  const mdy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
-  if (!mdy) return null;
-
-  const [, mm, dd, yyyy, hh = '00', min = '00'] = mdy;
-  const utcDate = new Date(
-    Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min))
-  );
-  if (Number.isNaN(utcDate.getTime())) return null;
-  return utcDate;
+function formatTimezoneShort(timeZone) {
+  if (!timeZone) return '';
+  try {
+    const parts = new Intl.DateTimeFormat('es-AR', {
+      timeZone,
+      timeZoneName: 'short',
+    }).formatToParts(new Date());
+    return parts.find((p) => p.type === 'timeZoneName')?.value || timeZone;
+  } catch {
+    return timeZone;
+  }
 }
 
-export function formatMatchDate(match) {
-  // kickoffAt is canonical and converts reliably to player's timezone.
+export function formatMatchDate(match, { showTimezone = false } = {}) {
+  // kickoffAt is canonical UTC; display in the player's browser timezone.
   const fromKickoff = tryFormatFromDate(match?.kickoffAt);
-  if (fromKickoff) return fromKickoff;
+  if (fromKickoff) {
+    if (!showTimezone) return fromKickoff;
+    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const label = formatTimezoneShort(userTz);
+    return label ? `${fromKickoff} (${label})` : fromKickoff;
+  }
 
   const raw = String(match?.localDate || '').trim();
   if (!raw) return '';
 
-  // Fallback for API strings like MM/DD/YYYY HH:mm (assumed UTC source).
-  const parsedMdy = parseMdyDateAsUtc(raw);
-  if (parsedMdy) return formatInUserTimezone(parsedMdy);
-
-  // Last fallback for parseable strings.
   const parsed = tryFormatFromDate(raw);
   if (parsed) return parsed;
 
   return raw;
+}
+
+export function formatLockHint(match) {
+  if (!match?.lockAt) return null;
+  const lockText = tryFormatFromDate(match.lockAt);
+  if (!lockText) return null;
+  return `Cierre de predicciones: ${lockText}`;
 }

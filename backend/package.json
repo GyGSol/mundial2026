@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync": "node src/scripts/runSync.js",
+    "fix-kickoffs": "node src/scripts/fixKickoffTimes.js",
     "simulate": "node src/scripts/runSimulation.js",
     "reset-db": "node src/scripts/resetDatabase.js"
   },

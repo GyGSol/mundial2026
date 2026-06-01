@@ -42,6 +42,12 @@ describe('worldCupApiClient normalization', () => {
     expect(game.group).toBe('H');
   });
 
+  it('calcula kickoffAt desde local_date y zona del estadio', () => {
+    const game = normalizeGame(sampleGame, { stadiumTimezone: 'America/New_York' });
+    expect(game.kickoffAt.toISOString()).toBe('2026-06-15T16:00:00.000Z');
+    expect(game.kickoffTimezone).toBe('America/New_York');
+  });
+
   it('detecta partido finalizado desde finished=TRUE', () => {
     expect(mapGameStatus({ ...sampleGame, finished: 'TRUE' })).toBe('finished');
   });

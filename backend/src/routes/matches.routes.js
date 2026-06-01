@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
+import { Stadium } from '../models/Stadium.js';
 import { Prediction } from '../models/Prediction.js';
 import { optionalAuth } from '../middleware/auth.middleware.js';
 import {
@@ -23,6 +24,10 @@ async function enrichMatches(matches, userId) {
 
   const teams = await Team.find({ externalId: { $in: [...teamIds] } });
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
+
+  const stadiumIds = [...new Set(matches.map((m) => m.stadiumId).filter(Boolean))];
+  const stadiums = await Stadium.find({ externalId: { $in: stadiumIds } });
+  const stadiumMap = Object.fromEntries(stadiums.map((s) => [s.externalId, s]));
 
   let predictionMap = {};
   if (userId) {
@@ -59,6 +64,9 @@ async function enrichMatches(matches, userId) {
       localDate: m.localDate,
       status: m.status,
       kickoffAt: m.kickoffAt,
+      kickoffTimezone:
+        m.kickoffTimezone || stadiumMap[m.stadiumId]?.timezone || null,
+      lockAt: meta.lockAt,
       homeTeam: teamMap[m.homeTeamId]
         ? {
             nameEn: teamMap[m.homeTeamId].nameEn,
