@@ -27,7 +27,10 @@ export default function LoginPage() {
     <Card className="mx-auto max-w-md">
       <CardHeader>
         <CardTitle>Ingresar</CardTitle>
-        <CardDescription>Accedé para guardar tus predicciones.</CardDescription>
+        <CardDescription>
+          Accedé para guardar pronósticos. Los grupos se gestionan en la pestaña Grupos (crear o
+          unirte después de ingresar).
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

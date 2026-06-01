@@ -1,11 +1,9 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { User } from '../models/User.js';
-import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { authMiddleware, signToken } from '../middleware/auth.middleware.js';
 import {
   getCompetitionGroupById,
-  joinCompetitionGroup,
   listUserCompetitionGroups,
 } from '../services/competitionGroupService.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
@@ -40,7 +38,7 @@ async function serializeUser(user) {
 
 router.post('/register', async (req, res, next) => {
   try {
-    const { name, email, password, competitionGroupId } = req.body;
+    const { name, email, password } = req.body;
     if (!name?.trim() || !email?.trim() || !password) {
       return res.status(400).json({
         error: 'Nombre, email y contraseña son obligatorios',
@@ -58,14 +56,6 @@ router.post('/register', async (req, res, next) => {
       competitionGroupId: null,
       activeCompetitionGroupId: null,
     });
-
-    if (competitionGroupId) {
-      const group = await CompetitionGroup.findById(competitionGroupId);
-      if (!group) {
-        return res.status(400).json({ error: 'El grupo seleccionado no existe' });
-      }
-      await joinCompetitionGroup({ userId: user._id, groupId: competitionGroupId });
-    }
 
     const token = signToken(user._id);
     res.status(201).json({

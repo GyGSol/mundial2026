@@ -37,8 +37,8 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         return data.user;
       },
-      async register(name, email, password, competitionGroupId = null) {
-        const data = await authApi.register(name, email, password, competitionGroupId);
+      async register(name, email, password) {
+        const data = await authApi.register(name, email, password);
         localStorage.setItem('token', data.token);
         setUser(data.user);
         return data.user;

@@ -45,18 +45,6 @@ router.get('/my', authMiddleware, async (req, res, next) => {
   }
 });
 
-router.post('/:groupId/join', authMiddleware, async (req, res, next) => {
-  try {
-    const group = await joinCompetitionGroup({
-      userId: req.user._id,
-      groupId: req.params.groupId,
-    });
-    res.status(201).json({ group });
-  } catch (err) {
-    next(err);
-  }
-});
-
 router.post('/active', authMiddleware, async (req, res, next) => {
   try {
     const group = await setActiveCompetitionGroup({
@@ -64,6 +52,18 @@ router.post('/active', authMiddleware, async (req, res, next) => {
       groupId: req.body.groupId,
     });
     res.json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:groupId/join', authMiddleware, async (req, res, next) => {
+  try {
+    const group = await joinCompetitionGroup({
+      userId: req.user._id,
+      groupId: req.params.groupId,
+    });
+    res.status(201).json({ group });
   } catch (err) {
     next(err);
   }

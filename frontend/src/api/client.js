@@ -19,10 +19,10 @@ async function request(path, options = {}) {
 }
 
 export const authApi = {
-  register: (name, email, password, competitionGroupId = null) =>
+  register: (name, email, password) =>
     request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, competitionGroupId }),
+      body: JSON.stringify({ name, email, password }),
     }),
   login: (email, password) =>
     request('/auth/login', {

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { CircleHelp } from 'lucide-react';
 import { competitionGroupsApi } from '../api/client.js';
+import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
@@ -25,7 +27,8 @@ function normalizePrizeRows(count, existing = []) {
 }
 
 export default function GroupsPage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, isAuthenticated, loading: authLoading } = useAuth();
+  const location = useLocation();
   const [allGroups, setAllGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
@@ -33,27 +36,55 @@ export default function GroupsPage() {
   const [newPrizesWinnersCount, setNewPrizesWinnersCount] = useState(0);
   const [newPrizes, setNewPrizes] = useState([]);
   const [editing, setEditing] = useState({});
-  const [joinGroupId, setJoinGroupId] = useState('');
+  const [joinGroupId, setJoinGroupId] = useState(undefined);
   const [joinLoading, setJoinLoading] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
+  const [showHelp, setShowHelp] = useState(
+    Boolean(location.state?.welcome || location.state?.created)
+  );
+  const [pageLoading, setPageLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState(() => {
+    if (location.state?.welcome) {
+      return 'Cuenta creada. Ahora creá un grupo o unite a uno existente para aparecer en un ranking.';
+    }
+    if (location.state?.created) {
+      return 'Grupo creado. Compartí el nombre con tus amigos para que se unan desde esta misma página.';
+    }
+    return '';
+  });
   const [error, setError] = useState('');
 
   const loadData = async () => {
-    const [all, mine] = await Promise.all([competitionGroupsApi.list(), competitionGroupsApi.my()]);
+    const all = await competitionGroupsApi.list();
     setAllGroups(all.groups ?? []);
-    setMyGroups(mine.groups ?? []);
+
+    if (isAuthenticated) {
+      const mine = await competitionGroupsApi.my();
+      setMyGroups(mine.groups ?? []);
+    } else {
+      setMyGroups([]);
+    }
   };
 
   useEffect(() => {
-    loadData().catch((err) => setError(err.message));
-  }, []);
+    setPageLoading(true);
+    setError('');
+    loadData()
+      .catch((err) => setError(err.message))
+      .finally(() => setPageLoading(false));
+  }, [isAuthenticated]);
 
   const myIds = useMemo(() => new Set(myGroups.map((group) => group.id)), [myGroups]);
+  const joinableGroups = useMemo(
+    () => allGroups.filter((group) => !myIds.has(group.id)),
+    [allGroups, myIds]
+  );
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!isAuthenticated) return;
     setError('');
+    setSuccessMessage('');
     setSavingGroup(true);
     try {
       await competitionGroupsApi.create(
@@ -66,6 +97,7 @@ export default function GroupsPage() {
       setNewGroupDescription('');
       setNewPrizesWinnersCount(0);
       setNewPrizes([]);
+      setSuccessMessage('Grupo creado. Ya participás como administrador.');
       await Promise.all([loadData(), refreshUser()]);
     } catch (err) {
       setError(err.message);
@@ -75,10 +107,13 @@ export default function GroupsPage() {
   };
 
   const handleJoin = async (groupId) => {
+    if (!isAuthenticated) return;
     setError('');
+    setSuccessMessage('');
     setJoinLoading(groupId);
     try {
       await competitionGroupsApi.join(groupId);
+      setSuccessMessage('Te uniste al grupo. Podés sumarte a más grupos cuando quieras.');
       await Promise.all([loadData(), refreshUser()]);
     } catch (err) {
       setError(err.message);
@@ -91,14 +126,16 @@ export default function GroupsPage() {
     e.preventDefault();
     if (!joinGroupId) return;
     await handleJoin(joinGroupId);
-    setJoinGroupId('');
+    setJoinGroupId(undefined);
   };
 
   const handleSetActive = async (groupId) => {
     setError('');
+    setSuccessMessage('');
     try {
       await competitionGroupsApi.setActive(groupId);
       await refreshUser();
+      setSuccessMessage('Grupo activo actualizado para ranking y vistas filtradas.');
     } catch (err) {
       setError(err.message);
     }
@@ -118,10 +155,15 @@ export default function GroupsPage() {
       );
       await loadData();
       setEditing((prev) => ({ ...prev, [groupId]: null }));
+      setSuccessMessage('Datos del grupo guardados.');
     } catch (err) {
       setError(err.message);
     }
   };
+
+  if (authLoading || pageLoading) {
+    return <p className="text-sm text-muted-foreground">Cargando grupos...</p>;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -141,339 +183,404 @@ export default function GroupsPage() {
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          Participá en varios grupos con tus pronósticos y elegí cuál usar como contexto activo.
-          Solo el creador (administrador) puede editar los datos del grupo.
+          Los grupos son ligas privadas con ranking propio. Podés estar en varios a la vez: cargás
+          pronósticos una vez y competís en cada ranking.
         </p>
       </div>
 
-      {showHelp && (
+      <InfoPanel title="Resumen rápido">
+        <InfoList
+          items={[
+            'Crear grupo: armás una liga nueva y sos administrador (podés editar datos y premios).',
+            'Unirme: te sumás a un grupo existente; podés repetir esto en tantos grupos como quieras.',
+            'Usar: marca el grupo activo para filtrar ranking y algunas vistas (no cambia tus puntos).',
+            'Predicciones: son globales por usuario; cada grupo calcula su tabla con los mismos resultados.',
+          ]}
+        />
+      </InfoPanel>
+
+      {!isAuthenticated && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">¿Cómo funcionan los grupos?</CardTitle>
+            <CardTitle className="text-base">Iniciá sesión para participar</CardTitle>
+            <CardDescription>
+              Podés ver los grupos existentes, pero para crear o unirte necesitás una cuenta.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>- Podés participar en varios grupos con la misma cuenta y los mismos pronósticos.</p>
-            <p>- El botón <strong>Usar</strong> define el grupo activo para vistas filtradas.</p>
-            <p>- En ranking podés ver el modo general (todos) o un grupo puntual.</p>
-            <p>- Si quedás sin grupo, seguís en “Ranking · Sin grupo” con tus puntos intactos.</p>
-            <p>
-              - El <strong>administrador del grupo</strong> (creador) es quien puede editar nombre,
-              descripción y premios.
-            </p>
-            <p>
-              - Premios: definís cuántos puestos ganan premio y opcionalmente qué premio recibe cada
-              puesto.
-            </p>
+          <CardContent className="flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <Link to="/login">Ingresar</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/register">Registrarse</Link>
+            </Button>
           </CardContent>
         </Card>
       )}
 
+      {showHelp && (
+        <InfoPanel title="Guía completa de grupos">
+          <InfoList
+            items={[
+              'Varios grupos: una sola cuenta, mismos pronósticos, rankings independientes por grupo.',
+              'Grupo activo (Usar): referencia visual en el encabezado y filtro en Ranking cuando elegís un grupo.',
+              'Sin grupo: igual podés jugar; en Ranking aparecés como “Sin grupo” con tus puntos.',
+              'Administrador: solo quien creó el grupo puede Editar o Eliminar. Los demás solo participan.',
+              'Premios: informativos en la ficha del grupo (no se pagan desde la app).',
+              'Invitar amigos: deciles el nombre exacto del grupo; buscan en “Unirse a un grupo” o en “Todos los grupos”.',
+            ]}
+          />
+        </InfoPanel>
+      )}
+
+      {successMessage && (
+        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {successMessage}
+        </p>
+      )}
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Crear grupo</CardTitle>
-          <CardDescription>
-            Definí nombre, descripción y premios del grupo. Como creador quedás como administrador
-            y luego podés editar estos datos.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-              <div className="md:col-span-4">
-                <label className="mb-1 block text-sm font-medium">Nombre del grupo</label>
-                <Input
-                  placeholder="Ej: Amigos del Mundial"
-                  value={newGroupName}
-                  onChange={(e) => setNewGroupName(e.target.value)}
-                  required
+      {isAuthenticated && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Crear grupo</CardTitle>
+              <CardDescription>
+                Armá una liga nueva. El nombre debe ser único: otros jugadores lo usarán para
+                encontrarte y unirse.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <InfoPanel title="Antes de crear">
+                <InfoList
+                  items={[
+                    'Quedás como administrador: podés editar nombre, descripción y premios después.',
+                    'Al crear, el grupo pasa a ser tu grupo activo automáticamente.',
+                    'Los premios son opcionales y sirven para documentar qué se lleva cada puesto.',
+                  ]}
                 />
-              </div>
+              </InfoPanel>
+              <form onSubmit={handleCreate} className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+                  <div className="md:col-span-4">
+                    <label className="mb-1 block text-sm font-medium">Nombre del grupo</label>
+                    <p className="mb-1 text-xs text-muted-foreground">
+                      Visible para todos. Ej: “Familia López”, “Trabajo 2026”.
+                    </p>
+                    <Input
+                      placeholder="Ej: Amigos del Mundial"
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      required
+                    />
+                  </div>
 
-              <div className="md:col-span-5">
-                <label className="mb-1 block text-sm font-medium">Descripción (opcional)</label>
-                <Input
-                  placeholder="Ej: Pronósticos entre amigos de la oficina"
-                  value={newGroupDescription}
-                  onChange={(e) => setNewGroupDescription(e.target.value)}
-                />
-              </div>
+                  <div className="md:col-span-5">
+                    <label className="mb-1 block text-sm font-medium">Descripción (opcional)</label>
+                    <Input
+                      placeholder="Ej: Pronósticos entre amigos de la oficina"
+                      value={newGroupDescription}
+                      onChange={(e) => setNewGroupDescription(e.target.value)}
+                    />
+                  </div>
 
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium">Puestos premiados</label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={10}
-                  value={newPrizesWinnersCount}
-                  onChange={(e) => {
-                    const count = Number(e.target.value || 0);
-                    setNewPrizesWinnersCount(count);
-                    setNewPrizes((prev) => normalizePrizeRows(count, prev));
-                  }}
-                />
-              </div>
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-medium">Puestos premiados</label>
+                    <p className="mb-1 text-xs text-muted-foreground">0 = sin premios. Máximo 10.</p>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={newPrizesWinnersCount}
+                      onChange={(e) => {
+                        const count = Number(e.target.value || 0);
+                        setNewPrizesWinnersCount(count);
+                        setNewPrizes((prev) => normalizePrizeRows(count, prev));
+                      }}
+                    />
+                  </div>
 
-              <div className="md:col-span-1 md:self-end">
-                <Button type="submit" disabled={savingGroup} className="w-full">
-                  {savingGroup ? 'Guardando...' : 'Crear'}
-                </Button>
-              </div>
-            </div>
+                  <div className="md:col-span-1 md:self-end">
+                    <Button type="submit" disabled={savingGroup} className="w-full">
+                      {savingGroup ? 'Guardando...' : 'Crear'}
+                    </Button>
+                  </div>
+                </div>
 
-            <div className="rounded-md border border-border/70 bg-muted/20 p-3 text-xs text-muted-foreground">
-              Si ponés <strong>0</strong>, el grupo queda sin premios. Si ponés <strong>3</strong>,
-              podrás definir premio para 1°, 2° y 3° (opcional en cada puesto).
-            </div>
-
-          {newPrizesWinnersCount > 0 && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              <p className="sm:col-span-2 text-sm font-medium">Detalle de premios por puesto</p>
-              {newPrizes.map((row) => (
-                <Input
-                  key={`new-prize-${row.position}`}
-                  placeholder={`Puesto ${row.position}: ej. $20 / Camiseta / Cena (opcional)`}
-                  value={row.prize}
-                  onChange={(e) =>
-                    setNewPrizes((prev) =>
-                      prev.map((item) =>
-                        item.position === row.position ? { ...item, prize: e.target.value } : item
-                      )
-                    )
-                  }
-                />
-              ))}
-            </div>
-          )}
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Mis grupos</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {myGroups.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Todavía no participás en grupos. Sumate desde la lista de abajo.
-            </p>
-          )}
-          {myGroups.map((group) => {
-            const isOwner = Boolean(group.isAdmin || group.role === 'owner');
-            const isActive = user?.competitionGroup?.id === group.id;
-            const rowEdit = editing[group.id];
-            return (
-              <div
-                key={group.id}
-                className="flex flex-col gap-2 rounded-lg border border-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  {rowEdit ? (
-                    <div className="flex flex-col gap-2">
+                {newPrizesWinnersCount > 0 && (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <p className="sm:col-span-2 text-sm font-medium">Detalle de premios por puesto</p>
+                    {newPrizes.map((row) => (
                       <Input
-                        value={rowEdit.name}
+                        key={`new-prize-${row.position}`}
+                        placeholder={`Puesto ${row.position}: ej. $20 / Camiseta (opcional)`}
+                        value={row.prize}
                         onChange={(e) =>
-                          setEditing((prev) => ({
-                            ...prev,
-                            [group.id]: { ...rowEdit, name: e.target.value },
-                          }))
+                          setNewPrizes((prev) =>
+                            prev.map((item) =>
+                              item.position === row.position
+                                ? { ...item, prize: e.target.value }
+                                : item
+                            )
+                          )
                         }
                       />
-                      <Input
-                        value={rowEdit.description || ''}
-                        onChange={(e) =>
-                          setEditing((prev) => ({
-                            ...prev,
-                            [group.id]: { ...rowEdit, description: e.target.value },
-                          }))
-                        }
-                      />
-                      <Input
-                        type="number"
-                        min={0}
-                        max={10}
-                        placeholder="Puestos premiados"
-                        value={rowEdit.prizesWinnersCount || 0}
-                        onChange={(e) => {
-                          const count = Number(e.target.value || 0);
-                          setEditing((prev) => ({
-                            ...prev,
-                            [group.id]: {
-                              ...rowEdit,
-                              prizesWinnersCount: count,
-                              prizes: normalizePrizeRows(count, rowEdit.prizes),
-                            },
-                          }));
-                        }}
-                      />
-                      {(rowEdit.prizesWinnersCount || 0) > 0 && (
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          {(rowEdit.prizes || []).map((prizeRow) => (
-                            <Input
-                              key={`edit-prize-${group.id}-${prizeRow.position}`}
-                              placeholder={`Premio puesto ${prizeRow.position} (opcional)`}
-                              value={prizeRow.prize}
-                              onChange={(e) =>
-                                setEditing((prev) => ({
-                                  ...prev,
-                                  [group.id]: {
-                                    ...rowEdit,
-                                    prizes: rowEdit.prizes.map((item) =>
-                                      item.position === prizeRow.position
-                                        ? { ...item, prize: e.target.value }
-                                        : item
-                                    ),
-                                  },
-                                }))
-                              }
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <p className="font-medium">{group.name}</p>
-                      {isOwner && (
-                        <p className="text-xs text-emerald-600">Administrador del grupo</p>
-                      )}
-                      {group.description && (
-                        <p className="text-sm text-muted-foreground">{group.description}</p>
-                      )}
-                      {(group.prizesWinnersCount || 0) > 0 && (
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Premian {group.prizesWinnersCount} puesto(s)
-                          {group.prizes?.some((row) => row.prize) && (
-                            <span>
-                              {' '}
-                              ·{' '}
-                              {group.prizes
-                                .filter((row) => row.prize)
-                                .map((row) => `${row.position}°: ${row.prize}`)
-                                .join(' · ')}
-                            </span>
+                    ))}
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Mis grupos ({myGroups.length})</CardTitle>
+              <CardDescription>
+                Administración y grupo activo. Si sos administrador, podés editar o eliminar la liga.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <InfoPanel title="Acciones disponibles">
+                <InfoList
+                  items={[
+                    'Usar / Activo: grupo de referencia en la app (podés cambiarlo cuando quieras).',
+                    'Editar grupo (solo admin): nombre, descripción y tabla de premios.',
+                    'Eliminar (solo admin): borra la liga; los jugadores conservan puntos y pueden seguir en otros grupos.',
+                    'Si no sos admin: solo podés usar el grupo o sumarte a otros desde abajo.',
+                  ]}
+                />
+              </InfoPanel>
+              {myGroups.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Todavía no participás en ningún grupo. Unite desde el buscador de abajo o creá
+                  uno nuevo.
+                </p>
+              )}
+              {myGroups.map((group) => {
+                const isOwner = Boolean(group.isAdmin || group.role === 'owner');
+                const isActive = user?.competitionGroup?.id === group.id;
+                const rowEdit = editing[group.id];
+                return (
+                  <div
+                    key={group.id}
+                    className="flex flex-col gap-2 rounded-lg border border-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      {rowEdit ? (
+                        <div className="flex flex-col gap-2">
+                          <Input
+                            value={rowEdit.name}
+                            onChange={(e) =>
+                              setEditing((prev) => ({
+                                ...prev,
+                                [group.id]: { ...rowEdit, name: e.target.value },
+                              }))
+                            }
+                          />
+                          <Input
+                            value={rowEdit.description || ''}
+                            onChange={(e) =>
+                              setEditing((prev) => ({
+                                ...prev,
+                                [group.id]: { ...rowEdit, description: e.target.value },
+                              }))
+                            }
+                          />
+                          <Input
+                            type="number"
+                            min={0}
+                            max={10}
+                            placeholder="Puestos premiados"
+                            value={rowEdit.prizesWinnersCount || 0}
+                            onChange={(e) => {
+                              const count = Number(e.target.value || 0);
+                              setEditing((prev) => ({
+                                ...prev,
+                                [group.id]: {
+                                  ...rowEdit,
+                                  prizesWinnersCount: count,
+                                  prizes: normalizePrizeRows(count, rowEdit.prizes),
+                                },
+                              }));
+                            }}
+                          />
+                          {(rowEdit.prizesWinnersCount || 0) > 0 && (
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              {(rowEdit.prizes || []).map((prizeRow) => (
+                                <Input
+                                  key={`edit-prize-${group.id}-${prizeRow.position}`}
+                                  placeholder={`Premio puesto ${prizeRow.position} (opcional)`}
+                                  value={prizeRow.prize}
+                                  onChange={(e) =>
+                                    setEditing((prev) => ({
+                                      ...prev,
+                                      [group.id]: {
+                                        ...rowEdit,
+                                        prizes: rowEdit.prizes.map((item) =>
+                                          item.position === prizeRow.position
+                                            ? { ...item, prize: e.target.value }
+                                            : item
+                                        ),
+                                      },
+                                    }))
+                                  }
+                                />
+                              ))}
+                            </div>
                           )}
                         </div>
+                      ) : (
+                        <>
+                          <p className="font-medium">{group.name}</p>
+                          {isOwner && (
+                            <p className="text-xs text-emerald-600">Administrador del grupo</p>
+                          )}
+                          {group.description && (
+                            <p className="text-sm text-muted-foreground">{group.description}</p>
+                          )}
+                          {(group.prizesWinnersCount || 0) > 0 && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              Premian {group.prizesWinnersCount} puesto(s)
+                            </div>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant={isActive ? 'default' : 'outline'}
-                    onClick={() => handleSetActive(group.id)}
-                  >
-                    {isActive ? 'Activo' : 'Usar'}
-                  </Button>
-                  {isOwner && !rowEdit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setEditing((prev) => ({
-                          ...prev,
-                          [group.id]: {
-                            name: group.name,
-                            description: group.description || '',
-                            prizesWinnersCount: group.prizesWinnersCount || 0,
-                            prizes: normalizePrizeRows(group.prizesWinnersCount || 0, group.prizes),
-                          },
-                        }))
-                      }
-                    >
-                      Editar grupo
-                    </Button>
-                  )}
-                  {isOwner && !rowEdit && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={async () => {
-                        const ok = window.confirm(
-                          `¿Eliminar definitivamente el grupo \"${group.name}\"?\n\nLos jugadores quedarán sin grupo (sin perder puntos).`
-                        );
-                        if (!ok) return;
-                        setError('');
-                        try {
-                          await competitionGroupsApi.remove(group.id);
-                          await Promise.all([loadData(), refreshUser()]);
-                        } catch (err) {
-                          setError(err.message);
-                        }
-                      }}
-                    >
-                      Eliminar grupo
-                    </Button>
-                  )}
-                  {!isOwner && (
-                    <span className="self-center text-xs text-muted-foreground">
-                      Solo el administrador puede editar
-                    </span>
-                  )}
-                  {isOwner && rowEdit && (
-                    <>
-                      <Button size="sm" onClick={() => handleSaveEdit(group.id)}>
-                        Guardar
-                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => setEditing((prev) => ({ ...prev, [group.id]: null }))}
+                        variant={isActive ? 'default' : 'outline'}
+                        onClick={() => handleSetActive(group.id)}
                       >
-                        Cancelar
+                        {isActive ? 'Activo' : 'Usar'}
                       </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+                      {isOwner && !rowEdit && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setEditing((prev) => ({
+                                ...prev,
+                                [group.id]: {
+                                  name: group.name,
+                                  description: group.description || '',
+                                  prizesWinnersCount: group.prizesWinnersCount || 0,
+                                  prizes: normalizePrizeRows(
+                                    group.prizesWinnersCount || 0,
+                                    group.prizes
+                                  ),
+                                },
+                              }))
+                            }
+                          >
+                            Editar grupo
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={async () => {
+                              const ok = window.confirm(
+                                `¿Eliminar definitivamente el grupo "${group.name}"?\n\nLos jugadores quedarán sin ese grupo (sin perder puntos).`
+                              );
+                              if (!ok) return;
+                              setError('');
+                              try {
+                                await competitionGroupsApi.remove(group.id);
+                                setSuccessMessage('Grupo eliminado.');
+                                await Promise.all([loadData(), refreshUser()]);
+                              } catch (err) {
+                                setError(err.message);
+                              }
+                            }}
+                          >
+                            Eliminar
+                          </Button>
+                        </>
+                      )}
+                      {isOwner && rowEdit && (
+                        <>
+                          <Button size="sm" onClick={() => handleSaveEdit(group.id)}>
+                            Guardar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditing((prev) => ({ ...prev, [group.id]: null }))}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      )}
+                      {!isOwner && !rowEdit && (
+                        <span className="self-center text-xs text-muted-foreground">
+                          Miembro · solo el administrador edita el grupo
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Unirse a un grupo específico</CardTitle>
-          <CardDescription>
-            Si no lo creaste vos, podés unirte seleccionándolo por nombre.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleJoinSpecific} className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            <div className="md:col-span-10">
-              <Select value={joinGroupId} onValueChange={setJoinGroupId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccioná un grupo por nombre" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allGroups
-                    .filter((group) => !myIds.has(group.id))
-                    .map((group) => (
-                      <SelectItem key={`join-${group.id}`} value={group.id}>
-                        {group.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="md:col-span-2" disabled={!joinGroupId}>
-              Unirme
-            </Button>
-          </form>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Consejo: también podés unirte desde la lista “Todos los grupos”.
-          </p>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Unirse a un grupo</CardTitle>
+              <CardDescription>
+                Sumate a una liga existente. No reemplaza tus otros grupos: se agrega a “Mis grupos”.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">
+                Pedí el nombre exacto al administrador del grupo. Después de unirte, tus pronósticos
+                ya cargados cuentan para ese ranking.
+              </p>
+              {joinableGroups.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {allGroups.length === 0
+                    ? 'No hay grupos todavía. Creá el primero arriba.'
+                    : 'Ya participás en todos los grupos disponibles.'}
+                </p>
+              ) : (
+                <form onSubmit={handleJoinSpecific} className="grid grid-cols-1 gap-3 md:grid-cols-12">
+                  <div className="md:col-span-10">
+                    <Select value={joinGroupId} onValueChange={setJoinGroupId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccioná un grupo por nombre" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {joinableGroups.map((group) => (
+                          <SelectItem key={`join-${group.id}`} value={group.id}>
+                            {group.name} ({group.memberCount} jugadores)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="submit"
+                    className="md:col-span-2"
+                    disabled={!joinGroupId || Boolean(joinLoading)}
+                  >
+                    {joinLoading ? 'Uniendo...' : 'Unirme'}
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <Card>
         <CardHeader>
           <CardTitle>Todos los grupos</CardTitle>
+          <CardDescription>Listado público de grupos de competencia.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
+          {allGroups.length === 0 && (
+            <p className="text-sm text-muted-foreground">Todavía no hay grupos creados.</p>
+          )}
           {allGroups.map((group) => (
             <div
               key={group.id}
@@ -483,14 +590,24 @@ export default function GroupsPage() {
                 <p className="font-medium">{group.name}</p>
                 <p className="text-sm text-muted-foreground">{group.memberCount} jugadores</p>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={myIds.has(group.id) || joinLoading === group.id}
-                onClick={() => handleJoin(group.id)}
-              >
-                {myIds.has(group.id) ? 'Ya participás' : joinLoading === group.id ? 'Uniendo...' : 'Unirme'}
-              </Button>
+              {!isAuthenticated ? (
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/login">Ingresar para unirme</Link>
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={myIds.has(group.id) || joinLoading === group.id}
+                  onClick={() => handleJoin(group.id)}
+                >
+                  {myIds.has(group.id)
+                    ? 'Ya participás'
+                    : joinLoading === group.id
+                      ? 'Uniendo...'
+                      : 'Unirme'}
+                </Button>
+              )}
             </div>
           ))}
         </CardContent>
