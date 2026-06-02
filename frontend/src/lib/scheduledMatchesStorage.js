@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'mundial2026-scheduled-matches';
+const SCHEDULE_ALL_KEY = 'mundial2026-schedule-all-used';
 
 export function getScheduledMatchIds() {
   if (typeof window === 'undefined') return new Set();
@@ -36,4 +37,15 @@ export function unmarkMatchScheduled(matchId) {
   ids.delete(matchId);
   saveScheduledMatchIds(ids);
   return ids;
+}
+
+/** Una vez usado "Agendar todos", no volver a mostrar el botón en este dispositivo. */
+export function hasUsedScheduleAll() {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(SCHEDULE_ALL_KEY) === '1';
+}
+
+export function markScheduleAllUsed() {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SCHEDULE_ALL_KEY, '1');
 }
