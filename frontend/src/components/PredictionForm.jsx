@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button.jsx';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input.jsx';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
+
+/** Mismo ancho/alto en web y móvil para Guardar y Editar */
+const PREDICTION_ACTION_BUTTON_CLASS = 'min-w-28 px-4';
+const EDIT_PREDICTION_BUTTON_CLASS =
+  'border border-amber-300/80 bg-amber-100/60 text-amber-900 hover:bg-amber-200/70 hover:text-amber-950';
 
 function ScoreCell({ children }) {
   return <div className="flex justify-center">{children}</div>;
@@ -145,7 +151,12 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homePrediction={prediction.homeGoals}
           awayPrediction={prediction.awayGoals}
         />
-        <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => setEditing(true)}
+          className={cn(PREDICTION_ACTION_BUTTON_CLASS, EDIT_PREDICTION_BUTTON_CLASS)}
+        >
           Editar
         </Button>
         <BroadcastRow broadcasters={broadcasters} />
@@ -166,7 +177,12 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
       />
 
       <div className="flex flex-col items-center gap-2">
-        <Button type="submit" size="sm" disabled={saving} className="min-w-28">
+        <Button
+          type="submit"
+          size="sm"
+          disabled={saving}
+          className={PREDICTION_ACTION_BUTTON_CLASS}
+        >
           {saving ? '...' : 'Guardar'}
         </Button>
         {hasPrediction && (
