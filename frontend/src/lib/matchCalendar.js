@@ -15,10 +15,10 @@ function toIcsUtc(date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 }
 
-function teamLabel(team) {
+/** Solo nombre del equipo (sin URLs de banderas ni emojis en calendario). */
+function teamName(team) {
   if (!team) return 'Por definir';
-  const name = team.nameEn || team.fifaCode || 'Equipo';
-  return team.flag ? `${team.flag} ${name}` : name;
+  return team.nameEn || team.fifaCode || 'Equipo';
 }
 
 function formatLockAt(lockAt) {
@@ -36,35 +36,42 @@ function formatLockAt(lockAt) {
   }).format(date);
 }
 
+function matchTitle(match) {
+  return `${teamName(match.homeTeam)} vs ${teamName(match.awayTeam)}`;
+}
+
+function groupLabel(match) {
+  if (!match.group) return '';
+  return match.matchday ? `Grupo ${match.group} · Fecha ${match.matchday}` : `Grupo ${match.group}`;
+}
+
+function predictionActionLine(match) {
+  const hasPrediction = match.prediction != null;
+  const { homeGoals, awayGoals } = match.prediction ?? {};
+
+  if (hasPrediction && match.predictionOpen) {
+    return `Editá tu predicción (${homeGoals}-${awayGoals}) antes del cierre.`;
+  }
+  if (hasPrediction) {
+    return `Predicción cargada: ${homeGoals}-${awayGoals}.`;
+  }
+  if (match.predictionOpen) {
+    return 'Cargá tu predicción antes del cierre.';
+  }
+  return 'Predicción cerrada para este partido.';
+}
+
 function buildDescription(match, predictionsUrl) {
-  const home = teamLabel(match.homeTeam);
-  const away = teamLabel(match.awayTeam);
   const kickoff = formatMatchDate(match);
   const lock = formatLockAt(match.lockAt);
-  const tv =
-    match.broadcasters?.map((b) => b.name).filter(Boolean).join(', ') || null;
-  const prediction =
-    match.prediction != null
-      ? `Tu predicción: ${match.prediction.homeGoals} - ${match.prediction.awayGoals}`
-      : 'Todavía no cargaste predicción';
+  const group = groupLabel(match);
 
   const lines = [
-    'Mundial FIFA 2026 — Mundial2026 Predicciones',
-    '',
-    `${home} vs ${away}`,
-    `Grupo ${match.group || '—'}${match.matchday ? ` · Fecha ${match.matchday}` : ''}`,
-    kickoff ? `Inicio (Argentina): ${kickoff}` : null,
-    lock ? `Cierre de predicciones: ${lock}` : 'Las predicciones cierran 1 hora antes del partido',
-    match.stadium?.nameEn
-      ? `Estadio: ${match.stadium.nameEn}${match.stadium.city ? ` (${match.stadium.city})` : ''}`
-      : null,
-    tv ? `TV (Argentina): ${tv}` : null,
-    '',
-    prediction,
-    '',
-    `Cargá o editá tu predicción: ${predictionsUrl}`,
-    '',
-    'Recordatorio: 1 hora y 30 minutos antes del pitazo inicial.',
+    group ? `Partido: ${matchTitle(match)} (${group})` : `Partido: ${matchTitle(match)}`,
+    kickoff ? `Inicio del partido: ${kickoff}` : null,
+    lock ? `Cierre de predicciones: ${lock}` : 'Cierre de predicciones: 1 h antes del partido',
+    predictionActionLine(match),
+    predictionsUrl,
   ];
 
   return lines.filter(Boolean).join('\n');
@@ -89,9 +96,7 @@ export function buildMatchIcs(match, { predictionsUrl } = {}) {
   }
 
   const end = new Date(kickoff.getTime() + EVENT_DURATION_MS);
-  const home = teamLabel(match.homeTeam);
-  const away = teamLabel(match.awayTeam);
-  const summary = escapeIcsText(`Mundial 2026: ${home} vs ${away}`);
+  const summary = escapeIcsText(`Mundial 2026 · ${matchTitle(match)}`);
   const location = escapeIcsText(
     [match.stadium?.nameEn, match.stadium?.city, match.stadium?.country].filter(Boolean).join(', ')
   );
@@ -118,7 +123,7 @@ export function buildMatchIcs(match, { predictionsUrl } = {}) {
     'BEGIN:VALARM',
     'TRIGGER:-PT1H30M',
     'ACTION:DISPLAY',
-    'DESCRIPTION:Recordá cargar tu predicción del Mundial',
+    'DESCRIPTION:Recordá tu predicción del Mundial',
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
@@ -138,14 +143,12 @@ function isIosDevice() {
 /** Opens ICS in the same user gesture (avoids navigator.share Permission denied). */
 export function scheduleMatchInCalendar(match) {
   const ics = buildMatchIcs(match);
-  // iOS Safari rejects text/calendar;charset=utf-8 on blobs
   const blob = new Blob([ics], { type: 'text/calendar' });
   const filename = `mundial-partido-${match.externalId || match.id}.ics`;
   const blobUrl = URL.createObjectURL(blob);
 
   try {
     if (isIosDevice()) {
-      // Same-tab navigation opens the "add to calendar" flow on iOS
       window.location.assign(blobUrl);
     } else {
       const link = document.createElement('a');
