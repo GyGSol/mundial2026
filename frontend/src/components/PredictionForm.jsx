@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import TeamHeader from './TeamHeader.jsx';
+import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
 function ScoreCell({ children }) {
   return <div className="flex justify-center">{children}</div>;
@@ -65,7 +66,16 @@ function MatchScoreboard({
   );
 }
 
-export default function PredictionForm({ match, onSave, saving }) {
+function BroadcastRow({ broadcasters }) {
+  if (!broadcasters?.length) return null;
+  return (
+    <div className="flex w-full justify-center pt-1">
+      <BroadcastBadges broadcasters={broadcasters} size="md" className="justify-center" />
+    </div>
+  );
+}
+
+export default function PredictionForm({ match, onSave, saving, broadcasters = [] }) {
   const locked = !match.predictionOpen;
   const hasPrediction = match.hasPrediction || Boolean(match.prediction);
   const [editing, setEditing] = useState(!hasPrediction && !locked);
@@ -113,6 +123,7 @@ export default function PredictionForm({ match, onSave, saving }) {
           <p className="text-sm font-medium text-foreground">+{prediction.pointsEarned} pts</p>
         )}
         {!prediction && <p className="text-sm text-muted-foreground">Predicción cerrada</p>}
+        <BroadcastRow broadcasters={broadcasters} />
       </div>
     );
   }
@@ -132,6 +143,7 @@ export default function PredictionForm({ match, onSave, saving }) {
         <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
           Editar
         </Button>
+        <BroadcastRow broadcasters={broadcasters} />
       </div>
     );
   }
@@ -157,6 +169,7 @@ export default function PredictionForm({ match, onSave, saving }) {
             Cancelar
           </Button>
         )}
+        <BroadcastRow broadcasters={broadcasters} />
       </div>
     </form>
   );
