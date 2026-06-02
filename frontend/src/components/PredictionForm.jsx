@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
+import MatchScheduleButton from '@/components/MatchScheduleButton.jsx';
 
 function ScoreCell({ children }) {
   return <div className="flex justify-center">{children}</div>;
@@ -128,6 +129,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           <p className="text-sm font-medium text-foreground">+{prediction.pointsEarned} pts</p>
         )}
         {!prediction && <p className="text-sm text-muted-foreground">Predicción cerrada</p>}
+        <MatchScheduleButton match={match} />
         <BroadcastRow broadcasters={broadcasters} />
       </div>
     );
@@ -148,6 +150,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
         <Button type="button" variant="outline" size="sm" onClick={() => setEditing(true)}>
           Editar
         </Button>
+        <MatchScheduleButton match={match} />
         <BroadcastRow broadcasters={broadcasters} />
       </div>
     );
@@ -174,6 +177,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
             Cancelar
           </Button>
         )}
+        <MatchScheduleButton match={match} />
         <BroadcastRow broadcasters={broadcasters} />
       </div>
     </form>

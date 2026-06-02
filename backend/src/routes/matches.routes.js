@@ -89,6 +89,13 @@ async function enrichMatches(matches, userId) {
         homeTeam: teamMap[m.homeTeamId],
         awayTeam: teamMap[m.awayTeamId],
       }),
+      stadium: stadiumMap[m.stadiumId]
+        ? {
+            nameEn: stadiumMap[m.stadiumId].nameEn,
+            city: stadiumMap[m.stadiumId].city,
+            country: stadiumMap[m.stadiumId].country,
+          }
+        : null,
       prediction,
       ...meta,
     };
