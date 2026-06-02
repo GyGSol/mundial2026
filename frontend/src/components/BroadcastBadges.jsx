@@ -1,38 +1,44 @@
 import { cn } from '@/lib/utils';
 
+/** Logo height (px) and max width ≈ height × φ² (φ ≈ 1.618) for balanced proportions */
 const SIZE_STYLES = {
   xs: {
-    height: 'h-3',
+    height: 'h-3.5',
     maxWidth: 'max-w-9',
     gap: 'gap-1',
     wrap: 'flex-nowrap',
   },
   sm: {
-    height: 'h-3.5',
+    height: 'h-4',
     maxWidth: 'max-w-10',
     gap: 'gap-1.5',
     wrap: 'flex-wrap',
   },
   md: {
-    height: 'h-4',
+    height: 'h-[1.125rem]',
     maxWidth: 'max-w-11',
     gap: 'gap-1.5',
     wrap: 'flex-wrap',
   },
 };
 
-export default function BroadcastBadges({ broadcasters = [], className, size = 'sm' }) {
+export default function BroadcastBadges({
+  broadcasters = [],
+  className,
+  size = 'sm',
+  label,
+}) {
   if (!broadcasters?.length) return null;
 
   const styles = SIZE_STYLES[size] ?? SIZE_STYLES.sm;
 
-  return (
+  const logos = (
     <div
       className={cn(
         'flex items-center justify-center',
         styles.wrap,
         styles.gap,
-        className
+        label ? 'w-full' : className
       )}
     >
       {broadcasters.map((broadcaster) => (
@@ -50,6 +56,15 @@ export default function BroadcastBadges({ broadcasters = [], className, size = '
           )}
         />
       ))}
+    </div>
+  );
+
+  if (!label) return logos;
+
+  return (
+    <div className={cn('flex w-full flex-col items-center gap-1', className)}>
+      <p className="text-center text-[11px] font-medium text-muted-foreground">{label}</p>
+      {logos}
     </div>
   );
 }

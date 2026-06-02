@@ -69,8 +69,13 @@ function MatchScoreboard({
 function BroadcastRow({ broadcasters }) {
   if (!broadcasters?.length) return null;
   return (
-    <div className="flex w-full justify-center pt-1">
-      <BroadcastBadges broadcasters={broadcasters} size="xs" className="w-full" />
+    <div className="flex w-full justify-center pt-2">
+      <BroadcastBadges
+        broadcasters={broadcasters}
+        size="xs"
+        label="Lo podes ver en"
+        className="w-full"
+      />
     </div>
   );
 }
