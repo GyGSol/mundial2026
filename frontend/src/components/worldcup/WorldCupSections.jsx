@@ -417,12 +417,12 @@ function isMatchFinalized(match) {
 }
 
 function sortMatchesForPartidos(matches = []) {
-  const statusOrder = { finished: 0, live: 1, upcoming: 2 };
   return [...matches].sort((a, b) => {
-    const statusDiff =
-      (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
-    if (statusDiff !== 0) return statusDiff;
-    return new Date(b.kickoffAt || 0) - new Date(a.kickoffAt || 0);
+    const byKickoff = new Date(a.kickoffAt || 0) - new Date(b.kickoffAt || 0);
+    if (byKickoff !== 0) return byKickoff;
+    return String(a.externalId ?? '').localeCompare(String(b.externalId ?? ''), undefined, {
+      numeric: true,
+    });
   });
 }
 
