@@ -70,7 +70,7 @@ function BroadcastRow({ broadcasters }) {
   if (!broadcasters?.length) return null;
   return (
     <div className="flex w-full justify-center pt-1">
-      <BroadcastBadges broadcasters={broadcasters} size="md" className="justify-center" />
+      <BroadcastBadges broadcasters={broadcasters} size="xs" className="w-full" />
     </div>
   );
 }
