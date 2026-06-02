@@ -7,6 +7,7 @@ import {
   TableRow,
 } from '@/components/ui/table.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
+import { cn } from '@/lib/utils';
 
 const statColumns = [
   { key: 'pa', label: 'PA', title: 'Acierto resultado' },
@@ -20,6 +21,20 @@ function buildPrizeByPosition(prizes = []) {
     (Array.isArray(prizes) ? prizes : []).map((row) => [Number(row.position), row.prize || ''])
   );
 }
+
+/** Colores de la barra lateral por puesto premiado (como en la referencia visual). */
+function getPrizeRankAccent(rank, prizesWinnersCount) {
+  if (rank > prizesWinnersCount || prizesWinnersCount <= 0) return null;
+  if (rank <= 2) return 'emerald';
+  if (rank === 3) return 'sky';
+  return 'amber';
+}
+
+const prizeRankAccentClasses = {
+  emerald: 'border-l-4 border-l-emerald-500 text-primary font-semibold',
+  sky: 'border-l-4 border-l-sky-400 text-primary font-semibold',
+  amber: 'border-l-4 border-l-amber-400 text-primary font-semibold',
+};
 
 export default function LeaderboardTable({
   leaderboard,
@@ -60,10 +75,20 @@ export default function LeaderboardTable({
                 showPrizes && row.rank <= prizesWinnersCount
                   ? (prizeByPosition.get(row.rank) || '').trim() || '—'
                   : null;
+              const prizeAccent = showPrizes
+                ? getPrizeRankAccent(row.rank, prizesWinnersCount)
+                : null;
 
               return (
                 <TableRow key={row.id}>
-                  <TableCell className="text-muted-foreground">{row.rank}</TableCell>
+                  <TableCell
+                    className={cn(
+                      'text-muted-foreground tabular-nums',
+                      prizeAccent ? prizeRankAccentClasses[prizeAccent] : null
+                    )}
+                  >
+                    {row.rank}
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center justify-between gap-2">
                       <span>{row.name}</span>
