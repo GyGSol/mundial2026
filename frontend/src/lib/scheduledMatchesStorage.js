@@ -29,3 +29,11 @@ export function markMatchesScheduled(matchIds) {
   saveScheduledMatchIds(ids);
   return ids;
 }
+
+/** Tras guardar/editar predicción: el .ics anterior queda desactualizado. */
+export function unmarkMatchScheduled(matchId) {
+  const ids = getScheduledMatchIds();
+  ids.delete(matchId);
+  saveScheduledMatchIds(ids);
+  return ids;
+}

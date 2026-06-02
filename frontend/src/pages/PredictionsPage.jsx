@@ -29,7 +29,8 @@ export default function PredictionsPage() {
   const [savingId, setSavingId] = useState(null);
   const [message, setMessage] = useState('');
   const scrolledToMatch = useRef(false);
-  const { isScheduled, markScheduled, markManyScheduled } = useScheduledMatches();
+  const { isScheduled, markScheduled, markManyScheduled, unmarkScheduled } =
+    useScheduledMatches();
 
   useEffect(() => {
     if (!focusMatchId) return;
@@ -60,6 +61,7 @@ export default function PredictionsPage() {
     setMessage('');
     try {
       await predictionsApi.save(matchId, homeGoals, awayGoals);
+      unmarkScheduled(matchId);
       setMessage('Predicción guardada');
       await refresh();
     } catch (err) {

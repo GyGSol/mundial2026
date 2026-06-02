@@ -3,6 +3,7 @@ import {
   getScheduledMatchIds,
   markMatchScheduled,
   markMatchesScheduled,
+  unmarkMatchScheduled,
 } from '@/lib/scheduledMatchesStorage.js';
 
 export function useScheduledMatches() {
@@ -30,5 +31,13 @@ export function useScheduledMatches() {
     [refresh]
   );
 
-  return { isScheduled, markScheduled, markManyScheduled };
+  const unmarkScheduled = useCallback(
+    (matchId) => {
+      unmarkMatchScheduled(matchId);
+      refresh();
+    },
+    [refresh]
+  );
+
+  return { isScheduled, markScheduled, markManyScheduled, unmarkScheduled };
 }
