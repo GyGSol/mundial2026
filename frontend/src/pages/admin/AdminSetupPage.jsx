@@ -75,7 +75,7 @@ export default function AdminSetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+    <div className="admin-theme flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <Card className="w-full max-w-md border-slate-800 bg-slate-900 text-slate-100">
         <CardHeader>
           <CardTitle>Primer ingreso — Administrador</CardTitle>

@@ -45,3 +45,26 @@
 body {
   @apply bg-background text-foreground antialiased;
 }
+
+/* Panel /admin: tokens oscuros para botones y componentes shadcn */
+.admin-theme {
+  --background: oklch(0.18 0.02 260);
+  --foreground: oklch(0.95 0.01 260);
+  --card: oklch(0.22 0.02 260);
+  --card-foreground: oklch(0.95 0.01 260);
+  --popover: oklch(0.22 0.02 260);
+  --popover-foreground: oklch(0.95 0.01 260);
+  --primary: oklch(0.72 0.14 75);
+  --primary-foreground: oklch(0.2 0.04 75);
+  --secondary: oklch(0.28 0.02 260);
+  --secondary-foreground: oklch(0.92 0.01 260);
+  --muted: oklch(0.28 0.02 260);
+  --muted-foreground: oklch(0.72 0.03 260);
+  --accent: oklch(0.32 0.03 260);
+  --accent-foreground: oklch(0.95 0.01 260);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.38 0.02 260);
+  --input: oklch(0.38 0.02 260);
+  --ring: oklch(0.72 0.14 75);
+  color: var(--foreground);
+}
