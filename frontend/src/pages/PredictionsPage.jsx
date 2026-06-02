@@ -17,7 +17,7 @@ function formatLastUpdated(date) {
 }
 
 export default function PredictionsPage() {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [statusFilter, setStatusFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
   const [savingId, setSavingId] = useState(null);
@@ -60,7 +60,11 @@ export default function PredictionsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Panel de predicciones</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {user?.email
+              ? `Panel de predicciones del Jugador ${user.email}`
+              : 'Panel de predicciones'}
+          </h1>
           <p className="text-sm text-muted-foreground">
             {matches.length} partidos
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)} · tiempo real`}
