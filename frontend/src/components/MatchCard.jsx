@@ -38,7 +38,9 @@ export default function MatchCard({ match, onSave, savingId }) {
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={status.variant}>{status.text}</Badge>
+            {match.status !== 'upcoming' && (
+              <Badge variant={status.variant}>{status.text}</Badge>
+            )}
             {isArgentinaMatch && (
               <Badge
                 variant="outline"
