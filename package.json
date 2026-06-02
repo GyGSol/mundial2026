@@ -15,6 +15,7 @@
     "simulate": "npm run simulate -w backend",
     "reset-db": "npm run reset-db -w backend",
     "prepare-package": "node scripts/prepare-package.js",
+    "package-zip": "node scripts/prepare-package.js",
     "start": "node backend/src/index.js",
     "heroku-postbuild": "npm install --include=dev && npm run build"
   },

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
+import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
+import { isSevereError } from '../lib/apiError.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
 import LiveMatchesBar from '../components/LiveMatchesBar.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
@@ -74,6 +76,16 @@ export default function LeaderboardPage() {
 
   const displayGroup = data?.group || selectedGroup;
   const isNoGroupMode = effectiveGroupId === '__nogroup';
+
+  if (error && isSevereError(error)) {
+    return (
+      <TechnicalDifficulties
+        error={error}
+        title="No se pudo cargar la aplicación"
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">

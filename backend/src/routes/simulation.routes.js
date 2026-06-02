@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
+import { adminMiddleware } from '../middleware/admin.middleware.js';
 import {
   finishLiveMatch,
   getSimulationStatus,
@@ -18,6 +19,7 @@ function requireSimulationEnabled(req, res, next) {
 }
 
 router.use(requireSimulationEnabled);
+router.use(adminMiddleware);
 
 router.get('/', async (req, res, next) => {
   try {

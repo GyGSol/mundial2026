@@ -9,11 +9,15 @@ import { Stadium } from '../models/Stadium.js';
 import { SyncMeta } from '../models/SyncMeta.js';
 import { SimulationState } from '../models/SimulationState.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
+import { UserGroupMembership } from '../models/UserGroupMembership.js';
+import { AdminSettings } from '../models/AdminSettings.js';
 
 const COLLECTIONS = [
+  { label: 'adminsettings', model: AdminSettings },
   { label: 'predictions', model: Prediction },
   { label: 'simulationstates', model: SimulationState },
   { label: 'matches', model: Match },
+  { label: 'usergroupmemberships', model: UserGroupMembership },
   { label: 'users', model: User },
   { label: 'competitiongroups', model: CompetitionGroup },
   { label: 'teams', model: Team },

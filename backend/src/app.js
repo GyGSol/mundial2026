@@ -14,6 +14,7 @@ import competitionGroupsRoutes from './routes/competitionGroups.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import worldCupRoutes from './routes/worldCup.routes.js';
 import simulationRoutes from './routes/simulation.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,6 +41,7 @@ export function createApp() {
   app.use('/api/health', healthRoutes);
   app.use('/api/world-cup', worldCupRoutes);
   app.use('/api/simulation', simulationRoutes);
+  app.use('/api/admin', adminRoutes);
 
   if (existsSync(publicDir)) {
     app.use(express.static(publicDir));

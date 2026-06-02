@@ -402,7 +402,7 @@ export async function setActiveCompetitionGroup({ userId, groupId }) {
   return getCompetitionGroupById(group._id);
 }
 
-export async function deleteCompetitionGroup({ groupId, userId }) {
+export async function deleteCompetitionGroup({ groupId, userId, adminOverride = false }) {
   const group = await CompetitionGroup.findById(groupId);
   if (!group) {
     const error = new Error('Grupo no encontrado');
@@ -410,7 +410,7 @@ export async function deleteCompetitionGroup({ groupId, userId }) {
     throw error;
   }
 
-  if (!(await isGroupAdmin({ userId, group }))) {
+  if (!adminOverride && !(await isGroupAdmin({ userId, group }))) {
     const error = new Error('Solo el administrador puede eliminar el grupo');
     error.status = 403;
     throw error;

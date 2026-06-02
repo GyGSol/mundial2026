@@ -12,4 +12,7 @@ export const env = {
   worldCupSyncPassword: process.env.WORLD_CUP_SYNC_PASSWORD || '',
   syncIntervalMs: Number(process.env.SYNC_INTERVAL_MS || 60000),
   simulationEnabled: process.env.SIMULATION_ENABLED !== 'false',
+  adminUsername: process.env.ADMIN_USERNAME || '',
+  adminPassword: process.env.ADMIN_PASSWORD || '',
+  adminJwtExpires: process.env.ADMIN_JWT_EXPIRES || '8h',
 };

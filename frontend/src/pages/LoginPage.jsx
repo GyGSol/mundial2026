@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
+import { isSevereError } from '../lib/apiError.js';
 import { joinGroupAfterAuth } from '../lib/joinGroupAfterAuth.js';
 import { buildAuthPathWithJoin } from '../lib/inviteLink.js';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
@@ -16,6 +18,16 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  if (error && isSevereError(error)) {
+    return (
+      <TechnicalDifficulties
+        error={error}
+        title="No se pudo conectar con el servidor"
+        onRetry={() => setError('')}
+      />
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

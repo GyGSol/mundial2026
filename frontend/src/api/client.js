@@ -1,3 +1,5 @@
+import { formatRequestError } from '../lib/apiError.js';
+
 const API_BASE = '/api';
 
 async function request(path, options = {}) {
@@ -8,11 +10,17 @@ async function request(path, options = {}) {
     ...options.headers,
   };
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  } catch (err) {
+    throw new Error(formatRequestError(err, null, {}));
+  }
+
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.error || `Request failed (${res.status})`);
+    throw new Error(formatRequestError(null, res, data));
   }
 
   return data;

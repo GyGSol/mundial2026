@@ -76,6 +76,16 @@ git commit -m "tu mensaje"
 git push heroku main
 ```
 
-## Dashboard
+## Panel de administración
+
+**Primer ingreso:** abrí `https://mundial2026-pred-34de76763ecc.herokuapp.com/admin/setup` y creá usuario y contraseña del admin (se guardan hasheados en MongoDB). Solo funciona una vez.
+
+**Ingresos siguientes:** `https://mundial2026-pred-34de76763ecc.herokuapp.com/admin/login`
+
+Opcional en local: `ADMIN_USERNAME` / `ADMIN_PASSWORD` en `.env` (si no están, usá `/admin/setup`).
+
+Desde el panel podés ejecutar sync manual, editar partidos, gestionar usuarios/grupos y usar la simulación.
+
+## Dashboard Heroku
 
 https://dashboard.heroku.com/apps/mundial2026-pred

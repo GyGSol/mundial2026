@@ -2,7 +2,7 @@
 
 Aplicación web para predecir resultados del Mundial 2026, con puntuación automática y ranking en **tiempo real** vía WebSockets.
 
-> **Entrega a otro desarrollador:** ver [ENTREGA.md](./ENTREGA.md) (setup, base de datos, qué incluir en el zip, arquitectura).
+> **Entrega a otro desarrollador:** ver [ENTREGA.md](./ENTREGA.md) (setup, base de datos, deploy). Generar zip: `npm run package-zip` → `mundial2026-entrega.zip`.
 
 ## Stack
 
@@ -72,22 +72,16 @@ Reglas implementadas en `calculatePoints`:
 
 ```bash
 npm run sync
+npm run fix-kickoffs -w backend   # recalcula kickoff UTC si hiciera falta
 ```
 
-## Reset de base de datos
+## Reset y paquete de entrega
 
 ```bash
-npm run reset-db      # vacía todas las colecciones MongoDB
-npm run prepare-package   # elimina dist/ y backend/public/ antes de zippear
+npm run reset-db
+npm run package-zip   # crea mundial2026-entrega.zip (sin node_modules ni .env)
 ```
 
-## Producción / Heroku
+## Producción
 
-```bash
-heroku config:set MONGODB_URI=... JWT_SECRET=... WORLD_CUP_SYNC_EMAIL=... WORLD_CUP_SYNC_PASSWORD=...
-heroku config:set CLIENT_ORIGIN=https://tu-app.herokuapp.com
-
-git push heroku main
-```
-
-El backend sirve el frontend compilado desde `backend/public` tras `heroku-postbuild`.
+Ver [HEROKU.md](./HEROKU.md) (Heroku + MongoDB Atlas). En cualquier host: `npm run build` y `npm start`; el backend sirve el SPA desde `backend/public`.
