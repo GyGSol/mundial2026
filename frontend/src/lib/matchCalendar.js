@@ -127,27 +127,36 @@ export function buildMatchIcs(match, { predictionsUrl } = {}) {
     .join('\r\n');
 }
 
-export async function scheduleMatchInCalendar(match) {
+function isIosDevice() {
+  if (typeof navigator === 'undefined') return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+}
+
+/** Opens ICS in the same user gesture (avoids navigator.share Permission denied). */
+export function scheduleMatchInCalendar(match) {
   const ics = buildMatchIcs(match);
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  // iOS Safari rejects text/calendar;charset=utf-8 on blobs
+  const blob = new Blob([ics], { type: 'text/calendar' });
   const filename = `mundial-partido-${match.externalId || match.id}.ics`;
-  const file = new File([blob], filename, { type: 'text/calendar' });
+  const blobUrl = URL.createObjectURL(blob);
 
-  if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-    await navigator.share({
-      files: [file],
-      title: 'Agendar partido — Mundial 2026',
-    });
-    return;
+  try {
+    if (isIosDevice()) {
+      // Same-tab navigation opens the "add to calendar" flow on iOS
+      window.location.assign(blobUrl);
+    } else {
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  } finally {
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
   }
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.rel = 'noopener';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }

@@ -11,11 +11,15 @@ export default function MatchScheduleButton({ match }) {
 
   const schedulable = canScheduleMatchReminder(match);
 
-  const handleClick = async () => {
+  const handleClick = () => {
     setHint('');
     try {
-      await scheduleMatchInCalendar(match);
-      setHint('Si no se abrió solo, revisá Descargas o tu app de Calendario.');
+      scheduleMatchInCalendar(match);
+      setHint(
+        /iPad|iPhone|iPod/i.test(navigator.userAgent)
+          ? 'Si Safari pregunta, tocá Permitir. Después elegí Calendario y Guardar.'
+          : 'Si no se abrió solo, revisá Descargas o elegí tu app de Calendario.'
+      );
     } catch (err) {
       setHint(err.message || 'No se pudo crear el evento');
     }
