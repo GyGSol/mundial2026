@@ -45,9 +45,6 @@ export default function Layout() {
           <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
             <span className="text-muted-foreground">
               {user.name}
-              {user.competitionGroup?.name && (
-                <span className="text-foreground"> · {user.competitionGroup.name}</span>
-              )}
               {sessionExpiresLabel ? (
                 <span className="hidden sm:inline"> · sesión hasta {sessionExpiresLabel}</span>
               ) : null}
