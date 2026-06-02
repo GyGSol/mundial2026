@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select.jsx';
 import { Button } from '@/components/ui/button.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 
 function formatLastUpdated(date) {
   if (!date) return '';
@@ -76,6 +77,9 @@ export default function LeaderboardPage() {
 
   const displayGroup = data?.group || selectedGroup;
   const isNoGroupMode = effectiveGroupId === '__nogroup';
+  const prizesWinnersCount = displayGroup?.prizesWinnersCount || 0;
+  const groupPrizes = displayGroup?.prizes || [];
+  const hasPrizes = !isNoGroupMode && prizesWinnersCount > 0;
 
   if (error && isSevereError(error)) {
     return (
@@ -141,7 +145,32 @@ export default function LeaderboardPage() {
       {loading && <p className="text-muted-foreground">Cargando ranking...</p>}
       {error && <p className="text-destructive">{error}</p>}
 
-      <LeaderboardTable leaderboard={data?.leaderboard} showGroupName={false} />
+      {hasPrizes ? (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Premios del grupo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-1.5 text-sm">
+              {groupPrizes.map((row) => (
+                <li key={row.position} className="flex flex-wrap items-baseline gap-2">
+                  <span className="font-medium tabular-nums">{row.position}°</span>
+                  <span className="text-muted-foreground">
+                    {row.prize?.trim() ? row.prize : 'Premio por definir'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <LeaderboardTable
+        leaderboard={data?.leaderboard}
+        showGroupName={false}
+        prizes={groupPrizes}
+        prizesWinnersCount={prizesWinnersCount}
+      />
     </div>
   );
 }
