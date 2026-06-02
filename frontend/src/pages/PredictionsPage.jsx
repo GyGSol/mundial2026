@@ -1,8 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { matchesApi, predictionsApi } from '../api/client.js';
 import MatchCard from '../components/MatchCard.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -18,10 +20,20 @@ function formatLastUpdated(date) {
 
 export default function PredictionsPage() {
   const { user, isAuthenticated } = useAuth();
+  const [searchParams] = useSearchParams();
+  const focusMatchId = searchParams.get('match');
   const [statusFilter, setStatusFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
   const [savingId, setSavingId] = useState(null);
   const [message, setMessage] = useState('');
+  const scrolledToMatch = useRef(false);
+
+  useEffect(() => {
+    if (!focusMatchId) return;
+    setStatusFilter('');
+    setGroupFilter('');
+    scrolledToMatch.current = false;
+  }, [focusMatchId]);
 
   const fetchMatches = useCallback(() => {
     const params = {};
@@ -55,6 +67,14 @@ export default function PredictionsPage() {
   };
 
   const matches = data?.matches ?? [];
+
+  useEffect(() => {
+    if (!focusMatchId || loading || scrolledToMatch.current) return;
+    const el = document.getElementById(`match-${focusMatchId}`);
+    if (!el) return;
+    scrolledToMatch.current = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusMatchId, loading, matches]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,12 +134,16 @@ export default function PredictionsPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {matches.map((match) => (
-          <MatchCard
+          <div
             key={match.id}
-            match={match}
-            onSave={handleSave}
-            savingId={savingId}
-          />
+            id={`match-${match.id}`}
+            className={cn(
+              'scroll-mt-24 rounded-xl transition-shadow',
+              focusMatchId === match.id && 'ring-2 ring-primary ring-offset-2'
+            )}
+          >
+            <MatchCard match={match} onSave={handleSave} savingId={savingId} />
+          </div>
         ))}
       </div>
     </div>

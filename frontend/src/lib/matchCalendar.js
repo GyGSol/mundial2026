@@ -61,6 +61,14 @@ function predictionActionLine(match) {
   return 'Predicción cerrada para este partido.';
 }
 
+export function predictionsUrlForMatch(match) {
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : 'https://mundial2026-pred.herokuapp.com';
+  const matchId = match?.id;
+  if (!matchId) return `${origin}/predictions`;
+  return `${origin}/predictions?match=${encodeURIComponent(matchId)}`;
+}
+
 function buildDescription(match, predictionsUrl) {
   const kickoff = formatMatchDate(match);
   const lock = formatLockAt(match.lockAt);
@@ -100,9 +108,7 @@ export function buildMatchIcs(match, { predictionsUrl } = {}) {
   const location = escapeIcsText(
     [match.stadium?.nameEn, match.stadium?.city, match.stadium?.country].filter(Boolean).join(', ')
   );
-  const url =
-    predictionsUrl ||
-    (typeof window !== 'undefined' ? `${window.location.origin}/predictions` : '/predictions');
+  const url = predictionsUrl || predictionsUrlForMatch(match);
   const description = escapeIcsText(buildDescription(match, url));
   const uid = `mundial2026-match-${match.externalId || match.id}@mundial2026-pred`;
 
