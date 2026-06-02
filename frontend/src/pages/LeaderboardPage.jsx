@@ -35,9 +35,8 @@ function buildRankingGroupOptions(groups, { includeNoGroup = false } = {}) {
 
 export default function LeaderboardPage() {
   const { user, isAuthenticated } = useAuth();
-  const [groups, setGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
-  const [selectedGroupId, setSelectedGroupId] = useState('__nogroup');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
 
   const canViewNoGroupRanking = useMemo(
     () => isAuthenticated && myGroups.some(isUserGroupAdmin),
@@ -45,21 +44,14 @@ export default function LeaderboardPage() {
   );
 
   const rankingGroupOptions = useMemo(
-    () => buildRankingGroupOptions(groups, { includeNoGroup: canViewNoGroupRanking }),
-    [groups, canViewNoGroupRanking]
+    () => buildRankingGroupOptions(myGroups, { includeNoGroup: canViewNoGroupRanking }),
+    [myGroups, canViewNoGroupRanking]
   );
 
   const selectedGroup = useMemo(
     () => rankingGroupOptions.find((g) => g.id === selectedGroupId) ?? rankingGroupOptions[0],
     [rankingGroupOptions, selectedGroupId]
   );
-
-  useEffect(() => {
-    competitionGroupsApi
-      .list()
-      .then((data) => setGroups(data.groups ?? []))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -88,6 +80,8 @@ export default function LeaderboardPage() {
   const effectiveGroupId =
     selectedGroup?.id ?? (canViewNoGroupRanking ? '__nogroup' : undefined);
 
+  const canLoadRanking = Boolean(effectiveGroupId);
+
   const fetchLeaderboard = useCallback(async () => {
     const [leaderboardData, liveData] = await Promise.all([
       leaderboardApi.list(effectiveGroupId),
@@ -99,7 +93,12 @@ export default function LeaderboardPage() {
     };
   }, [effectiveGroupId]);
 
-  const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId]);
+  const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId], {
+    enabled: canLoadRanking,
+  });
+
+  const rankingLoading = canLoadRanking && loading;
+  const rankingReady = !canLoadRanking || !loading;
 
   const displayGroup = data?.group || selectedGroup;
   const isNoGroupMode = effectiveGroupId === '__nogroup';
@@ -119,7 +118,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {!loading && <LiveMatchesBar matches={data?.liveMatches ?? []} />}
+      {rankingReady && <LiveMatchesBar matches={data?.liveMatches ?? []} />}
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
@@ -158,9 +157,9 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {!loading && !isAuthenticated && (
+      {rankingReady && !isAuthenticated && (
         <p className="text-sm text-muted-foreground">
-          Iniciá sesión para aparecer en el ranking si te unís a un grupo en{' '}
+          Iniciá sesión para ver el ranking de los grupos en los que participás. Unite a uno en{' '}
           <Link to="/groups" className="text-foreground underline">
             Grupos
           </Link>
@@ -168,7 +167,17 @@ export default function LeaderboardPage() {
         </p>
       )}
 
-      {loading && <p className="text-muted-foreground">Cargando ranking...</p>}
+      {rankingReady && isAuthenticated && rankingGroupOptions.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Todavía no participás en ningún grupo.{' '}
+          <Link to="/groups" className="text-foreground underline">
+            Creá uno o unite a un grupo existente
+          </Link>{' '}
+          para ver su ranking.
+        </p>
+      )}
+
+      {rankingLoading && <p className="text-muted-foreground">Cargando ranking...</p>}
       {error && <p className="text-destructive">{error}</p>}
 
       {hasPrizes ? (
@@ -191,11 +200,13 @@ export default function LeaderboardPage() {
         </Card>
       ) : null}
 
-      <LeaderboardTable
-        leaderboard={data?.leaderboard}
-        showGroupName={false}
-        prizesWinnersCount={prizesWinnersCount}
-      />
+      {canLoadRanking ? (
+        <LeaderboardTable
+          leaderboard={data?.leaderboard}
+          showGroupName={false}
+          prizesWinnersCount={prizesWinnersCount}
+        />
+      ) : null}
     </div>
   );
 }
