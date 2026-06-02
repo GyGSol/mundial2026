@@ -1,19 +1,34 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../api/client.js';
+import {
+  clearStoredSession,
+  formatSessionExpiry,
+  getStoredToken,
+  saveStoredSession,
+} from '../lib/sessionStorage.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState(
+    () => localStorage.getItem('sessionExpiresAt') || null
+  );
   const [loading, setLoading] = useState(true);
-  const refreshUser = async () => {
+
+  const refreshUser = useCallback(async () => {
     const data = await authApi.me();
     setUser(data.user);
     return data.user;
-  };
+  }, []);
+
+  const persistSession = useCallback(({ token, expiresAt }) => {
+    saveStoredSession({ token, expiresAt });
+    setSessionExpiresAt(expiresAt || null);
+  }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getStoredToken();
     if (!token) {
       setLoading(false);
       return;
@@ -22,24 +37,49 @@ export function AuthProvider({ children }) {
     authApi
       .me()
       .then((data) => setUser(data.user))
-      .catch(() => localStorage.removeItem('token'))
+      .catch(() => {
+        clearStoredSession();
+        setSessionExpiresAt(null);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!sessionExpiresAt || !user) return undefined;
+
+    const msUntilExpiry = new Date(sessionExpiresAt).getTime() - Date.now();
+    if (msUntilExpiry <= 0) {
+      clearStoredSession();
+      setUser(null);
+      setSessionExpiresAt(null);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      clearStoredSession();
+      setUser(null);
+      setSessionExpiresAt(null);
+    }, msUntilExpiry);
+
+    return () => window.clearTimeout(timer);
+  }, [sessionExpiresAt, user]);
 
   const value = useMemo(
     () => ({
       user,
       loading,
+      sessionExpiresAt,
+      sessionExpiresLabel: formatSessionExpiry(sessionExpiresAt),
       isAuthenticated: Boolean(user),
       async login(email, password) {
         const data = await authApi.login(email, password);
-        localStorage.setItem('token', data.token);
+        persistSession(data);
         setUser(data.user);
         return data.user;
       },
       async register(name, email, password) {
         const data = await authApi.register(name, email, password);
-        localStorage.setItem('token', data.token);
+        persistSession(data);
         setUser(data.user);
         return data.user;
       },
@@ -51,12 +91,18 @@ export function AuthProvider({ children }) {
         setUser(data.user);
         return data.user;
       },
-      logout() {
-        localStorage.removeItem('token');
+      async logout() {
+        try {
+          await authApi.logout();
+        } catch {
+          // ignore network errors on logout
+        }
+        clearStoredSession();
+        setSessionExpiresAt(null);
         setUser(null);
       },
     }),
-    [user, loading]
+    [user, loading, sessionExpiresAt, persistSession, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

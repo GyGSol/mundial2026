@@ -1,9 +1,10 @@
 import { formatRequestError } from '../lib/apiError.js';
+import { clearStoredSession, getStoredToken } from '../lib/sessionStorage.js';
 
 const API_BASE = '/api';
 
 async function request(path, options = {}) {
-  const token = localStorage.getItem('token');
+  const token = getStoredToken();
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -20,6 +21,9 @@ async function request(path, options = {}) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
+    if (res.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/register')) {
+      clearStoredSession();
+    }
     throw new Error(formatRequestError(null, res, data));
   }
 
@@ -38,6 +42,7 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
   me: () => request('/auth/me'),
+  logout: () => request('/auth/logout', { method: 'POST' }),
   updateProfile: (name) =>
     request('/auth/me', {
       method: 'PATCH',

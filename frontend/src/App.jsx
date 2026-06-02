@@ -13,6 +13,8 @@ import AdminGroupsPage from './pages/admin/AdminGroupsPage.jsx';
 import AdminPredictionsPage from './pages/admin/AdminPredictionsPage.jsx';
 import AdminSimulationPage from './pages/admin/AdminSimulationPage.jsx';
 import Layout from './components/Layout.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import GuestRoute from './components/GuestRoute.jsx';
 import PredictionsPage from './pages/PredictionsPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import RulesPage from './pages/RulesPage.jsx';
@@ -20,6 +22,7 @@ import WorldCupPage from './pages/WorldCupPage.jsx';
 import SimulationPage from './pages/SimulationPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import WelcomePage from './pages/WelcomePage.jsx';
 
 import CreateGroupPage from './pages/CreateGroupPage.jsx';
 import GroupsPage from './pages/GroupsPage.jsx';
@@ -44,19 +47,26 @@ export default function App() {
                 <Route path="simulation" element={<AdminSimulationPage />} />
               </Route>
             </Route>
-            <Route element={<Layout />}>
-              <Route index element={<LeaderboardPage />} />
-              <Route path="predictions" element={<PredictionsPage />} />
-              <Route path="leaderboard" element={<Navigate to="/" replace />} />
-              <Route path="groups/new" element={<CreateGroupPage />} />
-              <Route path="groups" element={<GroupsPage />} />
-              <Route path="invite/:groupId" element={<InviteJoinPage />} />
-              <Route path="mundial" element={<WorldCupPage />} />
-              <Route path="simulation" element={<SimulationPage />} />
-              <Route path="rules" element={<RulesPage />} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="register" element={<RegisterPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/" element={<WelcomePage />} />
+            <Route path="/login" element={<GuestRoute />}>
+              <Route index element={<LoginPage />} />
+            </Route>
+            <Route path="/register" element={<GuestRoute />}>
+              <Route index element={<RegisterPage />} />
+            </Route>
+            <Route path="/invite/:groupId" element={<InviteJoinPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                <Route path="ranking" element={<LeaderboardPage />} />
+                <Route path="predictions" element={<PredictionsPage />} />
+                <Route path="leaderboard" element={<Navigate to="/ranking" replace />} />
+                <Route path="groups/new" element={<CreateGroupPage />} />
+                <Route path="groups" element={<GroupsPage />} />
+                <Route path="mundial" element={<WorldCupPage />} />
+                <Route path="simulation" element={<SimulationPage />} />
+                <Route path="rules" element={<RulesPage />} />
+                <Route path="*" element={<Navigate to="/ranking" replace />} />
+              </Route>
             </Route>
           </Routes>
         </BrowserRouter>

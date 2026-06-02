@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../lib/apiError.js';
@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export default function LoginPage() {
   const { login, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const joinGroupId = searchParams.get('joinGroup');
   const [email, setEmail] = useState('');
@@ -49,21 +50,29 @@ export default function LoginPage() {
         return;
       }
 
-      navigate('/');
+      const from = location.state?.from?.pathname;
+      const destination =
+        from && !['/login', '/register', '/'].includes(from) ? from : '/ranking';
+      navigate(destination, { replace: true });
     } catch (err) {
       setError(err.message);
     }
   };
 
   return (
-    <div className="mx-auto flex max-w-md flex-col gap-4">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4 py-10">
+      <p className="text-center text-sm text-muted-foreground">
+        <Link to="/" className="text-foreground underline">
+          Volver al inicio
+        </Link>
+      </p>
       <Card>
         <CardHeader>
           <CardTitle>Ingresar</CardTitle>
           <CardDescription>
             {joinGroupId
-              ? 'Ingresá para unirte al grupo de la invitación.'
-              : 'Accedé para guardar pronósticos. Los grupos se gestionan en la pestaña Grupos.'}
+              ? 'Ingresá para unirte al grupo de la invitación. La sesión dura 2 horas.'
+              : 'Solo jugadores registrados. Tu sesión permanece activa 2 horas después de ingresar.'}
           </CardDescription>
         </CardHeader>
         <CardContent>

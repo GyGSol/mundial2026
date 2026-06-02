@@ -157,17 +157,7 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {rankingReady && !isAuthenticated && (
-        <p className="text-sm text-muted-foreground">
-          Iniciá sesión para ver el ranking de los grupos en los que participás. Unite a uno en{' '}
-          <Link to="/groups" className="text-foreground underline">
-            Grupos
-          </Link>
-          .
-        </p>
-      )}
-
-      {rankingReady && isAuthenticated && rankingGroupOptions.length === 0 && (
+      {rankingReady && rankingGroupOptions.length === 0 && (
         <p className="text-sm text-muted-foreground">
           Todavía no participás en ningún grupo.{' '}
           <Link to="/groups" className="text-foreground underline">

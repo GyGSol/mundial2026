@@ -10,19 +10,19 @@ const navClass = ({ isActive }) =>
     : 'text-muted-foreground hover:text-foreground';
 
 export default function Layout() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, sessionExpiresLabel } = useAuth();
   const [editPlayerOpen, setEditPlayerOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link to="/" className="text-lg font-semibold tracking-tight">
+          <Link to="/ranking" className="text-lg font-semibold tracking-tight">
             Mundial 2026
           </Link>
 
           <nav className="flex flex-wrap items-center gap-4 text-sm">
-            <NavLink to="/" end className={navClass}>
+            <NavLink to="/ranking" className={navClass}>
               Ranking
             </NavLink>
             <NavLink to="/predictions" className={navClass}>
@@ -42,40 +42,28 @@ export default function Layout() {
             </NavLink>
           </nav>
 
-          <div className="flex items-center gap-3 text-sm">
-            {isAuthenticated ? (
-              <>
-                <span className="text-muted-foreground">
-                  {user.name}
-                  {user.competitionGroup?.name && (
-                    <span className="text-foreground"> · {user.competitionGroup.name}</span>
-                  )}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditPlayerOpen(true)}
-                >
-                  Editar jugador
-                </Button>
-                <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
-                <Button variant="outline" size="sm" onClick={logout}>
-                  Salir
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Ingresar
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button size="sm">Registrarse</Button>
-                </Link>
-              </>
-            )}
+          <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
+            <span className="text-muted-foreground">
+              {user.name}
+              {user.competitionGroup?.name && (
+                <span className="text-foreground"> · {user.competitionGroup.name}</span>
+              )}
+              {sessionExpiresLabel ? (
+                <span className="hidden sm:inline"> · sesión hasta {sessionExpiresLabel}</span>
+              ) : null}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditPlayerOpen(true)}
+            >
+              Editar jugador
+            </Button>
+            <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
+            <Button variant="outline" size="sm" onClick={() => logout()}>
+              Salir
+            </Button>
           </div>
         </div>
       </header>

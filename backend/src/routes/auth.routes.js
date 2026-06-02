@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { User } from '../models/User.js';
-import { authMiddleware, signToken } from '../middleware/auth.middleware.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
+import { createUserSession, revokeSessionToken } from '../services/sessionService.js';
 import {
   getCompetitionGroupById,
   listUserCompetitionGroups,
@@ -57,9 +58,10 @@ router.post('/register', async (req, res, next) => {
       activeCompetitionGroupId: null,
     });
 
-    const token = signToken(user._id);
+    const session = await createUserSession(user._id);
     res.status(201).json({
-      token,
+      token: session.token,
+      expiresAt: session.expiresAt,
       user: await serializeUser(user),
     });
   } catch (err) {
@@ -76,11 +78,23 @@ router.post('/login', async (req, res, next) => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = signToken(user._id);
+    const session = await createUserSession(user._id);
     res.json({
-      token,
+      token: session.token,
+      expiresAt: session.expiresAt,
       user: await serializeUser(user),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/logout', authMiddleware, async (req, res, next) => {
+  try {
+    const header = req.headers.authorization;
+    const token = header?.startsWith('Bearer ') ? header.slice(7) : '';
+    await revokeSessionToken(token);
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

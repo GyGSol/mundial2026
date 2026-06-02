@@ -61,7 +61,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-lg flex-col gap-4">
+    <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-4 px-4 py-10">
+      <p className="text-center text-sm text-muted-foreground">
+        <Link to="/" className="text-foreground underline">
+          Volver al inicio
+        </Link>
+      </p>
       <Card>
         <CardHeader>
           <CardTitle>Registro de jugador</CardTitle>
