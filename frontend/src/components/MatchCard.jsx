@@ -1,7 +1,5 @@
-import { CalendarPlus } from 'lucide-react';
 import PredictionForm from './PredictionForm.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
-import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
   CardContent,
@@ -11,11 +9,6 @@ import {
 import { cn } from '@/lib/utils';
 import { matchInvolvesArgentina } from '@/lib/teamMeta';
 import { formatMatchDate, formatLockHint } from '@/lib/dateFormat';
-import {
-  canExportCalendarReminder,
-  downloadMatchReminderIcs,
-  formatReminderHint,
-} from '@/lib/predictionCalendar.js';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -28,8 +21,6 @@ export default function MatchCard({ match, onSave, savingId }) {
   const hasPrediction = match.hasPrediction || Boolean(match.prediction);
   const isArgentinaMatch = matchInvolvesArgentina(match);
   const lockHint = formatLockHint(match);
-  const showCalendarReminder = canExportCalendarReminder(match);
-  const reminderHint = showCalendarReminder ? formatReminderHint(match) : null;
 
   return (
     <Card
@@ -76,24 +67,9 @@ export default function MatchCard({ match, onSave, savingId }) {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-2">
-        {lockHint && match.predictionOpen ? (
+        {lockHint && match.predictionOpen && (
           <p className="text-xs text-muted-foreground">{lockHint}</p>
-        ) : null}
-        {reminderHint ? (
-          <p className="text-xs text-muted-foreground">{reminderHint}</p>
-        ) : null}
-        {showCalendarReminder ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-fit gap-2"
-            onClick={() => downloadMatchReminderIcs(match)}
-          >
-            <CalendarPlus className="size-4 shrink-0" aria-hidden />
-            Agregar recordatorio al calendario
-          </Button>
-        ) : null}
+        )}
         <PredictionForm match={match} onSave={onSave} saving={savingId === match.id} />
       </CardContent>
     </Card>

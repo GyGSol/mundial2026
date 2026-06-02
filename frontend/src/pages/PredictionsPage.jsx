@@ -1,14 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Download } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import { matchesApi, predictionsApi } from '../api/client.js';
 import MatchCard from '../components/MatchCard.jsx';
-import { Button } from '@/components/ui/button.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import {
-  canExportCalendarReminder,
-  downloadBulkRemindersIcs,
-} from '../lib/predictionCalendar.js';
 import {
   Select,
   SelectContent,
@@ -61,19 +55,6 @@ export default function PredictionsPage() {
   };
 
   const matches = data?.matches ?? [];
-  const exportableReminderCount = useMemo(
-    () => matches.filter(canExportCalendarReminder).length,
-    [matches]
-  );
-
-  const handleBulkCalendar = () => {
-    const count = downloadBulkRemindersIcs(matches);
-    if (count > 0) {
-      setMessage(`Descargado calendario con ${count} recordatorio(s). Abrilo en tu app de calendario.`);
-      return;
-    }
-    setMessage('No hay partidos con recordatorio disponible en este momento.');
-  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -118,14 +99,6 @@ export default function PredictionsPage() {
               ))}
             </SelectContent>
           </Select>
-
-          {exportableReminderCount > 0 ? (
-            <Button type="button" variant="outline" className="gap-2" onClick={handleBulkCalendar}>
-              <Download className="size-4 shrink-0" aria-hidden />
-              Recordatorios (.ics)
-              <span className="text-muted-foreground">({exportableReminderCount})</span>
-            </Button>
-          ) : null}
         </div>
       </div>
 
