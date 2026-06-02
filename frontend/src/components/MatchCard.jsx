@@ -21,6 +21,38 @@ export default function MatchCard({ match, onSave, savingId, isScheduled, onSche
   const status = statusLabels[match.status] || statusLabels.upcoming;
   const hasPrediction = match.hasPrediction || Boolean(match.prediction);
   const isArgentinaMatch = matchInvolvesArgentina(match);
+  const matchMeta = (
+    <>
+      Grupo {match.group} · {formatMatchDate(match)}
+    </>
+  );
+
+  const headerBadges = (
+    <>
+      {match.status !== 'upcoming' && (
+        <Badge variant={status.variant}>{status.text}</Badge>
+      )}
+      {isArgentinaMatch && (
+        <Badge
+          variant="outline"
+          className="border-sky-400/70 bg-sky-100/70 text-sky-900"
+        >
+          🇦🇷 Argentina
+        </Badge>
+      )}
+      {hasPrediction && (
+        <Badge
+          variant="outline"
+          className={cn(
+            'border-amber-300/80 bg-amber-100/60 text-amber-900',
+            isArgentinaMatch && 'border-amber-300/60 bg-amber-50/80'
+          )}
+        >
+          Predicción cargada
+        </Badge>
+      )}
+    </>
+  );
 
   return (
     <Card
@@ -37,43 +69,23 @@ export default function MatchCard({ match, onSave, savingId, isScheduled, onSche
       )}
     >
       <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            {match.status !== 'upcoming' && (
-              <Badge variant={status.variant}>{status.text}</Badge>
-            )}
-            {isArgentinaMatch && (
-              <Badge
-                variant="outline"
-                className="border-sky-400/70 bg-sky-100/70 text-sky-900"
-              >
-                🇦🇷 Argentina
-              </Badge>
-            )}
-            {hasPrediction && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  'border-amber-300/80 bg-amber-100/60 text-amber-900',
-                  isArgentinaMatch && 'border-amber-300/60 bg-amber-50/80'
-                )}
-              >
-                Predicción cargada
-              </Badge>
-            )}
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
-            {onScheduled && (
+        <div className="flex flex-col gap-2 md:hidden">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{headerBadges}</div>
+            {onScheduled ? (
               <MatchScheduleBadge
                 match={match}
                 isScheduled={isScheduled}
                 onScheduled={onScheduled}
               />
-            )}
-            <CardDescription className="text-right">
-              Grupo {match.group} · {formatMatchDate(match)}
-            </CardDescription>
+            ) : null}
           </div>
+          <CardDescription className="w-full text-center">{matchMeta}</CardDescription>
+        </div>
+
+        <div className="hidden flex-wrap items-start justify-between gap-2 md:flex">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{headerBadges}</div>
+          <CardDescription className="shrink-0 text-right">{matchMeta}</CardDescription>
         </div>
       </CardHeader>
 
