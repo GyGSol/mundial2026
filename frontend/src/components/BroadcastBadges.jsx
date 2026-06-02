@@ -3,21 +3,21 @@ import { cn } from '@/lib/utils';
 /** Logo height (px) and max width ≈ height × φ² (φ ≈ 1.618) for balanced proportions */
 const SIZE_STYLES = {
   xs: {
-    height: 'h-3.5',
-    maxWidth: 'max-w-9',
-    gap: 'gap-1',
+    height: 'h-4',
+    maxWidth: 'max-w-10',
+    gap: 'gap-1.5',
     wrap: 'flex-nowrap',
   },
   sm: {
-    height: 'h-4',
-    maxWidth: 'max-w-10',
+    height: 'h-5',
+    maxWidth: 'max-w-11',
     gap: 'gap-1.5',
     wrap: 'flex-wrap',
   },
   md: {
-    height: 'h-[1.125rem]',
-    maxWidth: 'max-w-11',
-    gap: 'gap-1.5',
+    height: 'h-5',
+    maxWidth: 'max-w-12',
+    gap: 'gap-2',
     wrap: 'flex-wrap',
   },
 };
@@ -63,7 +63,7 @@ export default function BroadcastBadges({
 
   return (
     <div className={cn('flex w-full flex-col items-center gap-1', className)}>
-      <p className="text-center text-[11px] font-medium text-muted-foreground">{label}</p>
+      <p className="text-center text-xs font-medium text-muted-foreground">{label}</p>
       {logos}
     </div>
   );
