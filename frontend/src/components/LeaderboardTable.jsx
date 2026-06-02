@@ -22,19 +22,12 @@ function buildPrizeByPosition(prizes = []) {
   );
 }
 
-/** Colores de la barra lateral por puesto premiado (como en la referencia visual). */
-function getPrizeRankAccent(rank, prizesWinnersCount) {
-  if (rank > prizesWinnersCount || prizesWinnersCount <= 0) return null;
-  if (rank <= 2) return 'emerald';
-  if (rank === 3) return 'sky';
-  return 'amber';
-}
+const prizedRankCellClass =
+  'border-l-4 border-l-emerald-500 text-primary font-semibold';
 
-const prizeRankAccentClasses = {
-  emerald: 'border-l-4 border-l-emerald-500 text-primary font-semibold',
-  sky: 'border-l-4 border-l-sky-400 text-primary font-semibold',
-  amber: 'border-l-4 border-l-amber-400 text-primary font-semibold',
-};
+function isPrizedRank(rank, prizesWinnersCount) {
+  return prizesWinnersCount > 0 && rank <= prizesWinnersCount;
+}
 
 export default function LeaderboardTable({
   leaderboard,
@@ -75,16 +68,14 @@ export default function LeaderboardTable({
                 showPrizes && row.rank <= prizesWinnersCount
                   ? (prizeByPosition.get(row.rank) || '').trim() || '—'
                   : null;
-              const prizeAccent = showPrizes
-                ? getPrizeRankAccent(row.rank, prizesWinnersCount)
-                : null;
+              const prizedRank = showPrizes && isPrizedRank(row.rank, prizesWinnersCount);
 
               return (
                 <TableRow key={row.id}>
                   <TableCell
                     className={cn(
                       'text-muted-foreground tabular-nums',
-                      prizeAccent ? prizeRankAccentClasses[prizeAccent] : null
+                      prizedRank ? prizedRankCellClass : null
                     )}
                   >
                     {row.rank}
