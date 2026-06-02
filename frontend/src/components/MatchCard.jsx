@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { matchInvolvesArgentina } from '@/lib/teamMeta';
-import { formatMatchDate, formatLockHint } from '@/lib/dateFormat';
+import { formatMatchDate } from '@/lib/dateFormat';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -20,7 +20,6 @@ export default function MatchCard({ match, onSave, savingId }) {
   const status = statusLabels[match.status] || statusLabels.upcoming;
   const hasPrediction = match.hasPrediction || Boolean(match.prediction);
   const isArgentinaMatch = matchInvolvesArgentina(match);
-  const lockHint = formatLockHint(match);
 
   return (
     <Card
@@ -67,9 +66,6 @@ export default function MatchCard({ match, onSave, savingId }) {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-2">
-        {lockHint && match.predictionOpen && (
-          <p className="text-xs text-muted-foreground">{lockHint}</p>
-        )}
         <PredictionForm
           match={match}
           onSave={onSave}

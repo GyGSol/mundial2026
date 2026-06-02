@@ -49,11 +49,3 @@ export function formatMatchDate(match, { showTimezone = false } = {}) {
 
   return raw;
 }
-
-export function formatLockHint(match) {
-  if (!match?.lockAt) return null;
-  const timeZone = match?.displayTimezone || ARGENTINA_TIMEZONE;
-  const lockText = tryFormatFromDate(match.lockAt, timeZone);
-  if (!lockText) return null;
-  return `Cierre de predicciones: ${lockText}`;
-}
