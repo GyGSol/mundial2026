@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import EditPlayerDialog from './EditPlayerDialog.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
 const navClass = ({ isActive }) =>
@@ -9,6 +11,7 @@ const navClass = ({ isActive }) =>
 
 export default function Layout() {
   const { user, logout, isAuthenticated } = useAuth();
+  const [editPlayerOpen, setEditPlayerOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,6 +51,15 @@ export default function Layout() {
                     <span className="text-foreground"> · {user.competitionGroup.name}</span>
                   )}
                 </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditPlayerOpen(true)}
+                >
+                  Editar jugador
+                </Button>
+                <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
                 <Button variant="outline" size="sm" onClick={logout}>
                   Salir
                 </Button>

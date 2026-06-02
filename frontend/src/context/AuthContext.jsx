@@ -46,6 +46,11 @@ export function AuthProvider({ children }) {
       async refreshUser() {
         return refreshUser();
       },
+      async updateProfile(name) {
+        const data = await authApi.updateProfile(name);
+        setUser(data.user);
+        return data.user;
+      },
       logout() {
         localStorage.removeItem('token');
         setUser(null);

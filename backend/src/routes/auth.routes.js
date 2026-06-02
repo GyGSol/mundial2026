@@ -94,4 +94,28 @@ router.get('/me', authMiddleware, async (req, res, next) => {
   }
 });
 
+router.patch('/me', authMiddleware, async (req, res, next) => {
+  try {
+    if (req.body?.email !== undefined) {
+      return res.status(400).json({ error: 'El email no se puede modificar' });
+    }
+
+    const trimmedName = String(req.body?.name ?? '').trim();
+    if (!trimmedName) {
+      return res.status(400).json({ error: 'El nombre de jugador es obligatorio' });
+    }
+
+    if (trimmedName.length > 80) {
+      return res.status(400).json({ error: 'El nombre no puede superar 80 caracteres' });
+    }
+
+    req.user.name = trimmedName;
+    await req.user.save();
+
+    res.json({ user: await serializeUser(req.user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

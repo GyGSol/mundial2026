@@ -38,6 +38,11 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     }),
   me: () => request('/auth/me'),
+  updateProfile: (name) =>
+    request('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
 };
 
 export const competitionGroupsApi = {
