@@ -22,18 +22,32 @@ function formatLastUpdated(date) {
   return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function isUserGroupAdmin(group) {
+  return Boolean(group?.isAdmin) || group?.role === 'owner';
+}
+
 /** Opciones del ranking: un solo grupo por vista (sin modo general). */
-function buildRankingGroupOptions(groups) {
+function buildRankingGroupOptions(groups, { includeNoGroup = false } = {}) {
   const real = (groups ?? []).filter((g) => g.id !== '__nogroup' && !g.isVirtual);
+  if (!includeNoGroup) return real;
   return [{ id: '__nogroup', name: 'Sin grupo' }, ...real];
 }
 
 export default function LeaderboardPage() {
   const { user, isAuthenticated } = useAuth();
   const [groups, setGroups] = useState([]);
+  const [myGroups, setMyGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('__nogroup');
 
-  const rankingGroupOptions = useMemo(() => buildRankingGroupOptions(groups), [groups]);
+  const canViewNoGroupRanking = useMemo(
+    () => isAuthenticated && myGroups.some(isUserGroupAdmin),
+    [isAuthenticated, myGroups]
+  );
+
+  const rankingGroupOptions = useMemo(
+    () => buildRankingGroupOptions(groups, { includeNoGroup: canViewNoGroupRanking }),
+    [groups, canViewNoGroupRanking]
+  );
 
   const selectedGroup = useMemo(
     () => rankingGroupOptions.find((g) => g.id === selectedGroupId) ?? rankingGroupOptions[0],
@@ -48,6 +62,17 @@ export default function LeaderboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setMyGroups([]);
+      return;
+    }
+    competitionGroupsApi
+      .my()
+      .then((data) => setMyGroups(data.groups ?? []))
+      .catch(() => setMyGroups([]));
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     if (!rankingGroupOptions.length) return;
 
     setSelectedGroupId((current) => {
@@ -60,7 +85,8 @@ export default function LeaderboardPage() {
     });
   }, [rankingGroupOptions, user?.competitionGroup?.id]);
 
-  const effectiveGroupId = selectedGroup?.id ?? '__nogroup';
+  const effectiveGroupId =
+    selectedGroup?.id ?? (canViewNoGroupRanking ? '__nogroup' : undefined);
 
   const fetchLeaderboard = useCallback(async () => {
     const [leaderboardData, liveData] = await Promise.all([
