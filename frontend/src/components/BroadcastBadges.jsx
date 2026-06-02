@@ -4,16 +4,19 @@ export default function BroadcastBadges({ broadcasters = [], className, size = '
   if (!broadcasters?.length) return null;
 
   const heightClass = size === 'md' ? 'h-5' : 'h-4';
+  const maxWidthClass = size === 'md' ? 'max-w-[5.5rem]' : 'max-w-[4.5rem]';
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
+    <div className={cn('flex flex-wrap items-center gap-2', className)}>
       {broadcasters.map((broadcaster) => (
         <img
           key={broadcaster.id}
           src={broadcaster.logo}
           alt={broadcaster.name}
           title={broadcaster.name}
-          className={cn(heightClass, 'w-auto rounded-sm object-contain')}
+          loading="lazy"
+          decoding="async"
+          className={cn(heightClass, maxWidthClass, 'w-auto shrink-0 object-contain')}
         />
       ))}
     </div>
