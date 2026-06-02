@@ -16,12 +16,6 @@ const statColumns = [
   { key: 'gt', label: 'GT', title: 'Goles totales' },
 ];
 
-function buildPrizeByPosition(prizes = []) {
-  return new Map(
-    (Array.isArray(prizes) ? prizes : []).map((row) => [Number(row.position), row.prize || ''])
-  );
-}
-
 const prizedRankCellClass =
   'border-l-4 border-l-emerald-500 text-primary font-semibold';
 
@@ -32,15 +26,13 @@ function isPrizedRank(rank, prizesWinnersCount) {
 export default function LeaderboardTable({
   leaderboard,
   showGroupName = false,
-  prizes = [],
   prizesWinnersCount = 0,
 }) {
   if (!leaderboard?.length) {
     return <p className="text-muted-foreground">Aún no hay jugadores en el ranking.</p>;
   }
 
-  const showPrizes = prizesWinnersCount > 0;
-  const prizeByPosition = buildPrizeByPosition(prizes);
+  const showPrizedRanks = prizesWinnersCount > 0;
 
   return (
     <Card>
@@ -58,17 +50,12 @@ export default function LeaderboardTable({
               <TableHead className="text-center" title="Puntos bonus (consuelo)">
                 PB
               </TableHead>
-              {showPrizes ? <TableHead>Premio</TableHead> : null}
               <TableHead className="text-right">Puntos</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {leaderboard.map((row) => {
-              const prizeText =
-                showPrizes && row.rank <= prizesWinnersCount
-                  ? (prizeByPosition.get(row.rank) || '').trim() || '—'
-                  : null;
-              const prizedRank = showPrizes && isPrizedRank(row.rank, prizesWinnersCount);
+              const prizedRank = showPrizedRanks && isPrizedRank(row.rank, prizesWinnersCount);
 
               return (
                 <TableRow key={row.id}>
@@ -96,11 +83,6 @@ export default function LeaderboardTable({
                     </TableCell>
                   ))}
                   <TableCell className="text-center tabular-nums">{row.pb ?? 0}</TableCell>
-                  {showPrizes ? (
-                    <TableCell className="max-w-[200px] text-sm text-muted-foreground">
-                      {prizeText ?? '—'}
-                    </TableCell>
-                  ) : null}
                   <TableCell className="text-right font-semibold tabular-nums">
                     {row.totalPoints}
                   </TableCell>

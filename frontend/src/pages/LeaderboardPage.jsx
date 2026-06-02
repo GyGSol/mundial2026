@@ -168,7 +168,6 @@ export default function LeaderboardPage() {
       <LeaderboardTable
         leaderboard={data?.leaderboard}
         showGroupName={false}
-        prizes={groupPrizes}
         prizesWinnersCount={prizesWinnersCount}
       />
     </div>
