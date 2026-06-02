@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { matchInvolvesArgentina } from '@/lib/teamMeta';
 import { formatMatchDate } from '@/lib/dateFormat';
+import MatchScheduleBadge from '@/components/MatchScheduleBadge.jsx';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -16,7 +17,7 @@ const statusLabels = {
   finished: { text: 'Finalizado', variant: 'default' },
 };
 
-export default function MatchCard({ match, onSave, savingId }) {
+export default function MatchCard({ match, onSave, savingId, isScheduled, onScheduled }) {
   const status = statusLabels[match.status] || statusLabels.upcoming;
   const hasPrediction = match.hasPrediction || Boolean(match.prediction);
   const isArgentinaMatch = matchInvolvesArgentina(match);
@@ -36,8 +37,8 @@ export default function MatchCard({ match, onSave, savingId }) {
       )}
     >
       <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             {match.status !== 'upcoming' && (
               <Badge variant={status.variant}>{status.text}</Badge>
             )}
@@ -61,9 +62,18 @@ export default function MatchCard({ match, onSave, savingId }) {
               </Badge>
             )}
           </div>
-          <CardDescription>
-            Grupo {match.group} · {formatMatchDate(match)}
-          </CardDescription>
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            {onScheduled && (
+              <MatchScheduleBadge
+                match={match}
+                isScheduled={isScheduled}
+                onScheduled={onScheduled}
+              />
+            )}
+            <CardDescription className="text-right">
+              Grupo {match.group} · {formatMatchDate(match)}
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
 

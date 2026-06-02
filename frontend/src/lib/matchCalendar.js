@@ -97,7 +97,7 @@ export function canScheduleMatchReminder(match) {
   return alarmAt && alarmAt.getTime() > Date.now();
 }
 
-export function buildMatchIcs(match, { predictionsUrl } = {}) {
+function buildVeventLines(match, { predictionsUrl } = {}) {
   const kickoff = new Date(match.kickoffAt);
   if (Number.isNaN(kickoff.getTime())) {
     throw new Error('Este partido no tiene horario de inicio');
@@ -113,11 +113,6 @@ export function buildMatchIcs(match, { predictionsUrl } = {}) {
   const uid = `mundial2026-match-${match.externalId || match.id}@mundial2026-pred`;
 
   return [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Mundial2026 Predicciones//ES',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${toIcsUtc(new Date())}`,
@@ -132,10 +127,36 @@ export function buildMatchIcs(match, { predictionsUrl } = {}) {
     'DESCRIPTION:Recordá tu predicción del Mundial',
     'END:VALARM',
     'END:VEVENT',
+  ].filter(Boolean);
+}
+
+function wrapIcsCalendar(eventBlocks) {
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Mundial2026 Predicciones//ES',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    ...eventBlocks,
     'END:VCALENDAR',
-  ]
-    .filter(Boolean)
-    .join('\r\n');
+  ].join('\r\n');
+}
+
+export function buildMatchIcs(match, options = {}) {
+  return wrapIcsCalendar(buildVeventLines(match, options));
+}
+
+export function buildAllMatchesIcs(matches = []) {
+  const schedulable = matches.filter(canScheduleMatchReminder);
+  if (!schedulable.length) {
+    throw new Error('No hay partidos próximos para agendar');
+  }
+  const events = schedulable.flatMap((match) => buildVeventLines(match));
+  return wrapIcsCalendar(events);
+}
+
+export function getSchedulableMatches(matches = []) {
+  return matches.filter(canScheduleMatchReminder);
 }
 
 function isIosDevice() {
@@ -146,11 +167,8 @@ function isIosDevice() {
   );
 }
 
-/** Opens ICS in the same user gesture (avoids navigator.share Permission denied). */
-export function scheduleMatchInCalendar(match) {
-  const ics = buildMatchIcs(match);
+function openIcsBlob(ics, filename) {
   const blob = new Blob([ics], { type: 'text/calendar' });
-  const filename = `mundial-partido-${match.externalId || match.id}.ics`;
   const blobUrl = URL.createObjectURL(blob);
 
   try {
@@ -168,4 +186,15 @@ export function scheduleMatchInCalendar(match) {
   } finally {
     window.setTimeout(() => URL.revokeObjectURL(blobUrl), 120_000);
   }
+}
+
+/** Opens ICS in the same user gesture (avoids navigator.share Permission denied). */
+export function scheduleMatchInCalendar(match) {
+  const ics = buildMatchIcs(match);
+  openIcsBlob(ics, `mundial-partido-${match.externalId || match.id}.ics`);
+}
+
+export function scheduleAllMatchesInCalendar(matches) {
+  const ics = buildAllMatchesIcs(matches);
+  openIcsBlob(ics, 'mundial-partidos.ics');
 }

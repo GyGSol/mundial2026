@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { matchesApi, predictionsApi } from '../api/client.js';
 import MatchCard from '../components/MatchCard.jsx';
+import ScheduleAllButton from '../components/ScheduleAllButton.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
+import { useScheduledMatches } from '../hooks/useScheduledMatches.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { cn } from '@/lib/utils';
 import {
@@ -27,6 +29,7 @@ export default function PredictionsPage() {
   const [savingId, setSavingId] = useState(null);
   const [message, setMessage] = useState('');
   const scrolledToMatch = useRef(false);
+  const { isScheduled, markScheduled, markManyScheduled } = useScheduledMatches();
 
   useEffect(() => {
     if (!focusMatchId) return;
@@ -91,7 +94,12 @@ export default function PredictionsPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <ScheduleAllButton
+            matches={matches}
+            isScheduled={isScheduled}
+            onScheduledMany={markManyScheduled}
+          />
           <Select
             value={statusFilter || 'all'}
             onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}
@@ -142,7 +150,13 @@ export default function PredictionsPage() {
               focusMatchId === match.id && 'ring-2 ring-primary ring-offset-2'
             )}
           >
-            <MatchCard match={match} onSave={handleSave} savingId={savingId} />
+            <MatchCard
+              match={match}
+              onSave={handleSave}
+              savingId={savingId}
+              isScheduled={isScheduled}
+              onScheduled={markScheduled}
+            />
           </div>
         ))}
       </div>
