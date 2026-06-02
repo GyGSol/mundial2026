@@ -1,5 +1,6 @@
-function formatInUserTimezone(date) {
-  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+export const ARGENTINA_TIMEZONE = 'America/Argentina/Buenos_Aires';
+
+function formatInTimezone(date, timeZone) {
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
     month: '2-digit',
@@ -7,15 +8,15 @@ function formatInUserTimezone(date) {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone: userTimeZone,
+    timeZone,
   }).format(date);
 }
 
-function tryFormatFromDate(value) {
+function tryFormatFromDate(value, timeZone = ARGENTINA_TIMEZONE) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return formatInUserTimezone(date);
+  return formatInTimezone(date, timeZone);
 }
 
 function formatTimezoneShort(timeZone) {
@@ -32,19 +33,18 @@ function formatTimezoneShort(timeZone) {
 }
 
 export function formatMatchDate(match, { showTimezone = false } = {}) {
-  // kickoffAt is canonical UTC; display in the player's browser timezone.
-  const fromKickoff = tryFormatFromDate(match?.kickoffAt);
+  const timeZone = match?.displayTimezone || ARGENTINA_TIMEZONE;
+  const fromKickoff = tryFormatFromDate(match?.kickoffAt, timeZone);
   if (fromKickoff) {
     if (!showTimezone) return fromKickoff;
-    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const label = formatTimezoneShort(userTz);
+    const label = formatTimezoneShort(timeZone);
     return label ? `${fromKickoff} (${label})` : fromKickoff;
   }
 
   const raw = String(match?.localDate || '').trim();
   if (!raw) return '';
 
-  const parsed = tryFormatFromDate(raw);
+  const parsed = tryFormatFromDate(raw, timeZone);
   if (parsed) return parsed;
 
   return raw;
@@ -52,7 +52,8 @@ export function formatMatchDate(match, { showTimezone = false } = {}) {
 
 export function formatLockHint(match) {
   if (!match?.lockAt) return null;
-  const lockText = tryFormatFromDate(match.lockAt);
+  const timeZone = match?.displayTimezone || ARGENTINA_TIMEZONE;
+  const lockText = tryFormatFromDate(match.lockAt, timeZone);
   if (!lockText) return null;
   return `Cierre de predicciones: ${lockText}`;
 }

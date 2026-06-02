@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
+import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
 function LiveMatchCard({ match }) {
   const homeName = match.homeTeam?.nameEn || 'Local';
@@ -48,6 +49,7 @@ function LiveMatchCard({ match }) {
         <span className="text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}
         </span>
+        <BroadcastBadges broadcasters={match.broadcasters} size="md" />
       </CardContent>
     </Card>
   );

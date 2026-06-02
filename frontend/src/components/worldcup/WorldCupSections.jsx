@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { formatMatchDate } from '@/lib/dateFormat';
+import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
 function TeamCell({ team, fallback = '—' }) {
   const name = team?.nameEn || fallback;
@@ -219,6 +220,7 @@ export function KnockoutSection({ phases }) {
                       {match.stadium.city ? ` · ${match.stadium.city}` : ''}
                     </span>
                   )}
+                  <BroadcastBadges broadcasters={match.broadcasters} />
                 </div>
               </div>
             ))}
@@ -473,6 +475,7 @@ export function GroupMatchesSection({
               {getMatchMetaParts(match).map((part) => (
                 <span key={part}>{part}</span>
               ))}
+              <BroadcastBadges broadcasters={match.broadcasters} />
             </div>
 
             {showScorers && (

@@ -2,7 +2,8 @@ import dotenv from 'dotenv';
 import { connectDb } from '../config/db.js';
 import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
-import { resolveKickoffForStoredMatch } from '../services/kickoffTimeService.js';
+import { resolveKickoffForStoredMatch, resolveOfficialKickoffAt } from '../services/kickoffTimeService.js';
+import { ARGENTINA_TIMEZONE } from '../data/officialFixtureArgentina.js';
 import { resolveStadiumTimezone } from '../services/stadiumTimezones.js';
 
 dotenv.config();
@@ -35,8 +36,10 @@ async function fixMatchKickoffs() {
     const kickoffAt = resolveKickoffForStoredMatch(match, stadium);
     if (!kickoffAt) continue;
 
-    const kickoffTimezone =
-      match.kickoffTimezone || stadium?.timezone || resolveStadiumTimezone(stadium || {});
+    const official = resolveOfficialKickoffAt(match.externalId);
+    const kickoffTimezone = official
+      ? ARGENTINA_TIMEZONE
+      : match.kickoffTimezone || stadium?.timezone || resolveStadiumTimezone(stadium || {});
     const sameTime =
       match.kickoffAt &&
       new Date(match.kickoffAt).getTime() === new Date(kickoffAt).getTime();

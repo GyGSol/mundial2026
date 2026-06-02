@@ -228,6 +228,8 @@ function isSimulationMatch(match) {
   return String(match.externalId || '').startsWith('sim-');
 }
 
+import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
+
 function hasBothTeamsAssigned(match, teamMap) {
   const homeId = match.homeTeamId;
   const awayId = match.awayTeamId;
@@ -250,10 +252,15 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
     status: match.status,
     kickoffAt: match.kickoffAt,
     kickoffTimezone: match.kickoffTimezone || stadium?.timezone || null,
+    displayTimezone: 'America/Argentina/Buenos_Aires',
     type: match.type,
     phaseLabel: phase?.label ?? (normalizePhaseKey(match.type) === 'group' ? 'Fase de grupos' : match.type),
     homeTeam: formatTeamRef(teamMap[match.homeTeamId]),
     awayTeam: formatTeamRef(teamMap[match.awayTeamId]),
+    broadcasters: getBroadcastersForMatch(match.externalId, {
+      homeTeam: teamMap[match.homeTeamId],
+      awayTeam: teamMap[match.awayTeamId],
+    }),
     stadium: stadium
       ? {
           externalId: stadium.externalId,

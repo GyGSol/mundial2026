@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { matchInvolvesArgentina } from '@/lib/teamMeta';
 import { formatMatchDate, formatLockHint } from '@/lib/dateFormat';
+import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -60,8 +61,9 @@ export default function MatchCard({ match, onSave, savingId }) {
               </Badge>
             )}
           </div>
-          <CardDescription>
-            Grupo {match.group} · {formatMatchDate(match)}
+          <CardDescription className="flex flex-col items-end gap-1">
+            <span>Grupo {match.group} · {formatMatchDate(match)}</span>
+            <BroadcastBadges broadcasters={match.broadcasters} />
           </CardDescription>
         </div>
       </CardHeader>

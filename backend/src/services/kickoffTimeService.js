@@ -1,3 +1,7 @@
+import {
+  ARGENTINA_TIMEZONE,
+  OFFICIAL_KICKOFFS_AR,
+} from '../data/officialFixtureArgentina.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
 
 const MDY_TIME_RE = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/;
@@ -74,12 +78,27 @@ function parseIsoDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function argentinaIsoToMdy(isoLocal) {
+  const [datePart, timePart] = isoLocal.split('T');
+  const [year, month, day] = datePart.split('-');
+  const [hour, minute] = timePart.split(':');
+  return `${month}/${day}/${year} ${hour}:${minute}`;
+}
+
+/** Horario oficial FIFA en hora Argentina → UTC. */
+export function resolveOfficialKickoffAt(externalId) {
+  const isoLocal = OFFICIAL_KICKOFFS_AR[String(externalId)];
+  if (!isoLocal) return null;
+  return localWallClockToUtc(argentinaIsoToMdy(isoLocal), ARGENTINA_TIMEZONE);
+}
+
 /**
- * Canonical kickoff for sync: prefer API UTC, else local_date at stadium, else API kickoff_at.
+ * Canonical kickoff for sync: official Argentina fixture, else stadium local_date, else API fields.
  */
 export function resolveKickoffAt(game, { stadiumTimezone } = {}) {
-  const utcFromApi = parseIsoDate(game.utc_date ?? game.utcDate);
-  if (utcFromApi) return utcFromApi;
+  const externalId = String(game.id ?? game._id ?? game.idGame ?? '');
+  const official = resolveOfficialKickoffAt(externalId);
+  if (official) return official;
 
   const localDate = game.local_date ?? game.localDate ?? '';
   const tz =
@@ -94,6 +113,9 @@ export function resolveKickoffAt(game, { stadiumTimezone } = {}) {
     const fromLocal = localWallClockToUtc(localDate, tz);
     if (fromLocal) return fromLocal;
   }
+
+  const utcFromApi = parseIsoDate(game.utc_date ?? game.utcDate);
+  if (utcFromApi) return utcFromApi;
 
   const kickoffFromApi = parseIsoDate(game.kickoff_at ?? game.kickoffAt);
   if (kickoffFromApi) return kickoffFromApi;
@@ -110,6 +132,9 @@ export function resolveKickoffForStoredMatch(match, stadium) {
   if (match.externalId?.startsWith('sim-')) {
     return match.kickoffAt ?? null;
   }
+
+  const official = resolveOfficialKickoffAt(match.externalId);
+  if (official) return official;
 
   const stadiumTimezone = stadium?.timezone || resolveStadiumTimezone(stadium || {});
   if (!match.localDate || !stadiumTimezone) {

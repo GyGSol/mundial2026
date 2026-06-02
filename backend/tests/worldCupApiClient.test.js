@@ -42,8 +42,14 @@ describe('worldCupApiClient normalization', () => {
     expect(game.group).toBe('H');
   });
 
-  it('calcula kickoffAt desde local_date y zona del estadio', () => {
-    const game = normalizeGame(sampleGame, { stadiumTimezone: 'America/New_York' });
+  it('calcula kickoffAt desde fixture oficial Argentina', () => {
+    const game = normalizeGame({ ...sampleGame, id: '14' });
+    expect(game.kickoffAt.toISOString()).toBe('2026-06-15T19:00:00.000Z');
+    expect(game.displayTimezone).toBe('America/Argentina/Buenos_Aires');
+  });
+
+  it('calcula kickoffAt desde local_date y zona del estadio si no hay fixture oficial', () => {
+    const game = normalizeGame({ ...sampleGame, id: 'demo-x' }, { stadiumTimezone: 'America/New_York' });
     expect(game.kickoffAt.toISOString()).toBe('2026-06-15T16:00:00.000Z');
     expect(game.kickoffTimezone).toBe('America/New_York');
   });

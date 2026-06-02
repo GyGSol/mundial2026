@@ -8,6 +8,7 @@ import {
   ensureDefaultPredictionsForUser,
   enrichMatchPredictionMeta,
 } from '../services/predictionLockService.js';
+import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
 
 const router = Router();
 
@@ -66,6 +67,7 @@ async function enrichMatches(matches, userId) {
       kickoffAt: m.kickoffAt,
       kickoffTimezone:
         m.kickoffTimezone || stadiumMap[m.stadiumId]?.timezone || null,
+      displayTimezone: 'America/Argentina/Buenos_Aires',
       lockAt: meta.lockAt,
       homeTeam: teamMap[m.homeTeamId]
         ? {
@@ -83,6 +85,10 @@ async function enrichMatches(matches, userId) {
             externalId: teamMap[m.awayTeamId].externalId,
           }
         : null,
+      broadcasters: getBroadcastersForMatch(m.externalId, {
+        homeTeam: teamMap[m.homeTeamId],
+        awayTeam: teamMap[m.awayTeamId],
+      }),
       prediction,
       ...meta,
     };
