@@ -258,7 +258,6 @@ router.get('/predictions', adminMiddleware, async (req, res, next) => {
   try {
     res.json({
       predictions: await listAdminPredictions({
-        matchId: req.query.matchId,
         userId: req.query.userId,
       }),
     });

@@ -301,43 +301,84 @@ export async function recalculateAllFinishedMatches() {
   return { recalculated: finished.length };
 }
 
-export async function listAdminPredictions({ matchId, userId } = {}) {
-  const filter = {};
-  if (matchId) filter.matchId = matchId;
-  if (userId) filter.userId = userId;
+function teamLabel(team, fallbackId) {
+  if (!team) return fallbackId ?? '—';
+  return team.fifaCode || team.nameEn || team.externalId || fallbackId ?? '—';
+}
 
-  if (!matchId && !userId) {
-    const error = new Error('Indicá matchId o userId');
-    error.status = 400;
-    throw error;
+export async function listAdminPredictions({ userId } = {}) {
+  const filter = {};
+  if (userId) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      const error = new Error('userId inválido');
+      error.status = 400;
+      throw error;
+    }
+    filter.userId = userId;
   }
 
   const predictions = await Prediction.find(filter)
-    .sort({ updatedAt: -1 })
-    .limit(200)
     .populate('userId', 'name email')
-    .populate('matchId', 'homeTeamId awayTeamId status homeScore awayScore')
+    .populate(
+      'matchId',
+      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt externalId'
+    )
     .lean();
 
-  return predictions.map((p) => ({
-    id: p._id.toString(),
-    userId: p.userId?._id?.toString(),
-    userName: p.userId?.name,
-    userEmail: p.userId?.email,
-    matchId: p.matchId?._id?.toString(),
-    homeGoals: p.homeGoals,
-    awayGoals: p.awayGoals,
-    pointsEarned: p.pointsEarned,
-    match: p.matchId
-      ? {
-          homeTeamId: p.matchId.homeTeamId,
-          awayTeamId: p.matchId.awayTeamId,
-          status: p.matchId.status,
-          homeScore: p.matchId.homeScore,
-          awayScore: p.matchId.awayScore,
-        }
-      : null,
-  }));
+  const teamIds = new Set();
+  for (const p of predictions) {
+    if (p.matchId?.homeTeamId) teamIds.add(p.matchId.homeTeamId);
+    if (p.matchId?.awayTeamId) teamIds.add(p.matchId.awayTeamId);
+  }
+
+  const teams = teamIds.size
+    ? await Team.find({ externalId: { $in: [...teamIds] } }).lean()
+    : [];
+  const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
+
+  const rows = predictions.map((p) => {
+    const match = p.matchId;
+    const homeTeam = match ? teamMap[match.homeTeamId] : null;
+    const awayTeam = match ? teamMap[match.awayTeamId] : null;
+    const homeLabel = teamLabel(homeTeam, match?.homeTeamId);
+    const awayLabel = teamLabel(awayTeam, match?.awayTeamId);
+
+    return {
+      id: p._id.toString(),
+      userId: p.userId?._id?.toString(),
+      userName: p.userId?.name,
+      userEmail: p.userId?.email,
+      matchId: match?._id?.toString(),
+      homeGoals: p.homeGoals,
+      awayGoals: p.awayGoals,
+      pointsEarned: p.pointsEarned,
+      updatedAt: p.updatedAt,
+      match: match
+        ? {
+            externalId: match.externalId,
+            homeTeamId: match.homeTeamId,
+            awayTeamId: match.awayTeamId,
+            status: match.status,
+            homeScore: match.homeScore,
+            awayScore: match.awayScore,
+            group: match.group,
+            kickoffAt: match.kickoffAt,
+            label: `${homeLabel} vs ${awayLabel}`,
+          }
+        : null,
+    };
+  });
+
+  rows.sort((a, b) => {
+    const kickA = a.match?.kickoffAt ? new Date(a.match.kickoffAt).getTime() : 0;
+    const kickB = b.match?.kickoffAt ? new Date(b.match.kickoffAt).getTime() : 0;
+    if (kickA !== kickB) return kickA - kickB;
+    const userA = (a.userName || a.userEmail || '').toLowerCase();
+    const userB = (b.userName || b.userEmail || '').toLowerCase();
+    return userA.localeCompare(userB, 'es');
+  });
+
+  return rows;
 }
 
 export async function getAdminSyncStatus() {
