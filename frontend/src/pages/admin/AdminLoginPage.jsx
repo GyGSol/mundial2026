@@ -6,7 +6,8 @@ import TechnicalDifficulties from '../../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../../lib/apiError.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+import AdminBrand from '../../components/admin/AdminBrand.jsx';
+import { Card, CardContent, CardHeader } from '@/components/ui/card.jsx';
 
 export default function AdminLoginPage() {
   const { login, isAuthenticated, loading } = useAdminAuth();
@@ -70,8 +71,10 @@ export default function AdminLoginPage() {
     <div className="admin-theme flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <Card className="w-full max-w-md border-slate-800 bg-slate-900 text-slate-100">
         <CardHeader>
-          <CardTitle>Admin — Mundial 2026</CardTitle>
-          <p className="text-sm text-slate-400">Acceso restringido al panel de operaciones.</p>
+          <AdminBrand
+            title="Admin — Mundial 2026"
+            description="Acceso restringido al panel de operaciones."
+          />
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

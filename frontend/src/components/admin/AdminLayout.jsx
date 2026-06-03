@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
+import AdminBrand from './AdminBrand.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 
@@ -26,10 +27,7 @@ export default function AdminLayout() {
     <div className="admin-theme min-h-screen bg-slate-950 text-slate-100">
       <header className="border-b border-slate-800 bg-slate-900/80">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-amber-400/90">Mundial 2026</p>
-            <h1 className="text-lg font-semibold">Panel de administración</h1>
-          </div>
+          <AdminBrand />
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
               <a href="/">Ver app</a>

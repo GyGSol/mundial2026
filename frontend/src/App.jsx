@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { AdminAuthProvider } from './context/AdminAuthContext.jsx';
 import AdminRoute from './components/admin/AdminRoute.jsx';
+import AdminFaviconOutlet from './components/admin/AdminFaviconOutlet.jsx';
 import AdminLayout from './components/admin/AdminLayout.jsx';
 import AdminLoginPage from './pages/admin/AdminLoginPage.jsx';
 import AdminSetupPage from './pages/admin/AdminSetupPage.jsx';
@@ -34,17 +35,19 @@ export default function App() {
       <AdminAuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/admin/setup" element={<AdminSetupPage />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route path="/admin" element={<AdminRoute />}>
-              <Route element={<AdminLayout />}>
-                <Route index element={<AdminDashboardPage />} />
-                <Route path="sync" element={<AdminSyncPage />} />
-                <Route path="matches" element={<AdminMatchesPage />} />
-                <Route path="users" element={<AdminUsersPage />} />
-                <Route path="groups" element={<AdminGroupsPage />} />
-                <Route path="predictions" element={<AdminPredictionsPage />} />
-                <Route path="simulation" element={<AdminSimulationPage />} />
+            <Route element={<AdminFaviconOutlet />}>
+              <Route path="/admin/setup" element={<AdminSetupPage />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route path="/admin" element={<AdminRoute />}>
+                <Route element={<AdminLayout />}>
+                  <Route index element={<AdminDashboardPage />} />
+                  <Route path="sync" element={<AdminSyncPage />} />
+                  <Route path="matches" element={<AdminMatchesPage />} />
+                  <Route path="users" element={<AdminUsersPage />} />
+                  <Route path="groups" element={<AdminGroupsPage />} />
+                  <Route path="predictions" element={<AdminPredictionsPage />} />
+                  <Route path="simulation" element={<AdminSimulationPage />} />
+                </Route>
               </Route>
             </Route>
             <Route path="/" element={<WelcomePage />} />

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Admin">
+  <rect width="32" height="32" rx="7" fill="#0f172a"/>
+  <path
+    fill="none"
+    stroke="#60a5fa"
+    stroke-width="2"
+    stroke-linejoin="round"
+    d="M16 6 L24 9.5 V16.5 C24 21.5 20.5 24.8 16 26.5 C11.5 24.8 8 21.5 8 16.5 V9.5 Z"
+  />
+  <path
+    fill="none"
+    stroke="#93c5fd"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    d="M13 16 L15.2 18.2 L19.5 13.8"
+  />
+</svg>

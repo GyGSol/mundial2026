@@ -5,7 +5,8 @@ import TechnicalDifficulties from '../../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../../lib/apiError.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+import AdminBrand from '../../components/admin/AdminBrand.jsx';
+import { Card, CardContent, CardHeader } from '@/components/ui/card.jsx';
 
 export default function AdminSetupPage() {
   const navigate = useNavigate();
@@ -78,10 +79,10 @@ export default function AdminSetupPage() {
     <div className="admin-theme flex min-h-screen items-center justify-center bg-slate-950 px-4">
       <Card className="w-full max-w-md border-slate-800 bg-slate-900 text-slate-100">
         <CardHeader>
-          <CardTitle>Primer ingreso — Administrador</CardTitle>
-          <p className="text-sm text-slate-400">
-            Creá el usuario y la contraseña del panel. Solo se puede hacer una vez.
-          </p>
+          <AdminBrand
+            title="Primer ingreso — Administrador"
+            description="Creá el usuario y la contraseña del panel. Solo se puede hacer una vez."
+          />
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
