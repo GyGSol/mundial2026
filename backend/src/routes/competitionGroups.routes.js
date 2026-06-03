@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { authMiddleware, optionalAuth } from '../middleware/auth.middleware.js';
 import {
   approveJoinRequest,
@@ -89,13 +90,18 @@ router.get('/:groupId/invite', async (req, res, next) => {
 router.get('/:groupId/members', optionalAuth, async (req, res, next) => {
   try {
     let includeRoles = false;
-    if (req.user) {
-      const group = await CompetitionGroup.findById(req.params.groupId);
+    const { groupId } = req.params;
+    if (
+      req.user &&
+      groupId !== '__nogroup' &&
+      mongoose.Types.ObjectId.isValid(groupId)
+    ) {
+      const group = await CompetitionGroup.findById(groupId);
       if (group && (await isGroupAdmin({ userId: req.user._id, group }))) {
         includeRoles = true;
       }
     }
-    const members = await listCompetitionGroupMembers(req.params.groupId, { includeRoles });
+    const members = await listCompetitionGroupMembers(groupId, { includeRoles });
     res.json({ members });
   } catch (err) {
     next(err);
