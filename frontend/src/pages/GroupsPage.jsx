@@ -7,6 +7,7 @@ import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
 import GroupInvitePanel from '../components/GroupInvitePanel.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Input } from '@/components/ui/input.jsx';
@@ -31,6 +32,7 @@ function normalizePrizeRows(count, existing = []) {
 
 export default function GroupsPage() {
   const { user, refreshUser, isAuthenticated, loading: authLoading } = useAuth();
+  const { refresh: refreshPendingApprovals } = usePendingApprovals();
   const location = useLocation();
   const [allGroups, setAllGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
@@ -108,6 +110,7 @@ export default function GroupsPage() {
       setGroupJoinRequests({});
       setGroupMembers({});
     }
+    refreshPendingApprovals();
   };
 
   useEffect(() => {

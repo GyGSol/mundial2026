@@ -330,6 +330,18 @@ export async function listUserPendingJoinRequests(userId) {
   return requests.map((r) => r.groupId.toString());
 }
 
+/** Solicitudes de ingreso pendientes en grupos donde el usuario es administrador. */
+export async function countPendingApprovalsForUser(userId) {
+  const myGroups = await listUserCompetitionGroups(userId);
+  const adminGroupIds = myGroups.filter((g) => g.isAdmin).map((g) => g.id);
+  if (!adminGroupIds.length) return 0;
+
+  return CompetitionGroupJoinRequest.countDocuments({
+    groupId: { $in: adminGroupIds.map((id) => new mongoose.Types.ObjectId(id)) },
+    status: 'pending',
+  });
+}
+
 export async function listGroupJoinRequests({ groupId, userId, adminOverride = false }) {
   const group = await CompetitionGroup.findById(groupId);
   if (!group) {

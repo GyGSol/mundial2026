@@ -13,6 +13,7 @@ import {
   listCompetitionGroups,
   listGroupJoinRequests,
   listUserCompetitionGroups,
+  countPendingApprovalsForUser,
   listUserPendingJoinRequests,
   rejectJoinRequest,
   removeGroupMember,
@@ -61,6 +62,15 @@ router.get('/my/join-requests', authMiddleware, async (req, res, next) => {
   try {
     const pendingGroupIds = await listUserPendingJoinRequests(req.user._id);
     res.json({ pendingGroupIds });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/my/pending-approval-count', authMiddleware, async (req, res, next) => {
+  try {
+    const count = await countPendingApprovalsForUser(req.user._id);
+    res.json({ count });
   } catch (err) {
     next(err);
   }

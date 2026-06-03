@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
 import EditPlayerDialog from './EditPlayerDialog.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
@@ -11,7 +12,13 @@ const navClass = ({ isActive }) =>
 
 export default function Layout() {
   const { user, logout, sessionExpiresLabel } = useAuth();
+  const { count: pendingApprovalCount, refresh: refreshPendingApprovals } = usePendingApprovals();
+  const location = useLocation();
   const [editPlayerOpen, setEditPlayerOpen] = useState(false);
+
+  useEffect(() => {
+    refreshPendingApprovals();
+  }, [location.pathname, refreshPendingApprovals]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,7 +42,17 @@ export default function Layout() {
               Simulación
             </NavLink>
             <NavLink to="/groups" className={navClass}>
-              Grupos
+              <span className="inline-flex items-center gap-1.5">
+                Grupos
+                {pendingApprovalCount > 0 ? (
+                  <span
+                    className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm"
+                    title={`${pendingApprovalCount} solicitud${pendingApprovalCount === 1 ? '' : 'es'} pendiente${pendingApprovalCount === 1 ? '' : 's'} de aceptar`}
+                  >
+                    {pendingApprovalCount > 9 ? '9+' : pendingApprovalCount}
+                  </span>
+                ) : null}
+              </span>
             </NavLink>
             <NavLink to="/rules" className={navClass}>
               Reglas

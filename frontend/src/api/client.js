@@ -67,6 +67,7 @@ export const competitionGroupsApi = {
       method: 'POST',
     }),
   myJoinRequests: () => request('/competition-groups/my/join-requests'),
+  pendingApprovalCount: () => request('/competition-groups/my/pending-approval-count'),
   listJoinRequests: (groupId) => request(`/competition-groups/${groupId}/join-requests`),
   approveJoinRequest: (groupId, userId) =>
     request(`/competition-groups/${groupId}/join-requests/${userId}/approve`, {

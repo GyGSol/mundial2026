@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { PendingApprovalsProvider } from './context/PendingApprovalsContext.jsx';
 import { AdminAuthProvider } from './context/AdminAuthContext.jsx';
 import AdminRoute from './components/admin/AdminRoute.jsx';
 import AdminFaviconOutlet from './components/admin/AdminFaviconOutlet.jsx';
@@ -32,8 +33,9 @@ import InviteJoinPage from './pages/InviteJoinPage.jsx';
 export default function App() {
   return (
     <AuthProvider>
-      <AdminAuthProvider>
-        <BrowserRouter>
+      <PendingApprovalsProvider>
+        <AdminAuthProvider>
+          <BrowserRouter>
           <Routes>
             <Route element={<AdminFaviconOutlet />}>
               <Route path="/admin/setup" element={<AdminSetupPage />} />
@@ -72,8 +74,9 @@ export default function App() {
               </Route>
             </Route>
           </Routes>
-        </BrowserRouter>
-      </AdminAuthProvider>
+          </BrowserRouter>
+        </AdminAuthProvider>
+      </PendingApprovalsProvider>
     </AuthProvider>
   );
 }
