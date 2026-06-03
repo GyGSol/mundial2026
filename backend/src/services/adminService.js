@@ -302,8 +302,8 @@ export async function recalculateAllFinishedMatches() {
 }
 
 function teamLabel(team, fallbackId) {
-  if (!team) return fallbackId ?? '—';
-  return team.fifaCode || team.nameEn || team.externalId || fallbackId ?? '—';
+  if (!team) return fallbackId || '—';
+  return team.fifaCode || team.nameEn || team.externalId || fallbackId || '—';
 }
 
 export async function listAdminPredictions({ userId } = {}) {
