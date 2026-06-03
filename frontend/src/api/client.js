@@ -62,6 +62,24 @@ export const competitionGroupsApi = {
     request(`/competition-groups/${groupId}/join`, {
       method: 'POST',
     }),
+  requestJoin: (groupId) =>
+    request(`/competition-groups/${groupId}/join-request`, {
+      method: 'POST',
+    }),
+  myJoinRequests: () => request('/competition-groups/my/join-requests'),
+  listJoinRequests: (groupId) => request(`/competition-groups/${groupId}/join-requests`),
+  approveJoinRequest: (groupId, userId) =>
+    request(`/competition-groups/${groupId}/join-requests/${userId}/approve`, {
+      method: 'POST',
+    }),
+  rejectJoinRequest: (groupId, userId) =>
+    request(`/competition-groups/${groupId}/join-requests/${userId}/reject`, {
+      method: 'POST',
+    }),
+  removeMember: (groupId, userId) =>
+    request(`/competition-groups/${groupId}/members/${userId}`, {
+      method: 'DELETE',
+    }),
   leave: (groupId) =>
     request(`/competition-groups/${groupId}/leave`, {
       method: 'POST',

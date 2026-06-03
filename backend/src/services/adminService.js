@@ -7,8 +7,16 @@ import { Team } from '../models/Team.js';
 import { Prediction } from '../models/Prediction.js';
 import { SyncMeta } from '../models/SyncMeta.js';
 import {
-  listCompetitionGroupMembers,
+  addGroupMemberDirect,
+  approveJoinRequest,
+  createCompetitionGroup,
   deleteCompetitionGroup,
+  getCompetitionGroupById,
+  listCompetitionGroupMembers,
+  listGroupJoinRequests,
+  rejectJoinRequest,
+  removeGroupMember,
+  updateCompetitionGroup,
 } from './competitionGroupService.js';
 import { recalculateMatchScores } from './syncService.js';
 import { env } from '../config/env.js';
@@ -233,13 +241,112 @@ export async function listAdminGroups() {
   );
 }
 
+export async function getAdminGroup(groupId) {
+  const group = await getCompetitionGroupById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+  const memberCount = await UserGroupMembership.countDocuments({
+    groupId: new mongoose.Types.ObjectId(groupId),
+  });
+  return { ...group, memberCount };
+}
+
+export async function createAdminGroup({ name, description, prizesWinnersCount = 0, prizes = [] }) {
+  return createCompetitionGroup({
+    name,
+    description,
+    prizesWinnersCount,
+    prizes,
+    internal: true,
+  });
+}
+
+export async function updateAdminGroup({
+  groupId,
+  name,
+  description,
+  prizesWinnersCount = 0,
+  prizes = [],
+}) {
+  return updateCompetitionGroup({
+    groupId,
+    name,
+    description,
+    userId: null,
+    prizesWinnersCount,
+    prizes,
+    adminOverride: true,
+  });
+}
+
 export async function getAdminGroupMembers(groupId) {
-  return listCompetitionGroupMembers(groupId);
+  return listCompetitionGroupMembers(groupId, { includeRoles: true });
 }
 
 export async function deleteAdminGroup(groupId) {
   return deleteCompetitionGroup({
     groupId,
+    userId: null,
+    adminOverride: true,
+  });
+}
+
+export async function addAdminGroupMember({ groupId, email, userId }) {
+  let targetUserId = userId;
+  if (!targetUserId && email) {
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
+    if (!user) {
+      const error = new Error('Usuario no encontrado con ese email');
+      error.status = 404;
+      throw error;
+    }
+    targetUserId = user._id;
+  }
+  if (!targetUserId) {
+    const error = new Error('Indicá userId o email');
+    error.status = 400;
+    throw error;
+  }
+  return addGroupMemberDirect({
+    groupId,
+    targetUserId,
+    adminOverride: true,
+  });
+}
+
+export async function removeAdminGroupMember({ groupId, userId }) {
+  return removeGroupMember({
+    groupId,
+    targetUserId: userId,
+    userId: null,
+    adminOverride: true,
+  });
+}
+
+export async function listAdminGroupJoinRequests(groupId) {
+  return listGroupJoinRequests({
+    groupId,
+    userId: null,
+    adminOverride: true,
+  });
+}
+
+export async function approveAdminJoinRequest({ groupId, userId }) {
+  return approveJoinRequest({
+    groupId,
+    targetUserId: userId,
+    userId: null,
+    adminOverride: true,
+  });
+}
+
+export async function rejectAdminJoinRequest({ groupId, userId }) {
+  return rejectJoinRequest({
+    groupId,
+    targetUserId: userId,
     userId: null,
     adminOverride: true,
   });

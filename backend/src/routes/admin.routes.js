@@ -12,18 +12,26 @@ import {
 } from '../services/adminSetupService.js';
 import { runSync } from '../services/syncService.js';
 import {
+  addAdminGroupMember,
+  approveAdminJoinRequest,
+  createAdminGroup,
   deleteAdminGroup,
   deleteAdminUser,
+  getAdminGroup,
   getAdminGroupMembers,
   getAdminStats,
   getAdminSyncStatus,
   getAdminUserById,
+  listAdminGroupJoinRequests,
   listAdminGroups,
   listAdminMatches,
   listAdminPredictions,
   listAdminUsers,
   recalculateAdminMatch,
   recalculateAllFinishedMatches,
+  rejectAdminJoinRequest,
+  removeAdminGroupMember,
+  updateAdminGroup,
   updateAdminMatch,
   updateAdminUserPoints,
 } from '../services/adminService.js';
@@ -195,6 +203,43 @@ router.get('/groups', adminMiddleware, async (req, res, next) => {
   }
 });
 
+router.post('/groups', adminMiddleware, async (req, res, next) => {
+  try {
+    const group = await createAdminGroup({
+      name: req.body.name,
+      description: req.body.description,
+      prizesWinnersCount: req.body.prizesWinnersCount,
+      prizes: req.body.prizes,
+    });
+    res.status(201).json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/groups/:id', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json({ group: await getAdminGroup(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/groups/:id', adminMiddleware, async (req, res, next) => {
+  try {
+    const group = await updateAdminGroup({
+      groupId: req.params.id,
+      name: req.body.name,
+      description: req.body.description,
+      prizesWinnersCount: req.body.prizesWinnersCount,
+      prizes: req.body.prizes,
+    });
+    res.json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/groups/:id/members', adminMiddleware, async (req, res, next) => {
   try {
     res.json({ members: await getAdminGroupMembers(req.params.id) });
@@ -202,6 +247,75 @@ router.get('/groups/:id/members', adminMiddleware, async (req, res, next) => {
     next(err);
   }
 });
+
+router.post('/groups/:id/members', adminMiddleware, async (req, res, next) => {
+  try {
+    res.status(201).json(
+      await addAdminGroupMember({
+        groupId: req.params.id,
+        email: req.body.email,
+        userId: req.body.userId,
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/groups/:id/members/:userId', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(
+      await removeAdminGroupMember({
+        groupId: req.params.id,
+        userId: req.params.userId,
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/groups/:id/join-requests', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json({ requests: await listAdminGroupJoinRequests(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post(
+  '/groups/:id/join-requests/:userId/approve',
+  adminMiddleware,
+  async (req, res, next) => {
+    try {
+      res.json(
+        await approveAdminJoinRequest({
+          groupId: req.params.id,
+          userId: req.params.userId,
+        })
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/groups/:id/join-requests/:userId/reject',
+  adminMiddleware,
+  async (req, res, next) => {
+    try {
+      res.json(
+        await rejectAdminJoinRequest({
+          groupId: req.params.id,
+          userId: req.params.userId,
+        })
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 router.delete('/groups/:id', adminMiddleware, async (req, res, next) => {
   try {

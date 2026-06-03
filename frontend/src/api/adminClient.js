@@ -105,7 +105,34 @@ export const adminApi = {
     }),
   deleteUser: (id) => adminRequest(`/users/${id}`, { method: 'DELETE' }),
   listGroups: () => adminRequest('/groups'),
+  getGroup: (id) => adminRequest(`/groups/${id}`),
+  createGroup: (body) =>
+    adminRequest('/groups', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  updateGroup: (id, body) =>
+    adminRequest(`/groups/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
   getGroupMembers: (id) => adminRequest(`/groups/${id}/members`),
+  addGroupMember: (id, body) =>
+    adminRequest(`/groups/${id}/members`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  removeGroupMember: (groupId, userId) =>
+    adminRequest(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }),
+  listJoinRequests: (id) => adminRequest(`/groups/${id}/join-requests`),
+  approveJoinRequest: (groupId, userId) =>
+    adminRequest(`/groups/${groupId}/join-requests/${userId}/approve`, {
+      method: 'POST',
+    }),
+  rejectJoinRequest: (groupId, userId) =>
+    adminRequest(`/groups/${groupId}/join-requests/${userId}/reject`, {
+      method: 'POST',
+    }),
   deleteGroup: (id) => adminRequest(`/groups/${id}`, { method: 'DELETE' }),
   listMatches: (params = {}) => {
     const query = new URLSearchParams(params).toString();

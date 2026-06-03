@@ -2,13 +2,18 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import mongoose from 'mongoose';
 import { User } from '../src/models/User.js';
 import { UserGroupMembership } from '../src/models/UserGroupMembership.js';
+import { CompetitionGroupJoinRequest } from '../src/models/CompetitionGroupJoinRequest.js';
+import { CompetitionGroup } from '../src/models/CompetitionGroup.js';
 import {
+  approveJoinRequest,
   createCompetitionGroup,
   getCompetitionGroupInvitePreview,
   joinCompetitionGroup,
   leaveCompetitionGroup,
   listCompetitionGroupMembers,
   listCompetitionGroups,
+  removeGroupMember,
+  requestJoinCompetitionGroup,
 } from '../src/services/competitionGroupService.js';
 
 describe('competitionGroupService', () => {
@@ -77,6 +82,61 @@ describe('competitionGroupService', () => {
 
       const noGroupMembers = await listCompetitionGroupMembers('__nogroup');
       expect(noGroupMembers.some((row) => row.email.includes('leave-'))).toBe(true);
+    });
+
+    it('solicitud pendiente no cuenta como miembro hasta aprobar', async () => {
+      const owner = await User.create({
+        name: 'Owner',
+        email: `owner-${Date.now()}@test.local`,
+        passwordHash: 'hash',
+      });
+      const applicant = await User.create({
+        name: 'Applicant',
+        email: `applicant-${Date.now()}@test.local`,
+        passwordHash: 'hash',
+      });
+
+      const group = await createCompetitionGroup({
+        name: `Grupo request ${Date.now()}`,
+        createdBy: owner._id,
+        internal: false,
+      });
+
+      const pending = await requestJoinCompetitionGroup({
+        userId: applicant._id,
+        groupId: group.id,
+      });
+      expect(pending.status).toBe('pending');
+
+      let members = await listCompetitionGroupMembers(group.id);
+      expect(members.some((row) => row.email.includes('applicant-'))).toBe(false);
+
+      await approveJoinRequest({
+        groupId: group.id,
+        targetUserId: applicant._id,
+        userId: owner._id,
+      });
+
+      members = await listCompetitionGroupMembers(group.id);
+      expect(members.some((row) => row.email.includes('applicant-'))).toBe(true);
+
+      await joinCompetitionGroup({ userId: applicant._id, groupId: group.id });
+      await removeGroupMember({
+        groupId: group.id,
+        targetUserId: applicant._id,
+        userId: owner._id,
+      });
+      members = await listCompetitionGroupMembers(group.id);
+      expect(members.some((row) => row.email.includes('applicant-'))).toBe(false);
+
+      await CompetitionGroupJoinRequest.deleteMany({
+        $or: [{ userId: owner._id }, { userId: applicant._id }],
+      });
+      await UserGroupMembership.deleteMany({
+        $or: [{ userId: owner._id }, { userId: applicant._id }],
+      });
+      await CompetitionGroup.deleteOne({ _id: group.id });
+      await User.deleteMany({ _id: { $in: [owner._id, applicant._id] } });
     });
   });
 });

@@ -42,6 +42,10 @@ export default function GroupsPage() {
   const [joinGroupId, setJoinGroupId] = useState(undefined);
   const [joinLoading, setJoinLoading] = useState('');
   const [leaveLoading, setLeaveLoading] = useState('');
+  const [pendingJoinGroupIds, setPendingJoinGroupIds] = useState(() => new Set());
+  const [groupJoinRequests, setGroupJoinRequests] = useState({});
+  const [groupMembers, setGroupMembers] = useState({});
+  const [memberActionLoading, setMemberActionLoading] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
   const [showHelp, setShowHelp] = useState(
     Boolean(location.state?.welcome || location.state?.created)
@@ -61,15 +65,48 @@ export default function GroupsPage() {
   });
   const [error, setError] = useState('');
 
+  const loadAdminGroupDetails = async (groups) => {
+    const adminGroups = groups.filter((g) => g.isAdmin);
+    if (!adminGroups.length) {
+      setGroupJoinRequests({});
+      setGroupMembers({});
+      return;
+    }
+
+    const requestsEntries = await Promise.all(
+      adminGroups.map(async (g) => {
+        const data = await competitionGroupsApi.listJoinRequests(g.id);
+        return [g.id, data.requests ?? []];
+      })
+    );
+    const membersEntries = await Promise.all(
+      adminGroups.map(async (g) => {
+        const data = await competitionGroupsApi.members(g.id);
+        return [g.id, data.members ?? []];
+      })
+    );
+    setGroupJoinRequests(Object.fromEntries(requestsEntries));
+    setGroupMembers(Object.fromEntries(membersEntries));
+  };
+
   const loadData = async () => {
     const all = await competitionGroupsApi.list();
     setAllGroups(all.groups ?? []);
 
     if (isAuthenticated) {
-      const mine = await competitionGroupsApi.my();
-      setMyGroups(mine.groups ?? []);
+      const [mine, pending] = await Promise.all([
+        competitionGroupsApi.my(),
+        competitionGroupsApi.myJoinRequests(),
+      ]);
+      const groups = mine.groups ?? [];
+      setMyGroups(groups);
+      setPendingJoinGroupIds(new Set(pending.pendingGroupIds ?? []));
+      await loadAdminGroupDetails(groups);
     } else {
       setMyGroups([]);
+      setPendingJoinGroupIds(new Set());
+      setGroupJoinRequests({});
+      setGroupMembers({});
     }
   };
 
@@ -83,8 +120,14 @@ export default function GroupsPage() {
 
   const myIds = useMemo(() => new Set(myGroups.map((group) => group.id)), [myGroups]);
   const joinableGroups = useMemo(
-    () => allGroups.filter((group) => !group.isVirtual && !myIds.has(group.id)),
-    [allGroups, myIds]
+    () =>
+      allGroups.filter(
+        (group) =>
+          !group.isVirtual &&
+          !myIds.has(group.id) &&
+          !pendingJoinGroupIds.has(group.id)
+      ),
+    [allGroups, myIds, pendingJoinGroupIds]
   );
 
   const isNoGroupParticipant = isAuthenticated && myGroups.length === 0;
@@ -117,19 +160,67 @@ export default function GroupsPage() {
     }
   };
 
-  const handleJoin = async (groupId) => {
+  const handleRequestJoin = async (groupId) => {
     if (!isAuthenticated) return;
     setError('');
     setSuccessMessage('');
     setJoinLoading(groupId);
     try {
-      await competitionGroupsApi.join(groupId);
-      setSuccessMessage('Te uniste al grupo. Podés sumarte a más grupos cuando quieras.');
-      await Promise.all([loadData(), refreshUser()]);
+      await competitionGroupsApi.requestJoin(groupId);
+      setSuccessMessage(
+        'Solicitud enviada. El administrador del grupo debe aprobarla para que aparezcas en el ranking.'
+      );
+      await loadData();
     } catch (err) {
       setError(err.message);
     } finally {
       setJoinLoading('');
+    }
+  };
+
+  const handleApproveRequest = async (groupId, userId) => {
+    setMemberActionLoading(`${groupId}-approve-${userId}`);
+    setError('');
+    try {
+      await competitionGroupsApi.approveJoinRequest(groupId, userId);
+      setSuccessMessage('Solicitud aprobada. El jugador ya participa en el grupo.');
+      await loadData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setMemberActionLoading('');
+    }
+  };
+
+  const handleRejectRequest = async (groupId, userId) => {
+    setMemberActionLoading(`${groupId}-reject-${userId}`);
+    setError('');
+    try {
+      await competitionGroupsApi.rejectJoinRequest(groupId, userId);
+      setSuccessMessage('Solicitud rechazada.');
+      await loadData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setMemberActionLoading('');
+    }
+  };
+
+  const handleRemoveMember = async (groupId, userId, memberName) => {
+    const ok = window.confirm(
+      `¿Expulsar a "${memberName}" de este grupo?\n\nSeguirá con sus puntos globales.`
+    );
+    if (!ok) return;
+    setMemberActionLoading(`${groupId}-remove-${userId}`);
+    setError('');
+    try {
+      await competitionGroupsApi.removeMember(groupId, userId);
+      setSuccessMessage('Jugador expulsado del grupo.');
+      await loadData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setMemberActionLoading('');
     }
   };
 
@@ -146,7 +237,7 @@ export default function GroupsPage() {
     setLeaveLoading(groupId);
     try {
       await competitionGroupsApi.leave(groupId);
-      setSuccessMessage('Saliste del grupo. Podés unirte de nuevo cuando quieras.');
+      setSuccessMessage('Saliste del grupo. Podés solicitar unirte de nuevo cuando quieras.');
       await Promise.all([loadData(), refreshUser()]);
     } catch (err) {
       setError(err.message);
@@ -158,7 +249,7 @@ export default function GroupsPage() {
   const handleJoinSpecific = async (e) => {
     e.preventDefault();
     if (!joinGroupId) return;
-    await handleJoin(joinGroupId);
+    await handleRequestJoin(joinGroupId);
     setJoinGroupId(undefined);
   };
 
@@ -225,7 +316,7 @@ export default function GroupsPage() {
         <InfoList
           items={[
             'Crear grupo: armás una liga nueva y sos administrador (podés editar datos y premios).',
-            'Unirme: te sumás a un grupo existente; podés repetir esto en tantos grupos como quieras.',
+            'Solicitar unirme: pedís ingreso a un grupo; el administrador debe aprobar. El enlace de invitación sigue siendo entrada directa.',
             'Usar: marca el grupo activo para filtrar ranking y algunas vistas (no cambia tus puntos).',
             'Predicciones: son globales por usuario; cada grupo calcula su tabla con los mismos resultados.',
           ]}
@@ -261,7 +352,8 @@ export default function GroupsPage() {
               'Administrador: solo quien creó el grupo puede invitar, editar o eliminar. Los demás son miembros.',
               'Premios: informativos en la ficha del grupo (no se pagan desde la app).',
               'Invitar (solo admin): debajo del grupo que creaste verás “Invitar jugadores” con el enlace para copiar.',
-              'Unirse sin enlace: buscá el nombre exacto en “Unirse a un grupo” o en “Todos los grupos”.',
+              'Unirse sin enlace: solicitá ingreso por nombre; el admin del grupo aprueba o rechaza. Con enlace de invitación entrás al instante.',
+              'Como admin del grupo podés aprobar solicitudes y expulsar jugadores desde “Mis grupos”.',
             ]}
           />
         </InfoPanel>
@@ -387,7 +479,8 @@ export default function GroupsPage() {
                     'Editar grupo (solo admin): nombre, descripción y tabla de premios.',
                     'Eliminar (solo admin): borra la liga; los jugadores conservan puntos y pueden seguir en otros grupos.',
                     'Si no sos admin: solo podés usar el grupo o sumarte a otros desde abajo.',
-                    'Invitar (solo quien creó el grupo): enlace copiable debajo de ese grupo en la lista.',
+                    'Invitar (solo admin): enlace de entrada directa debajo de ese grupo.',
+                    'Solicitudes pendientes y expulsar jugadores: panel debajo de cada grupo que administrás.',
                   ]}
                 />
               </InfoPanel>
@@ -584,6 +677,86 @@ export default function GroupsPage() {
                     {isOwner && !rowEdit && (
                       <GroupInvitePanel group={group} compact={false} />
                     )}
+                    {isOwner && !rowEdit ? (
+                      <div className="flex flex-col gap-3 border-t border-border/60 pt-3">
+                        {(groupJoinRequests[group.id] ?? []).length > 0 ? (
+                          <div>
+                            <p className="mb-2 text-xs font-medium text-muted-foreground">
+                              Solicitudes pendientes
+                            </p>
+                            <ul className="flex flex-col gap-2">
+                              {(groupJoinRequests[group.id] ?? []).map((req) => (
+                                <li
+                                  key={req.userId}
+                                  className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/30 px-2 py-1.5 text-sm"
+                                >
+                                  <span>
+                                    {req.name} · {req.email}
+                                  </span>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      size="sm"
+                                      disabled={Boolean(memberActionLoading)}
+                                      onClick={() =>
+                                        handleApproveRequest(group.id, req.userId)
+                                      }
+                                    >
+                                      Aprobar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={Boolean(memberActionLoading)}
+                                      onClick={() => handleRejectRequest(group.id, req.userId)}
+                                    >
+                                      Rechazar
+                                    </Button>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            No hay solicitudes pendientes.
+                          </p>
+                        )}
+                        <div>
+                          <p className="mb-2 text-xs font-medium text-muted-foreground">
+                            Jugadores del grupo
+                          </p>
+                          <ul className="flex flex-col gap-1.5">
+                            {(groupMembers[group.id] ?? []).map((member) => (
+                              <li
+                                key={member.id}
+                                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                              >
+                                <span>
+                                  {member.name} · {member.email}
+                                  {member.role === 'owner' ? (
+                                    <span className="ml-1 text-xs text-emerald-600">
+                                      (admin)
+                                    </span>
+                                  ) : null}
+                                </span>
+                                {member.role !== 'owner' ? (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    disabled={Boolean(memberActionLoading)}
+                                    onClick={() =>
+                                      handleRemoveMember(group.id, member.id, member.name)
+                                    }
+                                  >
+                                    Expulsar
+                                  </Button>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
@@ -607,8 +780,8 @@ export default function GroupsPage() {
                 />
               </InfoPanel>
               <p className="text-sm text-muted-foreground">
-                Si no tenés enlace, pedí el nombre exacto al administrador. Después de unirte, tus
-                pronósticos ya cargados cuentan para ese ranking.
+                Sin enlace, solicitá unirte por nombre: el administrador debe aprobar. Con enlace de
+                invitación entrás al instante. Tus pronósticos cuentan en el ranking una vez aprobado.
               </p>
               {joinableGroups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
@@ -637,7 +810,7 @@ export default function GroupsPage() {
                     className="md:col-span-2"
                     disabled={!joinGroupId || Boolean(joinLoading)}
                   >
-                    {joinLoading ? 'Uniendo...' : 'Unirme'}
+                    {joinLoading ? 'Enviando...' : 'Solicitar unirme'}
                   </Button>
                 </form>
               )}
@@ -664,10 +837,11 @@ export default function GroupsPage() {
               group={group}
               isAuthenticated={isAuthenticated}
               isMember={myIds.has(group.id)}
+              joinRequestPending={pendingJoinGroupIds.has(group.id)}
               isNoGroupParticipant={isNoGroupParticipant}
               joinLoading={joinLoading === group.id}
               leaveLoading={leaveLoading === group.id}
-              onJoin={handleJoin}
+              onRequestJoin={handleRequestJoin}
               onLeave={handleLeave}
             />
           ))}

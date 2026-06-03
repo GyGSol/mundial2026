@@ -1,17 +1,25 @@
 import { Router } from 'express';
-import { authMiddleware } from '../middleware/auth.middleware.js';
+import { authMiddleware, optionalAuth } from '../middleware/auth.middleware.js';
 import {
+  approveJoinRequest,
   createCompetitionGroup,
   deleteCompetitionGroup,
   getCompetitionGroupInvitePreview,
+  isGroupAdmin,
   joinCompetitionGroup,
   leaveCompetitionGroup,
   listCompetitionGroupMembers,
   listCompetitionGroups,
+  listGroupJoinRequests,
   listUserCompetitionGroups,
+  listUserPendingJoinRequests,
+  rejectJoinRequest,
+  removeGroupMember,
+  requestJoinCompetitionGroup,
   setActiveCompetitionGroup,
   updateCompetitionGroup,
 } from '../services/competitionGroupService.js';
+import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 const router = Router();
 
@@ -48,6 +56,15 @@ router.get('/my', authMiddleware, async (req, res, next) => {
   }
 });
 
+router.get('/my/join-requests', authMiddleware, async (req, res, next) => {
+  try {
+    const pendingGroupIds = await listUserPendingJoinRequests(req.user._id);
+    res.json({ pendingGroupIds });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/active', authMiddleware, async (req, res, next) => {
   try {
     const group = await setActiveCompetitionGroup({
@@ -69,10 +86,88 @@ router.get('/:groupId/invite', async (req, res, next) => {
   }
 });
 
-router.get('/:groupId/members', async (req, res, next) => {
+router.get('/:groupId/members', optionalAuth, async (req, res, next) => {
   try {
-    const members = await listCompetitionGroupMembers(req.params.groupId);
+    let includeRoles = false;
+    if (req.user) {
+      const group = await CompetitionGroup.findById(req.params.groupId);
+      if (group && (await isGroupAdmin({ userId: req.user._id, group }))) {
+        includeRoles = true;
+      }
+    }
+    const members = await listCompetitionGroupMembers(req.params.groupId, { includeRoles });
     res.json({ members });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:groupId/join-request', authMiddleware, async (req, res, next) => {
+  try {
+    const result = await requestJoinCompetitionGroup({
+      userId: req.user._id,
+      groupId: req.params.groupId,
+    });
+    res.status(result.status === 'pending' ? 202 : 201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:groupId/join-requests', authMiddleware, async (req, res, next) => {
+  try {
+    const requests = await listGroupJoinRequests({
+      groupId: req.params.groupId,
+      userId: req.user._id,
+    });
+    res.json({ requests });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post(
+  '/:groupId/join-requests/:targetUserId/approve',
+  authMiddleware,
+  async (req, res, next) => {
+    try {
+      const result = await approveJoinRequest({
+        groupId: req.params.groupId,
+        targetUserId: req.params.targetUserId,
+        userId: req.user._id,
+      });
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  '/:groupId/join-requests/:targetUserId/reject',
+  authMiddleware,
+  async (req, res, next) => {
+    try {
+      const result = await rejectJoinRequest({
+        groupId: req.params.groupId,
+        targetUserId: req.params.targetUserId,
+        userId: req.user._id,
+      });
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.delete('/:groupId/members/:targetUserId', authMiddleware, async (req, res, next) => {
+  try {
+    const result = await removeGroupMember({
+      groupId: req.params.groupId,
+      targetUserId: req.params.targetUserId,
+      userId: req.user._id,
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }

@@ -1,7 +1,12 @@
 import mongoose from 'mongoose';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
+import { CompetitionGroupJoinRequest } from '../models/CompetitionGroupJoinRequest.js';
 import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
+import {
+  maybeActivateGroupForUser,
+  reassignActiveGroupAfterLeave,
+} from './competitionGroupJoinHelpers.js';
 
 function normalizePrizes({ winnersCount, prizes = [] }) {
   const count = Math.max(0, Math.min(Number(winnersCount || 0), 10));
@@ -33,7 +38,7 @@ function serializeGroup(group) {
   };
 }
 
-async function isGroupAdmin({ userId, group }) {
+export async function isGroupAdmin({ userId, group }) {
   if (group.createdBy && String(group.createdBy) === String(userId)) return true;
   if (!group.createdBy) {
     // Legacy groups created before admin tracking: any current member can claim admin on first edit.
@@ -84,7 +89,12 @@ export async function listCompetitionGroups() {
   return [buildNoGroupEntry(noGroupCount), ...serialized];
 }
 
-export async function listCompetitionGroupMembers(groupId) {
+function membershipRoleForUser(group, membership, userId) {
+  if (group.createdBy && String(group.createdBy) === String(userId)) return 'owner';
+  return membership?.role || 'member';
+}
+
+export async function listCompetitionGroupMembers(groupId, { includeRoles = false } = {}) {
   if (groupId === '__nogroup') {
     const memberUserIds = await UserGroupMembership.distinct('userId');
     const users = await User.find({ _id: { $nin: memberUserIds } })
@@ -105,19 +115,30 @@ export async function listCompetitionGroupMembers(groupId) {
     throw error;
   }
 
-  const memberUserIds = await UserGroupMembership.find({ groupId: group._id }).distinct('userId');
-  if (!memberUserIds.length) return [];
+  const memberships = await UserGroupMembership.find({ groupId: group._id }).lean();
+  if (!memberships.length) return [];
+
+  const roleByUser = Object.fromEntries(
+    memberships.map((m) => [m.userId.toString(), membershipRoleForUser(group, m, m.userId)])
+  );
+  const memberUserIds = memberships.map((m) => m.userId);
 
   const users = await User.find({ _id: { $in: memberUserIds } })
     .select('name email')
     .sort({ name: 1 })
     .lean();
 
-  return users.map((user) => ({
-    id: user._id.toString(),
-    name: user.name,
-    email: user.email,
-  }));
+  return users.map((user) => {
+    const row = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+    };
+    if (includeRoles) {
+      row.role = roleByUser[user._id.toString()] || 'member';
+    }
+    return row;
+  });
 }
 
 export async function createCompetitionGroup({
@@ -226,21 +247,8 @@ export async function leaveCompetitionGroup({ userId, groupId }) {
   }
 
   await UserGroupMembership.deleteOne({ _id: membership._id });
-
-  const user = await User.findById(userId).select('activeCompetitionGroupId competitionGroupId');
-  const wasActive =
-    String(user?.activeCompetitionGroupId || user?.competitionGroupId || '') === String(group._id);
-
-  if (wasActive) {
-    const remaining = await UserGroupMembership.findOne({ userId }).sort({ createdAt: 1 }).lean();
-    const nextGroupId = remaining?.groupId || null;
-    await User.findByIdAndUpdate(userId, {
-      $set: {
-        activeCompetitionGroupId: nextGroupId,
-        competitionGroupId: nextGroupId,
-      },
-    });
-  }
+  await CompetitionGroupJoinRequest.deleteMany({ userId, groupId: group._id });
+  await reassignActiveGroupAfterLeave(userId, group._id);
 
   return { left: true, groupId: group._id.toString() };
 }
@@ -265,6 +273,7 @@ export async function joinCompetitionGroup({ userId, groupId }) {
     { upsert: true, new: true }
   );
 
+  await maybeActivateGroupForUser(userId, group._id);
   await User.findByIdAndUpdate(userId, {
     $set: {
       activeCompetitionGroupId: group._id,
@@ -272,7 +281,266 @@ export async function joinCompetitionGroup({ userId, groupId }) {
     },
   });
 
+  await CompetitionGroupJoinRequest.deleteMany({ userId, groupId: group._id });
+
   return getCompetitionGroupById(group._id);
+}
+
+export async function requestJoinCompetitionGroup({ userId, groupId }) {
+  if (groupId === '__nogroup') {
+    const error = new Error('No podés solicitar unirte al grupo Sin grupo');
+    error.status = 400;
+    throw error;
+  }
+
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const existingMembership = await UserGroupMembership.findOne({ userId, groupId: group._id });
+  if (existingMembership) {
+    const error = new Error('Ya participás en este grupo');
+    error.status = 409;
+    throw error;
+  }
+
+  const existingRequest = await CompetitionGroupJoinRequest.findOne({
+    userId,
+    groupId: group._id,
+  });
+
+  if (existingRequest?.status === 'pending') {
+    return { status: 'pending', group: await getCompetitionGroupById(group._id) };
+  }
+
+  await CompetitionGroupJoinRequest.findOneAndUpdate(
+    { userId, groupId: group._id },
+    { $set: { status: 'pending' } },
+    { upsert: true, new: true }
+  );
+
+  return { status: 'pending', group: await getCompetitionGroupById(group._id) };
+}
+
+export async function listUserPendingJoinRequests(userId) {
+  const requests = await CompetitionGroupJoinRequest.find({ userId, status: 'pending' }).lean();
+  return requests.map((r) => r.groupId.toString());
+}
+
+export async function listGroupJoinRequests({ groupId, userId, adminOverride = false }) {
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  if (!adminOverride && !(await isGroupAdmin({ userId, group }))) {
+    const error = new Error('Solo el administrador puede ver solicitudes');
+    error.status = 403;
+    throw error;
+  }
+
+  const requests = await CompetitionGroupJoinRequest.find({
+    groupId: group._id,
+    status: 'pending',
+  })
+    .sort({ createdAt: 1 })
+    .lean();
+
+  if (!requests.length) return [];
+
+  const users = await User.find({ _id: { $in: requests.map((r) => r.userId) } })
+    .select('name email')
+    .lean();
+  const userById = Object.fromEntries(users.map((u) => [u._id.toString(), u]));
+
+  return requests.map((r) => {
+    const user = userById[r.userId.toString()];
+    return {
+      userId: r.userId.toString(),
+      name: user?.name || '',
+      email: user?.email || '',
+      requestedAt: r.createdAt,
+    };
+  });
+}
+
+async function addMemberToGroup({ userId, group }) {
+  await UserGroupMembership.findOneAndUpdate(
+    { userId, groupId: group._id },
+    { $setOnInsert: { role: 'member' } },
+    { upsert: true, new: true }
+  );
+  await CompetitionGroupJoinRequest.deleteMany({ userId, groupId: group._id });
+  await maybeActivateGroupForUser(userId, group._id);
+}
+
+export async function approveJoinRequest({
+  groupId,
+  targetUserId,
+  userId,
+  adminOverride = false,
+}) {
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  if (!adminOverride && !(await isGroupAdmin({ userId, group }))) {
+    const error = new Error('Solo el administrador puede aprobar solicitudes');
+    error.status = 403;
+    throw error;
+  }
+
+  const request = await CompetitionGroupJoinRequest.findOne({
+    groupId: group._id,
+    userId: targetUserId,
+    status: 'pending',
+  });
+
+  if (!request) {
+    const error = new Error('No hay solicitud pendiente para este usuario');
+    error.status = 404;
+    throw error;
+  }
+
+  await addMemberToGroup({ userId: targetUserId, group });
+  return { approved: true, userId: String(targetUserId) };
+}
+
+export async function rejectJoinRequest({
+  groupId,
+  targetUserId,
+  userId,
+  adminOverride = false,
+}) {
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  if (!adminOverride && !(await isGroupAdmin({ userId, group }))) {
+    const error = new Error('Solo el administrador puede rechazar solicitudes');
+    error.status = 403;
+    throw error;
+  }
+
+  const result = await CompetitionGroupJoinRequest.findOneAndUpdate(
+    { groupId: group._id, userId: targetUserId, status: 'pending' },
+    { $set: { status: 'rejected' } },
+    { new: true }
+  );
+
+  if (!result) {
+    const error = new Error('No hay solicitud pendiente para este usuario');
+    error.status = 404;
+    throw error;
+  }
+
+  return { rejected: true, userId: String(targetUserId) };
+}
+
+export async function removeGroupMember({
+  groupId,
+  targetUserId,
+  userId,
+  adminOverride = false,
+}) {
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  if (!adminOverride && !(await isGroupAdmin({ userId, group }))) {
+    const error = new Error('Solo el administrador puede expulsar miembros');
+    error.status = 403;
+    throw error;
+  }
+
+  if (String(targetUserId) === String(userId) && !adminOverride) {
+    const error = new Error('Usá Salir para abandonar el grupo');
+    error.status = 403;
+    throw error;
+  }
+
+  const isOwner =
+    (group.createdBy && String(group.createdBy) === String(targetUserId)) ||
+    Boolean(
+      await UserGroupMembership.findOne({
+        userId: targetUserId,
+        groupId: group._id,
+        role: 'owner',
+      })
+    );
+
+  if (isOwner) {
+    const error = new Error('No podés expulsar al administrador del grupo');
+    error.status = 403;
+    throw error;
+  }
+
+  const membership = await UserGroupMembership.findOne({
+    userId: targetUserId,
+    groupId: group._id,
+  });
+
+  if (!membership) {
+    const error = new Error('Este usuario no participa en el grupo');
+    error.status = 404;
+    throw error;
+  }
+
+  await UserGroupMembership.deleteOne({ _id: membership._id });
+  await CompetitionGroupJoinRequest.deleteMany({ userId: targetUserId, groupId: group._id });
+  await reassignActiveGroupAfterLeave(targetUserId, group._id);
+
+  return { removed: true, userId: String(targetUserId) };
+}
+
+export async function addGroupMemberDirect({
+  groupId,
+  targetUserId,
+  adminOverride = false,
+  actorUserId = null,
+}) {
+  const group = await CompetitionGroup.findById(groupId);
+  if (!group) {
+    const error = new Error('Grupo no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  if (!adminOverride && actorUserId) {
+    if (!(await isGroupAdmin({ userId: actorUserId, group }))) {
+      const error = new Error('Solo el administrador puede agregar miembros');
+      error.status = 403;
+      throw error;
+    }
+  } else if (!adminOverride) {
+    const error = new Error('No autorizado');
+    error.status = 403;
+    throw error;
+  }
+
+  const targetUser = await User.findById(targetUserId);
+  if (!targetUser) {
+    const error = new Error('Usuario no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  await addMemberToGroup({ userId: targetUserId, group });
+  return { added: true, userId: String(targetUserId) };
 }
 
 export async function updateCompetitionGroup({
@@ -282,6 +550,7 @@ export async function updateCompetitionGroup({
   userId,
   prizesWinnersCount = 0,
   prizes = [],
+  adminOverride = false,
 }) {
   const group = await CompetitionGroup.findById(groupId);
   if (!group) {
@@ -290,7 +559,7 @@ export async function updateCompetitionGroup({
     throw error;
   }
 
-  if (!(await isGroupAdmin({ userId, group }))) {
+  if (!adminOverride && !(await isGroupAdmin({ userId, group }))) {
     const error = new Error('Solo el creador puede editar el grupo');
     error.status = 403;
     throw error;
@@ -315,7 +584,7 @@ export async function updateCompetitionGroup({
 
   group.name = trimmedName;
   group.description = description?.trim() || '';
-  if (!group.createdBy) {
+  if (!group.createdBy && userId) {
     // Claim admin ownership for legacy groups without explicit creator.
     group.createdBy = userId;
     await UserGroupMembership.findOneAndUpdate(
@@ -372,7 +641,7 @@ export async function listUserCompetitionGroups(userId) {
     return {
       ...serializeGroup(group),
       role,
-      isAdmin: isCreator,
+      isAdmin: role === 'owner',
     };
   });
 }
@@ -419,6 +688,7 @@ export async function deleteCompetitionGroup({ groupId, userId, adminOverride = 
   const memberUserIds = await UserGroupMembership.find({ groupId: group._id }).distinct('userId');
 
   await UserGroupMembership.deleteMany({ groupId: group._id });
+  await CompetitionGroupJoinRequest.deleteMany({ groupId: group._id });
 
   for (const memberUserId of memberUserIds) {
     const remainingMembership = await UserGroupMembership.findOne({ userId: memberUserId })

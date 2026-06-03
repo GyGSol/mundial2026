@@ -9,10 +9,11 @@ export default function GroupDirectoryRow({
   group,
   isAuthenticated,
   isMember,
+  joinRequestPending,
   isNoGroupParticipant,
   joinLoading,
   leaveLoading,
-  onJoin,
+  onRequestJoin,
   onLeave,
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -104,14 +105,18 @@ export default function GroupDirectoryRow({
                 {leaveLoading ? 'Saliendo...' : 'Salir'}
               </Button>
             </>
+          ) : joinRequestPending ? (
+            <span className="rounded-md bg-amber-500/15 px-2 py-1 text-xs text-amber-700 dark:text-amber-300">
+              Pendiente de aprobación
+            </span>
           ) : (
             <Button
               size="sm"
               variant="outline"
               disabled={joinLoading}
-              onClick={() => onJoin(group.id)}
+              onClick={() => onRequestJoin(group.id)}
             >
-              {joinLoading ? 'Uniendo...' : 'Unirme'}
+              {joinLoading ? 'Enviando...' : 'Solicitar unirme'}
             </Button>
           )}
         </div>
