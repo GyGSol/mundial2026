@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Dices } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input.jsx';
+import { MAX_GOALS_PER_TEAM, randomMatchScore } from '@/lib/randomMatchScore.js';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
@@ -72,6 +74,22 @@ function MatchScoreboard({
   );
 }
 
+function RandomScoreButton({ onClick }) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      title="Completar con un resultado aleatorio (máx. 10 goles por equipo, sin goleadas extremas)"
+      className="gap-1.5"
+    >
+      <Dices className="size-4" aria-hidden />
+      Al azar
+    </Button>
+  );
+}
+
 function BroadcastRow({ broadcasters }) {
   if (!broadcasters?.length) return null;
   return (
@@ -105,13 +123,20 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
     setEditing(false);
   };
 
+  const applyRandomScore = () => {
+    const { homeGoals, awayGoals } = randomMatchScore();
+    setHome(homeGoals);
+    setAway(awayGoals);
+    setEditing(true);
+  };
+
   const showActualScores = match.status !== 'upcoming';
   const prediction = match.prediction;
 
   const inputProps = (side) => ({
     type: 'number',
     min: 0,
-    max: 20,
+    max: MAX_GOALS_PER_TEAM,
     value: side === 'home' ? home : away,
     onChange: (e) => (side === 'home' ? setHome : setAway)(e.target.value),
     className: 'w-16 text-center text-xl font-bold tabular-nums',
@@ -151,14 +176,17 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homePrediction={prediction.homeGoals}
           awayPrediction={prediction.awayGoals}
         />
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => setEditing(true)}
-          className={cn(PREDICTION_ACTION_BUTTON_CLASS, EDIT_PREDICTION_BUTTON_CLASS)}
-        >
-          Editar
-        </Button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setEditing(true)}
+            className={cn(PREDICTION_ACTION_BUTTON_CLASS, EDIT_PREDICTION_BUTTON_CLASS)}
+          >
+            Editar
+          </Button>
+          <RandomScoreButton onClick={applyRandomScore} />
+        </div>
         <BroadcastRow broadcasters={broadcasters} />
       </div>
     );
@@ -177,19 +205,22 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
       />
 
       <div className="flex flex-col items-center gap-2">
-        <Button
-          type="submit"
-          size="sm"
-          disabled={saving}
-          className={PREDICTION_ACTION_BUTTON_CLASS}
-        >
-          {saving ? '...' : 'Guardar'}
-        </Button>
-        {hasPrediction && (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <RandomScoreButton onClick={applyRandomScore} />
+          <Button
+            type="submit"
+            size="sm"
+            disabled={saving}
+            className={PREDICTION_ACTION_BUTTON_CLASS}
+          >
+            {saving ? '...' : 'Guardar'}
+          </Button>
+        </div>
+        {hasPrediction ? (
           <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
             Cancelar
           </Button>
-        )}
+        ) : null}
         <BroadcastRow broadcasters={broadcasters} />
       </div>
     </form>
