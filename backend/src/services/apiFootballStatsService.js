@@ -7,6 +7,8 @@ import {
 export const WORLD_CUP_LEAGUE_ID = 1;
 export const WORLD_CUP_SEASON_TARGET = 2026;
 export const FRIENDLY_LOOKBACK_DAYS = 30;
+/** En plan free (temporada histórica) se amplía la ventana para encontrar amistosos. */
+export const FRIENDLY_LOOKBACK_DAYS_FREE = 120;
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']);
 const LIVE_STATUSES = new Set(['LIVE', '1H', 'HT', '2H', 'ET', 'BT', 'P', 'INT']);
@@ -261,12 +263,30 @@ async function fetchFixturesForLeagueInRange(leagueId, season, from, to) {
   return body.response || [];
 }
 
+export function buildSeasonDateRanges(from, to, season) {
+  const ranges = [{ from, to }];
+  const calendarYear = new Date(from).getFullYear();
+
+  if (season < calendarYear) {
+    const shifted = shiftDateRangeToSeason(from, to, season);
+    ranges.push(shifted);
+
+    const wideEnd = new Date(`${shifted.to}T12:00:00Z`);
+    const wideStart = new Date(wideEnd);
+    wideStart.setDate(wideStart.getDate() - FRIENDLY_LOOKBACK_DAYS_FREE);
+    ranges.push({
+      from: formatDateYmd(wideStart),
+      to: shifted.to,
+    });
+  }
+
+  return ranges;
+}
+
 async function fetchFriendliesForDbTeams(dbTeams, season, from, to) {
   const leagueIds = await discoverFriendlyLeagueIds();
-  const dateRanges = [ { from, to } ];
-  if (season < new Date(from).getFullYear()) {
-    dateRanges.push(shiftDateRangeToSeason(from, to, season));
-  }
+  const dateRanges = buildSeasonDateRanges(from, to, season);
+  const shifted = shiftDateRangeToSeason(from, to, season);
 
   let raw = [];
 
@@ -284,22 +304,14 @@ async function fetchFriendliesForDbTeams(dbTeams, season, from, to) {
         /* siguiente liga */
       }
     }
+    raw = filterDbTeamFriendlies(raw, dbTeams);
     if (raw.length > 0) break;
+    raw = [];
   }
 
-  if (raw.length === 0) {
-    try {
-      const shifted = shiftDateRangeToSeason(from, to, season);
-      const body = await apiFootballGet('/fixtures', { season, from: shifted.from, to: shifted.to });
-      raw = body.response || [];
-    } catch {
-      raw = [];
-    }
-  }
-
-  raw = filterDbTeamFriendlies(raw, dbTeams);
-  const inRange = filterFixturesByDateRange(raw, from, to);
-  const usedBroadFallback = inRange.length === 0 && raw.length > 0;
+  const inRange = filterFixturesByDateRange(raw, shifted.from, shifted.to);
+  const usedBroadFallback =
+    season < new Date(from).getFullYear() && inRange.length === 0 && raw.length > 0;
   const selected = usedBroadFallback ? raw : inRange;
 
   const sorted = sortFixturesByKickoff(selected, 'desc');
@@ -356,7 +368,7 @@ function buildPlanNotice(season, usedBroadFallback) {
   }
   if (usedBroadFallback) {
     parts.push(
-      'No hay amistosos en el último mes en esa temporada; se muestran los amistosos más recientes disponibles.'
+      `Se muestran amistosos recientes de la temporada ${season} (el plan free no cubre el último mes de 2026).`
     );
   }
   return parts.length ? parts.join(' ') : null;
