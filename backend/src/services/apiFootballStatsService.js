@@ -227,21 +227,34 @@ export async function buildApiFootballStats() {
     };
   }
 
-  const { from, to } = getLastMonthDateRange();
-  const { teams, teamIds } = await fetchWorldCupTeams();
-  const teamIdList = [...teamIds];
+  try {
+    const { from, to } = getLastMonthDateRange();
+    const { teams, teamIds } = await fetchWorldCupTeams();
+    const teamIdList = [...teamIds];
 
-  const [friendlies, injuries] = await Promise.all([
-    fetchFriendliesInRange(teamIds, from, to),
-    fetchInjuriesForTeams(teamIdList),
-  ]);
+    const [friendlies, injuries] = await Promise.all([
+      fetchFriendliesInRange(teamIds, from, to),
+      fetchInjuriesForTeams(teamIdList),
+    ]);
 
-  return {
-    configured: true,
-    friendlies,
-    injuries,
-    worldCupTeams: teams,
-    period: { from, to, lookbackDays: FRIENDLY_LOOKBACK_DAYS },
-    fetchedAt: new Date().toISOString(),
-  };
+    return {
+      configured: true,
+      friendlies,
+      injuries,
+      worldCupTeams: teams,
+      period: { from, to, lookbackDays: FRIENDLY_LOOKBACK_DAYS },
+      fetchedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    const { from, to } = getLastMonthDateRange();
+    return {
+      configured: true,
+      friendlies: [],
+      injuries: [],
+      worldCupTeams: [],
+      period: { from, to, lookbackDays: FRIENDLY_LOOKBACK_DAYS },
+      apiError: err.message || 'Error al consultar API-Football',
+      message: err.message || 'Error al consultar API-Football',
+    };
+  }
 }

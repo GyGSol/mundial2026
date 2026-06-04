@@ -318,6 +318,8 @@ function ApiFootballStatsPanels({ apiFootball, loading, error }) {
               {apiFootball.message ||
                 'Configurá API_FOOTBALL_KEY en el servidor para ver los amistosos.'}
             </p>
+          ) : apiFootball.apiError ? (
+            <p className="text-sm text-amber-700 dark:text-amber-400">{apiFootball.apiError}</p>
           ) : apiFootball.friendlies?.length ? (
             <div className="flex flex-col">
               {apiFootball.friendlies.map((match) => (
@@ -345,6 +347,8 @@ function ApiFootballStatsPanels({ apiFootball, loading, error }) {
               {apiFootball.message ||
                 'Configurá API_FOOTBALL_KEY en el servidor para ver lesiones.'}
             </p>
+          ) : apiFootball.apiError ? (
+            <p className="px-6 text-sm text-amber-700 dark:text-amber-400">{apiFootball.apiError}</p>
           ) : apiFootball.injuries?.length ? (
             <Table>
               <TableHeader>
