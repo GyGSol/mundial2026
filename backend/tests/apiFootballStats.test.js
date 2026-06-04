@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   dedupeInjuries,
+  filterFixturesByDateRange,
   filterWorldCupFriendlyFixtures,
   getLastMonthDateRange,
   isNationalFriendlyLeagueName,
   mapFixtureStatus,
   normalizeFriendlyFixture,
+  pickApiTeamMatch,
   sortFixturesByKickoff,
 } from '../src/services/apiFootballStatsService.js';
 
@@ -96,5 +98,23 @@ describe('apiFootballStatsService', () => {
     expect(mapFixtureStatus('FT')).toBe('finished');
     expect(mapFixtureStatus('NS')).toBe('scheduled');
     expect(mapFixtureStatus('LIVE')).toBe('live');
+  });
+
+  it('filtra fixtures por rango de fechas', () => {
+    const fixtures = [
+      { fixture: { date: '2024-05-10T18:00:00+00:00' } },
+      { fixture: { date: '2024-03-01T18:00:00+00:00' } },
+    ];
+    const filtered = filterFixturesByDateRange(fixtures, '2024-05-01', '2024-05-31');
+    expect(filtered).toHaveLength(1);
+  });
+
+  it('elige selección por código FIFA en búsqueda', () => {
+    const rows = [
+      { team: { id: 1, name: 'Other', code: 'OTH', national: false } },
+      { team: { id: 26, name: 'Argentina', code: 'ARG', national: true } },
+    ];
+    const team = pickApiTeamMatch(rows, { fifaCode: 'ARG', nameEn: 'Argentina' });
+    expect(team.id).toBe(26);
   });
 });

@@ -16,6 +16,8 @@ export const env = {
   worldCupSyncPassword: process.env.WORLD_CUP_SYNC_PASSWORD || '',
   /** API-Sports Football v3 — header x-apisports-key */
   apiFootballKey: process.env.API_FOOTBALL_KEY || '',
+  /** Plan free: 2022–2024. Plan pago: 2026 para Mundial actual. */
+  apiFootballSeason: Number(process.env.API_FOOTBALL_SEASON || 2024),
   syncIntervalMs: Number(process.env.SYNC_INTERVAL_MS || 60000),
   simulationEnabled: process.env.SIMULATION_ENABLED !== 'false',
   adminUsername: process.env.ADMIN_USERNAME || '',

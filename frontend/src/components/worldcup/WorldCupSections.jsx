@@ -304,12 +304,18 @@ function ApiFootballStatsPanels({ apiFootball, loading, error }) {
 
   return (
     <>
+      {apiFootball.planNotice ? (
+        <p className="text-sm text-amber-700 dark:text-amber-400 lg:col-span-2">
+          {apiFootball.planNotice}
+        </p>
+      ) : null}
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="text-base">Partidos amistosos</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Selecciones del Mundial 2026 · {periodLabel}
-            {!apiFootball.configured && ' · ' + (apiFootball.message || '')}
+            Selecciones del Mundial 2026
+            {apiFootball.season ? ` · temporada API ${apiFootball.season}` : ''} · {periodLabel}
+            {!apiFootball.configured && apiFootball.message ? ` · ${apiFootball.message}` : ''}
           </p>
         </CardHeader>
         <CardContent>

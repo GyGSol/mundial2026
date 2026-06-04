@@ -1,15 +1,21 @@
+import { env } from '../config/env.js';
 import {
   apiFootballGet,
-  ApiFootballNotConfiguredError,
   isApiFootballConfigured,
 } from './apiFootballClient.js';
 
 export const WORLD_CUP_LEAGUE_ID = 1;
-export const WORLD_CUP_SEASON = 2026;
+export const WORLD_CUP_SEASON_TARGET = 2026;
 export const FRIENDLY_LOOKBACK_DAYS = 30;
+export const FRIENDLY_LAST_PER_TEAM = 25;
 
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']);
 const LIVE_STATUSES = new Set(['LIVE', '1H', 'HT', '2H', 'ET', 'BT', 'P', 'INT']);
+
+export function getApiFootballSeason() {
+  const season = Number(env.apiFootballSeason);
+  return Number.isFinite(season) && season > 0 ? season : 2024;
+}
 
 export function isNationalFriendlyLeagueName(name) {
   const n = String(name || '').toLowerCase();
@@ -39,13 +45,22 @@ export function getLastMonthDateRange(now = new Date()) {
   return { from: formatDateYmd(from), to: formatDateYmd(to) };
 }
 
-function normalizeApiTeam(team) {
+export function filterFixturesByDateRange(fixtures, from, to) {
+  const fromMs = new Date(`${from}T00:00:00Z`).getTime();
+  const toMs = new Date(`${to}T23:59:59Z`).getTime();
+  return fixtures.filter((item) => {
+    const ms = new Date(item.fixture?.date || 0).getTime();
+    return ms >= fromMs && ms <= toMs;
+  });
+}
+
+function normalizeApiTeam(team, fallback = {}) {
   if (!team?.id) return null;
   return {
     apiFootballId: team.id,
-    nameEn: team.name || '',
-    fifaCode: (team.code || '').toUpperCase(),
-    flag: team.logo || '',
+    nameEn: team.name || fallback.nameEn || '',
+    fifaCode: (team.code || fallback.fifaCode || '').toUpperCase(),
+    flag: team.logo || fallback.flag || '',
   };
 }
 
@@ -126,55 +141,113 @@ export function dedupeInjuries(rows) {
   );
 }
 
-async function fetchWorldCupTeams() {
+export function pickApiTeamMatch(rows, dbTeam) {
+  const code = (dbTeam.fifaCode || '').toUpperCase();
+  if (code) {
+    const byCode = rows.find((r) => (r.team?.code || '').toUpperCase() === code);
+    if (byCode?.team?.id) return byCode.team;
+  }
+  const national = rows.find((r) => r.team?.national === true);
+  return national?.team || rows[0]?.team || null;
+}
+
+async function resolveApiTeamId(dbTeam) {
+  const search = (dbTeam.nameEn || dbTeam.fifaCode || '').trim();
+  if (search.length < 3) return null;
+
+  const body = await apiFootballGet('/teams', { search });
+  const rows = body.response || [];
+  const team = pickApiTeamMatch(rows, dbTeam);
+  return team?.id ?? null;
+}
+
+async function fetchWorldCupTeamsFromLeague(season) {
   const body = await apiFootballGet('/teams', {
     league: WORLD_CUP_LEAGUE_ID,
-    season: WORLD_CUP_SEASON,
+    season,
   });
   const list = body.response || [];
-  const teams = list
-    .map((row) => normalizeApiTeam(row.team))
-    .filter(Boolean);
+  const teams = list.map((row) => normalizeApiTeam(row.team)).filter(Boolean);
   const teamIds = new Set(teams.map((t) => t.apiFootballId));
   return { teams, teamIds };
 }
 
-async function discoverFriendlyLeagueIds() {
-  const body = await apiFootballGet('/leagues', { search: 'Friendlies' });
-  const leagues = body.response || [];
-  const ids = new Set();
+async function fetchWorldCupTeamsFromDatabase(Team) {
+  const dbTeams = await Team.find().select('nameEn fifaCode flag').lean();
+  const teams = [];
+  const chunkSize = 5;
 
-  for (const entry of leagues) {
-    const league = entry.league || entry;
-    const name = league.name || '';
-    if (!isNationalFriendlyLeagueName(name)) continue;
-    if (league.id) ids.add(league.id);
+  for (let i = 0; i < dbTeams.length; i += chunkSize) {
+    const chunk = dbTeams.slice(i, i + chunkSize);
+    const resolved = await Promise.all(
+      chunk.map(async (dbTeam) => {
+        try {
+          const apiFootballId = await resolveApiTeamId(dbTeam);
+          if (!apiFootballId) return null;
+          return {
+            apiFootballId,
+            nameEn: dbTeam.nameEn || '',
+            fifaCode: (dbTeam.fifaCode || '').toUpperCase(),
+            flag: dbTeam.flag || '',
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+    teams.push(...resolved.filter(Boolean));
   }
 
-  return [...ids];
+  const teamIds = new Set(teams.map((t) => t.apiFootballId));
+  return { teams, teamIds };
 }
 
-async function fetchFixturesForLeagueInRange(leagueId, from, to) {
-  const body = await apiFootballGet('/fixtures', { league: leagueId, from, to });
+async function fetchWorldCupTeams(Team) {
+  const season = getApiFootballSeason();
+
+  if (season >= WORLD_CUP_SEASON_TARGET) {
+    try {
+      return await fetchWorldCupTeamsFromLeague(season);
+    } catch {
+      /* plan free u otra limitación → equipos desde Mongo */
+    }
+  }
+
+  if (!Team) {
+    throw new Error('No se pudieron resolver equipos para API-Football');
+  }
+
+  return fetchWorldCupTeamsFromDatabase(Team);
+}
+
+async function fetchRecentFixturesForTeam(teamId, season) {
+  const body = await apiFootballGet('/fixtures', {
+    team: teamId,
+    season,
+    last: FRIENDLY_LAST_PER_TEAM,
+  });
   return body.response || [];
 }
 
-async function fetchFriendliesInRange(teamIds, from, to) {
-  const leagueIds = await discoverFriendlyLeagueIds();
-  const batches = await Promise.all(
-    leagueIds.map((leagueId) => fetchFixturesForLeagueInRange(leagueId, from, to))
-  );
+async function fetchFriendliesForTeams(teamIds, season, from, to) {
+  const idList = [...teamIds];
+  const chunkSize = 6;
+  let raw = [];
 
-  let raw = batches.flat();
-
-  if (raw.length === 0) {
-    const fallback = await apiFootballGet('/fixtures', { from, to });
-    raw = filterWorldCupFriendlyFixtures(fallback.response || [], teamIds);
-  } else {
-    raw = filterWorldCupFriendlyFixtures(raw, teamIds);
+  for (let i = 0; i < idList.length; i += chunkSize) {
+    const chunk = idList.slice(i, i + chunkSize);
+    const batches = await Promise.all(
+      chunk.map((teamId) => fetchRecentFixturesForTeam(teamId, season).catch(() => []))
+    );
+    raw.push(...batches.flat());
   }
 
-  const sorted = sortFixturesByKickoff(raw, 'desc');
+  raw = filterWorldCupFriendlyFixtures(raw, teamIds);
+  const inRange = filterFixturesByDateRange(raw, from, to);
+  const usedBroadFallback = inRange.length === 0 && raw.length > 0;
+  const selected = usedBroadFallback ? raw : inRange;
+
+  const sorted = sortFixturesByKickoff(selected, 'desc');
   const seenFixtureIds = new Set();
   const unique = [];
 
@@ -185,10 +258,13 @@ async function fetchFriendliesInRange(teamIds, from, to) {
     unique.push(item);
   }
 
-  return unique.map(normalizeFriendlyFixture);
+  return {
+    friendlies: unique.map(normalizeFriendlyFixture),
+    usedBroadFallback,
+  };
 }
 
-async function fetchInjuriesForTeams(teamIds) {
+async function fetchInjuriesForTeams(teamIds, season) {
   const rows = [];
   const chunkSize = 6;
 
@@ -197,7 +273,7 @@ async function fetchInjuriesForTeams(teamIds) {
     const results = await Promise.all(
       chunk.map(async (teamId) => {
         try {
-          const body = await apiFootballGet('/injuries', { team: teamId, season: WORLD_CUP_SEASON });
+          const body = await apiFootballGet('/injuries', { team: teamId, season });
           return body.response || [];
         } catch {
           try {
@@ -215,43 +291,80 @@ async function fetchInjuriesForTeams(teamIds) {
   return dedupeInjuries(rows.map(normalizeInjuryRow));
 }
 
-export async function buildApiFootballStats() {
+function buildPlanNotice(season, usedBroadFallback) {
+  const parts = [];
+  if (season < WORLD_CUP_SEASON_TARGET) {
+    parts.push(
+      `Plan gratuito de API-Football: datos con temporada ${season} (el Mundial 2026 requiere plan pago o API_FOOTBALL_SEASON=2026).`
+    );
+  }
+  if (usedBroadFallback) {
+    parts.push(
+      'No hay amistosos en el último mes en esa temporada; se muestran los amistosos más recientes disponibles.'
+    );
+  }
+  return parts.length ? parts.join(' ') : null;
+}
+
+export async function buildApiFootballStats({ Team } = {}) {
+  const season = getApiFootballSeason();
+  const { from, to } = getLastMonthDateRange();
+
   if (!isApiFootballConfigured()) {
     return {
       configured: false,
       friendlies: [],
       injuries: [],
       worldCupTeams: [],
-      period: getLastMonthDateRange(),
+      season,
+      period: { from, to, lookbackDays: FRIENDLY_LOOKBACK_DAYS },
       message: 'Configurá API_FOOTBALL_KEY en el servidor para ver amistosos y lesiones.',
     };
   }
 
   try {
-    const { from, to } = getLastMonthDateRange();
-    const { teams, teamIds } = await fetchWorldCupTeams();
+    const { teams, teamIds } = await fetchWorldCupTeams(Team);
     const teamIdList = [...teamIds];
 
-    const [friendlies, injuries] = await Promise.all([
-      fetchFriendliesInRange(teamIds, from, to),
-      fetchInjuriesForTeams(teamIdList),
+    if (teamIdList.length === 0) {
+      return {
+        configured: true,
+        friendlies: [],
+        injuries: [],
+        worldCupTeams: [],
+        season,
+        period: { from, to, lookbackDays: FRIENDLY_LOOKBACK_DAYS },
+        apiError:
+          'No se pudieron vincular las selecciones del Mundial con API-Football. Sincronizá equipos primero.',
+        message:
+          'No se pudieron vincular las selecciones del Mundial con API-Football. Sincronizá equipos primero.',
+      };
+    }
+
+    const [{ friendlies, usedBroadFallback }, injuries] = await Promise.all([
+      fetchFriendliesForTeams(teamIds, season, from, to),
+      fetchInjuriesForTeams(teamIdList, season),
     ]);
+
+    const planNotice = buildPlanNotice(season, usedBroadFallback);
 
     return {
       configured: true,
       friendlies,
       injuries,
       worldCupTeams: teams,
+      season,
       period: { from, to, lookbackDays: FRIENDLY_LOOKBACK_DAYS },
+      planNotice,
       fetchedAt: new Date().toISOString(),
     };
   } catch (err) {
-    const { from, to } = getLastMonthDateRange();
     return {
       configured: true,
       friendlies: [],
       injuries: [],
       worldCupTeams: [],
+      season,
       period: { from, to, lookbackDays: FRIENDLY_LOOKBACK_DAYS },
       apiError: err.message || 'Error al consultar API-Football',
       message: err.message || 'Error al consultar API-Football',

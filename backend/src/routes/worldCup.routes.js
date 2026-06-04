@@ -36,7 +36,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
 
 router.get('/api-football-stats', async (_req, res, next) => {
   try {
-    const stats = await buildApiFootballStats();
+    const stats = await buildApiFootballStats({ Team });
     res.json(stats);
   } catch (err) {
     next(err);
