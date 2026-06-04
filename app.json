@@ -38,6 +38,10 @@
       "description": "Password de sync worldcup26.ir",
       "required": false
     },
+    "API_FOOTBALL_KEY": {
+      "description": "API key de API-Sports Football v3 (dashboard api-sports.io)",
+      "required": false
+    },
     "SYNC_INTERVAL_MS": {
       "description": "Intervalo de sync automático",
       "value": "60000"

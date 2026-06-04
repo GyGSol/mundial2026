@@ -141,6 +141,7 @@ export const worldCupApi = {
     const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : '';
     return request(`/world-cup${query}`);
   },
+  apiFootballStats: () => request('/world-cup/api-football-stats'),
 };
 
 export const simulationApi = {
