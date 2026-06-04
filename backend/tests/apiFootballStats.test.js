@@ -4,6 +4,7 @@ import {
   filterDbTeamFriendlies,
   filterFixturesByDateRange,
   filterWorldCupFriendlyFixtures,
+  resolveFixtureFetchRange,
   shiftDateRangeToSeason,
   getLastMonthDateRange,
   isNationalFriendlyLeagueName,
@@ -132,6 +133,13 @@ describe('apiFootballStatsService', () => {
       from: '2024-05-05',
       to: '2024-06-04',
     });
+  });
+
+  it('amplía ventana de búsqueda en plan free', () => {
+    const resolved = resolveFixtureFetchRange('2026-05-05', '2026-06-04', 2024);
+    expect(resolved.usedBroadFallback).toBe(true);
+    expect(resolved.fetch.from).toBe('2024-02-05');
+    expect(resolved.fetch.to).toBe('2024-06-04');
   });
 
   it('elige selección por código FIFA en búsqueda', () => {

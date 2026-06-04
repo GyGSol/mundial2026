@@ -13,6 +13,10 @@ export const FRIENDLY_LOOKBACK_DAYS_FREE = 120;
 const FINISHED_STATUSES = new Set(['FT', 'AET', 'PEN', 'AWD', 'WO']);
 const LIVE_STATUSES = new Set(['LIVE', '1H', 'HT', '2H', 'ET', 'BT', 'P', 'INT']);
 
+/** Liga internacional de amistosos (cache en memoria del dyno). */
+const FRIENDLY_LEAGUE_ID = 10;
+let cachedFriendlyLeagueIds = null;
+
 export function getApiFootballSeason() {
   const season = Number(env.apiFootballSeason);
   return Number.isFinite(season) && season > 0 ? season : 2024;
@@ -239,18 +243,26 @@ async function fetchWorldCupTeams(Team, season) {
 }
 
 async function discoverFriendlyLeagueIds() {
-  const body = await apiFootballGet('/leagues', { search: 'Friendlies' });
-  const leagues = body.response || [];
-  const ids = new Set();
+  if (cachedFriendlyLeagueIds) return cachedFriendlyLeagueIds;
 
-  for (const entry of leagues) {
-    const league = entry.league || entry;
-    const name = league.name || '';
-    if (!isNationalFriendlyLeagueName(name)) continue;
-    if (league.id) ids.add(league.id);
+  try {
+    const body = await apiFootballGet('/leagues', { search: 'Friendlies' });
+    const leagues = body.response || [];
+    const ids = new Set();
+
+    for (const entry of leagues) {
+      const league = entry.league || entry;
+      const name = league.name || '';
+      if (!isNationalFriendlyLeagueName(name)) continue;
+      if (league.id) ids.add(league.id);
+    }
+
+    cachedFriendlyLeagueIds = ids.size ? [...ids] : [FRIENDLY_LEAGUE_ID];
+  } catch {
+    cachedFriendlyLeagueIds = [FRIENDLY_LEAGUE_ID];
   }
 
-  return [...ids];
+  return cachedFriendlyLeagueIds;
 }
 
 async function fetchFixturesForLeagueInRange(leagueId, season, from, to) {
@@ -263,56 +275,43 @@ async function fetchFixturesForLeagueInRange(leagueId, season, from, to) {
   return body.response || [];
 }
 
-export function buildSeasonDateRanges(from, to, season) {
-  const ranges = [{ from, to }];
+export function resolveFixtureFetchRange(from, to, season) {
   const calendarYear = new Date(from).getFullYear();
+  const shifted = shiftDateRangeToSeason(from, to, season);
 
-  if (season < calendarYear) {
-    const shifted = shiftDateRangeToSeason(from, to, season);
-    ranges.push(shifted);
-
-    const wideEnd = new Date(`${shifted.to}T12:00:00Z`);
-    const wideStart = new Date(wideEnd);
-    wideStart.setDate(wideStart.getDate() - FRIENDLY_LOOKBACK_DAYS_FREE);
-    ranges.push({
-      from: formatDateYmd(wideStart),
-      to: shifted.to,
-    });
+  if (season >= calendarYear) {
+    return { fetch: { from, to }, display: { from, to }, usedBroadFallback: false };
   }
 
-  return ranges;
+  const wideEnd = new Date(`${shifted.to}T12:00:00Z`);
+  const wideStart = new Date(wideEnd);
+  wideStart.setDate(wideStart.getDate() - FRIENDLY_LOOKBACK_DAYS_FREE);
+
+  return {
+    fetch: { from: formatDateYmd(wideStart), to: shifted.to },
+    display: shifted,
+    usedBroadFallback: true,
+  };
 }
 
 async function fetchFriendliesForDbTeams(dbTeams, season, from, to) {
-  const leagueIds = await discoverFriendlyLeagueIds();
-  const dateRanges = buildSeasonDateRanges(from, to, season);
-  const shifted = shiftDateRangeToSeason(from, to, season);
+  const { fetch, display, usedBroadFallback } = resolveFixtureFetchRange(from, to, season);
 
   let raw = [];
-
-  for (const range of dateRanges) {
-    for (const leagueId of leagueIds) {
-      try {
-        const batch = await fetchFixturesForLeagueInRange(
-          leagueId,
-          season,
-          range.from,
-          range.to
-        );
-        raw.push(...batch);
-      } catch {
-        /* siguiente liga */
-      }
-    }
-    raw = filterDbTeamFriendlies(raw, dbTeams);
-    if (raw.length > 0) break;
+  try {
+    raw = await fetchFixturesForLeagueInRange(
+      FRIENDLY_LEAGUE_ID,
+      season,
+      fetch.from,
+      fetch.to
+    );
+  } catch {
     raw = [];
   }
 
-  const inRange = filterFixturesByDateRange(raw, shifted.from, shifted.to);
-  const usedBroadFallback =
-    season < new Date(from).getFullYear() && inRange.length === 0 && raw.length > 0;
-  const selected = usedBroadFallback ? raw : inRange;
+  raw = filterDbTeamFriendlies(raw, dbTeams);
+  const inRange = filterFixturesByDateRange(raw, display.from, display.to);
+  const selected = usedBroadFallback && inRange.length === 0 ? raw : inRange;
 
   const sorted = sortFixturesByKickoff(selected, 'desc');
   const seenFixtureIds = new Set();
@@ -332,28 +331,16 @@ async function fetchFriendliesForDbTeams(dbTeams, season, from, to) {
 }
 
 async function fetchInjuriesForDbTeams(dbTeams, season) {
-  const matchers = buildDbTeamMatchers(dbTeams);
   let rows = [];
 
   try {
-    const body = await apiFootballGet('/injuries', { season });
-    rows = body.response || [];
+    const body = await apiFootballGet('/injuries', {
+      league: FRIENDLY_LEAGUE_ID,
+      season,
+    });
+    rows = filterInjuriesForDbTeams(body.response || [], dbTeams);
   } catch {
     rows = [];
-  }
-
-  rows = filterInjuriesForDbTeams(rows, dbTeams);
-
-  if (rows.length === 0) {
-    const leagueIds = await discoverFriendlyLeagueIds();
-    for (const leagueId of leagueIds.slice(0, 2)) {
-      try {
-        const body = await apiFootballGet('/injuries', { league: leagueId, season });
-        rows.push(...filterInjuriesForDbTeams(body.response || [], dbTeams));
-      } catch {
-        /* ignore */
-      }
-    }
   }
 
   return dedupeInjuries(rows.map(normalizeInjuryRow));
