@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   dedupeInjuries,
+  filterDbTeamFriendlies,
   filterFixturesByDateRange,
   filterWorldCupFriendlyFixtures,
+  shiftDateRangeToSeason,
   getLastMonthDateRange,
   isNationalFriendlyLeagueName,
   mapFixtureStatus,
@@ -107,6 +109,29 @@ describe('apiFootballStatsService', () => {
     ];
     const filtered = filterFixturesByDateRange(fixtures, '2024-05-01', '2024-05-31');
     expect(filtered).toHaveLength(1);
+  });
+
+  it('filtra amistosos por código FIFA sin IDs de API', () => {
+    const dbTeams = [{ nameEn: 'Argentina', fifaCode: 'ARG' }, { nameEn: 'Brazil', fifaCode: 'BRA' }];
+    const fixtures = [
+      {
+        fixture: { id: 1, date: '2024-05-10T18:00:00+00:00', status: { short: 'FT' } },
+        league: { name: 'Friendlies' },
+        teams: {
+          home: { id: 1, name: 'Argentina', code: 'ARG' },
+          away: { id: 2, name: 'Brazil', code: 'BRA' },
+        },
+        goals: { home: 1, away: 0 },
+      },
+    ];
+    expect(filterDbTeamFriendlies(fixtures, dbTeams)).toHaveLength(1);
+  });
+
+  it('corre rango de fechas al año de temporada API', () => {
+    expect(shiftDateRangeToSeason('2026-05-05', '2026-06-04', 2024)).toEqual({
+      from: '2024-05-05',
+      to: '2024-06-04',
+    });
   });
 
   it('elige selección por código FIFA en búsqueda', () => {
