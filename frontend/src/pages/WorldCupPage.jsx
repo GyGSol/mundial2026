@@ -35,16 +35,6 @@ export default function WorldCupPage() {
   const { data, loading, error, lastUpdated } = useLiveData(fetchOverview, [groupId], {
     enabled: !authLoading,
   });
-
-  const fetchApiFootballStats = useCallback(() => worldCupApi.apiFootballStats(), []);
-  const {
-    data: apiFootball,
-    loading: apiFootballLoading,
-    error: apiFootballError,
-  } = useLiveData(fetchApiFootballStats, [], {
-    enabled: !authLoading && activeTab === 'stats',
-  });
-
   const pageLoading = authLoading || loading;
 
   return (
@@ -90,14 +80,7 @@ export default function WorldCupPage() {
             />
           )}
           {activeTab === 'stats' && (
-            <StatsSection
-              stats={data?.stats}
-              teams={data?.teams}
-              stadiums={data?.stadiums}
-              apiFootball={apiFootball}
-              apiFootballLoading={apiFootballLoading}
-              apiFootballError={apiFootballError}
-            />
+            <StatsSection stats={data?.stats} teams={data?.teams} stadiums={data?.stadiums} />
           )}
           {activeTab === 'teams' && <TeamsSection teams={data?.teams} />}
         </>

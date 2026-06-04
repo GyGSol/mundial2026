@@ -38,14 +38,6 @@
       "description": "Password de sync worldcup26.ir",
       "required": false
     },
-    "API_FOOTBALL_KEY": {
-      "description": "API key de API-Sports Football v3 (dashboard api-sports.io)",
-      "required": false
-    },
-    "API_FOOTBALL_SEASON": {
-      "description": "Temporada API-Football (plan free: 2024; plan pago Mundial: 2026)",
-      "value": "2024"
-    },
     "SYNC_INTERVAL_MS": {
       "description": "Intervalo de sync automático",
       "value": "60000"
