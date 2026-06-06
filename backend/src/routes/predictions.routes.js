@@ -13,8 +13,16 @@ router.put('/:matchId', authMiddleware, async (req, res, next) => {
     const home = Number(homeGoals);
     const away = Number(awayGoals);
 
-    if (!Number.isInteger(home) || !Number.isInteger(away) || home < 0 || away < 0) {
-      return res.status(400).json({ error: 'Invalid score values' });
+    const maxGoals = 10;
+    if (
+      !Number.isInteger(home) ||
+      !Number.isInteger(away) ||
+      home < 0 ||
+      away < 0 ||
+      home > maxGoals ||
+      away > maxGoals
+    ) {
+      return res.status(400).json({ error: `Marcá entre 0 y ${maxGoals} goles por equipo` });
     }
 
     const match = await Match.findById(req.params.matchId);
