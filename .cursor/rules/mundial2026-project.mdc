@@ -1,0 +1,38 @@
+---
+description: >-
+  Mundial 2026 — ruta del repo, app Heroku, Engram y convenciones básicas.
+  Disparadores: Mundial2026, mundial2026-pred, predicciones, worldcup26.
+alwaysApply: true
+---
+
+# Mundial 2026 — contexto del workspace
+
+## Ruta y apps
+
+- **Repo local:** `/home/magnetico/Nexus/Mundial2026` (no usar `/home/magnetico/cursor/Mundial2026`).
+- **Heroku:** app `mundial2026-pred` → https://mundial2026-pred-34de76763ecc.herokuapp.com/
+- **MongoDB:** Atlas vía `MONGODB_URI` (requerido en Heroku).
+
+## Memoria (Engram)
+
+- Proyecto: `mundial2026`
+- Datos: `.engram/` en la raíz del repo (gitignored)
+- No guardar JWT, passwords, `MONGODB_URI` ni PII de usuarios.
+
+## Desarrollo
+
+```bash
+cd /home/magnetico/Nexus/Mundial2026
+npm install
+npm run dev    # frontend :5173, backend :5000
+npm test
+npm run sync   # poblar desde worldcup26.ir
+```
+
+## Deploy
+
+```bash
+git push heroku main
+```
+
+Ver [HEROKU.md](../../HEROKU.md) para Atlas, config vars y panel admin.

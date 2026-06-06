@@ -70,7 +70,7 @@ curl https://mundial2026-pred-34de76763ecc.herokuapp.com/api/health
 ## Deploy de cambios futuros
 
 ```bash
-cd /home/magnetico/cursor/Mundial2026
+cd /home/magnetico/Nexus/Mundial2026
 git add .
 git commit -m "tu mensaje"
 git push heroku main

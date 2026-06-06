@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "engram": {
+      "command": "/home/magnetico/.local/bin/engram",
+      "args": ["mcp", "--tools=agent", "--project", "mundial2026"],
+      "env": {
+        "ENGRAM_PROJECT": "mundial2026",
+        "ENGRAM_DATA_DIR": "/home/magnetico/Nexus/Mundial2026/.engram"
+      }
+    },
+    "heroku": {
+      "command": "/usr/bin/heroku",
+      "args": ["mcp:start"]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}
