@@ -67,7 +67,6 @@ async function enrichMatches(matches, userId) {
       kickoffAt: m.kickoffAt,
       kickoffTimezone:
         m.kickoffTimezone || stadiumMap[m.stadiumId]?.timezone || null,
-      displayTimezone: 'America/Argentina/Buenos_Aires',
       lockAt: meta.lockAt,
       homeTeam: teamMap[m.homeTeamId]
         ? {

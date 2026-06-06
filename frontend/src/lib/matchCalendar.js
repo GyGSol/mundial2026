@@ -1,4 +1,4 @@
-import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat.js';
+import { formatMatchDate, getBrowserTimezone } from '@/lib/dateFormat.js';
 
 const ALARM_MS = 90 * 60 * 1000;
 const EVENT_DURATION_MS = 2 * 60 * 60 * 1000;
@@ -32,7 +32,7 @@ function formatLockAt(lockAt) {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone: ARGENTINA_TIMEZONE,
+    timeZone: getBrowserTimezone(),
   }).format(date);
 }
 

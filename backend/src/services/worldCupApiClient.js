@@ -145,7 +145,6 @@ export function normalizeGame(game, options = {}) {
     localDate: game.local_date ?? game.localDate ?? '',
     stadiumId: String(game.stadium_id ?? game.stadiumId ?? ''),
     kickoffTimezone: stadiumTimezone || undefined,
-    displayTimezone: 'America/Argentina/Buenos_Aires',
     type: game.type ?? game.round ?? 'group',
     status: mapGameStatus(game),
     kickoffAt,

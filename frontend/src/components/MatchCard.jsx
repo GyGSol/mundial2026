@@ -23,7 +23,7 @@ export default function MatchCard({ match, onSave, savingId, isScheduled, onSche
   const isArgentinaMatch = matchInvolvesArgentina(match);
   const matchMeta = (
     <>
-      Grupo {match.group} · {formatMatchDate(match)}
+      Grupo {match.group} · {formatMatchDate(match, { showTimezone: true })}
     </>
   );
 

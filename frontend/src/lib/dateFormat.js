@@ -1,5 +1,14 @@
 export const ARGENTINA_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
+export function getBrowserTimezone() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return tz || ARGENTINA_TIMEZONE;
+  } catch {
+    return ARGENTINA_TIMEZONE;
+  }
+}
+
 function formatInTimezone(date, timeZone) {
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
@@ -12,7 +21,7 @@ function formatInTimezone(date, timeZone) {
   }).format(date);
 }
 
-function tryFormatFromDate(value, timeZone = ARGENTINA_TIMEZONE) {
+function tryFormatFromDate(value, timeZone) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
@@ -32,19 +41,19 @@ function formatTimezoneShort(timeZone) {
   }
 }
 
-export function formatMatchDate(match, { showTimezone = false } = {}) {
-  const timeZone = match?.displayTimezone || ARGENTINA_TIMEZONE;
-  const fromKickoff = tryFormatFromDate(match?.kickoffAt, timeZone);
+export function formatMatchDate(match, { showTimezone = false, timeZone } = {}) {
+  const resolvedTimeZone = timeZone ?? getBrowserTimezone();
+  const fromKickoff = tryFormatFromDate(match?.kickoffAt, resolvedTimeZone);
   if (fromKickoff) {
     if (!showTimezone) return fromKickoff;
-    const label = formatTimezoneShort(timeZone);
+    const label = formatTimezoneShort(resolvedTimeZone);
     return label ? `${fromKickoff} (${label})` : fromKickoff;
   }
 
   const raw = String(match?.localDate || '').trim();
   if (!raw) return '';
 
-  const parsed = tryFormatFromDate(raw, timeZone);
+  const parsed = tryFormatFromDate(raw, resolvedTimeZone);
   if (parsed) return parsed;
 
   return raw;

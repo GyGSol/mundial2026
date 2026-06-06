@@ -252,7 +252,6 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
     status: match.status,
     kickoffAt: match.kickoffAt,
     kickoffTimezone: match.kickoffTimezone || stadium?.timezone || null,
-    displayTimezone: 'America/Argentina/Buenos_Aires',
     type: match.type,
     phaseLabel: phase?.label ?? (normalizePhaseKey(match.type) === 'group' ? 'Fase de grupos' : match.type),
     homeTeam: formatTeamRef(teamMap[match.homeTeamId]),
