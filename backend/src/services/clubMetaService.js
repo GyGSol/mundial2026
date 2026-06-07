@@ -854,20 +854,22 @@ function formatClubMeta(entry = {}) {
 }
 
 export function resolveClubMeta(clubName, stored = {}) {
-  if (stored.clubCountry || stored.clubCrestUrl || stored.leagueName) {
-    return formatClubMeta(stored);
-  }
-
   if (!clubName || isLikelyCountryLabel(clubName)) {
-    return formatClubMeta();
+    return formatClubMeta(stored);
   }
 
   buildIndex();
   const key = normalizeClubKey(CLUB_ALIASES[normalizeClubKey(clubName)] || clubName);
   const hit = clubIndex.get(key);
-  if (hit) return formatClubMeta(hit);
+  const resolved = hit ? formatClubMeta(hit) : formatClubMeta();
 
-  return formatClubMeta();
+  return {
+    clubCountry: stored.clubCountry || resolved.clubCountry,
+    clubCrestUrl: stored.clubCrestUrl || resolved.clubCrestUrl,
+    leagueName: stored.leagueName || resolved.leagueName,
+    leagueEmblemUrl: stored.leagueEmblemUrl || resolved.leagueEmblemUrl,
+    footballDataClubId: stored.footballDataClubId ?? resolved.footballDataClubId,
+  };
 }
 
 export function enrichClubFields(player) {
