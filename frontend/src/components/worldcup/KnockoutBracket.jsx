@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { formatMatchDate } from '@/lib/dateFormat';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { KnockoutSection } from '@/components/worldcup/WorldCupSections.jsx';
 import {
@@ -14,7 +15,7 @@ import {
 } from '@/lib/worldCupBracketLayout.js';
 
 const MIN_CELL_W = 108;
-const MIN_CELL_H = 56;
+const MIN_CELL_H = 64;
 const FINAL_COLUMN = 5;
 const CENTER_MATCH_IDS = new Set(['103', '104']);
 
@@ -114,6 +115,27 @@ function BracketCountryLine({ team, slotLabel, score, isWinner, isLive }) {
   );
 }
 
+function BracketMatchMeta({ match }) {
+  const dateTime = formatMatchDate(match);
+  const stadiumLine = [match?.stadium?.nameEn, match?.stadium?.city].filter(Boolean).join(' · ');
+
+  if (!match?.externalId && !dateTime && !stadiumLine) return null;
+
+  return (
+    <div className="mb-1.5 w-full space-y-0.5 border-b border-border/40 pb-1.5 text-center text-[9px] leading-snug text-primary/75 sm:text-[10px]">
+      {match?.externalId ? (
+        <p className="font-semibold tabular-nums text-primary">Partido #{match.externalId}</p>
+      ) : null}
+      {dateTime ? <p>{dateTime}</p> : null}
+      {stadiumLine ? (
+        <p className="truncate px-0.5" title={stadiumLine}>
+          {stadiumLine}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function BracketMatchCell({ match, highlight = false }) {
   const isLive = match?.status === 'live';
   const isFinished = match?.status === 'finished';
@@ -134,6 +156,8 @@ function BracketMatchCell({ match, highlight = false }) {
       )}
       title={`Partido ${match?.externalId ?? ''}: ${homeTitle} vs ${awayTitle}`}
     >
+      <BracketMatchMeta match={match} />
+
       <BracketCountryLine
         team={match?.homeTeam}
         slotLabel={match?.homeTeamSlotLabel}
