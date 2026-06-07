@@ -16,7 +16,7 @@ import {
 const MIN_CELL_W = 108;
 const MIN_CELL_H = 56;
 const FINAL_COLUMN = 5;
-const TROPHY_HEIGHT = 72;
+const TROPHY_HEIGHT = 88;
 
 function useBracketDimensions(containerRef) {
   const [cellW, setCellW] = useState(MIN_CELL_W);
@@ -196,9 +196,9 @@ function BracketTrophy({ cellW }) {
       }}
     >
       <img
-        src="/world-cup-trophy.svg"
+        src="/world-cup-trophy.png"
         alt="Copa del Mundo FIFA"
-        className="h-12 w-auto drop-shadow-md sm:h-16"
+        className="h-16 w-auto object-contain drop-shadow-md sm:h-20"
         draggable={false}
       />
       <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs">
