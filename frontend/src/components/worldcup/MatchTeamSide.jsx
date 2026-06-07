@@ -25,8 +25,38 @@ export function getMatchSideShortLabel(team, slotLabel) {
   return 'TBD';
 }
 
-export default function MatchTeamSide({ team, slotLabel, align = 'left', compact = false }) {
+export default function MatchTeamSide({ team, slotLabel, align = 'left', compact = false, bracket = false }) {
   if (team) {
+    if (bracket) {
+      const flagUrl = getTeamFlag(team);
+      const name = team.nameEn || team.fifaCode || '—';
+      return (
+        <div
+          className={cn(
+            'flex min-w-0 flex-1 items-center gap-2',
+            align === 'right' && 'flex-row-reverse text-right'
+          )}
+          title={name}
+        >
+          {flagUrl ? (
+            <img
+              src={flagUrl}
+              alt=""
+              className="size-5 shrink-0 rounded-sm border border-border/60 object-cover sm:size-6"
+            />
+          ) : team.flag ? (
+            <span className="shrink-0 text-base leading-none">{team.flag}</span>
+          ) : (
+            <span className="size-5 shrink-0 rounded-sm border border-dashed border-border/60 bg-muted/30 sm:size-6" />
+          )}
+          <span className="min-w-0 truncate text-xs font-medium sm:text-sm">{name}</span>
+          {team.fifaCode && team.nameEn ? (
+            <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:inline">{team.fifaCode}</span>
+          ) : null}
+        </div>
+      );
+    }
+
     if (compact) {
       const flagUrl = getTeamFlag(team);
       const label = team.fifaCode || team.nameEn?.slice(0, 3).toUpperCase() || '—';
@@ -68,15 +98,23 @@ export default function MatchTeamSide({ team, slotLabel, align = 'left', compact
     return (
       <span
         className={cn(
-          compact ? 'text-[10px] font-medium text-muted-foreground' : 'text-sm font-medium text-muted-foreground',
-          align === 'right' && 'sm:text-right'
+          bracket
+            ? 'block min-w-0 flex-1 text-xs leading-snug text-muted-foreground italic sm:text-sm'
+            : compact
+              ? 'text-[10px] font-medium text-muted-foreground'
+              : 'text-sm font-medium text-muted-foreground',
+          align === 'right' && !bracket && 'sm:text-right'
         )}
         title={slotLabel}
       >
-        {compact && slotLabel.length > 20 ? `${slotLabel.slice(0, 18)}…` : slotLabel}
+        {bracket || !compact ? slotLabel : slotLabel.length > 20 ? `${slotLabel.slice(0, 18)}…` : slotLabel}
       </span>
     );
   }
 
-  return <span className="text-[10px] text-muted-foreground">TBD</span>;
+  return (
+    <span className={cn('text-muted-foreground', bracket ? 'text-xs sm:text-sm' : 'text-[10px]')}>
+      Por definir
+    </span>
+  );
 }

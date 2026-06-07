@@ -87,3 +87,25 @@ export function getNodeCenter(node) {
     row: node.rowStart + (node.rowSpan - 1) / 2,
   };
 }
+
+export const ROUND_TITLES = {
+  r32: 'Dieciseisavos',
+  r16: 'Octavos',
+  qf: 'Cuartos',
+  sf: 'Semifinales',
+  final: 'Final',
+  third: '3er puesto',
+};
+
+/** Etiquetas de columna para el encabezado del bracket (cols 1–9). */
+export const BRACKET_COLUMN_LABELS = {
+  1: 'Dieciseisavos',
+  2: 'Octavos',
+  3: 'Cuartos',
+  4: 'Semifinales',
+  5: 'Final',
+  6: 'Semifinales',
+  7: 'Cuartos',
+  8: 'Octavos',
+  9: 'Dieciseisavos',
+};
