@@ -126,7 +126,7 @@ function BracketMatchCell({ match, highlight = false }) {
   return (
     <div
       className={cn(
-        'flex h-full w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md border bg-card px-1.5 py-2 shadow-sm',
+        'flex w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md border bg-card px-1.5 py-2 shadow-sm',
         highlight ? 'border-primary/60 ring-1 ring-primary/20' : 'border-border/70',
         isLive && 'border-emerald-400/70 bg-emerald-50/30'
       )}
@@ -245,7 +245,12 @@ export default function KnockoutBracket({ phases }) {
               return (
                 <div
                   key={id}
-                  className="flex min-h-0 items-center px-0.5 py-0.5"
+                  className={cn(
+                    'flex min-h-0 px-0.5 py-0.5',
+                    node.round === 'final' || node.round === 'third'
+                      ? 'items-start justify-center pt-1'
+                      : 'items-center'
+                  )}
                   style={{
                     gridColumn: node.col,
                     gridRow: `${node.rowStart} / span ${node.rowSpan}`,
