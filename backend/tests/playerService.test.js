@@ -25,12 +25,12 @@ describe('clubMetaService', () => {
 
   it('resuelve país y escudos para clubes conocidos', () => {
     const salzburg = resolveClubMeta('Red Bull Salzburg');
-    expect(salzburg.country).toBe('Austria');
+    expect(salzburg.clubCountry).toBe('Austria');
     expect(salzburg.leagueName).toBe('Bundesliga (Austria)');
     expect(salzburg.clubCrestUrl).toContain('crests.football-data.org');
 
     const basel = resolveClubMeta('Basel');
-    expect(basel.country).toBe('Suiza');
+    expect(basel.clubCountry).toBe('Suiza');
     expect(basel.leagueEmblemUrl).toContain('SL1');
   });
 });

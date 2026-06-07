@@ -843,39 +843,31 @@ export function isLikelyCountryLabel(value) {
   return COUNTRY_NAMES.has(String(value).toLowerCase().trim());
 }
 
+function formatClubMeta(entry = {}) {
+  return {
+    clubCountry: entry.clubCountry || entry.country || '',
+    clubCrestUrl: entry.clubCrestUrl ?? null,
+    leagueName: entry.leagueName || '',
+    leagueEmblemUrl: entry.leagueEmblemUrl ?? null,
+    footballDataClubId: entry.footballDataClubId ?? null,
+  };
+}
+
 export function resolveClubMeta(clubName, stored = {}) {
   if (stored.clubCountry || stored.clubCrestUrl || stored.leagueName) {
-    return {
-      clubCountry: stored.clubCountry || '',
-      clubCrestUrl: stored.clubCrestUrl || null,
-      leagueName: stored.leagueName || '',
-      leagueEmblemUrl: stored.leagueEmblemUrl || null,
-      footballDataClubId: stored.footballDataClubId ?? null,
-    };
+    return formatClubMeta(stored);
   }
 
   if (!clubName || isLikelyCountryLabel(clubName)) {
-    return {
-      clubCountry: '',
-      clubCrestUrl: null,
-      leagueName: '',
-      leagueEmblemUrl: null,
-      footballDataClubId: null,
-    };
+    return formatClubMeta();
   }
 
   buildIndex();
   const key = normalizeClubKey(CLUB_ALIASES[normalizeClubKey(clubName)] || clubName);
   const hit = clubIndex.get(key);
-  if (hit) return hit;
+  if (hit) return formatClubMeta(hit);
 
-  return {
-    clubCountry: '',
-    clubCrestUrl: null,
-    leagueName: '',
-    leagueEmblemUrl: null,
-    footballDataClubId: null,
-  };
+  return formatClubMeta();
 }
 
 export function enrichClubFields(player) {
