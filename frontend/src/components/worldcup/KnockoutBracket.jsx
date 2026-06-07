@@ -16,7 +16,7 @@ import {
 const MIN_CELL_W = 108;
 const MIN_CELL_H = 56;
 const FINAL_COLUMN = 5;
-const TROPHY_HEIGHT = 88;
+const CENTER_MATCH_IDS = new Set(['103', '104']);
 
 function useBracketDimensions(containerRef) {
   const [cellW, setCellW] = useState(MIN_CELL_W);
@@ -184,26 +184,47 @@ function BracketConnectors({ cellW, cellH, width, height }) {
   );
 }
 
-function BracketTrophy({ cellW }) {
+function BracketCenterColumn({ cellW, height, finalMatch, thirdMatch }) {
+  const centerY = height / 2;
+
   return (
     <div
-      className="pointer-events-none absolute z-10 flex flex-col items-center justify-end"
+      className="pointer-events-none absolute z-10"
       style={{
         left: (FINAL_COLUMN - 1) * cellW,
         width: cellW,
         top: 0,
-        height: TROPHY_HEIGHT,
+        height,
       }}
     >
-      <img
-        src="/world-cup-trophy.png"
-        alt="Copa del Mundo FIFA"
-        className="h-16 w-auto object-contain drop-shadow-md sm:h-20"
-        draggable={false}
-      />
-      <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs">
-        Final
-      </span>
+      <div
+        className="absolute flex w-full flex-col items-center justify-center px-1"
+        style={{
+          top: centerY,
+          left: 0,
+          transform: 'translateY(-50%)',
+        }}
+      >
+        <img
+          src="/world-cup-trophy.png"
+          alt="Copa del Mundo FIFA"
+          className="pointer-events-none mb-1 h-14 w-auto max-w-full object-contain drop-shadow-md sm:h-[4.25rem]"
+          draggable={false}
+        />
+        <span className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs">
+          Final
+        </span>
+        {finalMatch ? (
+          <div className="pointer-events-auto w-full">
+            <BracketMatchCell match={finalMatch} highlight />
+          </div>
+        ) : null}
+        {thirdMatch ? (
+          <div className="pointer-events-auto mt-2 w-full">
+            <BracketMatchCell match={thirdMatch} />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -250,50 +271,44 @@ export default function KnockoutBracket({ phases }) {
   }
 
   const matchById = indexKnockoutMatches(phases);
+  const finalMatch = matchById.get('104');
+  const thirdMatch = matchById.get('103');
 
   return (
     <div ref={containerRef} className="w-full overflow-x-auto">
       <div style={{ width, minWidth: '100%' }}>
         <BracketColumnHeaders cellW={cellW} width={width} />
-        <div
-          className="relative"
-          style={{ width, height: height + TROPHY_HEIGHT, minHeight: height + TROPHY_HEIGHT }}
-        >
-          <BracketTrophy cellW={cellW} />
+        <div className="relative" style={{ width, height, minHeight: height }}>
+          <BracketConnectors cellW={cellW} cellH={cellH} width={width} height={height} />
+          <BracketCenterColumn
+            cellW={cellW}
+            height={height}
+            finalMatch={finalMatch}
+            thirdMatch={thirdMatch}
+          />
           <div
-            className="absolute left-0 right-0"
-            style={{ top: TROPHY_HEIGHT, width, height, minHeight: height }}
+            className="relative grid h-full"
+            style={{
+              width,
+              gridTemplateColumns: `repeat(${BRACKET_GRID_COLS}, ${cellW}px)`,
+              gridTemplateRows: `repeat(${BRACKET_GRID_ROWS}, ${cellH}px)`,
+            }}
           >
-            <BracketConnectors cellW={cellW} cellH={cellH} width={width} height={height} />
-            <div
-              className="relative grid h-full"
-              style={{
-                width,
-                gridTemplateColumns: `repeat(${BRACKET_GRID_COLS}, ${cellW}px)`,
-                gridTemplateRows: `repeat(${BRACKET_GRID_ROWS}, ${cellH}px)`,
-              }}
-            >
             {Object.entries(BRACKET_NODES).map(([id, node]) => {
+              if (CENTER_MATCH_IDS.has(id)) return null;
+
               const match = matchById.get(id);
-              const isFinal = node.round === 'final';
               return (
                 <div
                   key={id}
-                  className={cn(
-                    'flex min-h-0 px-0.5 py-0.5',
-                    node.round === 'final'
-                      ? 'items-start justify-center'
-                      : node.round === 'third'
-                        ? 'items-start justify-center pt-0.5'
-                        : 'items-center'
-                  )}
+                  className="flex min-h-0 items-center px-0.5 py-0.5"
                   style={{
                     gridColumn: node.col,
                     gridRow: `${node.rowStart} / span ${node.rowSpan}`,
                   }}
                 >
                   {match ? (
-                    <BracketMatchCell match={match} highlight={isFinal} />
+                    <BracketMatchCell match={match} />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/20 px-2 text-center text-xs text-primary/70">
                       #{id}
@@ -302,7 +317,6 @@ export default function KnockoutBracket({ phases }) {
                 </div>
               );
             })}
-            </div>
           </div>
         </div>
       </div>
