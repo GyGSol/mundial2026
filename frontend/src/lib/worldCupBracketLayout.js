@@ -28,8 +28,8 @@ export const BRACKET_NODES = {
 
   101: { round: 'sf', col: 4, rowStart: 1, rowSpan: 16, parents: ['97', '98'] },
 
-  104: { round: 'final', col: 5, rowStart: 6, rowSpan: 5, parents: ['101', '102'] },
-  103: { round: 'third', col: 5, rowStart: 11, rowSpan: 3, parents: ['101', '102'] },
+  104: { round: 'final', col: 5, rowStart: 1, rowSpan: 4, parents: ['101', '102'] },
+  103: { round: 'third', col: 5, rowStart: 5, rowSpan: 3, parents: ['101', '102'] },
 
   102: { round: 'sf', col: 6, rowStart: 1, rowSpan: 16, parents: ['99', '100'] },
 

@@ -15,6 +15,8 @@ import {
 
 const MIN_CELL_W = 108;
 const MIN_CELL_H = 56;
+const FINAL_COLUMN = 5;
+const TROPHY_HEIGHT = 72;
 
 function useBracketDimensions(containerRef) {
   const [cellW, setCellW] = useState(MIN_CELL_W);
@@ -182,6 +184,30 @@ function BracketConnectors({ cellW, cellH, width, height }) {
   );
 }
 
+function BracketTrophy({ cellW }) {
+  return (
+    <div
+      className="pointer-events-none absolute z-10 flex flex-col items-center justify-end"
+      style={{
+        left: (FINAL_COLUMN - 1) * cellW,
+        width: cellW,
+        top: 0,
+        height: TROPHY_HEIGHT,
+      }}
+    >
+      <img
+        src="/world-cup-trophy.svg"
+        alt="Copa del Mundo FIFA"
+        className="h-12 w-auto drop-shadow-md sm:h-16"
+        draggable={false}
+      />
+      <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs">
+        Final
+      </span>
+    </div>
+  );
+}
+
 function BracketColumnHeaders({ cellW, width }) {
   return (
     <div
@@ -199,7 +225,7 @@ function BracketColumnHeaders({ cellW, width }) {
             key={col}
             className="px-1 pb-2 text-center text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs"
           >
-            {label}
+            {col === FINAL_COLUMN ? '' : label}
           </div>
         );
       })}
@@ -229,16 +255,24 @@ export default function KnockoutBracket({ phases }) {
     <div ref={containerRef} className="w-full overflow-x-auto">
       <div style={{ width, minWidth: '100%' }}>
         <BracketColumnHeaders cellW={cellW} width={width} />
-        <div className="relative" style={{ width, height, minHeight: height }}>
-          <BracketConnectors cellW={cellW} cellH={cellH} width={width} height={height} />
+        <div
+          className="relative"
+          style={{ width, height: height + TROPHY_HEIGHT, minHeight: height + TROPHY_HEIGHT }}
+        >
+          <BracketTrophy cellW={cellW} />
           <div
-            className="relative grid h-full"
-            style={{
-              width,
-              gridTemplateColumns: `repeat(${BRACKET_GRID_COLS}, ${cellW}px)`,
-              gridTemplateRows: `repeat(${BRACKET_GRID_ROWS}, ${cellH}px)`,
-            }}
+            className="absolute left-0 right-0"
+            style={{ top: TROPHY_HEIGHT, width, height, minHeight: height }}
           >
+            <BracketConnectors cellW={cellW} cellH={cellH} width={width} height={height} />
+            <div
+              className="relative grid h-full"
+              style={{
+                width,
+                gridTemplateColumns: `repeat(${BRACKET_GRID_COLS}, ${cellW}px)`,
+                gridTemplateRows: `repeat(${BRACKET_GRID_ROWS}, ${cellH}px)`,
+              }}
+            >
             {Object.entries(BRACKET_NODES).map(([id, node]) => {
               const match = matchById.get(id);
               const isFinal = node.round === 'final';
@@ -247,9 +281,11 @@ export default function KnockoutBracket({ phases }) {
                   key={id}
                   className={cn(
                     'flex min-h-0 px-0.5 py-0.5',
-                    node.round === 'final' || node.round === 'third'
-                      ? 'items-start justify-center pt-1'
-                      : 'items-center'
+                    node.round === 'final'
+                      ? 'items-start justify-center'
+                      : node.round === 'third'
+                        ? 'items-start justify-center pt-0.5'
+                        : 'items-center'
                   )}
                   style={{
                     gridColumn: node.col,
@@ -266,6 +302,7 @@ export default function KnockoutBracket({ phases }) {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       </div>
