@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import MatchTeamSide from '@/components/worldcup/MatchTeamSide.jsx';
+import { getTeamFlag } from '@/lib/teamMeta';
 import { KnockoutSection } from '@/components/worldcup/WorldCupSections.jsx';
 import {
   BRACKET_COLUMN_LABELS,
   BRACKET_GRID_COLS,
   BRACKET_GRID_ROWS,
   BRACKET_NODES,
-  ROUND_TITLES,
   getBracketConnectors,
   getNodeCenter,
   indexKnockoutMatches,
@@ -15,7 +14,7 @@ import {
 } from '@/lib/worldCupBracketLayout.js';
 
 const MIN_CELL_W = 108;
-const MIN_CELL_H = 72;
+const MIN_CELL_H = 56;
 
 function useBracketDimensions(containerRef) {
   const [cellW, setCellW] = useState(MIN_CELL_W);
@@ -36,7 +35,7 @@ function useBracketDimensions(containerRef) {
     return () => observer.disconnect();
   }, [containerRef]);
 
-  const cellH = Math.max(MIN_CELL_H, Math.round(cellW * 0.78));
+  const cellH = Math.max(MIN_CELL_H, Math.round(cellW * 0.48));
   const width = BRACKET_GRID_COLS * cellW;
   const height = BRACKET_GRID_ROWS * cellH;
 
@@ -65,21 +64,45 @@ function buildConnectorPath(fromId, toId, cellW, cellH) {
   return `M ${fromEdgeX} ${from.y} H ${midX} V ${to.y} H ${toEdgeX}`;
 }
 
-function BracketTeamRow({ team, slotLabel, score, isWinner, isLive }) {
+function BracketCountryLine({ team, slotLabel, score, isWinner, isLive }) {
+  const flagUrl = team ? getTeamFlag(team) : null;
+  const label = team?.nameEn || team?.fifaCode || slotLabel || 'Por definir';
+
   return (
     <div
       className={cn(
-        'flex min-w-0 items-center gap-1 rounded-sm px-1 py-0.5',
-        isWinner && 'bg-primary/10 font-semibold',
-        isLive && !isWinner && 'bg-emerald-50/50'
+        'flex w-full min-w-0 items-center justify-center gap-1.5 px-1',
+        isWinner && 'font-bold',
+        isLive && !isWinner && 'opacity-90'
       )}
+      title={label}
     >
-      <MatchTeamSide team={team} slotLabel={slotLabel} bracket />
+      {team ? (
+        flagUrl ? (
+          <img
+            src={flagUrl}
+            alt=""
+            className="size-4 shrink-0 rounded-sm border border-border/60 object-cover sm:size-5"
+          />
+        ) : team.flag ? (
+          <span className="shrink-0 text-sm leading-none">{team.flag}</span>
+        ) : (
+          <span className="size-4 shrink-0 rounded-sm border border-dashed border-primary/30 bg-primary/5 sm:size-5" />
+        )
+      ) : null}
+      <span
+        className={cn(
+          'min-w-0 text-center text-[11px] leading-tight text-primary sm:text-xs',
+          !team && 'font-medium'
+        )}
+      >
+        {label}
+      </span>
       {score != null ? (
         <span
           className={cn(
-            'shrink-0 min-w-[1.25rem] text-right text-xs font-bold tabular-nums sm:text-sm',
-            isWinner ? 'text-primary' : 'text-muted-foreground'
+            'shrink-0 text-xs font-bold tabular-nums text-primary sm:text-sm',
+            isWinner && 'text-primary'
           )}
         >
           {score}
@@ -89,14 +112,13 @@ function BracketTeamRow({ team, slotLabel, score, isWinner, isLive }) {
   );
 }
 
-function BracketMatchCell({ match, round, highlight = false }) {
+function BracketMatchCell({ match, highlight = false }) {
   const isLive = match?.status === 'live';
   const isFinished = match?.status === 'finished';
   const hasScore = isFinished || isLive;
 
   const homeTitle = match?.homeTeam?.nameEn || match?.homeTeamSlotLabel || 'Por definir';
   const awayTitle = match?.awayTeam?.nameEn || match?.awayTeamSlotLabel || 'Por definir';
-  const roundLabel = ROUND_TITLES[round] || round;
 
   const homeWinner = hasScore && match.homeScore > match.awayScore;
   const awayWinner = hasScore && match.awayScore > match.homeScore;
@@ -104,39 +126,29 @@ function BracketMatchCell({ match, round, highlight = false }) {
   return (
     <div
       className={cn(
-        'flex w-full min-w-0 flex-col gap-1 rounded-md border bg-card p-2 shadow-sm',
+        'flex h-full w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md border bg-card px-1.5 py-2 shadow-sm',
         highlight ? 'border-primary/60 ring-1 ring-primary/20' : 'border-border/70',
         isLive && 'border-emerald-400/70 bg-emerald-50/30'
       )}
       title={`Partido ${match?.externalId ?? ''}: ${homeTitle} vs ${awayTitle}`}
     >
-      <div className="flex items-center justify-between gap-1 border-b border-border/40 pb-1">
-        <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {roundLabel}
-        </span>
-        {match?.externalId ? (
-          <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">#{match.externalId}</span>
-        ) : null}
-      </div>
-
-      <BracketTeamRow
+      <BracketCountryLine
         team={match?.homeTeam}
         slotLabel={match?.homeTeamSlotLabel}
         score={hasScore ? match.homeScore : null}
         isWinner={homeWinner}
         isLive={isLive}
       />
-      <BracketTeamRow
+
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-primary/70">vs</span>
+
+      <BracketCountryLine
         team={match?.awayTeam}
         slotLabel={match?.awayTeamSlotLabel}
         score={hasScore ? match.awayScore : null}
         isWinner={awayWinner}
         isLive={isLive}
       />
-
-      {!hasScore && (
-        <span className="text-center text-[10px] font-medium text-muted-foreground/80">vs</span>
-      )}
     </div>
   );
 }
@@ -185,7 +197,7 @@ function BracketColumnHeaders({ cellW, width }) {
         return (
           <div
             key={col}
-            className="px-1 pb-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+            className="px-1 pb-2 text-center text-[10px] font-semibold uppercase tracking-wide text-primary sm:text-xs"
           >
             {label}
           </div>
@@ -217,10 +229,7 @@ export default function KnockoutBracket({ phases }) {
     <div ref={containerRef} className="w-full overflow-x-auto">
       <div style={{ width, minWidth: '100%' }}>
         <BracketColumnHeaders cellW={cellW} width={width} />
-        <div
-          className="relative"
-          style={{ width, height, minHeight: height }}
-        >
+        <div className="relative" style={{ width, height, minHeight: height }}>
           <BracketConnectors cellW={cellW} cellH={cellH} width={width} height={height} />
           <div
             className="relative grid h-full"
@@ -230,28 +239,28 @@ export default function KnockoutBracket({ phases }) {
               gridTemplateRows: `repeat(${BRACKET_GRID_ROWS}, ${cellH}px)`,
             }}
           >
-          {Object.entries(BRACKET_NODES).map(([id, node]) => {
-            const match = matchById.get(id);
-            const isFinal = node.round === 'final';
-            return (
-              <div
-                key={id}
-                className="flex items-center px-1"
-                style={{
-                  gridColumn: node.col,
-                  gridRow: `${node.rowStart} / span ${node.rowSpan}`,
-                }}
-              >
-                {match ? (
-                  <BracketMatchCell match={match} round={node.round} highlight={isFinal} />
-                ) : (
-                  <div className="w-full rounded-md border border-dashed border-border/60 bg-muted/20 px-2 py-3 text-center text-xs text-muted-foreground">
-                    Partido #{id}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+            {Object.entries(BRACKET_NODES).map(([id, node]) => {
+              const match = matchById.get(id);
+              const isFinal = node.round === 'final';
+              return (
+                <div
+                  key={id}
+                  className="flex min-h-0 items-center px-0.5 py-0.5"
+                  style={{
+                    gridColumn: node.col,
+                    gridRow: `${node.rowStart} / span ${node.rowSpan}`,
+                  }}
+                >
+                  {match ? (
+                    <BracketMatchCell match={match} highlight={isFinal} />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/20 px-2 text-center text-xs text-primary/70">
+                      #{id}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

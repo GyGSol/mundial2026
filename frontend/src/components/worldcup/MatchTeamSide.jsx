@@ -49,7 +49,7 @@ export default function MatchTeamSide({ team, slotLabel, align = 'left', compact
           ) : (
             <span className="size-5 shrink-0 rounded-sm border border-dashed border-border/60 bg-muted/30 sm:size-6" />
           )}
-          <span className="min-w-0 truncate text-xs font-medium sm:text-sm">{name}</span>
+          <span className="min-w-0 truncate text-[11px] font-semibold text-primary sm:text-xs">{name}</span>
           {team.fifaCode && team.nameEn ? (
             <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:inline">{team.fifaCode}</span>
           ) : null}
@@ -99,7 +99,7 @@ export default function MatchTeamSide({ team, slotLabel, align = 'left', compact
       <span
         className={cn(
           bracket
-            ? 'block min-w-0 flex-1 text-xs leading-snug text-muted-foreground italic sm:text-sm'
+            ? 'block min-w-0 flex-1 text-center text-[11px] font-medium leading-tight text-primary sm:text-xs'
             : compact
               ? 'text-[10px] font-medium text-muted-foreground'
               : 'text-sm font-medium text-muted-foreground',
