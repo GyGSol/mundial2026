@@ -12,6 +12,7 @@ import {
 } from './footballDataApiClient.js';
 import { notifyPlayersUpdated } from './websocketService.js';
 import { resolveFifaCode } from '../data/teamFifaAliases.js';
+import { enrichClubFields, isLikelyCountryLabel } from './clubMetaService.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '../data');
@@ -34,6 +35,23 @@ function slugify(value) {
     .replace(/^-|-$/g, '');
 }
 
+function normalizeNameForMatch(name) {
+  return String(name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function playerRecordScore(player) {
+  let score = 0;
+  if (!String(player.externalId).startsWith('fd-')) score += 10;
+  if (player.currentClub && !isLikelyCountryLabel(player.currentClub)) score += 5;
+  if (player.dataSources?.structural === 'seed') score += 3;
+  if (player.footballDataPersonId) score += 1;
+  return score;
+}
+
 function normalizeSeedPlayer(entry, team) {
   const fifaCode = entry.fifaCode || team?.fifaCode || '';
   const externalId =
@@ -41,7 +59,7 @@ function normalizeSeedPlayer(entry, team) {
     `${fifaCode}-${slugify(entry.fullName)}` ||
     `${team?.externalId}-${slugify(entry.fullName)}`;
 
-  return {
+  const base = {
     externalId,
     footballDataPersonId: entry.footballDataPersonId,
     fullName: entry.fullName,
@@ -60,6 +78,8 @@ function normalizeSeedPlayer(entry, team) {
     },
     raw: entry.raw,
   };
+
+  return { ...base, ...enrichClubFields(base) };
 }
 
 async function upsertPlayer(doc) {
@@ -69,6 +89,90 @@ async function upsertPlayer(doc) {
     { $set: { ...rest, externalId } },
     { upsert: true, new: true }
   );
+}
+
+async function findPlayerByFifaAndName(fifaCode, fullName) {
+  const key = normalizeNameForMatch(fullName);
+  const candidates = await Player.find({ fifaCode }).lean();
+  return candidates.find((p) => normalizeNameForMatch(p.fullName) === key) ?? null;
+}
+
+async function upsertFootballDataPlayer(doc) {
+  const existing =
+    (doc.footballDataPersonId
+      ? await Player.findOne({ footballDataPersonId: doc.footballDataPersonId }).lean()
+      : null) || (await findPlayerByFifaAndName(doc.fifaCode, doc.fullName));
+
+  if (existing) {
+    const update = {
+      footballDataPersonId: doc.footballDataPersonId ?? existing.footballDataPersonId,
+    };
+
+    const fdClubValid = doc.currentClub && !isLikelyCountryLabel(doc.currentClub);
+    const existingClubValid =
+      existing.currentClub && !isLikelyCountryLabel(existing.currentClub);
+
+    if (fdClubValid && !existingClubValid) {
+      Object.assign(update, enrichClubFields(doc));
+    } else if (!existingClubValid && doc.currentClub) {
+      update.currentClub = '';
+    }
+
+    if (doc.shirtNumber != null) update.shirtNumber = doc.shirtNumber;
+    if (doc.age != null) update.age = doc.age;
+    if (doc.nationality) update.nationality = doc.nationality;
+
+    await Player.updateOne({ _id: existing._id }, { $set: update });
+    return;
+  }
+
+  const payload = { ...doc };
+  if (isLikelyCountryLabel(payload.currentClub)) {
+    payload.currentClub = '';
+    Object.assign(payload, enrichClubFields(payload));
+  }
+
+  await upsertPlayer(payload);
+}
+
+async function dedupePlayers() {
+  const players = await Player.find().lean();
+  const groups = new Map();
+
+  for (const player of players) {
+    const key = `${player.fifaCode}::${normalizeNameForMatch(player.fullName)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(player);
+  }
+
+  let removed = 0;
+
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+
+    const ranked = [...group].sort((a, b) => playerRecordScore(b) - playerRecordScore(a));
+    const keep = ranked[0];
+
+    for (const dup of ranked.slice(1)) {
+      const patch = {};
+      if (!keep.footballDataPersonId && dup.footballDataPersonId) {
+        patch.footballDataPersonId = dup.footballDataPersonId;
+      }
+      const keepClubOk = keep.currentClub && !isLikelyCountryLabel(keep.currentClub);
+      const dupClubOk = dup.currentClub && !isLikelyCountryLabel(dup.currentClub);
+      if (!keepClubOk && dupClubOk) {
+        Object.assign(patch, enrichClubFields(dup));
+      }
+
+      if (Object.keys(patch).length) {
+        await Player.updateOne({ _id: keep._id }, { $set: patch });
+      }
+      await Player.deleteOne({ _id: dup._id });
+      removed += 1;
+    }
+  }
+
+  return removed;
 }
 
 async function syncFootballDataTeamMap() {
@@ -109,7 +213,7 @@ async function syncSquadsFromFootballData() {
           externalId: team.externalId,
           fifaCode: team.fifaCode,
         });
-        await upsertPlayer(doc);
+        await upsertFootballDataPlayer(doc);
         count += 1;
       }
     } catch (err) {
@@ -206,6 +310,7 @@ export async function runPlayerSync() {
     }
 
     injuriesMerged = await mergeInjuriesSeed();
+    const deduped = await dedupePlayers();
 
     const playerCount = await Player.countDocuments();
 
@@ -219,6 +324,7 @@ export async function runPlayerSync() {
         fdPlayers,
         seedPlayers,
         injuriesMerged,
+        deduped,
       },
       { upsert: true }
     );
@@ -226,10 +332,10 @@ export async function runPlayerSync() {
     notifyPlayersUpdated({ playerCount, fdPlayers, seedPlayers });
 
     console.log(
-      `Player sync OK: ${playerCount} total (FD squads: ${fdPlayers}, seed: ${seedPlayers}, injuries: ${injuriesMerged})`
+      `Player sync OK: ${playerCount} total (FD squads: ${fdPlayers}, seed: ${seedPlayers}, injuries: ${injuriesMerged}, deduped: ${deduped})`
     );
 
-    return { playerCount, fdMapped, fdPlayers, seedPlayers, injuriesMerged };
+    return { playerCount, fdMapped, fdPlayers, seedPlayers, injuriesMerged, deduped };
   } catch (err) {
     error = err.message;
     await SyncMeta.findOneAndUpdate(

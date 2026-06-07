@@ -70,6 +70,9 @@ export function normalizeFootballDataPerson(person, teamMeta = {}) {
     ? Math.floor((Date.now() - dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
     : person.age ?? null;
 
+  const currentTeam = person.currentTeam ?? null;
+  const running = currentTeam?.runningCompetitions?.[0] ?? null;
+
   return {
     externalId,
     footballDataPersonId: id ? Number(id) : undefined,
@@ -77,7 +80,12 @@ export function normalizeFootballDataPerson(person, teamMeta = {}) {
     teamExternalId: teamMeta.externalId || '',
     fifaCode,
     position: mapFootballDataPosition(person.position),
-    currentClub: person.currentTeam?.name ?? person.nationality ?? '',
+    currentClub: currentTeam?.name ?? '',
+    clubCountry: currentTeam?.area?.name ?? '',
+    clubCrestUrl: currentTeam?.crest ?? (currentTeam?.id ? `https://crests.football-data.org/${currentTeam.id}.png` : ''),
+    footballDataClubId: currentTeam?.id ? Number(currentTeam.id) : undefined,
+    leagueName: running?.name ?? '',
+    leagueEmblemUrl: running?.emblem ?? (running?.code ? `https://crests.football-data.org/${running.code}.png` : ''),
     age: age ?? undefined,
     shirtNumber: person.shirtNumber ?? undefined,
     nationality: person.nationality ?? '',

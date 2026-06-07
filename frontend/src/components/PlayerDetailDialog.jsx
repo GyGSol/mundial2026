@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table.jsx';
 import { cn } from '@/lib/utils';
+import { ClubCell } from './ClubDisplay.jsx';
 
 function healthBadgeClass(status) {
   if (status === 'injured') return 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400';
@@ -86,7 +87,18 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange }) {
                     <img src={flag} alt="" className="size-5 rounded-sm object-cover" />
                   ) : null}
                   {player?.teamName} · {player?.positionLabel}
-                  {player?.currentClub ? ` · ${player.currentClub}` : ''}
+                  {player?.clubCountry ? ` · ${player.clubCountry}` : ''}
+                  {player?.currentClub ? (
+                    <>
+                      {' · '}
+                      <ClubCell
+                        club={player.currentClub}
+                        clubCrestUrl={player.clubCrestUrl}
+                        leagueEmblemUrl={player.leagueEmblemUrl}
+                        leagueName={player.leagueName}
+                      />
+                    </>
+                  ) : null}
                   {player?.age ? ` · ${player.age} años` : ''}
                 </span>
               )}

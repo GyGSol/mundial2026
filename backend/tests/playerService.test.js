@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { mapFootballDataPosition } from '../src/services/footballDataApiClient.js';
+import {
+  enrichClubFields,
+  isLikelyCountryLabel,
+  resolveClubMeta,
+} from '../src/services/clubMetaService.js';
 
 describe('footballDataApiClient position mapping', () => {
   it('mapea posiciones de Football-Data.org', () => {
@@ -7,6 +12,26 @@ describe('footballDataApiClient position mapping', () => {
     expect(mapFootballDataPosition('Defence')).toBe('DEF');
     expect(mapFootballDataPosition('Midfield')).toBe('MID');
     expect(mapFootballDataPosition('Offence')).toBe('FWD');
+  });
+});
+
+describe('clubMetaService', () => {
+  it('no usa nacionalidad como club', () => {
+    expect(isLikelyCountryLabel('Austria')).toBe(true);
+    expect(isLikelyCountryLabel('Red Bull Salzburg')).toBe(false);
+    const club = enrichClubFields({ currentClub: 'Austria', nationality: 'Austria' });
+    expect(club.currentClub).toBe('');
+  });
+
+  it('resuelve país y escudos para clubes conocidos', () => {
+    const salzburg = resolveClubMeta('Red Bull Salzburg');
+    expect(salzburg.country).toBe('Austria');
+    expect(salzburg.leagueName).toBe('Bundesliga (Austria)');
+    expect(salzburg.clubCrestUrl).toContain('crests.football-data.org');
+
+    const basel = resolveClubMeta('Basel');
+    expect(basel.country).toBe('Suiza');
+    expect(basel.leagueEmblemUrl).toContain('SL1');
   });
 });
 

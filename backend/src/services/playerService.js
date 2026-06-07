@@ -4,6 +4,7 @@ import {
   fetchPersonMatches,
   hasToken,
 } from './footballDataApiClient.js';
+import { enrichClubFields } from './clubMetaService.js';
 
 const POSITION_LABELS = {
   GK: 'Portero',
@@ -20,6 +21,8 @@ const HEALTH_LABELS = {
 
 function serializePlayer(player, teamMap) {
   const team = teamMap.get(player.teamExternalId);
+  const club = enrichClubFields(player);
+
   return {
     id: player._id.toString(),
     externalId: player.externalId,
@@ -30,7 +33,11 @@ function serializePlayer(player, teamMap) {
     flag: team?.flag ?? '',
     position: player.position,
     positionLabel: POSITION_LABELS[player.position] || player.position,
-    currentClub: player.currentClub,
+    currentClub: club.currentClub,
+    clubCountry: club.clubCountry,
+    clubCrestUrl: club.clubCrestUrl,
+    leagueName: club.leagueName,
+    leagueEmblemUrl: club.leagueEmblemUrl,
     age: player.age ?? null,
     shirtNumber: player.shirtNumber ?? null,
     healthStatus: player.healthStatus,

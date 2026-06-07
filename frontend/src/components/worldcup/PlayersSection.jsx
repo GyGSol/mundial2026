@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table.jsx';
 import { cn } from '@/lib/utils';
+import { ClubCell } from '../ClubDisplay.jsx';
 
 const POSITIONS = [
   { value: 'GK', label: 'Portero' },
@@ -165,6 +166,7 @@ export default function PlayersSection() {
                 <TableHead>Jugador</TableHead>
                 <TableHead>Selección</TableHead>
                 <TableHead>Posición</TableHead>
+                <TableHead>País</TableHead>
                 <TableHead>Club</TableHead>
                 <TableHead>Edad</TableHead>
                 <TableHead>Estado</TableHead>
@@ -189,7 +191,17 @@ export default function PlayersSection() {
                       </span>
                     </TableCell>
                     <TableCell>{player.positionLabel}</TableCell>
-                    <TableCell className="text-muted-foreground">{player.currentClub || '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {player.clubCountry || '—'}
+                    </TableCell>
+                    <TableCell>
+                      <ClubCell
+                        club={player.currentClub}
+                        clubCrestUrl={player.clubCrestUrl}
+                        leagueEmblemUrl={player.leagueEmblemUrl}
+                        leagueName={player.leagueName}
+                      />
+                    </TableCell>
                     <TableCell>{player.age ?? '—'}</TableCell>
                     <TableCell>
                       <span className="inline-flex flex-wrap gap-1">
