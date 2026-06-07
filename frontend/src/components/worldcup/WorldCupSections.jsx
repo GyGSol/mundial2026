@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { formatMatchDate } from '@/lib/dateFormat';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
+import MatchTeamSide from '@/components/worldcup/MatchTeamSide.jsx';
 
 function TeamCell({ team, fallback = '—' }) {
   const name = team?.nameEn || fallback;
@@ -30,43 +31,6 @@ function TeamCell({ team, fallback = '—' }) {
       {team?.fifaCode && <span className="text-xs text-muted-foreground">{team.fifaCode}</span>}
     </div>
   );
-}
-
-function MatchTeamSide({ team, slotLabel, align = 'left' }) {
-  if (team) {
-    return align === 'right' ? (
-      <div className="flex items-center justify-end gap-2">
-        {team.fifaCode && <span className="text-xs text-muted-foreground">{team.fifaCode}</span>}
-        <span className="font-medium">{team.nameEn}</span>
-        {getTeamFlag(team) ? (
-          <img
-            src={getTeamFlag(team)}
-            alt=""
-            className="size-5 rounded-sm border border-border/60 object-cover"
-          />
-        ) : team.flag ? (
-          <span>{team.flag}</span>
-        ) : null}
-      </div>
-    ) : (
-      <TeamCell team={team} />
-    );
-  }
-
-  if (slotLabel) {
-    return (
-      <span
-        className={cn(
-          'text-sm font-medium text-muted-foreground',
-          align === 'right' && 'sm:text-right'
-        )}
-      >
-        {slotLabel}
-      </span>
-    );
-  }
-
-  return <span className="text-sm text-muted-foreground">Por definir</span>;
 }
 
 function MatchScore({ match }) {

@@ -11,6 +11,7 @@ import {
   StatsSection,
   TeamsSection,
 } from '@/components/worldcup/WorldCupSections.jsx';
+import FixtureSection from '@/components/worldcup/FixtureSection.jsx';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -19,6 +20,7 @@ const tabs = [
   { id: 'matches', label: 'Partidos' },
   { id: 'stats', label: 'Estadísticas' },
   { id: 'teams', label: 'Equipos' },
+  { id: 'fixture', label: 'Fixture' },
 ];
 
 function formatLastUpdated(date) {
@@ -83,6 +85,9 @@ export default function WorldCupPage() {
             <StatsSection stats={data?.stats} teams={data?.teams} stadiums={data?.stadiums} />
           )}
           {activeTab === 'teams' && <TeamsSection teams={data?.teams} />}
+          {activeTab === 'fixture' && (
+            <FixtureSection groups={data?.groups} knockout={data?.knockout} />
+          )}
         </>
       )}
     </div>
