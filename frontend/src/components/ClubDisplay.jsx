@@ -29,7 +29,7 @@ export function ClubCell({ club, clubCrestUrl, leagueEmblemUrl, leagueName }) {
         <CrestImage
           src={leagueEmblemUrl}
           alt={leagueName || 'Liga'}
-          className="size-7 opacity-90"
+          className="size-9 opacity-95"
           title={leagueName || undefined}
         />
       ) : null}

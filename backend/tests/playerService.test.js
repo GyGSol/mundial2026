@@ -31,7 +31,14 @@ describe('clubMetaService', () => {
 
     const basel = resolveClubMeta('Basel');
     expect(basel.clubCountry).toBe('Suiza');
-    expect(basel.leagueEmblemUrl).toContain('SL1');
+    expect(basel.leagueEmblemUrl).toContain('Special:FilePath');
+
+    const ed = resolveClubMeta('Ajax');
+    expect(ed.leagueEmblemUrl).toContain('ED.png');
+
+    const cologne = resolveClubMeta('FC Cologne');
+    expect(cologne.leagueName).toBe('Bundesliga');
+    expect(cologne.leagueEmblemUrl).toContain('BL1');
   });
 });
 

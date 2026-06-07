@@ -1,6 +1,37 @@
 const FD_CREST = (id) => `https://crests.football-data.org/${id}.png`;
 const FD_LEAGUE = (code) => `https://crests.football-data.org/${code}.png`;
 
+/** Códigos con escudo de liga válido en crests.football-data.org */
+const VALID_FD_LEAGUE_CODES = new Set([
+  'PL',
+  'PD',
+  'SA',
+  'BL1',
+  'BL2',
+  'FL1',
+  'FL2',
+  'PPL',
+  'ED',
+  'ELC',
+  'SPL',
+  'MLS',
+  'SB',
+  'CLI',
+  'EL',
+  'UCL',
+  'CL',
+]);
+
+/** Escudo de liga vía Wikimedia (Special:FilePath resuelve el thumbnail). */
+const WM_EMBLEM = (file) =>
+  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=120`;
+
+function leagueEmblemUrl(bucket) {
+  if (bucket.emblemFile) return WM_EMBLEM(bucket.emblemFile);
+  if (VALID_FD_LEAGUE_CODES.has(bucket.code)) return FD_LEAGUE(bucket.code);
+  return null;
+}
+
 /** Liga → país + escudo de competición + clubes (nombre → id FD opcional). */
 const LEAGUE_BUCKETS = [
   {
@@ -98,6 +129,7 @@ const LEAGUE_BUCKETS = [
       Como: null,
       Cremonese: null,
       Parma: null,
+      'Juventus Next Gen': null,
     },
   },
   {
@@ -123,6 +155,30 @@ const LEAGUE_BUCKETS = [
       'Holstein Kiel': null,
       'Hamburg': 7,
       'St. Pauli': null,
+      'FC Cologne': 1,
+      '1. FC Köln': 1,
+      '1. FC Koln': 1,
+    },
+  },
+  {
+    code: 'BL2',
+    leagueName: '2. Bundesliga',
+    country: 'Alemania',
+    clubs: {
+      'Arminia Bielefeld': 44,
+      'Eintracht Braunschweig': 39,
+      'Hansa Rostock': 30,
+      'Hertha BSC': 9,
+      'Karlsruher SC': 6,
+      '1. FC Kaiserslautern': 25,
+      'Fortuna Düsseldorf': 8,
+      'Fortuna Dusseldorf': 8,
+      'Hannover 96': 13,
+      '1. FC Nürnberg': 14,
+      '1. FC Nurnberg': 14,
+      'SC Paderborn': 29,
+      'SV Elversberg': null,
+      'SV Darmstadt 98': 24,
     },
   },
   {
@@ -162,7 +218,7 @@ const LEAGUE_BUCKETS = [
     },
   },
   {
-    code: 'DED',
+    code: 'ED',
     leagueName: 'Eredivisie',
     country: 'Países Bajos',
     clubs: {
@@ -180,6 +236,9 @@ const LEAGUE_BUCKETS = [
       'NAC Breda': null,
       'RKC Waalwijk': null,
       Vitesse: null,
+      'Almere City': null,
+      'De Graafschap': null,
+      'TOP Oss': null,
     },
   },
   {
@@ -216,6 +275,7 @@ const LEAGUE_BUCKETS = [
   },
   {
     code: 'SL1',
+    emblemFile: 'RZ_BSL_Logo_Portrait_RGB.svg',
     leagueName: 'Super League',
     country: 'Suiza',
     clubs: {
@@ -258,7 +318,7 @@ const LEAGUE_BUCKETS = [
     },
   },
   {
-    code: 'EL1',
+    code: 'ELC',
     leagueName: 'Championship',
     country: 'Inglaterra',
     clubs: {
@@ -267,6 +327,14 @@ const LEAGUE_BUCKETS = [
       Southampton: 340,
       'Sheffield United': 356,
       'West Bromwich Albion': 74,
+      'Cardiff City': 715,
+      Portsmouth: 325,
+      'Norwich City': 68,
+      'Ipswich Town': 113,
+      Watford: 346,
+      'Coventry City': 1076,
+      'Middlesbrough': 343,
+      'Stoke City': 70,
     },
   },
   {
@@ -320,10 +388,12 @@ const LEAGUE_BUCKETS = [
       'Al Ula': null,
       Damac: null,
       Abha: null,
+      'Al Faisaly': null,
+      'Al Shabab': null,
     },
   },
   {
-    code: 'BSA',
+    code: 'SB',
     leagueName: 'Brasileirão',
     country: 'Brasil',
     clubs: {
@@ -382,6 +452,7 @@ const LEAGUE_BUCKETS = [
   },
   {
     code: 'TSL',
+    emblemFile: 'Süper_Lig_logo.svg',
     leagueName: 'Süper Lig',
     country: 'Turquía',
     clubs: {
@@ -434,6 +505,7 @@ const LEAGUE_BUCKETS = [
       'Crvena zvezda': null,
       'Red Star Belgrade': null,
       Partizan: null,
+      'FK TSC': null,
     },
   },
   {
@@ -457,6 +529,7 @@ const LEAGUE_BUCKETS = [
       Brondby: null,
       Nordsjaelland: null,
       Silkeborg: null,
+      OB: null,
     },
   },
   {
@@ -467,6 +540,9 @@ const LEAGUE_BUCKETS = [
       'Bodo/Glimt': null,
       Molde: null,
       Rosenborg: null,
+      Lillestrom: null,
+      'Lillestrøm': null,
+      Viking: null,
     },
   },
   {
@@ -563,6 +639,7 @@ const LEAGUE_BUCKETS = [
       'Qatar SC': null,
       'Al Ahli Doha': null,
       Muaither: null,
+      'Al Shamal': null,
     },
   },
   {
@@ -643,6 +720,7 @@ const LEAGUE_BUCKETS = [
     clubs: {
       'Plaza Amador': null,
       Municipal: null,
+      Nacional: null,
     },
   },
   {
@@ -712,14 +790,174 @@ const LEAGUE_BUCKETS = [
       'Changchun Yatai': null,
     },
   },
+  {
+    code: 'RPL',
+    leagueName: 'Premier League',
+    country: 'Rusia',
+    clubs: {
+      'CSKA Moscow': null,
+      'Dinamo Moscow': null,
+      'Dynamo Moscow': null,
+      Krasnodar: null,
+      Rostov: null,
+      'Rubin Kazan': null,
+      'Spartak Moscow': null,
+    },
+  },
+  {
+    code: 'UKR',
+    leagueName: 'Premier League',
+    country: 'Ucrania',
+    clubs: {
+      'Shakhtar Donetsk': null,
+    },
+  },
+  {
+    code: 'POL',
+    leagueName: 'Ekstraklasa',
+    country: 'Polonia',
+    clubs: {
+      Cracovia: null,
+      'Lech Poznan': null,
+      'Lech Poznań': null,
+      'Rakow Czestochowa': null,
+      'Raków Częstochowa': null,
+    },
+  },
+  {
+    code: 'HUN',
+    leagueName: 'NB I',
+    country: 'Hungría',
+    clubs: {
+      Ferencvaros: null,
+      'Ferencváros': null,
+    },
+  },
+  {
+    code: 'BUL',
+    leagueName: 'First League',
+    country: 'Bulgaria',
+    clubs: {
+      Ludogorets: null,
+    },
+  },
+  {
+    code: 'ISR',
+    leagueName: 'Premier League',
+    country: 'Israel',
+    clubs: {
+      'Maccabi Haifa': null,
+      'Maccabi Tel Aviv': null,
+    },
+  },
+  {
+    code: 'CYP',
+    leagueName: 'First Division',
+    country: 'Chipre',
+    clubs: {
+      'Aris Limassol': null,
+      'Olympiakos Nicosia': null,
+      Pafos: null,
+    },
+  },
+  {
+    code: 'ARM',
+    leagueName: 'Premier League',
+    country: 'Armenia',
+    clubs: {
+      'Ararat-Armenia': null,
+    },
+  },
+  {
+    code: 'SVK',
+    leagueName: 'Fortuna Liga',
+    country: 'Eslovaquia',
+    clubs: {
+      'AS Trencin': null,
+      'AS Trenčín': null,
+      Kosice: null,
+      'Košice': null,
+    },
+  },
+  {
+    code: 'TUN',
+    leagueName: 'Ligue 1',
+    country: 'Túnez',
+    clubs: {
+      'Club Africain': null,
+      Esperance: null,
+      'Espérance': null,
+    },
+  },
+  {
+    code: 'KWT',
+    leagueName: 'Premier League',
+    country: 'Kuwait',
+    clubs: {
+      'Kuwait SC': null,
+    },
+  },
+  {
+    code: 'AZE',
+    leagueName: 'Premier League',
+    country: 'Azerbaiyán',
+    clubs: {
+      Qarabag: null,
+      Qarabağ: null,
+    },
+  },
+  {
+    code: 'IRL',
+    leagueName: 'League of Ireland',
+    country: 'Irlanda',
+    clubs: {
+      'Shamrock Rovers': null,
+      'Sligo Rovers': null,
+    },
+  },
+  {
+    code: 'MYS',
+    leagueName: 'Super League',
+    country: 'Malasia',
+    clubs: {
+      Selangor: null,
+    },
+  },
+  {
+    code: 'THA',
+    leagueName: 'Thai League 1',
+    country: 'Tailandia',
+    clubs: {
+      'Port FC': null,
+    },
+  },
+  {
+    code: 'SUR',
+    leagueName: 'Hoofdklasse',
+    country: 'Surinam',
+    clubs: {
+      'SV Robinhood': null,
+    },
+  },
+  {
+    code: 'CIV',
+    leagueName: 'Ligue 1',
+    country: 'Costa de Marfil',
+    clubs: {
+      'San Pedro': null,
+    },
+  },
 ];
 
 const CLUB_ALIASES = {
   'fc cologne': 'FC Cologne',
   '1. fc cologne': 'FC Cologne',
+  '1 fc koln': 'FC Cologne',
   'bodo/glimt': 'Bodo/Glimt',
   'crvena zvezda': 'Red Star Belgrade',
   'red star belgrade': 'Red Star Belgrade',
+  'dynamo moscow': 'Dinamo Moscow',
+  'dinamo moscow': 'Dinamo Moscow',
 };
 
 const COUNTRY_NAMES = new Set(
@@ -830,7 +1068,7 @@ function buildIndex() {
         country: bucket.country,
         leagueName: bucket.leagueName,
         leagueCode: bucket.code,
-        leagueEmblemUrl: FD_LEAGUE(bucket.code),
+        leagueEmblemUrl: leagueEmblemUrl(bucket),
         clubCrestUrl: teamId ? FD_CREST(teamId) : null,
         footballDataClubId: teamId ?? null,
       });
