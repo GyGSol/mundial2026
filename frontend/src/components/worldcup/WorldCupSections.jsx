@@ -11,6 +11,8 @@ import {
   TableRow,
 } from '@/components/ui/table.jsx';
 import { cn } from '@/lib/utils';
+import { getGroupRowBorderStyle } from '@/lib/groupColors.js';
+import { QualificationLegend } from '@/components/worldcup/GroupColorUi.jsx';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { formatMatchDate } from '@/lib/dateFormat';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
@@ -102,11 +104,6 @@ const standingsStatCell =
   'w-7 px-0.5 py-1.5 text-center tabular-nums text-xs sm:w-8 sm:px-1 sm:py-2 sm:text-sm md:w-9';
 const standingsOptionalCol = 'hidden sm:table-cell';
 
-const qualificationZoneRow = {
-  direct: 'border-l-4 border-l-emerald-500',
-  third_possible: 'border-l-4 border-l-sky-400',
-};
-
 export function GroupStandingsSection({ groups }) {
   if (!groups?.length) {
     return (
@@ -118,16 +115,7 @@ export function GroupStandingsSection({ groups }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
-          Dieciseisavos de final
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 shrink-0 rounded-full bg-sky-400" aria-hidden />
-          Posible clasificado
-        </span>
-      </div>
+      <QualificationLegend />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {groups.map((group) => (
@@ -159,10 +147,8 @@ export function GroupStandingsSection({ groups }) {
                 {group.standings.map((row) => (
                   <tr
                     key={row.teamId || row.rank}
-                    className={cn(
-                      'border-b border-border transition-colors hover:bg-muted/50',
-                      qualificationZoneRow[row.qualificationZone] || 'border-l-4 border-l-transparent'
-                    )}
+                    className="border-b border-border border-l-solid transition-colors hover:bg-muted/50"
+                    style={getGroupRowBorderStyle(group.group, row.rank)}
                   >
                     <td className="w-7 px-0.5 py-1.5 text-center align-middle text-xs text-muted-foreground sm:w-8 sm:py-2">
                       {row.rank}

@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils';
+import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
 import { getTeamFlag } from '@/lib/teamMeta';
+import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
 
 function TeamCell({ team, fallback = '—' }) {
   const name = team?.nameEn || fallback;
@@ -95,19 +97,37 @@ export default function MatchTeamSide({ team, slotLabel, align = 'left', compact
   }
 
   if (slotLabel) {
+    if (bracket) {
+      const parsed = parseKnockoutSlotLabel(slotLabel);
+      const accentColor =
+        parsed?.type === 'group_position'
+          ? getGroupColor(parsed.group, parsed.position)
+          : null;
+
+      return (
+        <span
+          className={cn(
+            'flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm px-1 py-0.5 text-primary',
+            accentColor && 'border-l-[3px] border-solid'
+          )}
+          style={accentColor ? { borderLeftColor: accentColor } : undefined}
+        >
+          <KnockoutSlotLabel label={slotLabel} />
+        </span>
+      );
+    }
+
     return (
       <span
         className={cn(
-          bracket
-            ? 'block min-w-0 flex-1 text-center text-[11px] font-medium leading-tight text-primary sm:text-xs'
-            : compact
-              ? 'text-[10px] font-medium text-muted-foreground'
-              : 'text-sm font-medium text-muted-foreground',
-          align === 'right' && !bracket && 'sm:text-right'
+          compact
+            ? 'text-[10px] font-medium text-muted-foreground'
+            : 'text-sm font-medium text-muted-foreground',
+          align === 'right' && 'sm:text-right'
         )}
         title={slotLabel}
       >
-        {bracket || !compact ? slotLabel : slotLabel.length > 20 ? `${slotLabel.slice(0, 18)}…` : slotLabel}
+        {compact && slotLabel.length > 20 ? `${slotLabel.slice(0, 18)}…` : slotLabel}
       </span>
     );
   }

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
 import { getTeamFlag } from '@/lib/teamMeta';
+import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
+import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
 import { KnockoutSection } from '@/components/worldcup/WorldCupSections.jsx';
 import {
   BRACKET_COLUMN_LABELS,
@@ -69,16 +71,23 @@ function buildConnectorPath(fromId, toId, cellW, cellH) {
 
 function BracketCountryLine({ team, slotLabel, score, isWinner, isLive }) {
   const flagUrl = team ? getTeamFlag(team) : null;
-  const label = team?.nameEn || team?.fifaCode || slotLabel || 'Por definir';
+  const title = team?.nameEn || team?.fifaCode || slotLabel || 'Por definir';
+  const parsed = !team && slotLabel ? parseKnockoutSlotLabel(slotLabel) : null;
+  const accentColor =
+    parsed?.type === 'group_position'
+      ? getGroupColor(parsed.group, parsed.position)
+      : null;
 
   return (
     <div
       className={cn(
         'flex w-full min-w-0 items-center justify-center gap-1.5 px-1',
+        accentColor && 'border-l-[3px] border-solid',
         isWinner && 'font-bold',
         isLive && !isWinner && 'opacity-90'
       )}
-      title={label}
+      style={accentColor ? { borderLeftColor: accentColor } : undefined}
+      title={title}
     >
       {team ? (
         flagUrl ? (
@@ -93,14 +102,23 @@ function BracketCountryLine({ team, slotLabel, score, isWinner, isLive }) {
           <span className="size-4 shrink-0 rounded-sm border border-dashed border-primary/30 bg-primary/5 sm:size-5" />
         )
       ) : null}
-      <span
-        className={cn(
-          'min-w-0 text-center text-[11px] leading-tight text-primary sm:text-xs',
-          !team && 'font-medium'
-        )}
-      >
-        {label}
-      </span>
+      {team ? (
+        <span
+          className={cn(
+            'min-w-0 text-center text-[11px] leading-tight text-primary sm:text-xs',
+            isWinner && 'font-bold'
+          )}
+        >
+          {team.nameEn || team.fifaCode}
+        </span>
+      ) : slotLabel ? (
+        <KnockoutSlotLabel
+          label={slotLabel}
+          className="min-w-0 text-[10px] font-medium text-primary sm:text-[11px]"
+        />
+      ) : (
+        <span className="text-[11px] text-muted-foreground sm:text-xs">Por definir</span>
+      )}
       {score != null ? (
         <span
           className={cn(

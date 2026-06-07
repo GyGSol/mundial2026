@@ -1,26 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { cn } from '@/lib/utils';
+import { getGroupRowBorderStyle } from '@/lib/groupColors.js';
 import { getTeamFlag } from '@/lib/teamMeta';
+import { QualificationLegend } from '@/components/worldcup/GroupColorUi.jsx';
 
-const qualificationZoneRow = {
-  direct: 'border-l-4 border-l-emerald-500',
-  third_possible: 'border-l-4 border-l-sky-400',
-};
-
-export function QualificationLegend() {
-  return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-2.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
-        Dieciseisavos de final
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-2.5 shrink-0 rounded-full bg-sky-400" aria-hidden />
-        Posible clasificado
-      </span>
-    </div>
-  );
-}
+export { QualificationLegend };
 
 export default function CompactGroupTable({ group }) {
   if (!group?.standings?.length) return null;
@@ -46,10 +29,8 @@ export default function CompactGroupTable({ group }) {
               return (
                 <tr
                   key={row.teamId || row.rank}
-                  className={cn(
-                    'border-b border-border/60',
-                    qualificationZoneRow[row.qualificationZone] || 'border-l-2 border-l-transparent'
-                  )}
+                  className="border-b border-border/60 border-l-solid"
+                  style={getGroupRowBorderStyle(group.group, row.rank)}
                 >
                   <td className="py-0.5 text-center text-muted-foreground">{row.rank}</td>
                   <td className="min-w-0 py-0.5">
