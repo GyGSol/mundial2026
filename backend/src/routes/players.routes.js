@@ -11,6 +11,7 @@ router.get('/', async (req, res, next) => {
       limit: req.query.limit,
       team: req.query.team,
       position: req.query.position,
+      status: req.query.status,
       q: req.query.q,
     });
     res.json(result);

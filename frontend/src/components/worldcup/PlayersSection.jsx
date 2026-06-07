@@ -31,6 +31,15 @@ const POSITIONS = [
   { value: 'FWD', label: 'Delantero' },
 ];
 
+const STATUS_FILTERS = [
+  { value: 'priority', label: 'Alertas primero' },
+  { value: 'alert', label: 'Solo lesiones y dudas' },
+  { value: 'injured', label: 'Lesionado' },
+  { value: 'doubt', label: 'Duda' },
+  { value: 'available', label: 'Disponible' },
+  { value: 'all', label: 'Todos (A-Z)' },
+];
+
 function healthBadgeClass(status) {
   if (status === 'injured') return 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400';
   if (status === 'doubt') return 'border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400';
@@ -40,6 +49,7 @@ function healthBadgeClass(status) {
 export default function PlayersSection() {
   const [teamFilter, setTeamFilter] = useState('');
   const [positionFilter, setPositionFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('priority');
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -64,13 +74,15 @@ export default function PlayersSection() {
     if (teamFilter) params.team = teamFilter;
     if (positionFilter) params.position = positionFilter;
     if (searchQuery) params.q = searchQuery;
+    if (statusFilter) params.status = statusFilter;
     return playersApi.list(params);
-  }, [page, teamFilter, positionFilter, searchQuery]);
+  }, [page, teamFilter, positionFilter, statusFilter, searchQuery]);
 
   const { data, loading, error, lastUpdated } = useLiveData(fetchPlayers, [
     page,
     teamFilter,
     positionFilter,
+    statusFilter,
     searchQuery,
   ]);
 
@@ -146,6 +158,24 @@ export default function PlayersSection() {
             ))}
           </SelectContent>
         </Select>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_FILTERS.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -166,7 +196,6 @@ export default function PlayersSection() {
                 <TableHead>Jugador</TableHead>
                 <TableHead>Selección</TableHead>
                 <TableHead>Posición</TableHead>
-                <TableHead>País</TableHead>
                 <TableHead>Club</TableHead>
                 <TableHead>Edad</TableHead>
                 <TableHead>Estado</TableHead>
@@ -191,9 +220,6 @@ export default function PlayersSection() {
                       </span>
                     </TableCell>
                     <TableCell>{player.positionLabel}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {player.clubCountry || '—'}
-                    </TableCell>
                     <TableCell>
                       <ClubCell
                         club={player.currentClub}

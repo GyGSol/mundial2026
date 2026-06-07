@@ -1,4 +1,4 @@
-import { Player, POSITIONS } from '../models/Player.js';
+import { Player, POSITIONS, HEALTH_STATUSES } from '../models/Player.js';
 import { Team } from '../models/Team.js';
 import {
   fetchPersonMatches,
@@ -54,15 +54,48 @@ async function buildTeamMap() {
   return new Map(teams.map((t) => [t.externalId, t]));
 }
 
+const STATUS_FILTERS = new Set(['priority', 'all', 'alert', ...HEALTH_STATUSES]);
+
+function buildListPipeline(filter, { status, skip, limit }) {
+  const pipeline = [{ $match: filter }];
+
+  if (status === 'priority') {
+    pipeline.push({
+      $addFields: {
+        healthSort: {
+          $switch: {
+            branches: [
+              { case: { $eq: ['$healthStatus', 'injured'] }, then: 0 },
+              { case: { $eq: ['$healthStatus', 'doubt'] }, then: 1 },
+            ],
+            default: 2,
+          },
+        },
+        starterSort: {
+          $cond: [{ $eq: ['$lineupStatus', 'starter'] }, 0, 1],
+        },
+      },
+    });
+    pipeline.push({ $sort: { healthSort: 1, starterSort: 1, fullName: 1 } });
+  } else {
+    pipeline.push({ $sort: { fullName: 1 } });
+  }
+
+  pipeline.push({ $skip: skip }, { $limit: limit });
+  return pipeline;
+}
+
 export async function listPlayers({
   page = 1,
   limit = 24,
   team = '',
   position = '',
+  status = 'priority',
   q = '',
 } = {}) {
   const safeLimit = Math.min(Math.max(Number(limit) || 24, 1), 50);
   const safePage = Math.max(Number(page) || 1, 1);
+  const safeStatus = STATUS_FILTERS.has(status) ? status : 'priority';
   const filter = {};
 
   if (team) {
@@ -78,17 +111,22 @@ export async function listPlayers({
     filter.position = position;
   }
 
+  if (safeStatus === 'alert') {
+    filter.healthStatus = { $in: ['injured', 'doubt'] };
+  } else if (HEALTH_STATUSES.includes(safeStatus)) {
+    filter.healthStatus = safeStatus;
+  }
+
   const trimmed = String(q).trim();
   if (trimmed) {
     filter.fullName = { $regex: trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
   }
 
+  const skip = (safePage - 1) * safeLimit;
+  const pipeline = buildListPipeline(filter, { status: safeStatus, skip, limit: safeLimit });
+
   const [items, total] = await Promise.all([
-    Player.find(filter)
-      .sort({ fullName: 1 })
-      .skip((safePage - 1) * safeLimit)
-      .limit(safeLimit)
-      .lean(),
+    Player.aggregate(pipeline),
     Player.countDocuments(filter),
   ]);
 
@@ -100,6 +138,7 @@ export async function listPlayers({
     page: safePage,
     limit: safeLimit,
     totalPages: Math.max(1, Math.ceil(total / safeLimit)),
+    status: safeStatus,
   };
 }
 

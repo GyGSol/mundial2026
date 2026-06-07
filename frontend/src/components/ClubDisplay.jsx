@@ -1,11 +1,12 @@
 import { cn } from '@/lib/utils';
 
-function CrestImage({ src, alt, className }) {
+function CrestImage({ src, alt, className, title }) {
   if (!src) return null;
   return (
     <img
       src={src}
       alt={alt}
+      title={title}
       className={cn('size-5 shrink-0 object-contain', className)}
       loading="lazy"
       onError={(e) => {
@@ -28,7 +29,8 @@ export function ClubCell({ club, clubCrestUrl, leagueEmblemUrl, leagueName }) {
         <CrestImage
           src={leagueEmblemUrl}
           alt={leagueName || 'Liga'}
-          className="size-4 opacity-80"
+          className="size-7 opacity-90"
+          title={leagueName || undefined}
         />
       ) : null}
     </span>
