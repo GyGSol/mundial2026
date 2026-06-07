@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-06-07T13:24:06.226Z",
+  "generatedAt": "2026-06-07T13:42:15.528Z",
   "sources": [
     "embedSquads.js"
   ],
-  "playerCount": 1154,
+  "playerCount": 1075,
   "players": [
     {
       "externalId": "USA-matt-turner",
@@ -2619,825 +2619,6 @@
       }
     },
     {
-      "externalId": "CHI-brayan-cortes",
-      "fullName": "Brayan Cortes",
-      "fifaCode": "CHI",
-      "position": "GK",
-      "currentClub": "Colo-Colo",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-gabriel-arias",
-      "fullName": "Gabriel Arias",
-      "fifaCode": "CHI",
-      "position": "GK",
-      "currentClub": "Racing Club",
-      "age": 38,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-lawrence-vigouroux",
-      "fullName": "Lawrence Vigouroux",
-      "fifaCode": "CHI",
-      "position": "GK",
-      "currentClub": "Swansea City",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-paulo-diaz",
-      "fullName": "Paulo Diaz",
-      "fifaCode": "CHI",
-      "position": "DEF",
-      "currentClub": "River Plate",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-guillermo-maripan",
-      "fullName": "Guillermo Maripan",
-      "fifaCode": "CHI",
-      "position": "DEF",
-      "currentClub": "Monaco",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-gabriel-suazo",
-      "fullName": "Gabriel Suazo",
-      "fifaCode": "CHI",
-      "position": "DEF",
-      "currentClub": "Toulouse",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-matias-catalan",
-      "fullName": "Matias Catalan",
-      "fifaCode": "CHI",
-      "position": "DEF",
-      "currentClub": "Talleres",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-igor-lichnovsky",
-      "fullName": "Igor Lichnovsky",
-      "fifaCode": "CHI",
-      "position": "DEF",
-      "currentClub": "Club America",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-nayel-mehssatou",
-      "fullName": "Nayel Mehssatou",
-      "fifaCode": "CHI",
-      "position": "DEF",
-      "currentClub": "Kortrijk",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-erick-wiemberg",
-      "fullName": "Erick Wiemberg",
-      "fifaCode": "CHI",
-      "position": "DEF",
-      "currentClub": "Colo-Colo",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-rodrigo-echeverria",
-      "fullName": "Rodrigo Echeverria",
-      "fifaCode": "CHI",
-      "position": "MID",
-      "currentClub": "Huracan",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-erick-pulgar",
-      "fullName": "Erick Pulgar",
-      "fifaCode": "CHI",
-      "position": "MID",
-      "currentClub": "Flamengo",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-marcelino-nunez",
-      "fullName": "Marcelino Nunez",
-      "fifaCode": "CHI",
-      "position": "MID",
-      "currentClub": "Norwich City",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-diego-valdes",
-      "fullName": "Diego Valdes",
-      "fifaCode": "CHI",
-      "position": "MID",
-      "currentClub": "Club America",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-dario-osorio",
-      "fullName": "Dario Osorio",
-      "fifaCode": "CHI",
-      "position": "MID",
-      "currentClub": "Midtjylland",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-felipe-loyola",
-      "fullName": "Felipe Loyola",
-      "fifaCode": "CHI",
-      "position": "MID",
-      "currentClub": "Independiente",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-cesar-perez",
-      "fullName": "Cesar Perez",
-      "fifaCode": "CHI",
-      "position": "MID",
-      "currentClub": "Union La Calera",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-alexis-sanchez",
-      "fullName": "Alexis Sanchez",
-      "fifaCode": "CHI",
-      "position": "FWD",
-      "currentClub": "Udinese",
-      "age": 37,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-ben-brereton-diaz",
-      "fullName": "Ben Brereton Diaz",
-      "fifaCode": "CHI",
-      "position": "FWD",
-      "currentClub": "Southampton",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-eduardo-vargas",
-      "fullName": "Eduardo Vargas",
-      "fifaCode": "CHI",
-      "position": "FWD",
-      "currentClub": "Atletico Mineiro",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CHI-victor-davila",
-      "fullName": "Victor Davila",
-      "fifaCode": "CHI",
-      "position": "FWD",
-      "currentClub": "CSKA Moscow",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-pedro-gallese",
-      "fullName": "Pedro Gallese",
-      "fifaCode": "PER",
-      "position": "GK",
-      "currentClub": "Orlando City",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-carlos-caceda",
-      "fullName": "Carlos Caceda",
-      "fifaCode": "PER",
-      "position": "GK",
-      "currentClub": "Melgar",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-diego-romero",
-      "fullName": "Diego Romero",
-      "fifaCode": "PER",
-      "position": "GK",
-      "currentClub": "Universitario",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-luis-advincula",
-      "fullName": "Luis Advincula",
-      "fifaCode": "PER",
-      "position": "DEF",
-      "currentClub": "Boca Juniors",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-miguel-araujo",
-      "fullName": "Miguel Araujo",
-      "fifaCode": "PER",
-      "position": "DEF",
-      "currentClub": "Portland Timbers",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-carlos-zambrano",
-      "fullName": "Carlos Zambrano",
-      "fifaCode": "PER",
-      "position": "DEF",
-      "currentClub": "Alianza Lima",
-      "age": 37,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-alexander-callens",
-      "fullName": "Alexander Callens",
-      "fifaCode": "PER",
-      "position": "DEF",
-      "currentClub": "AEK Athens",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-marcos-lopez",
-      "fullName": "Marcos Lopez",
-      "fifaCode": "PER",
-      "position": "DEF",
-      "currentClub": "Feyenoord",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-aldo-corzo",
-      "fullName": "Aldo Corzo",
-      "fifaCode": "PER",
-      "position": "DEF",
-      "currentClub": "Universitario",
-      "age": 37,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-anderson-santamaria",
-      "fullName": "Anderson Santamaria",
-      "fifaCode": "PER",
-      "position": "DEF",
-      "currentClub": "Atlas",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-renato-tapia",
-      "fullName": "Renato Tapia",
-      "fifaCode": "PER",
-      "position": "MID",
-      "currentClub": "Celta Vigo",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-wilder-cartagena",
-      "fullName": "Wilder Cartagena",
-      "fifaCode": "PER",
-      "position": "MID",
-      "currentClub": "Orlando City",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-sergio-pena",
-      "fullName": "Sergio Pena",
-      "fifaCode": "PER",
-      "position": "MID",
-      "currentClub": "PAOK",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-piero-quispe",
-      "fullName": "Piero Quispe",
-      "fifaCode": "PER",
-      "position": "MID",
-      "currentClub": "Pumas UNAM",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-yoshimar-yotun",
-      "fullName": "Yoshimar Yotun",
-      "fifaCode": "PER",
-      "position": "MID",
-      "currentClub": "Sporting Cristal",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-andre-carrillo",
-      "fullName": "Andre Carrillo",
-      "fifaCode": "PER",
-      "position": "MID",
-      "currentClub": "Corinthians",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-bryan-reyna",
-      "fullName": "Bryan Reyna",
-      "fifaCode": "PER",
-      "position": "MID",
-      "currentClub": "Belgrano",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-edison-flores",
-      "fullName": "Edison Flores",
-      "fifaCode": "PER",
-      "position": "FWD",
-      "currentClub": "Universitario",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-gianluca-lapadula",
-      "fullName": "Gianluca Lapadula",
-      "fifaCode": "PER",
-      "position": "FWD",
-      "currentClub": "Cagliari",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-alex-valera",
-      "fullName": "Alex Valera",
-      "fifaCode": "PER",
-      "position": "FWD",
-      "currentClub": "Universitario",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "PER-joao-grimaldo",
-      "fullName": "Joao Grimaldo",
-      "fifaCode": "PER",
-      "position": "FWD",
-      "currentClub": "Partizan",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-carlos-lampe",
-      "fullName": "Carlos Lampe",
-      "fifaCode": "BOL",
-      "position": "GK",
-      "currentClub": "Bolivar",
-      "age": 39,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-guillermo-viscarra",
-      "fullName": "Guillermo Viscarra",
-      "fifaCode": "BOL",
-      "position": "GK",
-      "currentClub": "The Strongest",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-ruben-cordano",
-      "fullName": "Ruben Cordano",
-      "fifaCode": "BOL",
-      "position": "GK",
-      "currentClub": "Bolivar",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-luis-haquin",
-      "fullName": "Luis Haquin",
-      "fifaCode": "BOL",
-      "position": "DEF",
-      "currentClub": "Ponte Preta",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-jose-sagredo",
-      "fullName": "Jose Sagredo",
-      "fifaCode": "BOL",
-      "position": "DEF",
-      "currentClub": "Bolivar",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-jesus-sagredo",
-      "fullName": "Jesus Sagredo",
-      "fifaCode": "BOL",
-      "position": "DEF",
-      "currentClub": "Bolivar",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-roberto-fernandez",
-      "fullName": "Roberto Fernandez",
-      "fifaCode": "BOL",
-      "position": "DEF",
-      "currentClub": "Bolivar",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-diego-medina",
-      "fullName": "Diego Medina",
-      "fifaCode": "BOL",
-      "position": "DEF",
-      "currentClub": "Always Ready",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-marcelo-suarez",
-      "fullName": "Marcelo Suarez",
-      "fifaCode": "BOL",
-      "position": "DEF",
-      "currentClub": "Oriente Petrolero",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-jairo-quinteros",
-      "fullName": "Jairo Quinteros",
-      "fifaCode": "BOL",
-      "position": "DEF",
-      "currentClub": "Real Zaragoza",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-ramiro-vaca",
-      "fullName": "Ramiro Vaca",
-      "fifaCode": "BOL",
-      "position": "MID",
-      "currentClub": "Bolivar",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-boris-cespedes",
-      "fullName": "Boris Cespedes",
-      "fifaCode": "BOL",
-      "position": "MID",
-      "currentClub": "Yverdon",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-gabriel-villamil",
-      "fullName": "Gabriel Villamil",
-      "fifaCode": "BOL",
-      "position": "MID",
-      "currentClub": "LDU Quito",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-robson-matheus",
-      "fullName": "Robson Matheus",
-      "fifaCode": "BOL",
-      "position": "MID",
-      "currentClub": "Bolivar",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-miguel-terceros",
-      "fullName": "Miguel Terceros",
-      "fifaCode": "BOL",
-      "position": "MID",
-      "currentClub": "Santos",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-jaume-cuellar",
-      "fullName": "Jaume Cuellar",
-      "fifaCode": "BOL",
-      "position": "MID",
-      "currentClub": "Barcelona B",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-luciano-ursino",
-      "fullName": "Luciano Ursino",
-      "fifaCode": "BOL",
-      "position": "MID",
-      "currentClub": "The Strongest",
-      "age": 37,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-carmelo-algaranaz",
-      "fullName": "Carmelo Algarañaz",
-      "fifaCode": "BOL",
-      "position": "FWD",
-      "currentClub": "Kalamata",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-bruno-miranda",
-      "fullName": "Bruno Miranda",
-      "fifaCode": "BOL",
-      "position": "FWD",
-      "currentClub": "The Strongest",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-enzo-monteiro",
-      "fullName": "Enzo Monteiro",
-      "fifaCode": "BOL",
-      "position": "FWD",
-      "currentClub": "Santos",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "BOL-victor-abrego",
-      "fullName": "Victor Abrego",
-      "fifaCode": "BOL",
-      "position": "FWD",
-      "currentClub": "Nacional Potosi",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
       "externalId": "FRA-mike-maignan",
       "fullName": "Mike Maignan",
       "fifaCode": "FRA",
@@ -5804,305 +4985,6 @@
       }
     },
     {
-      "externalId": "ITA-gianluigi-donnarumma",
-      "fullName": "Gianluigi Donnarumma",
-      "fifaCode": "ITA",
-      "position": "GK",
-      "currentClub": "Paris Saint-Germain",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-guglielmo-vicario",
-      "fullName": "Guglielmo Vicario",
-      "fifaCode": "ITA",
-      "position": "GK",
-      "currentClub": "Tottenham Hotspur",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-alex-meret",
-      "fullName": "Alex Meret",
-      "fifaCode": "ITA",
-      "position": "GK",
-      "currentClub": "Napoli",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-giovanni-di-lorenzo",
-      "fullName": "Giovanni Di Lorenzo",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Napoli",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-alessandro-bastoni",
-      "fullName": "Alessandro Bastoni",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Inter Milan",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-riccardo-calafiori",
-      "fullName": "Riccardo Calafiori",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Arsenal",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-alessandro-buongiorno",
-      "fullName": "Alessandro Buongiorno",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Napoli",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-gianluca-mancini",
-      "fullName": "Gianluca Mancini",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Roma",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-federico-dimarco",
-      "fullName": "Federico Dimarco",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Inter Milan",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-andrea-cambiaso",
-      "fullName": "Andrea Cambiaso",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Juventus",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-matteo-darmian",
-      "fullName": "Matteo Darmian",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Inter Milan",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-giorgio-scalvini",
-      "fullName": "Giorgio Scalvini",
-      "fifaCode": "ITA",
-      "position": "DEF",
-      "currentClub": "Atalanta",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-nicolo-barella",
-      "fullName": "Nicolo Barella",
-      "fifaCode": "ITA",
-      "position": "MID",
-      "currentClub": "Inter Milan",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-sandro-tonali",
-      "fullName": "Sandro Tonali",
-      "fifaCode": "ITA",
-      "position": "MID",
-      "currentClub": "Newcastle United",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-davide-frattesi",
-      "fullName": "Davide Frattesi",
-      "fifaCode": "ITA",
-      "position": "MID",
-      "currentClub": "Inter Milan",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-lorenzo-pellegrini",
-      "fullName": "Lorenzo Pellegrini",
-      "fifaCode": "ITA",
-      "position": "MID",
-      "currentClub": "Roma",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-samuele-ricci",
-      "fullName": "Samuele Ricci",
-      "fifaCode": "ITA",
-      "position": "MID",
-      "currentClub": "Torino",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-manuel-locatelli",
-      "fullName": "Manuel Locatelli",
-      "fifaCode": "ITA",
-      "position": "MID",
-      "currentClub": "Juventus",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-federico-chiesa",
-      "fullName": "Federico Chiesa",
-      "fifaCode": "ITA",
-      "position": "FWD",
-      "currentClub": "Juventus",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-mateo-retegui",
-      "fullName": "Mateo Retegui",
-      "fifaCode": "ITA",
-      "position": "FWD",
-      "currentClub": "Atalanta",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-gianluca-scamacca",
-      "fullName": "Gianluca Scamacca",
-      "fifaCode": "ITA",
-      "position": "FWD",
-      "currentClub": "Atalanta",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-giacomo-raspadori",
-      "fullName": "Giacomo Raspadori",
-      "fifaCode": "ITA",
-      "position": "FWD",
-      "currentClub": "Napoli",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "ITA-mattia-zaccagni",
-      "fullName": "Mattia Zaccagni",
-      "fifaCode": "ITA",
-      "position": "FWD",
-      "currentClub": "Lazio",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
       "externalId": "SUI-gregor-kobel",
       "fullName": "Gregor Kobel",
       "fifaCode": "SUI",
@@ -6668,1150 +5550,6 @@
       "position": "FWD",
       "currentClub": "Wolfsburg",
       "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-kasper-schmeichel",
-      "fullName": "Kasper Schmeichel",
-      "fifaCode": "DEN",
-      "position": "GK",
-      "currentClub": "Celtic",
-      "age": 39,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-mads-hermansen",
-      "fullName": "Mads Hermansen",
-      "fifaCode": "DEN",
-      "position": "GK",
-      "currentClub": "Leicester City",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-frederik-ronnow",
-      "fullName": "Frederik Ronnow",
-      "fifaCode": "DEN",
-      "position": "GK",
-      "currentClub": "Union Berlin",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-andreas-christensen",
-      "fullName": "Andreas Christensen",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Barcelona",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-joachim-andersen",
-      "fullName": "Joachim Andersen",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Crystal Palace",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-jannik-vestergaard",
-      "fullName": "Jannik Vestergaard",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Leicester City",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-joakim-maehle",
-      "fullName": "Joakim Maehle",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Wolfsburg",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-alexander-bah",
-      "fullName": "Alexander Bah",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Benfica",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-victor-kristiansen",
-      "fullName": "Victor Kristiansen",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Leicester City",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-rasmus-kristensen",
-      "fullName": "Rasmus Kristensen",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Eintracht Frankfurt",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-victor-nelsson",
-      "fullName": "Victor Nelsson",
-      "fifaCode": "DEN",
-      "position": "DEF",
-      "currentClub": "Galatasaray",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-pierre-emile-hojbjerg",
-      "fullName": "Pierre-Emile Hojbjerg",
-      "fifaCode": "DEN",
-      "position": "MID",
-      "currentClub": "Marseille",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-christian-norgaard",
-      "fullName": "Christian Norgaard",
-      "fifaCode": "DEN",
-      "position": "MID",
-      "currentClub": "Brentford",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-morten-hjulmand",
-      "fullName": "Morten Hjulmand",
-      "fifaCode": "DEN",
-      "position": "MID",
-      "currentClub": "Sporting CP",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-christian-eriksen",
-      "fullName": "Christian Eriksen",
-      "fifaCode": "DEN",
-      "position": "MID",
-      "currentClub": "Manchester United",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-mikkel-damsgaard",
-      "fullName": "Mikkel Damsgaard",
-      "fifaCode": "DEN",
-      "position": "MID",
-      "currentClub": "Brentford",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-andreas-skov-olsen",
-      "fullName": "Andreas Skov Olsen",
-      "fifaCode": "DEN",
-      "position": "MID",
-      "currentClub": "Club Brugge",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-rasmus-hojlund",
-      "fullName": "Rasmus Hojlund",
-      "fifaCode": "DEN",
-      "position": "FWD",
-      "currentClub": "Manchester United",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-jonas-wind",
-      "fullName": "Jonas Wind",
-      "fifaCode": "DEN",
-      "position": "FWD",
-      "currentClub": "Wolfsburg",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-jesper-lindstrom",
-      "fullName": "Jesper Lindstrom",
-      "fifaCode": "DEN",
-      "position": "FWD",
-      "currentClub": "Napoli",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-yussuf-poulsen",
-      "fullName": "Yussuf Poulsen",
-      "fifaCode": "DEN",
-      "position": "FWD",
-      "currentClub": "RB Leipzig",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "DEN-kasper-dolberg",
-      "fullName": "Kasper Dolberg",
-      "fifaCode": "DEN",
-      "position": "FWD",
-      "currentClub": "Anderlecht",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-vanja-milinkovic-savic",
-      "fullName": "Vanja Milinkovic-Savic",
-      "fifaCode": "SRB",
-      "position": "GK",
-      "currentClub": "Torino",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-predrag-rajkovic",
-      "fullName": "Predrag Rajkovic",
-      "fifaCode": "SRB",
-      "position": "GK",
-      "currentClub": "Mallorca",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-djordje-petrovic",
-      "fullName": "Djordje Petrovic",
-      "fifaCode": "SRB",
-      "position": "GK",
-      "currentClub": "Chelsea",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-nikola-milenkovic",
-      "fullName": "Nikola Milenkovic",
-      "fifaCode": "SRB",
-      "position": "DEF",
-      "currentClub": "Nottingham Forest",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-strahinja-pavlovic",
-      "fullName": "Strahinja Pavlovic",
-      "fifaCode": "SRB",
-      "position": "DEF",
-      "currentClub": "AC Milan",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-milos-veljkovic",
-      "fullName": "Milos Veljkovic",
-      "fifaCode": "SRB",
-      "position": "DEF",
-      "currentClub": "Werder Bremen",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-srdjan-babic",
-      "fullName": "Srdjan Babic",
-      "fifaCode": "SRB",
-      "position": "DEF",
-      "currentClub": "Spartak Moscow",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-strahinja-erakovic",
-      "fullName": "Strahinja Erakovic",
-      "fifaCode": "SRB",
-      "position": "DEF",
-      "currentClub": "Zenit",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-andrija-zivkovic",
-      "fullName": "Andrija Zivkovic",
-      "fifaCode": "SRB",
-      "position": "DEF",
-      "currentClub": "PAOK",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-filip-kostic",
-      "fullName": "Filip Kostic",
-      "fifaCode": "SRB",
-      "position": "DEF",
-      "currentClub": "Juventus",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-sasa-lukic",
-      "fullName": "Sasa Lukic",
-      "fifaCode": "SRB",
-      "position": "MID",
-      "currentClub": "Fulham",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-sergej-milinkovic-savic",
-      "fullName": "Sergej Milinkovic-Savic",
-      "fifaCode": "SRB",
-      "position": "MID",
-      "currentClub": "Al Hilal",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-nemanja-gudelj",
-      "fullName": "Nemanja Gudelj",
-      "fifaCode": "SRB",
-      "position": "MID",
-      "currentClub": "Sevilla",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-nemanja-maksimovic",
-      "fullName": "Nemanja Maksimovic",
-      "fifaCode": "SRB",
-      "position": "MID",
-      "currentClub": "Panathinaikos",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-ivan-ilic",
-      "fullName": "Ivan Ilic",
-      "fifaCode": "SRB",
-      "position": "MID",
-      "currentClub": "Torino",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-lazar-samardzic",
-      "fullName": "Lazar Samardzic",
-      "fifaCode": "SRB",
-      "position": "MID",
-      "currentClub": "Atalanta",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-dusan-tadic",
-      "fullName": "Dusan Tadic",
-      "fifaCode": "SRB",
-      "position": "MID",
-      "currentClub": "Fenerbahce",
-      "age": 37,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-dusan-vlahovic",
-      "fullName": "Dusan Vlahovic",
-      "fifaCode": "SRB",
-      "position": "FWD",
-      "currentClub": "Juventus",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-aleksandar-mitrovic",
-      "fullName": "Aleksandar Mitrovic",
-      "fifaCode": "SRB",
-      "position": "FWD",
-      "currentClub": "Al Hilal",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-luka-jovic",
-      "fullName": "Luka Jovic",
-      "fifaCode": "SRB",
-      "position": "FWD",
-      "currentClub": "AC Milan",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-veljko-birmancevic",
-      "fullName": "Veljko Birmancevic",
-      "fifaCode": "SRB",
-      "position": "FWD",
-      "currentClub": "Sparta Prague",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SRB-dejan-joveljic",
-      "fullName": "Dejan Joveljic",
-      "fifaCode": "SRB",
-      "position": "FWD",
-      "currentClub": "LA Galaxy",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-marcin-bulka",
-      "fullName": "Marcin Bulka",
-      "fifaCode": "POL",
-      "position": "GK",
-      "currentClub": "Nice",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-lukasz-skorupski",
-      "fullName": "Lukasz Skorupski",
-      "fifaCode": "POL",
-      "position": "GK",
-      "currentClub": "Bologna",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-bartlomiej-dragowski",
-      "fullName": "Bartlomiej Dragowski",
-      "fifaCode": "POL",
-      "position": "GK",
-      "currentClub": "Panathinaikos",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-jan-bednarek",
-      "fullName": "Jan Bednarek",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Southampton",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-jakub-kiwior",
-      "fullName": "Jakub Kiwior",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Arsenal",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-pawel-dawidowicz",
-      "fullName": "Pawel Dawidowicz",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Hellas Verona",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-matty-cash",
-      "fullName": "Matty Cash",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Aston Villa",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-przemyslaw-frankowski",
-      "fullName": "Przemyslaw Frankowski",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Lens",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-nicola-zalewski",
-      "fullName": "Nicola Zalewski",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Roma",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-sebastian-walukiewicz",
-      "fullName": "Sebastian Walukiewicz",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Empoli",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-bartosz-bereszynski",
-      "fullName": "Bartosz Bereszynski",
-      "fifaCode": "POL",
-      "position": "DEF",
-      "currentClub": "Sampdoria",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-piotr-zielinski",
-      "fullName": "Piotr Zielinski",
-      "fifaCode": "POL",
-      "position": "MID",
-      "currentClub": "Inter Milan",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-sebastian-szymanski",
-      "fullName": "Sebastian Szymanski",
-      "fifaCode": "POL",
-      "position": "MID",
-      "currentClub": "Fenerbahce",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-jakub-moder",
-      "fullName": "Jakub Moder",
-      "fifaCode": "POL",
-      "position": "MID",
-      "currentClub": "Brighton & Hove Albion",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-bartosz-slisz",
-      "fullName": "Bartosz Slisz",
-      "fifaCode": "POL",
-      "position": "MID",
-      "currentClub": "Atlanta United",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-jakub-piotrowski",
-      "fullName": "Jakub Piotrowski",
-      "fifaCode": "POL",
-      "position": "MID",
-      "currentClub": "Ludogorets",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-kacper-urbanski",
-      "fullName": "Kacper Urbanski",
-      "fifaCode": "POL",
-      "position": "MID",
-      "currentClub": "Bologna",
-      "age": 21,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-kacper-kozlowski",
-      "fullName": "Kacper Kozlowski",
-      "fifaCode": "POL",
-      "position": "MID",
-      "currentClub": "Gaziantep",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-robert-lewandowski",
-      "fullName": "Robert Lewandowski",
-      "fifaCode": "POL",
-      "position": "FWD",
-      "currentClub": "Barcelona",
-      "age": 38,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-karol-swiderski",
-      "fullName": "Karol Swiderski",
-      "fifaCode": "POL",
-      "position": "FWD",
-      "currentClub": "Verona",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-krzysztof-piatek",
-      "fullName": "Krzysztof Piatek",
-      "fifaCode": "POL",
-      "position": "FWD",
-      "currentClub": "Istanbul Basaksehir",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "POL-adam-buksa",
-      "fullName": "Adam Buksa",
-      "fifaCode": "POL",
-      "position": "FWD",
-      "currentClub": "Midtjylland",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-danny-ward",
-      "fullName": "Danny Ward",
-      "fifaCode": "WAL",
-      "position": "GK",
-      "currentClub": "Leicester City",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-karl-darlow",
-      "fullName": "Karl Darlow",
-      "fifaCode": "WAL",
-      "position": "GK",
-      "currentClub": "Leeds United",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-tom-king",
-      "fullName": "Tom King",
-      "fifaCode": "WAL",
-      "position": "GK",
-      "currentClub": "Wolverhampton Wanderers",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-ben-davies",
-      "fullName": "Ben Davies",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Tottenham Hotspur",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-joe-rodon",
-      "fullName": "Joe Rodon",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Leeds United",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-neco-williams",
-      "fullName": "Neco Williams",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Nottingham Forest",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-connor-roberts",
-      "fullName": "Connor Roberts",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Burnley",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-chris-mepham",
-      "fullName": "Chris Mepham",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Bournemouth",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-ben-cabango",
-      "fullName": "Ben Cabango",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Swansea City",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-ethan-ampadu",
-      "fullName": "Ethan Ampadu",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Leeds United",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-tom-lockyer",
-      "fullName": "Tom Lockyer",
-      "fifaCode": "WAL",
-      "position": "DEF",
-      "currentClub": "Luton Town",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-jordan-james",
-      "fullName": "Jordan James",
-      "fifaCode": "WAL",
-      "position": "MID",
-      "currentClub": "Rennes",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-josh-sheehan",
-      "fullName": "Josh Sheehan",
-      "fifaCode": "WAL",
-      "position": "MID",
-      "currentClub": "Bolton Wanderers",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-harry-wilson",
-      "fullName": "Harry Wilson",
-      "fifaCode": "WAL",
-      "position": "MID",
-      "currentClub": "Fulham",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-david-brooks",
-      "fullName": "David Brooks",
-      "fifaCode": "WAL",
-      "position": "MID",
-      "currentClub": "Bournemouth",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-rubin-colwill",
-      "fullName": "Rubin Colwill",
-      "fifaCode": "WAL",
-      "position": "MID",
-      "currentClub": "Cardiff City",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-daniel-james",
-      "fullName": "Daniel James",
-      "fifaCode": "WAL",
-      "position": "FWD",
-      "currentClub": "Leeds United",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-brennan-johnson",
-      "fullName": "Brennan Johnson",
-      "fifaCode": "WAL",
-      "position": "FWD",
-      "currentClub": "Tottenham Hotspur",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-kieffer-moore",
-      "fullName": "Kieffer Moore",
-      "fifaCode": "WAL",
-      "position": "FWD",
-      "currentClub": "Sheffield United",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-nathan-broadhead",
-      "fullName": "Nathan Broadhead",
-      "fifaCode": "WAL",
-      "position": "FWD",
-      "currentClub": "Ipswich Town",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-liam-cullen",
-      "fullName": "Liam Cullen",
-      "fifaCode": "WAL",
-      "position": "FWD",
-      "currentClub": "Swansea City",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "WAL-sorba-thomas",
-      "fullName": "Sorba Thomas",
-      "fifaCode": "WAL",
-      "position": "FWD",
-      "currentClub": "Huddersfield Town",
-      "age": 27,
       "healthStatus": "available",
       "dataSources": {
         "structural": "embed-squads",
@@ -8976,9 +6714,9 @@
       }
     },
     {
-      "externalId": "SAU-mohammed-al-owais",
+      "externalId": "KSA-mohammed-al-owais",
       "fullName": "Mohammed Al Owais",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "GK",
       "currentClub": "Al Hilal",
       "age": 35,
@@ -8989,9 +6727,9 @@
       }
     },
     {
-      "externalId": "SAU-nawaf-alaqidi",
+      "externalId": "KSA-nawaf-alaqidi",
       "fullName": "Nawaf Alaqidi",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "GK",
       "currentClub": "Al Nassr",
       "age": 26,
@@ -9002,9 +6740,9 @@
       }
     },
     {
-      "externalId": "SAU-ahmed-al-kassar",
+      "externalId": "KSA-ahmed-al-kassar",
       "fullName": "Ahmed Al Kassar",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "GK",
       "currentClub": "Al Fayha",
       "age": 35,
@@ -9015,9 +6753,9 @@
       }
     },
     {
-      "externalId": "SAU-saud-abdulhamid",
+      "externalId": "KSA-saud-abdulhamid",
       "fullName": "Saud Abdulhamid",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "DEF",
       "currentClub": "Roma",
       "age": 27,
@@ -9028,9 +6766,9 @@
       }
     },
     {
-      "externalId": "SAU-sultan-al-ghannam",
+      "externalId": "KSA-sultan-al-ghannam",
       "fullName": "Sultan Al Ghannam",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "DEF",
       "currentClub": "Al Nassr",
       "age": 32,
@@ -9041,9 +6779,9 @@
       }
     },
     {
-      "externalId": "SAU-ali-al-bulayhi",
+      "externalId": "KSA-ali-al-bulayhi",
       "fullName": "Ali Al Bulayhi",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "DEF",
       "currentClub": "Al Hilal",
       "age": 36,
@@ -9054,9 +6792,9 @@
       }
     },
     {
-      "externalId": "SAU-hassan-kadesh",
+      "externalId": "KSA-hassan-kadesh",
       "fullName": "Hassan Kadesh",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "DEF",
       "currentClub": "Al Ittihad",
       "age": 33,
@@ -9067,9 +6805,9 @@
       }
     },
     {
-      "externalId": "SAU-abdulelah-al-amri",
+      "externalId": "KSA-abdulelah-al-amri",
       "fullName": "Abdulelah Al Amri",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "DEF",
       "currentClub": "Al Nassr",
       "age": 29,
@@ -9080,9 +6818,9 @@
       }
     },
     {
-      "externalId": "SAU-yasir-al-shahrani",
+      "externalId": "KSA-yasir-al-shahrani",
       "fullName": "Yasir Al Shahrani",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "DEF",
       "currentClub": "Al Hilal",
       "age": 34,
@@ -9093,9 +6831,9 @@
       }
     },
     {
-      "externalId": "SAU-mohammed-al-breik",
+      "externalId": "KSA-mohammed-al-breik",
       "fullName": "Mohammed Al Breik",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "DEF",
       "currentClub": "Al Hilal",
       "age": 33,
@@ -9106,9 +6844,9 @@
       }
     },
     {
-      "externalId": "SAU-mohamed-kanno",
+      "externalId": "KSA-mohamed-kanno",
       "fullName": "Mohamed Kanno",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "MID",
       "currentClub": "Al Hilal",
       "age": 32,
@@ -9119,9 +6857,9 @@
       }
     },
     {
-      "externalId": "SAU-nasser-al-dawsari",
+      "externalId": "KSA-nasser-al-dawsari",
       "fullName": "Nasser Al Dawsari",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "MID",
       "currentClub": "Al Hilal",
       "age": 27,
@@ -9132,9 +6870,9 @@
       }
     },
     {
-      "externalId": "SAU-abdullah-otayf",
+      "externalId": "KSA-abdullah-otayf",
       "fullName": "Abdullah Otayf",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "MID",
       "currentClub": "Al Ahli",
       "age": 34,
@@ -9145,9 +6883,9 @@
       }
     },
     {
-      "externalId": "SAU-ali-al-hassan",
+      "externalId": "KSA-ali-al-hassan",
       "fullName": "Ali Al Hassan",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "MID",
       "currentClub": "Al Nassr",
       "age": 29,
@@ -9158,9 +6896,9 @@
       }
     },
     {
-      "externalId": "SAU-musab-al-juwayr",
+      "externalId": "KSA-musab-al-juwayr",
       "fullName": "Musab Al Juwayr",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "MID",
       "currentClub": "Al Shabab",
       "age": 23,
@@ -9171,9 +6909,9 @@
       }
     },
     {
-      "externalId": "SAU-salem-al-dawsari",
+      "externalId": "KSA-salem-al-dawsari",
       "fullName": "Salem Al Dawsari",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "MID",
       "currentClub": "Al Hilal",
       "age": 35,
@@ -9184,9 +6922,9 @@
       }
     },
     {
-      "externalId": "SAU-abdulrahman-ghareeb",
+      "externalId": "KSA-abdulrahman-ghareeb",
       "fullName": "Abdulrahman Ghareeb",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "FWD",
       "currentClub": "Al Nassr",
       "age": 29,
@@ -9197,9 +6935,9 @@
       }
     },
     {
-      "externalId": "SAU-feras-al-brikan",
+      "externalId": "KSA-feras-al-brikan",
       "fullName": "Feras Al Brikan",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "FWD",
       "currentClub": "Al Ahli",
       "age": 26,
@@ -9210,9 +6948,9 @@
       }
     },
     {
-      "externalId": "SAU-ayman-yahya",
+      "externalId": "KSA-ayman-yahya",
       "fullName": "Ayman Yahya",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "FWD",
       "currentClub": "Al Nassr",
       "age": 25,
@@ -9223,9 +6961,9 @@
       }
     },
     {
-      "externalId": "SAU-saleh-al-shehri",
+      "externalId": "KSA-saleh-al-shehri",
       "fullName": "Saleh Al Shehri",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "FWD",
       "currentClub": "Al Ittihad",
       "age": 33,
@@ -9236,9 +6974,9 @@
       }
     },
     {
-      "externalId": "SAU-marwan-al-sahafi",
+      "externalId": "KSA-marwan-al-sahafi",
       "fullName": "Marwan Al Sahafi",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "FWD",
       "currentClub": "Al Ittihad",
       "age": 22,
@@ -9249,9 +6987,9 @@
       }
     },
     {
-      "externalId": "SAU-abdullah-radif",
+      "externalId": "KSA-abdullah-radif",
       "fullName": "Abdullah Radif",
-      "fifaCode": "SAU",
+      "fifaCode": "KSA",
       "position": "FWD",
       "currentClub": "Al Hilal",
       "age": 23,
@@ -10107,292 +7845,6 @@
       }
     },
     {
-      "externalId": "NGA-stanley-nwabali",
-      "fullName": "Stanley Nwabali",
-      "fifaCode": "NGA",
-      "position": "GK",
-      "currentClub": "Chippa United",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-maduka-okoye",
-      "fullName": "Maduka Okoye",
-      "fifaCode": "NGA",
-      "position": "GK",
-      "currentClub": "Udinese",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-francis-uzoho",
-      "fullName": "Francis Uzoho",
-      "fifaCode": "NGA",
-      "position": "GK",
-      "currentClub": "Omonia",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-william-troost-ekong",
-      "fullName": "William Troost-Ekong",
-      "fifaCode": "NGA",
-      "position": "DEF",
-      "currentClub": "Al Kholood",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-calvin-bassey",
-      "fullName": "Calvin Bassey",
-      "fifaCode": "NGA",
-      "position": "DEF",
-      "currentClub": "Fulham",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-semi-ajayi",
-      "fullName": "Semi Ajayi",
-      "fifaCode": "NGA",
-      "position": "DEF",
-      "currentClub": "West Bromwich Albion",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-ola-aina",
-      "fullName": "Ola Aina",
-      "fifaCode": "NGA",
-      "position": "DEF",
-      "currentClub": "Nottingham Forest",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-zaidu-sanusi",
-      "fullName": "Zaidu Sanusi",
-      "fifaCode": "NGA",
-      "position": "DEF",
-      "currentClub": "Porto",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-bright-osayi-samuel",
-      "fullName": "Bright Osayi-Samuel",
-      "fifaCode": "NGA",
-      "position": "DEF",
-      "currentClub": "Fenerbahce",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-bruno-onyemaechi",
-      "fullName": "Bruno Onyemaechi",
-      "fifaCode": "NGA",
-      "position": "DEF",
-      "currentClub": "Boavista",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-wilfred-ndidi",
-      "fullName": "Wilfred Ndidi",
-      "fifaCode": "NGA",
-      "position": "MID",
-      "currentClub": "Leicester City",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-frank-onyeka",
-      "fullName": "Frank Onyeka",
-      "fifaCode": "NGA",
-      "position": "MID",
-      "currentClub": "Brentford",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-raphael-onyedika",
-      "fullName": "Raphael Onyedika",
-      "fifaCode": "NGA",
-      "position": "MID",
-      "currentClub": "Club Brugge",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-alex-iwobi",
-      "fullName": "Alex Iwobi",
-      "fifaCode": "NGA",
-      "position": "MID",
-      "currentClub": "Fulham",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-fisayo-dele-bashiru",
-      "fullName": "Fisayo Dele-Bashiru",
-      "fifaCode": "NGA",
-      "position": "MID",
-      "currentClub": "Lazio",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-alhassan-yusuf",
-      "fullName": "Alhassan Yusuf",
-      "fifaCode": "NGA",
-      "position": "MID",
-      "currentClub": "Royal Antwerp",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-ademola-lookman",
-      "fullName": "Ademola Lookman",
-      "fifaCode": "NGA",
-      "position": "FWD",
-      "currentClub": "Atalanta",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-victor-osimhen",
-      "fullName": "Victor Osimhen",
-      "fifaCode": "NGA",
-      "position": "FWD",
-      "currentClub": "Galatasaray",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-victor-boniface",
-      "fullName": "Victor Boniface",
-      "fifaCode": "NGA",
-      "position": "FWD",
-      "currentClub": "Bayer Leverkusen",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-samuel-chukwueze",
-      "fullName": "Samuel Chukwueze",
-      "fifaCode": "NGA",
-      "position": "FWD",
-      "currentClub": "AC Milan",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-moses-simon",
-      "fullName": "Moses Simon",
-      "fifaCode": "NGA",
-      "position": "FWD",
-      "currentClub": "Nantes",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "NGA-nathan-tella",
-      "fullName": "Nathan Tella",
-      "fifaCode": "NGA",
-      "position": "FWD",
-      "currentClub": "Bayer Leverkusen",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
       "externalId": "GHA-lawrence-ati-zigi",
       "fullName": "Lawrence Ati-Zigi",
       "fifaCode": "GHA",
@@ -10945,279 +8397,6 @@
       "position": "FWD",
       "currentClub": "Reims",
       "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-andre-onana",
-      "fullName": "Andre Onana",
-      "fifaCode": "CMR",
-      "position": "GK",
-      "currentClub": "Manchester United",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-devis-epassy",
-      "fullName": "Devis Epassy",
-      "fifaCode": "CMR",
-      "position": "GK",
-      "currentClub": "Karmiotissa",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-fabrice-ondoa",
-      "fullName": "Fabrice Ondoa",
-      "fifaCode": "CMR",
-      "position": "GK",
-      "currentClub": "Nimes",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-christopher-wooh",
-      "fullName": "Christopher Wooh",
-      "fifaCode": "CMR",
-      "position": "DEF",
-      "currentClub": "Rennes",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-jean-charles-castelletto",
-      "fullName": "Jean-Charles Castelletto",
-      "fifaCode": "CMR",
-      "position": "DEF",
-      "currentClub": "Nantes",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-michael-ngadeu-ngadjui",
-      "fullName": "Michael Ngadeu-Ngadjui",
-      "fifaCode": "CMR",
-      "position": "DEF",
-      "currentClub": "Beijing Guoan",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-nouhou-tolo",
-      "fullName": "Nouhou Tolo",
-      "fifaCode": "CMR",
-      "position": "DEF",
-      "currentClub": "Seattle Sounders",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-olivier-kemen",
-      "fullName": "Olivier Kemen",
-      "fifaCode": "CMR",
-      "position": "DEF",
-      "currentClub": "Istanbul Basaksehir",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-fai-collins",
-      "fullName": "Fai Collins",
-      "fifaCode": "CMR",
-      "position": "DEF",
-      "currentClub": "Al Tai",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-enzo-tchato",
-      "fullName": "Enzo Tchato",
-      "fifaCode": "CMR",
-      "position": "DEF",
-      "currentClub": "Montpellier",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-andre-frank-zambo-anguissa",
-      "fullName": "Andre-Frank Zambo Anguissa",
-      "fifaCode": "CMR",
-      "position": "MID",
-      "currentClub": "Napoli",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-martin-hongla",
-      "fullName": "Martin Hongla",
-      "fifaCode": "CMR",
-      "position": "MID",
-      "currentClub": "Granada",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-pierre-kunde",
-      "fullName": "Pierre Kunde",
-      "fifaCode": "CMR",
-      "position": "MID",
-      "currentClub": "Atromitos",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-carlos-baleba",
-      "fullName": "Carlos Baleba",
-      "fifaCode": "CMR",
-      "position": "MID",
-      "currentClub": "Brighton & Hove Albion",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-georges-kevin-nkoudou",
-      "fullName": "Georges-Kevin Nkoudou",
-      "fifaCode": "CMR",
-      "position": "MID",
-      "currentClub": "Damac",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-bryan-mbeumo",
-      "fullName": "Bryan Mbeumo",
-      "fifaCode": "CMR",
-      "position": "FWD",
-      "currentClub": "Brentford",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-vincent-aboubakar",
-      "fullName": "Vincent Aboubakar",
-      "fifaCode": "CMR",
-      "position": "FWD",
-      "currentClub": "Besiktas",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-karl-toko-ekambi",
-      "fullName": "Karl Toko Ekambi",
-      "fifaCode": "CMR",
-      "position": "FWD",
-      "currentClub": "Abha",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-eric-maxim-choupo-moting",
-      "fullName": "Eric Maxim Choupo-Moting",
-      "fifaCode": "CMR",
-      "position": "FWD",
-      "currentClub": "New York Red Bulls",
-      "age": 37,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-moumi-ngamaleu",
-      "fullName": "Moumi Ngamaleu",
-      "fifaCode": "CMR",
-      "position": "FWD",
-      "currentClub": "Dynamo Moscow",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CMR-faris-moumbagna",
-      "fullName": "Faris Moumbagna",
-      "fifaCode": "CMR",
-      "position": "FWD",
-      "currentClub": "Marseille",
-      "age": 26,
       "healthStatus": "available",
       "dataSources": {
         "structural": "embed-squads",
@@ -13656,284 +10835,11 @@
       }
     },
     {
-      "externalId": "CRC-keylor-navas",
-      "fullName": "Keylor Navas",
-      "fifaCode": "CRC",
+      "externalId": "KSA-mohammed-al-owais",
+      "fullName": "Mohammed Al Owais",
+      "fifaCode": "KSA",
       "position": "GK",
-      "currentClub": "Newell's Old Boys",
-      "age": 39,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-kevin-chamorro",
-      "fullName": "Kevin Chamorro",
-      "fifaCode": "CRC",
-      "position": "GK",
-      "currentClub": "Saprissa",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-patrick-sequeira",
-      "fullName": "Patrick Sequeira",
-      "fifaCode": "CRC",
-      "position": "GK",
-      "currentClub": "Ibiza",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-francisco-calvo",
-      "fullName": "Francisco Calvo",
-      "fifaCode": "CRC",
-      "position": "DEF",
-      "currentClub": "Hatayspor",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-juan-pablo-vargas",
-      "fullName": "Juan Pablo Vargas",
-      "fifaCode": "CRC",
-      "position": "DEF",
-      "currentClub": "Millonarios",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-julio-cascante",
-      "fullName": "Julio Cascante",
-      "fifaCode": "CRC",
-      "position": "DEF",
-      "currentClub": "Austin FC",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-carlos-martinez",
-      "fullName": "Carlos Martinez",
-      "fifaCode": "CRC",
-      "position": "DEF",
-      "currentClub": "Saprissa",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-jeyland-mitchell",
-      "fullName": "Jeyland Mitchell",
-      "fifaCode": "CRC",
-      "position": "DEF",
-      "currentClub": "Feyenoord",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-bryan-oviedo",
-      "fullName": "Bryan Oviedo",
-      "fifaCode": "CRC",
-      "position": "DEF",
-      "currentClub": "Alajuelense",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-gerald-taylor",
-      "fullName": "Gerald Taylor",
-      "fifaCode": "CRC",
-      "position": "DEF",
-      "currentClub": "Hearts",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-orlando-galo",
-      "fullName": "Orlando Galo",
-      "fifaCode": "CRC",
-      "position": "MID",
-      "currentClub": "Riga FC",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-brandon-aguilera",
-      "fullName": "Brandon Aguilera",
-      "fifaCode": "CRC",
-      "position": "MID",
-      "currentClub": "Bristol Rovers",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-alejandro-bran",
-      "fullName": "Alejandro Bran",
-      "fifaCode": "CRC",
-      "position": "MID",
-      "currentClub": "Alajuelense",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-yeltsin-tejeda",
-      "fullName": "Yeltsin Tejeda",
-      "fifaCode": "CRC",
-      "position": "MID",
-      "currentClub": "Herediano",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-jefferson-brenes",
-      "fullName": "Jefferson Brenes",
-      "fifaCode": "CRC",
-      "position": "MID",
-      "currentClub": "Saprissa",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-manfred-ugalde",
-      "fullName": "Manfred Ugalde",
-      "fifaCode": "CRC",
-      "position": "FWD",
-      "currentClub": "Spartak Moscow",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-joel-campbell",
-      "fullName": "Joel Campbell",
-      "fifaCode": "CRC",
-      "position": "FWD",
-      "currentClub": "Alajuelense",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-anthony-contreras",
-      "fullName": "Anthony Contreras",
-      "fifaCode": "CRC",
-      "position": "FWD",
-      "currentClub": "Riga FC",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-josimar-alcocer",
-      "fullName": "Josimar Alcocer",
-      "fifaCode": "CRC",
-      "position": "FWD",
-      "currentClub": "Westerlo",
-      "age": 21,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-warren-madrigal",
-      "fullName": "Warren Madrigal",
-      "fifaCode": "CRC",
-      "position": "FWD",
-      "currentClub": "Deportivo Saprissa",
-      "age": 21,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "CRC-kenneth-vargas",
-      "fullName": "Kenneth Vargas",
-      "fifaCode": "CRC",
-      "position": "FWD",
-      "currentClub": "Hearts",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-andre-blake",
-      "fullName": "Andre Blake",
-      "fifaCode": "JAM",
-      "position": "GK",
-      "currentClub": "Philadelphia Union",
+      "currentClub": "Al Hilal",
       "age": 35,
       "healthStatus": "available",
       "dataSources": {
@@ -13942,11 +10848,37 @@
       }
     },
     {
-      "externalId": "JAM-jahmali-waite",
-      "fullName": "Jahmali Waite",
-      "fifaCode": "JAM",
+      "externalId": "KSA-nawaf-alaqidi",
+      "fullName": "Nawaf Alaqidi",
+      "fifaCode": "KSA",
       "position": "GK",
-      "currentClub": "El Paso Locomotive",
+      "currentClub": "Al Nassr",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-ahmed-al-kassar",
+      "fullName": "Ahmed Al Kassar",
+      "fifaCode": "KSA",
+      "position": "GK",
+      "currentClub": "Al Fayha",
+      "age": 35,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-saud-abdulhamid",
+      "fullName": "Saud Abdulhamid",
+      "fifaCode": "KSA",
+      "position": "DEF",
+      "currentClub": "Roma",
       "age": 27,
       "healthStatus": "available",
       "dataSources": {
@@ -13955,11 +10887,141 @@
       }
     },
     {
-      "externalId": "JAM-coniah-boyce-clarke",
-      "fullName": "Coniah Boyce-Clarke",
-      "fifaCode": "JAM",
-      "position": "GK",
-      "currentClub": "Reading",
+      "externalId": "KSA-sultan-al-ghannam",
+      "fullName": "Sultan Al Ghannam",
+      "fifaCode": "KSA",
+      "position": "DEF",
+      "currentClub": "Al Nassr",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-ali-al-bulayhi",
+      "fullName": "Ali Al Bulayhi",
+      "fifaCode": "KSA",
+      "position": "DEF",
+      "currentClub": "Al Hilal",
+      "age": 36,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-hassan-kadesh",
+      "fullName": "Hassan Kadesh",
+      "fifaCode": "KSA",
+      "position": "DEF",
+      "currentClub": "Al Ittihad",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-abdulelah-al-amri",
+      "fullName": "Abdulelah Al Amri",
+      "fifaCode": "KSA",
+      "position": "DEF",
+      "currentClub": "Al Nassr",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-yasir-al-shahrani",
+      "fullName": "Yasir Al Shahrani",
+      "fifaCode": "KSA",
+      "position": "DEF",
+      "currentClub": "Al Hilal",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-mohammed-al-breik",
+      "fullName": "Mohammed Al Breik",
+      "fifaCode": "KSA",
+      "position": "DEF",
+      "currentClub": "Al Hilal",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-mohamed-kanno",
+      "fullName": "Mohamed Kanno",
+      "fifaCode": "KSA",
+      "position": "MID",
+      "currentClub": "Al Hilal",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-nasser-al-dawsari",
+      "fullName": "Nasser Al Dawsari",
+      "fifaCode": "KSA",
+      "position": "MID",
+      "currentClub": "Al Hilal",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-abdullah-otayf",
+      "fullName": "Abdullah Otayf",
+      "fifaCode": "KSA",
+      "position": "MID",
+      "currentClub": "Al Ahli",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-ali-al-hassan",
+      "fullName": "Ali Al Hassan",
+      "fifaCode": "KSA",
+      "position": "MID",
+      "currentClub": "Al Nassr",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-musab-al-juwayr",
+      "fullName": "Musab Al Juwayr",
+      "fifaCode": "KSA",
+      "position": "MID",
+      "currentClub": "Al Shabab",
       "age": 23,
       "healthStatus": "available",
       "dataSources": {
@@ -13968,180 +11030,596 @@
       }
     },
     {
-      "externalId": "JAM-ethan-pinnock",
-      "fullName": "Ethan Pinnock",
-      "fifaCode": "JAM",
+      "externalId": "KSA-salem-al-dawsari",
+      "fullName": "Salem Al Dawsari",
+      "fifaCode": "KSA",
+      "position": "MID",
+      "currentClub": "Al Hilal",
+      "age": 35,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-abdulrahman-ghareeb",
+      "fullName": "Abdulrahman Ghareeb",
+      "fifaCode": "KSA",
+      "position": "FWD",
+      "currentClub": "Al Nassr",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-feras-al-brikan",
+      "fullName": "Feras Al Brikan",
+      "fifaCode": "KSA",
+      "position": "FWD",
+      "currentClub": "Al Ahli",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-ayman-yahya",
+      "fullName": "Ayman Yahya",
+      "fifaCode": "KSA",
+      "position": "FWD",
+      "currentClub": "Al Nassr",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-saleh-al-shehri",
+      "fullName": "Saleh Al Shehri",
+      "fifaCode": "KSA",
+      "position": "FWD",
+      "currentClub": "Al Ittihad",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-marwan-al-sahafi",
+      "fullName": "Marwan Al Sahafi",
+      "fifaCode": "KSA",
+      "position": "FWD",
+      "currentClub": "Al Ittihad",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "KSA-abdullah-radif",
+      "fullName": "Abdullah Radif",
+      "fifaCode": "KSA",
+      "position": "FWD",
+      "currentClub": "Al Hilal",
+      "age": 23,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-nikola-vasilj",
+      "fullName": "Nikola Vasilj",
+      "fifaCode": "BIH",
+      "position": "GK",
+      "currentClub": "St. Pauli",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-kenan-piric",
+      "fullName": "Kenan Piric",
+      "fifaCode": "BIH",
+      "position": "GK",
+      "currentClub": "Antalyaspor",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-ibrahim-sehic",
+      "fullName": "Ibrahim Sehic",
+      "fifaCode": "BIH",
+      "position": "GK",
+      "currentClub": "Al Khaleej",
+      "age": 38,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-amar-dedic",
+      "fullName": "Amar Dedic",
+      "fifaCode": "BIH",
       "position": "DEF",
+      "currentClub": "Red Bull Salzburg",
+      "age": 23,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-jusuf-gazibegovic",
+      "fullName": "Jusuf Gazibegovic",
+      "fifaCode": "BIH",
+      "position": "DEF",
+      "currentClub": "FC Cologne",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-anel-ahmedhodzic",
+      "fullName": "Anel Ahmedhodzic",
+      "fifaCode": "BIH",
+      "position": "DEF",
+      "currentClub": "Sheffield United",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-sead-kolasinac",
+      "fullName": "Sead Kolasinac",
+      "fifaCode": "BIH",
+      "position": "DEF",
+      "currentClub": "Atalanta",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-adrian-leon-barisic",
+      "fullName": "Adrian Leon Barisic",
+      "fifaCode": "BIH",
+      "position": "DEF",
+      "currentClub": "Basel",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-dennis-hadzikadunic",
+      "fullName": "Dennis Hadzikadunic",
+      "fifaCode": "BIH",
+      "position": "DEF",
+      "currentClub": "Hamburg",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-ermin-bicakcic",
+      "fullName": "Ermin Bicakcic",
+      "fifaCode": "BIH",
+      "position": "DEF",
+      "currentClub": "Eintracht Braunschweig",
+      "age": 36,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-benjamin-tahirovic",
+      "fullName": "Benjamin Tahirovic",
+      "fifaCode": "BIH",
+      "position": "MID",
+      "currentClub": "Ajax",
+      "age": 23,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-rade-krunic",
+      "fullName": "Rade Krunic",
+      "fifaCode": "BIH",
+      "position": "MID",
+      "currentClub": "Fenerbahce",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-denis-huseinbasic",
+      "fullName": "Denis Huseinbasic",
+      "fifaCode": "BIH",
+      "position": "MID",
+      "currentClub": "FC Cologne",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-haris-hajradinovic",
+      "fullName": "Haris Hajradinovic",
+      "fifaCode": "BIH",
+      "position": "MID",
+      "currentClub": "Kasimpasa",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-armin-gigovic",
+      "fullName": "Armin Gigovic",
+      "fifaCode": "BIH",
+      "position": "MID",
+      "currentClub": "Holstein Kiel",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-dzenis-burnic",
+      "fullName": "Dzenis Burnic",
+      "fifaCode": "BIH",
+      "position": "MID",
+      "currentClub": "Karlsruher SC",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-edin-dzeko",
+      "fullName": "Edin Dzeko",
+      "fifaCode": "BIH",
+      "position": "FWD",
+      "currentClub": "Fenerbahce",
+      "age": 40,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-ermedin-demirovic",
+      "fullName": "Ermedin Demirovic",
+      "fifaCode": "BIH",
+      "position": "FWD",
+      "currentClub": "Stuttgart",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-samed-bazdar",
+      "fullName": "Samed Bazdar",
+      "fifaCode": "BIH",
+      "position": "FWD",
+      "currentClub": "Real Zaragoza",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-smail-prevljak",
+      "fullName": "Smail Prevljak",
+      "fifaCode": "BIH",
+      "position": "FWD",
+      "currentClub": "Hertha BSC",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-miroslav-stevanovic",
+      "fullName": "Miroslav Stevanovic",
+      "fifaCode": "BIH",
+      "position": "FWD",
+      "currentClub": "Servette",
+      "age": 36,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "BIH-luka-menalo",
+      "fullName": "Luka Menalo",
+      "fifaCode": "BIH",
+      "position": "FWD",
+      "currentClub": "Rijeka",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-lionel-mpasi",
+      "fullName": "Lionel Mpasi",
+      "fifaCode": "COD",
+      "position": "GK",
+      "currentClub": "Rodez",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-dimitry-bertaud",
+      "fullName": "Dimitry Bertaud",
+      "fifaCode": "COD",
+      "position": "GK",
+      "currentClub": "Montpellier",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-timothy-fayulu",
+      "fullName": "Timothy Fayulu",
+      "fifaCode": "COD",
+      "position": "GK",
+      "currentClub": "Sion",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-chancel-mbemba",
+      "fullName": "Chancel Mbemba",
+      "fifaCode": "COD",
+      "position": "DEF",
+      "currentClub": "Marseille",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-axel-tuanzebe",
+      "fullName": "Axel Tuanzebe",
+      "fifaCode": "COD",
+      "position": "DEF",
+      "currentClub": "Ipswich Town",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-arthur-masuaku",
+      "fullName": "Arthur Masuaku",
+      "fifaCode": "COD",
+      "position": "DEF",
+      "currentClub": "Besiktas",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-gedeon-kalulu",
+      "fullName": "Gedeon Kalulu",
+      "fifaCode": "COD",
+      "position": "DEF",
+      "currentClub": "Lorient",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-joris-kayembe",
+      "fullName": "Joris Kayembe",
+      "fifaCode": "COD",
+      "position": "DEF",
+      "currentClub": "Genk",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-dylan-batubinsika",
+      "fullName": "Dylan Batubinsika",
+      "fifaCode": "COD",
+      "position": "DEF",
+      "currentClub": "Saint-Etienne",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-henock-inonga",
+      "fullName": "Henock Inonga",
+      "fifaCode": "COD",
+      "position": "DEF",
+      "currentClub": "FAR Rabat",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-samuel-moutoussamy",
+      "fullName": "Samuel Moutoussamy",
+      "fifaCode": "COD",
+      "position": "MID",
+      "currentClub": "Sivasspor",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-edo-kayembe",
+      "fullName": "Edo Kayembe",
+      "fifaCode": "COD",
+      "position": "MID",
+      "currentClub": "Watford",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-charles-pickel",
+      "fullName": "Charles Pickel",
+      "fifaCode": "COD",
+      "position": "MID",
+      "currentClub": "Cremonese",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-theo-bongonda",
+      "fullName": "Theo Bongonda",
+      "fifaCode": "COD",
+      "position": "MID",
+      "currentClub": "Spartak Moscow",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-gael-kakuta",
+      "fullName": "Gael Kakuta",
+      "fifaCode": "COD",
+      "position": "MID",
+      "currentClub": "Amiens",
+      "age": 35,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-grady-diangana",
+      "fullName": "Grady Diangana",
+      "fifaCode": "COD",
+      "position": "MID",
+      "currentClub": "West Bromwich Albion",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "COD-yoane-wissa",
+      "fullName": "Yoane Wissa",
+      "fifaCode": "COD",
+      "position": "FWD",
       "currentClub": "Brentford",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-damion-lowe",
-      "fullName": "Damion Lowe",
-      "fifaCode": "JAM",
-      "position": "DEF",
-      "currentClub": "Philadelphia Union",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-di-shon-bernard",
-      "fullName": "Di'Shon Bernard",
-      "fifaCode": "JAM",
-      "position": "DEF",
-      "currentClub": "Sheffield Wednesday",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-greg-leigh",
-      "fullName": "Greg Leigh",
-      "fifaCode": "JAM",
-      "position": "DEF",
-      "currentClub": "Oxford United",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-amari-i-bell",
-      "fullName": "Amari'i Bell",
-      "fifaCode": "JAM",
-      "position": "DEF",
-      "currentClub": "Luton Town",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-dexter-lembikisa",
-      "fullName": "Dexter Lembikisa",
-      "fifaCode": "JAM",
-      "position": "DEF",
-      "currentClub": "Barnsley",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-michael-hector",
-      "fullName": "Michael Hector",
-      "fifaCode": "JAM",
-      "position": "DEF",
-      "currentClub": "Charlton Athletic",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-isaac-hayden",
-      "fullName": "Isaac Hayden",
-      "fifaCode": "JAM",
-      "position": "MID",
-      "currentClub": "Newcastle United",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-kasey-palmer",
-      "fullName": "Kasey Palmer",
-      "fifaCode": "JAM",
-      "position": "MID",
-      "currentClub": "Hull City",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-bobby-de-cordova-reid",
-      "fullName": "Bobby De Cordova-Reid",
-      "fifaCode": "JAM",
-      "position": "MID",
-      "currentClub": "Leicester City",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-jon-russell",
-      "fullName": "Jon Russell",
-      "fifaCode": "JAM",
-      "position": "MID",
-      "currentClub": "Barnsley",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-renaldo-cephas",
-      "fullName": "Renaldo Cephas",
-      "fifaCode": "JAM",
-      "position": "MID",
-      "currentClub": "Ankaragucu",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-leon-bailey",
-      "fullName": "Leon Bailey",
-      "fifaCode": "JAM",
-      "position": "FWD",
-      "currentClub": "Aston Villa",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-demarai-gray",
-      "fullName": "Demarai Gray",
-      "fifaCode": "JAM",
-      "position": "FWD",
-      "currentClub": "Al Ettifaq",
       "age": 30,
       "healthStatus": "available",
       "dataSources": {
@@ -14150,206 +11628,11 @@
       }
     },
     {
-      "externalId": "JAM-michail-antonio",
-      "fullName": "Michail Antonio",
-      "fifaCode": "JAM",
+      "externalId": "COD-simon-banza",
+      "fullName": "Simon Banza",
+      "fifaCode": "COD",
       "position": "FWD",
-      "currentClub": "West Ham United",
-      "age": 36,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-shamar-nicholson",
-      "fullName": "Shamar Nicholson",
-      "fifaCode": "JAM",
-      "position": "FWD",
-      "currentClub": "Spartak Moscow",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-romario-williams",
-      "fullName": "Romario Williams",
-      "fifaCode": "JAM",
-      "position": "FWD",
-      "currentClub": "Indy Eleven",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "JAM-kaheim-dixon",
-      "fullName": "Kaheim Dixon",
-      "fifaCode": "JAM",
-      "position": "FWD",
-      "currentClub": "Charlton Athletic",
-      "age": 21,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-edrick-menjivar",
-      "fullName": "Edrick Menjivar",
-      "fifaCode": "HON",
-      "position": "GK",
-      "currentClub": "Olimpia",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-harold-fonseca",
-      "fullName": "Harold Fonseca",
-      "fifaCode": "HON",
-      "position": "GK",
-      "currentClub": "Olancho",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-luis-lopez",
-      "fullName": "Luis Lopez",
-      "fifaCode": "HON",
-      "position": "GK",
-      "currentClub": "Real Espana",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-denil-maldonado",
-      "fullName": "Denil Maldonado",
-      "fifaCode": "HON",
-      "position": "DEF",
-      "currentClub": "Universitatea Craiova",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-marcelo-santos",
-      "fullName": "Marcelo Santos",
-      "fifaCode": "HON",
-      "position": "DEF",
-      "currentClub": "Motagua",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-luis-vega",
-      "fullName": "Luis Vega",
-      "fifaCode": "HON",
-      "position": "DEF",
-      "currentClub": "Motagua",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-wesly-decas",
-      "fullName": "Wesly Decas",
-      "fifaCode": "HON",
-      "position": "DEF",
-      "currentClub": "Hapoel Petah Tikva",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-franklin-flores",
-      "fullName": "Franklin Flores",
-      "fifaCode": "HON",
-      "position": "DEF",
-      "currentClub": "Olimpia",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-andy-najar",
-      "fullName": "Andy Najar",
-      "fifaCode": "HON",
-      "position": "DEF",
-      "currentClub": "Nashville SC",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-joseph-rosales",
-      "fullName": "Joseph Rosales",
-      "fifaCode": "HON",
-      "position": "DEF",
-      "currentClub": "Minnesota United",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-kervin-arriaga",
-      "fullName": "Kervin Arriaga",
-      "fifaCode": "HON",
-      "position": "MID",
-      "currentClub": "Partizan",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-deybi-flores",
-      "fullName": "Deybi Flores",
-      "fifaCode": "HON",
-      "position": "MID",
-      "currentClub": "Toronto FC",
+      "currentClub": "Trabzonspor",
       "age": 30,
       "healthStatus": "available",
       "dataSources": {
@@ -14358,76 +11641,11 @@
       }
     },
     {
-      "externalId": "HON-edwin-rodriguez",
-      "fullName": "Edwin Rodriguez",
-      "fifaCode": "HON",
-      "position": "MID",
-      "currentClub": "Olimpia",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-jorge-alvarez",
-      "fullName": "Jorge Alvarez",
-      "fifaCode": "HON",
-      "position": "MID",
-      "currentClub": "Olimpia",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-david-ruiz",
-      "fullName": "David Ruiz",
-      "fifaCode": "HON",
-      "position": "MID",
-      "currentClub": "Inter Miami",
-      "age": 22,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-rigoberto-rivas",
-      "fullName": "Rigoberto Rivas",
-      "fifaCode": "HON",
-      "position": "MID",
-      "currentClub": "Kocaelispor",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-luis-palma",
-      "fullName": "Luis Palma",
-      "fifaCode": "HON",
+      "externalId": "COD-cedric-bakambu",
+      "fullName": "Cedric Bakambu",
+      "fifaCode": "COD",
       "position": "FWD",
-      "currentClub": "Celtic",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-romell-quioto",
-      "fullName": "Romell Quioto",
-      "fifaCode": "HON",
-      "position": "FWD",
-      "currentClub": "Al Arabi",
+      "currentClub": "Real Betis",
       "age": 35,
       "healthStatus": "available",
       "dataSources": {
@@ -14436,37 +11654,11 @@
       }
     },
     {
-      "externalId": "HON-anthony-lozano",
-      "fullName": "Anthony Lozano",
-      "fifaCode": "HON",
+      "externalId": "COD-meschack-elia",
+      "fullName": "Meschack Elia",
+      "fifaCode": "COD",
       "position": "FWD",
-      "currentClub": "Santos Laguna",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-jerry-bengtson",
-      "fullName": "Jerry Bengtson",
-      "fifaCode": "HON",
-      "position": "FWD",
-      "currentClub": "Olimpia",
-      "age": 39,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "HON-jorge-benguche",
-      "fullName": "Jorge Benguche",
-      "fifaCode": "HON",
-      "position": "FWD",
-      "currentClub": "Olimpia",
+      "currentClub": "Young Boys",
       "age": 29,
       "healthStatus": "available",
       "dataSources": {
@@ -14475,37 +11667,11 @@
       }
     },
     {
-      "externalId": "SLV-mario-gonzalez",
-      "fullName": "Mario Gonzalez",
-      "fifaCode": "SLV",
-      "position": "GK",
-      "currentClub": "Alianza",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-tomas-romero",
-      "fullName": "Tomas Romero",
-      "fifaCode": "SLV",
-      "position": "GK",
-      "currentClub": "New York City FC",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-cesar-fuentes",
-      "fullName": "Cesar Fuentes",
-      "fifaCode": "SLV",
-      "position": "GK",
-      "currentClub": "FAS",
+      "externalId": "COD-fiston-mayele",
+      "fullName": "Fiston Mayele",
+      "fifaCode": "COD",
+      "position": "FWD",
+      "currentClub": "Pyramids",
       "age": 31,
       "healthStatus": "available",
       "dataSources": {
@@ -14514,50 +11680,11 @@
       }
     },
     {
-      "externalId": "SLV-alex-roldan",
-      "fullName": "Alex Roldan",
-      "fifaCode": "SLV",
-      "position": "DEF",
-      "currentClub": "Seattle Sounders",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-eriq-zavaleta",
-      "fullName": "Eriq Zavaleta",
-      "fifaCode": "SLV",
-      "position": "DEF",
-      "currentClub": "LA Galaxy",
-      "age": 34,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-roberto-dominguez",
-      "fullName": "Roberto Dominguez",
-      "fifaCode": "SLV",
-      "position": "DEF",
-      "currentClub": "Bolivar",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-ronald-rodriguez",
-      "fullName": "Ronald Rodriguez",
-      "fifaCode": "SLV",
-      "position": "DEF",
-      "currentClub": "Alianza",
+      "externalId": "COD-silas-katompa",
+      "fullName": "Silas Katompa",
+      "fifaCode": "COD",
+      "position": "FWD",
+      "currentClub": "Stuttgart",
       "age": 28,
       "healthStatus": "available",
       "dataSources": {
@@ -14566,12 +11693,12 @@
       }
     },
     {
-      "externalId": "SLV-bryan-tamacas",
-      "fullName": "Bryan Tamacas",
-      "fifaCode": "SLV",
-      "position": "DEF",
-      "currentClub": "FAS",
-      "age": 31,
+      "externalId": "CZE-jindrich-stanek",
+      "fullName": "Jindrich Stanek",
+      "fifaCode": "CZE",
+      "position": "GK",
+      "currentClub": "Slavia Prague",
+      "age": 30,
       "healthStatus": "available",
       "dataSources": {
         "structural": "embed-squads",
@@ -14579,12 +11706,12 @@
       }
     },
     {
-      "externalId": "SLV-nelson-blanco",
-      "fullName": "Nelson Blanco",
-      "fifaCode": "SLV",
-      "position": "DEF",
-      "currentClub": "Aguila",
-      "age": 27,
+      "externalId": "CZE-matej-kovar",
+      "fullName": "Matej Kovar",
+      "fifaCode": "CZE",
+      "position": "GK",
+      "currentClub": "Bayer Leverkusen",
+      "age": 26,
       "healthStatus": "available",
       "dataSources": {
         "structural": "embed-squads",
@@ -14592,24 +11719,11 @@
       }
     },
     {
-      "externalId": "SLV-javier-orellana",
-      "fullName": "Javier Orellana",
-      "fifaCode": "SLV",
-      "position": "DEF",
-      "currentClub": "Chicago Fire",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-darwin-ceren",
-      "fullName": "Darwin Ceren",
-      "fifaCode": "SLV",
-      "position": "MID",
-      "currentClub": "Aguila",
+      "externalId": "CZE-tomas-vaclik",
+      "fullName": "Tomas Vaclik",
+      "fifaCode": "CZE",
+      "position": "GK",
+      "currentClub": "Albacete",
       "age": 37,
       "healthStatus": "available",
       "dataSources": {
@@ -14618,323 +11732,11 @@
       }
     },
     {
-      "externalId": "SLV-narciso-orellana",
-      "fullName": "Narciso Orellana",
-      "fifaCode": "SLV",
-      "position": "MID",
-      "currentClub": "Alianza",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-cristian-martinez",
-      "fullName": "Cristian Martinez",
-      "fifaCode": "SLV",
-      "position": "MID",
-      "currentClub": "Plaza Amador",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-enrico-hernandez",
-      "fullName": "Enrico Hernandez",
-      "fifaCode": "SLV",
-      "position": "MID",
-      "currentClub": "Volos",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-jairo-henriquez",
-      "fullName": "Jairo Henriquez",
-      "fifaCode": "SLV",
-      "position": "MID",
-      "currentClub": "Colorado Springs Switchbacks",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-eric-calvillo",
-      "fullName": "Eric Calvillo",
-      "fifaCode": "SLV",
-      "position": "MID",
-      "currentClub": "El Paso Locomotive",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-brayan-gil-hurtado",
-      "fullName": "Brayan Gil Hurtado",
-      "fifaCode": "SLV",
-      "position": "FWD",
-      "currentClub": "Alianza",
-      "age": 24,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-nelson-bonilla",
-      "fullName": "Nelson Bonilla",
-      "fifaCode": "SLV",
-      "position": "FWD",
-      "currentClub": "Port FC",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-joaquin-rivas",
-      "fullName": "Joaquin Rivas",
-      "fifaCode": "SLV",
-      "position": "FWD",
-      "currentClub": "Miami FC",
-      "age": 33,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "SLV-kevin-reyes",
-      "fullName": "Kevin Reyes",
-      "fifaCode": "SLV",
-      "position": "FWD",
-      "currentClub": "FAS",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-nicholas-hagen",
-      "fullName": "Nicholas Hagen",
-      "fifaCode": "GUA",
-      "position": "GK",
-      "currentClub": "Columbus Crew",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-kenderson-navarro",
-      "fullName": "Kenderson Navarro",
-      "fifaCode": "GUA",
-      "position": "GK",
-      "currentClub": "Municipal",
-      "age": 23,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-fredy-perez",
-      "fullName": "Fredy Perez",
-      "fifaCode": "GUA",
-      "position": "GK",
-      "currentClub": "Comunicaciones",
-      "age": 31,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-aaron-herrera",
-      "fullName": "Aaron Herrera",
-      "fifaCode": "GUA",
+      "externalId": "CZE-vladimir-coufal",
+      "fullName": "Vladimir Coufal",
+      "fifaCode": "CZE",
       "position": "DEF",
-      "currentClub": "DC United",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-nicolas-samayoa",
-      "fullName": "Nicolas Samayoa",
-      "fifaCode": "GUA",
-      "position": "DEF",
-      "currentClub": "Politehnica Iasi",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-jose-carlos-pinto",
-      "fullName": "Jose Carlos Pinto",
-      "fifaCode": "GUA",
-      "position": "DEF",
-      "currentClub": "Comunicaciones",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-jose-ardon",
-      "fullName": "Jose Ardón",
-      "fifaCode": "GUA",
-      "position": "DEF",
-      "currentClub": "Municipal",
-      "age": 35,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-gerardo-gordillo",
-      "fullName": "Gerardo Gordillo",
-      "fifaCode": "GUA",
-      "position": "DEF",
-      "currentClub": "Universidad Tecnica",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-jose-morales",
-      "fullName": "Jose Morales",
-      "fifaCode": "GUA",
-      "position": "DEF",
-      "currentClub": "Municipal",
-      "age": 29,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-stheven-robles",
-      "fullName": "Stheven Robles",
-      "fifaCode": "GUA",
-      "position": "MID",
-      "currentClub": "Comunicaciones",
-      "age": 25,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-rodrigo-saravia",
-      "fullName": "Rodrigo Saravia",
-      "fifaCode": "GUA",
-      "position": "MID",
-      "currentClub": "Municipal",
-      "age": 32,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-oscar-castellanos",
-      "fullName": "Oscar Castellanos",
-      "fifaCode": "GUA",
-      "position": "MID",
-      "currentClub": "Antigua",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-rudy-munoz",
-      "fullName": "Rudy Munoz",
-      "fifaCode": "GUA",
-      "position": "MID",
-      "currentClub": "Municipal",
-      "age": 28,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-pedro-altan",
-      "fullName": "Pedro Altan",
-      "fifaCode": "GUA",
-      "position": "MID",
-      "currentClub": "Municipal",
-      "age": 26,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-olger-escobar",
-      "fullName": "Olger Escobar",
-      "fifaCode": "GUA",
-      "position": "MID",
-      "currentClub": "New England Revolution",
-      "age": 19,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-nathaniel-mendez-laing",
-      "fullName": "Nathaniel Mendez-Laing",
-      "fifaCode": "GUA",
-      "position": "FWD",
-      "currentClub": "Derby County",
+      "currentClub": "West Ham United",
       "age": 34,
       "healthStatus": "available",
       "dataSources": {
@@ -14943,37 +11745,11 @@
       }
     },
     {
-      "externalId": "GUA-oscar-santis",
-      "fullName": "Oscar Santis",
-      "fifaCode": "GUA",
-      "position": "FWD",
-      "currentClub": "Dinamo Tbilisi",
-      "age": 27,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-rubio-rubin",
-      "fullName": "Rubio Rubin",
-      "fifaCode": "GUA",
-      "position": "FWD",
-      "currentClub": "Real Salt Lake",
-      "age": 30,
-      "healthStatus": "available",
-      "dataSources": {
-        "structural": "embed-squads",
-        "injuries": ""
-      }
-    },
-    {
-      "externalId": "GUA-darwin-lom",
-      "fullName": "Darwin Lom",
-      "fifaCode": "GUA",
-      "position": "FWD",
-      "currentClub": "Comunicaciones",
+      "externalId": "CZE-david-doudera",
+      "fullName": "David Doudera",
+      "fifaCode": "CZE",
+      "position": "DEF",
+      "currentClub": "Slavia Prague",
       "age": 28,
       "healthStatus": "available",
       "dataSources": {
@@ -14982,11 +11758,466 @@
       }
     },
     {
-      "externalId": "GUA-arquimides-ordonez",
-      "fullName": "Arquimides Ordonez",
-      "fifaCode": "GUA",
+      "externalId": "CZE-robin-hranac",
+      "fullName": "Robin Hranac",
+      "fifaCode": "CZE",
+      "position": "DEF",
+      "currentClub": "Hoffenheim",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-tomas-holes",
+      "fullName": "Tomas Holes",
+      "fifaCode": "CZE",
+      "position": "DEF",
+      "currentClub": "Slavia Prague",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-ladislav-krejci",
+      "fullName": "Ladislav Krejci",
+      "fifaCode": "CZE",
+      "position": "DEF",
+      "currentClub": "Girona",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-david-zima",
+      "fullName": "David Zima",
+      "fifaCode": "CZE",
+      "position": "DEF",
+      "currentClub": "Slavia Prague",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-martin-vitik",
+      "fullName": "Martin Vitik",
+      "fifaCode": "CZE",
+      "position": "DEF",
+      "currentClub": "Sparta Prague",
+      "age": 23,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-tomas-soucek",
+      "fullName": "Tomas Soucek",
+      "fifaCode": "CZE",
+      "position": "MID",
+      "currentClub": "West Ham United",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-lukas-provod",
+      "fullName": "Lukas Provod",
+      "fifaCode": "CZE",
+      "position": "MID",
+      "currentClub": "Slavia Prague",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-michal-sadilek",
+      "fullName": "Michal Sadilek",
+      "fifaCode": "CZE",
+      "position": "MID",
+      "currentClub": "Twente",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-antonin-barak",
+      "fullName": "Antonin Barak",
+      "fifaCode": "CZE",
+      "position": "MID",
+      "currentClub": "Fiorentina",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-pavel-sulc",
+      "fullName": "Pavel Sulc",
+      "fifaCode": "CZE",
+      "position": "MID",
+      "currentClub": "Viktoria Plzen",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-vaclav-cerny",
+      "fullName": "Vaclav Cerny",
+      "fifaCode": "CZE",
+      "position": "MID",
+      "currentClub": "Wolfsburg",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-patrik-schick",
+      "fullName": "Patrik Schick",
+      "fifaCode": "CZE",
       "position": "FWD",
-      "currentClub": "FC Cincinnati",
+      "currentClub": "Bayer Leverkusen",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-adam-hlozek",
+      "fullName": "Adam Hlozek",
+      "fifaCode": "CZE",
+      "position": "FWD",
+      "currentClub": "Hoffenheim",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-jan-kuchta",
+      "fullName": "Jan Kuchta",
+      "fifaCode": "CZE",
+      "position": "FWD",
+      "currentClub": "Sparta Prague",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-tomas-chory",
+      "fullName": "Tomas Chory",
+      "fifaCode": "CZE",
+      "position": "FWD",
+      "currentClub": "Slavia Prague",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-matej-jurasek",
+      "fullName": "Matej Jurasek",
+      "fifaCode": "CZE",
+      "position": "FWD",
+      "currentClub": "Slavia Prague",
+      "age": 23,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "CZE-mojmir-chytil",
+      "fullName": "Mojmir Chytil",
+      "fifaCode": "CZE",
+      "position": "FWD",
+      "currentClub": "Slavia Prague",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-jalal-hassan",
+      "fullName": "Jalal Hassan",
+      "fifaCode": "IRQ",
+      "position": "GK",
+      "currentClub": "Al Zawraa",
+      "age": 35,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-fahad-talib",
+      "fullName": "Fahad Talib",
+      "fifaCode": "IRQ",
+      "position": "GK",
+      "currentClub": "Al Shorta",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-ahmed-basil",
+      "fullName": "Ahmed Basil",
+      "fifaCode": "IRQ",
+      "position": "GK",
+      "currentClub": "Al Shorta",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-rebin-sulaka",
+      "fullName": "Rebin Sulaka",
+      "fifaCode": "IRQ",
+      "position": "DEF",
+      "currentClub": "Brommapojkarna",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-frans-putros",
+      "fullName": "Frans Putros",
+      "fifaCode": "IRQ",
+      "position": "DEF",
+      "currentClub": "Port FC",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-zaid-tahseen",
+      "fullName": "Zaid Tahseen",
+      "fifaCode": "IRQ",
+      "position": "DEF",
+      "currentClub": "Al Shorta",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-hussein-ali",
+      "fullName": "Hussein Ali",
+      "fifaCode": "IRQ",
+      "position": "DEF",
+      "currentClub": "Heerenveen",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-ali-adnan",
+      "fullName": "Ali Adnan",
+      "fifaCode": "IRQ",
+      "position": "DEF",
+      "currentClub": "Mes Rafsanjan",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-saad-natiq",
+      "fullName": "Saad Natiq",
+      "fifaCode": "IRQ",
+      "position": "DEF",
+      "currentClub": "Abha",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-merchas-doski",
+      "fullName": "Merchas Doski",
+      "fifaCode": "IRQ",
+      "position": "DEF",
+      "currentClub": "Slovacko",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-osama-rashid",
+      "fullName": "Osama Rashid",
+      "fifaCode": "IRQ",
+      "position": "MID",
+      "currentClub": "Vizela",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-amir-al-ammari",
+      "fullName": "Amir Al-Ammari",
+      "fifaCode": "IRQ",
+      "position": "MID",
+      "currentClub": "Cracovia",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-zidane-iqbal",
+      "fullName": "Zidane Iqbal",
+      "fifaCode": "IRQ",
+      "position": "MID",
+      "currentClub": "Utrecht",
+      "age": 23,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-bashar-resan",
+      "fullName": "Bashar Resan",
+      "fifaCode": "IRQ",
+      "position": "MID",
+      "currentClub": "Qatar SC",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-ibrahim-bayesh",
+      "fullName": "Ibrahim Bayesh",
+      "fifaCode": "IRQ",
+      "position": "MID",
+      "currentClub": "Al Riyadh",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-youssef-amyn",
+      "fullName": "Youssef Amyn",
+      "fifaCode": "IRQ",
+      "position": "MID",
+      "currentClub": "Eintracht Braunschweig",
+      "age": 23,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-aymen-hussein",
+      "fullName": "Aymen Hussein",
+      "fifaCode": "IRQ",
+      "position": "FWD",
+      "currentClub": "Al Wakrah",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-mohanad-ali",
+      "fullName": "Mohanad Ali",
+      "fifaCode": "IRQ",
+      "position": "FWD",
+      "currentClub": "Al Shorta",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-ali-jasim",
+      "fullName": "Ali Jasim",
+      "fifaCode": "IRQ",
+      "position": "FWD",
+      "currentClub": "Como",
       "age": 22,
       "healthStatus": "available",
       "dataSources": {
@@ -14995,12 +12226,1754 @@
       }
     },
     {
-      "externalId": "GUA-carlos-mejia",
-      "fullName": "Carlos Mejia",
-      "fifaCode": "GUA",
+      "externalId": "IRQ-danilo-al-saed",
+      "fullName": "Danilo Al-Saed",
+      "fifaCode": "IRQ",
       "position": "FWD",
-      "currentClub": "Malacateco",
+      "currentClub": "Heerenveen",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-ali-al-hammadi",
+      "fullName": "Ali Al-Hammadi",
+      "fifaCode": "IRQ",
+      "position": "FWD",
+      "currentClub": "Ipswich Town",
       "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "IRQ-montader-madjed",
+      "fullName": "Montader Madjed",
+      "fifaCode": "IRQ",
+      "position": "FWD",
+      "currentClub": "Hammarby",
+      "age": 21,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-yazid-abu-layla",
+      "fullName": "Yazid Abu Layla",
+      "fifaCode": "JOR",
+      "position": "GK",
+      "currentClub": "Al Hussein",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-abdullah-al-fakhouri",
+      "fullName": "Abdullah Al-Fakhouri",
+      "fifaCode": "JOR",
+      "position": "GK",
+      "currentClub": "Al Wehdat",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-ahmad-abdel-sattar",
+      "fullName": "Ahmad Abdel Sattar",
+      "fifaCode": "JOR",
+      "position": "GK",
+      "currentClub": "Al Faisaly",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-yazan-al-arab",
+      "fullName": "Yazan Al-Arab",
+      "fifaCode": "JOR",
+      "position": "DEF",
+      "currentClub": "Muaither",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-abdallah-nasib",
+      "fullName": "Abdallah Nasib",
+      "fifaCode": "JOR",
+      "position": "DEF",
+      "currentClub": "Al Hussein",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-salem-al-ajalin",
+      "fullName": "Salem Al-Ajalin",
+      "fifaCode": "JOR",
+      "position": "DEF",
+      "currentClub": "Al Faisaly",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-ehsan-haddad",
+      "fullName": "Ehsan Haddad",
+      "fifaCode": "JOR",
+      "position": "DEF",
+      "currentClub": "Al Faisaly",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-bara-marei",
+      "fullName": "Bara Marei",
+      "fifaCode": "JOR",
+      "position": "DEF",
+      "currentClub": "Al Ahli",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-mohammad-abu-hasheesh",
+      "fullName": "Mohammad Abu Hasheesh",
+      "fifaCode": "JOR",
+      "position": "DEF",
+      "currentClub": "Al Wehdat",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-feras-shelbayeh",
+      "fullName": "Feras Shelbayeh",
+      "fifaCode": "JOR",
+      "position": "DEF",
+      "currentClub": "Al Wehdat",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-nizar-al-rashdan",
+      "fullName": "Nizar Al-Rashdan",
+      "fifaCode": "JOR",
+      "position": "MID",
+      "currentClub": "Al Arabi",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-noor-al-rawabdeh",
+      "fullName": "Noor Al-Rawabdeh",
+      "fifaCode": "JOR",
+      "position": "MID",
+      "currentClub": "Selangor",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-amer-jamous",
+      "fullName": "Amer Jamous",
+      "fifaCode": "JOR",
+      "position": "MID",
+      "currentClub": "Al Wehdat",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-mahmoud-al-mardi",
+      "fullName": "Mahmoud Al-Mardi",
+      "fifaCode": "JOR",
+      "position": "MID",
+      "currentClub": "Al Hussein",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-ibrahim-sadeh",
+      "fullName": "Ibrahim Sadeh",
+      "fifaCode": "JOR",
+      "position": "MID",
+      "currentClub": "Al Wehdat",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-anas-al-awad",
+      "fullName": "Anas Al-Awad",
+      "fifaCode": "JOR",
+      "position": "MID",
+      "currentClub": "Al Faisaly",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-musa-al-tamari",
+      "fullName": "Musa Al-Tamari",
+      "fifaCode": "JOR",
+      "position": "FWD",
+      "currentClub": "Montpellier",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-yazan-al-naimat",
+      "fullName": "Yazan Al-Naimat",
+      "fifaCode": "JOR",
+      "position": "FWD",
+      "currentClub": "Al Arabi",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-ali-olwan",
+      "fullName": "Ali Olwan",
+      "fifaCode": "JOR",
+      "position": "FWD",
+      "currentClub": "Selangor",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-mahmoud-ereisan",
+      "fullName": "Mahmoud Ereisan",
+      "fifaCode": "JOR",
+      "position": "FWD",
+      "currentClub": "Al Qadsia",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-hamza-al-dardour",
+      "fullName": "Hamza Al-Dardour",
+      "fifaCode": "JOR",
+      "position": "FWD",
+      "currentClub": "Al Salt",
+      "age": 35,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "JOR-saleh-ratib",
+      "fullName": "Saleh Ratib",
+      "fifaCode": "JOR",
+      "position": "FWD",
+      "currentClub": "Al Hussein",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-orjan-nyland",
+      "fullName": "Orjan Nyland",
+      "fifaCode": "NOR",
+      "position": "GK",
+      "currentClub": "Sevilla",
+      "age": 35,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-egil-selvik",
+      "fullName": "Egil Selvik",
+      "fifaCode": "NOR",
+      "position": "GK",
+      "currentClub": "Udinese",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-mads-christiansen",
+      "fullName": "Mads Christiansen",
+      "fifaCode": "NOR",
+      "position": "GK",
+      "currentClub": "Lillestrom",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-julian-ryerson",
+      "fullName": "Julian Ryerson",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "Borussia Dortmund",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-kristoffer-ajer",
+      "fullName": "Kristoffer Ajer",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "Brentford",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-leo-skiri-ostigard",
+      "fullName": "Leo Skiri Ostigard",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "Rennes",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-andreas-hanche-olsen",
+      "fullName": "Andreas Hanche-Olsen",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "Mainz",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-david-moller-wolfe",
+      "fullName": "David Moller Wolfe",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "AZ Alkmaar",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-marcus-holmgren-pedersen",
+      "fullName": "Marcus Holmgren Pedersen",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "Torino",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-fredrik-bjorkan",
+      "fullName": "Fredrik Bjorkan",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "Bodo/Glimt",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-torbjorn-heggem",
+      "fullName": "Torbjorn Heggem",
+      "fifaCode": "NOR",
+      "position": "DEF",
+      "currentClub": "West Bromwich Albion",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-martin-odegaard",
+      "fullName": "Martin Odegaard",
+      "fifaCode": "NOR",
+      "position": "MID",
+      "currentClub": "Arsenal",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-sander-berge",
+      "fullName": "Sander Berge",
+      "fifaCode": "NOR",
+      "position": "MID",
+      "currentClub": "Fulham",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-patrick-berg",
+      "fullName": "Patrick Berg",
+      "fifaCode": "NOR",
+      "position": "MID",
+      "currentClub": "Bodo/Glimt",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-antonio-nusa",
+      "fullName": "Antonio Nusa",
+      "fifaCode": "NOR",
+      "position": "MID",
+      "currentClub": "RB Leipzig",
+      "age": 21,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-oscar-bobb",
+      "fullName": "Oscar Bobb",
+      "fifaCode": "NOR",
+      "position": "MID",
+      "currentClub": "Manchester City",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-andreas-schjelderup",
+      "fullName": "Andreas Schjelderup",
+      "fifaCode": "NOR",
+      "position": "MID",
+      "currentClub": "Benfica",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-aron-donnum",
+      "fullName": "Aron Donnum",
+      "fifaCode": "NOR",
+      "position": "MID",
+      "currentClub": "Toulouse",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-erling-haaland",
+      "fullName": "Erling Haaland",
+      "fifaCode": "NOR",
+      "position": "FWD",
+      "currentClub": "Manchester City",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-alexander-sorloth",
+      "fullName": "Alexander Sorloth",
+      "fifaCode": "NOR",
+      "position": "FWD",
+      "currentClub": "Atletico Madrid",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-jorgen-strand-larsen",
+      "fullName": "Jorgen Strand Larsen",
+      "fifaCode": "NOR",
+      "position": "FWD",
+      "currentClub": "Wolverhampton Wanderers",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "NOR-ola-solbakken",
+      "fullName": "Ola Solbakken",
+      "fifaCode": "NOR",
+      "position": "FWD",
+      "currentClub": "Roma",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-angus-gunn",
+      "fullName": "Angus Gunn",
+      "fifaCode": "SCO",
+      "position": "GK",
+      "currentClub": "Norwich City",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-zander-clark",
+      "fullName": "Zander Clark",
+      "fifaCode": "SCO",
+      "position": "GK",
+      "currentClub": "Heart of Midlothian",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-liam-kelly",
+      "fullName": "Liam Kelly",
+      "fifaCode": "SCO",
+      "position": "GK",
+      "currentClub": "Rangers",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-andrew-robertson",
+      "fullName": "Andrew Robertson",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Liverpool",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-kieran-tierney",
+      "fullName": "Kieran Tierney",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Arsenal",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-nathan-patterson",
+      "fullName": "Nathan Patterson",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Everton",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-aaron-hickey",
+      "fullName": "Aaron Hickey",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Brentford",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-anthony-ralston",
+      "fullName": "Anthony Ralston",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Celtic",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-john-souttar",
+      "fullName": "John Souttar",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Rangers",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-jack-hendry",
+      "fullName": "Jack Hendry",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Al Ettifaq",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-grant-hanley",
+      "fullName": "Grant Hanley",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Birmingham City",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-scott-mckenna",
+      "fullName": "Scott McKenna",
+      "fifaCode": "SCO",
+      "position": "DEF",
+      "currentClub": "Las Palmas",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-billy-gilmour",
+      "fullName": "Billy Gilmour",
+      "fifaCode": "SCO",
+      "position": "MID",
+      "currentClub": "Napoli",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-callum-mcgregor",
+      "fullName": "Callum McGregor",
+      "fifaCode": "SCO",
+      "position": "MID",
+      "currentClub": "Celtic",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-scott-mctominay",
+      "fullName": "Scott McTominay",
+      "fifaCode": "SCO",
+      "position": "MID",
+      "currentClub": "Napoli",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-kenny-mclean",
+      "fullName": "Kenny McLean",
+      "fifaCode": "SCO",
+      "position": "MID",
+      "currentClub": "Norwich City",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-lewis-ferguson",
+      "fullName": "Lewis Ferguson",
+      "fifaCode": "SCO",
+      "position": "MID",
+      "currentClub": "Bologna",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-ryan-christie",
+      "fullName": "Ryan Christie",
+      "fifaCode": "SCO",
+      "position": "MID",
+      "currentClub": "Bournemouth",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-john-mcginn",
+      "fullName": "John McGinn",
+      "fifaCode": "SCO",
+      "position": "MID",
+      "currentClub": "Aston Villa",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-che-adams",
+      "fullName": "Che Adams",
+      "fifaCode": "SCO",
+      "position": "FWD",
+      "currentClub": "Torino",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-lyndon-dykes",
+      "fullName": "Lyndon Dykes",
+      "fifaCode": "SCO",
+      "position": "FWD",
+      "currentClub": "Birmingham City",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SCO-ben-doak",
+      "fullName": "Ben Doak",
+      "fifaCode": "SCO",
+      "position": "FWD",
+      "currentClub": "Liverpool",
+      "age": 20,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-robin-olsen",
+      "fullName": "Robin Olsen",
+      "fifaCode": "SWE",
+      "position": "GK",
+      "currentClub": "Aston Villa",
+      "age": 36,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-viktor-johansson",
+      "fullName": "Viktor Johansson",
+      "fifaCode": "SWE",
+      "position": "GK",
+      "currentClub": "Stoke City",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-kristoffer-nordfeldt",
+      "fullName": "Kristoffer Nordfeldt",
+      "fifaCode": "SWE",
+      "position": "GK",
+      "currentClub": "AIK",
+      "age": 37,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-victor-lindelof",
+      "fullName": "Victor Lindelof",
+      "fifaCode": "SWE",
+      "position": "DEF",
+      "currentClub": "Manchester United",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-isak-hien",
+      "fullName": "Isak Hien",
+      "fifaCode": "SWE",
+      "position": "DEF",
+      "currentClub": "Atalanta",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-carl-starfelt",
+      "fullName": "Carl Starfelt",
+      "fifaCode": "SWE",
+      "position": "DEF",
+      "currentClub": "Celta Vigo",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-emil-holm",
+      "fullName": "Emil Holm",
+      "fifaCode": "SWE",
+      "position": "DEF",
+      "currentClub": "Bologna",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-gabriel-gudmundsson",
+      "fullName": "Gabriel Gudmundsson",
+      "fifaCode": "SWE",
+      "position": "DEF",
+      "currentClub": "Lille",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-ludwig-augustinsson",
+      "fullName": "Ludwig Augustinsson",
+      "fifaCode": "SWE",
+      "position": "DEF",
+      "currentClub": "Anderlecht",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-hjalmar-ekdal",
+      "fullName": "Hjalmar Ekdal",
+      "fifaCode": "SWE",
+      "position": "DEF",
+      "currentClub": "Burnley",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-dejan-kulusevski",
+      "fullName": "Dejan Kulusevski",
+      "fifaCode": "SWE",
+      "position": "MID",
+      "currentClub": "Tottenham Hotspur",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-emil-forsberg",
+      "fullName": "Emil Forsberg",
+      "fifaCode": "SWE",
+      "position": "MID",
+      "currentClub": "New York Red Bulls",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-hugo-larsson",
+      "fullName": "Hugo Larsson",
+      "fifaCode": "SWE",
+      "position": "MID",
+      "currentClub": "Eintracht Frankfurt",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-jens-cajuste",
+      "fullName": "Jens Cajuste",
+      "fifaCode": "SWE",
+      "position": "MID",
+      "currentClub": "Napoli",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-mattias-svanberg",
+      "fullName": "Mattias Svanberg",
+      "fifaCode": "SWE",
+      "position": "MID",
+      "currentClub": "Wolfsburg",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-yasin-ayari",
+      "fullName": "Yasin Ayari",
+      "fifaCode": "SWE",
+      "position": "MID",
+      "currentClub": "Brighton & Hove Albion",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-alexander-isak",
+      "fullName": "Alexander Isak",
+      "fifaCode": "SWE",
+      "position": "FWD",
+      "currentClub": "Newcastle United",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-viktor-gyokeres",
+      "fullName": "Viktor Gyokeres",
+      "fifaCode": "SWE",
+      "position": "FWD",
+      "currentClub": "Sporting CP",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-anthony-elanga",
+      "fullName": "Anthony Elanga",
+      "fifaCode": "SWE",
+      "position": "FWD",
+      "currentClub": "Nottingham Forest",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-jesper-karlsson",
+      "fullName": "Jesper Karlsson",
+      "fifaCode": "SWE",
+      "position": "FWD",
+      "currentClub": "Bologna",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-sebastian-nanasi",
+      "fullName": "Sebastian Nanasi",
+      "fifaCode": "SWE",
+      "position": "FWD",
+      "currentClub": "Strasbourg",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "SWE-benjamin-nygren",
+      "fullName": "Benjamin Nygren",
+      "fifaCode": "SWE",
+      "position": "FWD",
+      "currentClub": "Nordsjaelland",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-ugurcan-cakir",
+      "fullName": "Ugurcan Cakir",
+      "fifaCode": "TUR",
+      "position": "GK",
+      "currentClub": "Trabzonspor",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-altay-bayindir",
+      "fullName": "Altay Bayindir",
+      "fifaCode": "TUR",
+      "position": "GK",
+      "currentClub": "Manchester United",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-mert-gunok",
+      "fullName": "Mert Gunok",
+      "fifaCode": "TUR",
+      "position": "GK",
+      "currentClub": "Besiktas",
+      "age": 37,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-zeki-celik",
+      "fullName": "Zeki Celik",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Roma",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-ferdi-kadioglu",
+      "fullName": "Ferdi Kadioglu",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Brighton & Hove Albion",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-merih-demiral",
+      "fullName": "Merih Demiral",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Al Ahli",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-abdulkerim-bardakci",
+      "fullName": "Abdulkerim Bardakci",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Galatasaray",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-caglar-soyuncu",
+      "fullName": "Caglar Soyuncu",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Fenerbahce",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-samet-akaydin",
+      "fullName": "Samet Akaydin",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Fenerbahce",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-mert-muldur",
+      "fullName": "Mert Muldur",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Fenerbahce",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-ozan-kabak",
+      "fullName": "Ozan Kabak",
+      "fifaCode": "TUR",
+      "position": "DEF",
+      "currentClub": "Hoffenheim",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-hakan-calhanoglu",
+      "fullName": "Hakan Calhanoglu",
+      "fifaCode": "TUR",
+      "position": "MID",
+      "currentClub": "Inter Milan",
+      "age": 32,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-orkun-kokcu",
+      "fullName": "Orkun Kokcu",
+      "fifaCode": "TUR",
+      "position": "MID",
+      "currentClub": "Benfica",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-ismail-yuksek",
+      "fullName": "Ismail Yuksek",
+      "fifaCode": "TUR",
+      "position": "MID",
+      "currentClub": "Fenerbahce",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-salih-ozcan",
+      "fullName": "Salih Ozcan",
+      "fifaCode": "TUR",
+      "position": "MID",
+      "currentClub": "Borussia Dortmund",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-arda-guler",
+      "fullName": "Arda Guler",
+      "fifaCode": "TUR",
+      "position": "MID",
+      "currentClub": "Real Madrid",
+      "age": 21,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-irfan-can-kahveci",
+      "fullName": "Irfan Can Kahveci",
+      "fifaCode": "TUR",
+      "position": "MID",
+      "currentClub": "Fenerbahce",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-kaan-ayhan",
+      "fullName": "Kaan Ayhan",
+      "fifaCode": "TUR",
+      "position": "MID",
+      "currentClub": "Galatasaray",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-kenan-yildiz",
+      "fullName": "Kenan Yildiz",
+      "fifaCode": "TUR",
+      "position": "FWD",
+      "currentClub": "Juventus",
+      "age": 21,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-kerem-akturkoglu",
+      "fullName": "Kerem Akturkoglu",
+      "fifaCode": "TUR",
+      "position": "FWD",
+      "currentClub": "Benfica",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-baris-alper-yilmaz",
+      "fullName": "Baris Alper Yilmaz",
+      "fifaCode": "TUR",
+      "position": "FWD",
+      "currentClub": "Galatasaray",
+      "age": 26,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "TUR-semih-kilicsoy",
+      "fullName": "Semih Kilicsoy",
+      "fifaCode": "TUR",
+      "position": "FWD",
+      "currentClub": "Besiktas",
+      "age": 20,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-utkir-yusupov",
+      "fullName": "Utkir Yusupov",
+      "fifaCode": "UZB",
+      "position": "GK",
+      "currentClub": "Navbahor",
+      "age": 35,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-abduvohid-nematov",
+      "fullName": "Abduvohid Nematov",
+      "fifaCode": "UZB",
+      "position": "GK",
+      "currentClub": "Nasaf",
+      "age": 24,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-botirali-ergashev",
+      "fullName": "Botirali Ergashev",
+      "fifaCode": "UZB",
+      "position": "GK",
+      "currentClub": "AGMK",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-abdukodir-khusanov",
+      "fullName": "Abdukodir Khusanov",
+      "fifaCode": "UZB",
+      "position": "DEF",
+      "currentClub": "Manchester City",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-rustam-ashurmatov",
+      "fullName": "Rustam Ashurmatov",
+      "fifaCode": "UZB",
+      "position": "DEF",
+      "currentClub": "Rubin Kazan",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-husniddin-aliqulov",
+      "fullName": "Husniddin Aliqulov",
+      "fifaCode": "UZB",
+      "position": "DEF",
+      "currentClub": "Rizespor",
+      "age": 27,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-hojiakbar-alijonov",
+      "fullName": "Hojiakbar Alijonov",
+      "fifaCode": "UZB",
+      "position": "DEF",
+      "currentClub": "Pakhtakor",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-farrukh-sayfiev",
+      "fullName": "Farrukh Sayfiev",
+      "fifaCode": "UZB",
+      "position": "DEF",
+      "currentClub": "Pakhtakor",
+      "age": 34,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-islom-tukhtakhujaev",
+      "fullName": "Islom Tukhtakhujaev",
+      "fifaCode": "UZB",
+      "position": "DEF",
+      "currentClub": "Navbahor",
+      "age": 37,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-odiljon-hamrobekov",
+      "fullName": "Odiljon Hamrobekov",
+      "fifaCode": "UZB",
+      "position": "MID",
+      "currentClub": "Pakhtakor",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-otabek-shukurov",
+      "fullName": "Otabek Shukurov",
+      "fifaCode": "UZB",
+      "position": "MID",
+      "currentClub": "Al Fayha",
+      "age": 30,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-jaloliddin-masharipov",
+      "fullName": "Jaloliddin Masharipov",
+      "fifaCode": "UZB",
+      "position": "MID",
+      "currentClub": "Esteghlal",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-abbosbek-fayzullaev",
+      "fullName": "Abbosbek Fayzullaev",
+      "fifaCode": "UZB",
+      "position": "MID",
+      "currentClub": "CSKA Moscow",
+      "age": 22,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-azizbek-turgunboev",
+      "fullName": "Azizbek Turgunboev",
+      "fifaCode": "UZB",
+      "position": "MID",
+      "currentClub": "Navbahor",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-dostonbek-khamdamov",
+      "fullName": "Dostonbek Khamdamov",
+      "fifaCode": "UZB",
+      "position": "MID",
+      "currentClub": "Bunyodkor",
+      "age": 29,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-jamshid-iskanderov",
+      "fullName": "Jamshid Iskanderov",
+      "fifaCode": "UZB",
+      "position": "MID",
+      "currentClub": "Navbahor",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-eldor-shomurodov",
+      "fullName": "Eldor Shomurodov",
+      "fifaCode": "UZB",
+      "position": "FWD",
+      "currentClub": "Roma",
+      "age": 31,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-igor-sergeev",
+      "fullName": "Igor Sergeev",
+      "fifaCode": "UZB",
+      "position": "FWD",
+      "currentClub": "Tobol",
+      "age": 33,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-khojimat-erkinov",
+      "fullName": "Khojimat Erkinov",
+      "fifaCode": "UZB",
+      "position": "FWD",
+      "currentClub": "Al Wahda",
+      "age": 25,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-bobir-abdukholikov",
+      "fullName": "Bobir Abdukholikov",
+      "fifaCode": "UZB",
+      "position": "FWD",
+      "currentClub": "Ordabasy",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-jasurbek-yakhshiboev",
+      "fullName": "Jasurbek Yakhshiboev",
+      "fifaCode": "UZB",
+      "position": "FWD",
+      "currentClub": "Navbahor",
+      "age": 28,
+      "healthStatus": "available",
+      "dataSources": {
+        "structural": "embed-squads",
+        "injuries": ""
+      }
+    },
+    {
+      "externalId": "UZB-oston-urunov",
+      "fullName": "Oston Urunov",
+      "fifaCode": "UZB",
+      "position": "FWD",
+      "currentClub": "Persepolis",
+      "age": 25,
       "healthStatus": "available",
       "dataSources": {
         "structural": "embed-squads",

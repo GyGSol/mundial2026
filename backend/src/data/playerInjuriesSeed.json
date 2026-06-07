@@ -2,41 +2,47 @@
   "_comment": "Lesiones y posición habitual referenciadas de Transfermarkt. Actualizar manualmente.",
   "entries": [
     {
+      "externalId": "ARG-giovani-lo-celso",
       "fifaCode": "ARG",
-      "fullName": "Paulo Dybala",
+      "fullName": "Giovani Lo Celso",
       "healthStatus": "doubt",
       "injuryInfo": "Molestias musculares — referencia Transfermarkt",
-      "position": "FWD"
+      "position": "MID"
     },
     {
+      "externalId": "GER-joshua-kimmich",
       "fifaCode": "GER",
       "fullName": "Joshua Kimmich",
       "healthStatus": "injured",
       "injuryInfo": "Lesión de rodilla — baja confirmada (Transfermarkt)",
-      "position": "MID"
+      "position": "DEF"
     },
     {
+      "externalId": "FRA-lucas-hernandez",
       "fifaCode": "FRA",
-      "fullName": "N'Golo Kanté",
+      "fullName": "Lucas Hernandez",
       "healthStatus": "doubt",
       "injuryInfo": "Recuperación de lesión — estado incierto (Transfermarkt)",
-      "position": "MID"
+      "position": "DEF"
     },
     {
+      "externalId": "BRA-ederson",
       "fifaCode": "BRA",
-      "fullName": "Neymar",
-      "healthStatus": "injured",
-      "injuryInfo": "Lesión de ligamento cruzado — fuera del Mundial (Transfermarkt)",
-      "position": "FWD"
+      "fullName": "Ederson",
+      "healthStatus": "doubt",
+      "injuryInfo": "Molestia física — consultar antes de predecir (Transfermarkt)",
+      "position": "GK"
     },
     {
+      "externalId": "ENG-luke-shaw",
       "fifaCode": "ENG",
-      "fullName": "Harry Maguire",
+      "fullName": "Luke Shaw",
       "healthStatus": "doubt",
       "injuryInfo": "Problemas físicos recurrentes — consultar antes de predecir (Transfermarkt)",
       "position": "DEF"
     },
     {
+      "externalId": "ESP-gavi",
       "fifaCode": "ESP",
       "fullName": "Gavi",
       "healthStatus": "injured",
@@ -44,6 +50,7 @@
       "position": "MID"
     },
     {
+      "externalId": "NED-frenkie-de-jong",
       "fifaCode": "NED",
       "fullName": "Frenkie de Jong",
       "healthStatus": "injured",
@@ -51,8 +58,9 @@
       "position": "MID"
     },
     {
+      "externalId": "MEX-raul-jimenez",
       "fifaCode": "MEX",
-      "fullName": "Raúl Jiménez",
+      "fullName": "Raul Jimenez",
       "healthStatus": "doubt",
       "injuryInfo": "Molestia física — duda para convocatoria (Transfermarkt)",
       "position": "FWD"

@@ -11,6 +11,7 @@ import mongoose from 'mongoose';
 import { connectDb } from '../config/db.js';
 import { Team } from '../models/Team.js';
 import { EMBED_SQUADS } from '../data/embedSquads.js';
+import { resolveFifaCode } from '../data/teamFifaAliases.js';
 import {
   fetchTeamWithSquad,
   fetchWorldCupTeams,
@@ -94,9 +95,10 @@ async function fetchFromFootballData(teamsByCode) {
 
 function fetchFromEmbed(teamsByCode) {
   const players = [];
-  for (const [code, team] of teamsByCode) {
-    const squad = EMBED_SQUADS[code];
-    if (!squad?.length) continue;
+  for (const [rawCode, squad] of Object.entries(EMBED_SQUADS)) {
+    const code = resolveFifaCode(rawCode);
+    const team = teamsByCode.get(code);
+    if (!team || !squad?.length) continue;
     for (const entry of squad) {
       players.push(toSeedPlayer({ ...entry, source: 'embed-squads' }, team));
     }

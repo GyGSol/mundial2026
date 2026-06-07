@@ -11,6 +11,7 @@ import {
   normalizeFootballDataPerson,
 } from './footballDataApiClient.js';
 import { notifyPlayersUpdated } from './websocketService.js';
+import { resolveFifaCode } from '../data/teamFifaAliases.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '../data');
@@ -124,16 +125,20 @@ async function syncFromSeed() {
   if (!seed?.players?.length) return 0;
 
   const teams = await Team.find().lean();
-  const teamByCode = new Map(teams.map((t) => [t.fifaCode, t]));
+  const teamByCode = new Map();
+  for (const t of teams) {
+    if (t.fifaCode) teamByCode.set(t.fifaCode.toUpperCase(), t);
+  }
   const teamByExternal = new Map(teams.map((t) => [t.externalId, t]));
 
   let count = 0;
   for (const entry of seed.players) {
+    const code = resolveFifaCode(entry.fifaCode);
     const team =
-      teamByCode.get(entry.fifaCode) ||
+      teamByCode.get(code) ||
       teamByExternal.get(entry.teamExternalId) ||
       teams.find((t) => t.nameEn === entry.teamName);
-    const doc = normalizeSeedPlayer(entry, team);
+    const doc = normalizeSeedPlayer({ ...entry, fifaCode: code }, team);
     if (!doc.teamExternalId) continue;
     await upsertPlayer(doc);
     count += 1;
@@ -142,17 +147,27 @@ async function syncFromSeed() {
   return count;
 }
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function mergeInjuriesSeed() {
   const injuries = await loadJson('playerInjuriesSeed.json');
   if (!injuries?.entries?.length) return 0;
 
   let count = 0;
   for (const entry of injuries.entries) {
-    const filter = entry.externalId
-      ? { externalId: entry.externalId }
-      : entry.fullName && entry.fifaCode
-        ? { fullName: entry.fullName, fifaCode: entry.fifaCode }
-        : null;
+    const code = resolveFifaCode(entry.fifaCode);
+    let filter = null;
+
+    if (entry.externalId) {
+      filter = { externalId: entry.externalId };
+    } else if (entry.fullName && code) {
+      filter = {
+        fifaCode: code,
+        fullName: new RegExp(`^${escapeRegex(entry.fullName)}$`, 'i'),
+      };
+    }
 
     if (!filter) continue;
 
@@ -165,7 +180,7 @@ async function mergeInjuriesSeed() {
     if (entry.currentClub) update.currentClub = entry.currentClub;
 
     const result = await Player.updateOne(filter, { $set: update });
-    if (result.modifiedCount > 0) count += 1;
+    if (result.matchedCount > 0) count += 1;
   }
 
   return count;
