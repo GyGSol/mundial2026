@@ -132,6 +132,15 @@ export const teamsApi = {
   },
 };
 
+export const playersApi = {
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/players${query ? `?${query}` : ''}`);
+  },
+  get: (id) => request(`/players/${id}`),
+  meta: () => request('/players/meta'),
+};
+
 export const healthApi = {
   get: () => request('/health'),
 };

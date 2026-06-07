@@ -12,6 +12,8 @@
     "build": "npm run build -w frontend && node scripts/copy-frontend.js",
     "test": "npm run test -w backend",
     "sync": "npm run sync -w backend",
+    "sync:players": "npm run sync:players -w backend",
+    "build:players-seed": "npm run build:players-seed -w backend",
     "simulate": "npm run simulate -w backend",
     "reset-db": "npm run reset-db -w backend",
     "prepare-package": "node scripts/prepare-package.js",

@@ -8,6 +8,7 @@ const teamSchema = new mongoose.Schema(
     fifaCode: String,
     group: String,
     flag: String,
+    footballDataTeamId: { type: Number, sparse: true, index: true },
     raw: mongoose.Schema.Types.Mixed,
   },
   { timestamps: true }

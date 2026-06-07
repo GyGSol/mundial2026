@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { matchesApi, predictionsApi } from '../api/client.js';
 import MatchCard from '../components/MatchCard.jsx';
 import ScheduleAllButton from '../components/ScheduleAllButton.jsx';
@@ -14,6 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.jsx';
+import { Badge } from '@/components/ui/badge.jsx';
+import { Card, CardContent } from '@/components/ui/card.jsx';
 
 function formatLastUpdated(date) {
   if (!date) return '';
@@ -135,6 +137,23 @@ export default function PredictionsPage() {
           </Select>
         </div>
       </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="text-sm text-foreground">
+            Consultá el estado de los jugadores antes de predecir
+          </p>
+          <Link
+            to="/mundial?tab=players"
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+          >
+            Enciclopedia de Jugadores
+            <Badge className="border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300">
+              Beta
+            </Badge>
+          </Link>
+        </CardContent>
+      </Card>
 
       {message && <p className="text-sm text-foreground">{message}</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}

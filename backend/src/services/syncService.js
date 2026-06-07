@@ -26,6 +26,7 @@ import {
   notifyMatchesUpdated,
   notifySyncComplete,
 } from './websocketService.js';
+import { syncLiveLineups } from './lineupSyncService.js';
 
 async function upsertTeams() {
   const data = await fetchTeams();
@@ -236,9 +237,15 @@ export async function runSync({ includeMetadata = true } = {}) {
       { upsert: true }
     );
 
+    const lineupResult = await syncLiveLineups();
+
     notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
     notifyMatchesUpdated({ matchesCount: count });
     notifyLeaderboardUpdated({ reason: 'sync_complete' });
+
+    if (lineupResult.updated > 0) {
+      console.log(`Lineup sync: ${lineupResult.updated} titulares en ${lineupResult.matches} partidos`);
+    }
 
     console.log(
       `Sync OK: ${teamsCount} teams, ${groupsCount} groups, ${stadiumsCount} stadiums, ${count} matches`

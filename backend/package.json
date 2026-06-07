@@ -9,6 +9,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync": "node src/scripts/runSync.js",
+    "sync:players": "node src/scripts/runPlayerSync.js",
+    "build:players-seed": "node src/scripts/buildPlayersSeed.js",
     "fix-kickoffs": "node src/scripts/fixKickoffTimes.js",
     "simulate": "node src/scripts/runSimulation.js",
     "reset-db": "node src/scripts/resetDatabase.js"

@@ -43,3 +43,7 @@ export function notifyLeaderboardUpdated(meta = {}) {
 export function notifySyncComplete(meta = {}) {
   broadcast('sync:complete', meta);
 }
+
+export function notifyPlayersUpdated(meta = {}) {
+  broadcast('players:updated', meta);
+}

@@ -11,6 +11,7 @@ import {
   setupAdminAccount,
 } from '../services/adminSetupService.js';
 import { runSync } from '../services/syncService.js';
+import { runPlayerSync } from '../services/playerSyncService.js';
 import {
   addAdminGroupMember,
   approveAdminJoinRequest,
@@ -146,6 +147,15 @@ router.get('/sync', adminMiddleware, async (req, res, next) => {
 router.post('/sync/run', adminMiddleware, async (req, res, next) => {
   try {
     const result = await runSync({ includeMetadata: true });
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/sync/players', adminMiddleware, async (req, res, next) => {
+  try {
+    const result = await runPlayerSync();
     res.json({ ok: true, ...result });
   } catch (err) {
     next(err);

@@ -1,0 +1,61 @@
+{
+  "_comment": "Lesiones y posición habitual referenciadas de Transfermarkt. Actualizar manualmente.",
+  "entries": [
+    {
+      "fifaCode": "ARG",
+      "fullName": "Paulo Dybala",
+      "healthStatus": "doubt",
+      "injuryInfo": "Molestias musculares — referencia Transfermarkt",
+      "position": "FWD"
+    },
+    {
+      "fifaCode": "GER",
+      "fullName": "Joshua Kimmich",
+      "healthStatus": "injured",
+      "injuryInfo": "Lesión de rodilla — baja confirmada (Transfermarkt)",
+      "position": "MID"
+    },
+    {
+      "fifaCode": "FRA",
+      "fullName": "N'Golo Kanté",
+      "healthStatus": "doubt",
+      "injuryInfo": "Recuperación de lesión — estado incierto (Transfermarkt)",
+      "position": "MID"
+    },
+    {
+      "fifaCode": "BRA",
+      "fullName": "Neymar",
+      "healthStatus": "injured",
+      "injuryInfo": "Lesión de ligamento cruzado — fuera del Mundial (Transfermarkt)",
+      "position": "FWD"
+    },
+    {
+      "fifaCode": "ENG",
+      "fullName": "Harry Maguire",
+      "healthStatus": "doubt",
+      "injuryInfo": "Problemas físicos recurrentes — consultar antes de predecir (Transfermarkt)",
+      "position": "DEF"
+    },
+    {
+      "fifaCode": "ESP",
+      "fullName": "Gavi",
+      "healthStatus": "injured",
+      "injuryInfo": "Rotura de ligamento cruzado — baja confirmada (Transfermarkt)",
+      "position": "MID"
+    },
+    {
+      "fifaCode": "NED",
+      "fullName": "Frenkie de Jong",
+      "healthStatus": "injured",
+      "injuryInfo": "Lesión de tobillo — en recuperación (Transfermarkt)",
+      "position": "MID"
+    },
+    {
+      "fifaCode": "MEX",
+      "fullName": "Raúl Jiménez",
+      "healthStatus": "doubt",
+      "injuryInfo": "Molestia física — duda para convocatoria (Transfermarkt)",
+      "position": "FWD"
+    }
+  ]
+}

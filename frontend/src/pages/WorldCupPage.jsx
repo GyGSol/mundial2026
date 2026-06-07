@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { worldCupApi } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
@@ -12,6 +12,8 @@ import {
   TeamsSection,
 } from '@/components/worldcup/WorldCupSections.jsx';
 import FixtureSection from '@/components/worldcup/FixtureSection.jsx';
+import PlayersSection from '@/components/worldcup/PlayersSection.jsx';
+import { Badge } from '@/components/ui/badge.jsx';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -21,6 +23,7 @@ const tabs = [
   { id: 'stats', label: 'Estadísticas' },
   { id: 'teams', label: 'Equipos' },
   { id: 'fixture', label: 'Fixture' },
+  { id: 'players', label: 'Jugadores', beta: true },
 ];
 
 function formatLastUpdated(date) {
@@ -29,6 +32,7 @@ function formatLastUpdated(date) {
 }
 
 export default function WorldCupPage() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('groups');
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const groupId = user?.competitionGroup?.id;
@@ -38,6 +42,13 @@ export default function WorldCupPage() {
     enabled: !authLoading,
   });
   const pageLoading = authLoading || loading;
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tabs.some((t) => t.id === tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,33 +71,47 @@ export default function WorldCupPage() {
             className={cn(activeTab !== tab.id && 'text-muted-foreground')}
             onClick={() => setActiveTab(tab.id)}
           >
-            {tab.label}
+            <span className="inline-flex items-center gap-1.5">
+              {tab.label}
+              {tab.beta ? (
+                <Badge className="border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] font-semibold text-amber-800 dark:text-amber-300">
+                  Beta
+                </Badge>
+              ) : null}
+            </span>
           </Button>
         ))}
       </div>
 
-      {pageLoading && <p className="text-muted-foreground">Cargando información del mundial...</p>}
-      {error && <p className="text-destructive">{error}</p>}
-
-      {!pageLoading && !error && (
+      {activeTab === 'players' ? (
+        <PlayersSection />
+      ) : (
         <>
-          {activeTab === 'groups' && <GroupStandingsSection groups={data?.groups} />}
-          {activeTab === 'knockout' && <KnockoutSection phases={data?.knockout} />}
-          {activeTab === 'matches' && (
-            <GroupMatchesSection
-              matches={data?.groupMatches}
-              matchPredictionRankings={data?.matchPredictionRankings}
-              predictionGroup={data?.predictionGroup}
-              simulationPredictionGroup={data?.simulationPredictionGroup}
-              isAuthenticated={isAuthenticated}
-            />
+          {pageLoading && (
+            <p className="text-muted-foreground">Cargando información del mundial...</p>
           )}
-          {activeTab === 'stats' && (
-            <StatsSection stats={data?.stats} teams={data?.teams} stadiums={data?.stadiums} />
-          )}
-          {activeTab === 'teams' && <TeamsSection teams={data?.teams} />}
-          {activeTab === 'fixture' && (
-            <FixtureSection groups={data?.groups} knockout={data?.knockout} />
+          {error && <p className="text-destructive">{error}</p>}
+          {!pageLoading && !error && (
+            <>
+              {activeTab === 'groups' && <GroupStandingsSection groups={data?.groups} />}
+              {activeTab === 'knockout' && <KnockoutSection phases={data?.knockout} />}
+              {activeTab === 'matches' && (
+                <GroupMatchesSection
+                  matches={data?.groupMatches}
+                  matchPredictionRankings={data?.matchPredictionRankings}
+                  predictionGroup={data?.predictionGroup}
+                  simulationPredictionGroup={data?.simulationPredictionGroup}
+                  isAuthenticated={isAuthenticated}
+                />
+              )}
+              {activeTab === 'stats' && (
+                <StatsSection stats={data?.stats} teams={data?.teams} stadiums={data?.stadiums} />
+              )}
+              {activeTab === 'teams' && <TeamsSection teams={data?.teams} />}
+              {activeTab === 'fixture' && (
+                <FixtureSection groups={data?.groups} knockout={data?.knockout} />
+              )}
+            </>
           )}
         </>
       )}

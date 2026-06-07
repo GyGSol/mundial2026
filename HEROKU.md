@@ -63,9 +63,19 @@ heroku config:set \
 ```bash
 heroku restart -a mundial2026-pred
 heroku run npm run sync -a mundial2026-pred
+heroku run npm run sync:players -a mundial2026-pred
 heroku logs --tail -a mundial2026-pred
 curl https://mundial2026-pred-34de76763ecc.herokuapp.com/api/health
+curl https://mundial2026-pred-34de76763ecc.herokuapp.com/api/players/meta
 ```
+
+### Enciclopedia de Jugadores (opcional)
+
+- `FOOTBALL_DATA_API_TOKEN` — token de [Football-Data.org](https://www.football-data.org/) para lineups en vivo e historial de partidos.
+- Sin token: se cargan ~1.150 jugadores desde `playersSeed.json` + lesiones desde `playerInjuriesSeed.json` (referencia Transfermarkt).
+- Regenerar seed local: `npm run build:players-seed` (requiere `npm run sync` previo para mapear selecciones).
+- Sync en producción: `heroku run npm run sync:players -a mundial2026-pred` o `POST /api/admin/sync/players` desde el panel admin.
+- UI: pestaña **Jugadores (Beta)** en `/mundial`, a la derecha de Fixture.
 
 ## Deploy de cambios futuros
 

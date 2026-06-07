@@ -50,7 +50,8 @@ export function useRealtimeRefresh(refresh) {
     if (
       message.type === 'matches:updated' ||
       message.type === 'leaderboard:updated' ||
-      message.type === 'sync:complete'
+      message.type === 'sync:complete' ||
+      message.type === 'players:updated'
     ) {
       refreshRef.current?.();
     }
