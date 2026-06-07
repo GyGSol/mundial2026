@@ -32,6 +32,78 @@ function TeamCell({ team, fallback = '—' }) {
   );
 }
 
+function MatchTeamSide({ team, slotLabel, align = 'left' }) {
+  if (team) {
+    return align === 'right' ? (
+      <div className="flex items-center justify-end gap-2">
+        {team.fifaCode && <span className="text-xs text-muted-foreground">{team.fifaCode}</span>}
+        <span className="font-medium">{team.nameEn}</span>
+        {getTeamFlag(team) ? (
+          <img
+            src={getTeamFlag(team)}
+            alt=""
+            className="size-5 rounded-sm border border-border/60 object-cover"
+          />
+        ) : team.flag ? (
+          <span>{team.flag}</span>
+        ) : null}
+      </div>
+    ) : (
+      <TeamCell team={team} />
+    );
+  }
+
+  if (slotLabel) {
+    return (
+      <span
+        className={cn(
+          'text-sm font-medium text-muted-foreground',
+          align === 'right' && 'sm:text-right'
+        )}
+      >
+        {slotLabel}
+      </span>
+    );
+  }
+
+  return <span className="text-sm text-muted-foreground">Por definir</span>;
+}
+
+function MatchScore({ match }) {
+  const statusClass =
+    match.status === 'live'
+      ? 'text-emerald-700'
+      : match.status === 'finished'
+        ? 'text-foreground'
+        : 'text-muted-foreground';
+
+  const scoreText =
+    match.status === 'upcoming' ? 'vs' : `${match.homeScore} - ${match.awayScore}`;
+
+  return (
+    <div className="flex flex-col items-start gap-1 rounded-lg border border-border/70 bg-card px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+      <div className="min-w-0 sm:min-w-[140px] sm:flex-1">
+        <MatchTeamSide team={match.homeTeam} slotLabel={match.homeTeamSlotLabel} />
+      </div>
+      <div className={cn('font-semibold tabular-nums sm:px-2 sm:text-center', statusClass)}>
+        {scoreText}
+      </div>
+      <div className="min-w-0 sm:min-w-[140px] sm:flex-1 sm:text-right">
+        <div className="sm:hidden">
+          <MatchTeamSide team={match.awayTeam} slotLabel={match.awayTeamSlotLabel} />
+        </div>
+        <div className="hidden sm:block">
+          <MatchTeamSide
+            team={match.awayTeam}
+            slotLabel={match.awayTeamSlotLabel}
+            align="right"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StandingsTeamCell({ team, fallback = '—' }) {
   const name = team?.nameEn || fallback;
   const flagUrl = getTeamFlag(team);
@@ -70,43 +142,6 @@ const qualificationZoneRow = {
   direct: 'border-l-4 border-l-emerald-500',
   third_possible: 'border-l-4 border-l-sky-400',
 };
-
-function MatchScore({ match }) {
-  const statusClass =
-    match.status === 'live'
-      ? 'text-emerald-700'
-      : match.status === 'finished'
-        ? 'text-foreground'
-        : 'text-muted-foreground';
-
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-card px-3 py-2">
-      <div className="min-w-[140px] flex-1">
-        <TeamCell team={match.homeTeam} />
-      </div>
-      <div className={cn('px-2 text-center font-semibold tabular-nums', statusClass)}>
-        {match.status === 'upcoming' ? 'vs' : `${match.homeScore} - ${match.awayScore}`}
-      </div>
-      <div className="min-w-[140px] flex-1 text-right">
-        <div className="flex items-center justify-end gap-2">
-          {match.awayTeam?.fifaCode && (
-            <span className="text-xs text-muted-foreground">{match.awayTeam.fifaCode}</span>
-          )}
-          <span className="font-medium">{match.awayTeam?.nameEn || '—'}</span>
-          {getTeamFlag(match.awayTeam) ? (
-            <img
-              src={getTeamFlag(match.awayTeam)}
-              alt=""
-              className="size-5 rounded-sm border border-border/60 object-cover"
-            />
-          ) : match.awayTeam?.flag ? (
-            <span>{match.awayTeam.flag}</span>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function GroupStandingsSection({ groups }) {
   if (!groups?.length) {

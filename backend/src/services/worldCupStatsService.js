@@ -230,11 +230,46 @@ function isSimulationMatch(match) {
 
 import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
 
-function hasBothTeamsAssigned(match, teamMap) {
-  const homeId = match.homeTeamId;
-  const awayId = match.awayTeamId;
-  if (!homeId || !awayId || homeId === '0' || awayId === '0') return false;
-  return Boolean(teamMap[homeId] && teamMap[awayId]);
+function isTeamSlotAssigned(teamId, teamMap) {
+  if (!teamId || teamId === '0') return false;
+  return Boolean(teamMap[teamId]);
+}
+
+function extractRawTeamSlotLabel(match, side) {
+  const raw = match.raw ?? {};
+  const snakeKey = side === 'home' ? 'home_team_label' : 'away_team_label';
+  const camelKey = side === 'home' ? 'homeTeamLabel' : 'awayTeamLabel';
+  return String(raw[snakeKey] ?? raw[camelKey] ?? '').trim() || null;
+}
+
+/** Traduce etiquetas oficiales de cruces (inglés) a texto breve en español. */
+export function formatKnockoutSlotLabelEs(label) {
+  const trimmed = String(label || '').trim();
+  if (!trimmed) return null;
+
+  let match = trimmed.match(/^Winner Group ([A-L])$/i);
+  if (match) return `1.º del grupo ${match[1]}`;
+
+  match = trimmed.match(/^(?:Runner-up|2nd position) Group ([A-L])$/i);
+  if (match) return `2.º del grupo ${match[1]}`;
+
+  match = trimmed.match(/^3rd Group (.+)$/i);
+  if (match) return `3.º mejor (${match[1]})`;
+
+  match = trimmed.match(/^Winner Match (\d+)$/i);
+  if (match) return `Ganador del partido ${match[1]}`;
+
+  match = trimmed.match(/^Loser Match (\d+)$/i);
+  if (match) return `Perdedor del partido ${match[1]}`;
+
+  return trimmed;
+}
+
+function resolveTeamSlotLabel(match, side, teamMap) {
+  const teamId = side === 'home' ? match.homeTeamId : match.awayTeamId;
+  if (isTeamSlotAssigned(teamId, teamMap)) return null;
+  const rawLabel = extractRawTeamSlotLabel(match, side);
+  return rawLabel ? formatKnockoutSlotLabelEs(rawLabel) : null;
 }
 
 export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
@@ -254,8 +289,14 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
     kickoffTimezone: match.kickoffTimezone || stadium?.timezone || null,
     type: match.type,
     phaseLabel: phase?.label ?? (normalizePhaseKey(match.type) === 'group' ? 'Fase de grupos' : match.type),
-    homeTeam: formatTeamRef(teamMap[match.homeTeamId]),
-    awayTeam: formatTeamRef(teamMap[match.awayTeamId]),
+    homeTeam: isTeamSlotAssigned(match.homeTeamId, teamMap)
+      ? formatTeamRef(teamMap[match.homeTeamId])
+      : null,
+    awayTeam: isTeamSlotAssigned(match.awayTeamId, teamMap)
+      ? formatTeamRef(teamMap[match.awayTeamId])
+      : null,
+    homeTeamSlotLabel: resolveTeamSlotLabel(match, 'home', teamMap),
+    awayTeamSlotLabel: resolveTeamSlotLabel(match, 'away', teamMap),
     broadcasters: getBroadcastersForMatch(match.externalId, {
       homeTeam: teamMap[match.homeTeamId],
       awayTeam: teamMap[match.awayTeamId],
@@ -282,7 +323,6 @@ export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}) {
 
   for (const match of knockoutMatches) {
     if (hasSimKnockout && !isSimulationMatch(match)) continue;
-    if (!hasBothTeamsAssigned(match, teamMap)) continue;
 
     const phase = resolveKnockoutPhase(match.type);
     if (!phase) continue;

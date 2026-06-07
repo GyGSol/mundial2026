@@ -4,6 +4,7 @@ import {
   computeGroupStandings,
   buildKnockoutPhases,
   computeTournamentStats,
+  formatKnockoutSlotLabelEs,
 } from '../src/services/worldCupStatsService.js';
 
 const teams = [
@@ -46,7 +47,7 @@ describe('worldCupStatsService', () => {
     expect(result[0].standings.find((row) => row.teamId === '3')?.points).toBe(1);
   });
 
-  it('excluye placeholders oficiales sin equipos y prioriza simulación', () => {
+  it('prioriza simulación y oculta placeholders oficiales cuando hay sim-*', () => {
     const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
     const matches = [
       {
@@ -58,6 +59,10 @@ describe('worldCupStatsService', () => {
         type: 'r32',
         status: 'upcoming',
         kickoffAt: new Date('2026-07-01T00:00:00Z'),
+        raw: {
+          home_team_label: 'Winner Group A',
+          away_team_label: 'Runner-up Group B',
+        },
       },
       {
         externalId: 'sim-run-1',
@@ -85,6 +90,41 @@ describe('worldCupStatsService', () => {
     expect(phases).toHaveLength(1);
     expect(phases[0].matches).toHaveLength(1);
     expect(phases[0].matches[0].externalId).toBe('sim-run-1');
+  });
+
+  it('incluye placeholders oficiales con etiquetas de cruce cuando no hay simulación', () => {
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const matches = [
+      {
+        externalId: '73',
+        homeTeamId: '0',
+        awayTeamId: '0',
+        homeScore: 0,
+        awayScore: 0,
+        type: 'r32',
+        status: 'upcoming',
+        kickoffAt: new Date('2026-07-01T00:00:00Z'),
+        raw: {
+          home_team_label: 'Winner Group F',
+          away_team_label: 'Runner-up Group A',
+        },
+      },
+    ];
+
+    const phases = buildKnockoutPhases(matches, teamMap);
+    expect(phases).toHaveLength(1);
+    expect(phases[0].matches).toHaveLength(1);
+    expect(phases[0].matches[0].homeTeam).toBeNull();
+    expect(phases[0].matches[0].awayTeam).toBeNull();
+    expect(phases[0].matches[0].homeTeamSlotLabel).toBe('1.º del grupo F');
+    expect(phases[0].matches[0].awayTeamSlotLabel).toBe('2.º del grupo A');
+  });
+
+  it('traduce etiquetas de cruces eliminatorios al español', () => {
+    expect(formatKnockoutSlotLabelEs('Winner Group F')).toBe('1.º del grupo F');
+    expect(formatKnockoutSlotLabelEs('Runner-up Group A')).toBe('2.º del grupo A');
+    expect(formatKnockoutSlotLabelEs('Winner Match 73')).toBe('Ganador del partido 73');
+    expect(formatKnockoutSlotLabelEs('Loser Match 101')).toBe('Perdedor del partido 101');
   });
 
   it('agrupa partidos de fase final por ronda', () => {
