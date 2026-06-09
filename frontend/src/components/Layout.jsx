@@ -4,11 +4,15 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
 import EditPlayerDialog from './EditPlayerDialog.jsx';
 import { Button } from '@/components/ui/button.jsx';
+import { cn } from '@/lib/utils';
 
 const navClass = ({ isActive }) =>
-  isActive
-    ? 'text-foreground font-medium'
-    : 'text-muted-foreground hover:text-foreground';
+  cn(
+    'shrink-0 whitespace-nowrap rounded-md px-2 py-1.5 transition-colors',
+    isActive
+      ? 'bg-muted font-medium text-foreground'
+      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+  );
 
 export default function Layout() {
   const { user, logout, sessionExpiresLabel } = useAuth();
@@ -22,13 +26,40 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <Link to="/ranking" className="text-lg font-semibold tracking-tight">
-            Mundial 2026
-          </Link>
+      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <Link to="/ranking" className="shrink-0 text-lg font-semibold tracking-tight">
+              Mundial 2026
+            </Link>
 
-          <nav className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                className="hidden max-w-[10rem] truncate text-sm text-muted-foreground sm:inline md:max-w-xs"
+                title={user.name}
+              >
+                {user.name}
+                {sessionExpiresLabel ? (
+                  <span className="hidden lg:inline"> · sesión hasta {sessionExpiresLabel}</span>
+                ) : null}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => setEditPlayerOpen(true)}
+              >
+                Editar
+              </Button>
+              <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
+              <Button variant="outline" size="sm" className="shrink-0" onClick={() => logout()}>
+                Salir
+              </Button>
+            </div>
+          </div>
+
+          <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-0.5 text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <NavLink to="/ranking" className={navClass}>
               Ranking
             </NavLink>
@@ -58,31 +89,10 @@ export default function Layout() {
               Reglas
             </NavLink>
           </nav>
-
-          <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
-            <span className="text-muted-foreground">
-              {user.name}
-              {sessionExpiresLabel ? (
-                <span className="hidden sm:inline"> · sesión hasta {sessionExpiresLabel}</span>
-              ) : null}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setEditPlayerOpen(true)}
-            >
-              Editar jugador
-            </Button>
-            <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
-            <Button variant="outline" size="sm" onClick={() => logout()}>
-              Salir
-            </Button>
-          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:py-8">
         <Outlet />
       </main>
     </div>

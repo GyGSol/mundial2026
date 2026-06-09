@@ -36,21 +36,28 @@ export default function LeaderboardTable({
 
   return (
     <Card>
-      <CardContent className="p-0">
-        <Table>
+      <CardContent className="overflow-x-auto p-0">
+        <Table className="min-w-[280px]">
           <TableHeader>
             <TableRow>
-              <TableHead>#</TableHead>
+              <TableHead className="w-10">#</TableHead>
               <TableHead>Jugador</TableHead>
               {statColumns.map((col) => (
-                <TableHead key={col.key} className="text-center" title={col.title}>
+                <TableHead
+                  key={col.key}
+                  className="hidden text-center sm:table-cell"
+                  title={col.title}
+                >
                   {col.label}
                 </TableHead>
               ))}
-              <TableHead className="text-center" title="Puntos bonus (consuelo)">
+              <TableHead
+                className="hidden text-center sm:table-cell"
+                title="Puntos bonus (consuelo)"
+              >
                 PB
               </TableHead>
-              <TableHead className="text-right">Puntos</TableHead>
+              <TableHead className="text-right">Pts</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -67,9 +74,9 @@ export default function LeaderboardTable({
                   >
                     {row.rank}
                   </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center justify-between gap-2">
-                      <span>{row.name}</span>
+                  <TableCell className="max-w-[9rem] font-medium sm:max-w-none">
+                    <div className="flex min-w-0 items-center justify-between gap-2">
+                      <span className="truncate">{row.name}</span>
                       {showGroupName && row.groupName ? (
                         <span className="text-xs font-normal text-muted-foreground">
                           {row.groupName}
@@ -78,11 +85,16 @@ export default function LeaderboardTable({
                     </div>
                   </TableCell>
                   {statColumns.map((col) => (
-                    <TableCell key={col.key} className="text-center tabular-nums">
+                    <TableCell
+                      key={col.key}
+                      className="hidden text-center tabular-nums sm:table-cell"
+                    >
                       {row[col.key] ?? 0}
                     </TableCell>
                   ))}
-                  <TableCell className="text-center tabular-nums">{row.pb ?? 0}</TableCell>
+                  <TableCell className="hidden text-center tabular-nums sm:table-cell">
+                    {row.pb ?? 0}
+                  </TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">
                     {row.totalPoints}
                   </TableCell>

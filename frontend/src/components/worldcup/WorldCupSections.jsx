@@ -104,7 +104,7 @@ const standingsStatCell =
   'w-7 px-0.5 py-1.5 text-center tabular-nums text-xs sm:w-8 sm:px-1 sm:py-2 sm:text-sm md:w-9';
 const standingsOptionalCol = 'hidden sm:table-cell';
 
-export function GroupStandingsSection({ groups }) {
+export function GroupStandingsSection({ groups, onGroupClick }) {
   if (!groups?.length) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -119,9 +119,35 @@ export function GroupStandingsSection({ groups }) {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {groups.map((group) => (
-        <Card key={group.group} className="min-w-0">
+        <Card
+          key={group.group}
+          className={cn(
+            'min-w-0',
+            onGroupClick &&
+              'cursor-pointer transition-colors hover:bg-muted/20 active:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+          )}
+          onClick={onGroupClick ? () => onGroupClick(group.group) : undefined}
+          onKeyDown={
+            onGroupClick
+              ? (event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onGroupClick(group.group);
+                  }
+                }
+              : undefined
+          }
+          tabIndex={onGroupClick ? 0 : undefined}
+          role={onGroupClick ? 'button' : undefined}
+          aria-label={onGroupClick ? `Ver partidos del grupo ${group.group}` : undefined}
+        >
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Grupo {group.group}</CardTitle>
+            <CardTitle className="flex items-center justify-between gap-2 text-base">
+              <span>Grupo {group.group}</span>
+              {onGroupClick ? (
+                <span className="text-xs font-normal text-primary">Ver partidos →</span>
+              ) : null}
+            </CardTitle>
           </CardHeader>
           <CardContent className="px-2 pb-2 sm:px-4">
             <table className="w-full table-fixed caption-bottom text-sm">

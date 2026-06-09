@@ -24,6 +24,8 @@ const views = [
   { id: 'standings', label: 'Mis tablas de grupos' },
 ];
 
+const GROUP_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
 function formatLastUpdated(date) {
   if (!date) return '';
   return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
@@ -98,6 +100,14 @@ export default function PredictionsPage() {
     }
   };
 
+  const handleGroupSelect = (group) => {
+    setGroupFilter(group);
+    setStatusFilter('');
+    setActiveView('matches');
+    setMessage(`Mostrando partidos del grupo ${group}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const matches = data?.matches ?? [];
   const standingsGroups = standingsData?.groups ?? [];
   const updatedAt = activeView === 'standings' ? standingsLastUpdated : lastUpdated;
@@ -111,23 +121,34 @@ export default function PredictionsPage() {
   }, [focusMatchId, loading, matches, activeView]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {user?.email
-              ? `Panel de predicciones del Jugador ${user.email}`
-              : 'Panel de predicciones'}
+    <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex flex-col gap-1">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            {user?.email ? (
+              <>
+                <span className="sm:hidden">Mis predicciones</span>
+                <span className="hidden sm:inline">
+                  Panel de predicciones del Jugador {user.email}
+                </span>
+              </>
+            ) : (
+              'Panel de predicciones'
+            )}
           </h1>
+          {user?.email ? (
+            <p className="truncate text-xs text-muted-foreground sm:hidden">{user.email}</p>
+          ) : null}
           <p className="text-sm text-muted-foreground">
             {activeView === 'matches'
-              ? `${matches.length} partidos`
-              : `${standingsGroups.length} grupos`}
-            {updatedAt && ` · Actualizado ${formatLastUpdated(updatedAt)} · tiempo real`}
+              ? `${matches.length} partido${matches.length === 1 ? '' : 's'}`
+              : `${standingsGroups.length} grupo${standingsGroups.length === 1 ? '' : 's'}`}
+            {groupFilter ? ` · Grupo ${groupFilter}` : ''}
+            {updatedAt && ` · Actualizado ${formatLastUpdated(updatedAt)}`}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {activeView === 'matches' ? (
             <ScheduleAllButton
               matches={matches}
@@ -141,7 +162,7 @@ export default function PredictionsPage() {
               value={statusFilter || 'all'}
               onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
@@ -157,12 +178,12 @@ export default function PredictionsPage() {
             value={groupFilter || 'all'}
             onValueChange={(value) => setGroupFilter(value === 'all' ? '' : value)}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Grupo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los grupos</SelectItem>
-              {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'].map((g) => (
+              {GROUP_OPTIONS.map((g) => (
                 <SelectItem key={g} value={g}>
                   Grupo {g}
                 </SelectItem>
@@ -172,13 +193,13 @@ export default function PredictionsPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {views.map((view) => (
           <Button
             key={view.id}
             size="sm"
             variant={activeView === view.id ? 'default' : 'outline'}
-            className={cn(activeView !== view.id && 'text-muted-foreground')}
+            className={cn('shrink-0', activeView !== view.id && 'text-muted-foreground')}
             onClick={() => setActiveView(view.id)}
           >
             {view.label}
@@ -188,7 +209,7 @@ export default function PredictionsPage() {
 
       {activeView === 'matches' ? (
         <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-foreground">
               Consultá el estado de los jugadores antes de predecir
             </p>
@@ -214,13 +235,31 @@ export default function PredictionsPage() {
             <p className="text-muted-foreground">Cargando partidos...</p>
           )}
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {!loading && !matches.length && !error ? (
+            <p className="text-sm text-muted-foreground">
+              No hay partidos con los filtros actuales.
+              {groupFilter ? (
+                <>
+                  {' '}
+                  <button
+                    type="button"
+                    className="font-medium text-primary underline"
+                    onClick={() => setGroupFilter('')}
+                  >
+                    Ver todos los grupos
+                  </button>
+                </>
+              ) : null}
+            </p>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {matches.map((match) => (
               <div
                 key={match.id}
                 id={`match-${match.id}`}
                 className={cn(
-                  'scroll-mt-24 rounded-xl transition-shadow',
+                  'scroll-mt-28 rounded-xl transition-shadow',
                   focusMatchId === match.id && 'ring-2 ring-primary ring-offset-2'
                 )}
               >
@@ -242,6 +281,7 @@ export default function PredictionsPage() {
           groups={standingsGroups}
           loading={standingsLoading}
           error={standingsError}
+          onGroupSelect={handleGroupSelect}
         />
       )}
     </div>

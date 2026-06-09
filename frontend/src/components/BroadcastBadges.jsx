@@ -6,7 +6,7 @@ const SIZE_STYLES = {
     height: 'h-4',
     maxWidth: 'max-w-10',
     gap: 'gap-1.5',
-    wrap: 'flex-nowrap',
+    wrap: 'flex-wrap',
   },
   sm: {
     height: 'h-5',

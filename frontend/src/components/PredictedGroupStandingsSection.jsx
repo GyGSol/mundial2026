@@ -2,7 +2,12 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { GroupStandingsSection } from '@/components/worldcup/WorldCupSections.jsx';
 
-export default function PredictedGroupStandingsSection({ groups, loading, error }) {
+export default function PredictedGroupStandingsSection({
+  groups,
+  loading,
+  error,
+  onGroupSelect,
+}) {
   if (loading && !groups?.length) {
     return <p className="text-sm text-muted-foreground">Cargando tablas de grupos...</p>;
   }
@@ -30,6 +35,9 @@ export default function PredictedGroupStandingsSection({ groups, loading, error 
           <p className="text-muted-foreground">
             Los partidos sin predicción cargada no aparecen en la tabla.
           </p>
+          {onGroupSelect ? (
+            <p className="text-muted-foreground">Tocá un grupo para ver sus partidos.</p>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -43,7 +51,7 @@ export default function PredictedGroupStandingsSection({ groups, loading, error 
         </div>
       ) : null}
 
-      <GroupStandingsSection groups={groups} />
+      <GroupStandingsSection groups={groups} onGroupClick={onGroupSelect} />
     </div>
   );
 }

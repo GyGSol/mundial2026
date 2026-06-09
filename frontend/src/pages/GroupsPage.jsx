@@ -691,12 +691,12 @@ export default function GroupsPage() {
                               {(groupJoinRequests[group.id] ?? []).map((req) => (
                                 <li
                                   key={req.userId}
-                                  className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/30 px-2 py-1.5 text-sm"
+                                  className="flex flex-col gap-2 rounded-md bg-muted/30 px-2 py-1.5 text-sm sm:flex-row sm:items-center sm:justify-between"
                                 >
-                                  <span>
+                                  <span className="min-w-0 truncate">
                                     {req.name} · {req.email}
                                   </span>
-                                  <div className="flex gap-1">
+                                  <div className="flex shrink-0 gap-1">
                                     <Button
                                       size="sm"
                                       disabled={Boolean(memberActionLoading)}
@@ -732,9 +732,9 @@ export default function GroupsPage() {
                             {(groupMembers[group.id] ?? []).map((member) => (
                               <li
                                 key={member.id}
-                                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                                className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between"
                               >
-                                <span>
+                                <span className="min-w-0 truncate">
                                   {member.name} · {member.email}
                                   {member.role === 'owner' ? (
                                     <span className="ml-1 text-xs text-emerald-600">

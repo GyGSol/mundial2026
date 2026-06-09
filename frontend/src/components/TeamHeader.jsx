@@ -39,7 +39,9 @@ export default function TeamHeader({ team }) {
 
       <WorldCupStars count={titles} />
 
-      <p className="min-h-[2.5rem] text-sm font-semibold leading-tight">{name}</p>
+      <p className="line-clamp-2 min-h-[2.5rem] max-w-full text-sm font-semibold leading-tight">
+        {name}
+      </p>
     </div>
   );
 }

@@ -54,21 +54,24 @@ export default function WorldCupPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Mundial 2026</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mundial 2026</h1>
           <p className="text-sm text-muted-foreground">
-            Tablas de grupos, fase final, estadios y estadísticas desde la API oficial del torneo.
+            <span className="sm:hidden">Grupos, fixture y estadísticas del torneo.</span>
+            <span className="hidden sm:inline">
+              Tablas de grupos, fase final, estadios y estadísticas desde la API oficial del torneo.
+            </span>
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((tab) => (
           <Button
             key={tab.id}
             size="sm"
             variant={activeTab === tab.id ? 'default' : 'outline'}
-            className={cn(activeTab !== tab.id && 'text-muted-foreground')}
+            className={cn('shrink-0', activeTab !== tab.id && 'text-muted-foreground')}
             onClick={() => setActiveTab(tab.id)}
           >
             <span className="inline-flex items-center gap-1.5">

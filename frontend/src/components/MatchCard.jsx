@@ -21,7 +21,12 @@ export default function MatchCard({ match, onSave, savingId, isScheduled, onSche
   const status = statusLabels[match.status] || statusLabels.upcoming;
   const hasPrediction = Boolean(match.hasPrediction ?? match.prediction?.userSubmitted);
   const isArgentinaMatch = matchInvolvesArgentina(match);
-  const matchMeta = (
+  const matchMetaShort = (
+    <>
+      Grupo {match.group} · {formatMatchDate(match)}
+    </>
+  );
+  const matchMetaFull = (
     <>
       Grupo {match.group} · {formatMatchDate(match, { showTimezone: true })}
     </>
@@ -80,12 +85,15 @@ export default function MatchCard({ match, onSave, savingId, isScheduled, onSche
               />
             ) : null}
           </div>
-          <CardDescription className="w-full text-center">{matchMeta}</CardDescription>
+          <CardDescription className="w-full text-center text-xs sm:text-sm">
+            <span className="sm:hidden">{matchMetaShort}</span>
+            <span className="hidden sm:inline">{matchMetaFull}</span>
+          </CardDescription>
         </div>
 
         <div className="hidden flex-wrap items-start justify-between gap-2 md:flex">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{headerBadges}</div>
-          <CardDescription className="shrink-0 text-right">{matchMeta}</CardDescription>
+          <CardDescription className="shrink-0 text-right">{matchMetaFull}</CardDescription>
         </div>
       </CardHeader>
 

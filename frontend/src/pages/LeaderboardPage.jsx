@@ -120,9 +120,9 @@ export default function LeaderboardPage() {
     <div className="flex flex-col gap-6">
       {rankingReady && <LiveMatchesBar matches={data?.liveMatches ?? []} />}
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex flex-col gap-1">
+          <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
             Ranking · {displayGroup?.name ?? 'Sin grupo'}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -133,10 +133,10 @@ export default function LeaderboardPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           {rankingGroupOptions.length > 0 ? (
             <Select value={effectiveGroupId} onValueChange={setSelectedGroupId}>
-              <SelectTrigger className="w-[220px]">
+              <SelectTrigger className="w-full sm:w-[220px]">
                 <SelectValue placeholder="Elegir grupo" />
               </SelectTrigger>
               <SelectContent>

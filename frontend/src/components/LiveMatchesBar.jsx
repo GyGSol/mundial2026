@@ -74,7 +74,7 @@ export default function LiveMatchesBar({ matches = [] }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <p className="text-sm font-medium text-muted-foreground">Partidos en curso</p>
-      <div className="flex w-full flex-wrap items-stretch justify-center gap-3">
+      <div className="-mx-4 flex w-full gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {matches.map((match) => (
           <LiveMatchCard key={match.id} match={match} />
         ))}

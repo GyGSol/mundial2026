@@ -57,7 +57,7 @@ export default function GroupDirectoryRow({
             toggleExpanded();
           }
         }}
-        className="flex cursor-pointer items-center justify-between gap-3 p-3 transition-colors hover:bg-muted/30"
+        className="flex cursor-pointer flex-col gap-3 p-3 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="flex min-w-0 flex-1 items-start gap-2">
           <ChevronDown
@@ -67,7 +67,7 @@ export default function GroupDirectoryRow({
             )}
           />
           <div className="min-w-0">
-            <p className="font-medium">{group.name}</p>
+            <p className="truncate font-medium">{group.name}</p>
             <p className="text-sm text-muted-foreground">
               {group.memberCount} jugador{group.memberCount === 1 ? '' : 'es'}
               {isVirtual ? ' · ranking sin liga' : ''}
@@ -78,7 +78,10 @@ export default function GroupDirectoryRow({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2" onClick={handleActionClick}>
+        <div
+          className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end"
+          onClick={handleActionClick}
+        >
           {!isAuthenticated ? (
             <Button asChild size="sm" variant="outline">
               <Link to="/login">Ingresar</Link>
