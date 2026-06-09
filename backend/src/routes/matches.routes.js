@@ -42,6 +42,7 @@ async function enrichMatches(matches, userId) {
         {
           homeGoals: p.homeGoals,
           awayGoals: p.awayGoals,
+          userSubmitted: Boolean(p.userSubmitted),
           pointsEarned: p.pointsEarned,
           pointsBreakdown: p.pointsBreakdown,
         },

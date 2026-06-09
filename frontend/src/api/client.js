@@ -116,6 +116,10 @@ export const predictionsApi = {
       method: 'PUT',
       body: JSON.stringify({ homeGoals, awayGoals }),
     }),
+  groupStandings: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/predictions/group-standings${query ? `?${query}` : ''}`);
+  },
 };
 
 export const leaderboardApi = {

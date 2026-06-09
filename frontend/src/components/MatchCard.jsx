@@ -19,7 +19,7 @@ const statusLabels = {
 
 export default function MatchCard({ match, onSave, savingId, isScheduled, onScheduled }) {
   const status = statusLabels[match.status] || statusLabels.upcoming;
-  const hasPrediction = match.hasPrediction || Boolean(match.prediction);
+  const hasPrediction = Boolean(match.hasPrediction ?? match.prediction?.userSubmitted);
   const isArgentinaMatch = matchInvolvesArgentina(match);
   const matchMeta = (
     <>

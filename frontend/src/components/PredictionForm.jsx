@@ -106,7 +106,7 @@ function BroadcastRow({ broadcasters }) {
 
 export default function PredictionForm({ match, onSave, saving, broadcasters = [] }) {
   const locked = !match.predictionOpen;
-  const hasPrediction = match.hasPrediction || Boolean(match.prediction);
+  const hasPrediction = Boolean(match.hasPrediction ?? match.prediction?.userSubmitted);
   const [editing, setEditing] = useState(!hasPrediction && !locked);
   const [home, setHome] = useState(match.prediction?.homeGoals ?? 0);
   const [away, setAway] = useState(match.prediction?.awayGoals ?? 0);
@@ -152,13 +152,13 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           showActualScores={showActualScores}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
-          homePrediction={prediction?.homeGoals}
-          awayPrediction={prediction?.awayGoals}
+          homePrediction={hasPrediction ? prediction?.homeGoals : undefined}
+          awayPrediction={hasPrediction ? prediction?.awayGoals : undefined}
         />
         {prediction?.pointsEarned != null && (
           <p className="text-sm font-medium text-foreground">+{prediction.pointsEarned} pts</p>
         )}
-        {!prediction && <p className="text-sm text-muted-foreground">Predicción cerrada</p>}
+        {!hasPrediction && <p className="text-sm text-muted-foreground">Predicción cerrada</p>}
         <BroadcastRow broadcasters={broadcasters} />
       </div>
     );

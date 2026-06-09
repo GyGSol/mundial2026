@@ -26,7 +26,7 @@ export function enrichMatchPredictionMeta(match, prediction) {
   return {
     predictionOpen,
     lockAt: lockAt?.toISOString() ?? null,
-    hasPrediction: Boolean(prediction),
+    hasPrediction: Boolean(prediction?.userSubmitted),
   };
 }
 
@@ -38,7 +38,17 @@ export async function ensureDefaultPredictionsForUser(userId) {
 
     await Prediction.findOneAndUpdate(
       { userId, matchId: match._id },
-      { $setOnInsert: { homeGoals: 0, awayGoals: 0, pointsEarned: null, bonusPoint: 0, bonusReason: null, pointsBreakdown: null } },
+      {
+        $setOnInsert: {
+          homeGoals: 0,
+          awayGoals: 0,
+          userSubmitted: false,
+          pointsEarned: null,
+          bonusPoint: 0,
+          bonusReason: null,
+          pointsBreakdown: null,
+        },
+      },
       { upsert: true }
     );
   }
@@ -62,6 +72,7 @@ export async function applyDefaultPredictionsForLockedMatches() {
         matchId: match._id,
         homeGoals: 0,
         awayGoals: 0,
+        userSubmitted: false,
         pointsEarned: null,
         bonusPoint: 0,
         bonusReason: null,

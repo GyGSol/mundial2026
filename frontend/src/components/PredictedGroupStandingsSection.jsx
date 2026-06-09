@@ -1,0 +1,49 @@
+import { Badge } from '@/components/ui/badge.jsx';
+import { Card, CardContent } from '@/components/ui/card.jsx';
+import { GroupStandingsSection } from '@/components/worldcup/WorldCupSections.jsx';
+
+export default function PredictedGroupStandingsSection({ groups, loading, error }) {
+  if (loading && !groups?.length) {
+    return <p className="text-sm text-muted-foreground">Cargando tablas de grupos...</p>;
+  }
+
+  if (error) {
+    return <p className="text-sm text-destructive">{error}</p>;
+  }
+
+  if (!groups?.length) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Todavía no hay datos de grupos para armar tus tablas de predicción.
+      </p>
+    );
+  }
+
+  const groupsWithOmitted = groups.filter((group) => group.matchCounts?.omitted > 0);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex flex-col gap-2 p-4 text-sm text-foreground">
+          <p>Resultados reales en partidos ya jugados.</p>
+          <p>Tus predicciones guardadas en partidos pendientes.</p>
+          <p className="text-muted-foreground">
+            Los partidos sin predicción cargada no aparecen en la tabla.
+          </p>
+        </CardContent>
+      </Card>
+
+      {groupsWithOmitted.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {groupsWithOmitted.map((group) => (
+            <Badge key={group.group} variant="outline" className="text-xs">
+              Grupo {group.group}: {group.matchCounts.omitted} sin predicción cargada
+            </Badge>
+          ))}
+        </div>
+      ) : null}
+
+      <GroupStandingsSection groups={groups} />
+    </div>
+  );
+}

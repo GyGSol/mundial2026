@@ -6,6 +6,7 @@ const predictionSchema = new mongoose.Schema(
     matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', required: true, index: true },
     homeGoals: { type: Number, required: true, min: 0 },
     awayGoals: { type: Number, required: true, min: 0 },
+    userSubmitted: { type: Boolean, default: false },
     pointsEarned: { type: Number, default: null },
     bonusPoint: { type: Number, default: 0 },
     bonusReason: { type: String, default: null },
