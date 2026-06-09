@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
 import { getTeamFlag } from '@/lib/teamMeta';
-import { GroupColorSwatch, KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
+import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
 import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
 import { KnockoutSection } from '@/components/worldcup/WorldCupSections.jsx';
 import {
@@ -17,14 +17,13 @@ import {
 } from '@/lib/worldCupBracketLayout.js';
 
 const MIN_CELL_W = 108;
-/** Dieciseisavos span 2 rows; cards need ~180px on narrow columns. */
-const MIN_CELL_H = 96;
+/** Dieciseisavos ocupan 2 filas; con el estilo completo hace falta más alto que 64px. */
+const MIN_CELL_H = 90;
 const FINAL_COLUMN = 5;
 const CENTER_MATCH_IDS = new Set(['103', '104']);
 
 function useBracketDimensions(containerRef) {
   const [cellW, setCellW] = useState(MIN_CELL_W);
-  const [isNarrow, setIsNarrow] = useState(false);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -33,7 +32,6 @@ function useBracketDimensions(containerRef) {
     const update = () => {
       const width = el.clientWidth;
       if (width <= 0) return;
-      setIsNarrow(width < 640);
       setCellW(Math.max(MIN_CELL_W, width / BRACKET_GRID_COLS));
     };
 
@@ -43,13 +41,11 @@ function useBracketDimensions(containerRef) {
     return () => observer.disconnect();
   }, [containerRef]);
 
-  const heightRatio = isNarrow ? 0.92 : 0.72;
-  const minCellH = isNarrow ? MIN_CELL_H : 72;
-  const cellH = Math.max(minCellH, Math.round(cellW * heightRatio));
+  const cellH = Math.max(MIN_CELL_H, Math.round(cellW * 0.48));
   const width = BRACKET_GRID_COLS * cellW;
   const height = BRACKET_GRID_ROWS * cellH;
 
-  return { cellW, cellH, width, height, isNarrow };
+  return { cellW, cellH, width, height };
 }
 
 function nodeCenterPx(node, cellW, cellH) {
@@ -74,18 +70,7 @@ function buildConnectorPath(fromId, toId, cellW, cellH) {
   return `M ${fromEdgeX} ${from.y} H ${midX} V ${to.y} H ${toEdgeX}`;
 }
 
-function compactSlotLabel(slotLabel) {
-  const parsed = parseKnockoutSlotLabel(slotLabel);
-  if (parsed?.type === 'group_position') {
-    return `${parsed.position}.º ${parsed.group}`;
-  }
-  if (parsed?.type === 'third_best') {
-    return parsed.text ?? slotLabel;
-  }
-  return parsed?.text ?? slotLabel;
-}
-
-function BracketCountryLine({ team, slotLabel, score, isWinner, isLive, compact = false }) {
+function BracketCountryLine({ team, slotLabel, score, isWinner, isLive }) {
   const flagUrl = team ? getTeamFlag(team) : null;
   const title = team?.nameEn || team?.fifaCode || slotLabel || 'Por definir';
   const parsed = !team && slotLabel ? parseKnockoutSlotLabel(slotLabel) : null;
@@ -128,22 +113,10 @@ function BracketCountryLine({ team, slotLabel, score, isWinner, isLive, compact 
           {team.nameEn || team.fifaCode}
         </span>
       ) : slotLabel ? (
-        compact ? (
-          <span
-            className="inline-flex min-w-0 items-center justify-center gap-1 text-center text-[9px] font-medium leading-tight text-primary"
-            title={slotLabel}
-          >
-            {parsed?.type === 'group_position' ? (
-              <GroupColorSwatch group={parsed.group} position={parsed.position} size="xs" />
-            ) : null}
-            <span className="line-clamp-2">{compactSlotLabel(slotLabel)}</span>
-          </span>
-        ) : (
-          <KnockoutSlotLabel
-            label={slotLabel}
-            className="min-w-0 text-[10px] font-medium text-primary sm:text-[11px]"
-          />
-        )
+        <KnockoutSlotLabel
+          label={slotLabel}
+          className="min-w-0 text-[10px] font-medium text-primary sm:text-[11px]"
+        />
       ) : (
         <span className="text-[11px] text-muted-foreground sm:text-xs">Por definir</span>
       )}
@@ -161,24 +134,11 @@ function BracketCountryLine({ team, slotLabel, score, isWinner, isLive, compact 
   );
 }
 
-function BracketMatchMeta({ match, compact = false }) {
+function BracketMatchMeta({ match }) {
   const dateTime = formatMatchDate(match);
   const stadiumLine = [match?.stadium?.nameEn, match?.stadium?.city].filter(Boolean).join(' · ');
 
   if (!match?.externalId && !dateTime && !stadiumLine) return null;
-
-  if (compact) {
-    const metaLine = [match?.externalId ? `#${match.externalId}` : null, dateTime]
-      .filter(Boolean)
-      .join(' · ');
-    if (!metaLine) return null;
-
-    return (
-      <div className="mb-1 w-full border-b border-border/40 pb-1 text-center text-[9px] leading-snug text-primary/75">
-        <p className="font-semibold tabular-nums text-primary">{metaLine}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="mb-1.5 w-full space-y-0.5 border-b border-border/40 pb-1.5 text-center text-[9px] leading-snug text-primary/75 sm:text-[10px]">
@@ -195,7 +155,7 @@ function BracketMatchMeta({ match, compact = false }) {
   );
 }
 
-function BracketMatchCell({ match, highlight = false, compact = false }) {
+function BracketMatchCell({ match, highlight = false }) {
   const isLive = match?.status === 'live';
   const isFinished = match?.status === 'finished';
   const hasScore = isFinished || isLive;
@@ -209,14 +169,13 @@ function BracketMatchCell({ match, highlight = false, compact = false }) {
   return (
     <div
       className={cn(
-        'flex h-full w-full min-h-0 min-w-0 flex-col items-center justify-center rounded-md border bg-card shadow-sm',
-        compact ? 'gap-0 px-1 py-1' : 'gap-0.5 px-1.5 py-2',
+        'flex h-full w-full min-h-0 min-w-0 flex-col items-center justify-center gap-0.5 rounded-md border bg-card px-1.5 py-2 shadow-sm',
         highlight ? 'border-primary/60 ring-1 ring-primary/20' : 'border-border/70',
         isLive && 'border-emerald-400/70 bg-emerald-50/30'
       )}
       title={`Partido ${match?.externalId ?? ''}: ${homeTitle} vs ${awayTitle}`}
     >
-      <BracketMatchMeta match={match} compact={compact} />
+      <BracketMatchMeta match={match} />
 
       <BracketCountryLine
         team={match?.homeTeam}
@@ -224,17 +183,9 @@ function BracketMatchCell({ match, highlight = false, compact = false }) {
         score={hasScore ? match.homeScore : null}
         isWinner={homeWinner}
         isLive={isLive}
-        compact={compact}
       />
 
-      <span
-        className={cn(
-          'font-semibold uppercase tracking-wide text-primary/70',
-          compact ? 'text-[9px] leading-none' : 'text-[10px]'
-        )}
-      >
-        vs
-      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-primary/70">vs</span>
 
       <BracketCountryLine
         team={match?.awayTeam}
@@ -242,7 +193,6 @@ function BracketMatchCell({ match, highlight = false, compact = false }) {
         score={hasScore ? match.awayScore : null}
         isWinner={awayWinner}
         isLive={isLive}
-        compact={compact}
       />
     </div>
   );
@@ -277,7 +227,7 @@ function BracketConnectors({ cellW, cellH, width, height }) {
   );
 }
 
-function BracketCenterColumn({ cellW, height, finalMatch, thirdMatch, compact = false }) {
+function BracketCenterColumn({ cellW, height, finalMatch, thirdMatch }) {
   const centerY = height / 2;
 
   return (
@@ -309,12 +259,12 @@ function BracketCenterColumn({ cellW, height, finalMatch, thirdMatch, compact = 
         </span>
         {finalMatch ? (
           <div className="pointer-events-auto w-full">
-            <BracketMatchCell match={finalMatch} highlight compact={compact} />
+            <BracketMatchCell match={finalMatch} highlight />
           </div>
         ) : null}
         {thirdMatch ? (
           <div className="pointer-events-auto mt-2 w-full">
-            <BracketMatchCell match={thirdMatch} compact={compact} />
+            <BracketMatchCell match={thirdMatch} />
           </div>
         ) : null}
       </div>
@@ -325,7 +275,7 @@ function BracketCenterColumn({ cellW, height, finalMatch, thirdMatch, compact = 
 function BracketColumnHeaders({ cellW, width }) {
   return (
     <div
-      className="mb-1 grid"
+      className="mb-1 grid shrink-0"
       style={{
         width,
         gridTemplateColumns: `repeat(${BRACKET_GRID_COLS}, ${cellW}px)`,
@@ -349,7 +299,7 @@ function BracketColumnHeaders({ cellW, width }) {
 
 export default function KnockoutBracket({ phases }) {
   const containerRef = useRef(null);
-  const { cellW, cellH, width, height, isNarrow } = useBracketDimensions(containerRef);
+  const { cellW, cellH, width, height } = useBracketDimensions(containerRef);
 
   if (!phases?.length) {
     return (
@@ -368,8 +318,11 @@ export default function KnockoutBracket({ phases }) {
   const thirdMatch = matchById.get('103');
 
   return (
-    <div ref={containerRef} className="w-full overflow-x-auto">
-      <div style={{ width, minWidth: '100%' }}>
+    <div
+      ref={containerRef}
+      className="max-w-full overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+    >
+      <div className="w-max min-w-full" style={{ width }}>
         <BracketColumnHeaders cellW={cellW} width={width} />
         <div className="relative" style={{ width, height, minHeight: height }}>
           <BracketConnectors cellW={cellW} cellH={cellH} width={width} height={height} />
@@ -378,10 +331,9 @@ export default function KnockoutBracket({ phases }) {
             height={height}
             finalMatch={finalMatch}
             thirdMatch={thirdMatch}
-            compact={isNarrow}
           />
           <div
-            className="relative grid h-full"
+            className="relative grid h-full shrink-0"
             style={{
               width,
               gridTemplateColumns: `repeat(${BRACKET_GRID_COLS}, ${cellW}px)`,
@@ -402,7 +354,7 @@ export default function KnockoutBracket({ phases }) {
                   }}
                 >
                   {match ? (
-                    <BracketMatchCell match={match} compact={isNarrow} />
+                    <BracketMatchCell match={match} />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/20 px-2 text-center text-xs text-primary/70">
                       #{id}

@@ -38,7 +38,7 @@ export default function FixtureSection({ groups, knockout }) {
             A medida que se jueguen los partidos, verás aquí banderas, resultados y el camino del torneo.
           </p>
         </div>
-        <div className="w-full overflow-x-auto rounded-lg border border-border/60 bg-muted/5 p-3 sm:p-4">
+        <div className="rounded-lg border border-border/60 bg-muted/5 p-3 sm:p-4">
           <KnockoutBracket phases={knockout} />
         </div>
       </div>
