@@ -8,12 +8,26 @@ import {
   ensureDefaultPredictionsForUser,
   enrichMatchPredictionMeta,
 } from '../services/predictionLockService.js';
+import { backfillLegacyUserSubmittedPredictions } from '../services/predictionMigrationService.js';
+
+let legacyBackfillPromise = null;
+
+function ensureLegacyPredictionsBackfilled() {
+  if (!legacyBackfillPromise) {
+    legacyBackfillPromise = backfillLegacyUserSubmittedPredictions().catch((err) => {
+      legacyBackfillPromise = null;
+      throw err;
+    });
+  }
+  return legacyBackfillPromise;
+}
 import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
 
 const router = Router();
 
 async function enrichMatches(matches, userId) {
   if (userId) {
+    await ensureLegacyPredictionsBackfilled();
     await ensureDefaultPredictionsForUser(userId);
   }
 

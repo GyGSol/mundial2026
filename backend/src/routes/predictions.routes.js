@@ -8,11 +8,13 @@ import { isPredictionLocked } from '../services/predictionLockService.js';
 import { computePredictedGroupStandings } from '../services/predictedGroupStandingsService.js';
 import { annotateGroupQualification } from '../services/worldCupStatsService.js';
 import { isGroupPhaseMatch } from '../services/groupStandingsUtils.js';
+import { backfillLegacyUserSubmittedPredictions } from '../services/predictionMigrationService.js';
 
 const router = Router();
 
 router.get('/group-standings', authMiddleware, async (req, res, next) => {
   try {
+    await backfillLegacyUserSubmittedPredictions();
     const groupFilter = req.query.group
       ? String(req.query.group).trim().toUpperCase()
       : null;

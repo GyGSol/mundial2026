@@ -46,7 +46,7 @@ function groupLabel(match) {
 }
 
 function predictionActionLine(match) {
-  const hasPrediction = match.prediction != null;
+  const hasPrediction = Boolean(match.hasPrediction ?? match.prediction?.userSubmitted);
   const { homeGoals, awayGoals } = match.prediction ?? {};
 
   if (hasPrediction && match.predictionOpen) {

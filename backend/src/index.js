@@ -4,9 +4,22 @@ import { connectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { startSyncJob } from './jobs/syncMatches.job.js';
 import { initWebSocket } from './services/websocketService.js';
+import { backfillLegacyUserSubmittedPredictions } from './services/predictionMigrationService.js';
 
 async function main() {
   await connectDb();
+
+  try {
+    const { updated, rescoredMatches } = await backfillLegacyUserSubmittedPredictions();
+    if (updated > 0) {
+      console.log(
+        `Backfill userSubmitted: ${updated} predicciones, ${rescoredMatches} partidos rescored`
+      );
+    }
+  } catch (err) {
+    console.error('Backfill userSubmitted failed:', err);
+  }
+
   const app = createApp();
   const server = createServer(app);
 
