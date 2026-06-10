@@ -107,7 +107,6 @@ export function getStadiumDetailRows(stadium) {
 
   const rows = [
     { label: 'Nombre FIFA', value: stadium.fifaName },
-    { label: 'Nombre (FA)', value: stadium.nameFa },
     { label: 'Ciudad', value: stadium.city },
     { label: 'País', value: stadium.country },
     {
@@ -117,7 +116,6 @@ export function getStadiumDetailRows(stadium) {
         : null,
     },
     { label: 'Zona horaria', value: formatStadiumTimezone(stadium.timezone) },
-    { label: 'ID sede', value: stadium.externalId },
   ];
 
   return rows.filter((row) => row.value);
