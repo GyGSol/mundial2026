@@ -1,7 +1,11 @@
 import { Badge } from '@/components/ui/badge.jsx';
 import { useIsMobile } from '@/hooks/useIsMobile.js';
 import { cn } from '@/lib/utils';
-import { canScheduleMatchReminder, scheduleMatchInCalendar } from '@/lib/matchCalendar.js';
+import {
+  canScheduleMatchReminder,
+  fetchGroupStandingsForMatch,
+  scheduleMatchInCalendar,
+} from '@/lib/matchCalendar.js';
 
 const badgeBase =
   'border px-2.5 py-0.5 text-xs font-semibold transition-colors';
@@ -28,9 +32,10 @@ export default function MatchScheduleBadge({ match, isScheduled, onScheduled }) 
 
   if (!schedulable) return null;
 
-  const handleClick = () => {
+  const handleClick = async () => {
     try {
-      scheduleMatchInCalendar(match);
+      const groupStandings = await fetchGroupStandingsForMatch(match);
+      scheduleMatchInCalendar(match, { groupStandings });
       onScheduled?.(match.id);
     } catch {
       // El navegador puede bloquear la descarga; el usuario puede reintentar

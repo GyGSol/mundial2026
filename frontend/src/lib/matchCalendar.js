@@ -15,7 +15,6 @@ function toIcsUtc(date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 }
 
-/** Solo nombre del equipo (sin URLs de banderas ni emojis en calendario). */
 function teamName(team) {
   if (!team) return 'Por definir';
   return team.nameEn || team.fifaCode || 'Equipo';
@@ -69,7 +68,44 @@ export function predictionsUrlForMatch(match) {
   return `${origin}/predictions?match=${encodeURIComponent(matchId)}`;
 }
 
-function buildDescription(match, predictionsUrl) {
+export function isFirstGroupEncounter(match) {
+  if (!match?.group || match.isKnockout) return false;
+  const type = String(match.type || 'group').toLowerCase();
+  if (type !== 'group') return false;
+  return Number(match.matchday) === 1;
+}
+
+export function shouldIncludeGroupStandings(match) {
+  if (!match?.group || match.isKnockout) return false;
+  const type = String(match.type || 'group').toLowerCase();
+  if (type !== 'group') return false;
+  return !isFirstGroupEncounter(match);
+}
+
+function teamCode(row) {
+  return row.fifaCode || (row.nameEn || row.teamId || '—').slice(0, 3).toUpperCase();
+}
+
+export function formatGroupStandingsForCalendar(group) {
+  if (!group?.standings?.length) return null;
+
+  const lines = [
+    '',
+    `⚽ Tabla del Grupo ${group.group} (con tus predicciones):`,
+    '#  Equipo  PJ  PG  GF  DG  Pts',
+  ];
+
+  for (const row of group.standings) {
+    const dg = row.goalDiff > 0 ? `+${row.goalDiff}` : String(row.goalDiff);
+    lines.push(
+      `${String(row.rank).padStart(1)}  ${teamCode(row).padEnd(6)} ${String(row.played).padStart(2)}  ${String(row.won).padStart(2)}  ${String(row.goalsFor).padStart(2)}  ${dg.padStart(3)}  ${String(row.points).padStart(2)}`
+    );
+  }
+
+  return lines.join('\n');
+}
+
+function buildDescription(match, predictionsUrl, groupStandings) {
   const kickoff = formatMatchDate(match);
   const lock = formatLockAt(match.lockAt);
   const group = groupLabel(match);
@@ -79,6 +115,9 @@ function buildDescription(match, predictionsUrl) {
     kickoff ? `Inicio del partido: ${kickoff}` : null,
     lock ? `Cierre de predicciones: ${lock}` : 'Cierre de predicciones: 1 h antes del partido',
     predictionActionLine(match),
+    shouldIncludeGroupStandings(match)
+      ? formatGroupStandingsForCalendar(groupStandings)
+      : null,
     predictionsUrl,
   ];
 
@@ -119,7 +158,7 @@ export function canScheduleMatchReminder(match) {
   return eventStart && eventStart.getTime() > Date.now();
 }
 
-function buildVeventLines(match, { predictionsUrl } = {}) {
+function buildVeventLines(match, { predictionsUrl, groupStandings } = {}) {
   const eventStart = getMatchEventStartAt(match);
   if (!eventStart) {
     throw new Error('Este partido no tiene horario de inicio');
@@ -127,12 +166,12 @@ function buildVeventLines(match, { predictionsUrl } = {}) {
 
   const lockAt = getLockAtFromMatch(match);
   const end = lockAt ?? new Date(eventStart.getTime() + REMINDER_BEFORE_LOCK_MS);
-  const summary = escapeIcsText(`Mundial 2026 · ${matchTitle(match)}`);
+  const summary = escapeIcsText(`⚽ Mundial 2026 · ${matchTitle(match)}`);
   const location = escapeIcsText(
     [match.stadium?.nameEn, match.stadium?.city, match.stadium?.country].filter(Boolean).join(', ')
   );
   const url = predictionsUrl || predictionsUrlForMatch(match);
-  const description = escapeIcsText(buildDescription(match, url));
+  const description = escapeIcsText(buildDescription(match, url, groupStandings));
   const uid = `mundial2026-match-${match.externalId || match.id}@mundial2026-pred`;
 
   return [
@@ -169,12 +208,16 @@ export function buildMatchIcs(match, options = {}) {
   return wrapIcsCalendar(buildVeventLines(match, options));
 }
 
-export function buildAllMatchesIcs(matches = []) {
+export function buildAllMatchesIcs(matches = [], standingsByGroup = {}) {
   const schedulable = matches.filter(canScheduleMatchReminder);
   if (!schedulable.length) {
     throw new Error('No hay partidos próximos para agendar');
   }
-  const events = schedulable.flatMap((match) => buildVeventLines(match));
+  const events = schedulable.flatMap((match) =>
+    buildVeventLines(match, {
+      groupStandings: standingsByGroup[String(match.group || '').toUpperCase()],
+    })
+  );
   return wrapIcsCalendar(events);
 }
 
@@ -212,12 +255,29 @@ function openIcsBlob(ics, filename) {
 }
 
 /** Opens ICS in the same user gesture (avoids navigator.share Permission denied). */
-export function scheduleMatchInCalendar(match) {
-  const ics = buildMatchIcs(match);
+export function scheduleMatchInCalendar(match, options = {}) {
+  const ics = buildMatchIcs(match, options);
   openIcsBlob(ics, `mundial-partido-${match.externalId || match.id}.ics`);
 }
 
-export function scheduleAllMatchesInCalendar(matches) {
-  const ics = buildAllMatchesIcs(matches);
+export function scheduleAllMatchesInCalendar(matches, standingsByGroup = {}) {
+  const ics = buildAllMatchesIcs(matches, standingsByGroup);
   openIcsBlob(ics, 'mundial-partidos.ics');
+}
+
+export async function fetchGroupStandingsForMatch(match) {
+  if (!shouldIncludeGroupStandings(match)) return undefined;
+  try {
+    const { predictionsApi } = await import('../api/client.js');
+    const data = await predictionsApi.groupStandings({ group: match.group });
+    return data.groups?.[0];
+  } catch {
+    return undefined;
+  }
+}
+
+export async function fetchStandingsByGroupForCalendar() {
+  const { predictionsApi } = await import('../api/client.js');
+  const data = await predictionsApi.groupStandings();
+  return Object.fromEntries((data.groups ?? []).map((group) => [group.group, group]));
 }

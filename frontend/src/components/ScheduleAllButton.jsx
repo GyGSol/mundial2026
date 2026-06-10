@@ -6,6 +6,7 @@ import {
   markScheduleAllUsed,
 } from '@/lib/scheduledMatchesStorage.js';
 import {
+  fetchStandingsByGroupForCalendar,
   getSchedulableMatches,
   scheduleAllMatchesInCalendar,
 } from '@/lib/matchCalendar.js';
@@ -21,9 +22,15 @@ export default function ScheduleAllButton({ matches, isScheduled, onScheduledMan
 
   if (!pending.length) return null;
 
-  const handleClick = () => {
+  const handleClick = async () => {
     try {
-      scheduleAllMatchesInCalendar(pending);
+      let standingsByGroup = {};
+      try {
+        standingsByGroup = await fetchStandingsByGroupForCalendar();
+      } catch {
+        // Sin sesión o error de red: se agenda sin tablas de grupo
+      }
+      scheduleAllMatchesInCalendar(pending, standingsByGroup);
       onScheduledMany?.(pending.map((m) => m.id));
       markScheduleAllUsed();
       setScheduleAllUsed(true);
