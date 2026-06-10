@@ -14,6 +14,7 @@ import {
   buildUserPredictedMatchContext,
   isOfficialKnockoutMatch,
 } from '../services/predictedMatchContextService.js';
+import { enrichMatchPhaseFields } from '../services/matchPhaseUtils.js';
 
 let legacyBackfillPromise = null;
 
@@ -79,6 +80,8 @@ async function enrichMatches(matches, userId) {
     const prediction = predictionMap[m._id.toString()] || null;
     const meta = enrichMatchPredictionMeta(m, prediction);
 
+    const phaseFields = enrichMatchPhaseFields(m);
+
     const base = {
       id: m._id.toString(),
       externalId: m.externalId,
@@ -89,6 +92,10 @@ async function enrichMatches(matches, userId) {
       group: m.group,
       matchday: m.matchday,
       localDate: m.localDate,
+      type: phaseFields.type,
+      isKnockout: phaseFields.isKnockout,
+      knockoutPhase: phaseFields.knockoutPhase,
+      knockoutPhaseKey: phaseFields.knockoutPhaseKey,
       status: m.status,
       kickoffAt: m.kickoffAt,
       kickoffTimezone:
@@ -116,6 +123,7 @@ async function enrichMatches(matches, userId) {
       }),
       stadium: stadiumMap[m.stadiumId]
         ? {
+            externalId: stadiumMap[m.stadiumId].externalId,
             nameEn: stadiumMap[m.stadiumId].nameEn,
             city: stadiumMap[m.stadiumId].city,
             country: stadiumMap[m.stadiumId].country,

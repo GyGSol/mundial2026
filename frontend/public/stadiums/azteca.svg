@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-azteca" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#006847" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#g-azteca)"/>
+  <path d="M10 38 L32 18 L54 38" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+  <ellipse cx="32" cy="40" rx="22" ry="7" fill="#fff" opacity="0.22"/>
+  <rect x="14" y="38" width="36" height="3" rx="1.5" fill="#fff" opacity="0.35"/>
+  <text x="32" y="54" text-anchor="middle" font-size="11" fill="#fff" font-family="system-ui,-apple-system,sans-serif" font-weight="700" letter-spacing="0.5">AZT</text>
+</svg>

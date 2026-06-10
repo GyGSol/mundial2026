@@ -92,6 +92,7 @@ export function applyResolvedKnockoutToMatch(match, resolved) {
     ...match,
     isKnockout: true,
     knockoutPhase: resolved.knockoutPhase,
+    knockoutPhaseKey: resolved.knockoutPhaseKey,
     homeTeam: resolved.homeTeam ?? match.homeTeam,
     awayTeam: resolved.awayTeam ?? match.awayTeam,
     homeTeamSlotLabel: resolved.homeTeam ? null : resolved.homeTeamSlotLabel,

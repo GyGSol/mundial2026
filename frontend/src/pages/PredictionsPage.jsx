@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { matchesApi, predictionsApi } from '../api/client.js';
-import MatchCard from '../components/MatchCard.jsx';
+import PredictionsMatchList from '../components/PredictionsMatchList.jsx';
 import PredictedGroupStandingsSection from '../components/PredictedGroupStandingsSection.jsx';
 import ScheduleAllButton from '../components/ScheduleAllButton.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
@@ -253,26 +253,14 @@ export default function PredictionsPage() {
             </p>
           ) : null}
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {matches.map((match) => (
-              <div
-                key={match.id}
-                id={`match-${match.id}`}
-                className={cn(
-                  'scroll-mt-28 rounded-xl transition-shadow',
-                  focusMatchId === match.id && 'ring-2 ring-primary ring-offset-2'
-                )}
-              >
-                <MatchCard
-                  match={match}
-                  onSave={handleSave}
-                  savingId={savingId}
-                  isScheduled={isScheduled}
-                  onScheduled={markScheduled}
-                />
-              </div>
-            ))}
-          </div>
+          <PredictionsMatchList
+            matches={matches}
+            focusMatchId={focusMatchId}
+            onSave={handleSave}
+            savingId={savingId}
+            isScheduled={isScheduled}
+            onScheduled={markScheduled}
+          />
         </>
       ) : !isAuthenticated ? (
         <p className="text-sm text-muted-foreground">Iniciá sesión para ver tus tablas de grupos.</p>
