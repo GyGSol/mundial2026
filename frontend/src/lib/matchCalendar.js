@@ -1,7 +1,7 @@
 import { formatMatchDate, getBrowserTimezone } from '@/lib/dateFormat.js';
 
-const ALARM_MS = 90 * 60 * 1000;
-const EVENT_DURATION_MS = 2 * 60 * 60 * 1000;
+const LOCK_MS = 60 * 60 * 1000;
+const REMINDER_BEFORE_LOCK_MS = 30 * 60 * 1000;
 
 function escapeIcsText(value) {
   return String(value ?? '')
@@ -85,25 +85,48 @@ function buildDescription(match, predictionsUrl) {
   return lines.filter(Boolean).join('\n');
 }
 
-export function getMatchAlarmAt(kickoffAt) {
+function getLockAtFromKickoff(kickoffAt) {
   const kickoff = new Date(kickoffAt);
   if (Number.isNaN(kickoff.getTime())) return null;
-  return new Date(kickoff.getTime() - ALARM_MS);
+  return new Date(kickoff.getTime() - LOCK_MS);
+}
+
+function getLockAtFromMatch(match) {
+  if (match.lockAt) {
+    const lock = new Date(match.lockAt);
+    if (!Number.isNaN(lock.getTime())) return lock;
+  }
+  return getLockAtFromKickoff(match.kickoffAt);
+}
+
+/** Inicio del evento de agenda: 30 min antes del cierre de predicciones. */
+export function getMatchEventStartAt(match) {
+  const lockAt = getLockAtFromMatch(match);
+  if (!lockAt) return null;
+  return new Date(lockAt.getTime() - REMINDER_BEFORE_LOCK_MS);
+}
+
+/** @deprecated Usar getMatchEventStartAt; se mantiene por compatibilidad. */
+export function getMatchAlarmAt(kickoffAt) {
+  const lockAt = getLockAtFromKickoff(kickoffAt);
+  if (!lockAt) return null;
+  return new Date(lockAt.getTime() - REMINDER_BEFORE_LOCK_MS);
 }
 
 export function canScheduleMatchReminder(match) {
   if (match.status !== 'upcoming' || !match.kickoffAt) return false;
-  const alarmAt = getMatchAlarmAt(match.kickoffAt);
-  return alarmAt && alarmAt.getTime() > Date.now();
+  const eventStart = getMatchEventStartAt(match);
+  return eventStart && eventStart.getTime() > Date.now();
 }
 
 function buildVeventLines(match, { predictionsUrl } = {}) {
-  const kickoff = new Date(match.kickoffAt);
-  if (Number.isNaN(kickoff.getTime())) {
+  const eventStart = getMatchEventStartAt(match);
+  if (!eventStart) {
     throw new Error('Este partido no tiene horario de inicio');
   }
 
-  const end = new Date(kickoff.getTime() + EVENT_DURATION_MS);
+  const lockAt = getLockAtFromMatch(match);
+  const end = lockAt ?? new Date(eventStart.getTime() + REMINDER_BEFORE_LOCK_MS);
   const summary = escapeIcsText(`Mundial 2026 · ${matchTitle(match)}`);
   const location = escapeIcsText(
     [match.stadium?.nameEn, match.stadium?.city, match.stadium?.country].filter(Boolean).join(', ')
@@ -116,13 +139,13 @@ function buildVeventLines(match, { predictionsUrl } = {}) {
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${toIcsUtc(new Date())}`,
-    `DTSTART:${toIcsUtc(kickoff)}`,
+    `DTSTART:${toIcsUtc(eventStart)}`,
     `DTEND:${toIcsUtc(end)}`,
     `SUMMARY:${summary}`,
     location ? `LOCATION:${location}` : null,
     `DESCRIPTION:${description}`,
     'BEGIN:VALARM',
-    'TRIGGER:-PT1H30M',
+    'TRIGGER:PT0S',
     'ACTION:DISPLAY',
     'DESCRIPTION:Recordá tu predicción del Mundial',
     'END:VALARM',
