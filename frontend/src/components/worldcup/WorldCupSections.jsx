@@ -248,7 +248,7 @@ export function KnockoutSection({ phases }) {
   );
 }
 
-export function StatsSection({ stats, teams, stadiums }) {
+export function StatsSection({ stats, teams, stadiums, tournament2026PlayerStats }) {
   if (!stats) return null;
 
   return (
@@ -268,6 +268,29 @@ export function StatsSection({ stats, teams, stadiums }) {
           <StatItem label="Empates" value={stats.goals.draws} />
           <StatItem label="Victorias local" value={stats.goals.homeWins} />
           <StatItem label="Victorias visitante" value={stats.goals.awayWins} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Goleadores del Mundial 2026</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tournament2026PlayerStats?.leaders?.length ? (
+            <ul className="flex flex-col gap-2 text-sm">
+              {tournament2026PlayerStats.leaders.map((row) => (
+                <li key={row.playerId} className="flex items-center justify-between gap-2">
+                  <TeamCell team={{ nameEn: row.fullName, fifaCode: row.fifaCode, flag: row.flag }} />
+                  <span className="font-semibold tabular-nums">{row.goals} goles</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {tournament2026PlayerStats?.note ??
+                'Los goleadores se actualizarán cuando haya partidos finalizados con datos de jugadores.'}
+            </p>
+          )}
         </CardContent>
       </Card>
 

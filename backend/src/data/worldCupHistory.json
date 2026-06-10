@@ -1,0 +1,1466 @@
+{
+  "source": "Wikipedia (en)",
+  "sourceUrls": [
+    "https://en.wikipedia.org/wiki/List_of_FIFA_World_Cup_finals",
+    "https://en.wikipedia.org/wiki/List_of_FIFA_World_Cup_top_goalscorers"
+  ],
+  "syncedAt": "2026-06-10T23:49:51.027Z",
+  "nationNames": {
+    "URU": "Uruguay",
+    "ARG": "Argentina",
+    "ITA": "Italia",
+    "TCH": "Checoslovaquia",
+    "HUN": "Hungría",
+    "BRA": "Brasil",
+    "FRG": "Alemania Occidental",
+    "SWE": "Suecia",
+    "ENG": "Inglaterra",
+    "NED": "Países Bajos",
+    "GER": "Alemania",
+    "FRA": "Francia",
+    "ESP": "España",
+    "CRO": "Croacia",
+    "USA": "Estados Unidos",
+    "MEX": "México",
+    "SUI": "Suiza",
+    "CHI": "Chile",
+    "KOR": "Corea del Sur",
+    "RSA": "Sudáfrica",
+    "RUS": "Rusia",
+    "QAT": "Catar",
+    "CAN": "Canadá"
+  },
+  "titlesByNation": [
+    {
+      "fifaCode": "BRA",
+      "name": "Brasil",
+      "titles": 5
+    },
+    {
+      "fifaCode": "ITA",
+      "name": "Italia",
+      "titles": 4
+    },
+    {
+      "fifaCode": "FRG",
+      "name": "Alemania Occidental",
+      "titles": 3
+    },
+    {
+      "fifaCode": "ARG",
+      "name": "Argentina",
+      "titles": 3
+    },
+    {
+      "fifaCode": "FRA",
+      "name": "Francia",
+      "titles": 2
+    },
+    {
+      "fifaCode": "URU",
+      "name": "Uruguay",
+      "titles": 2
+    },
+    {
+      "fifaCode": "GER",
+      "name": "Alemania",
+      "titles": 1
+    },
+    {
+      "fifaCode": "ESP",
+      "name": "España",
+      "titles": 1
+    },
+    {
+      "fifaCode": "ENG",
+      "name": "Inglaterra",
+      "titles": 1
+    }
+  ],
+  "finals": [
+    {
+      "year": 1930,
+      "hostFifa": "URU",
+      "hostLabel": "Uruguay",
+      "winnerFifa": "URU",
+      "winnerName": "Uruguay",
+      "runnerUpFifa": "ARG",
+      "runnerUpName": "Argentina",
+      "finalScore": "4–2",
+      "attendance": 68346,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1934,
+      "hostFifa": "ITA",
+      "hostLabel": "Italia",
+      "winnerFifa": "ITA",
+      "winnerName": "Italia",
+      "runnerUpFifa": "TCH",
+      "runnerUpName": "Checoslovaquia",
+      "finalScore": "2–1",
+      "attendance": 55000,
+      "extraTime": true,
+      "penalties": false
+    },
+    {
+      "year": 1938,
+      "hostFifa": "FRA",
+      "hostLabel": "Francia",
+      "winnerFifa": "ITA",
+      "winnerName": "Italia",
+      "runnerUpFifa": "HUN",
+      "runnerUpName": "Hungría",
+      "finalScore": "4–2",
+      "attendance": 45000,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1950,
+      "hostFifa": "BRA",
+      "hostLabel": "Brasil",
+      "winnerFifa": "URU",
+      "winnerName": "Uruguay",
+      "runnerUpFifa": "BRA",
+      "runnerUpName": "Brasil",
+      "finalScore": "2–1",
+      "attendance": 173850,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1954,
+      "hostFifa": "SUI",
+      "hostLabel": "Suiza",
+      "winnerFifa": "FRG",
+      "winnerName": "Alemania Occidental",
+      "runnerUpFifa": "HUN",
+      "runnerUpName": "Hungría",
+      "finalScore": "3–2",
+      "attendance": 62500,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1958,
+      "hostFifa": "SWE",
+      "hostLabel": "Suecia",
+      "winnerFifa": "BRA",
+      "winnerName": "Brasil",
+      "runnerUpFifa": "SWE",
+      "runnerUpName": "Suecia",
+      "finalScore": "5–2",
+      "attendance": 49737,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1962,
+      "hostFifa": "CHI",
+      "hostLabel": "Chile",
+      "winnerFifa": "BRA",
+      "winnerName": "Brasil",
+      "runnerUpFifa": "TCH",
+      "runnerUpName": "Checoslovaquia",
+      "finalScore": "3–1",
+      "attendance": 68679,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1966,
+      "hostFifa": "ENG",
+      "hostLabel": "Inglaterra",
+      "winnerFifa": "ENG",
+      "winnerName": "Inglaterra",
+      "runnerUpFifa": "FRG",
+      "runnerUpName": "Alemania Occidental",
+      "finalScore": "4–2",
+      "attendance": 96924,
+      "extraTime": true,
+      "penalties": false
+    },
+    {
+      "year": 1970,
+      "hostFifa": "MEX",
+      "hostLabel": "México",
+      "winnerFifa": "BRA",
+      "winnerName": "Brasil",
+      "runnerUpFifa": "ITA",
+      "runnerUpName": "Italia",
+      "finalScore": "4–1",
+      "attendance": 107412,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1974,
+      "hostFifa": "FRG",
+      "hostLabel": "Alemania Occidental",
+      "winnerFifa": "FRG",
+      "winnerName": "Alemania Occidental",
+      "runnerUpFifa": "NED",
+      "runnerUpName": "Países Bajos",
+      "finalScore": "2–1",
+      "attendance": 78200,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1978,
+      "hostFifa": "ARG",
+      "hostLabel": "Argentina",
+      "winnerFifa": "ARG",
+      "winnerName": "Argentina",
+      "runnerUpFifa": "NED",
+      "runnerUpName": "Países Bajos",
+      "finalScore": "3–1",
+      "attendance": 71483,
+      "extraTime": true,
+      "penalties": false
+    },
+    {
+      "year": 1982,
+      "hostFifa": "ESP",
+      "hostLabel": "España",
+      "winnerFifa": "ITA",
+      "winnerName": "Italia",
+      "runnerUpFifa": "FRG",
+      "runnerUpName": "Alemania Occidental",
+      "finalScore": "3–1",
+      "attendance": 90000,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1986,
+      "hostFifa": "MEX",
+      "hostLabel": "México",
+      "winnerFifa": "ARG",
+      "winnerName": "Argentina",
+      "runnerUpFifa": "FRG",
+      "runnerUpName": "Alemania Occidental",
+      "finalScore": "3–2",
+      "attendance": 114600,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1990,
+      "hostFifa": "ITA",
+      "hostLabel": "Italia",
+      "winnerFifa": "FRG",
+      "winnerName": "Alemania Occidental",
+      "runnerUpFifa": "ARG",
+      "runnerUpName": "Argentina",
+      "finalScore": "1–0",
+      "attendance": 73603,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 1994,
+      "hostFifa": "USA",
+      "hostLabel": "Estados Unidos",
+      "winnerFifa": "BRA",
+      "winnerName": "Brasil",
+      "runnerUpFifa": "ITA",
+      "runnerUpName": "Italia",
+      "finalScore": "0–0",
+      "attendance": 94194,
+      "extraTime": true,
+      "penalties": true
+    },
+    {
+      "year": 1998,
+      "hostFifa": "FRA",
+      "hostLabel": "Francia",
+      "winnerFifa": "FRA",
+      "winnerName": "Francia",
+      "runnerUpFifa": "BRA",
+      "runnerUpName": "Brasil",
+      "finalScore": "3–0",
+      "attendance": 80000,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 2002,
+      "hostFifa": "KOR",
+      "hostLabel": "Corea del Sur y Japón",
+      "winnerFifa": "BRA",
+      "winnerName": "Brasil",
+      "runnerUpFifa": "GER",
+      "runnerUpName": "Alemania",
+      "finalScore": "2–0",
+      "attendance": 69029,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 2006,
+      "hostFifa": "GER",
+      "hostLabel": "Alemania",
+      "winnerFifa": "ITA",
+      "winnerName": "Italia",
+      "runnerUpFifa": "FRA",
+      "runnerUpName": "Francia",
+      "finalScore": "1–1",
+      "attendance": 69000,
+      "extraTime": true,
+      "penalties": true
+    },
+    {
+      "year": 2010,
+      "hostFifa": "RSA",
+      "hostLabel": "Sudáfrica",
+      "winnerFifa": "ESP",
+      "winnerName": "España",
+      "runnerUpFifa": "NED",
+      "runnerUpName": "Países Bajos",
+      "finalScore": "1–0",
+      "attendance": 84490,
+      "extraTime": true,
+      "penalties": false
+    },
+    {
+      "year": 2014,
+      "hostFifa": "BRA",
+      "hostLabel": "Brasil",
+      "winnerFifa": "GER",
+      "winnerName": "Alemania",
+      "runnerUpFifa": "ARG",
+      "runnerUpName": "Argentina",
+      "finalScore": "1–0",
+      "attendance": 74738,
+      "extraTime": true,
+      "penalties": false
+    },
+    {
+      "year": 2018,
+      "hostFifa": "RUS",
+      "hostLabel": "Rusia",
+      "winnerFifa": "FRA",
+      "winnerName": "Francia",
+      "runnerUpFifa": "CRO",
+      "runnerUpName": "Croacia",
+      "finalScore": "4–2",
+      "attendance": 78011,
+      "extraTime": false,
+      "penalties": false
+    },
+    {
+      "year": 2022,
+      "hostFifa": "QAT",
+      "hostLabel": "Catar",
+      "winnerFifa": "ARG",
+      "winnerName": "Argentina",
+      "runnerUpFifa": "FRA",
+      "runnerUpName": "Francia",
+      "finalScore": "3–3",
+      "attendance": null,
+      "extraTime": true,
+      "penalties": true
+    }
+  ],
+  "allTimeTopScorers": [
+    {
+      "rank": 1,
+      "playerName": "Miroslav Klose",
+      "nationFifa": "GER",
+      "nationName": "Alemania",
+      "goals": 16,
+      "tournaments": []
+    },
+    {
+      "rank": 2,
+      "playerName": "Ronaldo",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 15,
+      "tournaments": []
+    },
+    {
+      "rank": 3,
+      "playerName": "Gerd Müller",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 14,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Just Fontaine",
+      "nationFifa": "FRA",
+      "nationName": "Francia",
+      "goals": 13,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Lionel Messi",
+      "nationFifa": "ARG",
+      "nationName": "Argentina",
+      "goals": 13,
+      "tournaments": []
+    },
+    {
+      "rank": 14,
+      "playerName": "Pelé",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 12,
+      "tournaments": []
+    },
+    {
+      "rank": 14,
+      "playerName": "Kylian Mbappé",
+      "nationFifa": "FRA",
+      "nationName": "Francia",
+      "goals": 12,
+      "tournaments": []
+    },
+    {
+      "rank": 5,
+      "playerName": "Sándor Kocsis",
+      "nationFifa": "HUN",
+      "nationName": "Hungría",
+      "goals": 11,
+      "tournaments": []
+    },
+    {
+      "rank": 17,
+      "playerName": "Jürgen Klinsmann",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 11,
+      "tournaments": []
+    },
+    {
+      "rank": 10,
+      "playerName": "Helmut Rahn",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 10,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Gary Lineker",
+      "nationFifa": "ENG",
+      "nationName": "Inglaterra",
+      "goals": 10,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Gabriel Batistuta",
+      "nationFifa": "ARG",
+      "nationName": "Argentina",
+      "goals": 10,
+      "tournaments": []
+    },
+    {
+      "rank": 13,
+      "playerName": "Teófilo Cubillas",
+      "nationFifa": "PER",
+      "nationName": "PER",
+      "goals": 10,
+      "tournaments": []
+    },
+    {
+      "rank": 19,
+      "playerName": "Thomas Müller",
+      "nationFifa": "GER",
+      "nationName": "Alemania",
+      "goals": 10,
+      "tournaments": []
+    },
+    {
+      "rank": 20,
+      "playerName": "Grzegorz Lato",
+      "nationFifa": "POL",
+      "nationName": "POL",
+      "goals": 10,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Ademir",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Eusébio",
+      "nationFifa": "POR",
+      "nationName": "POR",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 9,
+      "playerName": "Christian Vieri",
+      "nationFifa": "ITA",
+      "nationName": "Italia",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 10,
+      "playerName": "Vavá",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "David Villa",
+      "nationFifa": "ESP",
+      "nationName": "España",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 14,
+      "playerName": "Paolo Rossi",
+      "nationFifa": "ITA",
+      "nationName": "Italia",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 16,
+      "playerName": "Jairzinho",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 16,
+      "playerName": "Roberto Baggio",
+      "nationFifa": "ITA",
+      "nationName": "Italia",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 19,
+      "playerName": "Karl-Heinz Rummenigge",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 21,
+      "playerName": "Uwe Seeler",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 9,
+      "tournaments": []
+    },
+    {
+      "rank": 4,
+      "playerName": "Guillermo Stábile",
+      "nationFifa": "ARG",
+      "nationName": "Argentina",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 5,
+      "playerName": "Leônidas",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 7,
+      "playerName": "Óscar Míguez",
+      "nationFifa": "URU",
+      "nationName": "Uruguay",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 11,
+      "playerName": "Harry Kane",
+      "nationFifa": "ENG",
+      "nationName": "Inglaterra",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 13,
+      "playerName": "Neymar",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 14,
+      "playerName": "Rivaldo",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 15,
+      "playerName": "Rudi Völler",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 21,
+      "playerName": "Diego Maradona",
+      "nationFifa": "ARG",
+      "nationName": "Argentina",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 22,
+      "playerName": "Cristiano Ronaldo",
+      "nationFifa": "POR",
+      "nationName": "POR",
+      "goals": 8,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Oldřich Nejedlý",
+      "nationFifa": "TCH",
+      "nationName": "Checoslovaquia",
+      "goals": 7,
+      "tournaments": []
+    },
+    {
+      "rank": 8,
+      "playerName": "Lajos Tichy",
+      "nationFifa": "HUN",
+      "nationName": "Hungría",
+      "goals": 7,
+      "tournaments": []
+    },
+    {
+      "rank": 9,
+      "playerName": "Careca",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 7,
+      "tournaments": []
+    },
+    {
+      "rank": 13,
+      "playerName": "Johnny Rep",
+      "nationFifa": "NED",
+      "nationName": "Países Bajos",
+      "goals": 7,
+      "tournaments": []
+    },
+    {
+      "rank": 13,
+      "playerName": "Andrzej Szarmach",
+      "nationFifa": "POL",
+      "nationName": "POL",
+      "goals": 7,
+      "tournaments": []
+    },
+    {
+      "rank": 15,
+      "playerName": "Hans Schäfer",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 7,
+      "tournaments": []
+    },
+    {
+      "rank": 16,
+      "playerName": "Luis Suárez",
+      "nationFifa": "URU",
+      "nationName": "Uruguay",
+      "goals": 7,
+      "tournaments": []
+    },
+    {
+      "rank": 3,
+      "playerName": "Josef Hügi",
+      "nationFifa": "SUI",
+      "nationName": "Suiza",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 3,
+      "playerName": "Oleg Salenko",
+      "nationFifa": "RUS",
+      "nationName": "Rusia",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 5,
+      "playerName": "György Sárosi",
+      "nationFifa": "HUN",
+      "nationName": "Hungría",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 5,
+      "playerName": "Max Morlock",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 5,
+      "playerName": "Erich Probst",
+      "nationFifa": "AUT",
+      "nationName": "AUT",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Enner Valencia",
+      "nationFifa": "ECU",
+      "nationName": "ECU",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 7,
+      "playerName": "Salvatore Schillaci",
+      "nationFifa": "ITA",
+      "nationName": "Italia",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 8,
+      "playerName": "Davor Šuker",
+      "nationFifa": "YUG",
+      "nationName": "YUG",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 8,
+      "playerName": "James Rodríguez",
+      "nationFifa": "COL",
+      "nationName": "COL",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 9,
+      "playerName": "Helmut Haller",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 10,
+      "playerName": "Hristo Stoichkov",
+      "nationFifa": "BUL",
+      "nationName": "BUL",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 10,
+      "playerName": "Diego Forlán",
+      "nationFifa": "URU",
+      "nationName": "Uruguay",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 11,
+      "playerName": "Asamoah Gyan",
+      "nationFifa": "GHA",
+      "nationName": "GHA",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Dennis Bergkamp",
+      "nationFifa": "NED",
+      "nationName": "Países Bajos",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 13,
+      "playerName": "Rob Rensenbrink",
+      "nationFifa": "NED",
+      "nationName": "Países Bajos",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 15,
+      "playerName": "Rivellino",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 15,
+      "playerName": "Bebeto",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 15,
+      "playerName": "Arjen Robben",
+      "nationFifa": "NED",
+      "nationName": "Países Bajos",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 16,
+      "playerName": "Zbigniew Boniek",
+      "nationFifa": "POL",
+      "nationName": "POL",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 17,
+      "playerName": "Thierry Henry",
+      "nationFifa": "FRA",
+      "nationName": "Francia",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 17,
+      "playerName": "Robin van Persie",
+      "nationFifa": "NED",
+      "nationName": "Países Bajos",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 17,
+      "playerName": "Wesley Sneijder",
+      "nationFifa": "NED",
+      "nationName": "Países Bajos",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 17,
+      "playerName": "Ivan Perišić",
+      "nationFifa": "CRO",
+      "nationName": "Croacia",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 18,
+      "playerName": "Mario Kempes",
+      "nationFifa": "ARG",
+      "nationName": "Argentina",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 25,
+      "playerName": "Lothar Matthäus",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 6,
+      "tournaments": []
+    },
+    {
+      "rank": 4,
+      "playerName": "Pedro Cea",
+      "nationFifa": "URU",
+      "nationName": "Uruguay",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 4,
+      "playerName": "Silvio Piola",
+      "nationFifa": "ITA",
+      "nationName": "Italia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 4,
+      "playerName": "Gyula Zsengellér",
+      "nationFifa": "HUN",
+      "nationName": "Hungría",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 5,
+      "playerName": "Peter McParland",
+      "nationFifa": "NIR",
+      "nationName": "NIR",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 5,
+      "playerName": "Tomáš Skuhravý",
+      "nationFifa": "TCH",
+      "nationName": "Checoslovaquia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Juan Alberto Schiaffino",
+      "nationFifa": "URU",
+      "nationName": "Uruguay",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Geoff Hurst",
+      "nationFifa": "ENG",
+      "nationName": "Inglaterra",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 6,
+      "playerName": "Jon Dahl Tomasson",
+      "nationFifa": "DEN",
+      "nationName": "DEN",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 7,
+      "playerName": "Alessandro Altobelli",
+      "nationFifa": "ITA",
+      "nationName": "Italia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 7,
+      "playerName": "Kennet Andersson",
+      "nationFifa": "SWE",
+      "nationName": "Suecia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 7,
+      "playerName": "Fernando Morientes",
+      "nationFifa": "ESP",
+      "nationName": "España",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 8,
+      "playerName": "Romário",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 8,
+      "playerName": "Marc Wilmots",
+      "nationFifa": "BEL",
+      "nationName": "BEL",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 8,
+      "playerName": "Mario Mandžukić",
+      "nationFifa": "CRO",
+      "nationName": "Croacia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 9,
+      "playerName": "Valentin Ivanov",
+      "nationFifa": "URS",
+      "nationName": "URS",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 9,
+      "playerName": "Emilio Butragueño",
+      "nationFifa": "ESP",
+      "nationName": "España",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 9,
+      "playerName": "Roger Milla",
+      "nationFifa": "CMR",
+      "nationName": "CMR",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 9,
+      "playerName": "Tim Cahill",
+      "nationFifa": "AUS",
+      "nationName": "AUS",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 10,
+      "playerName": "Hans Krankl",
+      "nationFifa": "AUT",
+      "nationName": "AUT",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 11,
+      "playerName": "Raúl",
+      "nationFifa": "ESP",
+      "nationName": "España",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Garrincha",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Johan Neeskens",
+      "nationFifa": "NED",
+      "nationName": "Países Bajos",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Fernando Hierro",
+      "nationFifa": "ESP",
+      "nationName": "España",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Zinedine Zidane",
+      "nationFifa": "FRA",
+      "nationName": "Francia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Landon Donovan",
+      "nationFifa": "USA",
+      "nationName": "Estados Unidos",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Romelu Lukaku",
+      "nationFifa": "BEL",
+      "nationName": "BEL",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 12,
+      "playerName": "Xherdan Shaqiri",
+      "nationFifa": "SUI",
+      "nationName": "Suiza",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 13,
+      "playerName": "Henrik Larsson",
+      "nationFifa": "SWE",
+      "nationName": "Suecia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 14,
+      "playerName": "Michel Platini",
+      "nationFifa": "FRA",
+      "nationName": "Francia",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 14,
+      "playerName": "Zico",
+      "nationFifa": "BRA",
+      "nationName": "Brasil",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 14,
+      "playerName": "Gonzalo Higuaín",
+      "nationFifa": "ARG",
+      "nationName": "Argentina",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 15,
+      "playerName": "Lukas Podolski",
+      "nationFifa": "GER",
+      "nationName": "Alemania",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 17,
+      "playerName": "Edinson Cavani",
+      "nationFifa": "URU",
+      "nationName": "Uruguay",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 18,
+      "playerName": "Franz Beckenbauer",
+      "nationFifa": "FRG",
+      "nationName": "Alemania Occidental",
+      "goals": 5,
+      "tournaments": []
+    },
+    {
+      "rank": 18,
+      "playerName": "Olivier Giroud",
+      "nationFifa": "FRA",
+      "nationName": "Francia",
+      "goals": 5,
+      "tournaments": []
+    }
+  ],
+  "topScorersByTournament": [
+    {
+      "year": 1930,
+      "hostLabel": "Uruguay",
+      "topScorers": [
+        {
+          "playerName": "Uruguay 1930",
+          "nationFifa": "ARG",
+          "nationName": "Argentina",
+          "goals": 8,
+          "matchesPlayed": 4
+        }
+      ]
+    },
+    {
+      "year": 1934,
+      "hostLabel": "Italia",
+      "topScorers": [
+        {
+          "playerName": "Italy 1934",
+          "nationFifa": "TCH",
+          "nationName": "Checoslovaquia",
+          "goals": 5,
+          "matchesPlayed": 4
+        }
+      ]
+    },
+    {
+      "year": 1938,
+      "hostLabel": "Francia",
+      "topScorers": [
+        {
+          "playerName": "France 1938",
+          "nationFifa": "BRA",
+          "nationName": "Brasil",
+          "goals": 7,
+          "matchesPlayed": 4
+        }
+      ]
+    },
+    {
+      "year": 1950,
+      "hostLabel": "Brasil",
+      "topScorers": [
+        {
+          "playerName": "Brazil 1950",
+          "nationFifa": "BRA",
+          "nationName": "Brasil",
+          "goals": 9,
+          "matchesPlayed": 6
+        }
+      ]
+    },
+    {
+      "year": 1954,
+      "hostLabel": "Suiza",
+      "topScorers": [
+        {
+          "playerName": "Switzerland 1954",
+          "nationFifa": "HUN",
+          "nationName": "Hungría",
+          "goals": 11,
+          "matchesPlayed": 5
+        }
+      ]
+    },
+    {
+      "year": 1958,
+      "hostLabel": "Suecia",
+      "topScorers": [
+        {
+          "playerName": "Sweden 1958",
+          "nationFifa": "FRA",
+          "nationName": "Francia",
+          "goals": 6,
+          "matchesPlayed": null
+        }
+      ]
+    },
+    {
+      "year": 1962,
+      "hostLabel": "Chile",
+      "topScorers": [
+        {
+          "playerName": "Chile 1962",
+          "nationFifa": "BRA",
+          "nationName": "Brasil",
+          "goals": 6,
+          "matchesPlayed": null
+        }
+      ]
+    },
+    {
+      "year": 1966,
+      "hostLabel": "Inglaterra",
+      "topScorers": [
+        {
+          "playerName": "England 1966",
+          "nationFifa": "POR",
+          "nationName": "POR",
+          "goals": 9,
+          "matchesPlayed": 6
+        }
+      ]
+    },
+    {
+      "year": 1970,
+      "hostLabel": "México",
+      "topScorers": [
+        {
+          "playerName": "Mexico 1970",
+          "nationFifa": "FRG",
+          "nationName": "Alemania Occidental",
+          "goals": 10,
+          "matchesPlayed": 6
+        }
+      ]
+    },
+    {
+      "year": 1974,
+      "hostLabel": "Alemania Occidental",
+      "topScorers": [
+        {
+          "playerName": "West Germany 1974",
+          "nationFifa": "POL",
+          "nationName": "POL",
+          "goals": 7,
+          "matchesPlayed": 7
+        }
+      ]
+    },
+    {
+      "year": 1978,
+      "hostLabel": "Argentina",
+      "topScorers": [
+        {
+          "playerName": "Argentina 1978",
+          "nationFifa": "ARG",
+          "nationName": "Argentina",
+          "goals": 6,
+          "matchesPlayed": 7
+        }
+      ]
+    },
+    {
+      "year": 1982,
+      "hostLabel": "España",
+      "topScorers": [
+        {
+          "playerName": "Spain 1982",
+          "nationFifa": "ITA",
+          "nationName": "Italia",
+          "goals": 6,
+          "matchesPlayed": 7
+        }
+      ]
+    },
+    {
+      "year": 1986,
+      "hostLabel": "México",
+      "topScorers": [
+        {
+          "playerName": "Mexico 1986",
+          "nationFifa": "ENG",
+          "nationName": "Inglaterra",
+          "goals": 6,
+          "matchesPlayed": 5
+        }
+      ]
+    },
+    {
+      "year": 1990,
+      "hostLabel": "Italia",
+      "topScorers": [
+        {
+          "playerName": "Italy 1990",
+          "nationFifa": "ITA",
+          "nationName": "Italia",
+          "goals": 6,
+          "matchesPlayed": 7
+        }
+      ]
+    },
+    {
+      "year": 1994,
+      "hostLabel": "Estados Unidos",
+      "topScorers": [
+        {
+          "playerName": "United States 1994",
+          "nationFifa": "BUL",
+          "nationName": "BUL",
+          "goals": 7,
+          "matchesPlayed": null
+        }
+      ]
+    },
+    {
+      "year": 1998,
+      "hostLabel": "Francia",
+      "topScorers": [
+        {
+          "playerName": "France 1998",
+          "nationFifa": "CRO",
+          "nationName": "Croacia",
+          "goals": 6,
+          "matchesPlayed": 7
+        }
+      ]
+    },
+    {
+      "year": 2002,
+      "hostLabel": "Corea del Sur y Japón",
+      "topScorers": [
+        {
+          "playerName": "South Korea & Japan 2002",
+          "nationFifa": "BRA",
+          "nationName": "Brasil",
+          "goals": 8,
+          "matchesPlayed": 7
+        }
+      ]
+    },
+    {
+      "year": 2006,
+      "hostLabel": "Alemania",
+      "topScorers": [
+        {
+          "playerName": "Germany 2006",
+          "nationFifa": "GER",
+          "nationName": "Alemania",
+          "goals": 5,
+          "matchesPlayed": 7
+        }
+      ]
+    },
+    {
+      "year": 2010,
+      "hostLabel": "Sudáfrica",
+      "topScorers": [
+        {
+          "playerName": "South Africa 2010",
+          "nationFifa": "GER",
+          "nationName": "Alemania",
+          "goals": 6,
+          "matchesPlayed": null
+        }
+      ]
+    },
+    {
+      "year": 2014,
+      "hostLabel": "Brasil",
+      "topScorers": [
+        {
+          "playerName": "Brazil 2014",
+          "nationFifa": "COL",
+          "nationName": "COL",
+          "goals": 6,
+          "matchesPlayed": 5
+        }
+      ]
+    },
+    {
+      "year": 2018,
+      "hostLabel": "Rusia",
+      "topScorers": [
+        {
+          "playerName": "Russia 2018",
+          "nationFifa": "ENG",
+          "nationName": "Inglaterra",
+          "goals": 6,
+          "matchesPlayed": 6
+        }
+      ]
+    },
+    {
+      "year": 2022,
+      "hostLabel": "Catar",
+      "topScorers": [
+        {
+          "playerName": "Qatar 2022",
+          "nationFifa": "FRA",
+          "nationName": "Francia",
+          "goals": 8,
+          "matchesPlayed": 7
+        }
+      ]
+    }
+  ]
+}

@@ -154,6 +154,7 @@ export const worldCupApi = {
     const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : '';
     return request(`/world-cup${query}`);
   },
+  history: () => request('/world-cup/history'),
 };
 
 export const simulationApi = {

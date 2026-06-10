@@ -13,6 +13,7 @@
     "test": "npm run test -w backend",
     "sync": "npm run sync -w backend",
     "sync:players": "npm run sync:players -w backend",
+    "sync:history": "node scripts/sync-wikipedia-history.mjs",
     "build:players-seed": "npm run build:players-seed -w backend",
     "simulate": "npm run simulate -w backend",
     "reset-db": "npm run reset-db -w backend",

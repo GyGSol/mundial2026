@@ -438,6 +438,14 @@ export async function buildWorldCupOverview({
   }
   const stats = computeTournamentStats(matches, teams);
 
+  let tournament2026PlayerStats = null;
+  try {
+    const { buildWorldCup2026PlayerStats } = await import('./worldCupHistoryService.js');
+    tournament2026PlayerStats = await buildWorldCup2026PlayerStats();
+  } catch {
+    tournament2026PlayerStats = null;
+  }
+
   const groupMatches = matches
     .filter((m) => normalizePhaseKey(m.type) === 'group' || Boolean(m.group))
     .map((m) => formatMatchSummary(m, teamMap, stadiumMap));
@@ -512,5 +520,6 @@ export async function buildWorldCupOverview({
     })),
     stadiums: stadiumUsage,
     stats,
+    tournament2026PlayerStats,
   };
 }
