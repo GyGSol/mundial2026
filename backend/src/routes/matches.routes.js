@@ -9,6 +9,11 @@ import {
   enrichMatchPredictionMeta,
 } from '../services/predictionLockService.js';
 import { backfillLegacyUserSubmittedPredictions } from '../services/predictionMigrationService.js';
+import {
+  applyResolvedKnockoutToMatch,
+  buildUserPredictedMatchContext,
+  isOfficialKnockoutMatch,
+} from '../services/predictedMatchContextService.js';
 
 let legacyBackfillPromise = null;
 
@@ -64,11 +69,17 @@ async function enrichMatches(matches, userId) {
     );
   }
 
+  let resolvedKnockoutByExternalId = null;
+  if (userId && matches.some(isOfficialKnockoutMatch)) {
+    const ctx = await buildUserPredictedMatchContext(userId);
+    resolvedKnockoutByExternalId = ctx.resolvedKnockoutByExternalId;
+  }
+
   return matches.map((m) => {
     const prediction = predictionMap[m._id.toString()] || null;
     const meta = enrichMatchPredictionMeta(m, prediction);
 
-    return {
+    const base = {
       id: m._id.toString(),
       externalId: m.externalId,
       homeTeamId: m.homeTeamId,
@@ -113,6 +124,11 @@ async function enrichMatches(matches, userId) {
       prediction,
       ...meta,
     };
+
+    return applyResolvedKnockoutToMatch(
+      base,
+      resolvedKnockoutByExternalId?.get(String(m.externalId))
+    );
   });
 }
 

@@ -21,14 +21,23 @@ export default function MatchCard({ match, onSave, savingId, isScheduled, onSche
   const status = statusLabels[match.status] || statusLabels.upcoming;
   const hasPrediction = Boolean(match.hasPrediction ?? match.prediction?.userSubmitted);
   const isArgentinaMatch = matchInvolvesArgentina(match);
+  const phaseLabel = match.isKnockout
+    ? match.knockoutPhase || 'Fase final'
+    : match.group
+      ? `Grupo ${match.group}`
+      : null;
   const matchMetaShort = (
     <>
-      Grupo {match.group} · {formatMatchDate(match)}
+      {phaseLabel ? `${phaseLabel} · ` : null}
+      {match.externalId ? `#${match.externalId} · ` : null}
+      {formatMatchDate(match)}
     </>
   );
   const matchMetaFull = (
     <>
-      Grupo {match.group} · {formatMatchDate(match, { showTimezone: true })}
+      {phaseLabel ? `${phaseLabel} · ` : null}
+      {match.externalId ? `Partido #${match.externalId} · ` : null}
+      {formatMatchDate(match, { showTimezone: true })}
     </>
   );
 

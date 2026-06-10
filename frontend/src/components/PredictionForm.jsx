@@ -32,6 +32,8 @@ function ScoreValue({ value, label }) {
 function MatchScoreboard({
   homeTeam,
   awayTeam,
+  homeTeamSlotLabel,
+  awayTeamSlotLabel,
   showActualScores,
   homeScore,
   awayScore,
@@ -43,8 +45,8 @@ function MatchScoreboard({
   return (
     <div className="flex w-full flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
-        <TeamHeader team={homeTeam} />
-        <TeamHeader team={awayTeam} />
+        <TeamHeader team={homeTeam} slotLabel={homeTeamSlotLabel} />
+        <TeamHeader team={awayTeam} slotLabel={awayTeamSlotLabel} />
       </div>
 
       {showActualScores && (
@@ -149,6 +151,8 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
         <MatchScoreboard
           homeTeam={match.homeTeam}
           awayTeam={match.awayTeam}
+          homeTeamSlotLabel={match.homeTeamSlotLabel}
+          awayTeamSlotLabel={match.awayTeamSlotLabel}
           showActualScores={showActualScores}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
@@ -170,6 +174,8 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
         <MatchScoreboard
           homeTeam={match.homeTeam}
           awayTeam={match.awayTeam}
+          homeTeamSlotLabel={match.homeTeamSlotLabel}
+          awayTeamSlotLabel={match.awayTeamSlotLabel}
           showActualScores={showActualScores}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
@@ -197,6 +203,8 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
       <MatchScoreboard
         homeTeam={match.homeTeam}
         awayTeam={match.awayTeam}
+        homeTeamSlotLabel={match.homeTeamSlotLabel}
+        awayTeamSlotLabel={match.awayTeamSlotLabel}
         showActualScores={showActualScores}
         homeScore={match.homeScore}
         awayScore={match.awayScore}

@@ -1,3 +1,4 @@
+import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
 import { getTeamFlag, getWorldCupTitles } from '@/lib/teamMeta';
 
 function WorldCupStars({ count }) {
@@ -17,7 +18,15 @@ function WorldCupStars({ count }) {
   );
 }
 
-export default function TeamHeader({ team }) {
+export default function TeamHeader({ team, slotLabel }) {
+  if (!team && slotLabel) {
+    return (
+      <div className="flex flex-col items-center gap-1 px-1 text-center">
+        <KnockoutSlotLabel label={slotLabel} className="text-xs sm:text-sm" />
+      </div>
+    );
+  }
+
   const name = team?.nameEn || team?.externalId || '—';
   const flagUrl = getTeamFlag(team);
   const titles = getWorldCupTitles(team?.fifaCode);
