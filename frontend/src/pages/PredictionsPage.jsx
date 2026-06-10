@@ -121,7 +121,12 @@ export default function PredictionsPage() {
   }, [focusMatchId, loading, matches, activeView]);
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-6">
+    <div
+      className={cn(
+        'flex flex-col gap-4 sm:gap-6',
+        activeView === 'matches' && 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:pb-0'
+      )}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0 flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
@@ -150,11 +155,7 @@ export default function PredictionsPage() {
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {activeView === 'matches' ? (
-            <ScheduleAllButton
-              matches={matches}
-              isScheduled={isScheduled}
-              onScheduledMany={markManyScheduled}
-            />
+            <ScheduleAllButton matches={matches} onScheduledMany={markManyScheduled} />
           ) : null}
 
           {activeView === 'matches' ? (

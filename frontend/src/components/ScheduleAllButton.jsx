@@ -1,26 +1,18 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button.jsx';
 import { useIsMobile } from '@/hooks/useIsMobile.js';
-import {
-  hasUsedScheduleAll,
-  markScheduleAllUsed,
-} from '@/lib/scheduledMatchesStorage.js';
 import {
   fetchStandingsByGroupForCalendar,
   getSchedulableMatches,
   scheduleAllMatchesInCalendar,
 } from '@/lib/matchCalendar.js';
 
-export default function ScheduleAllButton({ matches, isScheduled, onScheduledMany }) {
+export default function ScheduleAllButton({ matches, onScheduledMany }) {
   const isMobile = useIsMobile();
-  const [scheduleAllUsed, setScheduleAllUsed] = useState(() => hasUsedScheduleAll());
 
-  if (!isMobile || scheduleAllUsed) return null;
+  if (!isMobile) return null;
 
   const schedulable = getSchedulableMatches(matches);
-  const pending = schedulable.filter((m) => !isScheduled(m.id));
-
-  if (!pending.length) return null;
+  if (!schedulable.length) return null;
 
   const handleClick = async () => {
     try {
@@ -30,18 +22,18 @@ export default function ScheduleAllButton({ matches, isScheduled, onScheduledMan
       } catch {
         // Sin sesión o error de red: se agenda sin tablas de grupo
       }
-      scheduleAllMatchesInCalendar(pending, standingsByGroup);
-      onScheduledMany?.(pending.map((m) => m.id));
-      markScheduleAllUsed();
-      setScheduleAllUsed(true);
+      scheduleAllMatchesInCalendar(schedulable, standingsByGroup);
+      onScheduledMany?.(schedulable.map((m) => m.id));
     } catch {
       // Reintentar desde un partido individual si falla
     }
   };
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={handleClick}>
-      Agendar todos
-    </Button>
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <Button type="button" variant="default" size="lg" className="w-full" onClick={handleClick}>
+        Agendar todos ({schedulable.length})
+      </Button>
+    </div>
   );
 }
