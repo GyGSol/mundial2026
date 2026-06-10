@@ -280,6 +280,8 @@ export default function PredictionsPage() {
         <PredictedGroupStandingsSection
           groups={standingsGroups}
           knockout={standingsData?.knockout}
+          thirdPlaceStandings={standingsData?.thirdPlaceStandings}
+          teams={standingsData?.teams}
           loading={standingsLoading}
           error={standingsError}
           onGroupSelect={handleGroupSelect}

@@ -3,9 +3,23 @@ import { Card, CardContent } from '@/components/ui/card.jsx';
 import PredictedKnockoutSection from '@/components/PredictedKnockoutSection.jsx';
 import { GroupStandingsSection } from '@/components/worldcup/WorldCupSections.jsx';
 
+function buildTeamMap(groups, teams = []) {
+  const map = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+  for (const group of groups ?? []) {
+    for (const row of group.standings ?? []) {
+      if (row.teamId && !map[row.teamId]) {
+        map[row.teamId] = row;
+      }
+    }
+  }
+  return map;
+}
+
 export default function PredictedGroupStandingsSection({
   groups,
   knockout,
+  thirdPlaceStandings,
+  teams,
   loading,
   error,
   onGroupSelect,
@@ -53,7 +67,12 @@ export default function PredictedGroupStandingsSection({
         </div>
       ) : null}
 
-      <GroupStandingsSection groups={groups} onGroupClick={onGroupSelect} />
+      <GroupStandingsSection
+        groups={groups}
+        thirdPlaceStandings={thirdPlaceStandings}
+        teamMap={buildTeamMap(groups, teams)}
+        onGroupClick={onGroupSelect}
+      />
 
       <div className="flex flex-col gap-3 pt-2">
         <div>

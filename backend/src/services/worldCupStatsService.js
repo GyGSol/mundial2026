@@ -1,5 +1,6 @@
 import { SimulationState } from '../models/SimulationState.js';
 import { applyResult, createStanding, sortStandings } from './groupStandingsUtils.js';
+import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
 
 const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
 
@@ -129,30 +130,11 @@ export function computeGroupStandings(teams, matches, groupDocs = []) {
     .filter((entry) => entry.standings.length > 0);
 }
 
-function compareThirdPlaces(a, b) {
-  if (b.points !== a.points) return b.points - a.points;
-  if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
-  if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-  return (a.group || '').localeCompare(b.group || '');
-}
-
 /** Mundial 2026: top 2 per group + 8 best third places → round of 32. */
 export function annotateGroupQualification(groupStandings) {
-  const thirdCandidates = groupStandings
-    .map((groupTable) => (groupTable.standings[2] ? { ...groupTable.standings[2], group: groupTable.group } : null))
-    .filter(Boolean);
-
-  const groupStageComplete = groupStandings.every((groupTable) =>
-    groupTable.standings.every((row) => row.played >= 3)
-  );
-
-  const qualifiedThirdIds = groupStageComplete
-    ? new Set(
-        [...thirdCandidates]
-          .sort(compareThirdPlaces)
-          .slice(0, 8)
-          .map((row) => row.teamId)
-      )
+  const { qualified, provisional } = rankBestThirdPlaceTeams(groupStandings);
+  const qualifiedThirdIds = qualified.length
+    ? new Set(qualified.map((row) => row.teamId))
     : null;
 
   return groupStandings.map((groupTable) => ({
@@ -163,7 +145,10 @@ export function annotateGroupQualification(groupStandings) {
       }
       if (row.rank === 3) {
         if (qualifiedThirdIds?.has(row.teamId)) {
-          return { ...row, qualificationZone: 'direct' };
+          return {
+            ...row,
+            qualificationZone: provisional ? 'third_provisional' : 'direct',
+          };
         }
         return { ...row, qualificationZone: 'third_possible' };
       }
@@ -212,7 +197,24 @@ export function formatKnockoutSlotLabelEs(label) {
   if (match) return `2.º del grupo ${match[1]}`;
 
   match = trimmed.match(/^3rd Group (.+)$/i);
-  if (match) return `3.º mejor (${match[1]})`;
+  if (match) {
+    const groups = match[1]
+      .split(/[/,\s]+/)
+      .map((part) => part.trim().toUpperCase())
+      .filter((part) => /^[A-L]$/.test(part))
+      .join('/');
+    return `3.º mejor (${groups})`;
+  }
+
+  match = trimmed.match(/^Best 3rd place Groups? (.+)$/i);
+  if (match) {
+    const groups = match[1]
+      .split(/[/,\s]+/)
+      .map((part) => part.trim().toUpperCase())
+      .filter((part) => /^[A-L]$/.test(part))
+      .join('/');
+    return `3.º mejor (${groups})`;
+  }
 
   match = trimmed.match(/^Winner Match (\d+)$/i);
   if (match) return `Ganador del partido ${match[1]}`;
@@ -416,8 +418,29 @@ export async function buildWorldCupOverview({
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
   const stadiumMap = Object.fromEntries(stadiums.map((s) => [s.externalId, s]));
 
-  const groupStandings = annotateGroupQualification(computeGroupStandings(teams, matches, groups));
-  const knockout = buildKnockoutPhases(matches, teamMap, stadiumMap);
+  const rawStandings = computeGroupStandings(teams, matches, groups);
+  const thirdPlaceStandings = rankBestThirdPlaceTeams(rawStandings);
+  const groupStandings = annotateGroupQualification(rawStandings);
+
+  let knockout = buildKnockoutPhases(matches, teamMap, stadiumMap);
+  const officialKnockoutMatches = matches.filter((match) => {
+    const id = String(match.externalId || '');
+    return /^\d+$/.test(id) && Number(id) >= 73 && Number(id) <= 104;
+  });
+
+  if (officialKnockoutMatches.length) {
+    const { buildPredictedKnockoutPhases } = await import('./predictedKnockoutService.js');
+    const resolved = buildPredictedKnockoutPhases({
+      groupStandings,
+      knockoutMatches: officialKnockoutMatches,
+      predictionsByMatchId: new Map(),
+      teamMap,
+      stadiumMap,
+    });
+    if (resolved.phases.length) {
+      knockout = resolved.phases;
+    }
+  }
   const stats = computeTournamentStats(matches, teams);
 
   const groupMatches = matches
@@ -474,6 +497,11 @@ export async function buildWorldCupOverview({
   return {
     lastSyncAt: await getLastSyncAt(),
     groups: groupStandings,
+    thirdPlaceStandings: {
+      ranked: thirdPlaceStandings.ranked,
+      provisional: thirdPlaceStandings.provisional,
+      combinationKey: thirdPlaceStandings.combinationKey,
+    },
     knockout,
     groupMatches,
     predictionGroup,

@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getGroupRowBorderStyle } from '@/lib/groupColors.js';
 import { QualificationLegend } from '@/components/worldcup/GroupColorUi.jsx';
+import ThirdPlaceStandingsSection from '@/components/worldcup/ThirdPlaceStandingsSection.jsx';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { formatMatchDate } from '@/lib/dateFormat';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
@@ -104,7 +105,7 @@ const standingsStatCell =
   'w-7 px-0.5 py-1.5 text-center tabular-nums text-xs sm:w-8 sm:px-1 sm:py-2 sm:text-sm md:w-9';
 const standingsOptionalCol = 'hidden sm:table-cell';
 
-export function GroupStandingsSection({ groups, onGroupClick }) {
+export function GroupStandingsSection({ groups, thirdPlaceStandings, teamMap, onGroupClick }) {
   if (!groups?.length) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -198,6 +199,11 @@ export function GroupStandingsSection({ groups, onGroupClick }) {
         </Card>
       ))}
       </div>
+
+      <ThirdPlaceStandingsSection
+        thirdPlaceStandings={thirdPlaceStandings}
+        teamMap={teamMap}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import CompactGroupTable, { QualificationLegend } from '@/components/worldcup/CompactGroupTable.jsx';
 import KnockoutBracket from '@/components/worldcup/KnockoutBracket.jsx';
+import ThirdPlaceStandingsSection from '@/components/worldcup/ThirdPlaceStandingsSection.jsx';
 
 const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
@@ -7,7 +8,7 @@ function groupMap(groups = []) {
   return Object.fromEntries(groups.map((g) => [String(g.group).toUpperCase(), g]));
 }
 
-export default function FixtureSection({ groups, knockout }) {
+export default function FixtureSection({ groups, knockout, thirdPlaceStandings, teamMap }) {
   if (!groups?.length) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -28,6 +29,11 @@ export default function FixtureSection({ groups, knockout }) {
           )}
         </div>
       </div>
+
+      <ThirdPlaceStandingsSection
+        thirdPlaceStandings={thirdPlaceStandings}
+        teamMap={teamMap}
+      />
 
       <div className="flex w-full flex-col gap-3">
         <div>

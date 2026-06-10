@@ -1,6 +1,7 @@
 import { THIRD_PLACE_COMBINATIONS } from '../data/thirdPlaceCombinations.js';
 import { formatKnockoutSlotLabelEs, formatMatchSummary } from './worldCupStatsService.js';
 import { KNOCKOUT_ROUNDS } from './simulationTournamentService.js';
+import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
 
 /** Partidos R32 donde un 3.º clasificado enfrenta al ganador del grupo indicado. */
 const THIRD_PLACE_MATCH_WINNER_SLOTS = {
@@ -80,13 +81,6 @@ function formatTeamRef(team) {
   };
 }
 
-function compareThirdPlaces(a, b) {
-  if (b.points !== a.points) return b.points - a.points;
-  if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
-  if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-  return (a.group || '').localeCompare(b.group || '');
-}
-
 function buildStandingsByGroup(groupStandings) {
   const byGroup = new Map();
   for (const groupTable of groupStandings) {
@@ -110,27 +104,11 @@ function getTeamFromStandingRow(row, teamMap) {
 }
 
 function getQualifiedThirdPlaceContext(groupStandings) {
-  const thirdCandidates = groupStandings
-    .map((groupTable) =>
-      groupTable.standings[2] ? { ...groupTable.standings[2], group: groupTable.group } : null
-    )
-    .filter(Boolean);
-
-  const groupStageComplete = groupStandings.every((groupTable) =>
-    groupTable.standings.every((row) => row.played >= 3)
-  );
-
-  if (!groupStageComplete || thirdCandidates.length < 12) {
+  const { qualified, combinationKey } = rankBestThirdPlaceTeams(groupStandings);
+  if (!combinationKey) {
     return { combinationKey: null, thirdByGroup: new Map() };
   }
-
-  const qualified = [...thirdCandidates].sort(compareThirdPlaces).slice(0, 8);
-  const combinationKey = qualified
-    .map((row) => row.group)
-    .sort()
-    .join('');
   const thirdByGroup = new Map(qualified.map((row) => [row.group, row]));
-
   return { combinationKey, thirdByGroup };
 }
 

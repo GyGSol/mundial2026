@@ -9,6 +9,7 @@ import { isPredictionLocked } from '../services/predictionLockService.js';
 import { computePredictedGroupStandings } from '../services/predictedGroupStandingsService.js';
 import { buildPredictedKnockoutPhases } from '../services/predictedKnockoutService.js';
 import { annotateGroupQualification } from '../services/worldCupStatsService.js';
+import { rankBestThirdPlaceTeams } from '../services/thirdPlaceRanking.js';
 import { isGroupPhaseMatch } from '../services/groupStandingsUtils.js';
 import { backfillLegacyUserSubmittedPredictions } from '../services/predictionMigrationService.js';
 
@@ -55,9 +56,9 @@ router.get('/group-standings', authMiddleware, async (req, res, next) => {
       ])
     );
 
-    let groups = annotateGroupQualification(
-      computePredictedGroupStandings(teams, groupMatches, predictionsByMatchId)
-    );
+    const rawGroups = computePredictedGroupStandings(teams, groupMatches, predictionsByMatchId);
+    const thirdPlaceRanked = rankBestThirdPlaceTeams(rawGroups);
+    let groups = annotateGroupQualification(rawGroups);
 
     if (groupFilter) {
       groups = groups.filter((entry) => entry.group === groupFilter);
@@ -76,6 +77,19 @@ router.get('/group-standings', authMiddleware, async (req, res, next) => {
 
     res.json({
       groups,
+      thirdPlaceStandings: {
+        ranked: thirdPlaceRanked.ranked,
+        provisional: thirdPlaceRanked.provisional,
+        combinationKey: thirdPlaceRanked.combinationKey,
+      },
+      teams: teams.map((team) => ({
+        externalId: team.externalId,
+        nameEn: team.nameEn,
+        nameFa: team.nameFa,
+        fifaCode: team.fifaCode,
+        group: team.group,
+        flag: team.flag,
+      })),
       knockout: {
         phases: knockout.phases,
         progress: knockout.progress,

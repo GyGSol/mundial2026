@@ -202,22 +202,32 @@ describe('worldCupStatsService', () => {
   });
 
   it('marca zonas de clasificación por puesto en el grupo', () => {
-    const standings = [
-      {
-        group: 'A',
-        standings: [
-          { teamId: '1', rank: 1, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
-          { teamId: '2', rank: 2, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
-          { teamId: '3', rank: 3, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
-          { teamId: '4', rank: 4, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
-        ],
-      },
-    ];
+    const letters = 'ABCDEFGHIJKL'.split('');
+    const standings = letters.map((group) => ({
+      group,
+      standings: [
+        { teamId: `${group}1`, rank: 1, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
+        { teamId: `${group}2`, rank: 2, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
+        {
+          teamId: `${group}3`,
+          rank: 3,
+          played: 0,
+          points: group === 'A' ? 0 : 3,
+          goalDiff: 0,
+          goalsFor: group === 'A' ? 0 : 3,
+        },
+        { teamId: `${group}4`, rank: 4, played: 0, points: 0, goalDiff: 0, goalsFor: 0 },
+      ],
+    }));
 
     const annotated = annotateGroupQualification(standings);
-    expect(annotated[0].standings[0].qualificationZone).toBe('direct');
-    expect(annotated[0].standings[1].qualificationZone).toBe('direct');
-    expect(annotated[0].standings[2].qualificationZone).toBe('third_possible');
-    expect(annotated[0].standings[3].qualificationZone).toBeNull();
+    const groupA = annotated.find((entry) => entry.group === 'A');
+    const groupB = annotated.find((entry) => entry.group === 'B');
+
+    expect(groupA.standings[0].qualificationZone).toBe('direct');
+    expect(groupA.standings[1].qualificationZone).toBe('direct');
+    expect(groupA.standings[2].qualificationZone).toBe('third_possible');
+    expect(groupA.standings[3].qualificationZone).toBeNull();
+    expect(groupB.standings[2].qualificationZone).toBe('third_provisional');
   });
 });

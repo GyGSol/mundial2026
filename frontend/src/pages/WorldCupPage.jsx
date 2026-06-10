@@ -96,7 +96,13 @@ export default function WorldCupPage() {
           {error && <p className="text-destructive">{error}</p>}
           {!pageLoading && !error && (
             <>
-              {activeTab === 'groups' && <GroupStandingsSection groups={data?.groups} />}
+              {activeTab === 'groups' && (
+                <GroupStandingsSection
+                  groups={data?.groups}
+                  thirdPlaceStandings={data?.thirdPlaceStandings}
+                  teamMap={Object.fromEntries((data?.teams ?? []).map((t) => [t.externalId, t]))}
+                />
+              )}
               {activeTab === 'knockout' && <KnockoutSection phases={data?.knockout} />}
               {activeTab === 'matches' && (
                 <GroupMatchesSection
@@ -112,7 +118,12 @@ export default function WorldCupPage() {
               )}
               {activeTab === 'teams' && <TeamsSection teams={data?.teams} />}
               {activeTab === 'fixture' && (
-                <FixtureSection groups={data?.groups} knockout={data?.knockout} />
+                <FixtureSection
+                  groups={data?.groups}
+                  knockout={data?.knockout}
+                  thirdPlaceStandings={data?.thirdPlaceStandings}
+                  teamMap={Object.fromEntries((data?.teams ?? []).map((t) => [t.externalId, t]))}
+                />
               )}
             </>
           )}
