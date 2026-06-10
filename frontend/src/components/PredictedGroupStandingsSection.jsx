@@ -1,9 +1,11 @@
 import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
+import PredictedKnockoutSection from '@/components/PredictedKnockoutSection.jsx';
 import { GroupStandingsSection } from '@/components/worldcup/WorldCupSections.jsx';
 
 export default function PredictedGroupStandingsSection({
   groups,
+  knockout,
   loading,
   error,
   onGroupSelect,
@@ -52,6 +54,19 @@ export default function PredictedGroupStandingsSection({
       ) : null}
 
       <GroupStandingsSection groups={groups} onGroupClick={onGroupSelect} />
+
+      <div className="flex flex-col gap-3 pt-2">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Simulación de fase final
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Cruces posibles según tus predicciones. Se actualiza al guardar resultados en grupos o
+            eliminatorios.
+          </p>
+        </div>
+        <PredictedKnockoutSection knockout={knockout} />
+      </div>
     </div>
   );
 }
