@@ -1,4 +1,4 @@
-/** Copas del Mundo ganadas por código FIFA (hasta 2022). */
+/** Copas del Mundo ganadas por código FIFA (hasta 2022). FRG + GER = Alemania. */
 export const WORLD_CUP_TITLES = {
   BRA: 5,
   GER: 4,
@@ -10,17 +10,88 @@ export const WORLD_CUP_TITLES = {
   ESP: 1,
 };
 
+/** Código FIFA (3 letras) → ISO 3166-1 alpha-2 para flagcdn.com */
+export const FIFA_TO_FLAG_ISO = {
+  ARG: 'ar',
+  AUS: 'au',
+  AUT: 'at',
+  BEL: 'be',
+  BRA: 'br',
+  BUL: 'bg',
+  CAN: 'ca',
+  CHI: 'cl',
+  CMR: 'cm',
+  COL: 'co',
+  CRC: 'cr',
+  CRO: 'hr',
+  CZE: 'cz',
+  DEN: 'dk',
+  ECU: 'ec',
+  EGY: 'eg',
+  ENG: 'gb-eng',
+  ESP: 'es',
+  FRA: 'fr',
+  FRG: 'de',
+  GER: 'de',
+  GHA: 'gh',
+  GRE: 'gr',
+  HUN: 'hu',
+  IRN: 'ir',
+  ISL: 'is',
+  ITA: 'it',
+  JPN: 'jp',
+  KOR: 'kr',
+  KSA: 'sa',
+  MAR: 'ma',
+  MEX: 'mx',
+  NED: 'nl',
+  NGA: 'ng',
+  NIR: 'gb-nir',
+  NOR: 'no',
+  PAN: 'pa',
+  PAR: 'py',
+  PER: 'pe',
+  POL: 'pl',
+  POR: 'pt',
+  QAT: 'qa',
+  ROU: 'ro',
+  RSA: 'za',
+  RUS: 'ru',
+  SCO: 'gb-sct',
+  SEN: 'sn',
+  SRB: 'rs',
+  SUI: 'ch',
+  SVK: 'sk',
+  SWE: 'se',
+  TCH: 'cz',
+  TUN: 'tn',
+  TUR: 'tr',
+  URU: 'uy',
+  USA: 'us',
+  URS: 'ru',
+  WAL: 'gb-wls',
+  YUG: 'rs',
+};
+
 export function getWorldCupTitles(fifaCode) {
   if (!fifaCode) return 0;
-  return WORLD_CUP_TITLES[fifaCode.toUpperCase()] ?? 0;
+  const code = fifaCode.toUpperCase();
+  if (code === 'FRG') return WORLD_CUP_TITLES.GER ?? 0;
+  return WORLD_CUP_TITLES[code] ?? 0;
+}
+
+export function fifaCodeToFlagIso(fifaCode) {
+  if (!fifaCode) return null;
+  const code = fifaCode.toUpperCase();
+  return FIFA_TO_FLAG_ISO[code] ?? null;
 }
 
 export function getTeamFlag(team) {
   if (!team) return null;
   if (team.flag?.startsWith('http')) return team.flag;
   if (team.fifaCode) {
-    const isoMap = { ARG: 'ar', BRA: 'br', MEX: 'mx', USA: 'us', ENG: 'gb-eng' };
-    const iso = isoMap[team.fifaCode] || team.fifaCode.slice(0, 2).toLowerCase();
+    const iso = fifaCodeToFlagIso(team.fifaCode);
+    if (!iso) return null;
     return `https://flagcdn.com/w80/${iso}.png`;
   }
   return null;
