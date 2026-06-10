@@ -6,7 +6,7 @@ export default function StadiumBadge({ stadium, className, size = 'sm' }) {
   const line = formatStadiumLine(stadium);
   if (!iconUrl && !line) return null;
 
-  const iconSize = size === 'xs' ? 'size-5' : 'size-6';
+  const iconSize = size === 'xs' ? 'size-7' : 'size-8';
 
   return (
     <div

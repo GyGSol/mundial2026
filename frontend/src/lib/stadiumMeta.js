@@ -1,5 +1,5 @@
 /**
- * Iconos locales en /public/stadiums/{slug}.svg (colores inspirados en cada sede).
+ * Fotos locales en /public/stadiums/{slug}.jpg (miniaturas Wikimedia Commons).
  * externalId según worldcup26.ir.
  */
 export const STADIUM_ICON_META = {
@@ -72,7 +72,7 @@ export function getStadiumIconMeta(stadium) {
 export function getStadiumIconUrl(stadium) {
   const meta = getStadiumIconMeta(stadium);
   if (!meta) return null;
-  return `/stadiums/${meta.slug}.svg`;
+  return `/stadiums/${meta.slug}.jpg`;
 }
 
 export function formatStadiumLine(stadium) {
