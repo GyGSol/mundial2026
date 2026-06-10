@@ -80,3 +80,45 @@ export function formatStadiumLine(stadium) {
   const parts = [stadium.nameEn, stadium.city].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
 }
+
+export function formatStadiumCapacity(capacity) {
+  if (!capacity || capacity <= 0) return null;
+  return capacity.toLocaleString('es-AR');
+}
+
+export function formatStadiumTimezone(timezone) {
+  if (!timezone) return null;
+  try {
+    const label = new Intl.DateTimeFormat('es-AR', {
+      timeZone: timezone,
+      timeZoneName: 'longGeneric',
+    })
+      .formatToParts(new Date())
+      .find((part) => part.type === 'timeZoneName')?.value;
+    return label ? `${label} (${timezone})` : timezone;
+  } catch {
+    return timezone;
+  }
+}
+
+/** Filas para el popup: solo campos con valor. */
+export function getStadiumDetailRows(stadium) {
+  if (!stadium) return [];
+
+  const rows = [
+    { label: 'Nombre FIFA', value: stadium.fifaName },
+    { label: 'Nombre (FA)', value: stadium.nameFa },
+    { label: 'Ciudad', value: stadium.city },
+    { label: 'País', value: stadium.country },
+    {
+      label: 'Capacidad',
+      value: formatStadiumCapacity(stadium.capacity)
+        ? `${formatStadiumCapacity(stadium.capacity)} espectadores`
+        : null,
+    },
+    { label: 'Zona horaria', value: formatStadiumTimezone(stadium.timezone) },
+    { label: 'ID sede', value: stadium.externalId },
+  ];
+
+  return rows.filter((row) => row.value);
+}

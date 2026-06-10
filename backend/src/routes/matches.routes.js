@@ -15,6 +15,7 @@ import {
   isOfficialKnockoutMatch,
 } from '../services/predictedMatchContextService.js';
 import { enrichMatchPhaseFields } from '../services/matchPhaseUtils.js';
+import { formatStadiumForClient } from '../services/stadiumPayload.js';
 
 let legacyBackfillPromise = null;
 
@@ -121,14 +122,7 @@ async function enrichMatches(matches, userId) {
         homeTeam: teamMap[m.homeTeamId],
         awayTeam: teamMap[m.awayTeamId],
       }),
-      stadium: stadiumMap[m.stadiumId]
-        ? {
-            externalId: stadiumMap[m.stadiumId].externalId,
-            nameEn: stadiumMap[m.stadiumId].nameEn,
-            city: stadiumMap[m.stadiumId].city,
-            country: stadiumMap[m.stadiumId].country,
-          }
-        : null,
+      stadium: formatStadiumForClient(stadiumMap[m.stadiumId]),
       prediction,
       ...meta,
     };

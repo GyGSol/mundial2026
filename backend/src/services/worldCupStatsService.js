@@ -172,6 +172,7 @@ function isSimulationMatch(match) {
 }
 
 import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
+import { formatStadiumForClient } from './stadiumPayload.js';
 
 function isTeamSlotAssigned(teamId, teamMap) {
   if (!teamId || teamId === '0') return false;
@@ -262,13 +263,7 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
       awayTeam: teamMap[match.awayTeamId],
     }),
     stadium: stadium
-      ? {
-          externalId: stadium.externalId,
-          nameEn: stadium.nameEn,
-          city: stadium.city,
-          country: stadium.country,
-          timezone: stadium.timezone,
-        }
+      ? formatStadiumForClient(stadium)
       : match.stadiumId
         ? { externalId: match.stadiumId }
         : null,
