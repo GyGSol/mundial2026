@@ -27,10 +27,6 @@ function buildMatchMeta(match, { showPhaseInHeader, showTimezone }) {
     parts.push(match.knockoutPhase);
   }
 
-  if (match.externalId) {
-    parts.push(`Partido #${match.externalId}`);
-  }
-
   const date = formatMatchDate(match, {
     showTimezone,
     timeZone: ARGENTINA_TIMEZONE,

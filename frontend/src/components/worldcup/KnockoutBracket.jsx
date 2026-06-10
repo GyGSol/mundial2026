@@ -138,13 +138,10 @@ function BracketMatchMeta({ match }) {
   const dateTime = formatMatchDate(match);
   const stadiumLine = [match?.stadium?.nameEn, match?.stadium?.city].filter(Boolean).join(' · ');
 
-  if (!match?.externalId && !dateTime && !stadiumLine) return null;
+  if (!dateTime && !stadiumLine) return null;
 
   return (
     <div className="mb-1.5 w-full space-y-0.5 border-b border-border/40 pb-1.5 text-center text-[9px] leading-snug text-primary/75 sm:text-[10px]">
-      {match?.externalId ? (
-        <p className="font-semibold tabular-nums text-primary">Partido #{match.externalId}</p>
-      ) : null}
       {dateTime ? <p>{dateTime}</p> : null}
       {stadiumLine ? (
         <p className="truncate px-0.5" title={stadiumLine}>
@@ -173,7 +170,7 @@ function BracketMatchCell({ match, highlight = false }) {
         highlight ? 'border-primary/60 ring-1 ring-primary/20' : 'border-border/70',
         isLive && 'border-emerald-400/70 bg-emerald-50/30'
       )}
-      title={`Partido ${match?.externalId ?? ''}: ${homeTitle} vs ${awayTitle}`}
+      title={`${homeTitle} vs ${awayTitle}`}
     >
       <BracketMatchMeta match={match} />
 
