@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
+function shouldPollLeaderboardLive(data) {
+  return (
+    (data?.liveMatches?.length ?? 0) > 0 || (data?.nextLockedMatches?.length ?? 0) > 0
+  );
+}
 import { Link } from 'react-router-dom';
 import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
@@ -98,6 +104,8 @@ export default function LeaderboardPage() {
 
   const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId], {
     enabled: canLoadRanking,
+    pollIntervalMs: 15000,
+    pollWhen: shouldPollLeaderboardLive,
   });
 
   const rankingLoading = canLoadRanking && loading;

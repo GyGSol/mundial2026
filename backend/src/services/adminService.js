@@ -382,7 +382,7 @@ export async function updateAdminMatch(matchId, { homeScore, awayScore, status }
 
   await match.save();
 
-  if (match.status === 'finished') {
+  if (match.status === 'finished' || match.status === 'live') {
     await recalculateMatchScores(match._id);
   }
 

@@ -90,7 +90,7 @@ async function buildStadiumTimezoneMap() {
 async function upsertMatches() {
   const data = await fetchGames();
   const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
-  const finishedIds = [];
+  const scoringIds = [];
   const stadiumTimezones = await buildStadiumTimezoneMap();
 
   for (const item of list) {
@@ -106,12 +106,17 @@ async function upsertMatches() {
       { upsert: true, new: true }
     );
 
-    if (match.status === 'finished' && (!wasFinished || needsRescore(existing, match))) {
-      finishedIds.push(match._id);
+    const becameLive = match.status === 'live' && existing?.status !== 'live';
+    const scoreChanged = needsRescore(existing, match);
+
+    if (match.status === 'finished' && (!wasFinished || scoreChanged)) {
+      scoringIds.push(match._id);
+    } else if (match.status === 'live' && (becameLive || scoreChanged)) {
+      scoringIds.push(match._id);
     }
   }
 
-  return { count: list.length, finishedIds };
+  return { count: list.length, scoringIds };
 }
 
 function needsRescore(before, after) {
@@ -125,7 +130,7 @@ function needsRescore(before, after) {
 
 export async function recalculateMatchScores(matchId) {
   const match = await Match.findById(matchId);
-  if (!match || match.status !== 'finished') return;
+  if (!match || (match.status !== 'finished' && match.status !== 'live')) return;
 
   const predictions = await Prediction.find({ matchId });
   const affectedUsers = new Set();
@@ -146,12 +151,17 @@ export async function recalculateMatchScores(matchId) {
   }
 
   for (const userId of affectedUsers) {
-    await recalculateConsolationBonuses(userId);
+    if (match.status === 'finished') {
+      await recalculateConsolationBonuses(userId);
+    }
     await recalculateUserTotalPoints(userId);
   }
 
   if (affectedUsers.size > 0) {
-    notifyLeaderboardUpdated({ reason: 'scores_recalculated', matchId: matchId.toString() });
+    notifyLeaderboardUpdated({
+      reason: match.status === 'live' ? 'live_scores_updated' : 'scores_recalculated',
+      matchId: matchId.toString(),
+    });
   }
 }
 
@@ -225,9 +235,9 @@ export async function runSync({ includeMetadata = true } = {}) {
       stadiumsCount = await upsertStadiums();
     }
 
-    const { count, finishedIds } = await upsertMatches();
+    const { count, scoringIds } = await upsertMatches();
 
-    for (const matchId of finishedIds) {
+    for (const matchId of scoringIds) {
       await recalculateMatchScores(matchId);
     }
 

@@ -658,8 +658,12 @@ export async function startNextLiveMatch() {
   }
 
   nextMatch.status = 'live';
+  if (nextMatch.homeScore == null) nextMatch.homeScore = 0;
+  if (nextMatch.awayScore == null) nextMatch.awayScore = 0;
   nextMatch.lastSyncedAt = new Date();
   await nextMatch.save();
+
+  await recalculateMatchScores(nextMatch._id);
 
   state.liveMatchId = nextMatch._id;
   await state.save();
@@ -668,6 +672,7 @@ export async function startNextLiveMatch() {
     reason: 'simulation_live',
     matchId: nextMatch._id.toString(),
   });
+  notifyLeaderboardUpdated({ reason: 'simulation_live', matchId: nextMatch._id.toString() });
 
   return getSimulationStatus();
 }

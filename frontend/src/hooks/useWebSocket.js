@@ -8,16 +8,26 @@ function getWsUrl() {
   return `${protocol}//${window.location.host}/ws`;
 }
 
-export function useWebSocket(onMessage) {
+export function useWebSocket(onMessage, { onReconnect } = {}) {
   const handlerRef = useRef(onMessage);
+  const reconnectRef = useRef(onReconnect);
   handlerRef.current = onMessage;
+  reconnectRef.current = onReconnect;
 
   useEffect(() => {
     let ws;
     let reconnectTimer;
+    let hasConnectedBefore = false;
 
     function connect() {
       ws = new WebSocket(getWsUrl());
+
+      ws.onopen = () => {
+        if (hasConnectedBefore) {
+          reconnectRef.current?.();
+        }
+        hasConnectedBefore = true;
+      };
 
       ws.onmessage = (event) => {
         try {
@@ -57,5 +67,9 @@ export function useRealtimeRefresh(refresh) {
     }
   }, []);
 
-  useWebSocket(handleMessage);
+  const handleReconnect = useCallback(() => {
+    refreshRef.current?.();
+  }, []);
+
+  useWebSocket(handleMessage, { onReconnect: handleReconnect });
 }

@@ -3,6 +3,7 @@ import { createApp } from './app.js';
 import { connectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { startSyncJob } from './jobs/syncMatches.job.js';
+import { startKickoffWatchJob } from './jobs/kickoffWatch.job.js';
 import { initWebSocket } from './services/websocketService.js';
 import { backfillLegacyUserSubmittedPredictions } from './services/predictionMigrationService.js';
 
@@ -25,6 +26,7 @@ async function main() {
 
   initWebSocket(server);
   startSyncJob();
+  startKickoffWatchJob();
 
   server.listen(env.port, () => {
     console.log(`Server listening on port ${env.port} (HTTP + WS /ws)`);

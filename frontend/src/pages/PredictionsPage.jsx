@@ -68,7 +68,10 @@ export default function PredictionsPage() {
   const { data, loading, error, lastUpdated, refresh } = useLiveData(fetchMatches, [
     statusFilter,
     groupFilter,
-  ]);
+  ], {
+    pollIntervalMs: 15000,
+    pollWhen: (payload) => (payload?.matches ?? []).some((m) => m.status === 'live'),
+  });
 
   const {
     data: standingsData,
