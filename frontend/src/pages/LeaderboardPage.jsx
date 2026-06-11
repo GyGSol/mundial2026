@@ -7,6 +7,7 @@ import LeaderboardTable from '../components/LeaderboardTable.jsx';
 import LiveMatchesBar from '../components/LiveMatchesBar.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { findNextLockedMatch } from '../lib/nextLockedMatch.js';
 import {
   Select,
   SelectContent,
@@ -83,13 +84,15 @@ export default function LeaderboardPage() {
   const canLoadRanking = Boolean(effectiveGroupId);
 
   const fetchLeaderboard = useCallback(async () => {
-    const [leaderboardData, liveData] = await Promise.all([
+    const [leaderboardData, liveData, upcomingData] = await Promise.all([
       leaderboardApi.list(effectiveGroupId),
       matchesApi.list({ status: 'live' }),
+      matchesApi.list({ status: 'upcoming' }),
     ]);
     return {
       ...leaderboardData,
       liveMatches: liveData.matches ?? [],
+      nextLockedMatch: findNextLockedMatch(upcomingData.matches),
     };
   }, [effectiveGroupId]);
 
@@ -118,7 +121,12 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {rankingReady && <LiveMatchesBar matches={data?.liveMatches ?? []} />}
+      {rankingReady && (
+        <LiveMatchesBar
+          matches={data?.liveMatches ?? []}
+          nextMatch={data?.nextLockedMatch}
+        />
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0 flex flex-col gap-1">
