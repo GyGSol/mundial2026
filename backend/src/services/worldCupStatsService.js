@@ -1,4 +1,3 @@
-import { SimulationState } from '../models/SimulationState.js';
 import { applyResult, createStanding, sortStandings } from './groupStandingsUtils.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
 
@@ -427,8 +426,6 @@ export async function buildWorldCupOverview({
   Group,
   Stadium,
   getLastSyncAt,
-  competitionGroupId = null,
-  buildMatchPredictionRankings,
 }) {
   const [teams, matches, groups, stadiums] = await Promise.all([
     Team.find().sort({ nameEn: 1 }),
@@ -494,36 +491,6 @@ export async function buildWorldCupOverview({
     };
   });
 
-  const finishedMatches = matches.filter((match) => match.status === 'finished');
-  let predictionGroup = null;
-  let simulationPredictionGroup = null;
-  let matchPredictionRankings = {};
-
-  if (competitionGroupId && buildMatchPredictionRankings) {
-    const rankings = await buildMatchPredictionRankings(competitionGroupId, finishedMatches);
-    predictionGroup = rankings.group;
-    matchPredictionRankings = rankings.rankingsByMatch;
-  }
-
-  const simState = await SimulationState.findOne({ key: 'active' });
-  if (simState?.groupId && buildMatchPredictionRankings) {
-    const simFinished = await Match.find({
-      _id: { $in: simState.matchIds },
-      status: 'finished',
-    });
-    if (simFinished.length) {
-      const simRankings = await buildMatchPredictionRankings(
-        simState.groupId.toString(),
-        simFinished
-      );
-      simulationPredictionGroup = simRankings.group;
-      matchPredictionRankings = {
-        ...matchPredictionRankings,
-        ...simRankings.rankingsByMatch,
-      };
-    }
-  }
-
   return {
     lastSyncAt: await getLastSyncAt(),
     groups: groupStandings,
@@ -534,9 +501,6 @@ export async function buildWorldCupOverview({
     },
     knockout,
     groupMatches,
-    predictionGroup,
-    simulationPredictionGroup,
-    matchPredictionRankings,
     teams: teams.map((t) => ({
       externalId: t.externalId,
       nameEn: t.nameEn,

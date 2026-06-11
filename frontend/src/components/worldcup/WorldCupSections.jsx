@@ -1,6 +1,4 @@
-import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge.jsx';
-import MatchPredictionRankingsTable from '@/components/MatchPredictionRankingsTable.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import {
   Table,
@@ -468,12 +466,6 @@ function getMatchMetaParts(match) {
   return parts;
 }
 
-function isMatchFinalized(match) {
-  if (match.status === 'finished') return true;
-  const finishedFlag = match.raw?.finished;
-  return finishedFlag === 'TRUE' || finishedFlag === true || finishedFlag === 'true';
-}
-
 function sortMatchesForPartidos(matches = []) {
   return [...matches].sort((a, b) => {
     const byKickoff = new Date(a.kickoffAt || 0) - new Date(b.kickoffAt || 0);
@@ -484,17 +476,7 @@ function sortMatchesForPartidos(matches = []) {
   });
 }
 
-function hasScorers(rankings) {
-  return rankings?.some((row) => row.points > 0);
-}
-
-export function GroupMatchesSection({
-  matches,
-  matchPredictionRankings = {},
-  predictionGroup,
-  simulationPredictionGroup,
-  isAuthenticated = false,
-}) {
+export function GroupMatchesSection({ matches }) {
   if (!matches?.length) {
     return (
       <p className="text-sm text-muted-foreground">No hay partidos de fase de grupos cargados.</p>
@@ -505,47 +487,20 @@ export function GroupMatchesSection({
 
   return (
     <div className="flex flex-col gap-3">
-      {!isAuthenticated && (
-        <p className="text-sm text-muted-foreground">
-          <Link to="/login" className="text-foreground underline">
-            Ingresá
-          </Link>{' '}
-          para ver quién sumó puntos en tu grupo en cada partido finalizado.
-        </p>
-      )}
-
-      {sortedMatches.map((match) => {
-        const rankings = matchPredictionRankings?.[match.externalId];
-        const isFinished = isMatchFinalized(match);
-        const showScorers =
-          isAuthenticated && isFinished && hasScorers(rankings);
-        const groupName = match.externalId?.startsWith('sim-')
-          ? simulationPredictionGroup?.name
-          : predictionGroup?.name;
-
-        return (
-          <div
-            key={match.externalId}
-            className="flex flex-col gap-2 rounded-lg border border-border/70 bg-card p-3"
-          >
-            <MatchScore match={match} />
-            <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-muted-foreground">
-              {getMatchMetaParts(match).map((part) => (
-                <span key={part}>{part}</span>
-              ))}
-              <BroadcastBadges broadcasters={match.broadcasters} />
-            </div>
-
-            {showScorers && (
-              <MatchPredictionRankingsTable
-                rankings={rankings}
-                groupName={groupName}
-                compact
-              />
-            )}
+      {sortedMatches.map((match) => (
+        <div
+          key={match.externalId}
+          className="flex flex-col gap-2 rounded-lg border border-border/70 bg-card p-3"
+        >
+          <MatchScore match={match} />
+          <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-muted-foreground">
+            {getMatchMetaParts(match).map((part) => (
+              <span key={part}>{part}</span>
+            ))}
+            <BroadcastBadges broadcasters={match.broadcasters} />
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { worldCupApi } from '../api/client.js';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
@@ -40,16 +39,13 @@ function shouldPollWorldCupLive(data) {
 export default function WorldCupPage() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('groups');
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const groupId = user?.competitionGroup?.id;
-
-  const fetchOverview = useCallback(() => worldCupApi.overview(groupId), [groupId]);
-  const { data, loading, error, lastUpdated } = useLiveData(fetchOverview, [groupId], {
-    enabled: !authLoading,
+  const fetchOverview = useCallback(() => worldCupApi.overview(), []);
+  const { data, loading, error, lastUpdated } = useLiveData(fetchOverview, [], {
+    enabled: true,
     pollIntervalMs: 15000,
     pollWhen: shouldPollWorldCupLive,
   });
-  const pageLoading = authLoading || loading;
+  const pageLoading = loading;
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -114,15 +110,7 @@ export default function WorldCupPage() {
                 />
               )}
               {activeTab === 'knockout' && <KnockoutSection phases={data?.knockout} />}
-              {activeTab === 'matches' && (
-                <GroupMatchesSection
-                  matches={data?.groupMatches}
-                  matchPredictionRankings={data?.matchPredictionRankings}
-                  predictionGroup={data?.predictionGroup}
-                  simulationPredictionGroup={data?.simulationPredictionGroup}
-                  isAuthenticated={isAuthenticated}
-                />
-              )}
+              {activeTab === 'matches' && <GroupMatchesSection matches={data?.groupMatches} />}
               {activeTab === 'stats' && (
                 <StatsSection
                   stats={data?.stats}
