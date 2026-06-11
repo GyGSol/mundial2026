@@ -15,7 +15,7 @@ Resumen operativo para humanos y agentes de Cursor. Detalle de setup: [README.md
 
 - **Backend:** Node.js, Express, MongoDB, JWT, WebSockets
 - **Frontend:** React, Vite, Tailwind, shadcn/ui
-- **Datos:** sync con [worldcup26.ir](https://worldcup26.ir) (+ API-Football opcional vía `API_FOOTBALL_KEY`)
+- **Datos:** sync con [worldcup26.ir](https://worldcup26.ir) + tarjetas/cambios vía [Football-Data.org](https://www.football-data.org/) (`FOOTBALL_DATA_API_TOKEN`)
 - **Deploy:** Heroku + MongoDB Atlas
 
 ## Skills del repo

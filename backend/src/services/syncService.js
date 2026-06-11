@@ -89,13 +89,7 @@ async function buildStadiumTimezoneMap() {
 
 export function mergeSyncedRaw(existingRaw = {}, incomingRaw = {}) {
   const merged = { ...incomingRaw };
-  const preserveKeys = [
-    'footballDataMatchId',
-    'fdMatchId',
-    'fdEvents',
-    'apiFootballFixtureId',
-    'apiFootballEvents',
-  ];
+  const preserveKeys = ['footballDataMatchId', 'fdMatchId', 'fdEvents'];
 
   for (const key of preserveKeys) {
     if (existingRaw[key] != null) {

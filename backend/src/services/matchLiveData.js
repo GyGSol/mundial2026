@@ -59,10 +59,9 @@ export function splitFootballDataEvents(matchData, homeFdTeamId, awayFdTeamId) {
 
 export function readStoredMatchEvents(raw = {}) {
   const fdEvents = raw.fdEvents ?? {};
-  const apiFootballEvents = raw.apiFootballEvents ?? {};
   const wcEvents = readWorldCupApiEvents(raw);
 
-  return mergeMatchEvents(mergeMatchEvents(fdEvents, apiFootballEvents), wcEvents);
+  return mergeMatchEvents(fdEvents, wcEvents);
 }
 
 export function countStoredEvents(events = {}) {

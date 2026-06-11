@@ -6,7 +6,6 @@ import {
   parseScorersField,
   splitFootballDataEvents,
 } from '../src/services/matchLiveData.js';
-import { splitApiFootballEvents } from '../src/services/apiFootballClient.js';
 
 describe('matchLiveData', () => {
   describe('formatTimeElapsed', () => {
@@ -188,38 +187,6 @@ describe('matchLiveData', () => {
       expect(parseBookingsField("45' López YELLOW, 78' Pérez RED")).toEqual([
         { minute: 45, player: 'López', card: 'YELLOW' },
         { minute: 78, player: 'Pérez', card: 'RED' },
-      ]);
-    });
-  });
-
-  describe('splitApiFootballEvents', () => {
-    it('mapea tarjetas y cambios de API-Football', () => {
-      const events = splitApiFootballEvents(
-        [
-          {
-            time: { elapsed: 33 },
-            team: { id: 10 },
-            player: { name: 'Player A' },
-            type: 'Card',
-            detail: 'Yellow Card',
-          },
-          {
-            time: { elapsed: 70 },
-            team: { id: 20 },
-            player: { name: 'In B' },
-            assist: { name: 'Out B' },
-            type: 'subst',
-          },
-        ],
-        10,
-        20
-      );
-
-      expect(events.homeBookings).toEqual([
-        { minute: 33, player: 'Player A', card: 'YELLOW' },
-      ]);
-      expect(events.awaySubstitutions).toEqual([
-        { minute: 70, playerOut: 'Out B', playerIn: 'In B' },
       ]);
     });
   });
