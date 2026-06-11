@@ -101,10 +101,10 @@ function StandingsTeamCell({ team, fallback = '—', isLive = false }) {
         <span className="truncate font-medium" title={name}>
           {name}
         </span>
+        {liveBadge}
         {team?.fifaCode && (
           <span className="shrink-0 text-xs text-muted-foreground">{team.fifaCode}</span>
         )}
-        {liveBadge}
       </div>
     </>
   );
@@ -207,16 +207,7 @@ export function GroupStandingsSection({ groups, thirdPlaceStandings, teamMap, on
                     <td className={standingsStatCell}>{row.goalsFor}</td>
                     <td className={cn(standingsStatCell, standingsOptionalCol)}>{row.goalsAgainst}</td>
                     <td className={standingsStatCell}>{row.goalDiff}</td>
-                    <td className={cn(standingsStatCell, 'font-semibold')}>
-                      {isLiveTeam ? (
-                        <span className="inline-flex flex-col items-center leading-none text-emerald-700">
-                          <span>{row.points}</span>
-                          <span className="mt-0.5 text-[9px] font-medium uppercase">En vivo</span>
-                        </span>
-                      ) : (
-                        row.points
-                      )}
-                    </td>
+                    <td className={cn(standingsStatCell, 'font-semibold')}>{row.points}</td>
                   </tr>
                   );
                 })}
