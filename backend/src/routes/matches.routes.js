@@ -15,6 +15,7 @@ import {
   isOfficialKnockoutMatch,
 } from '../services/predictedMatchContextService.js';
 import { enrichMatchPhaseFields } from '../services/matchPhaseUtils.js';
+import { enrichMatchLiveFields } from '../services/matchLiveData.js';
 import { formatStadiumForClient } from '../services/stadiumPayload.js';
 
 let legacyBackfillPromise = null;
@@ -82,6 +83,7 @@ async function enrichMatches(matches, userId) {
     const meta = enrichMatchPredictionMeta(m, prediction);
 
     const phaseFields = enrichMatchPhaseFields(m);
+    const liveFields = enrichMatchLiveFields(m);
 
     const base = {
       id: m._id.toString(),
@@ -124,6 +126,7 @@ async function enrichMatches(matches, userId) {
       }),
       stadium: formatStadiumForClient(stadiumMap[m.stadiumId]),
       prediction,
+      ...liveFields,
       ...meta,
     };
 

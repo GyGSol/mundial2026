@@ -6,6 +6,30 @@ import { formatMatchDate } from '@/lib/dateFormat';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 
+function formatScorerLine(scorer) {
+  if (!scorer?.name) return null;
+  return scorer.minute != null ? `${scorer.minute}' ${scorer.name}` : scorer.name;
+}
+
+function MatchScorers({ homeScorers = [], awayScorers = [] }) {
+  if (homeScorers.length === 0 && awayScorers.length === 0) return null;
+
+  return (
+    <div className="grid w-full grid-cols-2 gap-2 text-[10px] leading-snug text-muted-foreground">
+      <div className="flex flex-col items-end gap-0.5">
+        {homeScorers.map((scorer, index) => (
+          <span key={`home-${index}`}>{formatScorerLine(scorer)}</span>
+        ))}
+      </div>
+      <div className="flex flex-col items-start gap-0.5">
+        {awayScorers.map((scorer, index) => (
+          <span key={`away-${index}`}>{formatScorerLine(scorer)}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function LiveMatchCard({ match }) {
   const homeName = match.homeTeam?.nameEn || 'Local';
   const awayName = match.awayTeam?.nameEn || 'Visitante';
@@ -22,7 +46,7 @@ function LiveMatchCard({ match }) {
     >
       <CardContent className="flex flex-col items-center gap-2 p-4">
         <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-          En vivo
+          En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
         </Badge>
 
         <div className="flex items-center gap-3">
@@ -46,6 +70,8 @@ function LiveMatchCard({ match }) {
             <span className="max-w-[5rem] truncate text-xs font-medium">{awayName}</span>
           </div>
         </div>
+
+        <MatchScorers homeScorers={match.homeScorers} awayScorers={match.awayScorers} />
 
         <span className="text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}

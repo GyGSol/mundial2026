@@ -75,6 +75,28 @@ npm run sync
 npm run fix-kickoffs -w backend   # recalcula kickoff UTC si hiciera falta
 ```
 
+### Datos en vivo (worldcup26.ir)
+
+La API externa actualiza partidos en curso vía `GET /get/games` (polling, no WebSocket). Campos relevantes del objeto `Game`:
+
+| Campo | Uso |
+|-------|-----|
+| `home_score` / `away_score` | Marcador actual |
+| `finished` | `"TRUE"` / `"FALSE"` |
+| `time_elapsed` | `"notstarted"`, minuto (`"45"`), `"ht"`, etc. |
+| `home_scorers` / `away_scorers` | Goleadores (string `"null"`, JSON o texto) |
+| `status` | Opcional: `live` / `finished` / `upcoming` |
+
+**Qué usa esta app:**
+
+- **Backend:** sync cada `SYNC_INTERVAL_MS` (default 60 s); cada `SYNC_INTERVAL_LIVE_MS` (default 15 s) mientras haya partidos `live`; kickoff watch cada `KICKOFF_WATCH_MS` (15 s) para pasar a `live` y recalcular puntos.
+- **API interna:** expone `timeElapsed`, `homeScorers` y `awayScorers` en `/api/matches` (parseados desde `match.raw`).
+- **UI:** barra de partidos en vivo en `/ranking` muestra minuto y goleadores cuando la API los envía.
+
+**Latencia típica:** el marcador puede tardar hasta ~60 s en reflejarse desde worldcup26.ir (menos durante ventanas live, 15 s). El ranking provisional se refresca cada 15 s en el frontend cuando hay partidos en curso.
+
+Documentación completa: [worldcup26.ir/api-docs](https://worldcup26.ir/api-docs/) y [repo worldcup2026](https://github.com/rezarahiminia/worldcup2026).
+
 ## Reset y paquete de entrega
 
 ```bash

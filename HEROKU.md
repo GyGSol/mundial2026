@@ -17,7 +17,7 @@ Cuenta: **gonzalomlopolito@gmail.com**
 - `JWT_SECRET` — generado automáticamente
 - `CLIENT_ORIGIN` — URL de la app
 - `WORLD_CUP_API_URL` — https://worldcup26.ir
-- `SYNC_INTERVAL_MS`, `SIMULATION_ENABLED`, `NODE_ENV`
+- `SYNC_INTERVAL_MS`, `SYNC_INTERVAL_LIVE_MS`, `KICKOFF_WATCH_MS`, `SIMULATION_ENABLED`, `NODE_ENV`
 
 ## Pendiente: MongoDB Atlas
 
