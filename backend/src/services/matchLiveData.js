@@ -66,6 +66,13 @@ export function parseScorersField(value) {
   }
 
   const trimmed = String(value).trim();
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    const quoted = [...trimmed.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+    if (quoted.length > 0) {
+      return quoted.map(normalizeScorerEntry).filter(Boolean);
+    }
+  }
+
   if (trimmed.startsWith('[')) {
     try {
       const parsed = JSON.parse(trimmed);
@@ -99,6 +106,9 @@ export function formatTimeElapsed(rawOrElapsed) {
 
   const normalized = String(value).trim().toLowerCase();
   if (!normalized || normalized === 'notstarted' || normalized === '0') return null;
+  if (normalized === 'live' || normalized === 'inprogress' || normalized === 'in progress') {
+    return null;
+  }
   if (normalized === 'finished' || normalized === 'ft' || normalized === 'fulltime') {
     return 'Final';
   }

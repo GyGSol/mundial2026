@@ -22,6 +22,10 @@ describe('matchLiveData', () => {
       expect(formatTimeElapsed({ time_elapsed: 'ht' })).toBe('ET');
       expect(formatTimeElapsed({ time_elapsed: '45+2' })).toBe("45+2'");
     });
+
+    it('ignora el literal live en el badge', () => {
+      expect(formatTimeElapsed({ time_elapsed: 'live' })).toBeNull();
+    });
   });
 
   describe('parseScorersField', () => {
@@ -43,6 +47,13 @@ describe('matchLiveData', () => {
       expect(parseScorersField("Lozano 23', Jiménez 67'")).toEqual([
         { name: 'Lozano', minute: 23 },
         { name: 'Jiménez', minute: 67 },
+      ]);
+    });
+
+    it('parsea pseudo-objeto con comillas sin comas', () => {
+      expect(parseScorersField('{"J. Quiñones 9\'" "R. Jiménez 67\'"}')).toEqual([
+        { name: 'J. Quiñones', minute: 9 },
+        { name: 'R. Jiménez', minute: 67 },
       ]);
     });
   });
