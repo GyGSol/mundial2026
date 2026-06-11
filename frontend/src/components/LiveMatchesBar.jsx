@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
+import { buildMatchSummaryRows } from '@/lib/matchSummary';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 
@@ -204,6 +205,34 @@ function MatchTimeline({ events = [], homeCode = 'LOC', awayCode = 'VIS' }) {
   );
 }
 
+function MatchSummary({ events = [], reportStats = null, homeCode = 'LOC', awayCode = 'VIS' }) {
+  const rows = buildMatchSummaryRows({ timeline: events, reportStats });
+  if (!rows.length) return null;
+
+  return (
+    <div className="w-full rounded-md border bg-muted/20 px-3 py-2 text-left">
+      <p className="mb-2 text-center text-[11px] font-medium text-foreground">Resumen del partido</p>
+      <div className="mb-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] font-medium text-muted-foreground">
+        <span className="text-right">{homeCode}</span>
+        <span className="text-center" aria-hidden="true" />
+        <span className="text-left">{awayCode}</span>
+      </div>
+      <div className="flex flex-col gap-1">
+        {rows.map((row) => (
+          <div
+            key={row.label}
+            className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] leading-snug"
+          >
+            <span className="text-right font-medium tabular-nums text-foreground">{row.home}</span>
+            <span className="min-w-[4.5rem] text-center text-muted-foreground">{row.label}</span>
+            <span className="text-left font-medium tabular-nums text-foreground">{row.away}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FinishedTeamsHeader({ homeName, awayName, homeFlag, awayFlag, center }) {
   return (
     <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
@@ -314,6 +343,13 @@ function FinishedMatchCard({ match }) {
         />
 
         <MatchTimeline events={match.matchTimeline} homeCode={homeCode} awayCode={awayCode} />
+
+        <MatchSummary
+          events={match.matchTimeline}
+          reportStats={match.fifaReportStats}
+          homeCode={homeCode}
+          awayCode={awayCode}
+        />
 
         <span className="text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}
