@@ -43,11 +43,11 @@ export default function WelcomePage() {
               Solo jugadores con cuenta. Si todavía no tenés una, registrate en un minuto.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            <Button asChild size="lg">
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Button asChild size="lg" className="w-full sm:w-auto sm:min-w-[9.5rem]">
               <Link to="/login">Ingresar</Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto sm:min-w-[9.5rem]">
               <Link to="/register">Registrarse</Link>
             </Button>
           </CardContent>
