@@ -87,9 +87,30 @@ async function buildStadiumTimezoneMap() {
   return map;
 }
 
+export function mergeSyncedRaw(existingRaw = {}, incomingRaw = {}) {
+  const merged = { ...incomingRaw };
+  const preserveKeys = [
+    'footballDataMatchId',
+    'fdMatchId',
+    'fdEvents',
+    'apiFootballFixtureId',
+    'apiFootballEvents',
+  ];
+
+  for (const key of preserveKeys) {
+    if (existingRaw[key] != null) {
+      merged[key] = existingRaw[key];
+    }
+  }
+
+  return merged;
+}
+
 export function mergeSyncedMatch(existing, incoming) {
   const merged = { ...incoming };
   if (!existing) return merged;
+
+  merged.raw = mergeSyncedRaw(existing.raw ?? {}, incoming.raw ?? {});
 
   const kickoffAt = merged.kickoffAt ?? existing.kickoffAt;
   const kickoffMs = kickoffAt ? new Date(kickoffAt).getTime() : NaN;

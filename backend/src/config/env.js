@@ -19,4 +19,6 @@ export const env = {
   adminJwtExpires: process.env.ADMIN_JWT_EXPIRES || '8h',
   footballDataApiToken: process.env.FOOTBALL_DATA_API_TOKEN || '',
   footballDataApiUrl: process.env.FOOTBALL_DATA_API_URL || 'https://api.football-data.org/v4',
+  apiFootballKey: process.env.API_FOOTBALL_KEY || '',
+  apiFootballUrl: process.env.API_FOOTBALL_URL || 'https://v3.football.api-sports.io',
 };

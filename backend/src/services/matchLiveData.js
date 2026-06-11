@@ -58,12 +58,157 @@ export function splitFootballDataEvents(matchData, homeFdTeamId, awayFdTeamId) {
 }
 
 export function readStoredMatchEvents(raw = {}) {
-  const events = raw.fdEvents ?? {};
+  const fdEvents = raw.fdEvents ?? {};
+  const apiFootballEvents = raw.apiFootballEvents ?? {};
+  const wcEvents = readWorldCupApiEvents(raw);
+
+  return mergeMatchEvents(mergeMatchEvents(fdEvents, apiFootballEvents), wcEvents);
+}
+
+export function countStoredEvents(events = {}) {
+  return (
+    (events.homeBookings?.length ?? 0) +
+    (events.awayBookings?.length ?? 0) +
+    (events.homeSubstitutions?.length ?? 0) +
+    (events.awaySubstitutions?.length ?? 0)
+  );
+}
+
+export function mergeMatchEvents(primary = {}, secondary = {}) {
   return {
-    homeBookings: events.homeBookings ?? [],
-    awayBookings: events.awayBookings ?? [],
-    homeSubstitutions: events.homeSubstitutions ?? [],
-    awaySubstitutions: events.awaySubstitutions ?? [],
+    homeBookings:
+      primary.homeBookings?.length > 0 ? primary.homeBookings : (secondary.homeBookings ?? []),
+    awayBookings:
+      primary.awayBookings?.length > 0 ? primary.awayBookings : (secondary.awayBookings ?? []),
+    homeSubstitutions:
+      primary.homeSubstitutions?.length > 0
+        ? primary.homeSubstitutions
+        : (secondary.homeSubstitutions ?? []),
+    awaySubstitutions:
+      primary.awaySubstitutions?.length > 0
+        ? primary.awaySubstitutions
+        : (secondary.awaySubstitutions ?? []),
+  };
+}
+
+function detectCardType(text) {
+  const normalized = String(text ?? '').toUpperCase();
+  if (/\b(YELLOW_RED|YELLOW\/RED|SECOND\s+YELLOW|2\s*Y|🟨🟥)\b/.test(normalized)) {
+    return 'YELLOW_RED';
+  }
+  if (/\b(RED|🟥|R)\b/.test(normalized)) return 'RED';
+  return 'YELLOW';
+}
+
+function stripCardSuffix(text) {
+  return String(text ?? '')
+    .replace(/\s+(YELLOW_RED|YELLOW\/RED|SECOND\s+YELLOW|YELLOW|RED|Y|R|🟨🟥|🟥|🟨)\s*$/i, '')
+    .trim();
+}
+
+/**
+ * Parsea home_bookings / away_bookings de worldcup26 (mismo estilo que goleadores).
+ * @param {unknown} value
+ * @returns {MatchBooking[]}
+ */
+export function parseBookingsField(value) {
+  const scorers = parseScorersField(value);
+  if (scorers.length === 0) return [];
+
+  if (typeof value === 'string' || Array.isArray(value)) {
+    const rawParts = Array.isArray(value)
+      ? value.flatMap((entry) => parseScorersField(entry).map((s) => s.name))
+      : extractQuotedScorerParts(normalizeSmartQuotes(String(value)).trim());
+
+    if (rawParts.length === scorers.length) {
+      return scorers.map((entry, index) => ({
+        minute: entry.minute,
+        player: stripCardSuffix(entry.name),
+        card: detectCardType(rawParts[index] ?? entry.name),
+      }));
+    }
+  }
+
+  return scorers.map((entry) => ({
+    minute: entry.minute,
+    player: stripCardSuffix(entry.name),
+    card: detectCardType(entry.name),
+  }));
+}
+
+function parseSubstitutionEntry(entry) {
+  if (typeof entry === 'string') {
+    const trimmed = entry.trim();
+    if (!trimmed || isNullishScorerValue(trimmed)) return null;
+
+    const arrowMatch = trimmed.match(/^(\d+)\s*['']?\s+(.+?)\s*(?:→|->|➡)\s*(.+)$/);
+    if (arrowMatch) {
+      return {
+        minute: Number(arrowMatch[1]),
+        playerOut: arrowMatch[2].trim(),
+        playerIn: arrowMatch[3].trim(),
+      };
+    }
+  }
+
+  if (entry && typeof entry === 'object') {
+    const record = /** @type {Record<string, unknown>} */ (entry);
+    const playerOut = record.playerOut ?? record.player_out ?? record.out;
+    const playerIn = record.playerIn ?? record.player_in ?? record.in;
+    if (!playerOut || !playerIn) return null;
+
+    const minuteRaw = record.minute ?? record.time ?? record.min;
+    const minute =
+      minuteRaw == null || minuteRaw === ''
+        ? null
+        : Number.isFinite(Number(minuteRaw))
+          ? Number(minuteRaw)
+          : null;
+
+    return {
+      minute,
+      playerOut: String(playerOut).trim(),
+      playerIn: String(playerIn).trim(),
+    };
+  }
+
+  return null;
+}
+
+export function parseSubstitutionsField(value) {
+  if (isNullishScorerValue(value)) return [];
+  if (Array.isArray(value)) {
+    return value.map(parseSubstitutionEntry).filter(Boolean);
+  }
+
+  const trimmed = normalizeSmartQuotes(String(value)).trim();
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map(parseSubstitutionEntry).filter(Boolean);
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  const quoted = extractQuotedScorerParts(trimmed);
+  const parts = quoted.length > 0 ? quoted : trimmed.split(/[,;|]/).map((part) => part.trim());
+
+  return parts.map(parseSubstitutionEntry).filter(Boolean);
+}
+
+function readWorldCupApiEvents(raw = {}) {
+  return {
+    homeBookings: parseBookingsField(raw.home_bookings ?? raw.homeBookings),
+    awayBookings: parseBookingsField(raw.away_bookings ?? raw.awayBookings),
+    homeSubstitutions: parseSubstitutionsField(
+      raw.home_substitutions ?? raw.homeSubstitutions ?? raw.home_subs ?? raw.homeSubs
+    ),
+    awaySubstitutions: parseSubstitutionsField(
+      raw.away_substitutions ?? raw.awaySubstitutions ?? raw.away_subs ?? raw.awaySubs
+    ),
   };
 }
 

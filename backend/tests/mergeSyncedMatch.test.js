@@ -31,4 +31,37 @@ describe('mergeSyncedMatch', () => {
     expect(merged.status).toBe('finished');
     expect(merged.homeScore).toBe(2);
   });
+
+  it('conserva fdEvents y footballDataMatchId al sincronizar raw de worldcup26', () => {
+    const merged = mergeSyncedMatch(
+      {
+        status: 'finished',
+        homeScore: 2,
+        awayScore: 0,
+        raw: {
+          home_scorers: '{“J. Quiñones 9’”}',
+          footballDataMatchId: 537327,
+          fdEvents: {
+            homeBookings: [{ minute: 45, player: 'López', card: 'YELLOW' }],
+            awayBookings: [],
+            homeSubstitutions: [],
+            awaySubstitutions: [],
+          },
+        },
+      },
+      {
+        status: 'finished',
+        homeScore: 2,
+        awayScore: 0,
+        raw: {
+          home_scorers: '{“J. Quiñones 9’”,“R. Jiménez 67’”}',
+          away_scorers: 'null',
+        },
+      }
+    );
+
+    expect(merged.raw.footballDataMatchId).toBe(537327);
+    expect(merged.raw.fdEvents.homeBookings).toHaveLength(1);
+    expect(merged.raw.home_scorers).toContain('Jiménez');
+  });
 });
