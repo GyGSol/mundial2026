@@ -81,6 +81,9 @@ export default function PredictionsPage() {
     refresh: refreshStandings,
   } = useLiveData(fetchGroupStandings, [groupFilter], {
     enabled: isAuthenticated && activeView === 'standings',
+    pollIntervalMs: 15000,
+    pollWhen: (payload) =>
+      (payload?.groups ?? []).some((group) => (group.liveTeamIds?.length ?? 0) > 0),
   });
 
   const handleSave = async (matchId, homeGoals, awayGoals) => {

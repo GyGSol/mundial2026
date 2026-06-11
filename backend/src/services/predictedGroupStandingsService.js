@@ -20,7 +20,8 @@ export function computePredictedGroupStandings(teams, matches, predictionsByMatc
 
   for (const [groupName, groupTeams] of teamsByGroup.entries()) {
     const standingsMap = new Map(groupTeams.map((team) => [team.externalId, createStanding(team)]));
-    const matchCounts = { real: 0, predicted: 0, omitted: 0 };
+    const matchCounts = { real: 0, live: 0, predicted: 0, omitted: 0 };
+    const liveTeamIds = new Set();
 
     for (const match of groupMatches) {
       if (String(match.group || '').toUpperCase() !== groupName) continue;
@@ -35,6 +36,12 @@ export function computePredictedGroupStandings(teams, matches, predictionsByMatc
         homeGoals = match.homeScore;
         awayGoals = match.awayScore;
         matchCounts.real += 1;
+      } else if (match.status === 'live') {
+        homeGoals = match.homeScore;
+        awayGoals = match.awayScore;
+        matchCounts.live += 1;
+        liveTeamIds.add(match.homeTeamId);
+        liveTeamIds.add(match.awayTeamId);
       } else if (prediction?.userSubmitted) {
         homeGoals = prediction.homeGoals;
         awayGoals = prediction.awayGoals;
@@ -62,6 +69,7 @@ export function computePredictedGroupStandings(teams, matches, predictionsByMatc
       group: groupName,
       standings,
       matchCounts,
+      liveTeamIds: [...liveTeamIds],
       source: 'predicted',
     });
   }

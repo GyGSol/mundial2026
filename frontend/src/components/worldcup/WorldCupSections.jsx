@@ -71,7 +71,7 @@ function MatchScore({ match }) {
   );
 }
 
-function StandingsTeamCell({ team, fallback = '—' }) {
+function StandingsTeamCell({ team, fallback = '—', isLive = false }) {
   const name = team?.nameEn || fallback;
   const flagUrl = getTeamFlag(team);
   const flag = flagUrl ? (
@@ -80,11 +80,21 @@ function StandingsTeamCell({ team, fallback = '—' }) {
     <span className="shrink-0 text-sm">{team.flag}</span>
   ) : null;
 
+  const liveBadge = isLive ? (
+    <Badge
+      variant="outline"
+      className="shrink-0 border-emerald-300/70 bg-emerald-50 px-1 py-0 text-[9px] font-medium uppercase text-emerald-800"
+    >
+      En vivo
+    </Badge>
+  ) : null;
+
   return (
     <>
-      <div className="flex items-center gap-1.5 sm:hidden">
+      <div className="flex items-center gap-1 sm:hidden">
         {flag}
         <span className="font-medium">{team?.fifaCode || name.slice(0, 3).toUpperCase()}</span>
+        {liveBadge}
       </div>
       <div className="hidden min-w-0 items-center gap-1.5 sm:flex">
         {flag}
@@ -94,6 +104,7 @@ function StandingsTeamCell({ team, fallback = '—' }) {
         {team?.fifaCode && (
           <span className="shrink-0 text-xs text-muted-foreground">{team.fifaCode}</span>
         )}
+        {liveBadge}
       </div>
     </>
   );
@@ -171,17 +182,23 @@ export function GroupStandingsSection({ groups, thirdPlaceStandings, teamMap, on
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
-                {group.standings.map((row) => (
+                {group.standings.map((row) => {
+                  const isLiveTeam = group.liveTeamIds?.includes(row.teamId);
+
+                  return (
                   <tr
                     key={row.teamId || row.rank}
-                    className="border-b border-border border-l-solid transition-colors hover:bg-muted/50"
+                    className={cn(
+                      'border-b border-border border-l-solid transition-colors hover:bg-muted/50',
+                      isLiveTeam && 'bg-emerald-50/40'
+                    )}
                     style={getGroupRowBorderStyle(group.group, row.rank)}
                   >
                     <td className="w-7 px-0.5 py-1.5 text-center align-middle text-xs text-muted-foreground sm:w-8 sm:py-2">
                       {row.rank}
                     </td>
                     <td className="min-w-0 px-1 py-1.5 align-middle sm:px-2 sm:py-2">
-                      <StandingsTeamCell team={row} fallback={row.nameEn} />
+                      <StandingsTeamCell team={row} fallback={row.nameEn} isLive={isLiveTeam} />
                     </td>
                     <td className={standingsStatCell}>{row.played}</td>
                     <td className={standingsStatCell}>{row.won}</td>
@@ -190,9 +207,19 @@ export function GroupStandingsSection({ groups, thirdPlaceStandings, teamMap, on
                     <td className={standingsStatCell}>{row.goalsFor}</td>
                     <td className={cn(standingsStatCell, standingsOptionalCol)}>{row.goalsAgainst}</td>
                     <td className={standingsStatCell}>{row.goalDiff}</td>
-                    <td className={cn(standingsStatCell, 'font-semibold')}>{row.points}</td>
+                    <td className={cn(standingsStatCell, 'font-semibold')}>
+                      {isLiveTeam ? (
+                        <span className="inline-flex flex-col items-center leading-none text-emerald-700">
+                          <span>{row.points}</span>
+                          <span className="mt-0.5 text-[9px] font-medium uppercase">En vivo</span>
+                        </span>
+                      ) : (
+                        row.points
+                      )}
+                    </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </CardContent>

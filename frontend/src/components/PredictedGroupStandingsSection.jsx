@@ -47,6 +47,7 @@ export default function PredictedGroupStandingsSection({
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="flex flex-col gap-2 p-4 text-sm text-foreground">
           <p>Resultados reales en partidos ya jugados.</p>
+          <p>Marcador en vivo en partidos que se están jugando ahora (puntos provisionales).</p>
           <p>Tus predicciones guardadas en partidos pendientes.</p>
           <p className="text-muted-foreground">
             Los partidos sin predicción cargada no aparecen en la tabla.

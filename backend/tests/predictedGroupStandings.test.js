@@ -40,7 +40,7 @@ describe('predictedGroupStandingsService', () => {
 
     const result = computePredictedGroupStandings(teams, matches, predictionsByMatchId);
     expect(result).toHaveLength(1);
-    expect(result[0].matchCounts).toEqual({ real: 1, predicted: 1, omitted: 0 });
+    expect(result[0].matchCounts).toEqual({ real: 1, live: 0, predicted: 1, omitted: 0 });
 
     const mexico = result[0].standings.find((row) => row.teamId === '1');
     const brazil = result[0].standings.find((row) => row.teamId === '3');
@@ -79,7 +79,7 @@ describe('predictedGroupStandingsService', () => {
     ]);
 
     const result = computePredictedGroupStandings(teams, matches, predictionsByMatchId);
-    expect(result[0].matchCounts).toEqual({ real: 0, predicted: 0, omitted: 2 });
+    expect(result[0].matchCounts).toEqual({ real: 0, live: 0, predicted: 0, omitted: 2 });
     expect(result[0].standings.every((row) => row.played === 0)).toBe(true);
   });
 
@@ -105,6 +105,44 @@ describe('predictedGroupStandingsService', () => {
     const brazil = result[0].standings.find((row) => row.teamId === '3');
     expect(brazil?.points).toBe(3);
     expect(result[0].matchCounts.predicted).toBe(1);
+  });
+
+  it('incluye partidos en vivo con marcador real y marca equipos jugando', () => {
+    const matches = [
+      {
+        id: 'm1',
+        homeTeamId: '1',
+        awayTeamId: '2',
+        homeScore: 1,
+        awayScore: 0,
+        group: 'A',
+        type: 'group',
+        status: 'live',
+      },
+      {
+        id: 'm2',
+        homeTeamId: '3',
+        awayTeamId: '4',
+        homeScore: 0,
+        awayScore: 0,
+        group: 'A',
+        type: 'group',
+        status: 'upcoming',
+      },
+    ];
+
+    const predictionsByMatchId = new Map([
+      ['m2', { homeGoals: 2, awayGoals: 2, userSubmitted: true }],
+    ]);
+
+    const result = computePredictedGroupStandings(teams, matches, predictionsByMatchId);
+    expect(result[0].matchCounts).toEqual({ real: 0, live: 1, predicted: 1, omitted: 0 });
+    expect(result[0].liveTeamIds.sort()).toEqual(['1', '2']);
+
+    const mexico = result[0].standings.find((row) => row.teamId === '1');
+    const southAfrica = result[0].standings.find((row) => row.teamId === '2');
+    expect(mexico?.points).toBe(3);
+    expect(southAfrica?.points).toBe(0);
   });
 
   it('aplica zonas de clasificación cuando hay datos suficientes', () => {
