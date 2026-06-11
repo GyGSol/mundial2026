@@ -1,5 +1,5 @@
 import { Match } from '../models/Match.js';
-import { recalculateMatchScores } from './syncService.js';
+import { recalculateMatchScores, recalculateAllLiveMatches } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 
 /** Pasa a live los upcoming cuyo kickoff ya empezó (si el sync externo aún no lo hizo). */
@@ -30,4 +30,16 @@ export async function promoteMatchesAtKickoff() {
   notifyLeaderboardUpdated({ reason: 'kickoff_live' });
 
   return promotedIds;
+}
+
+/** Mantiene puntos y ranking al día mientras hay partidos en vivo. */
+export async function syncLiveMatchScoring() {
+  const promoted = await promoteMatchesAtKickoff();
+  const { matches, users } = await recalculateAllLiveMatches();
+
+  if (matches > 0 && users > 0) {
+    notifyMatchesUpdated({ reason: 'live_scoring_sync', liveMatches: matches });
+  }
+
+  return { promoted: promoted.length, liveMatches: matches, users };
 }

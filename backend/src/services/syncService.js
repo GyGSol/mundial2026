@@ -2,9 +2,7 @@ import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
 import { Group } from '../models/Group.js';
 import { Stadium } from '../models/Stadium.js';
-import { Prediction } from '../models/Prediction.js';
 import { SyncMeta } from '../models/SyncMeta.js';
-import { recalculateUserTotalPoints } from './leaderboardService.js';
 import {
   authenticate,
   fetchGames,
@@ -16,9 +14,11 @@ import {
   normalizeGroup,
   normalizeStadium,
 } from './worldCupApiClient.js';
-import { calculatePoints } from './scoringService.js';
-import { recalculateConsolationBonuses } from './consolationBonusService.js';
 import { GROUP_LETTERS, organizeTeamsByGroup } from './simulationTournamentService.js';
+import {
+  recalculateMatchScores,
+  recalculateAllLiveMatches,
+} from './matchScoringService.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import { env } from '../config/env.js';
 import {
@@ -87,6 +87,36 @@ async function buildStadiumTimezoneMap() {
   return map;
 }
 
+export function mergeSyncedMatch(existing, incoming) {
+  const merged = { ...incoming };
+  if (!existing) return merged;
+
+  const kickoffAt = merged.kickoffAt ?? existing.kickoffAt;
+  const kickoffMs = kickoffAt ? new Date(kickoffAt).getTime() : NaN;
+  const kickoffPassed = Number.isFinite(kickoffMs) && kickoffMs <= Date.now();
+
+  if (existing.status === 'finished') {
+    merged.status = 'finished';
+    merged.homeScore = existing.homeScore;
+    merged.awayScore = existing.awayScore;
+    return merged;
+  }
+
+  if (existing.status === 'live' && incoming.status === 'upcoming' && kickoffPassed) {
+    merged.status = 'live';
+    merged.homeScore = Math.max(Number(existing.homeScore ?? 0), Number(incoming.homeScore ?? 0));
+    merged.awayScore = Math.max(Number(existing.awayScore ?? 0), Number(incoming.awayScore ?? 0));
+    return merged;
+  }
+
+  if (existing.status === 'live' && incoming.status === 'live') {
+    merged.homeScore = Math.max(Number(existing.homeScore ?? 0), Number(incoming.homeScore ?? 0));
+    merged.awayScore = Math.max(Number(existing.awayScore ?? 0), Number(incoming.awayScore ?? 0));
+  }
+
+  return merged;
+}
+
 async function upsertMatches() {
   const data = await fetchGames();
   const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
@@ -99,10 +129,11 @@ async function upsertMatches() {
       stadiumTimezone: stadiumTimezones[stadiumId] || undefined,
     });
     const existing = await Match.findOne({ externalId: doc.externalId });
+    const merged = mergeSyncedMatch(existing, doc);
     const wasFinished = existing?.status === 'finished';
     const match = await Match.findOneAndUpdate(
       { externalId: doc.externalId },
-      { $set: { ...doc, lastSyncedAt: new Date() } },
+      { $set: { ...merged, lastSyncedAt: new Date() } },
       { upsert: true, new: true }
     );
 
@@ -128,42 +159,7 @@ function needsRescore(before, after) {
   );
 }
 
-export async function recalculateMatchScores(matchId) {
-  const match = await Match.findById(matchId);
-  if (!match || (match.status !== 'finished' && match.status !== 'live')) return;
-
-  const predictions = await Prediction.find({ matchId });
-  const affectedUsers = new Set();
-
-  for (const prediction of predictions) {
-    const { total, breakdown } = calculatePoints(
-      { home: prediction.homeGoals, away: prediction.awayGoals },
-      { home: match.homeScore, away: match.awayScore }
-    );
-
-    prediction.pointsEarned = total;
-    prediction.pointsBreakdown = breakdown;
-    prediction.bonusPoint = 0;
-    prediction.bonusReason = null;
-    await prediction.save();
-
-    affectedUsers.add(prediction.userId.toString());
-  }
-
-  for (const userId of affectedUsers) {
-    if (match.status === 'finished') {
-      await recalculateConsolationBonuses(userId);
-    }
-    await recalculateUserTotalPoints(userId);
-  }
-
-  if (affectedUsers.size > 0) {
-    notifyLeaderboardUpdated({
-      reason: match.status === 'live' ? 'live_scores_updated' : 'scores_recalculated',
-      matchId: matchId.toString(),
-    });
-  }
-}
+export { recalculateMatchScores, recalculateAllLiveMatches } from './matchScoringService.js';
 
 export async function seedDemoDataIfEmpty() {
   const count = await Match.countDocuments();
@@ -240,6 +236,8 @@ export async function runSync({ includeMetadata = true } = {}) {
     for (const matchId of scoringIds) {
       await recalculateMatchScores(matchId);
     }
+
+    await recalculateAllLiveMatches();
 
     await SyncMeta.findOneAndUpdate(
       { key: 'global' },

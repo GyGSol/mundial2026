@@ -54,6 +54,32 @@ export async function ensureDefaultPredictionsForUser(userId) {
   }
 }
 
+/** Crea 0-0 para todos los usuarios que aún no tienen predicción en este partido. */
+export async function ensurePredictionsForMatch(matchId) {
+  const users = await User.find().select('_id');
+  let created = 0;
+
+  for (const user of users) {
+    const existing = await Prediction.findOne({ userId: user._id, matchId });
+    if (existing) continue;
+
+    await Prediction.create({
+      userId: user._id,
+      matchId,
+      homeGoals: 0,
+      awayGoals: 0,
+      userSubmitted: false,
+      pointsEarned: null,
+      bonusPoint: 0,
+      bonusReason: null,
+      pointsBreakdown: null,
+    });
+    created += 1;
+  }
+
+  return created;
+}
+
 export async function applyDefaultPredictionsForLockedMatches() {
   const matches = await Match.find({ status: 'upcoming', kickoffAt: { $ne: null } });
   const lockedMatches = matches.filter(isPredictionLocked);
