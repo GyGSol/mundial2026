@@ -160,6 +160,70 @@ const liveCardClassName = (isArgentina) =>
     isArgentina && 'border-sky-300/80 bg-sky-50/95 ring-1 ring-sky-200/90'
   );
 
+
+function formatTimelineMinute(event) {
+  if (event?.extraMinute != null && event?.minute != null) {
+    return `${event.minute}+${event.extraMinute}'`;
+  }
+  if (event?.minute != null) return `${event.minute}'`;
+  return '';
+}
+
+function formatTimelineLine(event, homeCode, awayCode) {
+  const code = event.side === 'home' ? homeCode : awayCode;
+  const minute = formatTimelineMinute(event);
+
+  switch (event.type) {
+    case 'goal':
+      return `${minute} ${code} ⚽ ${event.player}`;
+    case 'yellow_card':
+      return `${minute} ${code} 🟨 ${event.player}`;
+    case 'red_card':
+      return `${minute} ${code} 🟥 ${event.player}`;
+    case 'substitution':
+      return `${minute} ${code} ${event.playerOut} → ${event.playerIn}`;
+    case 'foul':
+      return `${minute} ${code} Falta ${event.player}`;
+    default:
+      return null;
+  }
+}
+
+function MatchTimeline({ events = [], homeCode = 'LOC', awayCode = 'VIS' }) {
+  const lines = (events ?? []).map((event) => formatTimelineLine(event, homeCode, awayCode)).filter(Boolean);
+  if (!lines.length) return null;
+
+  return (
+    <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 text-left [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
+        {lines.map((line, index) => (
+          <span key={index}>{line}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FinishedTeamsHeader({ homeName, awayName, homeFlag, awayFlag, center }) {
+  return (
+    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
+      <div className="flex flex-col items-center gap-1 text-center">
+        {homeFlag ? (
+          <img src={homeFlag} alt={homeName} className="size-8 rounded-sm border object-cover" />
+        ) : null}
+        <span className="max-w-[5.5rem] truncate text-xs font-medium">{homeName}</span>
+      </div>
+      <div className="flex min-h-10 items-center justify-center px-1">{center}</div>
+      <div className="flex flex-col items-center gap-1 text-center">
+        {awayFlag ? (
+          <img src={awayFlag} alt={awayName} className="size-8 rounded-sm border object-cover" />
+        ) : null}
+        <span className="max-w-[5.5rem] truncate text-xs font-medium">{awayName}</span>
+      </div>
+    </div>
+  );
+}
+
 function ResultMatchCard({ match, variant = 'live' }) {
   const homeName = match.homeTeam?.nameEn || 'Local';
   const awayName = match.awayTeam?.nameEn || 'Visitante';
@@ -215,7 +279,49 @@ function LiveMatchCard({ match }) {
 }
 
 function FinishedMatchCard({ match }) {
-  return <ResultMatchCard match={match} variant="finished" />;
+  const homeName = match.homeTeam?.nameEn || 'Local';
+  const awayName = match.awayTeam?.nameEn || 'Visitante';
+  const homeFlag = getTeamFlag(match.homeTeam);
+  const awayFlag = getTeamFlag(match.awayTeam);
+  const homeCode = match.homeTeam?.fifaCode || 'LOC';
+  const awayCode = match.awayTeam?.fifaCode || 'VIS';
+  const isArgentina = matchInvolvesArgentina(match);
+  const hasTimeline = (match.matchTimeline?.length ?? 0) > 0;
+
+  if (!hasTimeline) {
+    return <ResultMatchCard match={match} variant="finished" />;
+  }
+
+  return (
+    <Card className={liveCardClassName(isArgentina)}>
+      <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
+        <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
+          Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
+        </Badge>
+
+        <FinishedTeamsHeader
+          homeName={homeName}
+          awayName={awayName}
+          homeFlag={homeFlag}
+          awayFlag={awayFlag}
+          center={
+            <div className="flex items-center gap-1 text-xl font-bold tabular-nums">
+              <span>{match.homeScore}</span>
+              <span className="text-muted-foreground">-</span>
+              <span>{match.awayScore}</span>
+            </div>
+          }
+        />
+
+        <MatchTimeline events={match.matchTimeline} homeCode={homeCode} awayCode={awayCode} />
+
+        <span className="text-[11px] text-muted-foreground">
+          Grupo {match.group} · {formatMatchDate(match)}
+        </span>
+        <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
+      </CardContent>
+    </Card>
+  );
 }
 
 function NextMatchCard({ match }) {

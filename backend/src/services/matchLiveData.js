@@ -348,6 +348,112 @@ export function formatTimeElapsed(rawOrElapsed) {
   return normalized;
 }
 
+
+function toSortKey(minute) {
+  if (minute == null || !Number.isFinite(Number(minute))) return Number.POSITIVE_INFINITY;
+  return Number(minute);
+}
+
+function buildTimelineFromLegacy(raw = {}, events = {}) {
+  const timeline = [];
+
+  for (const scorer of parseScorersField(raw.home_scorers ?? raw.homeScorers)) {
+    timeline.push({
+      sortKey: toSortKey(scorer.minute),
+      minute: scorer.minute,
+      extraMinute: null,
+      type: 'goal',
+      side: 'home',
+      player: scorer.name,
+      playerIn: null,
+      playerOut: null,
+    });
+  }
+
+  for (const scorer of parseScorersField(raw.away_scorers ?? raw.awayScorers)) {
+    timeline.push({
+      sortKey: toSortKey(scorer.minute),
+      minute: scorer.minute,
+      extraMinute: null,
+      type: 'goal',
+      side: 'away',
+      player: scorer.name,
+      playerIn: null,
+      playerOut: null,
+    });
+  }
+
+  const cardTypeMap = {
+    YELLOW: 'yellow_card',
+    RED: 'red_card',
+    YELLOW_RED: 'red_card',
+  };
+
+  for (const booking of events.homeBookings ?? []) {
+    timeline.push({
+      sortKey: toSortKey(booking.minute),
+      minute: booking.minute,
+      extraMinute: null,
+      type: cardTypeMap[String(booking.card ?? 'YELLOW').toUpperCase()] ?? 'yellow_card',
+      side: 'home',
+      player: booking.player,
+      playerIn: null,
+      playerOut: null,
+    });
+  }
+
+  for (const booking of events.awayBookings ?? []) {
+    timeline.push({
+      sortKey: toSortKey(booking.minute),
+      minute: booking.minute,
+      extraMinute: null,
+      type: cardTypeMap[String(booking.card ?? 'YELLOW').toUpperCase()] ?? 'yellow_card',
+      side: 'away',
+      player: booking.player,
+      playerIn: null,
+      playerOut: null,
+    });
+  }
+
+  for (const substitution of events.homeSubstitutions ?? []) {
+    timeline.push({
+      sortKey: toSortKey(substitution.minute),
+      minute: substitution.minute,
+      extraMinute: null,
+      type: 'substitution',
+      side: 'home',
+      player: substitution.playerIn,
+      playerIn: substitution.playerIn,
+      playerOut: substitution.playerOut,
+    });
+  }
+
+  for (const substitution of events.awaySubstitutions ?? []) {
+    timeline.push({
+      sortKey: toSortKey(substitution.minute),
+      minute: substitution.minute,
+      extraMinute: null,
+      type: 'substitution',
+      side: 'away',
+      player: substitution.playerIn,
+      playerIn: substitution.playerIn,
+      playerOut: substitution.playerOut,
+    });
+  }
+
+  return timeline.sort((a, b) => a.sortKey - b.sortKey);
+}
+
+export function readMatchTimeline(raw = {}) {
+  const fifaTimeline = raw.fifaEvents?.timeline;
+  if (Array.isArray(fifaTimeline) && fifaTimeline.length > 0) {
+    return fifaTimeline;
+  }
+
+  const events = readStoredMatchEvents(raw);
+  return buildTimelineFromLegacy(raw, events);
+}
+
 /**
  * @param {{ status?: string, raw?: Record<string, unknown> | null }} match
  */
@@ -355,6 +461,8 @@ export function enrichMatchLiveFields(match) {
   const raw = match.raw ?? {};
   const showResults = match.status === 'live' || match.status === 'finished';
   const events = readStoredMatchEvents(raw);
+
+  const matchTimeline = showResults ? readMatchTimeline(raw) : [];
 
   return {
     timeElapsed:
@@ -369,5 +477,7 @@ export function enrichMatchLiveFields(match) {
     awayBookings: showResults ? events.awayBookings : [],
     homeSubstitutions: showResults ? events.homeSubstitutions : [],
     awaySubstitutions: showResults ? events.awaySubstitutions : [],
+    matchTimeline,
+    fifaReportStats: showResults ? (raw.fifaReportStats ?? null) : null,
   };
 }

@@ -19,4 +19,9 @@ export const env = {
   adminJwtExpires: process.env.ADMIN_JWT_EXPIRES || '8h',
   footballDataApiToken: process.env.FOOTBALL_DATA_API_TOKEN || '',
   footballDataApiUrl: process.env.FOOTBALL_DATA_API_URL || 'https://api.football-data.org/v4',
+  fifaApiUrl: process.env.FIFA_API_URL || 'https://api.fifa.com/api/v3',
+  fifaCompetitionId: process.env.FIFA_COMPETITION_ID || '17',
+  fifaSeasonId: process.env.FIFA_SEASON_ID || '285023',
+  fifaReportAssetPrefix: process.env.FIFA_REPORT_ASSET_PREFIX || 'ce281',
+  fifaReportIdBase: Number(process.env.FIFA_REPORT_ID_BASE || 12451),
 };

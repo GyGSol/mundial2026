@@ -4,6 +4,7 @@ import {
   formatTimeElapsed,
   parseBookingsField,
   parseScorersField,
+  readMatchTimeline,
   splitFootballDataEvents,
 } from '../src/services/matchLiveData.js';
 
@@ -190,4 +191,35 @@ describe('matchLiveData', () => {
       ]);
     });
   });
+  describe('readMatchTimeline', () => {
+    it('prioriza fifaEvents.timeline sobre legacy', () => {
+      const timeline = readMatchTimeline({
+        fifaEvents: {
+          timeline: [{ sortKey: 9, minute: 9, type: 'goal', side: 'home', player: 'QUINONES' }],
+        },
+        home_scorers: "Otro 12'",
+      });
+
+      expect(timeline).toHaveLength(1);
+      expect(timeline[0].player).toBe('QUINONES');
+    });
+
+    it('enrich expone matchTimeline en partidos finished', () => {
+      const finished = enrichMatchLiveFields({
+        status: 'finished',
+        raw: {
+          fifaEvents: {
+            timeline: [
+              { sortKey: 67, minute: 67, type: 'goal', side: 'home', player: 'Jiménez' },
+              { sortKey: 76, minute: 76, type: 'substitution', side: 'home', playerIn: 'Vega', playerOut: 'Quinones' },
+            ],
+          },
+        },
+      });
+
+      expect(finished.matchTimeline).toHaveLength(2);
+      expect(finished.matchTimeline[0].type).toBe('goal');
+    });
+  });
+
 });

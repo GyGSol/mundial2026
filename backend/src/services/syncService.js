@@ -27,6 +27,7 @@ import {
   notifySyncComplete,
 } from './websocketService.js';
 import { syncLiveLineups } from './lineupSyncService.js';
+import { syncFifaMatchEvents } from './fifaEventSyncService.js';
 
 async function upsertTeams() {
   const data = await fetchTeams();
@@ -89,7 +90,14 @@ async function buildStadiumTimezoneMap() {
 
 export function mergeSyncedRaw(existingRaw = {}, incomingRaw = {}) {
   const merged = { ...incomingRaw };
-  const preserveKeys = ['footballDataMatchId', 'fdMatchId', 'fdEvents'];
+  const preserveKeys = [
+    'footballDataMatchId',
+    'fdMatchId',
+    'fdEvents',
+    'fifaMeta',
+    'fifaEvents',
+    'fifaReportStats',
+  ];
 
   for (const key of preserveKeys) {
     if (existingRaw[key] != null) {
@@ -261,6 +269,7 @@ export async function runSync({ includeMetadata = true } = {}) {
     );
 
     const lineupResult = await syncLiveLineups();
+    const fifaResult = await syncFifaMatchEvents();
 
     notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
     notifyMatchesUpdated({ matchesCount: count });
@@ -270,6 +279,10 @@ export async function runSync({ includeMetadata = true } = {}) {
       console.log(
         `Lineup/events sync: ${lineupResult.updated} titulares, ${lineupResult.events} partidos con eventos`
       );
+    }
+
+    if (fifaResult.events > 0) {
+      console.log(`FIFA events sync: ${fifaResult.events} partidos con timeline`);
     }
 
     console.log(

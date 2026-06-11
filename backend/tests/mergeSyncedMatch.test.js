@@ -64,4 +64,23 @@ describe('mergeSyncedMatch', () => {
     expect(merged.raw.fdEvents.homeBookings).toHaveLength(1);
     expect(merged.raw.home_scorers).toContain('Jiménez');
   });
+
+  it('conserva fifaEvents y fifaMeta al sincronizar raw de worldcup26', () => {
+    const merged = mergeSyncedMatch(
+      {
+        status: 'finished',
+        raw: {
+          fifaMeta: { idMatch: '400021443', idStage: '289273' },
+          fifaEvents: { timeline: [{ sortKey: 9, type: 'goal', side: 'home', player: 'QUINONES' }] },
+        },
+      },
+      {
+        status: 'finished',
+        raw: { home_scorers: 'null' },
+      }
+    );
+
+    expect(merged.raw.fifaMeta.idMatch).toBe('400021443');
+    expect(merged.raw.fifaEvents.timeline).toHaveLength(1);
+  });
 });
