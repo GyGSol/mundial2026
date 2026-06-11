@@ -5,6 +5,7 @@ import {
   buildKnockoutPhases,
   computeTournamentStats,
   formatKnockoutSlotLabelEs,
+  resolveGroupStandingsSource,
 } from '../src/services/worldCupStatsService.js';
 
 const teams = [
@@ -45,6 +46,68 @@ describe('worldCupStatsService', () => {
     expect(result[0].standings[0].teamId).toBe('1');
     expect(result[0].standings[0].points).toBe(3);
     expect(result[0].standings.find((row) => row.teamId === '3')?.points).toBe(1);
+  });
+
+  it('prefiere tabla calculada cuando la API trae filas en cero', () => {
+    const matches = [
+      {
+        externalId: '1',
+        homeTeamId: '1',
+        awayTeamId: '2',
+        homeScore: 1,
+        awayScore: 0,
+        group: 'A',
+        type: 'group',
+        status: 'finished',
+      },
+    ];
+    const groupDocs = [
+      {
+        name: 'A',
+        raw: {
+          matchTable: teams.map((team, index) => ({
+            team_id: team.externalId,
+            played: 0,
+            points: 0,
+            goals_for: 0,
+            goals_against: 0,
+            rank: index + 1,
+          })),
+        },
+      },
+    ];
+
+    const result = computeGroupStandings(teams, matches, groupDocs);
+    expect(result[0].source).toBe('computed');
+    expect(result[0].standings[0].teamId).toBe('1');
+    expect(result[0].standings[0].points).toBe(3);
+  });
+
+  it('incluye partidos en vivo en la tabla calculada', () => {
+    const matches = [
+      {
+        externalId: '1',
+        homeTeamId: '1',
+        awayTeamId: '2',
+        homeScore: 2,
+        awayScore: 1,
+        group: 'A',
+        type: 'group',
+        status: 'live',
+      },
+    ];
+
+    const result = computeGroupStandings(teams, matches);
+    expect(result[0].standings.find((row) => row.teamId === '1')?.points).toBe(3);
+    expect(result[0].standings.find((row) => row.teamId === '2')?.points).toBe(0);
+  });
+
+  it('resolveGroupStandingsSource elige la fuente con más PJ', () => {
+    const apiRows = [{ teamId: '1', played: 0, points: 0 }];
+    const computedRows = [{ teamId: '1', played: 1, points: 3 }];
+
+    expect(resolveGroupStandingsSource(apiRows, computedRows).source).toBe('computed');
+    expect(resolveGroupStandingsSource(computedRows, apiRows).source).toBe('api');
   });
 
   it('prioriza simulación y oculta placeholders oficiales cuando hay sim-*', () => {

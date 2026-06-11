@@ -33,6 +33,10 @@ function formatLastUpdated(date) {
   return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function shouldPollWorldCupLive(data) {
+  return (data?.stats?.matches?.live ?? 0) > 0;
+}
+
 export default function WorldCupPage() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('groups');
@@ -42,6 +46,8 @@ export default function WorldCupPage() {
   const fetchOverview = useCallback(() => worldCupApi.overview(groupId), [groupId]);
   const { data, loading, error, lastUpdated } = useLiveData(fetchOverview, [groupId], {
     enabled: !authLoading,
+    pollIntervalMs: 15000,
+    pollWhen: shouldPollWorldCupLive,
   });
   const pageLoading = authLoading || loading;
 

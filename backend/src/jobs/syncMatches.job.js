@@ -19,7 +19,11 @@ async function tick() {
   if (running) return;
   running = true;
   tickCount += 1;
-  const includeMetadata = tickCount === 1 || tickCount % METADATA_SYNC_EVERY_TICKS === 0;
+  const liveCount = await Match.countDocuments({ status: 'live' });
+  const includeMetadata =
+    tickCount === 1 ||
+    tickCount % METADATA_SYNC_EVERY_TICKS === 0 ||
+    liveCount > 0;
 
   try {
     await runSync({ includeMetadata });

@@ -38,6 +38,27 @@ function resolveKnockoutPhase(type) {
   );
 }
 
+function totalPlayedInStandings(rows) {
+  return (rows ?? []).reduce((sum, row) => sum + Number(row.played ?? 0), 0);
+}
+
+/** Prefiere la fuente con más partidos jugados (API puede venir en cero al inicio del torneo). */
+export function resolveGroupStandingsSource(apiRows, computedRows) {
+  const computed = computedRows ?? [];
+  if (!apiRows?.length) {
+    return { standings: computed, source: 'computed' };
+  }
+
+  const apiPlayed = totalPlayedInStandings(apiRows);
+  const computedPlayed = totalPlayedInStandings(computed);
+
+  if (computedPlayed > apiPlayed) {
+    return { standings: computed, source: 'computed' };
+  }
+
+  return { standings: apiRows, source: 'api' };
+}
+
 function extractApiStandings(groupDoc) {
   const raw = groupDoc?.raw ?? groupDoc;
   const table =
@@ -93,7 +114,7 @@ export function computeGroupStandings(teams, matches, groupDocs = []) {
     const standingsMap = new Map(groupTeams.map((team) => [team.externalId, createStanding(team)]));
 
     for (const match of matches) {
-      if (match.status !== 'finished') continue;
+      if (match.status !== 'finished' && match.status !== 'live') continue;
       if (normalizePhaseKey(match.type) !== 'group' && match.group?.toUpperCase() !== groupName) {
         continue;
       }
@@ -122,11 +143,17 @@ export function computeGroupStandings(teams, matches, groupDocs = []) {
 
   return [...allGroups]
     .sort()
-    .map((groupName) => ({
-      group: groupName,
-      standings: apiByGroup.get(groupName) || computed.get(groupName) || [],
-      source: apiByGroup.has(groupName) ? 'api' : 'computed',
-    }))
+    .map((groupName) => {
+      const resolved = resolveGroupStandingsSource(
+        apiByGroup.get(groupName),
+        computed.get(groupName)
+      );
+      return {
+        group: groupName,
+        standings: resolved.standings,
+        source: resolved.source,
+      };
+    })
     .filter((entry) => entry.standings.length > 0);
 }
 
