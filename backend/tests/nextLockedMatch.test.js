@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   findNextLockedMatch,
   findNextLockedMatches,
+  findNextUpcomingMatches,
 } from '../../frontend/src/lib/nextLockedMatch.js';
 
 describe('findNextLockedMatches', () => {
@@ -82,5 +83,81 @@ describe('findNextLockedMatch', () => {
       },
     ];
     expect(findNextLockedMatch(matches)?.id).toBe('2');
+  });
+});
+
+describe('findNextUpcomingMatches', () => {
+  it('devuelve el upcoming con kickoff más cercano aunque predictionOpen sea true', () => {
+    const matches = [
+      {
+        id: '1',
+        status: 'upcoming',
+        predictionOpen: true,
+        kickoffAt: '2026-06-11T19:00:00.000Z',
+      },
+      {
+        id: '2',
+        status: 'upcoming',
+        predictionOpen: false,
+        kickoffAt: '2026-06-11T22:00:00.000Z',
+      },
+    ];
+    expect(findNextUpcomingMatches(matches).map((m) => m.id)).toEqual(['1']);
+  });
+
+  it('agrupa por mismo kickoffAt', () => {
+    const matches = [
+      {
+        id: '1',
+        status: 'upcoming',
+        predictionOpen: true,
+        kickoffAt: '2026-06-11T19:00:00.000Z',
+      },
+      {
+        id: '2',
+        status: 'upcoming',
+        predictionOpen: true,
+        kickoffAt: '2026-06-11T19:00:00.000Z',
+      },
+      {
+        id: '3',
+        status: 'upcoming',
+        predictionOpen: true,
+        kickoffAt: '2026-06-11T22:00:00.000Z',
+      },
+    ];
+    expect(findNextUpcomingMatches(matches).map((m) => m.id)).toEqual(['1', '2']);
+  });
+
+  it('ignora live y finished', () => {
+    const matches = [
+      { id: '1', status: 'live', kickoffAt: '2026-06-11T18:00:00.000Z' },
+      { id: '2', status: 'finished', kickoffAt: '2026-06-11T17:00:00.000Z' },
+      {
+        id: '3',
+        status: 'upcoming',
+        predictionOpen: true,
+        kickoffAt: '2026-06-11T19:00:00.000Z',
+      },
+    ];
+    expect(findNextUpcomingMatches(matches).map((m) => m.id)).toEqual(['3']);
+  });
+
+  it('ignora upcoming sin kickoffAt', () => {
+    const matches = [
+      { id: '1', status: 'upcoming', predictionOpen: true },
+      {
+        id: '2',
+        status: 'upcoming',
+        predictionOpen: true,
+        kickoffAt: '2026-06-11T19:00:00.000Z',
+      },
+    ];
+    expect(findNextUpcomingMatches(matches).map((m) => m.id)).toEqual(['2']);
+  });
+
+  it('devuelve array vacío si no hay candidatos', () => {
+    expect(findNextUpcomingMatches([])).toEqual([]);
+    expect(findNextUpcomingMatches(null)).toEqual([]);
   });
 });

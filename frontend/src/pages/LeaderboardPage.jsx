@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 function shouldPollLeaderboardLive(data) {
   return (
-    (data?.liveMatches?.length ?? 0) > 0 || (data?.nextLockedMatches?.length ?? 0) > 0
+    (data?.liveMatches?.length ?? 0) > 0 || (data?.nextUpcomingMatches?.length ?? 0) > 0
   );
 }
 import { Link } from 'react-router-dom';
@@ -13,7 +13,7 @@ import LeaderboardTable from '../components/LeaderboardTable.jsx';
 import LiveMatchesBar from '../components/LiveMatchesBar.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { findNextLockedMatches } from '../lib/nextLockedMatch.js';
+import { findNextUpcomingMatches } from '../lib/nextLockedMatch.js';
 import { pickRecentFinishedMatches } from '../lib/recentFinishedMatches.js';
 import {
   Select,
@@ -101,7 +101,7 @@ export default function LeaderboardPage() {
       ...leaderboardData,
       liveMatches: liveData.matches ?? [],
       recentFinishedMatches: pickRecentFinishedMatches(finishedData.matches ?? []),
-      nextLockedMatches: findNextLockedMatches(upcomingData.matches),
+      nextUpcomingMatches: findNextUpcomingMatches(upcomingData.matches),
     };
   }, [effectiveGroupId]);
 
@@ -136,7 +136,7 @@ export default function LeaderboardPage() {
         <LiveMatchesBar
           matches={data?.liveMatches ?? []}
           finishedMatches={data?.recentFinishedMatches ?? []}
-          nextMatches={data?.nextLockedMatches ?? []}
+          nextMatches={data?.nextUpcomingMatches ?? []}
         />
       )}
 

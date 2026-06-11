@@ -156,7 +156,7 @@ function MatchTeamsLayout({
 
 const liveCardClassName = (isArgentina) =>
   cn(
-    'w-full max-w-md shrink-0',
+    'w-full',
     isArgentina && 'border-sky-300/80 bg-sky-50/95 ring-1 ring-sky-200/90'
   );
 
@@ -194,7 +194,7 @@ function MatchTimeline({ events = [], homeCode = 'LOC', awayCode = 'VIS' }) {
   if (!lines.length) return null;
 
   return (
-    <div className="max-h-40 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 text-left [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 text-left [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
         {lines.map((line, index) => (
           <span key={index}>{line}</span>
@@ -330,10 +330,21 @@ function NextMatchCard({ match }) {
   const homeFlag = getTeamFlag(match.homeTeam);
   const awayFlag = getTeamFlag(match.awayTeam);
   const isArgentina = matchInvolvesArgentina(match);
+  const predictionsOpen = match.predictionOpen !== false;
 
   return (
     <Card className={liveCardClassName(isArgentina)}>
       <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
+        {predictionsOpen ? (
+          <Badge variant="outline" className="border-sky-300/70 bg-sky-50 text-sky-900">
+            Predicciones abiertas
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="border-amber-300/70 bg-amber-50 text-amber-900">
+            Predicciones cerradas
+          </Badge>
+        )}
+
         <MatchTeamsLayout
           homeName={homeName}
           awayName={awayName}
@@ -359,13 +370,13 @@ function NextMatchCard({ match }) {
 
 function EmptyMatchesState() {
   return (
-    <div className="flex justify-center">
-      <Card className="w-full max-w-xl border-dashed">
+    <div className="mx-auto flex w-full max-w-full flex-col sm:max-w-2xl lg:max-w-3xl">
+      <Card className="w-full border-dashed">
         <CardContent className="flex flex-col items-center gap-1 py-5 text-center">
           <p className="text-sm font-medium text-foreground">Todavía no hay partidos para mostrar</p>
           <p className="text-sm text-muted-foreground">
-            Cuando cierren las predicciones (1 hora antes del inicio), los próximos partidos van a
-            aparecer acá. Los que terminen se quedan visibles con el resultado completo.
+            Cuando haya partidos en curso, próximos o finalizados, van a aparecer acá con el
+            resultado y el timeline de eventos.
           </p>
         </CardContent>
       </Card>
@@ -373,28 +384,13 @@ function EmptyMatchesState() {
   );
 }
 
-function MatchSection({ title, count, children }) {
+function MatchColumn({ title, children }) {
   return (
-    <div className="flex flex-col items-center gap-3">
-      <p className="text-sm font-medium text-muted-foreground">{title}</p>
-      <MatchesRow count={count}>{children}</MatchesRow>
-    </div>
-  );
-}
-
-function MatchesRow({ count, children }) {
-  const isSingle = count === 1;
-
-  return (
-    <div
-      className={cn(
-        'flex w-full gap-3 pb-1',
-        isSingle
-          ? 'justify-center'
-          : '-mx-4 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-      )}
-    >
-      {children}
+    <div className="flex w-full flex-col gap-4">
+      {title ? (
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      ) : null}
+      <div className="flex w-full flex-col gap-4">{children}</div>
     </div>
   );
 }
@@ -410,32 +406,32 @@ export default function LiveMatchesBar({
 
   if (hasLive || hasFinished || hasNext) {
     return (
-      <div className="flex flex-col items-center gap-6">
+      <div className="mx-auto flex w-full max-w-full flex-col gap-6 sm:max-w-2xl lg:max-w-3xl">
         {hasLive ? (
-          <MatchSection title="Partidos en curso" count={matches.length}>
+          <MatchColumn title="Partidos en curso">
             {matches.map((match) => (
               <LiveMatchCard key={match.id} match={match} />
             ))}
-          </MatchSection>
+          </MatchColumn>
         ) : null}
 
-        {hasFinished ? (
-          <MatchSection title="Últimos resultados" count={finishedMatches.length}>
-            {finishedMatches.map((match) => (
-              <FinishedMatchCard key={match.id} match={match} />
-            ))}
-          </MatchSection>
-        ) : null}
-
-        {hasNext ? (
-          <MatchSection
-            title={nextMatches.length > 1 ? 'Próximos partidos' : 'Próximo partido'}
-            count={nextMatches.length}
+        {hasNext || hasFinished ? (
+          <MatchColumn
+            title={
+              hasNext
+                ? nextMatches.length > 1
+                  ? 'Próximos partidos'
+                  : 'Próximo partido'
+                : 'Últimos resultados'
+            }
           >
             {nextMatches.map((match) => (
               <NextMatchCard key={match.id} match={match} />
             ))}
-          </MatchSection>
+            {finishedMatches.map((match) => (
+              <FinishedMatchCard key={match.id} match={match} />
+            ))}
+          </MatchColumn>
         ) : null}
       </div>
     );
