@@ -3,6 +3,7 @@ import {
   enrichMatchLiveFields,
   formatTimeElapsed,
   parseScorersField,
+  splitFootballDataEvents,
 } from '../src/services/matchLiveData.js';
 
 describe('matchLiveData', () => {
@@ -83,6 +84,66 @@ describe('matchLiveData', () => {
       expect(upcoming.timeElapsed).toBeNull();
       expect(upcoming.homeScorers).toEqual([]);
       expect(upcoming.awayScorers).toEqual([]);
+      expect(upcoming.homeBookings).toEqual([]);
+    });
+  });
+
+  describe('splitFootballDataEvents', () => {
+    it('separa tarjetas y cambios por equipo', () => {
+      const events = splitFootballDataEvents(
+        {
+          bookings: [
+            {
+              minute: 11,
+              team: { id: 10 },
+              player: { name: 'Player A' },
+              card: 'YELLOW',
+            },
+            {
+              minute: 78,
+              team: { id: 20 },
+              player: { name: 'Player B' },
+              card: 'RED',
+            },
+          ],
+          substitutions: [
+            {
+              minute: 60,
+              team: { id: 10 },
+              playerOut: { name: 'Out A' },
+              playerIn: { name: 'In A' },
+            },
+          ],
+        },
+        10,
+        20
+      );
+
+      expect(events.homeBookings).toEqual([
+        { minute: 11, player: 'Player A', card: 'YELLOW' },
+      ]);
+      expect(events.awayBookings).toEqual([{ minute: 78, player: 'Player B', card: 'RED' }]);
+      expect(events.homeSubstitutions).toEqual([
+        { minute: 60, playerOut: 'Out A', playerIn: 'In A' },
+      ]);
+    });
+
+    it('enriquece partido live con eventos guardados', () => {
+      const live = enrichMatchLiveFields({
+        status: 'live',
+        raw: {
+          time_elapsed: '67',
+          fdEvents: {
+            homeBookings: [{ minute: 45, player: 'López', card: 'YELLOW' }],
+            awayBookings: [],
+            homeSubstitutions: [],
+            awaySubstitutions: [{ minute: 70, playerOut: 'Smith', playerIn: 'Jones' }],
+          },
+        },
+      });
+
+      expect(live.homeBookings).toHaveLength(1);
+      expect(live.awaySubstitutions).toHaveLength(1);
     });
   });
 });

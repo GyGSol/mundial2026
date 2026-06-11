@@ -20,7 +20,7 @@ async function throttle() {
   lastRequestAt = Date.now();
 }
 
-async function request(path) {
+async function request(path, options = {}) {
   if (!hasToken()) {
     throw new Error('FOOTBALL_DATA_API_TOKEN no configurado');
   }
@@ -30,6 +30,7 @@ async function request(path) {
   const res = await fetch(`${base}${path}`, {
     headers: {
       'X-Auth-Token': env.footballDataApiToken,
+      ...options.headers,
     },
   });
 
@@ -106,9 +107,41 @@ export async function fetchTeamWithSquad(teamId) {
   return data;
 }
 
+export async function fetchCompetitionMatchesOnDate(competitionCode, date) {
+  const data = await request(
+    `/competitions/${competitionCode}/matches?dateFrom=${date}&dateTo=${date}`
+  );
+  return data?.matches ?? [];
+}
+
+export async function fetchMatchDetails(matchId) {
+  return request(`/matches/${matchId}`, {
+    headers: {
+      'X-Unfold-Lineups': 'true',
+      'X-Unfold-Bookings': 'true',
+      'X-Unfold-Subs': 'true',
+    },
+  });
+}
+
 export async function fetchMatchLineups(matchId) {
-  const data = await request(`/matches/${matchId}`);
-  return data;
+  return fetchMatchDetails(matchId);
+}
+
+export async function resolveFootballDataMatchId(match, homeTeam, awayTeam) {
+  const cached = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
+  if (cached) return Number(cached);
+
+  const homeFdId = homeTeam?.footballDataTeamId;
+  const awayFdId = awayTeam?.footballDataTeamId;
+  if (!homeFdId || !awayFdId || !match.kickoffAt) return null;
+
+  const date = match.kickoffAt.toISOString().slice(0, 10);
+  const dayMatches = await fetchCompetitionMatchesOnDate('WC', date);
+  const found = dayMatches.find(
+    (entry) => entry.homeTeam?.id === homeFdId && entry.awayTeam?.id === awayFdId
+  );
+  return found?.id ?? null;
 }
 
 export async function fetchPersonMatches(personId, { limit = 8 } = {}) {

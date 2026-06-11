@@ -251,8 +251,10 @@ export async function runSync({ includeMetadata = true } = {}) {
     notifyMatchesUpdated({ matchesCount: count });
     notifyLeaderboardUpdated({ reason: 'sync_complete' });
 
-    if (lineupResult.updated > 0) {
-      console.log(`Lineup sync: ${lineupResult.updated} titulares en ${lineupResult.matches} partidos`);
+    if (lineupResult.updated > 0 || lineupResult.events > 0) {
+      console.log(
+        `Lineup/events sync: ${lineupResult.updated} titulares, ${lineupResult.events} partidos con eventos`
+      );
     }
 
     console.log(

@@ -1,4 +1,71 @@
 /** @typedef {{ name: string, minute: number | null }} MatchScorer */
+/** @typedef {{ minute: number | null, player: string, card: string }} MatchBooking */
+/** @typedef {{ minute: number | null, playerOut: string, playerIn: string }} MatchSubstitution */
+
+export function splitFootballDataEvents(matchData, homeFdTeamId, awayFdTeamId) {
+  const homeId = Number(homeFdTeamId);
+  const awayId = Number(awayFdTeamId);
+
+  const sideOf = (teamId) => {
+    if (teamId === homeId) return 'home';
+    if (teamId === awayId) return 'away';
+    return null;
+  };
+
+  const homeBookings = [];
+  const awayBookings = [];
+  const homeSubstitutions = [];
+  const awaySubstitutions = [];
+
+  for (const booking of matchData?.bookings ?? []) {
+    const side = sideOf(booking?.team?.id);
+    if (!side || !booking?.player?.name) continue;
+
+    const entry = {
+      minute: Number.isFinite(Number(booking.minute)) ? Number(booking.minute) : null,
+      player: String(booking.player.name).trim(),
+      card: String(booking.card ?? 'YELLOW').toUpperCase(),
+    };
+
+    if (side === 'home') homeBookings.push(entry);
+    else awayBookings.push(entry);
+  }
+
+  for (const substitution of matchData?.substitutions ?? []) {
+    const side = sideOf(substitution?.team?.id);
+    const playerOut = substitution?.playerOut?.name ?? substitution?.player?.name;
+    const playerIn = substitution?.playerIn?.name ?? substitution?.assist?.name;
+    if (!side || !playerOut || !playerIn) continue;
+
+    const entry = {
+      minute: Number.isFinite(Number(substitution.minute)) ? Number(substitution.minute) : null,
+      playerOut: String(playerOut).trim(),
+      playerIn: String(playerIn).trim(),
+    };
+
+    if (side === 'home') homeSubstitutions.push(entry);
+    else awaySubstitutions.push(entry);
+  }
+
+  const byMinute = (a, b) => (a.minute ?? 0) - (b.minute ?? 0);
+
+  return {
+    homeBookings: homeBookings.sort(byMinute),
+    awayBookings: awayBookings.sort(byMinute),
+    homeSubstitutions: homeSubstitutions.sort(byMinute),
+    awaySubstitutions: awaySubstitutions.sort(byMinute),
+  };
+}
+
+export function readStoredMatchEvents(raw = {}) {
+  const events = raw.fdEvents ?? {};
+  return {
+    homeBookings: events.homeBookings ?? [],
+    awayBookings: events.awayBookings ?? [],
+    homeSubstitutions: events.homeSubstitutions ?? [],
+    awaySubstitutions: events.awaySubstitutions ?? [],
+  };
+}
 
 export function isNullishScorerValue(value) {
   if (value == null) return true;
@@ -132,10 +199,15 @@ export function formatTimeElapsed(rawOrElapsed) {
 export function enrichMatchLiveFields(match) {
   const raw = match.raw ?? {};
   const showResults = match.status === 'live' || match.status === 'finished';
+  const events = readStoredMatchEvents(raw);
 
   return {
     timeElapsed: match.status === 'live' ? formatTimeElapsed(raw) : null,
     homeScorers: showResults ? parseScorersField(raw.home_scorers ?? raw.homeScorers) : [],
     awayScorers: showResults ? parseScorersField(raw.away_scorers ?? raw.awayScorers) : [],
+    homeBookings: showResults ? events.homeBookings : [],
+    awayBookings: showResults ? events.awayBookings : [],
+    homeSubstitutions: showResults ? events.homeSubstitutions : [],
+    awaySubstitutions: showResults ? events.awaySubstitutions : [],
   };
 }

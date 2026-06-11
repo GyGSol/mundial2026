@@ -45,6 +45,42 @@ function formatScorerLine(scorer) {
   return scorer.minute != null ? `${scorer.minute}' ${scorer.name}` : scorer.name;
 }
 
+function cardSymbol(card) {
+  const normalized = String(card ?? 'YELLOW').toUpperCase();
+  if (normalized === 'RED') return '🟥';
+  if (normalized === 'YELLOW_RED') return '🟨🟥';
+  return '🟨';
+}
+
+function formatBookingLine(booking) {
+  if (!booking?.player) return null;
+  const minute = booking.minute != null ? `${booking.minute}' ` : '';
+  return `${minute}${cardSymbol(booking.card)} ${booking.player}`;
+}
+
+function formatSubstitutionLine(substitution) {
+  if (!substitution?.playerOut || !substitution?.playerIn) return null;
+  const minute = substitution.minute != null ? `${substitution.minute}' ` : '';
+  return `${minute}${substitution.playerOut} → ${substitution.playerIn}`;
+}
+
+function TeamEventColumn({ lines, className }) {
+  if (!lines.length) return null;
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center gap-0.5 text-center text-[10px] leading-snug text-muted-foreground',
+        className
+      )}
+    >
+      {lines.map((line, index) => (
+        <span key={index}>{line}</span>
+      ))}
+    </div>
+  );
+}
+
 function MatchTeamsLayout({
   homeName,
   awayName,
@@ -53,10 +89,25 @@ function MatchTeamsLayout({
   center,
   homeScorers = [],
   awayScorers = [],
+  homeBookings = [],
+  awayBookings = [],
+  homeSubstitutions = [],
+  awaySubstitutions = [],
 }) {
-  const homeScorerLines = normalizeScorerList(homeScorers);
-  const awayScorerLines = normalizeScorerList(awayScorers);
+  const homeScorerLines = normalizeScorerList(homeScorers).map(formatScorerLine).filter(Boolean);
+  const awayScorerLines = normalizeScorerList(awayScorers).map(formatScorerLine).filter(Boolean);
+  const homeBookingLines = (homeBookings ?? []).map(formatBookingLine).filter(Boolean);
+  const awayBookingLines = (awayBookings ?? []).map(formatBookingLine).filter(Boolean);
+  const homeSubstitutionLines = (homeSubstitutions ?? [])
+    .map(formatSubstitutionLine)
+    .filter(Boolean);
+  const awaySubstitutionLines = (awaySubstitutions ?? [])
+    .map(formatSubstitutionLine)
+    .filter(Boolean);
+
   const showScorers = homeScorerLines.length > 0 || awayScorerLines.length > 0;
+  const showBookings = homeBookingLines.length > 0 || awayBookingLines.length > 0;
+  const showSubstitutions = homeSubstitutionLines.length > 0 || awaySubstitutionLines.length > 0;
 
   return (
     <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
@@ -78,17 +129,25 @@ function MatchTeamsLayout({
 
       {showScorers ? (
         <>
-          <div className="flex flex-col items-center gap-0.5 text-center text-[10px] leading-snug text-muted-foreground">
-            {homeScorerLines.map((scorer, index) => (
-              <span key={`home-${index}`}>{formatScorerLine(scorer)}</span>
-            ))}
-          </div>
+          <TeamEventColumn lines={homeScorerLines} />
           <div aria-hidden="true" />
-          <div className="flex flex-col items-center gap-0.5 text-center text-[10px] leading-snug text-muted-foreground">
-            {awayScorerLines.map((scorer, index) => (
-              <span key={`away-${index}`}>{formatScorerLine(scorer)}</span>
-            ))}
-          </div>
+          <TeamEventColumn lines={awayScorerLines} />
+        </>
+      ) : null}
+
+      {showBookings ? (
+        <>
+          <TeamEventColumn lines={homeBookingLines} className="text-amber-800/90" />
+          <div aria-hidden="true" />
+          <TeamEventColumn lines={awayBookingLines} className="text-amber-800/90" />
+        </>
+      ) : null}
+
+      {showSubstitutions ? (
+        <>
+          <TeamEventColumn lines={homeSubstitutionLines} className="text-sky-800/90" />
+          <div aria-hidden="true" />
+          <TeamEventColumn lines={awaySubstitutionLines} className="text-sky-800/90" />
         </>
       ) : null}
     </div>
@@ -122,6 +181,10 @@ function LiveMatchCard({ match }) {
           awayFlag={awayFlag}
           homeScorers={match.homeScorers}
           awayScorers={match.awayScorers}
+          homeBookings={match.homeBookings}
+          awayBookings={match.awayBookings}
+          homeSubstitutions={match.homeSubstitutions}
+          awaySubstitutions={match.awaySubstitutions}
           center={
             <div className="flex items-center gap-1 text-xl font-bold tabular-nums">
               <span>{match.homeScore}</span>

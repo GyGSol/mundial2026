@@ -2,9 +2,11 @@ import { Match } from '../models/Match.js';
 import { Player } from '../models/Player.js';
 import { Team } from '../models/Team.js';
 import {
-  fetchMatchLineups,
+  fetchMatchDetails,
   hasToken,
+  resolveFootballDataMatchId,
 } from './footballDataApiClient.js';
+import { splitFootballDataEvents } from './matchLiveData.js';
 import { notifyPlayersUpdated } from './websocketService.js';
 
 function extractStarterIds(lineupData) {
@@ -20,50 +22,74 @@ function extractStarterIds(lineupData) {
   return starters;
 }
 
-async function resolveTeamExternalIds(match) {
-  const [home, away] = await Promise.all([
+async function loadMatchTeams(match) {
+  const [homeTeam, awayTeam] = await Promise.all([
     Team.findOne({ externalId: match.homeTeamId }).lean(),
     Team.findOne({ externalId: match.awayTeamId }).lean(),
   ]);
-  return [home?.externalId, away?.externalId].filter(Boolean);
+  return { homeTeam, awayTeam };
 }
 
 export async function syncLiveLineups() {
-  if (!hasToken()) return { updated: 0, matches: 0 };
+  if (!hasToken()) return { updated: 0, matches: 0, events: 0 };
 
   const liveMatches = await Match.find({ status: 'live' }).lean();
-  if (!liveMatches.length) return { updated: 0, matches: 0 };
+  if (!liveMatches.length) return { updated: 0, matches: 0, events: 0 };
 
   let updated = 0;
+  let eventsSynced = 0;
 
   for (const match of liveMatches) {
-    const fdMatchId = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
+    const { homeTeam, awayTeam } = await loadMatchTeams(match);
+    if (!homeTeam || !awayTeam) continue;
+
+    let fdMatchId = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
+    if (!fdMatchId) {
+      fdMatchId = await resolveFootballDataMatchId(match, homeTeam, awayTeam);
+    }
     if (!fdMatchId) continue;
 
     try {
-      const lineupData = await fetchMatchLineups(fdMatchId);
-      const starterIds = extractStarterIds(lineupData);
-      if (!starterIds.size) continue;
+      const matchData = await fetchMatchDetails(fdMatchId);
+      const starterIds = extractStarterIds(matchData);
+      const teamExternalIds = [homeTeam.externalId, awayTeam.externalId].filter(Boolean);
 
-      const teamIds = await resolveTeamExternalIds(match);
-      if (!teamIds.length) continue;
+      if (starterIds.size && teamExternalIds.length) {
+        await Player.updateMany(
+          { teamExternalId: { $in: teamExternalIds } },
+          { $unset: { lineupStatus: '' } }
+        );
 
-      await Player.updateMany(
-        { teamExternalId: { $in: teamIds } },
-        { $unset: { lineupStatus: '' } }
+        const result = await Player.updateMany(
+          { footballDataPersonId: { $in: [...starterIds] } },
+          { $set: { lineupStatus: 'starter' } }
+        );
+
+        updated += result.modifiedCount;
+        notifyPlayersUpdated({ matchId: match.externalId, starters: result.modifiedCount });
+      }
+
+      const fdEvents = splitFootballDataEvents(
+        matchData,
+        homeTeam.footballDataTeamId,
+        awayTeam.footballDataTeamId
       );
 
-      const result = await Player.updateMany(
-        { footballDataPersonId: { $in: [...starterIds] } },
-        { $set: { lineupStatus: 'starter' } }
+      await Match.updateOne(
+        { _id: match._id },
+        {
+          $set: {
+            'raw.footballDataMatchId': fdMatchId,
+            'raw.fdEvents': fdEvents,
+          },
+        }
       );
 
-      updated += result.modifiedCount;
-      notifyPlayersUpdated({ matchId: match.externalId, starters: result.modifiedCount });
+      eventsSynced += 1;
     } catch (err) {
-      console.warn(`Lineup sync skip match ${match.externalId}:`, err.message);
+      console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
     }
   }
 
-  return { updated, matches: liveMatches.length };
+  return { updated, matches: liveMatches.length, events: eventsSynced };
 }
