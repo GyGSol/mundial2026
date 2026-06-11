@@ -66,15 +66,11 @@ function NextMatchCard({ match }) {
   return (
     <Card
       className={cn(
-        'w-full max-w-xl',
+        'min-w-[240px] shrink-0',
         isArgentina && 'border-sky-300/80 bg-sky-50/95 ring-1 ring-sky-200/90'
       )}
     >
       <CardContent className="flex flex-col items-center gap-2 p-4">
-        <Badge variant="outline" className="border-sky-300/70 bg-sky-50 text-sky-900">
-          Próximo partido
-        </Badge>
-
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center gap-1">
             {homeFlag && (
@@ -115,8 +111,8 @@ function EmptyMatchesState() {
         <CardContent className="flex flex-col items-center gap-1 py-5 text-center">
           <p className="text-sm font-medium text-foreground">No hay partidos en curso</p>
           <p className="text-sm text-muted-foreground">
-            Cuando cierren las predicciones (1 hora antes del inicio), el próximo partido va a
-            aparecer acá. Cuando empiece en vivo, lo vas a ver con el marcador actualizado.
+            Cuando cierren las predicciones (1 hora antes del inicio), los próximos partidos van a
+            aparecer acá. Cuando empiecen en vivo, los vas a ver con el marcador actualizado.
           </p>
         </CardContent>
       </Card>
@@ -124,7 +120,7 @@ function EmptyMatchesState() {
   );
 }
 
-export default function LiveMatchesBar({ matches = [], nextMatch = null }) {
+export default function LiveMatchesBar({ matches = [], nextMatches = [] }) {
   if (matches.length > 0) {
     return (
       <div className="flex flex-col items-center gap-3">
@@ -138,11 +134,16 @@ export default function LiveMatchesBar({ matches = [], nextMatch = null }) {
     );
   }
 
-  if (nextMatch) {
+  if (nextMatches.length > 0) {
+    const title = nextMatches.length > 1 ? 'Próximos partidos' : 'Próximo partido';
     return (
       <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-medium text-muted-foreground">Próximo partido</p>
-        <NextMatchCard match={nextMatch} />
+        <p className="text-sm font-medium text-muted-foreground">{title}</p>
+        <div className="-mx-4 flex w-full gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {nextMatches.map((match) => (
+            <NextMatchCard key={match.id} match={match} />
+          ))}
+        </div>
       </div>
     );
   }

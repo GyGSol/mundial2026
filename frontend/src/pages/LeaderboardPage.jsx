@@ -7,7 +7,7 @@ import LeaderboardTable from '../components/LeaderboardTable.jsx';
 import LiveMatchesBar from '../components/LiveMatchesBar.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { findNextLockedMatch } from '../lib/nextLockedMatch.js';
+import { findNextLockedMatches } from '../lib/nextLockedMatch.js';
 import {
   Select,
   SelectContent,
@@ -92,7 +92,7 @@ export default function LeaderboardPage() {
     return {
       ...leaderboardData,
       liveMatches: liveData.matches ?? [],
-      nextLockedMatch: findNextLockedMatch(upcomingData.matches),
+      nextLockedMatches: findNextLockedMatches(upcomingData.matches),
     };
   }, [effectiveGroupId]);
 
@@ -124,7 +124,7 @@ export default function LeaderboardPage() {
       {rankingReady && (
         <LiveMatchesBar
           matches={data?.liveMatches ?? []}
-          nextMatch={data?.nextLockedMatch}
+          nextMatches={data?.nextLockedMatches ?? []}
         />
       )}
 
