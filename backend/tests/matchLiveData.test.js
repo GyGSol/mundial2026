@@ -82,6 +82,19 @@ describe('matchLiveData', () => {
       expect(live.awayScorers).toEqual([]);
     });
 
+    it('marca Final en partidos terminados', () => {
+      const finished = enrichMatchLiveFields({
+        status: 'finished',
+        raw: {
+          home_scorers: "Lozano 12'",
+          away_scorers: 'null',
+        },
+      });
+
+      expect(finished.timeElapsed).toBe('Final');
+      expect(finished.homeScorers).toEqual([{ name: 'Lozano', minute: 12 }]);
+    });
+
     it('no expone datos en upcoming', () => {
       const upcoming = enrichMatchLiveFields({
         status: 'upcoming',

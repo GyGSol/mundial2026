@@ -14,6 +14,7 @@ import LiveMatchesBar from '../components/LiveMatchesBar.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { findNextLockedMatches } from '../lib/nextLockedMatch.js';
+import { pickRecentFinishedMatches } from '../lib/recentFinishedMatches.js';
 import {
   Select,
   SelectContent,
@@ -90,14 +91,16 @@ export default function LeaderboardPage() {
   const canLoadRanking = Boolean(effectiveGroupId);
 
   const fetchLeaderboard = useCallback(async () => {
-    const [leaderboardData, liveData, upcomingData] = await Promise.all([
+    const [leaderboardData, liveData, finishedData, upcomingData] = await Promise.all([
       leaderboardApi.list(effectiveGroupId),
       matchesApi.list({ status: 'live' }),
+      matchesApi.list({ status: 'finished' }),
       matchesApi.list({ status: 'upcoming' }),
     ]);
     return {
       ...leaderboardData,
       liveMatches: liveData.matches ?? [],
+      recentFinishedMatches: pickRecentFinishedMatches(finishedData.matches ?? []),
       nextLockedMatches: findNextLockedMatches(upcomingData.matches),
     };
   }, [effectiveGroupId]);
@@ -132,6 +135,7 @@ export default function LeaderboardPage() {
       {rankingReady && (
         <LiveMatchesBar
           matches={data?.liveMatches ?? []}
+          finishedMatches={data?.recentFinishedMatches ?? []}
           nextMatches={data?.nextLockedMatches ?? []}
         />
       )}

@@ -213,7 +213,12 @@ export function enrichMatchLiveFields(match) {
   const events = readStoredMatchEvents(raw);
 
   return {
-    timeElapsed: match.status === 'live' ? formatTimeElapsed(raw) : null,
+    timeElapsed:
+      match.status === 'live'
+        ? formatTimeElapsed(raw)
+        : match.status === 'finished'
+          ? 'Final'
+          : null,
     homeScorers: showResults ? parseScorersField(raw.home_scorers ?? raw.homeScorers) : [],
     awayScorers: showResults ? parseScorersField(raw.away_scorers ?? raw.awayScorers) : [],
     homeBookings: showResults ? events.homeBookings : [],

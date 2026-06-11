@@ -33,13 +33,26 @@ async function loadMatchTeams(match) {
 export async function syncLiveLineups() {
   if (!hasToken()) return { updated: 0, matches: 0, events: 0 };
 
-  const liveMatches = await Match.find({ status: 'live' }).lean();
-  if (!liveMatches.length) return { updated: 0, matches: 0, events: 0 };
+  const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const [liveMatches, recentFinishedMatches] = await Promise.all([
+    Match.find({ status: 'live' }).lean(),
+    Match.find({ status: 'finished', kickoffAt: { $gte: recentCutoff } }).lean(),
+  ]);
+
+  const matchesToSync = [...liveMatches];
+  for (const finished of recentFinishedMatches) {
+    if (!matchesToSync.some((m) => m._id.toString() === finished._id.toString())) {
+      matchesToSync.push(finished);
+    }
+  }
+
+  if (!matchesToSync.length) return { updated: 0, matches: 0, events: 0 };
 
   let updated = 0;
   let eventsSynced = 0;
 
-  for (const match of liveMatches) {
+  for (const match of matchesToSync) {
+    const isLive = match.status === 'live';
     const { homeTeam, awayTeam } = await loadMatchTeams(match);
     if (!homeTeam || !awayTeam) continue;
 
@@ -54,7 +67,7 @@ export async function syncLiveLineups() {
       const starterIds = extractStarterIds(matchData);
       const teamExternalIds = [homeTeam.externalId, awayTeam.externalId].filter(Boolean);
 
-      if (starterIds.size && teamExternalIds.length) {
+      if (isLive && starterIds.size && teamExternalIds.length) {
         await Player.updateMany(
           { teamExternalId: { $in: teamExternalIds } },
           { $unset: { lineupStatus: '' } }
@@ -91,5 +104,5 @@ export async function syncLiveLineups() {
     }
   }
 
-  return { updated, matches: liveMatches.length, events: eventsSynced };
+  return { updated, matches: matchesToSync.length, events: eventsSynced };
 }

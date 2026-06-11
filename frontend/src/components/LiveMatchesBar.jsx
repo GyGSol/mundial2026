@@ -160,19 +160,26 @@ const liveCardClassName = (isArgentina) =>
     isArgentina && 'border-sky-300/80 bg-sky-50/95 ring-1 ring-sky-200/90'
   );
 
-function LiveMatchCard({ match }) {
+function ResultMatchCard({ match, variant = 'live' }) {
   const homeName = match.homeTeam?.nameEn || 'Local';
   const awayName = match.awayTeam?.nameEn || 'Visitante';
   const homeFlag = getTeamFlag(match.homeTeam);
   const awayFlag = getTeamFlag(match.awayTeam);
   const isArgentina = matchInvolvesArgentina(match);
+  const isLive = variant === 'live';
 
   return (
     <Card className={liveCardClassName(isArgentina)}>
       <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
-        <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-          En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
-        </Badge>
+        {isLive ? (
+          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
+            En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
+            Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
+          </Badge>
+        )}
 
         <MatchTeamsLayout
           homeName={homeName}
@@ -201,6 +208,14 @@ function LiveMatchCard({ match }) {
       </CardContent>
     </Card>
   );
+}
+
+function LiveMatchCard({ match }) {
+  return <ResultMatchCard match={match} variant="live" />;
+}
+
+function FinishedMatchCard({ match }) {
+  return <ResultMatchCard match={match} variant="finished" />;
 }
 
 function NextMatchCard({ match }) {
@@ -241,13 +256,22 @@ function EmptyMatchesState() {
     <div className="flex justify-center">
       <Card className="w-full max-w-xl border-dashed">
         <CardContent className="flex flex-col items-center gap-1 py-5 text-center">
-          <p className="text-sm font-medium text-foreground">No hay partidos en curso</p>
+          <p className="text-sm font-medium text-foreground">Todavía no hay partidos para mostrar</p>
           <p className="text-sm text-muted-foreground">
             Cuando cierren las predicciones (1 hora antes del inicio), los próximos partidos van a
-            aparecer acá. Cuando empiecen en vivo, los vas a ver con el marcador actualizado.
+            aparecer acá. Los que terminen se quedan visibles con el resultado completo.
           </p>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function MatchSection({ title, count, children }) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <MatchesRow count={count}>{children}</MatchesRow>
     </div>
   );
 }
@@ -269,30 +293,44 @@ function MatchesRow({ count, children }) {
   );
 }
 
-export default function LiveMatchesBar({ matches = [], nextMatches = [] }) {
-  if (matches.length > 0) {
-    return (
-      <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-medium text-muted-foreground">Partidos en curso</p>
-        <MatchesRow count={matches.length}>
-          {matches.map((match) => (
-            <LiveMatchCard key={match.id} match={match} />
-          ))}
-        </MatchesRow>
-      </div>
-    );
-  }
+export default function LiveMatchesBar({
+  matches = [],
+  finishedMatches = [],
+  nextMatches = [],
+}) {
+  const hasLive = matches.length > 0;
+  const hasFinished = finishedMatches.length > 0;
+  const hasNext = nextMatches.length > 0;
 
-  if (nextMatches.length > 0) {
-    const title = nextMatches.length > 1 ? 'Próximos partidos' : 'Próximo partido';
+  if (hasLive || hasFinished || hasNext) {
     return (
-      <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <MatchesRow count={nextMatches.length}>
-          {nextMatches.map((match) => (
-            <NextMatchCard key={match.id} match={match} />
-          ))}
-        </MatchesRow>
+      <div className="flex flex-col items-center gap-6">
+        {hasLive ? (
+          <MatchSection title="Partidos en curso" count={matches.length}>
+            {matches.map((match) => (
+              <LiveMatchCard key={match.id} match={match} />
+            ))}
+          </MatchSection>
+        ) : null}
+
+        {hasFinished ? (
+          <MatchSection title="Últimos resultados" count={finishedMatches.length}>
+            {finishedMatches.map((match) => (
+              <FinishedMatchCard key={match.id} match={match} />
+            ))}
+          </MatchSection>
+        ) : null}
+
+        {hasNext ? (
+          <MatchSection
+            title={nextMatches.length > 1 ? 'Próximos partidos' : 'Próximo partido'}
+            count={nextMatches.length}
+          >
+            {nextMatches.map((match) => (
+              <NextMatchCard key={match.id} match={match} />
+            ))}
+          </MatchSection>
+        ) : null}
       </div>
     );
   }
