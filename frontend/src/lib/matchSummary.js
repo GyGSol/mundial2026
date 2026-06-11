@@ -12,20 +12,47 @@ function countBySide(events, type) {
 }
 
 function formatPct(value) {
-  return value != null && !Number.isNaN(value) ? `${value}%` : '—';
+  return value != null && !Number.isNaN(value) ? `${value}%` : null;
 }
 
 function formatCount(value) {
-  return value != null && !Number.isNaN(value) ? String(value) : '—';
+  return value != null && !Number.isNaN(value) ? String(value) : null;
+}
+
+function formatPenalties(total, scored) {
+  if (total == null && scored == null) return null;
+  return `${total ?? 0} / ${scored ?? 0}`;
 }
 
 function pickCount(reportValue, timelineCount) {
   return reportValue != null ? reportValue : timelineCount;
 }
 
+function totalRedCards(reportSide) {
+  const direct = reportSide?.directRedCards ?? 0;
+  const secondYellow = reportSide?.redCardsSecondYellow ?? 0;
+  if (reportSide?.directRedCards == null && reportSide?.redCardsSecondYellow == null) {
+    return null;
+  }
+  return direct + secondYellow;
+}
+
+function readSide(reportSide, key) {
+  return reportSide?.[key] ?? null;
+}
+
+function pushRow(rows, label, home, away) {
+  if (home == null && away == null) return;
+  rows.push({
+    label,
+    home: home ?? '—',
+    away: away ?? '—',
+  });
+}
+
 /**
  * Filas para el resumen local | etiqueta | visitante.
- * Prioriza fifaReportStats (PDF oficial); completa con conteos del timeline.
+ * Prioriza fifaReportStats (PDF oficial); completa faltas/tarjetas con el timeline.
  */
 export function buildMatchSummaryRows({ timeline = [], reportStats = null } = {}) {
   const events = timeline ?? [];
@@ -39,39 +66,101 @@ export function buildMatchSummaryRows({ timeline = [], reportStats = null } = {}
 
   const rows = [];
 
-  if (homeReport.possession != null || awayReport.possession != null) {
-    rows.push({
-      label: 'Posesión',
-      home: formatPct(homeReport.possession),
-      away: formatPct(awayReport.possession),
-    });
-  }
+  pushRow(
+    rows,
+    'Posesión',
+    formatPct(readSide(homeReport, 'possession')),
+    formatPct(readSide(awayReport, 'possession'))
+  );
 
-  rows.push({
-    label: 'Faltas',
-    home: formatCount(pickCount(homeReport.foulsAgainst, fouls.home)),
-    away: formatCount(pickCount(awayReport.foulsAgainst, fouls.away)),
-  });
+  pushRow(
+    rows,
+    'Tiros',
+    formatCount(readSide(homeReport, 'attemptsTotal')),
+    formatCount(readSide(awayReport, 'attemptsTotal'))
+  );
 
-  rows.push({
-    label: 'Amarillas',
-    home: formatCount(pickCount(homeReport.yellowCards, yellows.home)),
-    away: formatCount(pickCount(awayReport.yellowCards, yellows.away)),
-  });
+  pushRow(
+    rows,
+    'Al arco',
+    formatCount(readSide(homeReport, 'attemptsOnTarget')),
+    formatCount(readSide(awayReport, 'attemptsOnTarget'))
+  );
 
-  rows.push({
-    label: 'Rojas',
-    home: formatCount(pickCount(homeReport.redCards, reds.home)),
-    away: formatCount(pickCount(awayReport.redCards, reds.away)),
-  });
+  pushRow(
+    rows,
+    'Bloqueados',
+    formatCount(readSide(homeReport, 'attemptsBlocked')),
+    formatCount(readSide(awayReport, 'attemptsBlocked'))
+  );
+
+  pushRow(
+    rows,
+    'Faltas',
+    formatCount(pickCount(readSide(homeReport, 'foulsAgainst'), fouls.home)),
+    formatCount(pickCount(readSide(awayReport, 'foulsAgainst'), fouls.away))
+  );
+
+  pushRow(
+    rows,
+    'Córners',
+    formatCount(readSide(homeReport, 'corners')),
+    formatCount(readSide(awayReport, 'corners'))
+  );
+
+  pushRow(
+    rows,
+    'Tiros libres',
+    formatCount(readSide(homeReport, 'directFreeKicks')),
+    formatCount(readSide(awayReport, 'directFreeKicks'))
+  );
+
+  pushRow(
+    rows,
+    'Offside',
+    formatCount(readSide(homeReport, 'offsides')),
+    formatCount(readSide(awayReport, 'offsides'))
+  );
+
+  pushRow(
+    rows,
+    'Penales',
+    formatPenalties(readSide(homeReport, 'penaltiesTotal'), readSide(homeReport, 'penaltiesScored')),
+    formatPenalties(readSide(awayReport, 'penaltiesTotal'), readSide(awayReport, 'penaltiesScored'))
+  );
+
+  pushRow(
+    rows,
+    'Autogoles',
+    formatCount(readSide(homeReport, 'ownGoals')),
+    formatCount(readSide(awayReport, 'ownGoals'))
+  );
+
+  pushRow(
+    rows,
+    'Amarillas',
+    formatCount(pickCount(readSide(homeReport, 'yellowCards'), yellows.home)),
+    formatCount(pickCount(readSide(awayReport, 'yellowCards'), yellows.away))
+  );
+
+  const homeReds =
+    totalRedCards(homeReport) ??
+    (reds.home > 0 || reportStats == null ? reds.home : null);
+  const awayReds =
+    totalRedCards(awayReport) ??
+    (reds.away > 0 || reportStats == null ? reds.away : null);
+
+  pushRow(rows, 'Rojas', formatCount(homeReds), formatCount(awayReds));
 
   if (subs.home > 0 || subs.away > 0) {
-    rows.push({
-      label: 'Cambios',
-      home: formatCount(subs.home),
-      away: formatCount(subs.away),
-    });
+    pushRow(rows, 'Cambios', formatCount(subs.home), formatCount(subs.away));
   }
 
   return rows;
+}
+
+export function formatMatchAttendance(reportStats) {
+  const attendance = reportStats?.attendance;
+  if (attendance == null || Number.isNaN(attendance)) return null;
+  return new Intl.NumberFormat('es-AR').format(attendance);
 }

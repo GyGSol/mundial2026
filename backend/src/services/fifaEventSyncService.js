@@ -6,7 +6,7 @@ import {
   resolveFifaMatchEntry,
 } from './fifaApiClient.js';
 import { parseFifaTimeline } from './fifaTimelineParser.js';
-import { fetchFifaReportStats } from './fifaReportPdfService.js';
+import { fetchFifaReportStats, FIFA_REPORT_STATS_VERSION } from './fifaReportPdfService.js';
 
 async function loadMatchTeams(match) {
   const [homeTeam, awayTeam] = await Promise.all([
@@ -79,14 +79,20 @@ export async function syncFifaMatchEvents() {
         },
       };
 
-      if (match.status === 'finished' && !match.raw?.fifaReportStats) {
-        const reportStats = await fetchFifaReportStats({
-          matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
-          homeName: homeTeam.nameEn,
-          awayName: awayTeam.nameEn,
-        });
-        if (reportStats) {
-          rawUpdate['raw.fifaReportStats'] = reportStats;
+      if (match.status === 'finished') {
+        const reportStats = match.raw?.fifaReportStats;
+        const needsReportRefresh =
+          !reportStats || reportStats.statsVersion !== FIFA_REPORT_STATS_VERSION;
+
+        if (needsReportRefresh) {
+          const freshReportStats = await fetchFifaReportStats({
+            matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
+            homeName: homeTeam.nameEn,
+            awayName: awayTeam.nameEn,
+          });
+          if (freshReportStats) {
+            rawUpdate['raw.fifaReportStats'] = freshReportStats;
+          }
         }
       }
 

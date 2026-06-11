@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
-import { buildMatchSummaryRows } from '@/lib/matchSummary';
+import { buildMatchSummaryRows, formatMatchAttendance } from '@/lib/matchSummary';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 
@@ -207,11 +207,17 @@ function MatchTimeline({ events = [], homeCode = 'LOC', awayCode = 'VIS' }) {
 
 function MatchSummary({ events = [], reportStats = null, homeCode = 'LOC', awayCode = 'VIS' }) {
   const rows = buildMatchSummaryRows({ timeline: events, reportStats });
+  const attendance = formatMatchAttendance(reportStats);
   if (!rows.length) return null;
 
   return (
     <div className="w-full rounded-md border bg-muted/20 px-3 py-2 text-left">
       <p className="mb-2 text-center text-[11px] font-medium text-foreground">Resumen del partido</p>
+      {attendance ? (
+        <p className="mb-2 text-center text-[10px] text-muted-foreground">
+          Asistencia: {attendance}
+        </p>
+      ) : null}
       <div className="mb-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] font-medium text-muted-foreground">
         <span className="text-right">{homeCode}</span>
         <span className="text-center" aria-hidden="true" />
