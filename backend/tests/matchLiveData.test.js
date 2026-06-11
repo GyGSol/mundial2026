@@ -57,6 +57,13 @@ describe('matchLiveData', () => {
         { name: 'R. Jiménez', minute: 67 },
       ]);
     });
+
+    it('parsea pseudo-objeto con comillas tipográficas de worldcup26', () => {
+      expect(parseScorersField('{“J. Quiñones 9’”,“R. Jiménez 67’”}')).toEqual([
+        { name: 'J. Quiñones', minute: 9 },
+        { name: 'R. Jiménez', minute: 67 },
+      ]);
+    });
   });
 
   describe('enrichMatchLiveFields', () => {

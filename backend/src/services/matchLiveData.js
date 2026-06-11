@@ -73,6 +73,13 @@ export function isNullishScorerValue(value) {
   return normalized === '' || normalized === 'null' || normalized === 'undefined';
 }
 
+/** worldcup26.ir a veces envía comillas tipográficas (“ ”) en lugar de ASCII. */
+export function normalizeSmartQuotes(value) {
+  return String(value)
+    .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
+    .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");
+}
+
 /**
  * @param {unknown} entry
  * @returns {MatchScorer | null}
@@ -125,16 +132,20 @@ function normalizeScorerEntry(entry) {
  * @param {unknown} value
  * @returns {MatchScorer[]}
  */
+function extractQuotedScorerParts(trimmed) {
+  return [...trimmed.matchAll(/"([^"]+)"/g)].map((match) => match[1].trim()).filter(Boolean);
+}
+
 export function parseScorersField(value) {
   if (isNullishScorerValue(value)) return [];
 
   if (Array.isArray(value)) {
-    return value.map(normalizeScorerEntry).filter(Boolean);
+    return value.flatMap((entry) => parseScorersField(entry));
   }
 
-  const trimmed = String(value).trim();
+  const trimmed = normalizeSmartQuotes(String(value)).trim();
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-    const quoted = [...trimmed.matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+    const quoted = extractQuotedScorerParts(trimmed);
     if (quoted.length > 0) {
       return quoted.map(normalizeScorerEntry).filter(Boolean);
     }
