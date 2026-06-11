@@ -146,16 +146,33 @@ function EmptyMatchesState() {
   );
 }
 
+function MatchesRow({ count, children }) {
+  const isSingle = count === 1;
+
+  return (
+    <div
+      className={cn(
+        'flex w-full gap-3 pb-1',
+        isSingle
+          ? 'justify-center'
+          : '-mx-4 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function LiveMatchesBar({ matches = [], nextMatches = [] }) {
   if (matches.length > 0) {
     return (
       <div className="flex flex-col items-center gap-3">
         <p className="text-sm font-medium text-muted-foreground">Partidos en curso</p>
-        <div className="-mx-4 flex w-full gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <MatchesRow count={matches.length}>
           {matches.map((match) => (
             <LiveMatchCard key={match.id} match={match} />
           ))}
-        </div>
+        </MatchesRow>
       </div>
     );
   }
@@ -165,11 +182,11 @@ export default function LiveMatchesBar({ matches = [], nextMatches = [] }) {
     return (
       <div className="flex flex-col items-center gap-3">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <div className="-mx-4 flex w-full gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <MatchesRow count={nextMatches.length}>
           {nextMatches.map((match) => (
             <NextMatchCard key={match.id} match={match} />
           ))}
-        </div>
+        </MatchesRow>
       </div>
     );
   }
