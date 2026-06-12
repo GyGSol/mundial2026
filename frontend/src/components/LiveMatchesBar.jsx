@@ -142,11 +142,19 @@ function countYellowCards(bookings = []) {
   }).length;
 }
 
+function countRedCards(bookings = []) {
+  return (bookings ?? []).filter((booking) => {
+    const card = String(booking?.card ?? 'YELLOW').toUpperCase();
+    return card === 'RED' || card === 'YELLOW_RED';
+  }).length;
+}
+
 function TeamSideStats({ bookings = [], substitutions = [], className }) {
   const yellowCount = countYellowCards(bookings);
+  const redCount = countRedCards(bookings);
   const substitutionCount = (substitutions ?? []).length;
 
-  if (yellowCount === 0 && substitutionCount === 0) return null;
+  if (yellowCount === 0 && redCount === 0 && substitutionCount === 0) return null;
 
   return (
     <div
@@ -159,6 +167,12 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
         <span className="inline-flex items-center gap-0.5" title="Tarjetas amarillas">
           <span aria-hidden="true">🟨</span>
           <span>{yellowCount}</span>
+        </span>
+      ) : null}
+      {redCount > 0 ? (
+        <span className="inline-flex items-center gap-0.5" title="Tarjetas rojas">
+          <span aria-hidden="true">🟥</span>
+          <span>{redCount}</span>
         </span>
       ) : null}
       {substitutionCount > 0 ? (
@@ -176,7 +190,9 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
 
 function TeamHeaderCell({ name, flag, bookings = [], substitutions = [], side = 'home' }) {
   const showStats =
-    countYellowCards(bookings) > 0 || (substitutions ?? []).length > 0;
+    countYellowCards(bookings) > 0 ||
+    countRedCards(bookings) > 0 ||
+    (substitutions ?? []).length > 0;
   const isAway = side === 'away';
 
   return (
