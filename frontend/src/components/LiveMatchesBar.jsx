@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
+import { filterTimelineForDisplay } from '@/lib/matchTimelineDisplay.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
@@ -193,11 +195,24 @@ function formatTimelineLine(event, homeCode, awayCode) {
 }
 
 function MatchTimeline({ events = [], homeCode = 'LOC', awayCode = 'VIS' }) {
-  const lines = (events ?? []).map((event) => formatTimelineLine(event, homeCode, awayCode)).filter(Boolean);
+  const scrollRef = useRef(null);
+  const displayEvents = filterTimelineForDisplay(events);
+  const lines = displayEvents
+    .map((event) => formatTimelineLine(event, homeCode, awayCode))
+    .filter(Boolean);
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [lines.length, events]);
+
   if (!lines.length) return null;
 
   return (
-    <div className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 text-left [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div
+      ref={scrollRef}
+      className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 text-left [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
         {lines.map((line, index) => (
           <span key={index}>{line}</span>

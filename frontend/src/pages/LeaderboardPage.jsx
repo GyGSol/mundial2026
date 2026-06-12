@@ -1,10 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-
-function shouldPollLeaderboardLive(data) {
-  return (
-    (data?.liveMatches?.length ?? 0) > 0 || (data?.nextUpcomingMatches?.length ?? 0) > 0
-  );
-}
 import { Link } from 'react-router-dom';
 import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
@@ -14,6 +8,7 @@ import LiveMatchesBar from '../components/LiveMatchesBar.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { findNextUpcomingMatches } from '../lib/nextLockedMatch.js';
+import { shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
 import { pickRecentFinishedMatches } from '../lib/recentFinishedMatches.js';
 import {
   Select,

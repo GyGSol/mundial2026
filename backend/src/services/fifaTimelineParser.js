@@ -106,7 +106,7 @@ export function parseFifaTimeline(timelineJson, homeTeamId, awayTeamId) {
       entry.player = playerIn ?? playerOut ?? entry.player;
       if (!entry.playerIn || !entry.playerOut) continue;
     } else if (type === 'goal_disallowed') {
-      entry.player = description || 'Gol anulado';
+      entry.player = null;
     } else if (!entry.player) {
       continue;
     }

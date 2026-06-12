@@ -283,7 +283,10 @@ export async function runSync({ includeMetadata = true } = {}) {
     }
 
     notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
-    notifyMatchesUpdated({ matchesCount: count });
+    notifyMatchesUpdated({
+      matchesCount: count,
+      fifaEventsSynced: fifaResult.events ?? 0,
+    });
     notifyLeaderboardUpdated({ reason: 'sync_complete' });
 
     if (lineupResult.updated > 0 || lineupResult.events > 0) {
