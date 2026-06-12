@@ -18,6 +18,7 @@ import Layout from './components/Layout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import GuestRoute from './components/GuestRoute.jsx';
 import PredictionsPage from './pages/PredictionsPage.jsx';
+import AiPredictionsPage from './pages/AiPredictionsPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import RulesPage from './pages/RulesPage.jsx';
 import WorldCupPage from './pages/WorldCupPage.jsx';
@@ -64,6 +65,7 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route path="ranking" element={<LeaderboardPage />} />
                 <Route path="predictions" element={<PredictionsPage />} />
+                <Route path="ai-predictions" element={<AiPredictionsPage />} />
                 <Route path="leaderboard" element={<Navigate to="/ranking" replace />} />
                 <Route path="groups/new" element={<CreateGroupPage />} />
                 <Route path="groups" element={<GroupsPage />} />

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { matchesApi, predictionsApi } from '../api/client.js';
 import PredictionsMatchList from '../components/PredictionsMatchList.jsx';
 import PredictedGroupStandingsSection from '../components/PredictedGroupStandingsSection.jsx';
@@ -151,6 +152,12 @@ export default function PredictionsPage() {
         </div>
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+          <Button variant="outline" size="sm" asChild className="gap-1.5 border-violet-500/30">
+            <Link to="/ai-predictions">
+              <Sparkles className="size-4" aria-hidden />
+              Predicciones IA
+            </Link>
+          </Button>
           {activeView === 'matches' ? (
             <ScheduleAllButton matches={matches} onScheduledMany={markManyScheduled} />
           ) : null}

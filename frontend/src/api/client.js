@@ -110,6 +110,24 @@ export const matchesApi = {
   },
 };
 
+export const aiConsultationsApi = {
+  listThreads: () => request('/ai-consultations'),
+  getThread: (topicType, topicKey) => {
+    const params = new URLSearchParams({ topicType, topicKey });
+    return request(`/ai-consultations/thread?${params}`);
+  },
+  generateInsight: (matchId) =>
+    request('/ai-consultations/insight', {
+      method: 'POST',
+      body: JSON.stringify({ matchId }),
+    }),
+  ask: (body) =>
+    request('/ai-consultations/ask', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};
+
 export const predictionsApi = {
   save: (matchId, homeGoals, awayGoals) =>
     request(`/predictions/${matchId}`, {

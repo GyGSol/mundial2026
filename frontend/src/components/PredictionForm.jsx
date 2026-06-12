@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Dices, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input.jsx';
 import { MAX_GOALS_PER_TEAM, randomMatchScore } from '@/lib/randomMatchScore.js';
-import AiPredictionDialog from './AiPredictionDialog.jsx';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
@@ -94,23 +94,20 @@ function RandomScoreButton({ onClick }) {
 }
 
 function AiInsightButton({ match }) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => setOpen(true)}
-        title="Ver predicción y análisis de la IA"
-        className="gap-1.5 min-w-28 border-violet-500/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20 hover:text-violet-50"
-      >
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      asChild
+      title="Consultar predicción IA de este partido"
+      className="gap-1.5 min-w-28 border-violet-500/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20 hover:text-violet-50"
+    >
+      <Link to={`/ai-predictions?topic=match&match=${match.id}`}>
         <Sparkles className="size-4" aria-hidden />
         IA
-      </Button>
-      <AiPredictionDialog match={match} open={open} onOpenChange={setOpen} />
-    </>
+      </Link>
+    </Button>
   );
 }
 

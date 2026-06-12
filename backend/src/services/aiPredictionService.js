@@ -396,7 +396,7 @@ export async function callAiForScore(context, { fetchImpl = fetch } = {}) {
 /** @deprecated Usar callAiForScore */
 export const callGeminiForScore = callAiForScore;
 
-function aiModelForScoreSource(source) {
+export function aiModelForScoreSource(source) {
   if (source === 'cerebras') return env.aiCerebrasModel;
   if (source === 'gemini') return env.aiGeminiModel;
   if (source === 'groq') return env.aiGroqModel;

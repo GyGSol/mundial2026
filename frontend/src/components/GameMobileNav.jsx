@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   Pencil,
   Play,
+  Sparkles,
   Trophy,
   Users,
   X,
@@ -23,7 +24,7 @@ const primaryTabs = [
   { to: '/groups', label: 'Grupos', icon: Users, end: false, showBadge: true },
 ];
 
-const morePaths = ['/simulation', '/rules'];
+const morePaths = ['/simulation', '/rules', '/ai-predictions'];
 
 function TabItem({ to, label, icon: Icon, end, badge }) {
   return (
@@ -100,6 +101,16 @@ export default function GameMobileNav({ onEditPlayer }) {
             ) : null}
 
             <nav className="game-mobile-more__links">
+              <NavLink
+                to="/ai-predictions"
+                className={({ isActive }) =>
+                  cn('game-mobile-more__link', isActive && 'game-mobile-more__link--active')
+                }
+                onClick={() => setMoreOpen(false)}
+              >
+                <Sparkles className="size-5 shrink-0" strokeWidth={1.75} />
+                Predicciones IA
+              </NavLink>
               <NavLink
                 to="/simulation"
                 className={({ isActive }) =>

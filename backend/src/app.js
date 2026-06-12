@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes.js';
 import matchesRoutes from './routes/matches.routes.js';
 import teamsRoutes from './routes/teams.routes.js';
 import predictionsRoutes from './routes/predictions.routes.js';
+import aiConsultationsRoutes from './routes/aiConsultations.routes.js';
 import leaderboardRoutes from './routes/leaderboard.routes.js';
 import competitionGroupsRoutes from './routes/competitionGroups.routes.js';
 import healthRoutes from './routes/health.routes.js';
@@ -37,6 +38,7 @@ export function createApp() {
   app.use('/api/matches', matchesRoutes);
   app.use('/api', teamsRoutes);
   app.use('/api/predictions', predictionsRoutes);
+  app.use('/api/ai-consultations', aiConsultationsRoutes);
   app.use('/api/leaderboard', leaderboardRoutes);
   app.use('/api/competition-groups', competitionGroupsRoutes);
   app.use('/api/health', healthRoutes);
