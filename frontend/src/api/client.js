@@ -196,6 +196,11 @@ export const worldCupApi = {
     return request(`/world-cup${query}`);
   },
   history: () => request('/world-cup/history'),
+  aiBriefing: () => request('/world-cup/ai-briefing'),
+  refreshAiBriefing: () =>
+    request('/world-cup/ai-briefing/refresh', {
+      method: 'POST',
+    }),
 };
 
 export const simulationApi = {

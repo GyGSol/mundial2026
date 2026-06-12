@@ -13,6 +13,7 @@ import {
 import FixtureSection from '@/components/worldcup/FixtureSection.jsx';
 import HistorySection from '@/components/worldcup/HistorySection.jsx';
 import PlayersSection from '@/components/worldcup/PlayersSection.jsx';
+import AiStatsBriefing from '@/components/worldcup/AiStatsBriefing.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
 import { cn } from '@/lib/utils';
 
@@ -20,7 +21,7 @@ const tabs = [
   { id: 'groups', label: 'Grupos' },
   { id: 'knockout', label: 'Fase final' },
   { id: 'matches', label: 'Partidos' },
-  { id: 'stats', label: 'Estadísticas' },
+  { id: 'stats', label: 'Estadísticas', ai: true },
   { id: 'teams', label: 'Equipos' },
   { id: 'fixture', label: 'Fixture' },
   { id: 'history', label: 'Historia' },
@@ -109,12 +110,15 @@ export default function WorldCupPage() {
               {activeTab === 'knockout' && <KnockoutSection phases={data?.knockout} />}
               {activeTab === 'matches' && <GroupMatchesSection matches={data?.groupMatches} />}
               {activeTab === 'stats' && (
-                <StatsSection
-                  stats={data?.stats}
-                  teams={data?.teams}
-                  stadiums={data?.stadiums}
-                  tournament2026PlayerStats={data?.tournament2026PlayerStats}
-                />
+                <div className="flex flex-col gap-6">
+                  <AiStatsBriefing />
+                  <StatsSection
+                    stats={data?.stats}
+                    teams={data?.teams}
+                    stadiums={data?.stadiums}
+                    tournament2026PlayerStats={data?.tournament2026PlayerStats}
+                  />
+                </div>
               )}
               {activeTab === 'teams' && <TeamsSection teams={data?.teams} />}
               {activeTab === 'fixture' && (
