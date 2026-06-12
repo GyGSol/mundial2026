@@ -4,6 +4,7 @@ import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import TechnicalDifficulties from '../../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../../lib/apiError.js';
+import AdminAdvancesSection from '../../components/admin/AdminAdvancesSection.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -111,6 +112,8 @@ export default function AdminDashboardPage() {
               </Button>
             </CardContent>
           </Card>
+
+          <AdminAdvancesSection />
 
           <p className="text-xs text-slate-500">
             Reset completo de la base: solo por CLI (<code className="text-slate-400">npm run reset-db</code>
