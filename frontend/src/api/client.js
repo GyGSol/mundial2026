@@ -108,6 +108,11 @@ export const matchesApi = {
     const query = new URLSearchParams(params).toString();
     return request(`/matches${query ? `?${query}` : ''}`);
   },
+  aiLiveBriefing: (matchId) => request(`/matches/${matchId}/ai-live`),
+  refreshAiLiveBriefing: (matchId) =>
+    request(`/matches/${matchId}/ai-live/refresh`, {
+      method: 'POST',
+    }),
 };
 
 export const aiConsultationsApi = {
