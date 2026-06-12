@@ -103,6 +103,11 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify({ totalPoints }),
     }),
+  updateUserPassword: (id, password) =>
+    adminRequest(`/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ password }),
+    }),
   deleteUser: (id) => adminRequest(`/users/${id}`, { method: 'DELETE' }),
   listGroups: () => adminRequest('/groups'),
   getGroup: (id) => adminRequest(`/groups/${id}`),

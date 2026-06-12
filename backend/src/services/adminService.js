@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
@@ -19,8 +20,11 @@ import {
   updateCompetitionGroup,
 } from './competitionGroupService.js';
 import { recalculateMatchScores } from './syncService.js';
+import { revokeAllUserSessions } from './sessionService.js';
 import { env } from '../config/env.js';
 import { isAdminConfigured } from './adminSetupService.js';
+
+const MIN_USER_PASSWORD_LENGTH = 8;
 
 function serializeUser(user) {
   return {
@@ -207,6 +211,28 @@ export async function updateAdminUserPoints(userId, totalPoints) {
   }
 
   return serializeUser(user);
+}
+
+export async function updateAdminUserPassword(userId, password) {
+  const plainPassword = String(password ?? '');
+  if (plainPassword.length < MIN_USER_PASSWORD_LENGTH) {
+    const error = new Error(`La contraseña debe tener al menos ${MIN_USER_PASSWORD_LENGTH} caracteres`);
+    error.status = 400;
+    throw error;
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error('Usuario no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  user.passwordHash = await bcrypt.hash(plainPassword, 10);
+  await user.save();
+  await revokeAllUserSessions(user._id);
+
+  return serializeUser(user.toObject());
 }
 
 export async function deleteAdminUser(userId) {

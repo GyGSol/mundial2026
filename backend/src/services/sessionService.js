@@ -37,3 +37,7 @@ export async function revokeSessionToken(token) {
   if (!token?.trim()) return;
   await Session.deleteOne({ tokenHash: hashToken(token) });
 }
+
+export async function revokeAllUserSessions(userId) {
+  await Session.deleteMany({ userId });
+}

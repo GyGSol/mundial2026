@@ -20,6 +20,7 @@ export default function AdminUsersPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [pointsEdit, setPointsEdit] = useState('');
+  const [passwordEdit, setPasswordEdit] = useState('');
   const [message, setMessage] = useState('');
 
   const fetchUsers = useCallback(
@@ -33,6 +34,7 @@ export default function AdminUsersPage() {
   async function loadDetail(id) {
     setSelectedId(id);
     setMessage('');
+    setPasswordEdit('');
     try {
       const result = await adminApi.getUser(id);
       setDetail(result);
@@ -56,6 +58,26 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function savePassword() {
+    if (!selectedId) return;
+    const trimmed = passwordEdit.trim();
+    if (trimmed.length < 8) {
+      setMessage('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    if (!window.confirm('¿Cambiar la contraseña de este usuario? Cerrará sus sesiones activas.')) {
+      return;
+    }
+    setMessage('');
+    try {
+      await adminApi.updateUserPassword(selectedId, trimmed);
+      setPasswordEdit('');
+      setMessage('Contraseña actualizada');
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
   async function deleteUser(id) {
     if (!window.confirm('¿Eliminar este usuario y todas sus predicciones?')) return;
     setMessage('');
@@ -74,7 +96,7 @@ export default function AdminUsersPage() {
     <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-xl font-semibold">Usuarios</h2>
-        <p className="text-sm text-slate-400">Buscar, ajustar puntos o eliminar cuentas.</p>
+        <p className="text-sm text-slate-400">Buscar, ajustar puntos, cambiar contraseña o eliminar cuentas.</p>
       </div>
 
       <form
@@ -165,6 +187,24 @@ export default function AdminUsersPage() {
                 </div>
                 <Button size="sm" onClick={savePoints}>
                   Guardar
+                </Button>
+              </div>
+
+              <div className="flex items-end gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <label className="text-slate-400">Nueva contraseña</label>
+                  <Input
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Mínimo 8 caracteres"
+                    minLength={8}
+                    className="border-slate-700 bg-slate-950"
+                    value={passwordEdit}
+                    onChange={(e) => setPasswordEdit(e.target.value)}
+                  />
+                </div>
+                <Button size="sm" variant="outline" onClick={savePassword} disabled={passwordEdit.length < 8}>
+                  Cambiar clave
                 </Button>
               </div>
 

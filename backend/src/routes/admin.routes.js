@@ -34,6 +34,7 @@ import {
   removeAdminGroupMember,
   updateAdminGroup,
   updateAdminMatch,
+  updateAdminUserPassword,
   updateAdminUserPoints,
 } from '../services/adminService.js';
 
@@ -186,12 +187,20 @@ router.get('/users/:id', adminMiddleware, async (req, res, next) => {
 
 router.patch('/users/:id', adminMiddleware, async (req, res, next) => {
   try {
-    if (req.body?.totalPoints === undefined) {
-      return res.status(400).json({ error: 'totalPoints requerido' });
+    const { totalPoints, password } = req.body ?? {};
+    if (totalPoints === undefined && password === undefined) {
+      return res.status(400).json({ error: 'Indicá totalPoints o password' });
     }
-    res.json(
-      await updateAdminUserPoints(req.params.id, req.body.totalPoints)
-    );
+
+    let user;
+    if (totalPoints !== undefined) {
+      user = await updateAdminUserPoints(req.params.id, totalPoints);
+    }
+    if (password !== undefined) {
+      user = await updateAdminUserPassword(req.params.id, password);
+    }
+
+    res.json(user);
   } catch (err) {
     next(err);
   }
