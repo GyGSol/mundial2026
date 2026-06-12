@@ -2,9 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
   enrichMatchLiveFields,
   formatTimeElapsed,
+  goalCountsFromTimeline,
   parseBookingsField,
   parseScorersField,
   readMatchTimeline,
+  resolveEffectiveLiveScores,
+  scorersFromTimeline,
   splitFootballDataEvents,
 } from '../src/services/matchLiveData.js';
 
@@ -219,6 +222,59 @@ describe('matchLiveData', () => {
 
       expect(finished.matchTimeline).toHaveLength(2);
       expect(finished.matchTimeline[0].type).toBe('goal');
+    });
+
+    it('enrich usa goles del timeline FIFA cuando worldcup26 no publicó goleadores', () => {
+      const live = enrichMatchLiveFields({
+        status: 'live',
+        homeScore: 0,
+        awayScore: 0,
+        raw: {
+          fifaEvents: {
+            timeline: [
+              { sortKey: 59, minute: 59, type: 'goal', side: 'away', player: 'Krejci' },
+              { sortKey: 67, minute: 67, type: 'goal', side: 'home', player: 'Hwang Inbeom' },
+            ],
+          },
+        },
+      });
+
+      expect(live.homeScore).toBe(1);
+      expect(live.awayScore).toBe(1);
+      expect(live.homeScorers).toEqual([{ name: 'Hwang Inbeom', minute: 67 }]);
+      expect(live.awayScorers).toEqual([{ name: 'Krejci', minute: 59 }]);
+      expect(live.timeElapsed).toBe("67'");
+    });
+  });
+
+  describe('goalCountsFromTimeline', () => {
+    it('cuenta goles por lado', () => {
+      expect(
+        goalCountsFromTimeline([
+          { type: 'goal', side: 'home' },
+          { type: 'goal', side: 'away' },
+          { type: 'foul', side: 'home' },
+        ])
+      ).toEqual({ home: 1, away: 1 });
+    });
+  });
+
+  describe('scorersFromTimeline', () => {
+    it('arma goleadores con minuto', () => {
+      expect(
+        scorersFromTimeline([{ type: 'goal', side: 'away', player: 'Krejci', minute: 59 }]).away
+      ).toEqual([{ name: 'Krejci', minute: 59 }]);
+    });
+  });
+
+  describe('resolveEffectiveLiveScores', () => {
+    it('no baja el marcador guardado', () => {
+      expect(
+        resolveEffectiveLiveScores(
+          { homeScore: 2, awayScore: 0 },
+          [{ type: 'goal', side: 'home' }]
+        )
+      ).toEqual({ homeScore: 2, awayScore: 0 });
     });
   });
 

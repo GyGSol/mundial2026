@@ -7,6 +7,7 @@ import {
 } from './fifaApiClient.js';
 import { parseFifaTimeline } from './fifaTimelineParser.js';
 import { fetchFifaReportStats, FIFA_REPORT_STATS_VERSION } from './fifaReportPdfService.js';
+import { goalCountsFromTimeline } from './matchLiveData.js';
 
 async function loadMatchTeams(match) {
   const [homeTeam, awayTeam] = await Promise.all([
@@ -30,17 +31,18 @@ export async function syncFifaMatchEvents() {
     }
   }
 
-  if (!matchesToSync.length) return { matches: 0, events: 0 };
+  if (!matchesToSync.length) return { matches: 0, events: 0, scoringIds: [] };
 
   let calendar = [];
   try {
     calendar = await fetchAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar sync skipped:', err.message);
-    return { matches: 0, events: 0 };
+    return { matches: 0, events: 0, scoringIds: [] };
   }
 
   let eventsSynced = 0;
+  const scoringIds = [];
 
   for (const match of matchesToSync) {
     const { homeTeam, awayTeam } = await loadMatchTeams(match);
@@ -96,6 +98,19 @@ export async function syncFifaMatchEvents() {
         }
       }
 
+      const { home, away } = goalCountsFromTimeline(timeline);
+      const nextHomeScore = Math.max(Number(match.homeScore ?? 0), home);
+      const nextAwayScore = Math.max(Number(match.awayScore ?? 0), away);
+      const scoreChanged =
+        nextHomeScore !== Number(match.homeScore ?? 0) ||
+        nextAwayScore !== Number(match.awayScore ?? 0);
+
+      if (scoreChanged) {
+        rawUpdate.homeScore = nextHomeScore;
+        rawUpdate.awayScore = nextAwayScore;
+        scoringIds.push(match._id);
+      }
+
       await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
       eventsSynced += 1;
     } catch (err) {
@@ -103,5 +118,5 @@ export async function syncFifaMatchEvents() {
     }
   }
 
-  return { matches: matchesToSync.length, events: eventsSynced };
+  return { matches: matchesToSync.length, events: eventsSynced, scoringIds };
 }

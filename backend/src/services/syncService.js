@@ -271,6 +271,10 @@ export async function runSync({ includeMetadata = true } = {}) {
     const lineupResult = await syncLiveLineups();
     const fifaResult = await syncFifaMatchEvents();
 
+    for (const matchId of fifaResult.scoringIds ?? []) {
+      await recalculateMatchScores(matchId);
+    }
+
     notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
     notifyMatchesUpdated({ matchesCount: count });
     notifyLeaderboardUpdated({ reason: 'sync_complete' });

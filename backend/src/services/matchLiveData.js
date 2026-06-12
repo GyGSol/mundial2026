@@ -454,8 +454,120 @@ export function readMatchTimeline(raw = {}) {
   return buildTimelineFromLegacy(raw, events);
 }
 
+/** @param {Array<{ type?: string, side?: string }>} timeline */
+export function goalCountsFromTimeline(timeline = []) {
+  let home = 0;
+  let away = 0;
+
+  for (const event of timeline) {
+    if (event.type !== 'goal') continue;
+    if (event.side === 'home') home += 1;
+    else if (event.side === 'away') away += 1;
+  }
+
+  return { home, away };
+}
+
+/** @param {Array<{ type?: string, side?: string, player?: string, minute?: number | null }>} timeline */
+export function scorersFromTimeline(timeline = []) {
+  const home = [];
+  const away = [];
+
+  for (const event of timeline) {
+    if (event.type !== 'goal' || !event.player) continue;
+    const entry = { name: String(event.player).trim(), minute: event.minute ?? null };
+    if (event.side === 'home') home.push(entry);
+    else if (event.side === 'away') away.push(entry);
+  }
+
+  return { home, away };
+}
+
+/** @param {Array<{ type?: string, side?: string, player?: string, minute?: number | null }>} timeline */
+export function bookingsFromTimeline(timeline = []) {
+  const homeBookings = [];
+  const awayBookings = [];
+
+  for (const event of timeline) {
+    if (!event.player) continue;
+
+    let card = null;
+    if (event.type === 'yellow_card') card = 'YELLOW';
+    else if (event.type === 'red_card') card = 'RED';
+    if (!card) continue;
+
+    const entry = {
+      minute: event.minute ?? null,
+      player: String(event.player).trim(),
+      card,
+    };
+
+    if (event.side === 'home') homeBookings.push(entry);
+    else if (event.side === 'away') awayBookings.push(entry);
+  }
+
+  return { homeBookings, awayBookings };
+}
+
+/** @param {Array<{ type?: string, side?: string, playerIn?: string, playerOut?: string, minute?: number | null }>} timeline */
+export function substitutionsFromTimeline(timeline = []) {
+  const homeSubstitutions = [];
+  const awaySubstitutions = [];
+
+  for (const event of timeline) {
+    if (event.type !== 'substitution' || !event.playerIn || !event.playerOut) continue;
+
+    const entry = {
+      minute: event.minute ?? null,
+      playerOut: String(event.playerOut).trim(),
+      playerIn: String(event.playerIn).trim(),
+    };
+
+    if (event.side === 'home') homeSubstitutions.push(entry);
+    else if (event.side === 'away') awaySubstitutions.push(entry);
+  }
+
+  return { homeSubstitutions, awaySubstitutions };
+}
+
+/** @param {Array<{ minute?: number | null, sortKey?: number }>} timeline */
+export function latestMinuteFromTimeline(timeline = []) {
+  let latest = null;
+
+  for (const event of timeline) {
+    if (event.minute != null && Number.isFinite(Number(event.minute))) {
+      latest = latest == null ? Number(event.minute) : Math.max(latest, Number(event.minute));
+      continue;
+    }
+
+    if (event.sortKey != null && Number.isFinite(Number(event.sortKey))) {
+      const minute = Math.floor(Number(event.sortKey));
+      latest = latest == null ? minute : Math.max(latest, minute);
+    }
+  }
+
+  return latest;
+}
+
 /**
- * @param {{ status?: string, raw?: Record<string, unknown> | null }} match
+ * @param {{ homeScore?: number | null, awayScore?: number | null }} match
+ * @param {Array<{ type?: string, side?: string }>} timeline
+ */
+export function resolveEffectiveLiveScores(match, timeline = []) {
+  const { home, away } = goalCountsFromTimeline(timeline);
+
+  return {
+    homeScore: Math.max(Number(match.homeScore ?? 0), home),
+    awayScore: Math.max(Number(match.awayScore ?? 0), away),
+  };
+}
+
+function pickNonEmptyList(primary = [], fallback = []) {
+  return primary.length > 0 ? primary : fallback;
+}
+
+/**
+ * @param {{ status?: string, homeScore?: number | null, awayScore?: number | null, raw?: Record<string, unknown> | null }} match
  */
 export function enrichMatchLiveFields(match) {
   const raw = match.raw ?? {};
@@ -463,20 +575,64 @@ export function enrichMatchLiveFields(match) {
   const events = readStoredMatchEvents(raw);
 
   const matchTimeline = showResults ? readMatchTimeline(raw) : [];
+  const timelineScorers = scorersFromTimeline(matchTimeline);
+  const timelineBookings = bookingsFromTimeline(matchTimeline);
+  const timelineSubstitutions = substitutionsFromTimeline(matchTimeline);
+
+  const homeScorers = showResults
+    ? pickNonEmptyList(
+        parseScorersField(raw.home_scorers ?? raw.homeScorers),
+        timelineScorers.home
+      )
+    : [];
+  const awayScorers = showResults
+    ? pickNonEmptyList(
+        parseScorersField(raw.away_scorers ?? raw.awayScorers),
+        timelineScorers.away
+      )
+    : [];
+
+  const homeBookings = showResults
+    ? pickNonEmptyList(events.homeBookings, timelineBookings.homeBookings)
+    : [];
+  const awayBookings = showResults
+    ? pickNonEmptyList(events.awayBookings, timelineBookings.awayBookings)
+    : [];
+  const homeSubstitutions = showResults
+    ? pickNonEmptyList(events.homeSubstitutions, timelineSubstitutions.homeSubstitutions)
+    : [];
+  const awaySubstitutions = showResults
+    ? pickNonEmptyList(events.awaySubstitutions, timelineSubstitutions.awaySubstitutions)
+    : [];
+
+  let timeElapsed =
+    match.status === 'live'
+      ? formatTimeElapsed(raw)
+      : match.status === 'finished'
+        ? 'Final'
+        : null;
+
+  if (match.status === 'live' && !timeElapsed) {
+    const latestMinute = latestMinuteFromTimeline(matchTimeline);
+    if (latestMinute != null) {
+      timeElapsed = `${latestMinute}'`;
+    }
+  }
+
+  const effectiveScores = showResults
+    ? resolveEffectiveLiveScores(match, matchTimeline)
+    : { homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 };
 
   return {
-    timeElapsed:
-      match.status === 'live'
-        ? formatTimeElapsed(raw)
-        : match.status === 'finished'
-          ? 'Final'
-          : null,
-    homeScorers: showResults ? parseScorersField(raw.home_scorers ?? raw.homeScorers) : [],
-    awayScorers: showResults ? parseScorersField(raw.away_scorers ?? raw.awayScorers) : [],
-    homeBookings: showResults ? events.homeBookings : [],
-    awayBookings: showResults ? events.awayBookings : [],
-    homeSubstitutions: showResults ? events.homeSubstitutions : [],
-    awaySubstitutions: showResults ? events.awaySubstitutions : [],
+    timeElapsed,
+    homeScore: effectiveScores.homeScore,
+    awayScore: effectiveScores.awayScore,
+    homeScorers,
+    awayScorers,
+    homeBookings,
+    awayBookings,
+    homeSubstitutions,
+    awaySubstitutions,
     matchTimeline,
     fifaReportStats: showResults ? (raw.fifaReportStats ?? null) : null,
   };
