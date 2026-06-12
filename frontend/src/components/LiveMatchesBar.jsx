@@ -184,51 +184,83 @@ function formatTimelineMinute(event) {
   return '';
 }
 
-function formatTimelineLine(event, homeCode, awayCode) {
-  const code = event.side === 'home' ? homeCode : awayCode;
+function formatTimelineEntry(event) {
   const minute = formatTimelineMinute(event);
+  const prefix = minute ? `${minute} ` : '';
 
   switch (event.type) {
     case 'goal':
-      return `${minute} ${code} ⚽ ${event.player}`;
+      return { side: event.side, text: `${prefix}⚽ ${event.player}` };
     case 'yellow_card':
-      return `${minute} ${code} 🟨 ${event.player}`;
+      return { side: event.side, text: `${prefix}🟨 ${event.player}` };
     case 'red_card':
-      return `${minute} ${code} 🟥 ${event.player}`;
+      return { side: event.side, text: `${prefix}🟥 ${event.player}` };
     case 'substitution':
-      return `${minute} ${code} ${event.playerOut} → ${event.playerIn}`;
+      return { side: event.side, text: `${prefix}${event.playerOut} → ${event.playerIn}` };
     case 'foul':
-      return `${minute} ${code} Falta ${event.player}`;
+      return { side: event.side, text: `${prefix}Falta ${event.player}` };
     case 'goal_disallowed':
-      return minute ? `${minute} 🚫 Gol anulado` : '🚫 Gol anulado';
+      return {
+        side: 'neutral',
+        text: minute ? `${minute} 🚫 Gol anulado` : '🚫 Gol anulado',
+      };
     default:
       return null;
   }
 }
 
-function MatchTimeline({ events = [], homeCode = 'LOC', awayCode = 'VIS' }) {
+function timelineSortKey(event) {
+  if (event?.sortKey != null && Number.isFinite(event.sortKey)) return event.sortKey;
+  const minute = Number(event?.minute ?? 0);
+  const extra = Number(event?.extraMinute ?? 0);
+  return minute + extra / 100;
+}
+
+function MatchTimeline({ events = [] }) {
   const scrollRef = useRef(null);
-  const displayEvents = filterTimelineForDisplay(events);
-  const lines = displayEvents
-    .map((event) => formatTimelineLine(event, homeCode, awayCode))
+  const displayEntries = filterTimelineForDisplay(events)
+    .slice()
+    .sort((a, b) => timelineSortKey(b) - timelineSortKey(a))
+    .map(formatTimelineEntry)
     .filter(Boolean);
 
   useEffect(() => {
     const node = scrollRef.current;
-    if (node) node.scrollTop = node.scrollHeight;
-  }, [lines.length, events]);
+    if (node) node.scrollTop = 0;
+  }, [displayEntries.length, events]);
 
-  if (!lines.length) return null;
+  if (!displayEntries.length) return null;
 
   return (
     <div
       ref={scrollRef}
-      className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 text-left [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
-        {lines.map((line, index) => (
-          <span key={index}>{line}</span>
-        ))}
+      <div className="flex flex-col gap-1 text-[10px] leading-snug text-muted-foreground">
+        {displayEntries.map((entry, index) =>
+          entry.side === 'neutral' ? (
+            <div key={index} className="text-center">
+              {entry.text}
+            </div>
+          ) : (
+            <div
+              key={index}
+              className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3"
+            >
+              {entry.side === 'home' ? (
+                <span className="text-left">{entry.text}</span>
+              ) : (
+                <span aria-hidden="true" />
+              )}
+              <span aria-hidden="true" />
+              {entry.side === 'away' ? (
+                <span className="text-right">{entry.text}</span>
+              ) : (
+                <span aria-hidden="true" />
+              )}
+            </div>
+          )
+        )}
       </div>
     </div>
   );
@@ -390,7 +422,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           }
         />
 
-        <MatchTimeline events={match.matchTimeline} homeCode={homeCode} awayCode={awayCode} />
+        <MatchTimeline events={match.matchTimeline} />
 
         <MatchSummary
           events={match.matchTimeline}
