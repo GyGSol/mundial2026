@@ -1,7 +1,12 @@
 import { Match } from '../models/Match.js';
 import { Player } from '../models/Player.js';
 import { Team } from '../models/Team.js';
-import { canonicalPlayerName, matchNameToRosterPlayer, normalizeName } from '../utils/playerNameMatch.js';
+import {
+  enrichNameFromRoster,
+  matchNameToRosterPlayer,
+  normalizeName,
+  rosterPositionForName,
+} from '../utils/playerNameMatch.js';
 import {
   buildTimelineFromLegacy,
   enrichMatchLiveFields,
@@ -85,17 +90,41 @@ export function normalizeTimelinePlayerNames(timeline, homePlayers, awayPlayers)
     const normalized = { ...event };
 
     if (normalized.player) {
-      normalized.player = canonicalPlayerName(normalized.player, roster);
+      const enriched = enrichNameFromRoster(normalized.player, roster);
+      normalized.player = enriched.name;
+      normalized.playerPosition = enriched.position ?? normalized.playerPosition ?? null;
     }
     if (normalized.playerIn) {
-      normalized.playerIn = canonicalPlayerName(normalized.playerIn, roster);
+      const enriched = enrichNameFromRoster(normalized.playerIn, roster);
+      normalized.playerIn = enriched.name;
+      normalized.playerInPosition = enriched.position ?? normalized.playerInPosition ?? null;
     }
     if (normalized.playerOut) {
-      normalized.playerOut = canonicalPlayerName(normalized.playerOut, roster);
+      const enriched = enrichNameFromRoster(normalized.playerOut, roster);
+      normalized.playerOut = enriched.name;
+      normalized.playerOutPosition = enriched.position ?? normalized.playerOutPosition ?? null;
     }
 
     return normalized;
   });
+}
+
+function timelineMissingPositions(timeline, homePlayers, awayPlayers) {
+  for (const event of timeline) {
+    const roster = rosterForSide(event.side, homePlayers, awayPlayers);
+
+    if (event.player && !event.playerPosition && rosterPositionForName(event.player, roster)) {
+      return true;
+    }
+    if (event.playerIn && !event.playerInPosition && rosterPositionForName(event.playerIn, roster)) {
+      return true;
+    }
+    if (event.playerOut && !event.playerOutPosition && rosterPositionForName(event.playerOut, roster)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function findMissingRawEvents(rawEvents = [], timeline = [], homeTeamId, awayTeamId) {
@@ -188,16 +217,28 @@ function normalizeAiRecoveredEntry(rawEntry, missingItem, roster) {
   return entry;
 }
 
-function buildMissingEventsPrompt(missingItems, homeCode, awayCode) {
+function formatRosterForPrompt(players = []) {
+  return players
+    .map((player) => `${player.fullName} (${player.position ?? '?'})`)
+    .join(', ');
+}
+
+function buildMissingEventsPrompt(missingItems, homeCode, awayCode, homePlayers = [], awayPlayers = []) {
   const lines = missingItems.map(
     (item, index) =>
       `${index}: minute="${item.rawEvent.MatchMinute}" type="${item.entry.type}" side="${item.entry.side}" description="${item.description.replace(/"/g, "'")}"`
   );
 
+  const homeRoster = formatRosterForPrompt(homePlayers);
+  const awayRoster = formatRosterForPrompt(awayPlayers);
+
   return `Extraé datos estructurados SOLO de estas descripciones de eventos FIFA del Mundial 2026.
 NO inventes eventos, minutos ni jugadores que no aparezcan en la descripción.
+Usá el roster para completar nombres parciales; NO inventes jugadores fuera del roster.
 
 Equipos: ${homeCode} (home) vs ${awayCode} (away)
+Roster ${homeCode}: ${homeRoster || 'sin datos'}
+Roster ${awayCode}: ${awayRoster || 'sin datos'}
 
 Eventos sin parsear:
 ${lines.join('\n')}
@@ -217,7 +258,7 @@ async function recoverMissingWithAi(missingItems, homeCode, awayCode, homePlayer
     return { recovered: [], prompt: null, rawResponse: null, source: null };
   }
 
-  const prompt = buildMissingEventsPrompt(missingItems, homeCode, awayCode);
+  const prompt = buildMissingEventsPrompt(missingItems, homeCode, awayCode, homePlayers, awayPlayers);
 
   try {
     const result = await callAiForJson(prompt);
@@ -305,7 +346,9 @@ export async function assistMatchEvents(match, { homeTeam, awayTeam, homePlayers
   }
 
   const inputHash = computeAssistInputHash(rawEvents, parsedTimeline.length > 0 ? parsedTimeline : baseTimeline);
+  const needsPositions = timelineMissingPositions(baseTimeline, homePlayers, awayPlayers);
   if (
+    !needsPositions &&
     fifaEvents.assistHash === inputHash &&
     isAssistFresh(fifaEvents.assistedAt, match.status)
   ) {

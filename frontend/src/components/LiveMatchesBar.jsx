@@ -21,6 +21,19 @@ import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
+const POSITION_SHORT = {
+  GK: 'POR',
+  DEF: 'DEF',
+  MID: 'MED',
+  FWD: 'DEL',
+};
+
+function formatPlayerWithPosition(name, position) {
+  if (!name) return '';
+  const tag = position ? POSITION_SHORT[position] ?? position : null;
+  return tag ? `${tag} · ${name}` : name;
+}
+
 function normalizeScorerEntry(entry) {
   if (typeof entry === 'string') {
     const trimmed = entry.trim();
@@ -43,6 +56,7 @@ function normalizeScorerEntry(entry) {
     return {
       name: String(entry.name).trim(),
       minute: entry.minute != null ? Number(entry.minute) : null,
+      position: entry.position ?? null,
     };
   }
 
@@ -57,7 +71,8 @@ function normalizeScorerList(scorers) {
 
 function formatScorerLine(scorer) {
   if (!scorer?.name) return null;
-  return scorer.minute != null ? `${scorer.minute}' ${scorer.name}` : scorer.name;
+  const label = formatPlayerWithPosition(scorer.name, scorer.position);
+  return scorer.minute != null ? `${scorer.minute}' ${label}` : label;
 }
 
 function cardSymbol(card) {
@@ -70,13 +85,19 @@ function cardSymbol(card) {
 function formatBookingLine(booking) {
   if (!booking?.player) return null;
   const minute = booking.minute != null ? `${booking.minute}' ` : '';
-  return `${minute}${cardSymbol(booking.card)} ${booking.player}`;
+  const label = formatPlayerWithPosition(booking.player, booking.position);
+  return `${minute}${cardSymbol(booking.card)} ${label}`;
 }
 
 function formatSubstitutionLine(substitution) {
   if (!substitution?.playerOut || !substitution?.playerIn) return null;
   const minute = substitution.minute != null ? `${substitution.minute}' ` : '';
-  return `${minute}${substitution.playerOut} → ${substitution.playerIn}`;
+  const playerOut = formatPlayerWithPosition(
+    substitution.playerOut,
+    substitution.playerOutPosition
+  );
+  const playerIn = formatPlayerWithPosition(substitution.playerIn, substitution.playerInPosition);
+  return `${minute}${playerOut} → ${playerIn}`;
 }
 
 function TeamEventColumn({ lines, className }) {
@@ -190,15 +211,30 @@ function formatTimelineEntry(event) {
 
   switch (event.type) {
     case 'goal':
-      return { side: event.side, text: `${prefix}⚽ ${event.player}` };
+      return {
+        side: event.side,
+        text: `${prefix}⚽ ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+      };
     case 'yellow_card':
-      return { side: event.side, text: `${prefix}🟨 ${event.player}` };
+      return {
+        side: event.side,
+        text: `${prefix}🟨 ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+      };
     case 'red_card':
-      return { side: event.side, text: `${prefix}🟥 ${event.player}` };
+      return {
+        side: event.side,
+        text: `${prefix}🟥 ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+      };
     case 'substitution':
-      return { side: event.side, text: `${prefix}${event.playerOut} → ${event.playerIn}` };
+      return {
+        side: event.side,
+        text: `${prefix}${formatPlayerWithPosition(event.playerOut, event.playerOutPosition)} → ${formatPlayerWithPosition(event.playerIn, event.playerInPosition)}`,
+      };
     case 'foul':
-      return { side: event.side, text: `${prefix}Falta ${event.player}` };
+      return {
+        side: event.side,
+        text: `${prefix}Falta ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+      };
     case 'goal_disallowed':
       return {
         side: 'neutral',

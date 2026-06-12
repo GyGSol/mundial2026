@@ -484,14 +484,18 @@ export function goalCountsFromTimeline(timeline = []) {
   return { home, away };
 }
 
-/** @param {Array<{ type?: string, side?: string, player?: string, minute?: number | null }>} timeline */
+/** @param {Array<{ type?: string, side?: string, player?: string, playerPosition?: string | null, minute?: number | null }>} timeline */
 export function scorersFromTimeline(timeline = []) {
   const home = [];
   const away = [];
 
   for (const event of timeline) {
     if (event.type !== 'goal' || !event.player) continue;
-    const entry = { name: String(event.player).trim(), minute: event.minute ?? null };
+    const entry = {
+      name: String(event.player).trim(),
+      minute: event.minute ?? null,
+      position: event.playerPosition ?? null,
+    };
     if (event.side === 'home') home.push(entry);
     else if (event.side === 'away') away.push(entry);
   }
@@ -499,7 +503,7 @@ export function scorersFromTimeline(timeline = []) {
   return { home, away };
 }
 
-/** @param {Array<{ type?: string, side?: string, player?: string, minute?: number | null }>} timeline */
+/** @param {Array<{ type?: string, side?: string, player?: string, playerPosition?: string | null, minute?: number | null }>} timeline */
 export function bookingsFromTimeline(timeline = []) {
   const homeBookings = [];
   const awayBookings = [];
@@ -516,6 +520,7 @@ export function bookingsFromTimeline(timeline = []) {
       minute: event.minute ?? null,
       player: String(event.player).trim(),
       card,
+      position: event.playerPosition ?? null,
     };
 
     if (event.side === 'home') homeBookings.push(entry);
@@ -525,7 +530,7 @@ export function bookingsFromTimeline(timeline = []) {
   return { homeBookings, awayBookings };
 }
 
-/** @param {Array<{ type?: string, side?: string, playerIn?: string, playerOut?: string, minute?: number | null }>} timeline */
+/** @param {Array<{ type?: string, side?: string, playerIn?: string, playerOut?: string, playerInPosition?: string | null, playerOutPosition?: string | null, minute?: number | null }>} timeline */
 export function substitutionsFromTimeline(timeline = []) {
   const homeSubstitutions = [];
   const awaySubstitutions = [];
@@ -537,6 +542,8 @@ export function substitutionsFromTimeline(timeline = []) {
       minute: event.minute ?? null,
       playerOut: String(event.playerOut).trim(),
       playerIn: String(event.playerIn).trim(),
+      playerOutPosition: event.playerOutPosition ?? null,
+      playerInPosition: event.playerInPosition ?? null,
     };
 
     if (event.side === 'home') homeSubstitutions.push(entry);

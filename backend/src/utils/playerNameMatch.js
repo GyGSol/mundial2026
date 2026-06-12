@@ -26,3 +26,20 @@ export function canonicalPlayerName(name, rosterPlayers = []) {
   if (!trimmed) return trimmed;
   return matchNameToRosterPlayer(trimmed, rosterPlayers)?.fullName ?? trimmed;
 }
+
+export function rosterPositionForName(name, rosterPlayers = []) {
+  return matchNameToRosterPlayer(name, rosterPlayers)?.position ?? null;
+}
+
+export function enrichNameFromRoster(name, rosterPlayers = []) {
+  const trimmed = String(name ?? '').trim();
+  if (!trimmed) return { name: trimmed, position: null };
+
+  const matched = matchNameToRosterPlayer(trimmed, rosterPlayers);
+  if (!matched) return { name: trimmed, position: null };
+
+  return {
+    name: matched.fullName,
+    position: matched.position ?? null,
+  };
+}

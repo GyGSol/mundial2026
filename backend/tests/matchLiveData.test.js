@@ -242,8 +242,8 @@ describe('matchLiveData', () => {
 
       expect(live.homeScore).toBe(1);
       expect(live.awayScore).toBe(1);
-      expect(live.homeScorers).toEqual([{ name: 'Hwang Inbeom', minute: 67 }]);
-      expect(live.awayScorers).toEqual([{ name: 'Krejci', minute: 59 }]);
+      expect(live.homeScorers).toEqual([{ name: 'Hwang Inbeom', minute: 67, position: null }]);
+      expect(live.awayScorers).toEqual([{ name: 'Krejci', minute: 59, position: null }]);
       expect(live.timeElapsed).toBe("67'");
     });
   });
@@ -264,7 +264,7 @@ describe('matchLiveData', () => {
     it('arma goleadores con minuto', () => {
       expect(
         scorersFromTimeline([{ type: 'goal', side: 'away', player: 'Krejci', minute: 59 }]).away
-      ).toEqual([{ name: 'Krejci', minute: 59 }]);
+      ).toEqual([{ name: 'Krejci', minute: 59, position: null }]);
     });
   });
 
