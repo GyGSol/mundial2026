@@ -404,13 +404,17 @@ function MatchTimeline({ events = [] }) {
               className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3"
             >
               {entry.side === 'home' ? (
-                <span className="text-left">{entry.text}</span>
+                <div className="flex flex-col items-center text-center">
+                  <span>{entry.text}</span>
+                </div>
               ) : (
                 <span aria-hidden="true" />
               )}
               <span aria-hidden="true" />
               {entry.side === 'away' ? (
-                <span className="text-right">{entry.text}</span>
+                <div className="flex flex-col items-center text-center">
+                  <span>{entry.text}</span>
+                </div>
               ) : (
                 <span aria-hidden="true" />
               )}
