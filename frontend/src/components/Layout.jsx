@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils';
 
 const navClass = ({ isActive }) =>
   cn(
-    'shrink-0 whitespace-nowrap rounded-md px-2 py-1.5 transition-colors',
+    'game-nav-link shrink-0 whitespace-nowrap rounded-md px-2 py-1.5 transition-colors',
     isActive
-      ? 'bg-muted font-medium text-foreground'
+      ? 'game-nav-link--active bg-muted font-medium text-foreground max-md:bg-transparent'
       : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
   );
 
@@ -25,11 +25,11 @@ export default function Layout() {
   }, [location.pathname, refreshPendingApprovals]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <div className="game-shell game-mesh min-h-screen bg-background">
+      <header className="game-header sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
-            <Link to="/ranking" className="shrink-0 text-lg font-semibold tracking-tight">
+            <Link to="/ranking" className="game-brand shrink-0 text-lg font-semibold tracking-tight">
               Mundial 2026
             </Link>
 
@@ -47,13 +47,18 @@ export default function Layout() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="shrink-0"
+                className="game-btn-outline shrink-0"
                 onClick={() => setEditPlayerOpen(true)}
               >
                 Editar
               </Button>
               <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
-              <Button variant="outline" size="sm" className="shrink-0" onClick={() => logout()}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="game-btn-outline shrink-0"
+                onClick={() => logout()}
+              >
                 Salir
               </Button>
             </div>
