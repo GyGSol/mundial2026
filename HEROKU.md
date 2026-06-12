@@ -100,7 +100,7 @@ heroku run npm run mark-ai-user -w backend -a mundial2026-pred
 
 4. Verificar en logs (`AI prediction: ...`) ~90 min antes de un partido upcoming.
 
-Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `AI_GEMINI_MODEL` (default `gemini-2.5-flash`).
+Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `AI_GEMINI_MODEL` (default `gemini-2.5-flash`), `GROQ_API_KEY` (fallback si Gemini falla), `AI_GROQ_MODEL` (default `llama-3.3-70b-versatile`).
 
 ## Deploy de cambios futuros
 

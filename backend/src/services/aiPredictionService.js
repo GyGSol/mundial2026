@@ -15,6 +15,7 @@ import { notifyMatchesUpdated } from './websocketService.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const AI_REASONING_MAX_LEN = 500;
 
 /** Partido en ventana T-90 ± window si kickoff cae en [now+lead-window, now+lead+window]. */
@@ -205,7 +206,7 @@ export async function buildPromptContext(match, aiUserId) {
   };
 }
 
-function buildGeminiPrompt(context) {
+function buildAiPredictionPrompt(context) {
   return `Sos un analista de fútbol para el Mundial FIFA 2026. Predecí el marcador final del partido.
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown):
@@ -215,19 +216,87 @@ Contexto del partido:
 ${JSON.stringify(context, null, 2)}`;
 }
 
+function parseAiScoreResponse(text, source) {
+  const parsed = parseGeminiJsonResponse(text);
+  const homeGoals = clampGoals(parsed?.homeGoals);
+  const awayGoals = clampGoals(parsed?.awayGoals);
+
+  if (homeGoals === null || awayGoals === null) {
+    throw new Error(`${source} devolvió JSON inválido`);
+  }
+
+  return {
+    homeGoals,
+    awayGoals,
+    reasoning: String(parsed?.reasoning ?? '').slice(0, AI_REASONING_MAX_LEN),
+    source,
+  };
+}
+
 async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function callGroqForScore(context, { fetchImpl = fetch } = {}) {
+  const apiKey = env.groqApiKey;
+  if (!apiKey) {
+    return null;
+  }
+
+  const body = {
+    model: env.aiGroqModel,
+    messages: [{ role: 'user', content: buildAiPredictionPrompt(context) }],
+    temperature: 0.4,
+    response_format: { type: 'json_object' },
+  };
+
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetchImpl(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (response.status === 429 && attempt < 2) {
+        await sleep(1000 * (attempt + 1));
+        continue;
+      }
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        throw new Error(`Groq HTTP ${response.status}: ${errText.slice(0, 200)}`);
+      }
+
+      const data = await response.json();
+      const text = data?.choices?.[0]?.message?.content ?? '';
+      return parseAiScoreResponse(text, 'groq');
+    } catch (err) {
+      lastError = err;
+      if (attempt < 2) {
+        await sleep(800 * (attempt + 1));
+      }
+    }
+  }
+
+  console.warn('AI prediction Groq failed:', lastError?.message ?? lastError);
+  return null;
 }
 
 export async function callGeminiForScore(context, { fetchImpl = fetch } = {}) {
   const apiKey = env.googleAiApiKey;
   if (!apiKey) {
-    return computeHeuristicScore(context);
+    const groqScore = await callGroqForScore(context, { fetchImpl });
+    return groqScore ?? computeHeuristicScore(context);
   }
 
   const url = `${GEMINI_API_BASE}/${env.aiGeminiModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const body = {
-    contents: [{ parts: [{ text: buildGeminiPrompt(context) }] }],
+    contents: [{ parts: [{ text: buildAiPredictionPrompt(context) }] }],
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.4,
@@ -256,20 +325,7 @@ export async function callGeminiForScore(context, { fetchImpl = fetch } = {}) {
       const data = await response.json();
       const text =
         data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? '';
-      const parsed = parseGeminiJsonResponse(text);
-      const homeGoals = clampGoals(parsed?.homeGoals);
-      const awayGoals = clampGoals(parsed?.awayGoals);
-
-      if (homeGoals === null || awayGoals === null) {
-        throw new Error('Gemini devolvió JSON inválido');
-      }
-
-      return {
-        homeGoals,
-        awayGoals,
-        reasoning: String(parsed?.reasoning ?? '').slice(0, AI_REASONING_MAX_LEN),
-        source: 'gemini',
-      };
+      return parseAiScoreResponse(text, 'gemini');
     } catch (err) {
       lastError = err;
       if (attempt < 2) {
@@ -278,8 +334,17 @@ export async function callGeminiForScore(context, { fetchImpl = fetch } = {}) {
     }
   }
 
-  console.warn('AI prediction Gemini fallback:', lastError?.message ?? lastError);
+  console.warn('AI prediction Gemini failed, trying Groq:', lastError?.message ?? lastError);
+  const groqScore = await callGroqForScore(context, { fetchImpl });
+  if (groqScore) return groqScore;
+
   return computeHeuristicScore(context);
+}
+
+function aiModelForScoreSource(source) {
+  if (source === 'gemini') return env.aiGeminiModel;
+  if (source === 'groq') return env.aiGroqModel;
+  return 'heuristic';
 }
 
 export async function submitAiPrediction(userId, matchId, { homeGoals, awayGoals, aiModel, aiReasoning }) {
@@ -361,7 +426,7 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
       await submitAiPrediction(aiUser._id, match._id, {
         homeGoals: score.homeGoals,
         awayGoals: score.awayGoals,
-        aiModel: score.source === 'gemini' ? env.aiGeminiModel : 'heuristic',
+        aiModel: aiModelForScoreSource(score.source),
         aiReasoning: score.reasoning,
       });
 

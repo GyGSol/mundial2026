@@ -112,6 +112,12 @@ describe('aiPredictionService', () => {
   });
 
   describe('callGeminiForScore', () => {
+    const context = {
+      homeTeam: { name: 'MEX', code: 'MEX', group: 'A' },
+      awayTeam: { name: 'RSA', code: 'RSA', group: 'A' },
+      groupStandings: [],
+    };
+
     it('parsea respuesta Gemini mockeada', async () => {
       const previousKey = env.googleAiApiKey;
       env.googleAiApiKey = 'test-key';
@@ -129,14 +135,7 @@ describe('aiPredictionService', () => {
         }),
       });
 
-      const result = await callGeminiForScore(
-        {
-          homeTeam: { name: 'MEX', code: 'MEX', group: 'A' },
-          awayTeam: { name: 'RSA', code: 'RSA', group: 'A' },
-          groupStandings: [],
-        },
-        { fetchImpl: mockFetch }
-      );
+      const result = await callGeminiForScore(context, { fetchImpl: mockFetch });
 
       expect(result).toEqual({
         homeGoals: 2,
@@ -146,6 +145,56 @@ describe('aiPredictionService', () => {
       });
       expect(mockFetch).toHaveBeenCalledOnce();
       env.googleAiApiKey = previousKey;
+    });
+
+    it('usa Groq si Gemini falla', async () => {
+      const previousGeminiKey = env.googleAiApiKey;
+      const previousGroqKey = env.groqApiKey;
+      env.googleAiApiKey = 'test-key';
+      env.groqApiKey = 'groq-test-key';
+
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          text: async () => 'server error',
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          text: async () => 'server error',
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          text: async () => 'server error',
+        })
+        .mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            choices: [
+              {
+                message: {
+                  content: '{"homeGoals":1,"awayGoals":0,"reasoning":"Groq backup"}',
+                },
+              },
+            ],
+          }),
+        });
+
+      const result = await callGeminiForScore(context, { fetchImpl: mockFetch });
+
+      expect(result).toEqual({
+        homeGoals: 1,
+        awayGoals: 0,
+        reasoning: 'Groq backup',
+        source: 'groq',
+      });
+      expect(mockFetch.mock.calls.some(([url]) => String(url).includes('groq.com'))).toBe(true);
+
+      env.googleAiApiKey = previousGeminiKey;
+      env.groqApiKey = previousGroqKey;
     });
   });
 });
