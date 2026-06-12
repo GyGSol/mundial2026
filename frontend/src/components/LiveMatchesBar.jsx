@@ -1,8 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
 import { filterTimelineForDisplay } from '@/lib/matchTimelineDisplay.js';
 import { Badge } from '@/components/ui/badge.jsx';
-import { Card, CardContent } from '@/components/ui/card.jsx';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
 import {
@@ -12,6 +19,7 @@ import {
 } from '@/lib/matchSummary';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
+import { Button } from '@/components/ui/button.jsx';
 
 function normalizeScorerEntry(entry) {
   if (typeof entry === 'string') {
@@ -409,7 +417,59 @@ function FinishedMatchCard({ match }) {
   return <TimelineMatchCard match={match} variant="finished" />;
 }
 
+function PredictionClosedDialog({ match, open, onOpenChange }) {
+  const dialogRef = useRef(null);
+  const homeName = match.homeTeam?.nameEn || 'Local';
+  const awayName = match.awayTeam?.nameEn || 'Visitante';
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    else if (!open && dialog.open) dialog.close();
+  }, [open]);
+
+  const handleClose = () => onOpenChange(false);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="max-h-[90vh] w-[min(100%,28rem)] overflow-y-auto rounded-lg border border-border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/40"
+      onClose={handleClose}
+      onCancel={handleClose}
+    >
+      <Card className="border-0 shadow-none">
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <CardTitle className="text-lg">Predicción cerrada</CardTitle>
+            <CardDescription>
+              {homeName} vs {awayName}
+              {match.group ? ` · Grupo ${match.group}` : ''}
+            </CardDescription>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={handleClose}>
+            Cerrar
+          </Button>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 pt-0 text-sm text-muted-foreground">
+          <p>
+            Las predicciones para este partido ya cerraron. Cierran 1 hora antes del comienzo del
+            partido.
+          </p>
+          {match.kickoffAt ? (
+            <p className="text-foreground">
+              Kickoff: <span className="font-medium">{formatMatchDate(match)}</span>
+            </p>
+          ) : null}
+        </CardContent>
+      </Card>
+    </dialog>
+  );
+}
+
 function NextMatchCard({ match }) {
+  const navigate = useNavigate();
+  const [closedDialogOpen, setClosedDialogOpen] = useState(false);
   const homeName = match.homeTeam?.nameEn || 'Local';
   const awayName = match.awayTeam?.nameEn || 'Visitante';
   const homeFlag = getTeamFlag(match.homeTeam);
@@ -417,39 +477,70 @@ function NextMatchCard({ match }) {
   const isArgentina = matchInvolvesArgentina(match);
   const predictionsOpen = match.predictionOpen !== false;
 
+  const handleActivate = () => {
+    if (predictionsOpen) {
+      navigate(`/predictions?match=${encodeURIComponent(match.id)}`);
+      return;
+    }
+    setClosedDialogOpen(true);
+  };
+
   return (
-    <Card className={liveCardClassName(isArgentina)}>
-      <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
-        {predictionsOpen ? (
-          <Badge variant="outline" className="border-sky-300/70 bg-sky-50 text-sky-900">
-            Predicciones abiertas
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="border-amber-300/70 bg-amber-50 text-amber-900">
-            Predicciones cerradas
-          </Badge>
+    <>
+      <Card
+        role="button"
+        tabIndex={0}
+        onClick={handleActivate}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleActivate();
+          }
+        }}
+        title={predictionsOpen ? 'Ir a predicciones' : 'Ver detalle de cierre'}
+        className={cn(
+          liveCardClassName(isArgentina),
+          'cursor-pointer transition-shadow hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
         )}
+      >
+        <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
+          {predictionsOpen ? (
+            <Badge variant="outline" className="border-sky-300/70 bg-sky-50 text-sky-900">
+              Predicciones abiertas
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="border-amber-300/70 bg-amber-50 text-amber-900">
+              Predicciones cerradas
+            </Badge>
+          )}
 
-        <MatchTeamsLayout
-          homeName={homeName}
-          awayName={awayName}
-          homeFlag={homeFlag}
-          awayFlag={awayFlag}
-          center={<span className="text-lg font-semibold text-muted-foreground">vs</span>}
-        />
+          <MatchTeamsLayout
+            homeName={homeName}
+            awayName={awayName}
+            homeFlag={homeFlag}
+            awayFlag={awayFlag}
+            center={<span className="text-lg font-semibold text-muted-foreground">vs</span>}
+          />
 
-        <KickoffCountdown
-          kickoffAt={match.kickoffAt}
-          className="text-sm font-medium text-foreground"
-        />
+          <KickoffCountdown
+            kickoffAt={match.kickoffAt}
+            className="text-sm font-medium text-foreground"
+          />
 
-        <span className="text-[11px] text-muted-foreground">
-          {match.group ? `Grupo ${match.group} · ` : ''}
-          {formatMatchDate(match)}
-        </span>
-        <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
-      </CardContent>
-    </Card>
+          <span className="text-[11px] text-muted-foreground">
+            {match.group ? `Grupo ${match.group} · ` : ''}
+            {formatMatchDate(match)}
+          </span>
+          <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
+        </CardContent>
+      </Card>
+
+      <PredictionClosedDialog
+        match={match}
+        open={closedDialogOpen}
+        onOpenChange={setClosedDialogOpen}
+      />
+    </>
   );
 }
 
