@@ -18,6 +18,8 @@ import { GROUP_LETTERS, organizeTeamsByGroup } from './simulationTournamentServi
 import {
   recalculateMatchScores,
   recalculateAllLiveMatches,
+  clearMatchScores,
+  clearStaleUpcomingMatchScores,
 } from './matchScoringService.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import { env } from '../config/env.js';
@@ -177,6 +179,7 @@ async function upsertMatches() {
   const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
   const scoringIds = [];
   const newlyFinishedIds = [];
+  const clearedScoreIds = [];
   const stadiumTimezones = await buildStadiumTimezoneMap();
 
   for (const item of list) {
@@ -187,6 +190,7 @@ async function upsertMatches() {
     const existing = await Match.findOne({ externalId: doc.externalId });
     const merged = mergeSyncedMatch(existing, doc);
     const wasFinished = existing?.status === 'finished';
+    const wasLive = existing?.status === 'live';
     const match = await Match.findOneAndUpdate(
       { externalId: doc.externalId },
       { $set: { ...merged, lastSyncedAt: new Date() } },
@@ -200,6 +204,10 @@ async function upsertMatches() {
       newlyFinishedIds.push(match._id);
     }
 
+    if ((wasFinished || wasLive) && match.status === 'upcoming') {
+      clearedScoreIds.push(match._id);
+    }
+
     if (match.status === 'finished' && (!wasFinished || scoreChanged)) {
       scoringIds.push(match._id);
     } else if (match.status === 'live' && (becameLive || scoreChanged)) {
@@ -207,7 +215,7 @@ async function upsertMatches() {
     }
   }
 
-  return { count: list.length, scoringIds, newlyFinishedIds };
+  return { count: list.length, scoringIds, newlyFinishedIds, clearedScoreIds };
 }
 
 function needsRescore(before, after) {
@@ -219,7 +227,7 @@ function needsRescore(before, after) {
   );
 }
 
-export { recalculateMatchScores, recalculateAllLiveMatches } from './matchScoringService.js';
+export { recalculateMatchScores, recalculateAllLiveMatches, clearMatchScores, clearStaleUpcomingMatchScores } from './matchScoringService.js';
 
 export async function seedDemoDataIfEmpty() {
   const count = await Match.countDocuments();
@@ -291,7 +299,13 @@ export async function runSync({ includeMetadata = true } = {}) {
       stadiumsCount = await upsertStadiums();
     }
 
-    const { count, scoringIds, newlyFinishedIds } = await upsertMatches();
+    const { count, scoringIds, newlyFinishedIds, clearedScoreIds } = await upsertMatches();
+
+    for (const matchId of clearedScoreIds) {
+      await clearMatchScores(matchId);
+    }
+
+    await clearStaleUpcomingMatchScores();
 
     for (const matchId of scoringIds) {
       await recalculateMatchScores(matchId);

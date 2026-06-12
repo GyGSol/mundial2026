@@ -19,7 +19,7 @@ import {
   removeGroupMember,
   updateCompetitionGroup,
 } from './competitionGroupService.js';
-import { recalculateMatchScores } from './syncService.js';
+import { recalculateMatchScores, clearMatchScores } from './syncService.js';
 import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { revokeAllUserSessions } from './sessionService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
@@ -539,6 +539,8 @@ export async function updateAdminMatch(matchId, { homeScore, awayScore, status, 
 
   if (match.status === 'finished' || match.status === 'live') {
     await recalculateMatchScores(match._id);
+  } else if (match.status === 'upcoming') {
+    await clearMatchScores(match._id);
   }
 
   return serializeMatch(match);
