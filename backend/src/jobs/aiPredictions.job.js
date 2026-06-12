@@ -6,7 +6,12 @@ let running = false;
 
 async function tick() {
   if (running) return;
-  if (!env.aiPredictionsEnabled || (!env.googleAiApiKey && !env.groqApiKey)) return;
+  if (
+    !env.aiPredictionsEnabled ||
+    (!env.cerebrasApiKey && !env.googleAiApiKey && !env.groqApiKey)
+  ) {
+    return;
+  }
 
   running = true;
   try {
@@ -29,8 +34,10 @@ export function startAiPredictionsJob() {
     console.log('AI predictions job disabled (AI_PREDICTIONS_ENABLED=false)');
     return;
   }
-  if (!env.googleAiApiKey && !env.groqApiKey) {
-    console.log('AI predictions job disabled (GOOGLE_AI_API_KEY and GROQ_API_KEY not set)');
+  if (!env.cerebrasApiKey && !env.googleAiApiKey && !env.groqApiKey) {
+    console.log(
+      'AI predictions job disabled (CEREBRAS_API_KEY, GOOGLE_AI_API_KEY and GROQ_API_KEY not set)'
+    );
     return;
   }
 

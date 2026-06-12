@@ -4,6 +4,7 @@ import {
   parseGeminiJsonResponse,
   clampGoals,
   computeHeuristicScore,
+  callAiForScore,
   callGeminiForScore,
   callAiForText,
   hasAiProvider,
@@ -114,15 +115,51 @@ describe('aiPredictionService', () => {
     });
   });
 
-  describe('callGeminiForScore', () => {
+  describe('callAiForScore', () => {
     const context = {
       homeTeam: { name: 'MEX', code: 'MEX', group: 'A' },
       awayTeam: { name: 'RSA', code: 'RSA', group: 'A' },
       groupStandings: [],
     };
 
+    it('usa Cerebras como proveedor principal', async () => {
+      const previousCerebrasKey = env.cerebrasApiKey;
+      const previousGeminiKey = env.googleAiApiKey;
+      env.cerebrasApiKey = 'cerebras-test-key';
+      env.googleAiApiKey = 'test-key';
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: '{"homeGoals":3,"awayGoals":1,"reasoning":"Cerebras favorito local"}',
+              },
+            },
+          ],
+        }),
+      });
+
+      const result = await callAiForScore(context, { fetchImpl: mockFetch });
+
+      expect(result).toEqual({
+        homeGoals: 3,
+        awayGoals: 1,
+        reasoning: 'Cerebras favorito local',
+        source: 'cerebras',
+      });
+      expect(mockFetch).toHaveBeenCalledOnce();
+      expect(String(mockFetch.mock.calls[0][0])).toContain('cerebras.ai');
+
+      env.cerebrasApiKey = previousCerebrasKey;
+      env.googleAiApiKey = previousGeminiKey;
+    });
+
     it('parsea respuesta Gemini mockeada', async () => {
+      const previousCerebrasKey = env.cerebrasApiKey;
       const previousKey = env.googleAiApiKey;
+      env.cerebrasApiKey = '';
       env.googleAiApiKey = 'test-key';
 
       const mockFetch = vi.fn().mockResolvedValue({
@@ -138,7 +175,7 @@ describe('aiPredictionService', () => {
         }),
       });
 
-      const result = await callGeminiForScore(context, { fetchImpl: mockFetch });
+      const result = await callAiForScore(context, { fetchImpl: mockFetch });
 
       expect(result).toEqual({
         homeGoals: 2,
@@ -147,12 +184,15 @@ describe('aiPredictionService', () => {
         source: 'gemini',
       });
       expect(mockFetch).toHaveBeenCalledOnce();
+      env.cerebrasApiKey = previousCerebrasKey;
       env.googleAiApiKey = previousKey;
     });
 
     it('usa Groq si Gemini falla', async () => {
+      const previousCerebrasKey = env.cerebrasApiKey;
       const previousGeminiKey = env.googleAiApiKey;
       const previousGroqKey = env.groqApiKey;
+      env.cerebrasApiKey = '';
       env.googleAiApiKey = 'test-key';
       env.groqApiKey = 'groq-test-key';
 
@@ -186,7 +226,7 @@ describe('aiPredictionService', () => {
           }),
         });
 
-      const result = await callGeminiForScore(context, { fetchImpl: mockFetch });
+      const result = await callAiForScore(context, { fetchImpl: mockFetch });
 
       expect(result).toEqual({
         homeGoals: 1,
@@ -196,29 +236,42 @@ describe('aiPredictionService', () => {
       });
       expect(mockFetch.mock.calls.some(([url]) => String(url).includes('groq.com'))).toBe(true);
 
+      env.cerebrasApiKey = previousCerebrasKey;
       env.googleAiApiKey = previousGeminiKey;
       env.groqApiKey = previousGroqKey;
+    });
+
+    it('callGeminiForScore es alias de callAiForScore', () => {
+      expect(callGeminiForScore).toBe(callAiForScore);
     });
   });
 
   describe('hasAiProvider', () => {
-    it('es true si hay Gemini o Groq', () => {
+    it('es true si hay Cerebras, Gemini o Groq', () => {
+      const prevCerebras = env.cerebrasApiKey;
       const prevGemini = env.googleAiApiKey;
       const prevGroq = env.groqApiKey;
+      env.cerebrasApiKey = '';
       env.googleAiApiKey = '';
       env.groqApiKey = '';
       expect(hasAiProvider()).toBe(false);
+      env.cerebrasApiKey = 'x';
+      expect(hasAiProvider()).toBe(true);
+      env.cerebrasApiKey = '';
       env.groqApiKey = 'x';
       expect(hasAiProvider()).toBe(true);
+      env.cerebrasApiKey = prevCerebras;
       env.googleAiApiKey = prevGemini;
       env.groqApiKey = prevGroq;
     });
   });
 
   describe('callAiForText', () => {
-    it('devuelve texto desde Groq mockeado', async () => {
+    it('devuelve texto desde Cerebras mockeado', async () => {
+      const previousCerebrasKey = env.cerebrasApiKey;
       const previousGroqKey = env.groqApiKey;
       const previousGeminiKey = env.googleAiApiKey;
+      env.cerebrasApiKey = 'cerebras-test-key';
       env.googleAiApiKey = '';
       env.groqApiKey = 'groq-test-key';
 
@@ -232,9 +285,10 @@ describe('aiPredictionService', () => {
       const result = await callAiForText('pregunta', { fetchImpl: mockFetch });
       expect(result).toEqual({
         text: 'Por la baja del 9 titular.',
-        source: 'groq',
+        source: 'cerebras',
       });
 
+      env.cerebrasApiKey = previousCerebrasKey;
       env.googleAiApiKey = previousGeminiKey;
       env.groqApiKey = previousGroqKey;
     });

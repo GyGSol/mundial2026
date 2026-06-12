@@ -15,6 +15,7 @@ import { notifyMatchesUpdated } from './websocketService.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const AI_REASONING_MAX_LEN = 500;
 const AI_FOLLOWUP_MAX_LEN = 1200;
@@ -239,23 +240,21 @@ async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function callGroqForScore(context, { fetchImpl = fetch } = {}) {
-  const apiKey = env.groqApiKey;
-  if (!apiKey) {
-    return null;
-  }
+async function callOpenAiChatCompletions(
+  { apiKey, url, model, messages, temperature = 0.4, responseFormat, providerLabel },
+  { fetchImpl = fetch } = {}
+) {
+  if (!apiKey) return null;
 
-  const body = {
-    model: env.aiGroqModel,
-    messages: [{ role: 'user', content: buildAiPredictionPrompt(context) }],
-    temperature: 0.4,
-    response_format: { type: 'json_object' },
-  };
+  const body = { model, messages, temperature };
+  if (responseFormat) {
+    body.response_format = responseFormat;
+  }
 
   let lastError = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      const response = await fetchImpl(GROQ_API_URL, {
+      const response = await fetchImpl(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -271,12 +270,11 @@ export async function callGroqForScore(context, { fetchImpl = fetch } = {}) {
 
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
-        throw new Error(`Groq HTTP ${response.status}: ${errText.slice(0, 200)}`);
+        throw new Error(`${providerLabel} HTTP ${response.status}: ${errText.slice(0, 200)}`);
       }
 
       const data = await response.json();
-      const text = data?.choices?.[0]?.message?.content ?? '';
-      return parseAiScoreResponse(text, 'groq');
+      return String(data?.choices?.[0]?.message?.content ?? '').trim();
     } catch (err) {
       lastError = err;
       if (attempt < 2) {
@@ -285,16 +283,58 @@ export async function callGroqForScore(context, { fetchImpl = fetch } = {}) {
     }
   }
 
-  console.warn('AI prediction Groq failed:', lastError?.message ?? lastError);
+  console.warn(`AI prediction ${providerLabel} failed:`, lastError?.message ?? lastError);
   return null;
 }
 
-export async function callGeminiForScore(context, { fetchImpl = fetch } = {}) {
+async function callOpenAiProviderForScore(context, { apiKey, url, model, source, providerLabel }, options) {
+  const text = await callOpenAiChatCompletions(
+    {
+      apiKey,
+      url,
+      model,
+      messages: [{ role: 'user', content: buildAiPredictionPrompt(context) }],
+      temperature: 0.4,
+      responseFormat: { type: 'json_object' },
+      providerLabel,
+    },
+    options
+  );
+  if (!text) return null;
+  return parseAiScoreResponse(text, source);
+}
+
+export async function callCerebrasForScore(context, options = {}) {
+  return callOpenAiProviderForScore(
+    context,
+    {
+      apiKey: env.cerebrasApiKey,
+      url: CEREBRAS_API_URL,
+      model: env.aiCerebrasModel,
+      source: 'cerebras',
+      providerLabel: 'Cerebras',
+    },
+    options
+  );
+}
+
+export async function callGroqForScore(context, options = {}) {
+  return callOpenAiProviderForScore(
+    context,
+    {
+      apiKey: env.groqApiKey,
+      url: GROQ_API_URL,
+      model: env.aiGroqModel,
+      source: 'groq',
+      providerLabel: 'Groq',
+    },
+    options
+  );
+}
+
+async function callGeminiProviderForScore(context, { fetchImpl = fetch } = {}) {
   const apiKey = env.googleAiApiKey;
-  if (!apiKey) {
-    const groqScore = await callGroqForScore(context, { fetchImpl });
-    return groqScore ?? computeHeuristicScore(context);
-  }
+  if (!apiKey) return null;
 
   const url = `${GEMINI_API_BASE}/${env.aiGeminiModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const body = {
@@ -336,21 +376,35 @@ export async function callGeminiForScore(context, { fetchImpl = fetch } = {}) {
     }
   }
 
-  console.warn('AI prediction Gemini failed, trying Groq:', lastError?.message ?? lastError);
+  console.warn('AI prediction Gemini failed:', lastError?.message ?? lastError);
+  return null;
+}
+
+export async function callAiForScore(context, { fetchImpl = fetch } = {}) {
+  const cerebrasScore = await callCerebrasForScore(context, { fetchImpl });
+  if (cerebrasScore) return cerebrasScore;
+
+  const geminiScore = await callGeminiProviderForScore(context, { fetchImpl });
+  if (geminiScore) return geminiScore;
+
   const groqScore = await callGroqForScore(context, { fetchImpl });
   if (groqScore) return groqScore;
 
   return computeHeuristicScore(context);
 }
 
+/** @deprecated Usar callAiForScore */
+export const callGeminiForScore = callAiForScore;
+
 function aiModelForScoreSource(source) {
+  if (source === 'cerebras') return env.aiCerebrasModel;
   if (source === 'gemini') return env.aiGeminiModel;
   if (source === 'groq') return env.aiGroqModel;
   return 'heuristic';
 }
 
 export function hasAiProvider() {
-  return Boolean(env.googleAiApiKey || env.groqApiKey);
+  return Boolean(env.cerebrasApiKey || env.googleAiApiKey || env.groqApiKey);
 }
 
 function normalizeFollowUpHistory(history) {
@@ -385,34 +439,56 @@ Pregunta del usuario: ${question}
 Respondé en español, de forma clara y breve (máximo 3 párrafos cortos). No cambies el marcador salvo que te lo pidan explícitamente.`;
 }
 
-async function callGroqForText(prompt, { fetchImpl = fetch } = {}) {
-  const apiKey = env.groqApiKey;
-  if (!apiKey) return null;
-
-  const body = {
-    model: env.aiGroqModel,
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.5,
-  };
-
-  const response = await fetchImpl(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+async function callOpenAiProviderForText(
+  prompt,
+  { apiKey, url, model, source, providerLabel },
+  { fetchImpl = fetch } = {}
+) {
+  const text = await callOpenAiChatCompletions(
+    {
+      apiKey,
+      url,
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.5,
+      providerLabel,
     },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error(`Groq HTTP ${response.status}: ${errText.slice(0, 200)}`);
+    { fetchImpl }
+  );
+  if (!text) {
+    throw new Error(`${providerLabel} devolvió respuesta vacía`);
   }
+  return { text: text.slice(0, AI_FOLLOWUP_MAX_LEN), source };
+}
 
-  const data = await response.json();
-  const text = String(data?.choices?.[0]?.message?.content ?? '').trim();
-  if (!text) throw new Error('Groq devolvió respuesta vacía');
-  return { text: text.slice(0, AI_FOLLOWUP_MAX_LEN), source: 'groq' };
+async function callCerebrasForText(prompt, options = {}) {
+  if (!env.cerebrasApiKey) return null;
+  return callOpenAiProviderForText(
+    prompt,
+    {
+      apiKey: env.cerebrasApiKey,
+      url: CEREBRAS_API_URL,
+      model: env.aiCerebrasModel,
+      source: 'cerebras',
+      providerLabel: 'Cerebras',
+    },
+    options
+  );
+}
+
+async function callGroqForText(prompt, options = {}) {
+  if (!env.groqApiKey) return null;
+  return callOpenAiProviderForText(
+    prompt,
+    {
+      apiKey: env.groqApiKey,
+      url: GROQ_API_URL,
+      model: env.aiGroqModel,
+      source: 'groq',
+      providerLabel: 'Groq',
+    },
+    options
+  );
 }
 
 async function callGeminiForText(prompt, { fetchImpl = fetch } = {}) {
@@ -443,6 +519,15 @@ async function callGeminiForText(prompt, { fetchImpl = fetch } = {}) {
 }
 
 export async function callAiForText(prompt, { fetchImpl = fetch } = {}) {
+  if (env.cerebrasApiKey) {
+    try {
+      const cerebras = await callCerebrasForText(prompt, { fetchImpl });
+      if (cerebras) return cerebras;
+    } catch (err) {
+      console.warn('AI follow-up Cerebras failed, trying fallbacks:', err.message);
+    }
+  }
+
   if (env.googleAiApiKey) {
     try {
       const gemini = await callGeminiForText(prompt, { fetchImpl });
@@ -487,7 +572,7 @@ export async function getMatchAiInsightForUser(matchId, userId, { fetchImpl = fe
   }
 
   const context = await buildPromptContext(match, userId);
-  const score = await callGeminiForScore(context, { fetchImpl });
+  const score = await callAiForScore(context, { fetchImpl });
   return formatMatchAiInsight(score);
 }
 
@@ -558,7 +643,7 @@ export async function submitAiPrediction(userId, matchId, { homeGoals, awayGoals
       pointsEarned: null,
       pointsBreakdown: null,
       predictionSource: 'ai',
-      aiModel: aiModel ?? env.aiGeminiModel,
+      aiModel: aiModel ?? env.aiCerebrasModel,
       aiReasoning: aiReasoning?.slice(0, AI_REASONING_MAX_LEN) ?? null,
     },
     { upsert: true, new: true }
@@ -615,7 +700,7 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
   for (const match of dueMatches) {
     try {
       const context = await buildPromptContext(match, aiUser._id);
-      const score = await callGeminiForScore(context, { fetchImpl });
+      const score = await callAiForScore(context, { fetchImpl });
       await submitAiPrediction(aiUser._id, match._id, {
         homeGoals: score.homeGoals,
         awayGoals: score.awayGoals,
