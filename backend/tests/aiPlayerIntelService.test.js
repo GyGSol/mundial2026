@@ -29,7 +29,7 @@ describe('aiPlayerIntelService', () => {
         suspensionInfo: '',
         isStarter: true,
         source: 'cerebras',
-        model: 'llama-3.3-70b',
+        model: 'gpt-oss-120b',
         fetchedAt: new Date(),
         aiSummary: 'Duda para el debut',
         notes: '',

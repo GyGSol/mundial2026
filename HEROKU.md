@@ -100,7 +100,7 @@ heroku run npm run mark-ai-user -w backend -a mundial2026-pred
 
 4. Verificar en logs (`AI prediction: ...`) ~90 min antes de un partido upcoming.
 
-Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `CEREBRAS_API_KEY` (proveedor principal), `AI_CEREBRAS_MODEL` (default `llama-3.3-70b`), `GOOGLE_AI_API_KEY` / `GROQ_API_KEY` (fallback), `AI_GEMINI_MODEL`, `AI_GROQ_MODEL`.
+Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `CEREBRAS_API_KEY` (proveedor principal), `AI_CEREBRAS_MODEL` (default `gpt-oss-120b`), `GOOGLE_AI_API_KEY` / `GROQ_API_KEY` (fallback), `AI_GEMINI_MODEL`, `AI_GROQ_MODEL`.
 
 ## Deploy de cambios futuros
 

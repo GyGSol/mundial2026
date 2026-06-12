@@ -4,6 +4,7 @@ import { Team } from '../models/Team.js';
 import { canonicalPlayerName, matchNameToRosterPlayer, normalizeName } from '../utils/playerNameMatch.js';
 import {
   buildTimelineFromLegacy,
+  enrichMatchLiveFields,
   goalCountsFromTimeline,
   readStoredMatchEvents,
   timelineHash,
@@ -212,13 +213,15 @@ Para sustituciones usá playerIn y playerOut. Para goles/tarjetas/faltas usá pl
 }
 
 async function recoverMissingWithAi(missingItems, homeCode, awayCode, homePlayers, awayPlayers) {
-  if (!missingItems.length || !hasAiProvider()) return [];
+  if (!missingItems.length || !hasAiProvider()) {
+    return { recovered: [], prompt: null, rawResponse: null, source: null };
+  }
+
+  const prompt = buildMissingEventsPrompt(missingItems, homeCode, awayCode);
 
   try {
-    const { data } = await callAiForJson(
-      buildMissingEventsPrompt(missingItems, homeCode, awayCode)
-    );
-    const rows = Array.isArray(data?.events) ? data.events : [];
+    const result = await callAiForJson(prompt);
+    const rows = Array.isArray(result?.data?.events) ? result.data.events : [];
     const recovered = [];
 
     for (const row of rows) {
@@ -231,9 +234,19 @@ async function recoverMissingWithAi(missingItems, homeCode, awayCode, homePlayer
       if (entry) recovered.push(entry);
     }
 
-    return recovered;
-  } catch {
-    return [];
+    return {
+      recovered,
+      prompt,
+      rawResponse: result?.data ?? null,
+      source: result?.source ?? null,
+    };
+  } catch (err) {
+    return {
+      recovered: [],
+      prompt,
+      rawResponse: { error: err.message },
+      source: null,
+    };
   }
 }
 
@@ -324,14 +337,14 @@ export async function assistMatchEvents(match, { homeTeam, awayTeam, homePlayers
     }
 
     if (stillMissing.length > 0) {
-      const aiRecovered = await recoverMissingWithAi(
+      const aiResult = await recoverMissingWithAi(
         stillMissing,
         homeTeam?.fifaCode ?? 'LOC',
         awayTeam?.fifaCode ?? 'VIS',
         homePlayers,
         awayPlayers
       );
-      recovered.push(...aiRecovered);
+      recovered.push(...aiResult.recovered);
     }
 
     const merged = mergeTimelineEntries(assistedTimeline, recovered);
@@ -417,4 +430,211 @@ export async function assistLiveMatchEvents({ matchIds = [] } = {}) {
   }
 
   return { matches: matches.length, updated, skipped };
+}
+
+/**
+ * Diagnóstico: qué datos tiene el partido y qué devolvería la IA (sin persistir).
+ */
+export async function probeLiveEventAssist(
+  match,
+  { homeTeam, awayTeam, homePlayers, awayPlayers } = {},
+  { invokeAi = true } = {}
+) {
+  const raw = match.raw ?? {};
+  const fifaEvents = raw.fifaEvents ?? {};
+  const rawEvents = Array.isArray(fifaEvents.rawEvents) ? fifaEvents.rawEvents : [];
+  const parsedTimeline = Array.isArray(fifaEvents.timeline) ? fifaEvents.timeline : [];
+
+  let baseTimeline = parsedTimeline.length > 0 ? [...parsedTimeline] : [];
+  if (baseTimeline.length === 0) {
+    const storedEvents = readStoredMatchEvents(raw);
+    baseTimeline = buildTimelineFromLegacy(raw, storedEvents);
+  }
+
+  const payloadBefore = enrichMatchLiveFields(match);
+  const inputHash = computeAssistInputHash(
+    rawEvents,
+    parsedTimeline.length > 0 ? parsedTimeline : baseTimeline
+  );
+
+  const report = {
+    matchId: String(match._id),
+    externalId: match.externalId,
+    status: match.status,
+    aiAvailable: hasAiProvider(),
+    assistCacheFresh: Boolean(
+      fifaEvents.assistHash === inputHash && isAssistFresh(fifaEvents.assistedAt, match.status)
+    ),
+    sources: {
+      rawFifaEvents: rawEvents.length,
+      parsedTimelineEvents: parsedTimeline.length,
+      legacyOrMergedTimelineEvents: baseTimeline.length,
+      hasFifaMeta: Boolean(raw.fifaMeta?.syncedAt),
+      fdEventsStored: Boolean(raw.fdEvents),
+    },
+    apiPayloadBefore: {
+      homeScore: payloadBefore.homeScore,
+      awayScore: payloadBefore.awayScore,
+      timeElapsed: payloadBefore.timeElapsed,
+      timelineEvents: payloadBefore.matchTimeline?.length ?? 0,
+      timeline: payloadBefore.matchTimeline ?? [],
+      homeScorers: payloadBefore.homeScorers,
+      awayScorers: payloadBefore.awayScorers,
+      homeBookings: payloadBefore.homeBookings,
+      awayBookings: payloadBefore.awayBookings,
+      homeSubstitutions: payloadBefore.homeSubstitutions,
+      awaySubstitutions: payloadBefore.awaySubstitutions,
+      fifaReportStats: payloadBefore.fifaReportStats,
+    },
+    assistPlan: {
+      inputHash,
+      missingFromParser: [],
+      recoveredHeuristic: [],
+      ai: null,
+      validationPassed: null,
+      wouldAddEvents: 0,
+    },
+    apiPayloadAfter: null,
+  };
+
+  if (baseTimeline.length === 0) {
+    report.assistPlan.reason = 'empty_timeline';
+    return report;
+  }
+
+  const originalTimeline = baseTimeline.map((event) => ({ ...event }));
+  let assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homePlayers, awayPlayers);
+
+  if (rawEvents.length > 0 && raw.fifaMeta?.homeTeamId && raw.fifaMeta?.awayTeamId) {
+    const missing = findMissingRawEvents(
+      rawEvents,
+      originalTimeline,
+      raw.fifaMeta.homeTeamId,
+      raw.fifaMeta.awayTeamId
+    );
+
+    report.assistPlan.missingFromParser = missing.map((item) => ({
+      index: item.index,
+      minute: item.rawEvent.MatchMinute,
+      type: item.entry.type,
+      side: item.entry.side,
+      description: item.description,
+      partialEntry: {
+        player: item.entry.player,
+        playerIn: item.entry.playerIn,
+        playerOut: item.entry.playerOut,
+      },
+    }));
+
+    const recovered = [];
+    const stillMissing = [];
+
+    for (const missingItem of missing) {
+      const roster = rosterForSide(missingItem.entry.side, homePlayers, awayPlayers);
+      const heuristic = tryRecoverEntryHeuristic(missingItem.entry, roster);
+      if (isEntryComplete(heuristic) && !timelineHasIdentity(assistedTimeline, heuristic)) {
+        recovered.push(heuristic);
+        report.assistPlan.recoveredHeuristic.push({
+          minute: heuristic.minute,
+          type: heuristic.type,
+          side: heuristic.side,
+          player: heuristic.player,
+          playerIn: heuristic.playerIn,
+          playerOut: heuristic.playerOut,
+        });
+      } else if (!isEntryComplete(heuristic)) {
+        stillMissing.push(missingItem);
+      }
+    }
+
+    if (invokeAi && stillMissing.length > 0) {
+      const aiResult = await recoverMissingWithAi(
+        stillMissing,
+        homeTeam?.fifaCode ?? 'LOC',
+        awayTeam?.fifaCode ?? 'VIS',
+        homePlayers,
+        awayPlayers
+      );
+      report.assistPlan.ai = {
+        providerConfigured: hasAiProvider(),
+        eventsSentToAi: stillMissing.length,
+        source: aiResult.source,
+        promptPreview: aiResult.prompt?.slice(0, 500) ?? null,
+        promptFull: aiResult.prompt,
+        rawResponse: aiResult.rawResponse,
+        recovered: aiResult.recovered.map((event) => ({
+          minute: event.minute,
+          type: event.type,
+          side: event.side,
+          player: event.player,
+          playerIn: event.playerIn,
+          playerOut: event.playerOut,
+        })),
+      };
+      recovered.push(...aiResult.recovered);
+    } else if (stillMissing.length > 0) {
+      report.assistPlan.ai = {
+        providerConfigured: hasAiProvider(),
+        eventsSentToAi: stillMissing.length,
+        skipped: !invokeAi ? 'invokeAi=false' : 'no_provider',
+      };
+    }
+
+    assistedTimeline = normalizeTimelinePlayerNames(
+      mergeTimelineEntries(assistedTimeline, recovered),
+      homePlayers,
+      awayPlayers
+    );
+  }
+
+  const validationPassed = validateAssistedTimeline(
+    assistedTimeline,
+    originalTimeline,
+    raw.fifaMeta ?? {}
+  );
+  report.assistPlan.validationPassed = validationPassed;
+
+  if (!validationPassed) {
+    assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homePlayers, awayPlayers);
+  }
+
+  const storedTimeline = stripTimelineForStorage(assistedTimeline);
+  report.assistPlan.wouldAddEvents = Math.max(
+    0,
+    storedTimeline.length - stripTimelineForStorage(originalTimeline).length
+  );
+
+  const payloadAfter = enrichMatchLiveFields({
+    ...match,
+    raw: {
+      ...raw,
+      fifaEvents: {
+        ...fifaEvents,
+        timeline: storedTimeline,
+      },
+    },
+  });
+
+  report.apiPayloadAfter = {
+    homeScore: payloadAfter.homeScore,
+    awayScore: payloadAfter.awayScore,
+    timeElapsed: payloadAfter.timeElapsed,
+    timelineEvents: payloadAfter.matchTimeline?.length ?? 0,
+    timeline: payloadAfter.matchTimeline ?? [],
+    homeScorers: payloadAfter.homeScorers,
+    awayScorers: payloadAfter.awayScorers,
+    diffTimelineOnly: storedTimeline.filter(
+      (event) => !timelineHasIdentity(originalTimeline, event)
+    ),
+  };
+
+  return report;
+}
+
+export async function probeLiveEventAssistById(matchId, options = {}) {
+  const match = await Match.findById(matchId).lean();
+  if (!match) throw new Error('Partido no encontrado');
+
+  const bundle = await loadMatchBundle(match);
+  return probeLiveEventAssist(match, bundle, options);
 }
