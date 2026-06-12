@@ -4,6 +4,7 @@ import {
   isGroupPhaseMatch,
   sortStandings,
 } from './groupStandingsUtils.js';
+import { hasUserPrediction } from './predictionLockService.js';
 
 export function computePredictedGroupStandings(teams, matches, predictionsByMatchId) {
   const groupMatches = matches.filter(isGroupPhaseMatch);
@@ -42,7 +43,7 @@ export function computePredictedGroupStandings(teams, matches, predictionsByMatc
         matchCounts.live += 1;
         liveTeamIds.add(match.homeTeamId);
         liveTeamIds.add(match.awayTeamId);
-      } else if (prediction?.userSubmitted) {
+      } else if (hasUserPrediction(prediction)) {
         homeGoals = prediction.homeGoals;
         awayGoals = prediction.awayGoals;
         matchCounts.predicted += 1;

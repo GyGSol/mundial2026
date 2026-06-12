@@ -1,6 +1,7 @@
 import { THIRD_PLACE_COMBINATIONS } from '../data/thirdPlaceCombinations.js';
 import { formatKnockoutSlotLabelEs, formatMatchSummary } from './worldCupStatsService.js';
 import { KNOCKOUT_ROUNDS } from './simulationTournamentService.js';
+import { hasUserPrediction } from './predictionLockService.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
 
 /** Partidos R32 donde un 3.º clasificado enfrenta al ganador del grupo indicado. */
@@ -189,7 +190,7 @@ function getSimulatedOutcome(match, prediction, teamMap) {
   if (match.status === 'finished') {
     homeGoals = match.homeScore;
     awayGoals = match.awayScore;
-  } else if (prediction?.userSubmitted) {
+  } else if (hasUserPrediction(prediction)) {
     homeGoals = prediction.homeGoals;
     awayGoals = prediction.awayGoals;
   } else {

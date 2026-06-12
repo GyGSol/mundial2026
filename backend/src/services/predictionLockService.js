@@ -20,13 +20,20 @@ export function isPredictionOpen(match) {
   return !isPredictionLocked(match);
 }
 
+export function hasUserPrediction(prediction) {
+  if (!prediction) return false;
+  if (prediction.userSubmitted) return true;
+  // Predicción cargada por admin o legacy sin flag (excluye el 0-0 automático al cierre)
+  return prediction.homeGoals !== 0 || prediction.awayGoals !== 0;
+}
+
 export function enrichMatchPredictionMeta(match, prediction) {
   const predictionOpen = isPredictionOpen(match);
   const lockAt = getLockAt(match.kickoffAt);
   return {
     predictionOpen,
     lockAt: lockAt?.toISOString() ?? null,
-    hasPrediction: Boolean(prediction?.userSubmitted),
+    hasPrediction: hasUserPrediction(prediction),
   };
 }
 

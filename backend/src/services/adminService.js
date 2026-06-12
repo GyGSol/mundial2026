@@ -22,6 +22,7 @@ import {
 import { recalculateMatchScores } from './syncService.js';
 import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { revokeAllUserSessions } from './sessionService.js';
+import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { env } from '../config/env.js';
 import { isAdminConfigured } from './adminSetupService.js';
 
@@ -742,6 +743,13 @@ export async function createAdminPrediction({ userId, matchId, homeGoals, awayGo
     await recalculateMatchScores(match._id);
   }
 
+  notifyMatchesUpdated({
+    reason: 'admin_prediction_created',
+    matchId: match._id.toString(),
+    userId: prediction.userId.toString(),
+  });
+  notifyLeaderboardUpdated({ reason: 'admin_prediction_created' });
+
   return serializeAdminPredictionRow(prediction);
 }
 
@@ -768,6 +776,7 @@ export async function updateAdminPrediction(
     }
     prediction.homeGoals = Math.floor(home);
     goalsChanged = true;
+    prediction.userSubmitted = true;
   }
 
   if (awayGoals !== undefined) {
@@ -779,6 +788,7 @@ export async function updateAdminPrediction(
     }
     prediction.awayGoals = Math.floor(away);
     goalsChanged = true;
+    prediction.userSubmitted = true;
   }
 
   if (pointsEarned !== undefined) {
@@ -814,6 +824,17 @@ export async function updateAdminPrediction(
     await recalculateMatchScores(match._id);
   } else if (pointsManual) {
     await recalculateUserTotalPoints(prediction.userId);
+  }
+
+  if (goalsChanged && match) {
+    notifyMatchesUpdated({
+      reason: 'admin_prediction_updated',
+      matchId: match._id.toString(),
+      userId: prediction.userId.toString(),
+    });
+  }
+  if (goalsChanged || pointsManual) {
+    notifyLeaderboardUpdated({ reason: 'admin_prediction_updated' });
   }
 
   return serializeAdminPredictionRow(prediction);
