@@ -94,6 +94,9 @@ function formatBookingLine(booking) {
   return `${minute}${cardSymbol(booking.card)} ${label}`;
 }
 
+const SUBSTITUTION_OUT_ICON = '↓';
+const SUBSTITUTION_IN_ICON = '↑';
+
 function formatSubstitutionLine(substitution) {
   if (!substitution?.playerOut || !substitution?.playerIn) return null;
   const minute = substitution.minute != null ? `${substitution.minute}' ` : '';
@@ -102,7 +105,7 @@ function formatSubstitutionLine(substitution) {
     substitution.playerOutPosition
   );
   const playerIn = formatPlayerWithPosition(substitution.playerIn, substitution.playerInPosition);
-  return `${minute}${playerOut} → ${playerIn}`;
+  return `${minute}${SUBSTITUTION_OUT_ICON} ${playerOut}  ${SUBSTITUTION_IN_ICON} ${playerIn}`;
 }
 
 function countYellowCards(bookings = []) {
@@ -133,7 +136,12 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
       ) : null}
       {substitutionCount > 0 ? (
         <span className="inline-flex items-center gap-0.5" title="Cambios">
-          <span aria-hidden="true">↔</span>
+          <span className="text-red-600/90" aria-hidden="true">
+            {SUBSTITUTION_OUT_ICON}
+          </span>
+          <span className="text-emerald-600/90" aria-hidden="true">
+            {SUBSTITUTION_IN_ICON}
+          </span>
           <span>{substitutionCount}</span>
         </span>
       ) : null}
@@ -325,7 +333,7 @@ function formatTimelineEntry(event) {
     case 'substitution':
       return {
         side: event.side,
-        text: `${prefix}${formatPlayerWithPosition(event.playerOut, event.playerOutPosition)} → ${formatPlayerWithPosition(event.playerIn, event.playerInPosition)}`,
+        text: `${prefix}${SUBSTITUTION_OUT_ICON} ${formatPlayerWithPosition(event.playerOut, event.playerOutPosition)}  ${SUBSTITUTION_IN_ICON} ${formatPlayerWithPosition(event.playerIn, event.playerInPosition)}`,
       };
     case 'foul':
       return {
