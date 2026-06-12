@@ -17,6 +17,9 @@ function formatFetchedAt(value) {
 }
 
 function NewsCard({ article }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = article.imageUrl && !imageFailed;
+
   return (
     <a
       href={article.url}
@@ -25,13 +28,14 @@ function NewsCard({ article }) {
       className="group flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card transition hover:border-violet-500/40 hover:bg-muted/20"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-muted/40">
-        {article.imageUrl ? (
+        {showImage ? (
           <img
             src={article.imageUrl}
             alt=""
             className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
             loading="lazy"
             referrerPolicy="no-referrer"
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
