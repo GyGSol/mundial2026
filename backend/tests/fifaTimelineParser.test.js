@@ -92,5 +92,53 @@ describe('fifaTimelineParser', () => {
       });
       expect(timeline[6].sortKey).toBeGreaterThan(timeline[5].sortKey);
     });
+
+    it('incluye pausas de hidratación y cambios de periodo', () => {
+      const timeline = parseFifaTimeline(
+        {
+          Event: [
+            {
+              Type: 83,
+              MatchMinute: "23'",
+              EventDescription: [
+                { Locale: 'en-GB', Description: 'Match paused for a hydration break' },
+              ],
+            },
+            {
+              Type: 8,
+              MatchMinute: "45'+4'",
+              EventDescription: [
+                { Locale: 'en-GB', Description: 'The referee brings the first period to an end.' },
+              ],
+            },
+            {
+              Type: 7,
+              MatchMinute: "45'",
+              EventDescription: [
+                { Locale: 'en-GB', Description: 'The referee signals the start of the second period.' },
+              ],
+            },
+            {
+              Type: 7,
+              MatchMinute: "0'",
+              EventDescription: [
+                { Locale: 'en-GB', Description: 'The referee signals the start of the first period.' },
+              ],
+            },
+          ],
+        },
+        'home',
+        'away'
+      );
+
+      expect(timeline.map((event) => event.type)).toEqual([
+        'hydration_break',
+        'period_end',
+        'period_start',
+      ]);
+      expect(timeline[0]).toMatchObject({ type: 'hydration_break', minute: 23 });
+      expect(timeline[1]).toMatchObject({ type: 'period_end', phase: 'first', minute: 45, extraMinute: 4 });
+      expect(timeline[2]).toMatchObject({ type: 'period_start', phase: 'second', minute: 45 });
+    });
   });
 });

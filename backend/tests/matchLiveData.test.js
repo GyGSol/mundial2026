@@ -26,7 +26,7 @@ describe('matchLiveData', () => {
     });
 
     it('formatea descanso y tiempo añadido', () => {
-      expect(formatTimeElapsed({ time_elapsed: 'ht' })).toBe('ET');
+      expect(formatTimeElapsed({ time_elapsed: 'ht' })).toBe('Entretiempo');
       expect(formatTimeElapsed({ time_elapsed: '45+2' })).toBe("45+2'");
     });
 

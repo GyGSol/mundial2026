@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
-import { filterTimelineForDisplay } from '@/lib/matchTimelineDisplay.js';
+import { filterTimelineForDisplay, formatNeutralTimelineLabel } from '@/lib/matchTimelineDisplay.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import {
   Card,
@@ -205,9 +205,34 @@ function formatTimelineMinute(event) {
   return '';
 }
 
+function neutralTimelineIcon(type) {
+  switch (type) {
+    case 'goal_disallowed':
+      return '🚫';
+    case 'hydration_break':
+      return '💧';
+    case 'period_end':
+      return '⏸️';
+    case 'period_start':
+      return '▶️';
+    case 'match_end':
+      return '🏁';
+    default:
+      return '•';
+  }
+}
+
 function formatTimelineEntry(event) {
   const minute = formatTimelineMinute(event);
   const prefix = minute ? `${minute} ` : '';
+  const neutralLabel = formatNeutralTimelineLabel(event);
+
+  if (neutralLabel) {
+    return {
+      side: 'neutral',
+      text: `${prefix}${neutralTimelineIcon(event.type)} ${neutralLabel}`.trim(),
+    };
+  }
 
   switch (event.type) {
     case 'goal':
@@ -234,11 +259,6 @@ function formatTimelineEntry(event) {
       return {
         side: event.side,
         text: `${prefix}Falta ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
-      };
-    case 'goal_disallowed':
-      return {
-        side: 'neutral',
-        text: minute ? `${minute} 🚫 Gol anulado` : '🚫 Gol anulado',
       };
     default:
       return null;

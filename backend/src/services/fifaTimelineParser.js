@@ -1,19 +1,35 @@
-/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'goal_disallowed'} TimelineEventType */
+/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'goal_disallowed' | 'hydration_break' | 'period_start' | 'period_end' | 'match_end'} TimelineEventType */
 
-export const FIFA_INCLUDED_EVENT_TYPES = new Set([0, 2, 3, 5, 18, 71]);
+export const FIFA_INCLUDED_EVENT_TYPES = new Set([0, 2, 3, 5, 7, 8, 18, 26, 71, 83]);
 
 const INCLUDED_TYPES = FIFA_INCLUDED_EVENT_TYPES;
+
+export const FIFA_NEUTRAL_EVENT_TYPES = new Set([
+  'goal_disallowed',
+  'hydration_break',
+  'period_start',
+  'period_end',
+  'match_end',
+]);
 
 export const FIFA_EVENT_TYPE_MAP = {
   0: 'goal',
   2: 'yellow_card',
   3: 'red_card',
   5: 'substitution',
+  7: 'period_start',
+  8: 'period_end',
   18: 'foul',
+  26: 'match_end',
   71: 'goal_disallowed',
+  83: 'hydration_break',
 };
 
 const TYPE_MAP = FIFA_EVENT_TYPE_MAP;
+
+export function isNeutralTimelineEvent(type) {
+  return FIFA_NEUTRAL_EVENT_TYPES.has(type);
+}
 
 export function parseFifaMinute(matchMinute) {
   const raw = String(matchMinute ?? '').trim();
@@ -78,6 +94,28 @@ function resolveSide(teamId, homeTeamId, awayTeamId) {
   return null;
 }
 
+/** @param {TimelineEventType} type @param {string} description @param {number | null} minute */
+export function inferPeriodPhase(type, description, minute) {
+  const desc = String(description ?? '').toLowerCase();
+
+  if (type === 'hydration_break' || type === 'match_end' || type === 'goal_disallowed') {
+    return null;
+  }
+
+  if (desc.includes('first')) return 'first';
+  if (desc.includes('second')) return 'second';
+
+  if (type === 'period_start') {
+    return minute != null && minute >= 45 ? 'second' : 'first';
+  }
+
+  if (type === 'period_end') {
+    return minute != null && minute > 45 ? 'second' : 'first';
+  }
+
+  return null;
+}
+
 export function fifaEventDescription(event) {
   return localizedDescription(event);
 }
@@ -100,20 +138,38 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
   const description = localizedDescription(event);
   const timing = parseFifaMinute(event.MatchMinute);
   const type = /** @type {TimelineEventType} */ (TYPE_MAP[event.Type]);
+  const neutral = isNeutralTimelineEvent(type);
   const side = resolveSide(event.IdTeam, homeTeamId, awayTeamId);
-  if (!side && type !== 'goal_disallowed') return null;
+  if (!side && !neutral) return null;
 
   const entry = {
     sortKey: timing.sortKey,
     minute: timing.minute,
     extraMinute: timing.extraMinute,
     type,
-    side,
-    player: extractPlayerName(description),
+    side: neutral ? null : side,
+    phase: inferPeriodPhase(type, description, timing.minute),
+    player: null,
     playerIn: null,
     playerOut: null,
     description,
   };
+
+  if (
+    entry.type === 'period_start' &&
+    entry.phase === 'second' &&
+    entry.minute === 45 &&
+    entry.extraMinute == null
+  ) {
+    // FIFA marca el inicio del 2.º tiempo en 45' aunque el 1.er termine en 45+X
+    entry.sortKey = entry.minute + 0.05;
+  }
+
+  if (neutral) {
+    return entry;
+  }
+
+  entry.player = extractPlayerName(description);
 
   if (type === 'substitution') {
     const { playerIn, playerOut } = parseSubstitution(description);
@@ -121,8 +177,6 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     entry.playerOut = playerOut;
     entry.player = playerIn ?? playerOut ?? entry.player;
     if (!entry.playerIn || !entry.playerOut) return entry;
-  } else if (type === 'goal_disallowed') {
-    entry.player = null;
   } else if (!entry.player) {
     return entry;
   }
@@ -138,10 +192,16 @@ export function parseFifaTimeline(timelineJson, homeTeamId, awayTeamId) {
     const entry = buildFifaTimelineEntry(event, homeTeamId, awayTeamId);
     if (!entry) continue;
 
-    if (entry.type === 'substitution' && (!entry.playerIn || !entry.playerOut)) continue;
-    if (entry.type !== 'goal_disallowed' && entry.type !== 'substitution' && !entry.player) {
+    if (isNeutralTimelineEvent(entry.type)) {
+      if (entry.type === 'period_start' && entry.phase === 'first' && entry.minute === 0) {
+        continue;
+      }
+      parsed.push(entry);
       continue;
     }
+
+    if (entry.type === 'substitution' && (!entry.playerIn || !entry.playerOut)) continue;
+    if (!entry.player) continue;
 
     parsed.push(entry);
   }

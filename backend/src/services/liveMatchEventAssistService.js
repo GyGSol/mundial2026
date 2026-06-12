@@ -18,6 +18,7 @@ import {
   buildFifaTimelineEntry,
   extractPlayerNameFromDescription,
   FIFA_INCLUDED_EVENT_TYPES,
+  isNeutralTimelineEvent,
   parseFifaMinute,
   parseSubstitutionFromDescription,
 } from './fifaTimelineParser.js';
@@ -33,6 +34,10 @@ const ALLOWED_EVENT_TYPES = new Set([
   'substitution',
   'foul',
   'goal_disallowed',
+  'hydration_break',
+  'period_start',
+  'period_end',
+  'match_end',
 ]);
 
 function rosterForSide(side, homePlayers, awayPlayers) {
@@ -55,8 +60,9 @@ function isAssistFresh(assistedAt, matchStatus, now = Date.now()) {
   return now - new Date(assistedAt).getTime() < ttl;
 }
 
-export function eventIdentity(event) {
-  return [event.type, event.side ?? '', event.minute ?? '', event.extraMinute ?? ''].join(':');
+function eventIdentity(event) {
+  const phase = event.phase ?? '';
+  return [event.type, event.side ?? '', event.minute ?? '', event.extraMinute ?? '', phase].join(':');
 }
 
 function timelineHasIdentity(timeline, entry) {
@@ -65,7 +71,7 @@ function timelineHasIdentity(timeline, entry) {
 }
 
 function isEntryComplete(entry) {
-  if (entry.type === 'goal_disallowed') return true;
+  if (isNeutralTimelineEvent(entry.type)) return true;
   if (entry.type === 'substitution') return Boolean(entry.playerIn && entry.playerOut);
   return Boolean(entry.player);
 }

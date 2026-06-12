@@ -334,7 +334,7 @@ export function formatTimeElapsed(rawOrElapsed) {
   if (normalized === 'finished' || normalized === 'ft' || normalized === 'fulltime') {
     return 'Final';
   }
-  if (normalized === 'ht' || normalized === 'halftime') return 'ET';
+  if (normalized === 'ht' || normalized === 'halftime') return 'Entretiempo';
 
   if (/^\d+\+\d+$/.test(normalized)) {
     return `${normalized}'`;
