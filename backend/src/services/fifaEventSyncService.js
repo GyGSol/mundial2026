@@ -175,8 +175,11 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
           };
           rawUpdate['raw.fifaEvents'] = {
             timeline,
+            rawEvents: timelineJson?.Event ?? [],
             source: 'fifa_api',
             syncedAt: new Date().toISOString(),
+            assistHash: null,
+            assistedAt: null,
           };
 
           const timelineGoals = goalCountsFromTimeline(timeline);

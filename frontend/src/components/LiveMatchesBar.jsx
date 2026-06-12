@@ -19,7 +19,6 @@ import {
 } from '@/lib/matchSummary';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
-import MatchLiveAiPanel from '@/components/MatchLiveAiPanel.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
 function normalizeScorerEntry(entry) {
@@ -400,8 +399,6 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           awayCode={awayCode}
           status={match.status}
         />
-
-        <MatchLiveAiPanel matchId={match.id} status={match.status} />
 
         <span className="text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}

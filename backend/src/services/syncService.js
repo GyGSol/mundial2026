@@ -28,6 +28,7 @@ import {
 } from './websocketService.js';
 import { syncLiveLineups } from './lineupSyncService.js';
 import { syncFifaMatchEvents, syncFifaReportsForMatchIds } from './fifaEventSyncService.js';
+import { assistLiveMatchEvents } from './liveMatchEventAssistService.js';
 import { readFifaAuthoritativeScores } from './matchLiveData.js';
 
 async function upsertTeams() {
@@ -302,6 +303,7 @@ export async function runSync({ includeMetadata = true } = {}) {
 
     const lineupResult = await syncLiveLineups();
     const fifaResult = await syncFifaMatchEvents({ extraMatchIds: newlyFinishedIds });
+    const assistResult = await assistLiveMatchEvents();
 
     for (const matchId of fifaResult.scoringIds ?? []) {
       await recalculateMatchScores(matchId);
@@ -322,6 +324,12 @@ export async function runSync({ includeMetadata = true } = {}) {
 
     if (fifaResult.events > 0) {
       console.log(`FIFA events sync: ${fifaResult.events} partidos con timeline`);
+    }
+
+    if (assistResult.updated > 0) {
+      console.log(
+        `Live event assist: ${assistResult.updated} partidos actualizados (${assistResult.skipped} sin cambios)`
+      );
     }
 
     console.log(

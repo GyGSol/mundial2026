@@ -354,7 +354,7 @@ function toSortKey(minute) {
   return Number(minute);
 }
 
-function buildTimelineFromLegacy(raw = {}, events = {}) {
+export function buildTimelineFromLegacy(raw = {}, events = {}) {
   const timeline = [];
 
   for (const scorer of parseScorersField(raw.home_scorers ?? raw.homeScorers)) {
@@ -442,6 +442,22 @@ function buildTimelineFromLegacy(raw = {}, events = {}) {
   }
 
   return timeline.sort((a, b) => a.sortKey - b.sortKey);
+}
+
+export function timelineHash(timeline = []) {
+  return timeline
+    .map((event) =>
+      [
+        event.type,
+        event.side,
+        event.minute,
+        event.extraMinute,
+        event.player,
+        event.playerIn,
+        event.playerOut,
+      ].join(':')
+    )
+    .join('|');
 }
 
 export function readMatchTimeline(raw = {}) {

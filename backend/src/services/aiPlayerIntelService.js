@@ -8,6 +8,7 @@ import {
   hasAiProvider,
 } from './aiPredictionService.js';
 import { listPlayers, getPlayerById } from './playerService.js';
+import { matchNameToRosterPlayer } from '../utils/playerNameMatch.js';
 
 const INTEL_TTL_MS = 12 * 60 * 60 * 1000;
 const HEALTH_STATUSES = new Set(['available', 'injured', 'doubt']);
@@ -18,14 +19,6 @@ const HEALTH_LABELS = {
   doubt: 'Duda',
   unknown: 'Sin datos IA',
 };
-
-function normalizeName(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-}
 
 function isIntelFresh(intel, now = Date.now()) {
   if (!intel?.fetchedAt) return false;
@@ -65,17 +58,7 @@ function normalizeAiPlayerEntry(entry) {
 }
 
 function matchAiEntryToPlayer(aiEntry, rosterPlayers) {
-  const target = normalizeName(aiEntry.fullName);
-  if (!target) return null;
-
-  const exact = rosterPlayers.find((p) => normalizeName(p.fullName) === target);
-  if (exact) return exact;
-
-  const partial = rosterPlayers.find((p) => {
-    const name = normalizeName(p.fullName);
-    return name.includes(target) || target.includes(name);
-  });
-  return partial ?? null;
+  return matchNameToRosterPlayer(aiEntry.fullName, rosterPlayers);
 }
 
 async function upsertIntelForPlayer(player, aiEntry, meta) {

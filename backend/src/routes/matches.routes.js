@@ -17,11 +17,6 @@ import {
 import { enrichMatchPhaseFields } from '../services/matchPhaseUtils.js';
 import { enrichMatchLiveFields } from '../services/matchLiveData.js';
 import { formatStadiumForClient } from '../services/stadiumPayload.js';
-import {
-  getMatchLiveAiBriefing,
-  refreshMatchLiveAiBriefing,
-} from '../services/aiMatchLiveService.js';
-
 let legacyBackfillPromise = null;
 
 function ensureLegacyPredictionsBackfilled() {
@@ -140,25 +135,6 @@ async function enrichMatches(matches, userId) {
     );
   });
 }
-
-router.get('/:id/ai-live', optionalAuth, async (req, res, next) => {
-  try {
-    const refresh = req.query.refresh === '1' || req.query.refresh === 'true';
-    const payload = await getMatchLiveAiBriefing(req.params.id, { refresh });
-    res.json(payload);
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post('/:id/ai-live/refresh', optionalAuth, async (req, res, next) => {
-  try {
-    const payload = await refreshMatchLiveAiBriefing(req.params.id);
-    res.json(payload);
-  } catch (err) {
-    next(err);
-  }
-});
 
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
