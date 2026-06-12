@@ -309,11 +309,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
   );
 }
 
-function LiveMatchCard({ match }) {
-  return <ResultMatchCard match={match} variant="live" />;
-}
-
-function FinishedMatchCard({ match }) {
+function TimelineMatchCard({ match, variant = 'finished' }) {
   const homeName = match.homeTeam?.nameEn || 'Local';
   const awayName = match.awayTeam?.nameEn || 'Visitante';
   const homeFlag = getTeamFlag(match.homeTeam);
@@ -321,18 +317,25 @@ function FinishedMatchCard({ match }) {
   const homeCode = match.homeTeam?.fifaCode || 'LOC';
   const awayCode = match.awayTeam?.fifaCode || 'VIS';
   const isArgentina = matchInvolvesArgentina(match);
+  const isLive = variant === 'live';
   const hasTimeline = (match.matchTimeline?.length ?? 0) > 0;
 
   if (!hasTimeline) {
-    return <ResultMatchCard match={match} variant="finished" />;
+    return <ResultMatchCard match={match} variant={variant} />;
   }
 
   return (
     <Card className={liveCardClassName(isArgentina)}>
       <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
-        <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
-          Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
-        </Badge>
+        {isLive ? (
+          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
+            En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
+            Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
+          </Badge>
+        )}
 
         <FinishedTeamsHeader
           homeName={homeName}
@@ -364,6 +367,14 @@ function FinishedMatchCard({ match }) {
       </CardContent>
     </Card>
   );
+}
+
+function LiveMatchCard({ match }) {
+  return <TimelineMatchCard match={match} variant="live" />;
+}
+
+function FinishedMatchCard({ match }) {
+  return <TimelineMatchCard match={match} variant="finished" />;
 }
 
 function NextMatchCard({ match }) {
