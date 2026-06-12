@@ -60,10 +60,7 @@ export default function WorldCupPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mundial 2026</h1>
           <p className="text-sm text-muted-foreground">
-            <span className="sm:hidden">Grupos, fixture y estadísticas del torneo.</span>
-            <span className="hidden sm:inline">
-              Tablas de grupos, fase final, estadios y estadísticas desde la API oficial del torneo.
-            </span>
+            Grupos, fixture y estadísticas del torneo.
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
           </p>
         </div>

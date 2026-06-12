@@ -73,7 +73,7 @@ export default function GameMobileNav({ onEditPlayer }) {
   return (
     <>
       {moreOpen ? (
-        <div className="game-mobile-more md:hidden" role="presentation">
+        <div className="game-mobile-more" role="presentation">
           <button
             type="button"
             className="game-mobile-more__backdrop"
@@ -150,7 +150,7 @@ export default function GameMobileNav({ onEditPlayer }) {
         </div>
       ) : null}
 
-      <nav className="game-mobile-nav md:hidden" aria-label="Navegación principal">
+      <nav className="game-mobile-nav" aria-label="Navegación principal">
         {primaryTabs.map((tab) => (
           <TabItem
             key={tab.to}

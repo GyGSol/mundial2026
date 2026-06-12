@@ -130,26 +130,16 @@ export default function PredictionsPage() {
     <div
       className={cn(
         'flex flex-col gap-4 sm:gap-6',
-        activeView === 'matches' &&
-          'pb-[calc(4rem+env(safe-area-inset-bottom))] max-md:pb-[calc(8.5rem+env(safe-area-inset-bottom))] sm:pb-0'
+        activeView === 'matches' && 'pb-[calc(8.5rem+env(safe-area-inset-bottom))]'
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0 flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-            {user?.email ? (
-              <>
-                <span className="sm:hidden">Mis predicciones</span>
-                <span className="hidden sm:inline">
-                  Panel de predicciones del Jugador {user.email}
-                </span>
-              </>
-            ) : (
-              'Panel de predicciones'
-            )}
+            {user?.email ? 'Mis predicciones' : 'Panel de predicciones'}
           </h1>
           {user?.email ? (
-            <p className="truncate text-xs text-muted-foreground sm:hidden">{user.email}</p>
+            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
           ) : null}
           <p className="text-sm text-muted-foreground">
             {activeView === 'matches'

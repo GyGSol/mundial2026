@@ -10,7 +10,7 @@ import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 /** Mismo ancho/alto en web y móvil para Guardar y Editar */
 const PREDICTION_ACTION_BUTTON_CLASS = 'min-w-28 px-4';
 const EDIT_PREDICTION_BUTTON_CLASS =
-  'border border-amber-300/80 bg-amber-100/60 text-amber-900 hover:bg-amber-200/70 hover:text-amber-950 max-md:border-amber-500/40 max-md:bg-amber-500/15 max-md:text-amber-100 max-md:hover:bg-amber-500/25 max-md:hover:text-amber-50';
+  'border border-amber-500/40 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25 hover:text-amber-50';
 
 function ScoreCell({ children }) {
   return <div className="flex justify-center">{children}</div>;

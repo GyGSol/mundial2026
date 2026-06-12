@@ -356,9 +356,8 @@ body {
   color: #fde68a;
 }
 
-/* ── Juego (app): mismo look que admin, solo en mobile (< md) ── */
-@media (max-width: 767px) {
-  body:has(.game-shell) {
+/* ── Juego (app): mismo look slate+ámbar que admin, en todas las resoluciones ── */
+body:has(.game-shell) {
     --admin-bg: #0a0f1a;
     --admin-surface: #111827;
     --admin-surface-raised: #1a2332;
@@ -720,11 +719,3 @@ body {
   .game-mobile-more__action--danger {
     color: #fca5a5;
   }
-}
-
-@media (min-width: 768px) {
-  .game-mobile-nav,
-  .game-mobile-more {
-    display: none !important;
-  }
-}
