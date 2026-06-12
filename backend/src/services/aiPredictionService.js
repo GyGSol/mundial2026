@@ -518,6 +518,59 @@ async function callGeminiForText(prompt, { fetchImpl = fetch } = {}) {
   return { text: text.slice(0, AI_FOLLOWUP_MAX_LEN), source: 'gemini' };
 }
 
+export async function callAiForJson(prompt, { fetchImpl = fetch } = {}) {
+  const jsonPrompt = `${prompt}\n\nRespondé ÚNICAMENTE con JSON válido (sin markdown).`;
+
+  if (env.cerebrasApiKey) {
+    try {
+      const text = await callOpenAiChatCompletions(
+        {
+          apiKey: env.cerebrasApiKey,
+          url: CEREBRAS_API_URL,
+          model: env.aiCerebrasModel,
+          messages: [{ role: 'user', content: jsonPrompt }],
+          temperature: 0.3,
+          responseFormat: { type: 'json_object' },
+          providerLabel: 'Cerebras',
+        },
+        { fetchImpl }
+      );
+      const parsed = parseGeminiJsonResponse(text);
+      if (parsed) return { data: parsed, source: 'cerebras' };
+    } catch (err) {
+      console.warn('AI JSON Cerebras failed, trying fallbacks:', err.message);
+    }
+  }
+
+  if (env.groqApiKey) {
+    try {
+      const text = await callOpenAiChatCompletions(
+        {
+          apiKey: env.groqApiKey,
+          url: GROQ_API_URL,
+          model: env.aiGroqModel,
+          messages: [{ role: 'user', content: jsonPrompt }],
+          temperature: 0.3,
+          responseFormat: { type: 'json_object' },
+          providerLabel: 'Groq',
+        },
+        { fetchImpl }
+      );
+      const parsed = parseGeminiJsonResponse(text);
+      if (parsed) return { data: parsed, source: 'groq' };
+    } catch (err) {
+      console.warn('AI JSON Groq failed, trying Gemini:', err.message);
+    }
+  }
+
+  const textResult = await callAiForText(jsonPrompt, { fetchImpl });
+  const parsed = parseGeminiJsonResponse(textResult.text);
+  if (!parsed) {
+    throw new Error('La IA devolvió JSON inválido');
+  }
+  return { data: parsed, source: textResult.source };
+}
+
 export async function callAiForText(prompt, { fetchImpl = fetch } = {}) {
   if (env.cerebrasApiKey) {
     try {

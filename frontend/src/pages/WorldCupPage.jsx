@@ -24,7 +24,7 @@ const tabs = [
   { id: 'teams', label: 'Equipos' },
   { id: 'fixture', label: 'Fixture' },
   { id: 'history', label: 'Historia' },
-  { id: 'players', label: 'Jugadores', beta: true },
+  { id: 'players', label: 'Jugadores', ai: true },
 ];
 
 function formatLastUpdated(date) {
@@ -77,9 +77,9 @@ export default function WorldCupPage() {
           >
             <span className="inline-flex items-center gap-1.5">
               {tab.label}
-              {tab.beta ? (
-                <Badge className="border-amber-500/40 bg-amber-500/10 px-1.5 py-0 text-[10px] font-semibold text-amber-800 dark:text-amber-300">
-                  Beta
+              {tab.ai ? (
+                <Badge className="border-violet-500/40 bg-violet-500/10 px-1.5 py-0 text-[10px] font-semibold text-violet-200">
+                  IA
                 </Badge>
               ) : null}
             </span>

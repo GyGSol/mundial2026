@@ -142,11 +142,12 @@ export async function listPlayers({
   };
 }
 
-export async function getPlayerById(id) {
+export async function getPlayerById(id, { skipExternalMatches = false } = {}) {
   const player = await Player.findById(id).lean();
   if (!player) return null;
 
   if (
+    !skipExternalMatches &&
     hasToken() &&
     player.footballDataPersonId &&
     (!player.recentMatches || player.recentMatches.length === 0)

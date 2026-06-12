@@ -170,6 +170,20 @@ export const playersApi = {
   },
   get: (id) => request(`/players/${id}`),
   meta: () => request('/players/meta'),
+  refreshTeamIntel: (team, { force = false } = {}) =>
+    request('/players/ai/refresh-team', {
+      method: 'POST',
+      body: JSON.stringify({ team, force }),
+    }),
+  refreshPlayerIntel: (id) =>
+    request(`/players/${id}/ai/refresh`, {
+      method: 'POST',
+    }),
+  askPlayerIntel: (id, question) =>
+    request(`/players/${id}/ai/ask`, {
+      method: 'POST',
+      body: JSON.stringify({ question }),
+    }),
 };
 
 export const healthApi = {
