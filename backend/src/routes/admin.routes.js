@@ -16,7 +16,10 @@ import {
   addAdminGroupMember,
   approveAdminJoinRequest,
   createAdminGroup,
+  createAdminPrediction,
+  createAdminUser,
   deleteAdminGroup,
+  deleteAdminPrediction,
   deleteAdminUser,
   getAdminGroup,
   getAdminGroupMembers,
@@ -33,9 +36,12 @@ import {
   rejectAdminJoinRequest,
   removeAdminGroupMember,
   updateAdminGroup,
+  updateAdminGroupMemberRole,
   updateAdminMatch,
+  updateAdminPrediction,
   updateAdminUserPassword,
   updateAdminUserPoints,
+  updateAdminUserProfile,
 } from '../services/adminService.js';
 
 const router = Router();
@@ -177,6 +183,21 @@ router.get('/users', adminMiddleware, async (req, res, next) => {
   }
 });
 
+router.post('/users', adminMiddleware, async (req, res, next) => {
+  try {
+    res.status(201).json(
+      await createAdminUser({
+        name: req.body?.name,
+        email: req.body?.email,
+        password: req.body?.password,
+        totalPoints: req.body?.totalPoints,
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/users/:id', adminMiddleware, async (req, res, next) => {
   try {
     res.json(await getAdminUserById(req.params.id));
@@ -187,12 +208,20 @@ router.get('/users/:id', adminMiddleware, async (req, res, next) => {
 
 router.patch('/users/:id', adminMiddleware, async (req, res, next) => {
   try {
-    const { totalPoints, password } = req.body ?? {};
-    if (totalPoints === undefined && password === undefined) {
-      return res.status(400).json({ error: 'Indicá totalPoints o password' });
+    const { totalPoints, password, name, email } = req.body ?? {};
+    if (
+      totalPoints === undefined &&
+      password === undefined &&
+      name === undefined &&
+      email === undefined
+    ) {
+      return res.status(400).json({ error: 'Indicá al menos un campo a actualizar' });
     }
 
     let user;
+    if (name !== undefined || email !== undefined) {
+      user = await updateAdminUserProfile(req.params.id, { name, email });
+    }
     if (totalPoints !== undefined) {
       user = await updateAdminUserPoints(req.params.id, totalPoints);
     }
@@ -294,6 +323,23 @@ router.delete('/groups/:id/members/:userId', adminMiddleware, async (req, res, n
   }
 });
 
+router.patch('/groups/:id/members/:userId', adminMiddleware, async (req, res, next) => {
+  try {
+    if (req.body?.role === undefined) {
+      return res.status(400).json({ error: 'role requerido' });
+    }
+    res.json(
+      await updateAdminGroupMemberRole({
+        groupId: req.params.id,
+        userId: req.params.userId,
+        role: req.body.role,
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/groups/:id/join-requests', adminMiddleware, async (req, res, next) => {
   try {
     res.json({ requests: await listAdminGroupJoinRequests(req.params.id) });
@@ -364,6 +410,9 @@ router.patch('/matches/:id', adminMiddleware, async (req, res, next) => {
         homeScore: req.body?.homeScore,
         awayScore: req.body?.awayScore,
         status: req.body?.status,
+        group: req.body?.group,
+        matchday: req.body?.matchday,
+        kickoffAt: req.body?.kickoffAt,
       })
     );
   } catch (err) {
@@ -394,6 +443,44 @@ router.get('/predictions', adminMiddleware, async (req, res, next) => {
         userId: req.query.userId,
       }),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/predictions', adminMiddleware, async (req, res, next) => {
+  try {
+    res.status(201).json(
+      await createAdminPrediction({
+        userId: req.body?.userId,
+        matchId: req.body?.matchId,
+        homeGoals: req.body?.homeGoals,
+        awayGoals: req.body?.awayGoals,
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/predictions/:id', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(
+      await updateAdminPrediction(req.params.id, {
+        homeGoals: req.body?.homeGoals,
+        awayGoals: req.body?.awayGoals,
+        pointsEarned: req.body?.pointsEarned,
+        bonusPoint: req.body?.bonusPoint,
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/predictions/:id', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await deleteAdminPrediction(req.params.id));
   } catch (err) {
     next(err);
   }

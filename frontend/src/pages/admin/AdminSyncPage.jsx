@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge.jsx';
 
 export default function AdminSyncPage() {
   const [running, setRunning] = useState(false);
+  const [playerRunning, setPlayerRunning] = useState(false);
   const [runResult, setRunResult] = useState(null);
   const [runError, setRunError] = useState(null);
 
@@ -26,6 +27,20 @@ export default function AdminSyncPage() {
       await refresh();
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function handleRunPlayerSync() {
+    setPlayerRunning(true);
+    setRunError(null);
+    try {
+      await adminApi.runPlayerSync();
+      setRunResult({ ok: true, players: true });
+      await refresh();
+    } catch (err) {
+      setRunError(err.message);
+    } finally {
+      setPlayerRunning(false);
     }
   }
 
@@ -82,6 +97,9 @@ export default function AdminSyncPage() {
         <CardContent className="flex flex-col gap-3">
           <Button onClick={handleRunSync} disabled={running}>
             {running ? 'Sincronizando…' : 'Ejecutar sync ahora'}
+          </Button>
+          <Button variant="outline" onClick={handleRunPlayerSync} disabled={playerRunning}>
+            {playerRunning ? 'Sync jugadores…' : 'Sync jugadores'}
           </Button>
           {runError ? <p className="text-sm text-red-400">{runError}</p> : null}
           {runResult?.ok ? (

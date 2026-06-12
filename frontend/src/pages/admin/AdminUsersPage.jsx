@@ -13,14 +13,20 @@ import {
 } from '@/components/ui/table.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 
+const emptyCreateForm = { name: '', email: '', password: '', totalPoints: '0' };
+
 export default function AdminUsersPage() {
   const [q, setQ] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [nameEdit, setNameEdit] = useState('');
+  const [emailEdit, setEmailEdit] = useState('');
   const [pointsEdit, setPointsEdit] = useState('');
   const [passwordEdit, setPasswordEdit] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [message, setMessage] = useState('');
 
   const fetchUsers = useCallback(
@@ -33,15 +39,34 @@ export default function AdminUsersPage() {
 
   async function loadDetail(id) {
     setSelectedId(id);
+    setShowCreate(false);
     setMessage('');
     setPasswordEdit('');
     try {
       const result = await adminApi.getUser(id);
       setDetail(result);
+      setNameEdit(result.user.name ?? '');
+      setEmailEdit(result.user.email ?? '');
       setPointsEdit(String(result.user.totalPoints ?? 0));
     } catch (err) {
       setMessage(err.message);
       setDetail(null);
+    }
+  }
+
+  async function saveProfile() {
+    if (!selectedId) return;
+    setMessage('');
+    try {
+      await adminApi.updateUser(selectedId, {
+        name: nameEdit.trim(),
+        email: emailEdit.trim(),
+      });
+      setMessage('Datos actualizados');
+      await refresh();
+      await loadDetail(selectedId);
+    } catch (err) {
+      setMessage(err.message);
     }
   }
 
@@ -78,6 +103,25 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function createUser() {
+    setMessage('');
+    try {
+      const result = await adminApi.createUser({
+        name: createForm.name.trim(),
+        email: createForm.email.trim(),
+        password: createForm.password,
+        totalPoints: Number(createForm.totalPoints || 0),
+      });
+      setMessage('Usuario creado');
+      setShowCreate(false);
+      setCreateForm(emptyCreateForm);
+      await refresh();
+      if (result?.id) await loadDetail(result.id);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
   async function deleteUser(id) {
     if (!window.confirm('¿Eliminar este usuario y todas sus predicciones?')) return;
     setMessage('');
@@ -94,9 +138,24 @@ export default function AdminUsersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl font-semibold">Usuarios</h2>
-        <p className="text-sm text-slate-400">Buscar, ajustar puntos, cambiar contraseña o eliminar cuentas.</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="text-xl font-semibold">Usuarios</h2>
+          <p className="text-sm text-slate-400">
+            Crear, editar datos, puntos, contraseña o eliminar cuentas.
+          </p>
+        </div>
+        <Button
+          size="sm"
+          onClick={() => {
+            setShowCreate(true);
+            setSelectedId(null);
+            setDetail(null);
+            setCreateForm(emptyCreateForm);
+          }}
+        >
+          Crear usuario
+        </Button>
       </div>
 
       <form
@@ -169,13 +228,72 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {detail ? (
+        {showCreate ? (
+          <Card className="border-slate-800 bg-slate-900">
+            <CardHeader>
+              <CardTitle className="text-base">Nuevo usuario</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3 text-sm">
+              <Input
+                placeholder="Nombre"
+                value={createForm.name}
+                onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+                className="border-slate-700 bg-slate-950"
+              />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                className="border-slate-700 bg-slate-950"
+              />
+              <Input
+                type="password"
+                placeholder="Contraseña (mín. 8)"
+                minLength={8}
+                value={createForm.password}
+                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                className="border-slate-700 bg-slate-950"
+              />
+              <Input
+                type="number"
+                min={0}
+                placeholder="Puntos iniciales"
+                value={createForm.totalPoints}
+                onChange={(e) => setCreateForm((f) => ({ ...f, totalPoints: e.target.value }))}
+                className="border-slate-700 bg-slate-950"
+              />
+              <Button size="sm" onClick={createUser}>
+                Crear
+              </Button>
+            </CardContent>
+          </Card>
+        ) : detail ? (
           <Card className="border-slate-800 bg-slate-900">
             <CardHeader>
               <CardTitle className="text-base">{detail.user.name}</CardTitle>
               <p className="text-sm text-slate-400">{detail.user.email}</p>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 text-sm">
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-400">Nombre</label>
+                <Input
+                  className="border-slate-700 bg-slate-950"
+                  value={nameEdit}
+                  onChange={(e) => setNameEdit(e.target.value)}
+                />
+                <label className="text-slate-400">Email</label>
+                <Input
+                  type="email"
+                  className="border-slate-700 bg-slate-950"
+                  value={emailEdit}
+                  onChange={(e) => setEmailEdit(e.target.value)}
+                />
+                <Button size="sm" variant="outline" onClick={saveProfile}>
+                  Guardar datos
+                </Button>
+              </div>
+
               <div className="flex items-end gap-2">
                 <div className="flex flex-col gap-1">
                   <label className="text-slate-400">Puntos totales</label>
@@ -186,7 +304,7 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <Button size="sm" onClick={savePoints}>
-                  Guardar
+                  Guardar pts
                 </Button>
               </div>
 
@@ -203,7 +321,12 @@ export default function AdminUsersPage() {
                     onChange={(e) => setPasswordEdit(e.target.value)}
                   />
                 </div>
-                <Button size="sm" variant="outline" onClick={savePassword} disabled={passwordEdit.length < 8}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={savePassword}
+                  disabled={passwordEdit.length < 8}
+                >
                   Cambiar clave
                 </Button>
               </div>
@@ -235,13 +358,18 @@ export default function AdminUsersPage() {
                 </ul>
               </div>
 
-              <Button variant="outline" size="sm" className="text-red-400" onClick={() => deleteUser(detail.user.id)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-400"
+                onClick={() => deleteUser(detail.user.id)}
+              >
                 Eliminar usuario
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <p className="text-sm text-slate-500">Seleccioná un usuario para ver detalle.</p>
+          <p className="text-sm text-slate-500">Seleccioná un usuario o creá uno nuevo.</p>
         )}
       </div>
     </div>

@@ -174,6 +174,21 @@ export default function AdminGroupsPage() {
     }
   }
 
+  async function changeMemberRole(userId, role) {
+    if (!selectedId) return;
+    setActionLoading(`role-${userId}`);
+    setMessage('');
+    try {
+      await adminApi.updateGroupMemberRole(selectedId, userId, role);
+      setMessage('Rol actualizado');
+      await loadGroupDetail(selectedId);
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setActionLoading('');
+    }
+  }
+
   async function approveRequest(userId) {
     if (!selectedId) return;
     setActionLoading(`approve-${userId}`);
@@ -416,21 +431,29 @@ export default function AdminGroupsPage() {
                       >
                         <span>
                           {m.name} · {m.email}
-                          {m.role === 'owner' ? (
-                            <span className="ml-1 text-xs text-emerald-400">(admin)</span>
-                          ) : null}
                         </span>
-                        {m.role !== 'owner' ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-400"
-                            disabled={actionLoading === `remove-${m.id}`}
-                            onClick={() => removeMember(m.id, m.name)}
+                        <div className="flex items-center gap-1">
+                          <select
+                            value={m.role}
+                            onChange={(e) => changeMemberRole(m.id, e.target.value)}
+                            disabled={Boolean(actionLoading)}
+                            className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs"
                           >
-                            Expulsar
-                          </Button>
-                        ) : null}
+                            <option value="member">member</option>
+                            <option value="owner">owner</option>
+                          </select>
+                          {m.role !== 'owner' ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-400"
+                              disabled={actionLoading === `remove-${m.id}`}
+                              onClick={() => removeMember(m.id, m.name)}
+                            >
+                              Expulsar
+                            </Button>
+                          ) : null}
+                        </div>
                       </li>
                     ))}
                     {!members.length ? (

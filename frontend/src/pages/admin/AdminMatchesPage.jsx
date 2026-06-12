@@ -79,7 +79,7 @@ export default function AdminMatchesPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">Partidos</h2>
-          <p className="text-sm text-slate-400">Editar marcadores y recalcular puntos.</p>
+          <p className="text-sm text-slate-400">Editar marcadores, estado, grupo, jornada y fecha.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
@@ -135,14 +135,39 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
   const [homeScore, setHomeScore] = useState(String(match.homeScore ?? 0));
   const [awayScore, setAwayScore] = useState(String(match.awayScore ?? 0));
   const [status, setStatus] = useState(match.status);
+  const [group, setGroup] = useState(match.group ?? '');
+  const [matchday, setMatchday] = useState(match.matchday ?? '');
+  const [kickoffAt, setKickoffAt] = useState(
+    match.kickoffAt ? new Date(match.kickoffAt).toISOString().slice(0, 16) : ''
+  );
 
   return (
     <TableRow className="border-slate-800">
       <TableCell className="text-sm">
         {match.homeTeamId} vs {match.awayTeamId}
         <p className="text-xs text-slate-500">{match.externalId}</p>
+        <Input
+          className="mt-1 h-7 border-slate-700 bg-slate-950 text-xs"
+          placeholder="Fecha (ISO local)"
+          type="datetime-local"
+          value={kickoffAt}
+          onChange={(e) => setKickoffAt(e.target.value)}
+        />
       </TableCell>
-      <TableCell>{match.group || '—'}</TableCell>
+      <TableCell>
+        <Input
+          className="mb-1 h-8 w-16 border-slate-700 bg-slate-950 text-sm"
+          placeholder="Grupo"
+          value={group}
+          onChange={(e) => setGroup(e.target.value)}
+        />
+        <Input
+          className="h-8 w-20 border-slate-700 bg-slate-950 text-xs"
+          placeholder="Jornada"
+          value={matchday}
+          onChange={(e) => setMatchday(e.target.value)}
+        />
+      </TableCell>
       <TableCell>
         <select
           value={status}
@@ -180,6 +205,9 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
                 homeScore: Number(homeScore),
                 awayScore: Number(awayScore),
                 status,
+                group: group.trim() || null,
+                matchday: matchday.trim() || null,
+                kickoffAt: kickoffAt ? new Date(kickoffAt).toISOString() : null,
               })
             }
           >

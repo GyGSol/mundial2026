@@ -20,6 +20,7 @@ import {
   updateCompetitionGroup,
 } from './competitionGroupService.js';
 import { recalculateMatchScores } from './syncService.js';
+import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { revokeAllUserSessions } from './sessionService.js';
 import { env } from '../config/env.js';
 import { isAdminConfigured } from './adminSetupService.js';
@@ -235,6 +236,86 @@ export async function updateAdminUserPassword(userId, password) {
   return serializeUser(user.toObject());
 }
 
+export async function updateAdminUserProfile(userId, { name, email }) {
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error('Usuario no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  if (name !== undefined) {
+    const trimmedName = String(name).trim();
+    if (!trimmedName) {
+      const error = new Error('El nombre es obligatorio');
+      error.status = 400;
+      throw error;
+    }
+    if (trimmedName.length > 80) {
+      const error = new Error('El nombre no puede superar 80 caracteres');
+      error.status = 400;
+      throw error;
+    }
+    user.name = trimmedName;
+  }
+
+  if (email !== undefined) {
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!normalizedEmail) {
+      const error = new Error('El email es obligatorio');
+      error.status = 400;
+      throw error;
+    }
+    const duplicate = await User.findOne({
+      email: normalizedEmail,
+      _id: { $ne: user._id },
+    });
+    if (duplicate) {
+      const error = new Error('Ya existe un usuario con ese email');
+      error.status = 409;
+      throw error;
+    }
+    user.email = normalizedEmail;
+  }
+
+  await user.save();
+  return serializeUser(user.toObject());
+}
+
+export async function createAdminUser({ name, email, password, totalPoints = 0 }) {
+  const trimmedName = String(name ?? '').trim();
+  const normalizedEmail = String(email ?? '').trim().toLowerCase();
+  const plainPassword = String(password ?? '');
+
+  if (!trimmedName || !normalizedEmail || !plainPassword) {
+    const error = new Error('Nombre, email y contraseña son obligatorios');
+    error.status = 400;
+    throw error;
+  }
+  if (plainPassword.length < MIN_USER_PASSWORD_LENGTH) {
+    const error = new Error(`La contraseña debe tener al menos ${MIN_USER_PASSWORD_LENGTH} caracteres`);
+    error.status = 400;
+    throw error;
+  }
+
+  const existing = await User.findOne({ email: normalizedEmail });
+  if (existing) {
+    const error = new Error('Ya existe un usuario con ese email');
+    error.status = 409;
+    throw error;
+  }
+
+  const points = Number(totalPoints);
+  const user = await User.create({
+    name: trimmedName,
+    email: normalizedEmail,
+    passwordHash: await bcrypt.hash(plainPassword, 10),
+    totalPoints: Number.isFinite(points) && points >= 0 ? Math.floor(points) : 0,
+  });
+
+  return serializeUser(user.toObject());
+}
+
 export async function deleteAdminUser(userId) {
   const user = await User.findById(userId);
   if (!user) {
@@ -352,6 +433,37 @@ export async function removeAdminGroupMember({ groupId, userId }) {
   });
 }
 
+export async function updateAdminGroupMemberRole({ groupId, userId, role }) {
+  if (!['member', 'owner'].includes(role)) {
+    const error = new Error('role debe ser member u owner');
+    error.status = 400;
+    throw error;
+  }
+
+  const membership = await UserGroupMembership.findOne({
+    groupId: new mongoose.Types.ObjectId(groupId),
+    userId: new mongoose.Types.ObjectId(userId),
+  });
+  if (!membership) {
+    const error = new Error('Membresía no encontrada');
+    error.status = 404;
+    throw error;
+  }
+
+  membership.role = role;
+  await membership.save();
+
+  if (role === 'owner') {
+    await CompetitionGroup.findByIdAndUpdate(groupId, { createdBy: userId });
+  }
+
+  return {
+    userId: membership.userId.toString(),
+    groupId: membership.groupId.toString(),
+    role: membership.role,
+  };
+}
+
 export async function listAdminGroupJoinRequests(groupId) {
   return listGroupJoinRequests({
     groupId,
@@ -387,7 +499,7 @@ export async function listAdminMatches({ status, group } = {}) {
   return matches.map(serializeMatch);
 }
 
-export async function updateAdminMatch(matchId, { homeScore, awayScore, status }) {
+export async function updateAdminMatch(matchId, { homeScore, awayScore, status, group, matchday, kickoffAt }) {
   const match = await Match.findById(matchId);
   if (!match) {
     const error = new Error('Partido no encontrado');
@@ -404,6 +516,21 @@ export async function updateAdminMatch(matchId, { homeScore, awayScore, status }
       throw error;
     }
     match.status = status;
+  }
+  if (group !== undefined) match.group = group ? String(group).trim() : null;
+  if (matchday !== undefined) match.matchday = matchday ? String(matchday).trim() : null;
+  if (kickoffAt !== undefined) {
+    if (kickoffAt === null || kickoffAt === '') {
+      match.kickoffAt = null;
+    } else {
+      const parsed = new Date(kickoffAt);
+      if (Number.isNaN(parsed.getTime())) {
+        const error = new Error('kickoffAt inválido');
+        error.status = 400;
+        throw error;
+      }
+      match.kickoffAt = parsed;
+    }
   }
 
   await match.save();
@@ -512,6 +639,199 @@ export async function listAdminPredictions({ userId } = {}) {
   });
 
   return rows;
+}
+
+async function serializeAdminPredictionRow(prediction) {
+  const populated = await Prediction.findById(prediction._id ?? prediction.id)
+    .populate('userId', 'name email')
+    .populate(
+      'matchId',
+      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt externalId'
+    )
+    .lean();
+
+  if (!populated) return null;
+
+  const teamIds = new Set();
+  if (populated.matchId?.homeTeamId) teamIds.add(populated.matchId.homeTeamId);
+  if (populated.matchId?.awayTeamId) teamIds.add(populated.matchId.awayTeamId);
+
+  const teams = teamIds.size
+    ? await Team.find({ externalId: { $in: [...teamIds] } }).lean()
+    : [];
+  const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
+
+  const match = populated.matchId;
+  const homeTeam = match ? teamMap[match.homeTeamId] : null;
+  const awayTeam = match ? teamMap[match.awayTeamId] : null;
+
+  return {
+    id: populated._id.toString(),
+    userId: populated.userId?._id?.toString(),
+    userName: populated.userId?.name,
+    userEmail: populated.userId?.email,
+    matchId: match?._id?.toString(),
+    homeGoals: populated.homeGoals,
+    awayGoals: populated.awayGoals,
+    pointsEarned: populated.pointsEarned,
+    bonusPoint: populated.bonusPoint ?? 0,
+    updatedAt: populated.updatedAt,
+    match: match
+      ? {
+          externalId: match.externalId,
+          homeTeamId: match.homeTeamId,
+          awayTeamId: match.awayTeamId,
+          status: match.status,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+          group: match.group,
+          kickoffAt: match.kickoffAt,
+          label: `${teamLabel(homeTeam, match.homeTeamId)} vs ${teamLabel(awayTeam, match.awayTeamId)}`,
+        }
+      : null,
+  };
+}
+
+export async function createAdminPrediction({ userId, matchId, homeGoals, awayGoals }) {
+  if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(matchId)) {
+    const error = new Error('userId o matchId inválido');
+    error.status = 400;
+    throw error;
+  }
+
+  const home = Number(homeGoals);
+  const away = Number(awayGoals);
+  if (!Number.isFinite(home) || !Number.isFinite(away) || home < 0 || away < 0) {
+    const error = new Error('homeGoals y awayGoals deben ser números >= 0');
+    error.status = 400;
+    throw error;
+  }
+
+  const [user, match] = await Promise.all([
+    User.findById(userId),
+    Match.findById(matchId),
+  ]);
+  if (!user) {
+    const error = new Error('Usuario no encontrado');
+    error.status = 404;
+    throw error;
+  }
+  if (!match) {
+    const error = new Error('Partido no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const existing = await Prediction.findOne({ userId, matchId });
+  if (existing) {
+    const error = new Error('Ese usuario ya tiene predicción para ese partido');
+    error.status = 409;
+    throw error;
+  }
+
+  const prediction = await Prediction.create({
+    userId,
+    matchId,
+    homeGoals: Math.floor(home),
+    awayGoals: Math.floor(away),
+    userSubmitted: true,
+    pointsEarned: null,
+  });
+
+  if (match.status === 'finished' || match.status === 'live') {
+    await recalculateMatchScores(match._id);
+  }
+
+  return serializeAdminPredictionRow(prediction);
+}
+
+export async function updateAdminPrediction(
+  predictionId,
+  { homeGoals, awayGoals, pointsEarned, bonusPoint }
+) {
+  const prediction = await Prediction.findById(predictionId);
+  if (!prediction) {
+    const error = new Error('Predicción no encontrada');
+    error.status = 404;
+    throw error;
+  }
+
+  let goalsChanged = false;
+  let pointsManual = false;
+
+  if (homeGoals !== undefined) {
+    const home = Number(homeGoals);
+    if (!Number.isFinite(home) || home < 0) {
+      const error = new Error('homeGoals debe ser un número >= 0');
+      error.status = 400;
+      throw error;
+    }
+    prediction.homeGoals = Math.floor(home);
+    goalsChanged = true;
+  }
+
+  if (awayGoals !== undefined) {
+    const away = Number(awayGoals);
+    if (!Number.isFinite(away) || away < 0) {
+      const error = new Error('awayGoals debe ser un número >= 0');
+      error.status = 400;
+      throw error;
+    }
+    prediction.awayGoals = Math.floor(away);
+    goalsChanged = true;
+  }
+
+  if (pointsEarned !== undefined) {
+    if (pointsEarned === null) {
+      prediction.pointsEarned = null;
+    } else {
+      const points = Number(pointsEarned);
+      if (!Number.isFinite(points) || points < 0) {
+        const error = new Error('pointsEarned debe ser un número >= 0 o null');
+        error.status = 400;
+        throw error;
+      }
+      prediction.pointsEarned = Math.floor(points);
+    }
+    pointsManual = true;
+  }
+
+  if (bonusPoint !== undefined) {
+    const bonus = Number(bonusPoint);
+    if (!Number.isFinite(bonus) || bonus < 0) {
+      const error = new Error('bonusPoint debe ser un número >= 0');
+      error.status = 400;
+      throw error;
+    }
+    prediction.bonusPoint = Math.floor(bonus);
+    pointsManual = true;
+  }
+
+  await prediction.save();
+
+  const match = await Match.findById(prediction.matchId);
+  if (goalsChanged && match && (match.status === 'finished' || match.status === 'live')) {
+    await recalculateMatchScores(match._id);
+  } else if (pointsManual) {
+    await recalculateUserTotalPoints(prediction.userId);
+  }
+
+  return serializeAdminPredictionRow(prediction);
+}
+
+export async function deleteAdminPrediction(predictionId) {
+  const prediction = await Prediction.findById(predictionId);
+  if (!prediction) {
+    const error = new Error('Predicción no encontrada');
+    error.status = 404;
+    throw error;
+  }
+
+  const userId = prediction.userId;
+  await prediction.deleteOne();
+  await recalculateUserTotalPoints(userId);
+
+  return { deleted: true, id: predictionId };
 }
 
 export async function getAdminSyncStatus() {

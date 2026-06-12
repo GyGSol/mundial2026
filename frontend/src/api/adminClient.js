@@ -93,11 +93,22 @@ export const adminApi = {
   stats: () => adminRequest('/stats'),
   syncStatus: () => adminRequest('/sync'),
   runSync: () => adminRequest('/sync/run', { method: 'POST' }),
+  runPlayerSync: () => adminRequest('/sync/players', { method: 'POST' }),
   listUsers: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return adminRequest(`/users${query ? `?${query}` : ''}`);
   },
   getUser: (id) => adminRequest(`/users/${id}`),
+  createUser: (body) =>
+    adminRequest('/users', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  updateUser: (id, body) =>
+    adminRequest(`/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
   updateUserPoints: (id, totalPoints) =>
     adminRequest(`/users/${id}`, {
       method: 'PATCH',
@@ -129,6 +140,11 @@ export const adminApi = {
     }),
   removeGroupMember: (groupId, userId) =>
     adminRequest(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' }),
+  updateGroupMemberRole: (groupId, userId, role) =>
+    adminRequest(`/groups/${groupId}/members/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    }),
   listJoinRequests: (id) => adminRequest(`/groups/${id}/join-requests`),
   approveJoinRequest: (groupId, userId) =>
     adminRequest(`/groups/${groupId}/join-requests/${userId}/approve`, {
@@ -156,6 +172,17 @@ export const adminApi = {
     const query = new URLSearchParams(params).toString();
     return adminRequest(`/predictions${query ? `?${query}` : ''}`);
   },
+  createPrediction: (body) =>
+    adminRequest('/predictions', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  updatePrediction: (id, body) =>
+    adminRequest(`/predictions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  deletePrediction: (id) => adminRequest(`/predictions/${id}`, { method: 'DELETE' }),
 };
 
 export const adminSimulationApi = {
