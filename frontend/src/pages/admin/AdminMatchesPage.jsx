@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import AdminCard from '../../components/admin/AdminCard.jsx';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
+import { ADMIN_BANNERS, adminInput, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
@@ -75,35 +78,33 @@ export default function AdminMatchesPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">Partidos</h2>
-          <p className="text-sm text-slate-400">Editar marcadores, estado, grupo, jornada y fecha.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-40 border-slate-700 bg-slate-950">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="upcoming">Próximos</SelectItem>
-              <SelectItem value="live">En vivo</SelectItem>
-              <SelectItem value="finished">Finalizados</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" onClick={recalculateAll} disabled={busyId === 'all'}>
-            Recalcular todos (finished)
-          </Button>
-        </div>
-      </div>
+    <div className={adminPage}>
+      <AdminPageHeader
+        title="Partidos"
+        description="Editar marcadores, estado, grupo, jornada y fecha."
+      >
+        <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
+          <SelectTrigger className={`w-40 ${adminInput}`}>
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="upcoming">Próximos</SelectItem>
+            <SelectItem value="live">En vivo</SelectItem>
+            <SelectItem value="finished">Finalizados</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline" size="sm" onClick={recalculateAll} disabled={busyId === 'all'}>
+          Recalcular todos (finished)
+        </Button>
+      </AdminPageHeader>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
-      {loading && !matches.length ? <p className="text-sm text-slate-400">Cargando…</p> : null}
+      {loading && !matches.length ? <p className={adminMuted}>Cargando…</p> : null}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-800">
+      <AdminCard banner={ADMIN_BANNERS.matches} flush contentClassName="p-0">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-slate-800 hover:bg-transparent">
@@ -126,7 +127,8 @@ export default function AdminMatchesPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+        </div>
+      </AdminCard>
     </div>
   );
 }
@@ -147,7 +149,7 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
         {match.homeTeamId} vs {match.awayTeamId}
         <p className="text-xs text-slate-500">{match.externalId}</p>
         <Input
-          className="mt-1 h-7 border-slate-700 bg-slate-950 text-xs"
+          className={`mt-1 h-7 text-xs ${adminInput}`}
           placeholder="Fecha (ISO local)"
           type="datetime-local"
           value={kickoffAt}
@@ -156,13 +158,13 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
       </TableCell>
       <TableCell>
         <Input
-          className="mb-1 h-8 w-16 border-slate-700 bg-slate-950 text-sm"
+          className={`mb-1 h-8 w-16 text-sm ${adminInput}`}
           placeholder="Grupo"
           value={group}
           onChange={(e) => setGroup(e.target.value)}
         />
         <Input
-          className="h-8 w-20 border-slate-700 bg-slate-950 text-xs"
+          className={`h-8 w-20 text-xs ${adminInput}`}
           placeholder="Jornada"
           value={matchday}
           onChange={(e) => setMatchday(e.target.value)}
@@ -172,7 +174,7 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm"
+          className={`rounded border px-2 py-1 text-sm ${adminInput}`}
         >
           <option value="upcoming">upcoming</option>
           <option value="live">live</option>
@@ -182,13 +184,13 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
       <TableCell>
         <div className="flex items-center gap-1">
           <Input
-            className="h-8 w-14 border-slate-700 bg-slate-950 tabular-nums"
+            className={`h-8 w-14 tabular-nums ${adminInput}`}
             value={homeScore}
             onChange={(e) => setHomeScore(e.target.value)}
           />
           <span>-</span>
           <Input
-            className="h-8 w-14 border-slate-700 bg-slate-950 tabular-nums"
+            className={`h-8 w-14 tabular-nums ${adminInput}`}
             value={awayScore}
             onChange={(e) => setAwayScore(e.target.value)}
           />

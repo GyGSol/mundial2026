@@ -12,7 +12,7 @@ export default function AdminBrand({
     <div className={cn('flex items-center gap-3', className)}>
       <div
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/35',
+          'flex shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/35',
           compact ? 'size-9' : 'size-10'
         )}
         aria-hidden
@@ -20,7 +20,7 @@ export default function AdminBrand({
         <ShieldCheck className={compact ? 'size-4' : 'size-5'} strokeWidth={2.25} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs uppercase tracking-wide text-blue-400/90">{subtitle}</p>
+        <p className="text-xs uppercase tracking-wide text-amber-400/90">{subtitle}</p>
         <p
           className={cn(
             'font-semibold text-slate-100',

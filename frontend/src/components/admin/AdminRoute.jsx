@@ -17,7 +17,7 @@ export default function AdminRoute() {
 
   if (!setupChecked || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-300">
+      <div className="admin-theme admin-mesh flex min-h-screen items-center justify-center text-slate-300">
         Cargando panel…
       </div>
     );

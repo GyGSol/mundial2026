@@ -1,6 +1,14 @@
 import { useCallback, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import AdminCard from '../../components/admin/AdminCard.jsx';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
+import {
+  ADMIN_BANNERS,
+  adminInput,
+  adminMuted,
+  adminPage,
+} from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
@@ -11,8 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-
 function normalizePrizeRows(count, existing = []) {
   const safeCount = Math.max(0, Math.min(Number(count || 0), 10));
   const byPos = Object.fromEntries(
@@ -219,14 +225,11 @@ export default function AdminGroupsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-xl font-semibold">Grupos de competencia</h2>
-          <p className="text-sm text-slate-400">
-            Crear, editar, ingresar o expulsar jugadores y gestionar solicitudes.
-          </p>
-        </div>
+    <div className={adminPage}>
+      <AdminPageHeader
+        title="Grupos de competencia"
+        description="Crear, editar, ingresar o expulsar jugadores y gestionar solicitudes."
+      >
         <Button
           size="sm"
           onClick={() => {
@@ -239,12 +242,13 @@ export default function AdminGroupsPage() {
         >
           Crear grupo
         </Button>
-      </div>
+      </AdminPageHeader>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
-      {loading && !groups.length ? <p className="text-sm text-slate-400">Cargando…</p> : null}
+      {loading && !groups.length ? <p className={adminMuted}>Cargando…</p> : null}
 
+      <AdminCard banner={ADMIN_BANNERS.groups} flush contentClassName="p-4">
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="overflow-x-auto rounded-lg border border-slate-800">
           <Table>
@@ -287,30 +291,29 @@ export default function AdminGroupsPage() {
           </Table>
         </div>
 
-        <Card className="border-slate-800 bg-slate-900">
-          <CardHeader>
-            <CardTitle className="text-base">
-              {showCreate
-                ? 'Nuevo grupo'
-                : selectedGroup
-                  ? `Editar: ${selectedGroup.name}`
-                  : 'Detalle del grupo'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+        <AdminCard
+          title={
+            showCreate
+              ? 'Nuevo grupo'
+              : selectedGroup
+                ? `Editar: ${selectedGroup.name}`
+                : 'Detalle del grupo'
+          }
+        >
+          <div className="flex flex-col gap-4">
             {showCreate || selectedId ? (
               <>
                 <Input
                   placeholder="Nombre"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="border-slate-700 bg-slate-950"
+                  className={adminInput}
                 />
                 <Input
                   placeholder="Descripción"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  className="border-slate-700 bg-slate-950"
+                  className={adminInput}
                 />
                 <Input
                   type="number"
@@ -326,7 +329,7 @@ export default function AdminGroupsPage() {
                       prizes: normalizePrizeRows(count, f.prizes),
                     }));
                   }}
-                  className="border-slate-700 bg-slate-950"
+                  className={adminInput}
                 />
                 {form.prizesWinnersCount > 0
                   ? form.prizes.map((row) => (
@@ -344,7 +347,7 @@ export default function AdminGroupsPage() {
                             ),
                           }))
                         }
-                        className="border-slate-700 bg-slate-950"
+                        className={adminInput}
                       />
                     ))
                   : null}
@@ -408,7 +411,7 @@ export default function AdminGroupsPage() {
                       placeholder="Email del usuario"
                       value={addMemberEmail}
                       onChange={(e) => setAddMemberEmail(e.target.value)}
-                      className="border-slate-700 bg-slate-950"
+                      className={adminInput}
                     />
                     <Button
                       size="sm"
@@ -437,7 +440,7 @@ export default function AdminGroupsPage() {
                             value={m.role}
                             onChange={(e) => changeMemberRole(m.id, e.target.value)}
                             disabled={Boolean(actionLoading)}
-                            className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs"
+                            className={`rounded border px-2 py-1 text-xs ${adminInput}`}
                           >
                             <option value="member">member</option>
                             <option value="owner">owner</option>
@@ -463,9 +466,10 @@ export default function AdminGroupsPage() {
                 </div>
               </>
             ) : null}
-          </CardContent>
-        </Card>
+          </div>
+        </AdminCard>
       </div>
+      </AdminCard>
     </div>
   );
 }

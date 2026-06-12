@@ -1,6 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import AdminCard from '../../components/admin/AdminCard.jsx';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
+import {
+  ADMIN_BANNERS,
+  adminInput,
+  adminMuted,
+  adminPage,
+} from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
@@ -18,7 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { formatMatchDate } from '@/lib/dateFormat';
 
 const statusLabels = {
@@ -117,24 +124,21 @@ export default function AdminPredictionsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-xl font-semibold">Predicciones</h2>
-          <p className="text-sm text-slate-400">
-            Ver, crear, editar marcadores predichos, puntos y eliminar predicciones.
-          </p>
-        </div>
+    <div className={adminPage}>
+      <AdminPageHeader
+        title="Predicciones"
+        description="Ver, crear, editar marcadores predichos, puntos y eliminar predicciones."
+      >
         <Button size="sm" onClick={() => setShowCreate((v) => !v)}>
           {showCreate ? 'Cancelar' : 'Nueva predicción'}
         </Button>
-      </div>
+      </AdminPageHeader>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs text-slate-400">Usuario</label>
           <Select value={userFilter} onValueChange={setUserFilter}>
-            <SelectTrigger className="w-72 border-slate-700 bg-slate-950">
+            <SelectTrigger className={`w-72 ${adminInput}`}>
               <SelectValue placeholder="Todos los usuarios" />
             </SelectTrigger>
             <SelectContent>
@@ -155,16 +159,13 @@ export default function AdminPredictionsPage() {
       </div>
 
       {showCreate ? (
-        <Card className="border-slate-800 bg-slate-900">
-          <CardHeader>
-            <CardTitle className="text-base">Crear predicción</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminCard title="Crear predicción">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Select
               value={createForm.userId}
               onValueChange={(v) => setCreateForm((f) => ({ ...f, userId: v }))}
             >
-              <SelectTrigger className="border-slate-700 bg-slate-950">
+              <SelectTrigger className={adminInput}>
                 <SelectValue placeholder="Usuario" />
               </SelectTrigger>
               <SelectContent>
@@ -179,7 +180,7 @@ export default function AdminPredictionsPage() {
               value={createForm.matchId}
               onValueChange={(v) => setCreateForm((f) => ({ ...f, matchId: v }))}
             >
-              <SelectTrigger className="border-slate-700 bg-slate-950">
+              <SelectTrigger className={adminInput}>
                 <SelectValue placeholder="Partido" />
               </SelectTrigger>
               <SelectContent>
@@ -197,7 +198,7 @@ export default function AdminPredictionsPage() {
               placeholder="Goles local"
               value={createForm.homeGoals}
               onChange={(e) => setCreateForm((f) => ({ ...f, homeGoals: e.target.value }))}
-              className="border-slate-700 bg-slate-950"
+              className={adminInput}
             />
             <Input
               type="number"
@@ -205,19 +206,20 @@ export default function AdminPredictionsPage() {
               placeholder="Goles visitante"
               value={createForm.awayGoals}
               onChange={(e) => setCreateForm((f) => ({ ...f, awayGoals: e.target.value }))}
-              className="border-slate-700 bg-slate-950"
+              className={adminInput}
             />
             <Button size="sm" className="sm:col-span-2 lg:col-span-4" onClick={createPrediction}>
               Crear
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </AdminCard>
       ) : null}
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-800">
+      <AdminCard banner={ADMIN_BANNERS.predictions} flush contentClassName="p-0">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-slate-800">
@@ -244,6 +246,7 @@ export default function AdminPredictionsPage() {
           <p className="p-4 text-sm text-slate-500">Sin predicciones cargadas.</p>
         ) : null}
       </div>
+      </AdminCard>
     </div>
   );
 }
@@ -279,13 +282,13 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
       <TableCell>
         <div className="flex items-center gap-1">
           <Input
-            className="h-8 w-14 border-slate-700 bg-slate-950 tabular-nums"
+            className={`h-8 w-14 tabular-nums ${adminInput}`}
             value={homeGoals}
             onChange={(e) => setHomeGoals(e.target.value)}
           />
           <span>-</span>
           <Input
-            className="h-8 w-14 border-slate-700 bg-slate-950 tabular-nums"
+            className={`h-8 w-14 tabular-nums ${adminInput}`}
             value={awayGoals}
             onChange={(e) => setAwayGoals(e.target.value)}
           />
@@ -294,14 +297,14 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
       <TableCell>
         <div className="flex items-center gap-1">
           <Input
-            className="h-8 w-14 border-slate-700 bg-slate-950 tabular-nums"
+            className={`h-8 w-14 tabular-nums ${adminInput}`}
             placeholder="Pts"
             value={pointsEarned}
             onChange={(e) => setPointsEarned(e.target.value)}
           />
           <span className="text-slate-500">+</span>
           <Input
-            className="h-8 w-12 border-slate-700 bg-slate-950 tabular-nums"
+            className={`h-8 w-12 tabular-nums ${adminInput}`}
             placeholder="B"
             value={bonusPoint}
             onChange={(e) => setBonusPoint(e.target.value)}

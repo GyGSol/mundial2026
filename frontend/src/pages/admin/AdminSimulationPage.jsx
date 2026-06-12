@@ -2,10 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { adminSimulationApi } from '../../api/adminClient.js';
 import LeaderboardTable from '../../components/LeaderboardTable.jsx';
 import MatchPredictionRankingsTable from '../../components/MatchPredictionRankingsTable.jsx';
+import AdminCard from '../../components/admin/AdminCard.jsx';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
+import {
+  ADMIN_BANNERS,
+  adminCard,
+  adminHighlight,
+  adminMuted,
+  adminPage,
+} from '../../components/admin/adminTheme.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import {
   Table,
   TableBody,
@@ -43,10 +51,10 @@ function MatchPreview({ match, highlight = false }) {
     <div
       className={cn(
         'flex flex-col gap-2 rounded-lg border px-4 py-3',
-        highlight ? 'border-emerald-400/70 bg-emerald-50/80' : 'border-border bg-card'
+        highlight ? adminHighlight : `${adminCard} border-slate-800`
       )}
     >
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <div className={`flex flex-wrap items-center gap-2 text-xs ${adminMuted}`}>
         {match.type && match.type !== 'group' && <Badge variant="outline">{match.type}</Badge>}
         {match.crossover && <span>Cruce: {match.crossover}</span>}
         {formatMatchDate(match) && <span>{formatMatchDate(match)}</span>}
@@ -77,13 +85,13 @@ function TeamLine({ team, align = 'left' }) {
   return (
     <div className={cn('flex min-w-[140px] items-center gap-2', align === 'right' && 'flex-row-reverse')}>
       {flagUrl ? (
-        <img src={flagUrl} alt="" className="size-8 rounded-sm border border-border/60 object-cover" />
+        <img src={flagUrl} alt="" className="size-8 rounded-sm border border-slate-700 object-cover" />
       ) : (
         <span className="text-xl">{team?.flag || '🏳️'}</span>
       )}
       <div className={cn('flex flex-col', align === 'right' && 'items-end')}>
         <span className="font-medium">{team?.nameEn || '—'}</span>
-        {team?.fifaCode && <span className="text-xs text-muted-foreground">{team.fifaCode}</span>}
+        {team?.fifaCode && <span className={`text-xs ${adminMuted}`}>{team.fifaCode}</span>}
       </div>
     </div>
   );
@@ -216,22 +224,16 @@ export default function AdminSimulationPage() {
   const progress = Math.round((data?.finishedCount / progressDenominator) * 100);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Simulación en vivo</h1>
-          <p className="text-sm text-muted-foreground">
-            Simulá el mundial completo (72 grupos + 32 eliminatorias) o una demo rápida con 10 jugadores.
-            {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
-          </p>
-        </div>
-      </div>
+    <div className={adminPage}>
+      <AdminPageHeader
+        title="Simulación en vivo"
+        description={`Simulá el mundial completo (72 grupos + 32 eliminatorias) o una demo rápida con 10 jugadores.${
+          lastUpdated ? ` · Actualizado ${formatLastUpdated(lastUpdated)}` : ''
+        }`}
+      />
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Controles</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
+      <AdminCard banner={ADMIN_BANNERS.simulation} title="Controles">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => handleSetup('full')} disabled={busy || autoRunning}>
             Mundial completo
           </Button>
@@ -251,14 +253,14 @@ export default function AdminSimulationPage() {
           <Button variant="ghost" onClick={handleReset} disabled={busy || autoRunning}>
             Reiniciar
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </AdminCard>
 
       {(loading || error || actionError) && (
         <div className="text-sm">
-          {loading && <p className="text-muted-foreground">Cargando simulación...</p>}
-          {error && <p className="text-destructive">{error}</p>}
-          {actionError && <p className="text-destructive">{actionError}</p>}
+          {loading && <p className={adminMuted}>Cargando simulación...</p>}
+          {error && <p className="text-red-400">{error}</p>}
+          {actionError && <p className="text-red-400">{actionError}</p>}
         </div>
       )}
 
@@ -268,7 +270,7 @@ export default function AdminSimulationPage() {
             <Button
               size="sm"
               variant={activeTab === 'summary' ? 'default' : 'outline'}
-              className={cn(activeTab !== 'summary' && 'text-muted-foreground')}
+              className={cn(activeTab !== 'summary' && 'text-slate-400')}
               onClick={() => setActiveTab('summary')}
             >
               Resumen
@@ -276,7 +278,7 @@ export default function AdminSimulationPage() {
             <Button
               size="sm"
               variant={activeTab === 'matches' ? 'default' : 'outline'}
-              className={cn(activeTab !== 'matches' && 'text-muted-foreground')}
+              className={cn(activeTab !== 'matches' && 'text-slate-400')}
               onClick={() => setActiveTab('matches')}
             >
               Partidos
@@ -285,19 +287,20 @@ export default function AdminSimulationPage() {
 
           {activeTab === 'summary' && (
             <>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
+          <AdminCard
+            header={
+              <div className="flex flex-wrap items-center justify-between gap-2 text-base font-semibold">
                 <span>{data.group?.name}</span>
                 <div className="flex flex-wrap items-center gap-2 text-sm font-normal">
                   <Badge>{phaseLabels[data.phase] || data.phase}</Badge>
-                  {data.currentKnockoutLabel && (
+                  {data.currentKnockoutLabel ? (
                     <Badge variant="outline">{data.currentKnockoutLabel}</Badge>
-                  )}
+                  ) : null}
                 </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+              </div>
+            }
+          >
+            <div className="flex flex-col gap-4">
               <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
                 <StatPill
                   label="Jugadores"
@@ -322,13 +325,13 @@ export default function AdminSimulationPage() {
               </div>
 
               <div>
-                <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                <div className={`mb-2 flex items-center justify-between text-xs ${adminMuted}`}>
                   <span>
                     Progreso total · {data.finishedCount}/{progressDenominator} partidos
                   </span>
                   <span>{progress}%</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div className="h-2 overflow-hidden rounded-full bg-slate-800">
                   <div
                     className="h-full rounded-full bg-primary transition-all duration-500"
                     style={{ width: `${progress}%` }}
@@ -337,7 +340,7 @@ export default function AdminSimulationPage() {
               </div>
 
               {data.currentRoundProgress && (
-                <p className="text-sm text-muted-foreground">
+                <p className={adminMuted}>
                   Ronda actual: {data.currentRoundProgress.label} ·{' '}
                   {data.currentRoundProgress.finished}/{data.currentRoundProgress.total}
                 </p>
@@ -345,79 +348,64 @@ export default function AdminSimulationPage() {
 
               {data.isLive && data.liveMatch && (
                 <div className="flex flex-col gap-2">
-                  <p className="text-sm font-medium text-emerald-700">Partido en curso</p>
+                  <p className="text-sm font-medium text-amber-300">Partido en curso</p>
                   <MatchPreview match={data.liveMatch} highlight />
                 </div>
               )}
 
               {!data.isLive && data.nextMatch && data.remainingCount > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="text-sm text-muted-foreground">Próximo partido</p>
+                  <p className={adminMuted}>Próximo partido</p>
                   <MatchPreview match={data.nextMatch} />
                 </div>
               )}
 
               {data.phase === 'completed' && (
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-medium text-slate-100">
                   Simulación completa, incluida la final. Revisá la tabla final de predicciones.
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </AdminCard>
 
           {data.pendingCrossovers?.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Cruces de la ronda</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <AdminCard title="Cruces de la ronda">
                 <ul className="grid gap-2 sm:grid-cols-2">
                   {data.pendingCrossovers.map((crossover) => (
                     <li
                       key={`${crossover.round}-${crossover.crossover}`}
-                      className="rounded-md border border-border/70 px-3 py-2 text-sm"
+                      className="rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm"
                     >
                       {crossover.crossover}
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
+            </AdminCard>
           )}
 
           {data.groupsUsed?.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  Zonas del mundial ({data.groupsUsed.length} grupos A–L)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <AdminCard title={`Zonas del mundial (${data.groupsUsed.length} grupos A–L)`}>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {data.groupsUsed.map((zone) => (
                   <div
                     key={zone.group}
-                    className="rounded-md border border-border/70 px-3 py-2 text-sm"
+                    className="rounded-md border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm"
                   >
                     <p className="mb-1 font-medium">Zona {zone.group}</p>
-                    <ul className="flex flex-col gap-0.5 text-muted-foreground">
+                    <ul className={`flex flex-col gap-0.5 ${adminMuted}`}>
                       {zone.teams.map((team) => (
                         <li key={team.externalId}>{team.nameEn}</li>
                       ))}
                     </ul>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </AdminCard>
           )}
 
           {data.groupStandings?.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  Tablas de posiciones · {data.groupStandings.length} zonas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <AdminCard title={`Tablas de posiciones · ${data.groupStandings.length} zonas`}>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {data.groupStandings.map((group) => (
                   <div key={group.group}>
                     <p className="mb-2 text-sm font-medium">Grupo {group.group}</p>
@@ -439,12 +427,12 @@ export default function AdminSimulationPage() {
                     </Table>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </AdminCard>
           )}
 
           <div className="flex flex-col gap-3">
-            <h2 className="text-lg font-semibold">Ranking de predicciones (tiempo real)</h2>
+            <h2 className="text-lg font-semibold text-slate-100">Ranking de predicciones (tiempo real)</h2>
             <LeaderboardTable leaderboard={data.leaderboard} />
           </div>
             </>
@@ -452,7 +440,7 @@ export default function AdminSimulationPage() {
 
           {activeTab === 'matches' && (
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-muted-foreground">
+              <p className={adminMuted}>
                 {data.mode === 'full'
                   ? `Calendario completo: ${data.scheduledMatches?.length || 0} partidos cargados · ${data.finishedCount}/${data.totalPlannedMatches} jugados · 48 países en 12 grupos.`
                   : 'Tabla por partido: solo jugadores que sumaron puntos (sin mostrar predicciones).'}
@@ -461,8 +449,7 @@ export default function AdminSimulationPage() {
               {data.scheduledMatches?.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {[...data.scheduledMatches].reverse().map((match) => (
-                    <Card key={match.id}>
-                      <CardContent className="pt-4">
+                    <AdminCard key={match.id} contentClassName="pt-4">
                         <MatchWithRankings
                           match={match}
                           rankings={
@@ -473,12 +460,11 @@ export default function AdminSimulationPage() {
                           groupName={data.predictionGroup?.name || data.group?.name}
                           highlight={match.status === 'live'}
                         />
-                      </CardContent>
-                    </Card>
+                    </AdminCard>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className={adminMuted}>
                   Todavía no hay partidos programados. Usá Mundial completo o Auto-play.
                 </p>
               )}
@@ -488,10 +474,10 @@ export default function AdminSimulationPage() {
       )}
 
       {!loading && !data?.active && (
-        <p className="text-sm text-muted-foreground">
-          Usá <strong className="text-foreground">Mundial completo</strong> para simular 104 partidos:
+        <p className={adminMuted}>
+          Usá <strong className="text-slate-100">Mundial completo</strong> para simular 104 partidos:
           72 de grupos, cruces de dieciseisavos y toda la fase final. Con{' '}
-          <strong className="text-foreground">Auto-play</strong> ves cómo se mueve el ranking en vivo.
+          <strong className="text-slate-100">Auto-play</strong> ves cómo se mueve el ranking en vivo.
         </p>
       )}
     </div>
@@ -500,9 +486,9 @@ export default function AdminSimulationPage() {
 
 function StatPill({ label, value }) {
   return (
-    <div className="rounded-lg border border-border/70 bg-muted/20 px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold tabular-nums">{value}</p>
+    <div className="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
+      <p className={`text-xs ${adminMuted}`}>{label}</p>
+      <p className="text-lg font-semibold tabular-nums text-slate-100">{value}</p>
     </div>
   );
 }

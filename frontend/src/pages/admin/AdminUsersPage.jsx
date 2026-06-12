@@ -1,6 +1,15 @@
 import { useCallback, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import AdminCard from '../../components/admin/AdminCard.jsx';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
+import {
+  ADMIN_BANNERS,
+  adminInput,
+  adminLabel,
+  adminMuted,
+  adminPage,
+} from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
@@ -11,8 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-
 const emptyCreateForm = { name: '', email: '', password: '', totalPoints: '0' };
 
 export default function AdminUsersPage() {
@@ -137,14 +144,11 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h2 className="text-xl font-semibold">Usuarios</h2>
-          <p className="text-sm text-slate-400">
-            Crear, editar datos, puntos, contraseña o eliminar cuentas.
-          </p>
-        </div>
+    <div className={adminPage}>
+      <AdminPageHeader
+        title="Usuarios"
+        description="Crear, editar datos, puntos, contraseña o eliminar cuentas."
+      >
         <Button
           size="sm"
           onClick={() => {
@@ -156,7 +160,7 @@ export default function AdminUsersPage() {
         >
           Crear usuario
         </Button>
-      </div>
+      </AdminPageHeader>
 
       <form
         className="flex flex-wrap gap-2"
@@ -170,7 +174,7 @@ export default function AdminUsersPage() {
           placeholder="Buscar por nombre o email"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="max-w-sm border-slate-700 bg-slate-950"
+          className={`max-w-sm ${adminInput}`}
         />
         <Button type="submit" variant="outline" size="sm">
           Buscar
@@ -180,6 +184,7 @@ export default function AdminUsersPage() {
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
 
+      <AdminCard banner={ADMIN_BANNERS.users} flush contentClassName="p-4">
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="overflow-x-auto rounded-lg border border-slate-800">
           <Table>
@@ -204,7 +209,7 @@ export default function AdminUsersPage() {
               ))}
             </TableBody>
           </Table>
-          {loading ? <p className="p-3 text-sm text-slate-400">Cargando…</p> : null}
+          {loading ? <p className={`p-3 ${adminMuted}`}>Cargando…</p> : null}
           <div className="flex items-center justify-between border-t border-slate-800 p-2 text-sm">
             <Button
               variant="ghost"
@@ -229,23 +234,20 @@ export default function AdminUsersPage() {
         </div>
 
         {showCreate ? (
-          <Card className="border-slate-800 bg-slate-900">
-            <CardHeader>
-              <CardTitle className="text-base">Nuevo usuario</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 text-sm">
+          <AdminCard title="Nuevo usuario">
+            <div className="flex flex-col gap-3 text-sm">
               <Input
                 placeholder="Nombre"
                 value={createForm.name}
                 onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
-                className="border-slate-700 bg-slate-950"
+                className={adminInput}
               />
               <Input
                 type="email"
                 placeholder="Email"
                 value={createForm.email}
                 onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
-                className="border-slate-700 bg-slate-950"
+                className={adminInput}
               />
               <Input
                 type="password"
@@ -253,7 +255,7 @@ export default function AdminUsersPage() {
                 minLength={8}
                 value={createForm.password}
                 onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-                className="border-slate-700 bg-slate-950"
+                className={adminInput}
               />
               <Input
                 type="number"
@@ -261,31 +263,34 @@ export default function AdminUsersPage() {
                 placeholder="Puntos iniciales"
                 value={createForm.totalPoints}
                 onChange={(e) => setCreateForm((f) => ({ ...f, totalPoints: e.target.value }))}
-                className="border-slate-700 bg-slate-950"
+                className={adminInput}
               />
               <Button size="sm" onClick={createUser}>
                 Crear
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </AdminCard>
         ) : detail ? (
-          <Card className="border-slate-800 bg-slate-900">
-            <CardHeader>
-              <CardTitle className="text-base">{detail.user.name}</CardTitle>
-              <p className="text-sm text-slate-400">{detail.user.email}</p>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4 text-sm">
+          <AdminCard
+            header={
+              <div>
+                <h3 className="text-base font-semibold">{detail.user.name}</h3>
+                <p className={adminMuted}>{detail.user.email}</p>
+              </div>
+            }
+          >
+            <div className="flex flex-col gap-4 text-sm">
               <div className="flex flex-col gap-2">
-                <label className="text-slate-400">Nombre</label>
+                <label className={adminLabel}>Nombre</label>
                 <Input
-                  className="border-slate-700 bg-slate-950"
+                  className={adminInput}
                   value={nameEdit}
                   onChange={(e) => setNameEdit(e.target.value)}
                 />
-                <label className="text-slate-400">Email</label>
+                <label className={adminLabel}>Email</label>
                 <Input
                   type="email"
-                  className="border-slate-700 bg-slate-950"
+                  className={adminInput}
                   value={emailEdit}
                   onChange={(e) => setEmailEdit(e.target.value)}
                 />
@@ -296,9 +301,9 @@ export default function AdminUsersPage() {
 
               <div className="flex items-end gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-slate-400">Puntos totales</label>
+                  <label className={adminLabel}>Puntos totales</label>
                   <Input
-                    className="w-28 border-slate-700 bg-slate-950 tabular-nums"
+                    className={`w-28 tabular-nums ${adminInput}`}
                     value={pointsEdit}
                     onChange={(e) => setPointsEdit(e.target.value)}
                   />
@@ -310,13 +315,13 @@ export default function AdminUsersPage() {
 
               <div className="flex items-end gap-2">
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <label className="text-slate-400">Nueva contraseña</label>
+                  <label className={adminLabel}>Nueva contraseña</label>
                   <Input
                     type="password"
                     autoComplete="new-password"
                     placeholder="Mínimo 8 caracteres"
                     minLength={8}
-                    className="border-slate-700 bg-slate-950"
+                    className={adminInput}
                     value={passwordEdit}
                     onChange={(e) => setPasswordEdit(e.target.value)}
                   />
@@ -366,12 +371,13 @@ export default function AdminUsersPage() {
               >
                 Eliminar usuario
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </AdminCard>
         ) : (
           <p className="text-sm text-slate-500">Seleccioná un usuario o creá uno nuevo.</p>
         )}
       </div>
+      </AdminCard>
     </div>
   );
 }

@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import AdminCard from '../../components/admin/AdminCard.jsx';
+import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
+import { ADMIN_BANNERS, adminBadgeOutline, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
 
 export default function AdminSyncPage() {
@@ -49,20 +51,15 @@ export default function AdminSyncPage() {
     : 'Nunca';
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-xl font-semibold">Sincronización</h2>
-        <p className="text-sm text-slate-400">
-          Descarga partidos y metadatos desde {data?.worldCupApiUrl || 'worldcup26.ir'}.
-        </p>
-      </div>
+    <div className={adminPage}>
+      <AdminPageHeader
+        title="Sincronización"
+        description={`Descarga partidos y metadatos desde ${data?.worldCupApiUrl || 'worldcup26.ir'}.`}
+      />
 
-      <Card className="border-slate-800 bg-slate-900">
-        <CardHeader>
-          <CardTitle className="text-base">Estado</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 text-sm">
-          {loading && !data ? <p className="text-slate-400">Cargando…</p> : null}
+      <AdminCard banner={ADMIN_BANNERS.sync} title="Estado">
+        <div className="flex flex-col gap-3 text-sm">
+          {loading && !data ? <p className={adminMuted}>Cargando…</p> : null}
           {error ? <p className="text-red-400">{error}</p> : null}
           {data ? (
             <>
@@ -75,7 +72,7 @@ export default function AdminSyncPage() {
               </p>
               <div className="flex flex-wrap gap-2">
                 {data.syncCredentialsConfigured ? (
-                  <Badge>Credenciales configuradas</Badge>
+                  <Badge className={adminBadgeOutline}>Credenciales configuradas</Badge>
                 ) : (
                   <Badge variant="outline">Sin WORLD_CUP_SYNC_EMAIL/PASSWORD</Badge>
                 )}
@@ -87,14 +84,11 @@ export default function AdminSyncPage() {
               ) : null}
             </>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </AdminCard>
 
-      <Card className="border-slate-800 bg-slate-900">
-        <CardHeader>
-          <CardTitle className="text-base">Sync manual</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+      <AdminCard title="Sync manual">
+        <div className="flex flex-col gap-3">
           <Button onClick={handleRunSync} disabled={running}>
             {running ? 'Sincronizando…' : 'Ejecutar sync ahora'}
           </Button>
@@ -103,13 +97,13 @@ export default function AdminSyncPage() {
           </Button>
           {runError ? <p className="text-sm text-red-400">{runError}</p> : null}
           {runResult?.ok ? (
-            <p className="text-sm text-emerald-400">
+            <p className="text-sm text-amber-300">
               OK — {runResult.matchesCount} partidos, {runResult.teamsCount} equipos,{' '}
               {runResult.groupsCount} grupos FIFA, {runResult.stadiumsCount} estadios.
             </p>
           ) : null}
-        </CardContent>
-      </Card>
+        </div>
+      </AdminCard>
     </div>
   );
 }

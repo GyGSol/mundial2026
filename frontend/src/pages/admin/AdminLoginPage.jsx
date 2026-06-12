@@ -4,10 +4,11 @@ import { adminAuthApi } from '../../api/adminClient.js';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 import TechnicalDifficulties from '../../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../../lib/apiError.js';
+import AdminBrand from '../../components/admin/AdminBrand.jsx';
+import AdminCard from '../../components/admin/AdminCard.jsx';
+import { adminInput, adminLabel } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
-import AdminBrand from '../../components/admin/AdminBrand.jsx';
-import { Card, CardContent, CardHeader } from '@/components/ui/card.jsx';
 
 export default function AdminLoginPage() {
   const { login, isAuthenticated, loading } = useAdminAuth();
@@ -33,7 +34,7 @@ export default function AdminLoginPage() {
 
   if (!setupChecked || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-300">
+      <div className="admin-theme admin-mesh flex min-h-screen items-center justify-center text-slate-300">
         Cargando…
       </div>
     );
@@ -68,18 +69,16 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="admin-theme flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <Card className="w-full max-w-md border-slate-800 bg-slate-900 text-slate-100">
-        <CardHeader>
+    <div className="admin-theme admin-mesh flex min-h-screen items-center justify-center px-4">
+      <AdminCard bannerVariant="auth" className="w-full max-w-md" flush>
+        <div className="flex flex-col gap-4 p-6">
           <AdminBrand
             title="Admin — Mundial 2026"
             description="Acceso restringido al panel de operaciones."
           />
-        </CardHeader>
-        <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label htmlFor="admin-user" className="text-sm text-slate-300">
+              <label htmlFor="admin-user" className={adminLabel}>
                 Usuario
               </label>
               <Input
@@ -88,11 +87,11 @@ export default function AdminLoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
                 required
-                className="border-slate-700 bg-slate-950"
+                className={adminInput}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label htmlFor="admin-pass" className="text-sm text-slate-300">
+              <label htmlFor="admin-pass" className={adminLabel}>
                 Contraseña
               </label>
               <Input
@@ -102,7 +101,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 required
-                className="border-slate-700 bg-slate-950"
+                className={adminInput}
               />
             </div>
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
@@ -110,8 +109,8 @@ export default function AdminLoginPage() {
               {submitting ? 'Entrando…' : 'Entrar'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </AdminCard>
     </div>
   );
 }
