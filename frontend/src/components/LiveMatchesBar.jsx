@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
-import { filterTimelineForDisplay, formatNeutralTimelineLabel } from '@/lib/matchTimelineDisplay.js';
+import {
+  filterTimelineForDisplay,
+  formatNeutralTimelineLabel,
+  timelineEventIdentity,
+  timelineEventsSignature,
+} from '@/lib/matchTimelineDisplay.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import {
   Card,
@@ -282,16 +287,29 @@ function compareTimelineEntries(a, b) {
 
 function MatchTimeline({ events = [] }) {
   const scrollRef = useRef(null);
-  const displayEntries = filterTimelineForDisplay(events)
-    .slice()
-    .sort(compareTimelineEntries)
-    .map(formatTimelineEntry)
-    .filter(Boolean);
+  const signature = useMemo(() => timelineEventsSignature(events), [events]);
+  const lastSignatureRef = useRef(signature);
+  const [displayEvents, setDisplayEvents] = useState(events);
 
   useEffect(() => {
-    const node = scrollRef.current;
-    if (node) node.scrollTop = 0;
-  }, [displayEntries.length, events]);
+    if (signature === lastSignatureRef.current) return;
+    lastSignatureRef.current = signature;
+    setDisplayEvents(events);
+  }, [events, signature]);
+
+  const displayEntries = useMemo(
+    () =>
+      filterTimelineForDisplay(displayEvents)
+        .slice()
+        .sort(compareTimelineEntries)
+        .map((event) => {
+          const entry = formatTimelineEntry(event);
+          if (!entry) return null;
+          return { ...entry, key: timelineEventIdentity(event) };
+        })
+        .filter(Boolean),
+    [displayEvents]
+  );
 
   if (!displayEntries.length) return null;
 
@@ -301,14 +319,14 @@ function MatchTimeline({ events = [] }) {
       className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className="flex flex-col gap-1 text-[10px] leading-snug text-muted-foreground">
-        {displayEntries.map((entry, index) =>
+        {displayEntries.map((entry) =>
           entry.side === 'neutral' ? (
-            <div key={index} className="text-center">
+            <div key={entry.key} className="text-center">
               {entry.text}
             </div>
           ) : (
             <div
-              key={index}
+              key={entry.key}
               className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3"
             >
               {entry.side === 'home' ? (

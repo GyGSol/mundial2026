@@ -15,6 +15,28 @@ export function filterTimelineForDisplay(events = []) {
   return (events ?? []).filter((event) => TIMELINE_DISPLAY_TYPES.has(event.type));
 }
 
+/** Identidad estable de un evento para keys y detectar cambios reales en la cronología. */
+export function timelineEventIdentity(event) {
+  const phase = event?.phase ?? '';
+  return [
+    event?.type ?? '',
+    event?.side ?? '',
+    event?.minute ?? '',
+    event?.extraMinute ?? '',
+    phase,
+    event?.player ?? '',
+    event?.playerIn ?? '',
+    event?.playerOut ?? '',
+    event?.playerPosition ?? '',
+  ].join(':');
+}
+
+export function timelineEventsSignature(events = []) {
+  return filterTimelineForDisplay(events)
+    .map(timelineEventIdentity)
+    .join('|');
+}
+
 export function formatNeutralTimelineLabel(event) {
   switch (event?.type) {
     case 'goal_disallowed':
