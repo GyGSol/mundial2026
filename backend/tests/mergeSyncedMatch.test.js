@@ -46,11 +46,23 @@ describe('mergeSyncedMatch', () => {
 
   it('no degrada finished', () => {
     const merged = mergeSyncedMatch(
-      { status: 'finished', homeScore: 2, awayScore: 1 },
-      { status: 'live', homeScore: 1, awayScore: 0 }
+      { status: 'finished', homeScore: 2, awayScore: 1, kickoffAt: kickoffPast },
+      { status: 'live', homeScore: 1, awayScore: 0, kickoffAt: kickoffPast }
     );
     expect(merged.status).toBe('finished');
     expect(merged.homeScore).toBe(2);
+  });
+
+  it('corrige finished prematuro si el kickoff aún no llegó', () => {
+    const kickoffFuture = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const merged = mergeSyncedMatch(
+      { status: 'finished', homeScore: 0, awayScore: 0, kickoffAt: kickoffFuture },
+      { status: 'upcoming', homeScore: 0, awayScore: 0, kickoffAt: kickoffFuture }
+    );
+
+    expect(merged.status).toBe('upcoming');
+    expect(merged.homeScore).toBe(0);
+    expect(merged.awayScore).toBe(0);
   });
 
   it('live→finished usa marcador FIFA si worldcup26 quedó en 2-2 tras gol anulado', () => {

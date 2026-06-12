@@ -119,6 +119,14 @@ export function mergeSyncedMatch(existing, incoming) {
   const kickoffAt = merged.kickoffAt ?? existing.kickoffAt;
   const kickoffMs = kickoffAt ? new Date(kickoffAt).getTime() : NaN;
   const kickoffPassed = Number.isFinite(kickoffMs) && kickoffMs <= Date.now();
+  const kickoffInFuture = Number.isFinite(kickoffMs) && kickoffMs > Date.now();
+
+  if (existing.status === 'finished' && kickoffInFuture) {
+    merged.status = incoming.status === 'live' ? 'live' : 'upcoming';
+    merged.homeScore = Number(incoming.homeScore ?? 0);
+    merged.awayScore = Number(incoming.awayScore ?? 0);
+    return merged;
+  }
 
   if (existing.status === 'finished') {
     merged.status = 'finished';

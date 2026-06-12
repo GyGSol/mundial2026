@@ -3,6 +3,7 @@ import {
   mapGameStatus,
   normalizeGame,
   normalizeTeam,
+  resolveGameStatus,
 } from '../src/services/worldCupApiClient.js';
 
 const sampleGame = {
@@ -59,6 +60,45 @@ describe('worldCupApiClient normalization', () => {
 
   it('detecta partido en vivo por time_elapsed', () => {
     expect(mapGameStatus({ ...sampleGame, time_elapsed: '45' })).toBe('live');
+  });
+
+  it('ignora finished de worldcup26 si el kickoff canónico aún no llegó', () => {
+    const usaParaguayKickoff = new Date('2026-06-13T01:00:00.000Z');
+    const beforeKickoff = usaParaguayKickoff.getTime() - 60_000;
+
+    expect(
+      resolveGameStatus(
+        {
+          id: '4',
+          finished: 'TRUE',
+          time_elapsed: 'finished',
+          home_score: '0',
+          away_score: '0',
+          local_date: '06/12/2026 18:00',
+        },
+        usaParaguayKickoff,
+        { now: beforeKickoff }
+      )
+    ).toBe('upcoming');
+
+    const game = normalizeGame({
+      id: '4',
+      home_team_id: '13',
+      away_team_id: '14',
+      home_score: '0',
+      away_score: '0',
+      group: 'D',
+      matchday: '1',
+      local_date: '06/12/2026 18:00',
+      finished: 'TRUE',
+      time_elapsed: 'finished',
+      type: 'group',
+    });
+
+    expect(game.kickoffAt.toISOString()).toBe('2026-06-13T01:00:00.000Z');
+    if (Date.now() < usaParaguayKickoff.getTime()) {
+      expect(game.status).toBe('upcoming');
+    }
   });
 
   it('normaliza un equipo con 48 entradas típicas', () => {

@@ -8,7 +8,7 @@ export function pickRecentFinishedMatches(matches = [], { now = Date.now(), max 
   return [...matches]
     .filter((match) => {
       const kickoffMs = new Date(match.kickoffAt || 0).getTime();
-      return Number.isFinite(kickoffMs) && kickoffMs >= cutoff;
+      return Number.isFinite(kickoffMs) && kickoffMs >= cutoff && kickoffMs <= now;
     })
     .sort((a, b) => new Date(b.kickoffAt || 0) - new Date(a.kickoffAt || 0))
     .slice(0, max);

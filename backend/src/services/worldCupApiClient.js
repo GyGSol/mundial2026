@@ -112,6 +112,9 @@ export function mapGameStatus(game) {
 
   const elapsed = game.time_elapsed ?? game.timeElapsed;
   if (elapsed && elapsed !== 'notstarted' && elapsed !== '0') {
+    if (String(elapsed).toLowerCase() === 'finished') {
+      return 'finished';
+    }
     return 'live';
   }
 
@@ -122,6 +125,16 @@ export function mapGameStatus(game) {
   }
 
   return 'upcoming';
+}
+
+/** worldcup26 a veces marca finished antes del kickoff; priorizar horario canónico. */
+export function resolveGameStatus(game, kickoffAt, { now = Date.now() } = {}) {
+  const kickoffMs = kickoffAt ? new Date(kickoffAt).getTime() : NaN;
+  if (Number.isFinite(kickoffMs) && kickoffMs > now) {
+    return 'upcoming';
+  }
+
+  return mapGameStatus(game);
 }
 
 /** @deprecated Use resolveKickoffAt from kickoffTimeService.js */
@@ -146,7 +159,7 @@ export function normalizeGame(game, options = {}) {
     stadiumId: String(game.stadium_id ?? game.stadiumId ?? ''),
     kickoffTimezone: stadiumTimezone || undefined,
     type: game.type ?? game.round ?? 'group',
-    status: mapGameStatus(game),
+    status: resolveGameStatus(game, kickoffAt),
     kickoffAt,
     raw: game,
   };
