@@ -222,7 +222,13 @@ function MatchTimeline({ events = [], homeCode = 'LOC', awayCode = 'VIS' }) {
   );
 }
 
-function MatchSummary({ events = [], reportStats = null, homeCode = 'LOC', awayCode = 'VIS' }) {
+function MatchSummary({
+  events = [],
+  reportStats = null,
+  homeCode = 'LOC',
+  awayCode = 'VIS',
+  partial = false,
+}) {
   const rows = buildMatchSummaryRows({ timeline: events, reportStats });
   const attendance = formatMatchAttendance(reportStats);
   if (!rows.length) return null;
@@ -230,6 +236,11 @@ function MatchSummary({ events = [], reportStats = null, homeCode = 'LOC', awayC
   return (
     <div className="w-full rounded-md border bg-muted/20 px-3 py-2 text-left">
       <p className="mb-2 text-center text-[11px] font-medium text-foreground">Resumen del partido</p>
+      {partial ? (
+        <p className="mb-2 text-center text-[10px] text-muted-foreground">
+          Parcial (cronología) · reporte FIFA pendiente
+        </p>
+      ) : null}
       {attendance ? (
         <p className="mb-2 text-center text-[10px] text-muted-foreground">
           Asistencia: {attendance}
@@ -375,6 +386,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           reportStats={match.fifaReportStats}
           homeCode={homeCode}
           awayCode={awayCode}
+          partial={!match.fifaReportStats}
         />
 
         <span className="text-[11px] text-muted-foreground">

@@ -1,6 +1,7 @@
 import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
 import {
+  extractTeamAbbreviation,
   fetchAllCalendarMatches,
   fetchMatchTimeline,
   resolveFifaMatchEntry,
@@ -96,6 +97,16 @@ export async function syncFifaMatchEvents() {
             matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
             homeName: homeTeam.nameEn,
             awayName: awayTeam.nameEn,
+            homeFifaCode: homeTeam.fifaCode,
+            awayFifaCode: awayTeam.fifaCode,
+            homeAliases: [
+              extractTeamAbbreviation(fifaEntry.Home),
+              fifaEntry.Home?.TeamName?.find((item) => item.Locale === 'en-GB')?.Description,
+            ],
+            awayAliases: [
+              extractTeamAbbreviation(fifaEntry.Away),
+              fifaEntry.Away?.TeamName?.find((item) => item.Locale === 'en-GB')?.Description,
+            ],
           });
           if (freshReportStats) {
             rawUpdate['raw.fifaReportStats'] = freshReportStats;

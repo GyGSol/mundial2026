@@ -81,9 +81,33 @@ export function parseMatchStatisticsFromText(text) {
   return sideStats;
 }
 
-function validateReportText(text, { homeName, awayName, matchNumber }) {
+function uniqueTerms(...groups) {
+  const seen = new Set();
+  const terms = [];
+  for (const group of groups) {
+    for (const value of group) {
+      const term = String(value ?? '').trim();
+      if (!term || seen.has(term)) continue;
+      seen.add(term);
+      terms.push(term);
+    }
+  }
+  return terms;
+}
+
+function textIncludesAny(text, terms) {
+  return terms.some((term) => text.includes(term));
+}
+
+function validateReportText(
+  text,
+  { homeName, awayName, matchNumber, homeFifaCode, awayFifaCode, homeAliases = [], awayAliases = [] }
+) {
   const normalized = String(text ?? '');
-  if (!normalized.includes(String(homeName)) || !normalized.includes(String(awayName))) {
+  const homeTerms = uniqueTerms([homeName, homeFifaCode, ...homeAliases]);
+  const awayTerms = uniqueTerms([awayName, awayFifaCode, ...awayAliases]);
+
+  if (!textIncludesAny(normalized, homeTerms) || !textIncludesAny(normalized, awayTerms)) {
     return false;
   }
   if (matchNumber && !normalized.includes(`#${matchNumber}`)) {
@@ -97,7 +121,20 @@ function parseAttendance(text) {
   return match ? Number(match[1].replace(/,/g, '')) : null;
 }
 
-export async function fetchFifaReportStats({ matchNumber, homeName, awayName }) {
+/** @internal exported for tests */
+export function matchesFifaReportIdentity(text, options) {
+  return validateReportText(text, options);
+}
+
+export async function fetchFifaReportStats({
+  matchNumber,
+  homeName,
+  awayName,
+  homeFifaCode,
+  awayFifaCode,
+  homeAliases = [],
+  awayAliases = [],
+}) {
   const pdfUrl = buildReportUrl(matchNumber);
 
   try {
@@ -108,7 +145,17 @@ export async function fetchFifaReportStats({ matchNumber, homeName, awayName }) 
     const parsed = await pdf(buffer);
     const text = parsed?.text ?? '';
 
-    if (!validateReportText(text, { homeName, awayName, matchNumber })) {
+    if (
+      !validateReportText(text, {
+        homeName,
+        awayName,
+        matchNumber,
+        homeFifaCode,
+        awayFifaCode,
+        homeAliases,
+        awayAliases,
+      })
+    ) {
       return null;
     }
 
