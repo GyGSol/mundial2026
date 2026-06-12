@@ -272,11 +272,19 @@ function timelineSortKey(event) {
   return minute + extra / 100;
 }
 
+/** Desempate en el límite del entretiempo (Fin 1.er vs Inicio 2.º). */
+function compareTimelineEntries(a, b) {
+  const keyDiff = timelineSortKey(b) - timelineSortKey(a);
+  if (keyDiff !== 0) return keyDiff;
+  const halftimeOrder = { period_start: 1, period_end: 0 };
+  return (halftimeOrder[b.type] ?? 0) - (halftimeOrder[a.type] ?? 0);
+}
+
 function MatchTimeline({ events = [] }) {
   const scrollRef = useRef(null);
   const displayEntries = filterTimelineForDisplay(events)
     .slice()
-    .sort((a, b) => timelineSortKey(b) - timelineSortKey(a))
+    .sort(compareTimelineEntries)
     .map(formatTimelineEntry)
     .filter(Boolean);
 

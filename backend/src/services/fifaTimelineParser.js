@@ -162,7 +162,7 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     entry.extraMinute == null
   ) {
     // FIFA marca el inicio del 2.º tiempo en 45' aunque el 1.er termine en 45+X
-    entry.sortKey = entry.minute + 0.05;
+    entry.sortKey = entry.minute + 0.5;
   }
 
   if (neutral) {

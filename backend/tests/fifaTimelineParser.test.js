@@ -106,7 +106,7 @@ describe('fifaTimelineParser', () => {
             },
             {
               Type: 8,
-              MatchMinute: "45'+4'",
+              MatchMinute: "45'+5'",
               EventDescription: [
                 { Locale: 'en-GB', Description: 'The referee brings the first period to an end.' },
               ],
@@ -137,8 +137,9 @@ describe('fifaTimelineParser', () => {
         'period_start',
       ]);
       expect(timeline[0]).toMatchObject({ type: 'hydration_break', minute: 23 });
-      expect(timeline[1]).toMatchObject({ type: 'period_end', phase: 'first', minute: 45, extraMinute: 4 });
+      expect(timeline[1]).toMatchObject({ type: 'period_end', phase: 'first', minute: 45, extraMinute: 5 });
       expect(timeline[2]).toMatchObject({ type: 'period_start', phase: 'second', minute: 45 });
+      expect(timeline[2].sortKey).toBeGreaterThan(timeline[1].sortKey);
     });
   });
 });
