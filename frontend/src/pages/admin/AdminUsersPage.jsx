@@ -4,11 +4,11 @@ import { useLiveData } from '../../hooks/useLiveData.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import {
-  ADMIN_BANNERS,
   adminInput,
   adminLabel,
   adminMuted,
   adminPage,
+  adminTableWrap,
 } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
@@ -184,9 +184,9 @@ export default function AdminUsersPage() {
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
 
-      <AdminCard banner={ADMIN_BANNERS.users} flush contentClassName="p-4">
+      <AdminCard accent flush contentClassName="p-4">
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="overflow-x-auto rounded-lg border border-slate-800">
+        <div className={adminTableWrap}>
           <Table>
             <TableHeader>
               <TableRow className="border-slate-800">

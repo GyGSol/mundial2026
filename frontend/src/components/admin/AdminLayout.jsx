@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 import AdminBrand from './AdminBrand.jsx';
+import { adminBtnOutline, adminNavLink, adminNavLinkActive } from './adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 
@@ -25,14 +26,14 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-theme admin-mesh min-h-screen text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+      <header className="admin-header">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <AdminBrand />
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className={adminBtnOutline} asChild>
               <a href="/">Ver app</a>
             </Button>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
+            <Button variant="outline" size="sm" className={adminBtnOutline} onClick={handleLogout}>
               Salir
             </Button>
           </div>
@@ -43,14 +44,7 @@ export default function AdminLayout() {
               key={item.to}
               to={item.to}
               end={item.end}
-              className={({ isActive }) =>
-                cn(
-                  'rounded-md px-3 py-1.5 text-sm transition-colors',
-                  isActive
-                    ? 'bg-amber-500/20 text-amber-200'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                )
-              }
+              className={({ isActive }) => cn(isActive ? adminNavLinkActive : adminNavLink)}
             >
               {item.label}
             </NavLink>

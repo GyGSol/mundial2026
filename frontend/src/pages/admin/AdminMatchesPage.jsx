@@ -3,7 +3,7 @@ import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
-import { ADMIN_BANNERS, adminInput, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
+import { adminInput, adminMuted, adminPage, adminTableWrap } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
@@ -103,8 +103,8 @@ export default function AdminMatchesPage() {
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
       {loading && !matches.length ? <p className={adminMuted}>Cargando…</p> : null}
 
-      <AdminCard banner={ADMIN_BANNERS.matches} flush contentClassName="p-0">
-        <div className="overflow-x-auto">
+      <AdminCard accent flush contentClassName="p-0">
+        <div className={adminTableWrap}>
         <Table>
           <TableHeader>
             <TableRow className="border-slate-800 hover:bg-transparent">

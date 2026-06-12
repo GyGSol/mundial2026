@@ -5,7 +5,6 @@ import MatchPredictionRankingsTable from '../../components/MatchPredictionRankin
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import {
-  ADMIN_BANNERS,
   adminCard,
   adminHighlight,
   adminMuted,
@@ -232,7 +231,7 @@ export default function AdminSimulationPage() {
         }`}
       />
 
-      <AdminCard banner={ADMIN_BANNERS.simulation} title="Controles">
+      <AdminCard accent title="Controles">
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => handleSetup('full')} disabled={busy || autoRunning}>
             Mundial completo

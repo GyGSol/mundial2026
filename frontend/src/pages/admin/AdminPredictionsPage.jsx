@@ -4,10 +4,10 @@ import { useLiveData } from '../../hooks/useLiveData.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import {
-  ADMIN_BANNERS,
   adminInput,
   adminMuted,
   adminPage,
+  adminTableWrap,
 } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
@@ -218,8 +218,8 @@ export default function AdminPredictionsPage() {
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
 
-      <AdminCard banner={ADMIN_BANNERS.predictions} flush contentClassName="p-0">
-      <div className="overflow-x-auto">
+      <AdminCard accent flush contentClassName="p-0">
+      <div className={adminTableWrap}>
         <Table>
           <TableHeader>
             <TableRow className="border-slate-800">

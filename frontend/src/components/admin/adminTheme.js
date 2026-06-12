@@ -1,21 +1,13 @@
-import { cn } from '@/lib/utils';
-
-export const ADMIN_BANNERS = {
-  sync: '/admin/avances/avance-mundial-stats.png',
-  matches: '/admin/avances/avance-ranking-vivo.png',
-  users: '/admin/avances/avance-panel-admin.png',
-  groups: '/admin/avances/avance-grupos-amigos.png',
-  predictions: '/admin/avances/avance-predicciones.png',
-  simulation: '/admin/avances/avance-ranking-vivo.png',
-};
-
+/** Clases CSS del panel admin — ver index.css (.admin-theme) */
 export const adminPage = 'flex flex-col gap-6';
 
-export const adminCard = 'border-slate-800 bg-slate-900 text-slate-100';
+export const adminCard = 'admin-card';
 
-export const adminCardInner = 'overflow-hidden rounded-lg border border-slate-800 bg-slate-950/60';
+export const adminCardAccent = 'admin-card admin-card--accent';
 
-export const adminInput = 'border-slate-700 bg-slate-950';
+export const adminCardInner = 'admin-advance-item';
+
+export const adminInput = 'admin-input';
 
 export const adminLabel = 'text-sm text-slate-300';
 
@@ -23,11 +15,16 @@ export const adminMuted = 'text-sm text-slate-400';
 
 export const adminHint = 'text-xs text-slate-500';
 
-export const adminBadgeOutline = 'border-amber-500/40 text-amber-200';
+export const adminBadgeOutline = 'admin-badge-outline';
 
-export const adminHighlight =
-  'border-amber-500/40 bg-amber-500/10';
+export const adminHighlight = 'admin-highlight';
 
-export function adminTableRow(className) {
-  return cn('border-slate-800 hover:bg-slate-800/40', className);
-}
+export const adminTableWrap = 'admin-table-wrap';
+
+export const adminNavLink = 'admin-nav-link';
+
+export const adminNavLinkActive = 'admin-nav-link admin-nav-link--active';
+
+export const adminPageHeaderClass = 'admin-page-header';
+
+export const adminBtnOutline = 'admin-btn-outline';

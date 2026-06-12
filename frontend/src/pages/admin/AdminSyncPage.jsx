@@ -3,7 +3,7 @@ import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
-import { ADMIN_BANNERS, adminBadgeOutline, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
+import { adminBadgeOutline, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
 
@@ -57,7 +57,7 @@ export default function AdminSyncPage() {
         description={`Descarga partidos y metadatos desde ${data?.worldCupApiUrl || 'worldcup26.ir'}.`}
       />
 
-      <AdminCard banner={ADMIN_BANNERS.sync} title="Estado">
+      <AdminCard accent title="Estado">
         <div className="flex flex-col gap-3 text-sm">
           {loading && !data ? <p className={adminMuted}>Cargando…</p> : null}
           {error ? <p className="text-red-400">{error}</p> : null}

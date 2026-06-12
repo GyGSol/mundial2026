@@ -8,7 +8,7 @@ import AdminAdvancesSection from '../../components/admin/AdminAdvancesSection.js
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStatCard from '../../components/admin/AdminStatCard.jsx';
-import { adminHint, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
+import { adminBtnOutline, adminHint, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
         title="Resumen"
         description="Estado de la base y operaciones del mundial."
       >
-        <Button variant="outline" size="sm" onClick={refresh} disabled={loading}>
+        <Button variant="outline" size="sm" className={adminBtnOutline} onClick={refresh} disabled={loading}>
           Actualizar
         </Button>
       </AdminPageHeader>
@@ -86,15 +86,15 @@ export default function AdminDashboardPage() {
             <AdminStatCard label="Último sync" value={lastSync} />
           </div>
 
-          <AdminCard title="Acciones rápidas">
+          <AdminCard accent title="Acciones rápidas">
             <div className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className={adminBtnOutline}>
                 <Link to="/admin/sync">Ejecutar sync</Link>
               </Button>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className={adminBtnOutline}>
                 <Link to="/admin/matches">Editar partidos</Link>
               </Button>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className={adminBtnOutline}>
                 <Link to="/admin/users">Usuarios</Link>
               </Button>
             </div>

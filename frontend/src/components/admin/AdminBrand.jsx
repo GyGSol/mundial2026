@@ -12,7 +12,7 @@ export default function AdminBrand({
     <div className={cn('flex items-center gap-3', className)}>
       <div
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/35',
+          'flex shrink-0 items-center justify-center rounded-xl bg-amber-500/18 text-amber-400 shadow-[0_0_24px_rgba(245,158,11,0.22)] ring-1 ring-amber-500/40',
           compact ? 'size-9' : 'size-10'
         )}
         aria-hidden
