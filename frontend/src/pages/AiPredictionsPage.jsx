@@ -253,7 +253,7 @@ export default function AiPredictionsPage() {
   }, [thread, topicType, topicKey, matches]);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 pb-24">
+    <div className="flex w-full flex-col gap-6 px-0 py-6 pb-24">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="size-5 text-violet-300" aria-hidden />

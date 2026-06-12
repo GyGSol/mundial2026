@@ -546,7 +546,7 @@ function NextMatchCard({ match }) {
 
 function EmptyMatchesState() {
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col">
+    <div className="mx-auto flex w-full flex-col">
       <Card className="w-full border-dashed">
         <CardContent className="flex flex-col items-center gap-1 py-5 text-center">
           <p className="text-sm font-medium text-foreground">Todavía no hay partidos para mostrar</p>
@@ -582,7 +582,7 @@ export default function LiveMatchesBar({
 
   if (hasLive || hasFinished || hasNext) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <div className="mx-auto flex w-full flex-col gap-6">
         {hasLive ? (
           <MatchColumn title="Partidos en curso">
             {matches.map((match) => (

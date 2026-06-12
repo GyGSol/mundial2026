@@ -15,7 +15,7 @@ export default function Layout() {
   return (
     <div className="game-shell game-mesh min-h-screen bg-background">
       <header className="game-header sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="mx-auto flex max-w-2xl items-center px-4 py-3">
+        <div className="game-shell__frame flex items-center py-3">
           <Link to="/ranking" className="game-brand shrink-0 text-lg font-semibold tracking-tight">
             Mundial 2026
           </Link>
@@ -23,7 +23,7 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-2xl px-4 py-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]">
+      <main className="game-shell__frame py-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </main>
 
