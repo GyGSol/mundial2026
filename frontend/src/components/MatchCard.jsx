@@ -57,7 +57,7 @@ export default function MatchCard({
       {isArgentinaMatch ? (
         <Badge
           variant="outline"
-          className="border-sky-400/70 bg-sky-100/70 text-sky-900"
+          className="border-sky-400/70 bg-sky-100/70 text-sky-900 max-md:border-sky-400/35 max-md:bg-sky-500/12 max-md:text-sky-100"
         >
           🇦🇷 Argentina
         </Badge>
@@ -66,8 +66,8 @@ export default function MatchCard({
         <Badge
           variant="outline"
           className={cn(
-            'border-amber-300/80 bg-amber-100/60 text-amber-900',
-            isArgentinaMatch && 'border-amber-300/60 bg-amber-50/80'
+            'border-amber-300/80 bg-amber-100/60 text-amber-900 max-md:border-amber-500/35 max-md:bg-amber-500/12 max-md:text-amber-100',
+            isArgentinaMatch && 'max-md:border-amber-500/30 max-md:bg-amber-500/10'
           )}
         >
           Predicción cargada
@@ -83,12 +83,19 @@ export default function MatchCard({
     <Card
       className={cn(
         'transition-colors',
-        isArgentinaMatch &&
-          'border-sky-300/80 bg-sky-50/95 shadow-sm ring-1 ring-sky-200/90',
+        isArgentinaMatch && [
+          'shadow-sm ring-1',
+          'max-md:border-sky-400/30 max-md:bg-transparent max-md:ring-sky-400/25 max-md:shadow-none',
+          'md:border-sky-300/80 md:bg-sky-50/95 md:ring-sky-200/90',
+        ],
         !isArgentinaMatch &&
-          hasPrediction &&
-          'border-amber-200/80 bg-amber-50/90 shadow-sm ring-1 ring-amber-100/90',
-        isArgentinaMatch && hasPrediction && 'ring-amber-200/60'
+          hasPrediction && [
+            'shadow-sm ring-1',
+            'max-md:border-amber-500/28 max-md:bg-transparent max-md:ring-amber-500/22 max-md:shadow-none',
+            'md:border-amber-200/80 md:bg-amber-50/90 md:ring-amber-100/90',
+          ],
+        isArgentinaMatch &&
+          hasPrediction && ['max-md:ring-amber-500/18', 'md:ring-amber-200/60']
       )}
     >
       <CardHeader className="space-y-2 pb-3">

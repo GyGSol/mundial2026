@@ -491,10 +491,19 @@ body {
     color: #a7f3d0 !important;
   }
 
-  .game-shell .bg-amber-50 {
+  .game-shell .bg-amber-50,
+  .game-shell .bg-amber-50\/80,
+  .game-shell .bg-amber-50\/90,
+  .game-shell .bg-amber-100\/60 {
     border-color: rgba(245, 158, 11, 0.35) !important;
     background: rgba(245, 158, 11, 0.12) !important;
     color: #fde68a !important;
+  }
+
+  .game-shell .bg-sky-100\/70 {
+    border-color: rgba(56, 189, 248, 0.35) !important;
+    background: rgba(14, 165, 233, 0.12) !important;
+    color: #bae6fd !important;
   }
 
   .game-shell .bg-red-50 {
