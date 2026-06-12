@@ -1,6 +1,6 @@
-/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul'} TimelineEventType */
+/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'goal_disallowed'} TimelineEventType */
 
-const INCLUDED_TYPES = new Set([0, 2, 3, 5, 18]);
+const INCLUDED_TYPES = new Set([0, 2, 3, 5, 18, 71]);
 
 const TYPE_MAP = {
   0: 'goal',
@@ -8,6 +8,7 @@ const TYPE_MAP = {
   3: 'red_card',
   5: 'substitution',
   18: 'foul',
+  71: 'goal_disallowed',
 };
 
 export function parseFifaMinute(matchMinute) {
@@ -82,10 +83,10 @@ export function parseFifaTimeline(timelineJson, homeTeamId, awayTeamId) {
 
     const description = localizedDescription(event);
     const timing = parseFifaMinute(event.MatchMinute);
-    const side = resolveSide(event.IdTeam, homeTeamId, awayTeamId);
-    if (!side) continue;
-
     const type = /** @type {TimelineEventType} */ (TYPE_MAP[event.Type]);
+    const side = resolveSide(event.IdTeam, homeTeamId, awayTeamId);
+    if (!side && type !== 'goal_disallowed') continue;
+
     const entry = {
       sortKey: timing.sortKey,
       minute: timing.minute,
@@ -104,6 +105,8 @@ export function parseFifaTimeline(timelineJson, homeTeamId, awayTeamId) {
       entry.playerOut = playerOut;
       entry.player = playerIn ?? playerOut ?? entry.player;
       if (!entry.playerIn || !entry.playerOut) continue;
+    } else if (type === 'goal_disallowed') {
+      entry.player = description || 'Gol anulado';
     } else if (!entry.player) {
       continue;
     }

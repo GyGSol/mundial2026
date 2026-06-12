@@ -23,6 +23,27 @@ describe('mergeSyncedMatch', () => {
     expect(merged.awayScore).toBe(0);
   });
 
+  it('prioriza marcador FIFA ante worldcup26 desactualizado tras gol anulado', () => {
+    const merged = mergeSyncedMatch(
+      {
+        status: 'live',
+        homeScore: 2,
+        awayScore: 1,
+        raw: {
+          fifaMeta: {
+            homeScore: 2,
+            awayScore: 1,
+            syncedAt: '2026-06-12T03:00:00.000Z',
+          },
+        },
+      },
+      { status: 'live', homeScore: 2, awayScore: 2 }
+    );
+
+    expect(merged.homeScore).toBe(2);
+    expect(merged.awayScore).toBe(1);
+  });
+
   it('no degrada finished', () => {
     const merged = mergeSyncedMatch(
       { status: 'finished', homeScore: 2, awayScore: 1 },

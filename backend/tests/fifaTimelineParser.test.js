@@ -60,6 +60,11 @@ describe('fifaTimelineParser', () => {
           MatchMinute: "90'+2'",
           EventDescription: [{ Locale: 'en-GB', Description: 'Cesar MONTES (Mexico) is sent off!' }],
         },
+        {
+          Type: 71,
+          MatchMinute: "78'",
+          EventDescription: [{ Locale: 'en-GB', Description: 'Goal disallowed' }],
+        },
       ],
     };
 
@@ -73,6 +78,7 @@ describe('fifaTimelineParser', () => {
         'red_card',
         'substitution',
         'goal',
+        'goal_disallowed',
         'red_card',
       ]);
 

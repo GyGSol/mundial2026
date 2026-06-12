@@ -185,6 +185,8 @@ function formatTimelineLine(event, homeCode, awayCode) {
       return `${minute} ${code} ${event.playerOut} → ${event.playerIn}`;
     case 'foul':
       return `${minute} ${code} Falta ${event.player}`;
+    case 'goal_disallowed':
+      return minute ? `${minute} 🚫 Gol anulado` : '🚫 Gol anulado';
     default:
       return null;
   }

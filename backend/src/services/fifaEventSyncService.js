@@ -65,6 +65,10 @@ export async function syncFifaMatchEvents() {
 
       if (!timeline.length) continue;
 
+      const fifaHomeScore = Number(fifaEntry.Home?.Score);
+      const fifaAwayScore = Number(fifaEntry.Away?.Score);
+      const hasFifaScore = Number.isFinite(fifaHomeScore) && Number.isFinite(fifaAwayScore);
+
       const rawUpdate = {
         'raw.fifaMeta': {
           idMatch: String(fifaEntry.IdMatch),
@@ -72,6 +76,7 @@ export async function syncFifaMatchEvents() {
           matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
           homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
           awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
+          ...(hasFifaScore ? { homeScore: fifaHomeScore, awayScore: fifaAwayScore } : {}),
           syncedAt: new Date().toISOString(),
         },
         'raw.fifaEvents': {
@@ -98,16 +103,20 @@ export async function syncFifaMatchEvents() {
         }
       }
 
-      const { home, away } = goalCountsFromTimeline(timeline);
-      const nextHomeScore = Math.max(Number(match.homeScore ?? 0), home);
-      const nextAwayScore = Math.max(Number(match.awayScore ?? 0), away);
+      const timelineGoals = goalCountsFromTimeline(timeline);
+      const resolvedHomeScore = hasFifaScore
+        ? fifaHomeScore
+        : Math.max(Number(match.homeScore ?? 0), timelineGoals.home);
+      const resolvedAwayScore = hasFifaScore
+        ? fifaAwayScore
+        : Math.max(Number(match.homeScore ?? 0), timelineGoals.away);
       const scoreChanged =
-        nextHomeScore !== Number(match.homeScore ?? 0) ||
-        nextAwayScore !== Number(match.awayScore ?? 0);
+        resolvedHomeScore !== Number(match.homeScore ?? 0) ||
+        resolvedAwayScore !== Number(match.awayScore ?? 0);
 
       if (scoreChanged) {
-        rawUpdate.homeScore = nextHomeScore;
-        rawUpdate.awayScore = nextAwayScore;
+        rawUpdate.homeScore = resolvedHomeScore;
+        rawUpdate.awayScore = resolvedAwayScore;
         scoringIds.push(match._id);
       }
 

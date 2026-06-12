@@ -550,10 +550,30 @@ export function latestMinuteFromTimeline(timeline = []) {
 }
 
 /**
+ * Marcador oficial FIFA guardado en fifaMeta (refleja goles anulados).
+ * @param {Record<string, unknown>} raw
+ */
+export function readFifaAuthoritativeScores(raw = {}) {
+  const meta = raw.fifaMeta ?? {};
+  const homeScore = Number(meta.homeScore);
+  const awayScore = Number(meta.awayScore);
+
+  if (!meta.syncedAt || !Number.isFinite(homeScore) || !Number.isFinite(awayScore)) {
+    return null;
+  }
+
+  return { homeScore, awayScore };
+}
+
+/**
  * @param {{ homeScore?: number | null, awayScore?: number | null }} match
  * @param {Array<{ type?: string, side?: string }>} timeline
+ * @param {Record<string, unknown>} raw
  */
-export function resolveEffectiveLiveScores(match, timeline = []) {
+export function resolveEffectiveLiveScores(match, timeline = [], raw = {}) {
+  const fifaScores = readFifaAuthoritativeScores(raw);
+  if (fifaScores) return fifaScores;
+
   const { home, away } = goalCountsFromTimeline(timeline);
 
   return {
@@ -620,7 +640,7 @@ export function enrichMatchLiveFields(match) {
   }
 
   const effectiveScores = showResults
-    ? resolveEffectiveLiveScores(match, matchTimeline)
+    ? resolveEffectiveLiveScores(match, matchTimeline, raw)
     : { homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 };
 
   return {

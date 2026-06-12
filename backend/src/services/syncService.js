@@ -28,6 +28,7 @@ import {
 } from './websocketService.js';
 import { syncLiveLineups } from './lineupSyncService.js';
 import { syncFifaMatchEvents } from './fifaEventSyncService.js';
+import { readFifaAuthoritativeScores } from './matchLiveData.js';
 
 async function upsertTeams() {
   const data = await fetchTeams();
@@ -133,8 +134,14 @@ export function mergeSyncedMatch(existing, incoming) {
   }
 
   if (existing.status === 'live' && incoming.status === 'live') {
-    merged.homeScore = Math.max(Number(existing.homeScore ?? 0), Number(incoming.homeScore ?? 0));
-    merged.awayScore = Math.max(Number(existing.awayScore ?? 0), Number(incoming.awayScore ?? 0));
+    const fifaScores = readFifaAuthoritativeScores(existing.raw ?? {});
+    if (fifaScores) {
+      merged.homeScore = fifaScores.homeScore;
+      merged.awayScore = fifaScores.awayScore;
+    } else {
+      merged.homeScore = Math.max(Number(existing.homeScore ?? 0), Number(incoming.homeScore ?? 0));
+      merged.awayScore = Math.max(Number(existing.awayScore ?? 0), Number(incoming.awayScore ?? 0));
+    }
   }
 
   return merged;

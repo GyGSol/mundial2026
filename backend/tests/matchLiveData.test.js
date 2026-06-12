@@ -6,6 +6,7 @@ import {
   parseBookingsField,
   parseScorersField,
   readMatchTimeline,
+  readFifaAuthoritativeScores,
   resolveEffectiveLiveScores,
   scorersFromTimeline,
   splitFootballDataEvents,
@@ -275,6 +276,28 @@ describe('matchLiveData', () => {
           [{ type: 'goal', side: 'home' }]
         )
       ).toEqual({ homeScore: 2, awayScore: 0 });
+    });
+
+    it('prioriza marcador FIFA sobre worldcup26 tras gol anulado', () => {
+      expect(
+        resolveEffectiveLiveScores(
+          { homeScore: 2, awayScore: 2 },
+          [{ type: 'goal', side: 'away' }, { type: 'goal', side: 'home' }, { type: 'goal', side: 'home' }],
+          {
+            fifaMeta: {
+              homeScore: 2,
+              awayScore: 1,
+              syncedAt: '2026-06-12T03:00:00.000Z',
+            },
+          }
+        )
+      ).toEqual({ homeScore: 2, awayScore: 1 });
+    });
+  });
+
+  describe('readFifaAuthoritativeScores', () => {
+    it('devuelve null sin syncedAt', () => {
+      expect(readFifaAuthoritativeScores({ fifaMeta: { homeScore: 2, awayScore: 1 } })).toBeNull();
     });
   });
 
