@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
@@ -94,8 +95,8 @@ function formatBookingLine(booking) {
   return `${minute}${cardSymbol(booking.card)} ${label}`;
 }
 
-const SUBSTITUTION_OUT_ICON = '↓';
-const SUBSTITUTION_IN_ICON = '↑';
+const SUBSTITUTION_OUT_ICON = '⬇️';
+const SUBSTITUTION_IN_ICON = '⬆️';
 
 function formatSubstitutionLine(substitution) {
   if (!substitution?.playerOut || !substitution?.playerIn) return null;
@@ -124,7 +125,7 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-0.5 text-[10px] leading-none tabular-nums text-muted-foreground',
+        'flex flex-col gap-1 text-[11px] leading-tight tabular-nums text-muted-foreground',
         className
       )}
     >
@@ -135,14 +136,12 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
         </span>
       ) : null}
       {substitutionCount > 0 ? (
-        <span className="inline-flex items-center gap-0.5" title="Cambios">
-          <span className="text-red-600/90" aria-hidden="true">
-            {SUBSTITUTION_OUT_ICON}
+        <span className="inline-flex items-center gap-1" title="Cambios">
+          <span className="inline-flex items-center gap-px" aria-hidden="true">
+            <ArrowDown className="size-3.5 shrink-0 text-red-500" strokeWidth={2.75} />
+            <ArrowUp className="size-3.5 shrink-0 text-emerald-500" strokeWidth={2.75} />
           </span>
-          <span className="text-emerald-600/90" aria-hidden="true">
-            {SUBSTITUTION_IN_ICON}
-          </span>
-          <span>{substitutionCount}</span>
+          <span className="font-semibold text-foreground">{substitutionCount}</span>
         </span>
       ) : null}
     </div>

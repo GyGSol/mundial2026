@@ -348,6 +348,76 @@ export function formatTimeElapsed(rawOrElapsed) {
   return normalized;
 }
 
+export function clockSortKeyFromParts(minute, extraMinute) {
+  if (minute == null || !Number.isFinite(Number(minute))) return Number.NEGATIVE_INFINITY;
+  if (extraMinute != null && Number(extraMinute) > 0) {
+    return Number(minute) + Number(extraMinute) / 100;
+  }
+  return Number(minute);
+}
+
+export function formatClockMinute(minute, extraMinute) {
+  if (minute == null || !Number.isFinite(Number(minute))) return null;
+  if (extraMinute != null && Number(extraMinute) > 0) {
+    return `${minute}+${extraMinute}'`;
+  }
+  return `${minute}'`;
+}
+
+export function parseElapsedClockToSortKey(clock) {
+  if (clock == null) return Number.NEGATIVE_INFINITY;
+
+  const normalized = String(clock).trim().replace(/'+$/, '');
+  const extraMatch = normalized.match(/^(\d+)\+(\d+)$/);
+  if (extraMatch) {
+    return Number(extraMatch[1]) + Number(extraMatch[2]) / 100;
+  }
+
+  const minute = Number(normalized);
+  if (Number.isFinite(minute)) return minute;
+
+  return Number.NEGATIVE_INFINITY;
+}
+
+/** @param {Array<{ minute?: number | null, extraMinute?: number | null, sortKey?: number }>} timeline */
+export function latestClockFromTimeline(timeline = []) {
+  let best = null;
+  let bestKey = Number.NEGATIVE_INFINITY;
+
+  for (const event of timeline) {
+    if (event.minute == null || !Number.isFinite(Number(event.minute))) continue;
+
+    const key =
+      event.sortKey != null && Number.isFinite(Number(event.sortKey))
+        ? Number(event.sortKey)
+        : clockSortKeyFromParts(event.minute, event.extraMinute);
+
+    if (key > bestKey) {
+      bestKey = key;
+      best = event;
+    }
+  }
+
+  return best ? formatClockMinute(best.minute, best.extraMinute) : null;
+}
+
+/**
+ * @param {Record<string, unknown>} raw
+ * @param {Array<{ minute?: number | null, extraMinute?: number | null, sortKey?: number }>} timeline
+ */
+export function resolveLiveTimeElapsed(raw, timeline = []) {
+  const fromApi = formatTimeElapsed(raw);
+  const fromTimeline = latestClockFromTimeline(timeline);
+
+  if (!fromTimeline) return fromApi;
+  if (!fromApi) return fromTimeline;
+  if (fromApi === 'Entretiempo' || fromApi === 'Final') return fromApi;
+
+  return parseElapsedClockToSortKey(fromTimeline) >= parseElapsedClockToSortKey(fromApi)
+    ? fromTimeline
+    : fromApi;
+}
+
 
 function toSortKey(minute) {
   if (minute == null || !Number.isFinite(Number(minute))) return Number.POSITIVE_INFINITY;
@@ -650,17 +720,10 @@ export function enrichMatchLiveFields(match) {
 
   let timeElapsed =
     match.status === 'live'
-      ? formatTimeElapsed(raw)
+      ? resolveLiveTimeElapsed(raw, matchTimeline)
       : match.status === 'finished'
         ? 'Final'
         : null;
-
-  if (match.status === 'live' && !timeElapsed) {
-    const latestMinute = latestMinuteFromTimeline(matchTimeline);
-    if (latestMinute != null) {
-      timeElapsed = `${latestMinute}'`;
-    }
-  }
 
   const effectiveScores = showResults
     ? resolveEffectiveLiveScores(match, matchTimeline, raw)

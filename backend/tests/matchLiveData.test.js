@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   enrichMatchLiveFields,
   formatTimeElapsed,
+  latestClockFromTimeline,
+  parseElapsedClockToSortKey,
+  resolveLiveTimeElapsed,
   goalCountsFromTimeline,
   parseBookingsField,
   parseScorersField,
@@ -32,6 +35,39 @@ describe('matchLiveData', () => {
 
     it('ignora el literal live en el badge', () => {
       expect(formatTimeElapsed({ time_elapsed: 'live' })).toBeNull();
+    });
+  });
+
+  describe('latestClockFromTimeline', () => {
+    it('incluye tiempo añadido del último evento', () => {
+      expect(
+        latestClockFromTimeline([
+          { minute: 88, extraMinute: null, sortKey: 88 },
+          { minute: 90, extraMinute: 3, sortKey: 90.03 },
+        ])
+      ).toBe("90+3'");
+    });
+  });
+
+  describe('resolveLiveTimeElapsed', () => {
+    it('prefiere cronología cuando la API solo marca el minuto base', () => {
+      expect(
+        resolveLiveTimeElapsed({ time_elapsed: '90' }, [
+          { minute: 90, extraMinute: 2, sortKey: 90.02 },
+        ])
+      ).toBe("90+2'");
+    });
+
+    it('respeta entretiempo de la API', () => {
+      expect(resolveLiveTimeElapsed({ time_elapsed: 'ht' }, [{ minute: 45, extraMinute: 1 }])).toBe(
+        'Entretiempo'
+      );
+    });
+  });
+
+  describe('parseElapsedClockToSortKey', () => {
+    it('ordena minuto con añadido después del base', () => {
+      expect(parseElapsedClockToSortKey("90+3'")).toBeGreaterThan(parseElapsedClockToSortKey("90'"));
     });
   });
 
@@ -245,6 +281,24 @@ describe('matchLiveData', () => {
       expect(live.homeScorers).toEqual([{ name: 'Hwang Inbeom', minute: 67, position: null }]);
       expect(live.awayScorers).toEqual([{ name: 'Krejci', minute: 59, position: null }]);
       expect(live.timeElapsed).toBe("67'");
+    });
+
+    it('enrich muestra tiempo añadido desde cronología FIFA', () => {
+      const live = enrichMatchLiveFields({
+        status: 'live',
+        homeScore: 1,
+        awayScore: 1,
+        raw: {
+          time_elapsed: '90',
+          fifaEvents: {
+            timeline: [
+              { sortKey: 90.02, minute: 90, extraMinute: 2, type: 'yellow_card', side: 'home', player: 'A' },
+            ],
+          },
+        },
+      });
+
+      expect(live.timeElapsed).toBe("90+2'");
     });
   });
 
