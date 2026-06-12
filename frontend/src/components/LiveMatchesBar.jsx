@@ -98,6 +98,32 @@ function formatBookingLine(booking) {
 const SUBSTITUTION_OUT_ICON = '⬇️';
 const SUBSTITUTION_IN_ICON = '⬆️';
 
+function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn }) {
+  return (
+    <span className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+      {minutePrefix ? <span>{minutePrefix}</span> : null}
+      <ArrowDown className="size-3 shrink-0 text-red-500" strokeWidth={2.75} aria-hidden="true" />
+      <span>{playerOut}</span>
+      <ArrowUp className="size-3 shrink-0 text-emerald-500" strokeWidth={2.75} aria-hidden="true" />
+      <span>{playerIn}</span>
+    </span>
+  );
+}
+
+function TimelineEntryContent({ entry }) {
+  if (entry.kind === 'substitution') {
+    return (
+      <SubstitutionTimelineRow
+        minutePrefix={entry.minutePrefix}
+        playerOut={entry.playerOut}
+        playerIn={entry.playerIn}
+      />
+    );
+  }
+
+  return entry.text;
+}
+
 function formatSubstitutionLine(substitution) {
   if (!substitution?.playerOut || !substitution?.playerIn) return null;
   const minute = substitution.minute != null ? `${substitution.minute}' ` : '';
@@ -332,7 +358,10 @@ function formatTimelineEntry(event) {
     case 'substitution':
       return {
         side: event.side,
-        text: `${prefix}${SUBSTITUTION_OUT_ICON} ${formatPlayerWithPosition(event.playerOut, event.playerOutPosition)}  ${SUBSTITUTION_IN_ICON} ${formatPlayerWithPosition(event.playerIn, event.playerInPosition)}`,
+        kind: 'substitution',
+        minutePrefix: prefix,
+        playerOut: formatPlayerWithPosition(event.playerOut, event.playerOutPosition),
+        playerIn: formatPlayerWithPosition(event.playerIn, event.playerInPosition),
       };
     case 'foul':
       return {
@@ -405,7 +434,7 @@ function MatchTimeline({ events = [] }) {
             >
               {entry.side === 'home' ? (
                 <div className="flex flex-col items-center text-center">
-                  <span>{entry.text}</span>
+                  <TimelineEntryContent entry={entry} />
                 </div>
               ) : (
                 <span aria-hidden="true" />
@@ -413,7 +442,7 @@ function MatchTimeline({ events = [] }) {
               <span aria-hidden="true" />
               {entry.side === 'away' ? (
                 <div className="flex flex-col items-center text-center">
-                  <span>{entry.text}</span>
+                  <TimelineEntryContent entry={entry} />
                 </div>
               ) : (
                 <span aria-hidden="true" />
