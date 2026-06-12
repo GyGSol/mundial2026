@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
 import EditPlayerDialog from './EditPlayerDialog.jsx';
+import GameMobileNav from './GameMobileNav.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 
@@ -27,13 +28,13 @@ export default function Layout() {
   return (
     <div className="game-shell game-mesh min-h-screen bg-background">
       <header className="game-header sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:py-4">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 md:py-4">
           <div className="flex items-center justify-between gap-3">
             <Link to="/ranking" className="game-brand shrink-0 text-lg font-semibold tracking-tight">
               Mundial 2026
             </Link>
 
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="hidden min-w-0 items-center gap-2 md:flex">
               <span
                 className="hidden max-w-[10rem] truncate text-sm text-muted-foreground sm:inline md:max-w-xs"
                 title={user.name}
@@ -52,7 +53,6 @@ export default function Layout() {
               >
                 Editar
               </Button>
-              <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
               <Button
                 variant="outline"
                 size="sm"
@@ -62,9 +62,10 @@ export default function Layout() {
                 Salir
               </Button>
             </div>
+            <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
           </div>
 
-          <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-0.5 text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav className="-mx-4 hidden gap-1 overflow-x-auto px-4 pb-0.5 text-sm md:flex [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <NavLink to="/ranking" className={navClass}>
               Ranking
             </NavLink>
@@ -97,9 +98,11 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-5 sm:py-8">
+      <main className="mx-auto max-w-7xl px-4 py-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))] md:max-w-7xl md:py-8 md:pb-8">
         <Outlet />
       </main>
+
+      <GameMobileNav onEditPlayer={() => setEditPlayerOpen(true)} />
     </div>
   );
 }

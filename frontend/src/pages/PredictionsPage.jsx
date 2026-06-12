@@ -130,7 +130,8 @@ export default function PredictionsPage() {
     <div
       className={cn(
         'flex flex-col gap-4 sm:gap-6',
-        activeView === 'matches' && 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:pb-0'
+        activeView === 'matches' &&
+          'pb-[calc(4rem+env(safe-area-inset-bottom))] max-md:pb-[calc(8.5rem+env(safe-area-inset-bottom))] sm:pb-0'
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
