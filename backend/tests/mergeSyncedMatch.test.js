@@ -53,6 +53,49 @@ describe('mergeSyncedMatch', () => {
     expect(merged.homeScore).toBe(2);
   });
 
+  it('live→finished usa marcador FIFA si worldcup26 quedó en 2-2 tras gol anulado', () => {
+    const merged = mergeSyncedMatch(
+      {
+        status: 'live',
+        homeScore: 2,
+        awayScore: 2,
+        raw: {
+          fifaMeta: {
+            homeScore: 2,
+            awayScore: 1,
+            syncedAt: '2026-06-12T03:00:00.000Z',
+          },
+        },
+      },
+      { status: 'finished', homeScore: 2, awayScore: 2 }
+    );
+
+    expect(merged.status).toBe('finished');
+    expect(merged.homeScore).toBe(2);
+    expect(merged.awayScore).toBe(1);
+  });
+
+  it('finished con fifaMeta corrige marcador guardado desactualizado', () => {
+    const merged = mergeSyncedMatch(
+      {
+        status: 'finished',
+        homeScore: 2,
+        awayScore: 2,
+        raw: {
+          fifaMeta: {
+            homeScore: 2,
+            awayScore: 1,
+            syncedAt: '2026-06-12T04:00:00.000Z',
+          },
+        },
+      },
+      { status: 'finished', homeScore: 2, awayScore: 2 }
+    );
+
+    expect(merged.homeScore).toBe(2);
+    expect(merged.awayScore).toBe(1);
+  });
+
   it('conserva fdEvents y footballDataMatchId al sincronizar raw de worldcup26', () => {
     const merged = mergeSyncedMatch(
       {

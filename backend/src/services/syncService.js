@@ -121,8 +121,24 @@ export function mergeSyncedMatch(existing, incoming) {
 
   if (existing.status === 'finished') {
     merged.status = 'finished';
-    merged.homeScore = existing.homeScore;
-    merged.awayScore = existing.awayScore;
+    const fifaScores = readFifaAuthoritativeScores(merged.raw ?? {});
+    if (fifaScores) {
+      merged.homeScore = fifaScores.homeScore;
+      merged.awayScore = fifaScores.awayScore;
+    } else {
+      merged.homeScore = existing.homeScore;
+      merged.awayScore = existing.awayScore;
+    }
+    return merged;
+  }
+
+  if (existing.status === 'live' && incoming.status === 'finished') {
+    merged.status = 'finished';
+    const fifaScores = readFifaAuthoritativeScores(merged.raw ?? {});
+    if (fifaScores) {
+      merged.homeScore = fifaScores.homeScore;
+      merged.awayScore = fifaScores.awayScore;
+    }
     return merged;
   }
 
