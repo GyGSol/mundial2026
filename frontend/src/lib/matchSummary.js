@@ -159,6 +159,14 @@ export function buildMatchSummaryRows({ timeline = [], reportStats = null } = {}
   return rows;
 }
 
+/** Subtítulo del resumen cuando faltan stats oficiales del PDF FIFA. */
+export function getMatchSummaryNotice(status, hasReportStats) {
+  if (hasReportStats) return null;
+  if (status === 'live') return 'Estadísticas parciales (en curso)';
+  if (status === 'finished') return 'Parcial (cronología) · reporte FIFA pendiente';
+  return null;
+}
+
 export function formatMatchAttendance(reportStats) {
   const attendance = reportStats?.attendance;
   if (attendance == null || Number.isNaN(attendance)) return null;

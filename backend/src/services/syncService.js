@@ -27,7 +27,7 @@ import {
   notifySyncComplete,
 } from './websocketService.js';
 import { syncLiveLineups } from './lineupSyncService.js';
-import { syncFifaMatchEvents } from './fifaEventSyncService.js';
+import { syncFifaMatchEvents, syncFifaReportsForMatchIds } from './fifaEventSyncService.js';
 import { readFifaAuthoritativeScores } from './matchLiveData.js';
 
 async function upsertTeams() {
@@ -167,6 +167,7 @@ async function upsertMatches() {
   const data = await fetchGames();
   const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
   const scoringIds = [];
+  const newlyFinishedIds = [];
   const stadiumTimezones = await buildStadiumTimezoneMap();
 
   for (const item of list) {
@@ -186,6 +187,10 @@ async function upsertMatches() {
     const becameLive = match.status === 'live' && existing?.status !== 'live';
     const scoreChanged = needsRescore(existing, match);
 
+    if (match.status === 'finished' && !wasFinished) {
+      newlyFinishedIds.push(match._id);
+    }
+
     if (match.status === 'finished' && (!wasFinished || scoreChanged)) {
       scoringIds.push(match._id);
     } else if (match.status === 'live' && (becameLive || scoreChanged)) {
@@ -193,7 +198,7 @@ async function upsertMatches() {
     }
   }
 
-  return { count: list.length, scoringIds };
+  return { count: list.length, scoringIds, newlyFinishedIds };
 }
 
 function needsRescore(before, after) {
@@ -277,13 +282,17 @@ export async function runSync({ includeMetadata = true } = {}) {
       stadiumsCount = await upsertStadiums();
     }
 
-    const { count, scoringIds } = await upsertMatches();
+    const { count, scoringIds, newlyFinishedIds } = await upsertMatches();
 
     for (const matchId of scoringIds) {
       await recalculateMatchScores(matchId);
     }
 
     await recalculateAllLiveMatches();
+
+    if (newlyFinishedIds.length) {
+      await syncFifaReportsForMatchIds(newlyFinishedIds);
+    }
 
     await SyncMeta.findOneAndUpdate(
       { key: 'global' },
@@ -292,7 +301,7 @@ export async function runSync({ includeMetadata = true } = {}) {
     );
 
     const lineupResult = await syncLiveLineups();
-    const fifaResult = await syncFifaMatchEvents();
+    const fifaResult = await syncFifaMatchEvents({ extraMatchIds: newlyFinishedIds });
 
     for (const matchId of fifaResult.scoringIds ?? []) {
       await recalculateMatchScores(matchId);

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildMatchSummaryRows, formatMatchAttendance } from '../../frontend/src/lib/matchSummary.js';
+import {
+  buildMatchSummaryRows,
+  formatMatchAttendance,
+  getMatchSummaryNotice,
+} from '../../frontend/src/lib/matchSummary.js';
 
 describe('buildMatchSummaryRows', () => {
   const timeline = [
@@ -77,5 +81,22 @@ describe('buildMatchSummaryRows', () => {
 
   it('formatea asistencia del reporte', () => {
     expect(formatMatchAttendance(fullReport)).toBe('80.824');
+  });
+});
+
+describe('getMatchSummaryNotice', () => {
+  it('no muestra aviso con reporte FIFA', () => {
+    expect(getMatchSummaryNotice('finished', true)).toBeNull();
+    expect(getMatchSummaryNotice('live', true)).toBeNull();
+  });
+
+  it('en vivo no menciona reporte FIFA pendiente', () => {
+    expect(getMatchSummaryNotice('live', false)).toBe('Estadísticas parciales (en curso)');
+  });
+
+  it('finalizado sin reporte indica PDF pendiente', () => {
+    expect(getMatchSummaryNotice('finished', false)).toBe(
+      'Parcial (cronología) · reporte FIFA pendiente'
+    );
   });
 });

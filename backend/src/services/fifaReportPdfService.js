@@ -12,7 +12,12 @@ function parseStatisticsSection(text) {
   const sectionMatch = text.match(
     /Statistics\s*([\s\S]*?)(?=\n(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|\n#POS|\nGreen\s+-|$)/i
   );
-  return sectionMatch?.[1]?.trim() ?? null;
+  if (!sectionMatch?.[1]) return null;
+
+  // Formato "Team A (ABC) Statistics Team B (XYZ)" — quitar nombre visitante tras "Statistics"
+  return sectionMatch[1]
+    .replace(/^\s*[A-Za-z][\w\s.'-]*\s*\([A-Z]{3}\)\s*/m, '')
+    .trim();
 }
 
 function assignPair(sideStats, key, match) {

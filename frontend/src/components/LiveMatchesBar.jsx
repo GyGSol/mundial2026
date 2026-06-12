@@ -5,7 +5,11 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
-import { buildMatchSummaryRows, formatMatchAttendance } from '@/lib/matchSummary';
+import {
+  buildMatchSummaryRows,
+  formatMatchAttendance,
+  getMatchSummaryNotice,
+} from '@/lib/matchSummary';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 
@@ -227,19 +231,18 @@ function MatchSummary({
   reportStats = null,
   homeCode = 'LOC',
   awayCode = 'VIS',
-  partial = false,
+  status = 'finished',
 }) {
   const rows = buildMatchSummaryRows({ timeline: events, reportStats });
   const attendance = formatMatchAttendance(reportStats);
+  const notice = getMatchSummaryNotice(status, Boolean(reportStats));
   if (!rows.length) return null;
 
   return (
     <div className="w-full rounded-md border bg-muted/20 px-3 py-2 text-left">
       <p className="mb-2 text-center text-[11px] font-medium text-foreground">Resumen del partido</p>
-      {partial ? (
-        <p className="mb-2 text-center text-[10px] text-muted-foreground">
-          Parcial (cronología) · reporte FIFA pendiente
-        </p>
+      {notice ? (
+        <p className="mb-2 text-center text-[10px] text-muted-foreground">{notice}</p>
       ) : null}
       {attendance ? (
         <p className="mb-2 text-center text-[10px] text-muted-foreground">
@@ -386,7 +389,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           reportStats={match.fifaReportStats}
           homeCode={homeCode}
           awayCode={awayCode}
-          partial={!match.fifaReportStats}
+          status={match.status}
         />
 
         <span className="text-[11px] text-muted-foreground">
