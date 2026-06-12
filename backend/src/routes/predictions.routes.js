@@ -6,6 +6,11 @@ import { notifyMatchesUpdated } from '../services/websocketService.js';
 import { isPredictionLocked } from '../services/predictionLockService.js';
 import { backfillLegacyUserSubmittedPredictions } from '../services/predictionMigrationService.js';
 import { buildUserPredictedMatchContext } from '../services/predictedMatchContextService.js';
+import {
+  askMatchAiFollowUp,
+  getMatchAiInsightForUser,
+  hasAiProvider,
+} from '../services/aiPredictionService.js';
 
 const router = Router();
 
@@ -46,6 +51,53 @@ router.get('/group-standings', authMiddleware, async (req, res, next) => {
       },
     });
   } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:matchId/ai-insight', authMiddleware, async (req, res, next) => {
+  try {
+    if (!hasAiProvider()) {
+      return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
+    }
+
+    const insight = await getMatchAiInsightForUser(req.params.matchId, req.user._id);
+    res.json({ insight });
+  } catch (err) {
+    if (err.message === 'Match not found') {
+      return res.status(404).json({ error: 'Partido no encontrado' });
+    }
+    if (err.message === 'La consulta IA solo está disponible para partidos próximos') {
+      return res.status(400).json({ error: err.message });
+    }
+    next(err);
+  }
+});
+
+router.post('/:matchId/ai-follow-up', authMiddleware, async (req, res, next) => {
+  try {
+    if (!hasAiProvider()) {
+      return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
+    }
+
+    const reply = await askMatchAiFollowUp(req.params.matchId, req.user._id, {
+      question: req.body?.question,
+      history: req.body?.history,
+      insight: req.body?.insight,
+    });
+    res.json({ reply });
+  } catch (err) {
+    if (err.message === 'Match not found') {
+      return res.status(404).json({ error: 'Partido no encontrado' });
+    }
+    if (
+      err.message === 'Escribí una pregunta' ||
+      err.message === 'La pregunta es demasiado larga' ||
+      err.message === 'Predicción IA inválida' ||
+      err.message === 'La consulta IA solo está disponible para partidos próximos'
+    ) {
+      return res.status(400).json({ error: err.message });
+    }
     next(err);
   }
 });

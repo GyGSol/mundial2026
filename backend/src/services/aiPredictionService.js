@@ -17,6 +17,8 @@ const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const AI_REASONING_MAX_LEN = 500;
+const AI_FOLLOWUP_MAX_LEN = 1200;
+const AI_FOLLOWUP_QUESTION_MAX_LEN = 500;
 
 /** Partido en ventana T-90 ± window si kickoff cae en [now+lead-window, now+lead+window]. */
 export function isInAiPredictionWindow(match, now = Date.now()) {
@@ -345,6 +347,197 @@ function aiModelForScoreSource(source) {
   if (source === 'gemini') return env.aiGeminiModel;
   if (source === 'groq') return env.aiGroqModel;
   return 'heuristic';
+}
+
+export function hasAiProvider() {
+  return Boolean(env.googleAiApiKey || env.groqApiKey);
+}
+
+function normalizeFollowUpHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter((entry) => entry && typeof entry.content === 'string')
+    .slice(-8)
+    .map((entry) => ({
+      role: entry.role === 'assistant' ? 'assistant' : 'user',
+      content: entry.content.trim().slice(0, AI_FOLLOWUP_MAX_LEN),
+    }))
+    .filter((entry) => entry.content);
+}
+
+function buildFollowUpPrompt(context, insight, question, history = []) {
+  const historyBlock = history.length
+    ? `\nConversación previa:\n${history
+        .map((entry) => `${entry.role === 'user' ? 'Usuario' : 'IA'}: ${entry.content}`)
+        .join('\n')}\n`
+    : '';
+
+  return `Sos un analista de fútbol para el Mundial FIFA 2026. Ya predijiste este partido.
+
+Contexto del partido:
+${JSON.stringify(context, null, 2)}
+
+Tu predicción: ${insight.homeGoals}-${insight.awayGoals}
+Tu razonamiento: ${insight.reasoning}
+${historyBlock}
+Pregunta del usuario: ${question}
+
+Respondé en español, de forma clara y breve (máximo 3 párrafos cortos). No cambies el marcador salvo que te lo pidan explícitamente.`;
+}
+
+async function callGroqForText(prompt, { fetchImpl = fetch } = {}) {
+  const apiKey = env.groqApiKey;
+  if (!apiKey) return null;
+
+  const body = {
+    model: env.aiGroqModel,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.5,
+  };
+
+  const response = await fetchImpl(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Groq HTTP ${response.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const text = String(data?.choices?.[0]?.message?.content ?? '').trim();
+  if (!text) throw new Error('Groq devolvió respuesta vacía');
+  return { text: text.slice(0, AI_FOLLOWUP_MAX_LEN), source: 'groq' };
+}
+
+async function callGeminiForText(prompt, { fetchImpl = fetch } = {}) {
+  const apiKey = env.googleAiApiKey;
+  if (!apiKey) return null;
+
+  const url = `${GEMINI_API_BASE}/${env.aiGeminiModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.5 },
+  };
+
+  const response = await fetchImpl(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`Gemini HTTP ${response.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const text = String(data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? '').trim();
+  if (!text) throw new Error('Gemini devolvió respuesta vacía');
+  return { text: text.slice(0, AI_FOLLOWUP_MAX_LEN), source: 'gemini' };
+}
+
+export async function callAiForText(prompt, { fetchImpl = fetch } = {}) {
+  if (env.googleAiApiKey) {
+    try {
+      const gemini = await callGeminiForText(prompt, { fetchImpl });
+      if (gemini) return gemini;
+    } catch (err) {
+      console.warn('AI follow-up Gemini failed, trying Groq:', err.message);
+      if (env.groqApiKey) {
+        return callGroqForText(prompt, { fetchImpl });
+      }
+      throw err;
+    }
+  }
+
+  if (env.groqApiKey) {
+    return callGroqForText(prompt, { fetchImpl });
+  }
+
+  throw new Error('IA no configurada');
+}
+
+export function formatMatchAiInsight(score) {
+  return {
+    homeGoals: score.homeGoals,
+    awayGoals: score.awayGoals,
+    reasoning: score.reasoning,
+    source: score.source,
+    model: aiModelForScoreSource(score.source),
+  };
+}
+
+export async function getMatchAiInsightForUser(matchId, userId, { fetchImpl = fetch } = {}) {
+  if (!hasAiProvider()) {
+    throw new Error('IA no configurada');
+  }
+
+  const match = await Match.findById(matchId).lean();
+  if (!match) {
+    throw new Error('Match not found');
+  }
+  if (match.status !== 'upcoming') {
+    throw new Error('La consulta IA solo está disponible para partidos próximos');
+  }
+
+  const context = await buildPromptContext(match, userId);
+  const score = await callGeminiForScore(context, { fetchImpl });
+  return formatMatchAiInsight(score);
+}
+
+export async function askMatchAiFollowUp(
+  matchId,
+  userId,
+  { question, history = [], insight },
+  { fetchImpl = fetch } = {}
+) {
+  if (!hasAiProvider()) {
+    throw new Error('IA no configurada');
+  }
+
+  const trimmedQuestion = String(question ?? '').trim();
+  if (!trimmedQuestion) {
+    throw new Error('Escribí una pregunta');
+  }
+  if (trimmedQuestion.length > AI_FOLLOWUP_QUESTION_MAX_LEN) {
+    throw new Error('La pregunta es demasiado larga');
+  }
+
+  const homeGoals = clampGoals(insight?.homeGoals);
+  const awayGoals = clampGoals(insight?.awayGoals);
+  const reasoning = String(insight?.reasoning ?? '').trim();
+  if (homeGoals === null || awayGoals === null || !reasoning) {
+    throw new Error('Predicción IA inválida');
+  }
+
+  const match = await Match.findById(matchId).lean();
+  if (!match) {
+    throw new Error('Match not found');
+  }
+  if (match.status !== 'upcoming') {
+    throw new Error('La consulta IA solo está disponible para partidos próximos');
+  }
+
+  const context = await buildPromptContext(match, userId);
+  const prompt = buildFollowUpPrompt(
+    context,
+    { homeGoals, awayGoals, reasoning },
+    trimmedQuestion,
+    normalizeFollowUpHistory(history)
+  );
+
+  const result = await callAiForText(prompt, { fetchImpl });
+  return {
+    answer: result.text,
+    source: result.source,
+    model: aiModelForScoreSource(result.source),
+  };
 }
 
 export async function submitAiPrediction(userId, matchId, { homeGoals, awayGoals, aiModel, aiReasoning }) {

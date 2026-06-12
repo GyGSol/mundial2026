@@ -5,6 +5,9 @@ import {
   clampGoals,
   computeHeuristicScore,
   callGeminiForScore,
+  callAiForText,
+  hasAiProvider,
+  askMatchAiFollowUp,
 } from '../src/services/aiPredictionService.js';
 import { env } from '../src/config/env.js';
 
@@ -195,6 +198,56 @@ describe('aiPredictionService', () => {
 
       env.googleAiApiKey = previousGeminiKey;
       env.groqApiKey = previousGroqKey;
+    });
+  });
+
+  describe('hasAiProvider', () => {
+    it('es true si hay Gemini o Groq', () => {
+      const prevGemini = env.googleAiApiKey;
+      const prevGroq = env.groqApiKey;
+      env.googleAiApiKey = '';
+      env.groqApiKey = '';
+      expect(hasAiProvider()).toBe(false);
+      env.groqApiKey = 'x';
+      expect(hasAiProvider()).toBe(true);
+      env.googleAiApiKey = prevGemini;
+      env.groqApiKey = prevGroq;
+    });
+  });
+
+  describe('callAiForText', () => {
+    it('devuelve texto desde Groq mockeado', async () => {
+      const previousGroqKey = env.groqApiKey;
+      const previousGeminiKey = env.googleAiApiKey;
+      env.googleAiApiKey = '';
+      env.groqApiKey = 'groq-test-key';
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: 'Por la baja del 9 titular.' } }],
+        }),
+      });
+
+      const result = await callAiForText('pregunta', { fetchImpl: mockFetch });
+      expect(result).toEqual({
+        text: 'Por la baja del 9 titular.',
+        source: 'groq',
+      });
+
+      env.googleAiApiKey = previousGeminiKey;
+      env.groqApiKey = previousGroqKey;
+    });
+  });
+
+  describe('askMatchAiFollowUp', () => {
+    it('rechaza pregunta vacía', async () => {
+      await expect(
+        askMatchAiFollowUp('000000000000000000000001', '000000000000000000000002', {
+          question: '   ',
+          insight: { homeGoals: 1, awayGoals: 0, reasoning: 'Local favorito' },
+        })
+      ).rejects.toThrow('Escribí una pregunta');
     });
   });
 });

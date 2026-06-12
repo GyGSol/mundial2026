@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Dices } from 'lucide-react';
+import { Dices, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input.jsx';
 import { MAX_GOALS_PER_TEAM, randomMatchScore } from '@/lib/randomMatchScore.js';
+import AiPredictionDialog from './AiPredictionDialog.jsx';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
@@ -89,6 +90,36 @@ function RandomScoreButton({ onClick }) {
       <Dices className="size-4" aria-hidden />
       Al azar
     </Button>
+  );
+}
+
+function AiInsightButton({ match }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+        title="Ver predicción y análisis de la IA"
+        className="gap-1.5 min-w-28 border-violet-500/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20 hover:text-violet-50"
+      >
+        <Sparkles className="size-4" aria-hidden />
+        IA
+      </Button>
+      <AiPredictionDialog match={match} open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+function PredictionActions({ children, match }) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2">{children}</div>
+      <AiInsightButton match={match} />
+    </div>
   );
 }
 
@@ -182,7 +213,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homePrediction={prediction.homeGoals}
           awayPrediction={prediction.awayGoals}
         />
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <PredictionActions match={match}>
           <Button
             type="button"
             size="sm"
@@ -192,7 +223,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
             Editar
           </Button>
           <RandomScoreButton onClick={applyRandomScore} />
-        </div>
+        </PredictionActions>
         <BroadcastRow broadcasters={broadcasters} />
       </div>
     );
@@ -213,7 +244,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
       />
 
       <div className="flex flex-col items-center gap-2">
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <PredictionActions match={match}>
           <RandomScoreButton onClick={applyRandomScore} />
           <Button
             type="submit"
@@ -223,7 +254,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           >
             {saving ? '...' : 'Guardar'}
           </Button>
-        </div>
+        </PredictionActions>
         {hasPrediction ? (
           <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
             Cancelar

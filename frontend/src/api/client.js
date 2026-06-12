@@ -116,6 +116,15 @@ export const predictionsApi = {
       method: 'PUT',
       body: JSON.stringify({ homeGoals, awayGoals }),
     }),
+  aiInsight: (matchId) =>
+    request(`/predictions/${matchId}/ai-insight`, {
+      method: 'POST',
+    }),
+  aiFollowUp: (matchId, body) =>
+    request(`/predictions/${matchId}/ai-follow-up`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
   groupStandings: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return request(`/predictions/group-standings${query ? `?${query}` : ''}`);
