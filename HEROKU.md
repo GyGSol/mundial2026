@@ -77,6 +77,31 @@ curl https://mundial2026-pred-34de76763ecc.herokuapp.com/api/players/meta
 - Sync en producción: `heroku run npm run sync:players -a mundial2026-pred` o `POST /api/admin/sync/players` desde el panel admin.
 - UI: pestaña **Jugadores (Beta)** en `/mundial`, a la derecha de Fixture.
 
+### Usuario IA (predicciones Gemini)
+
+El bot `predictivemodeling@gmail.com` predice automáticamente ~90 min antes de cada kickoff (ventana de cierre: 1 h antes).
+
+1. Crear API key gratis en [Google AI Studio](https://aistudio.google.com/apikey).
+2. Config vars en Heroku:
+
+```bash
+heroku config:set \
+  GOOGLE_AI_API_KEY="tu_api_key" \
+  AI_PREDICTIONS_ENABLED=true \
+  AI_USER_EMAIL="predictivemodeling@gmail.com" \
+  -a mundial2026-pred
+```
+
+3. Marcar el usuario como IA (una sola vez):
+
+```bash
+heroku run npm run mark-ai-user -w backend -a mundial2026-pred
+```
+
+4. Verificar en logs (`AI prediction: ...`) ~90 min antes de un partido upcoming.
+
+Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `AI_GEMINI_MODEL` (default `gemini-2.0-flash`).
+
 ## Deploy de cambios futuros
 
 ```bash

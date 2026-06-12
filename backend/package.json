@@ -13,7 +13,8 @@
     "build:players-seed": "node src/scripts/buildPlayersSeed.js",
     "fix-kickoffs": "node src/scripts/fixKickoffTimes.js",
     "simulate": "node src/scripts/runSimulation.js",
-    "reset-db": "node src/scripts/resetDatabase.js"
+    "reset-db": "node src/scripts/resetDatabase.js",
+    "mark-ai-user": "node src/scripts/markAiUser.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

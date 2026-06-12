@@ -24,4 +24,11 @@ export const env = {
   fifaSeasonId: process.env.FIFA_SEASON_ID || '285023',
   fifaReportAssetPrefix: process.env.FIFA_REPORT_ASSET_PREFIX || 'ce281',
   fifaReportIdBase: Number(process.env.FIFA_REPORT_ID_BASE || 12451),
+  aiPredictionsEnabled: process.env.AI_PREDICTIONS_ENABLED !== 'false',
+  aiUserEmail: (process.env.AI_USER_EMAIL || 'predictivemodeling@gmail.com').toLowerCase().trim(),
+  googleAiApiKey: process.env.GOOGLE_AI_API_KEY || '',
+  aiPredictLeadMs: Number(process.env.AI_PREDICT_LEAD_MS || 90 * 60 * 1000),
+  aiPredictWindowMs: Number(process.env.AI_PREDICT_WINDOW_MS || 5 * 60 * 1000),
+  aiPredictJobIntervalMs: Number(process.env.AI_PREDICT_JOB_INTERVAL_MS || 5 * 60 * 1000),
+  aiGeminiModel: process.env.AI_GEMINI_MODEL || 'gemini-2.0-flash',
 };

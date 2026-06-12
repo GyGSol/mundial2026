@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    isAiUser: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

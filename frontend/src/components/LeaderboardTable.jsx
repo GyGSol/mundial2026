@@ -76,7 +76,17 @@ export default function LeaderboardTable({
                   </TableCell>
                   <TableCell className="max-w-[9rem] font-medium sm:max-w-none">
                     <div className="flex min-w-0 items-center justify-between gap-2">
-                      <span className="truncate">{row.name}</span>
+                      <span className="truncate">
+                        {row.name}
+                        {row.isAiUser ? (
+                          <span
+                            className="ml-1.5 inline-flex rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300"
+                            title="Predicciones generadas por IA"
+                          >
+                            IA
+                          </span>
+                        ) : null}
+                      </span>
                       {showGroupName && row.groupName ? (
                         <span className="text-xs font-normal text-muted-foreground">
                           {row.groupName}

@@ -16,6 +16,9 @@ const predictionSchema = new mongoose.Schema(
       awayGoals: Number,
       totalGoals: Number,
     },
+    predictionSource: { type: String, enum: ['user', 'ai', 'admin', 'default'], default: 'user' },
+    aiModel: { type: String, default: null },
+    aiReasoning: { type: String, default: null },
   },
   { timestamps: true }
 );

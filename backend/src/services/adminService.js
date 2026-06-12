@@ -34,6 +34,7 @@ function serializeUser(user) {
     name: user.name,
     email: user.email,
     totalPoints: user.totalPoints ?? 0,
+    isAiUser: Boolean(user.isAiUser),
     activeCompetitionGroupId: user.activeCompetitionGroupId?.toString() ?? null,
     competitionGroupId: user.competitionGroupId?.toString() ?? null,
     createdAt: user.createdAt,

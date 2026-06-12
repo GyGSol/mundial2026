@@ -64,7 +64,7 @@ export async function getLeaderboard(competitionGroupId, limit = 100) {
   }
 
   const users = await User.find(filter).select(
-    'name totalPoints createdAt activeCompetitionGroupId competitionGroupId'
+    'name totalPoints createdAt activeCompetitionGroupId competitionGroupId isAiUser'
   );
   const statsMap = await getPredictionStatsByUser(users.map((u) => u._id));
   const groupIds = [
@@ -83,6 +83,7 @@ export async function getLeaderboard(competitionGroupId, limit = 100) {
     return {
       id: user._id.toString(),
       name: user.name,
+      isAiUser: Boolean(user.isAiUser),
       groupName: groupNameById[(user.activeCompetitionGroupId || user.competitionGroupId)?.toString()] || null,
       totalPoints: user.totalPoints,
       pa: stats.pa ?? 0,
