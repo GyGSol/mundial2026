@@ -31,6 +31,21 @@ npm run sync   # poblar desde worldcup26.ir
 
 ## Deploy
 
+Tras completar cambios de código que el usuario pidió (features, fixes, UI), **siempre** hacer deploy sin esperar que lo pida:
+
+```bash
+git add <archivos relevantes>
+git commit -m "..."
+git push heroku main
+git push origin main
+```
+
+- App: `mundial2026-pred` (rama `main`).
+- No incluir en commits archivos no relacionados ni secretos (`.env`).
+- Si los tests fallan por timeout de red u otra causa ajena al cambio, indicarlo; no bloquear deploy de UI pura si el build pasa.
+
+Deploy manual (referencia):
+
 ```bash
 git push heroku main
 ```

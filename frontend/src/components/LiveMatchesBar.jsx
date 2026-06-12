@@ -105,6 +105,71 @@ function formatSubstitutionLine(substitution) {
   return `${minute}${playerOut} → ${playerIn}`;
 }
 
+function countYellowCards(bookings = []) {
+  return (bookings ?? []).filter((booking) => {
+    const card = String(booking?.card ?? 'YELLOW').toUpperCase();
+    return card === 'YELLOW' || card === 'YELLOW_RED';
+  }).length;
+}
+
+function TeamSideStats({ bookings = [], substitutions = [], className }) {
+  const yellowCount = countYellowCards(bookings);
+  const substitutionCount = (substitutions ?? []).length;
+
+  if (yellowCount === 0 && substitutionCount === 0) return null;
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-0.5 text-[10px] leading-none tabular-nums text-muted-foreground',
+        className
+      )}
+    >
+      {yellowCount > 0 ? (
+        <span className="inline-flex items-center gap-0.5" title="Tarjetas amarillas">
+          <span aria-hidden="true">🟨</span>
+          <span>{yellowCount}</span>
+        </span>
+      ) : null}
+      {substitutionCount > 0 ? (
+        <span className="inline-flex items-center gap-0.5" title="Cambios">
+          <span aria-hidden="true">↔</span>
+          <span>{substitutionCount}</span>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function TeamHeaderCell({ name, flag, bookings = [], substitutions = [], side = 'home' }) {
+  const showStats =
+    countYellowCards(bookings) > 0 || (substitutions ?? []).length > 0;
+  const isAway = side === 'away';
+
+  return (
+    <div className="flex flex-col items-center gap-1 text-center">
+      <div
+        className={cn(
+          'flex items-center justify-center gap-1.5',
+          isAway && 'flex-row-reverse'
+        )}
+      >
+        {flag ? (
+          <img src={flag} alt={name} className="size-8 shrink-0 rounded-sm border object-cover" />
+        ) : null}
+        {showStats ? (
+          <TeamSideStats
+            bookings={bookings}
+            substitutions={substitutions}
+            className={isAway ? 'items-end' : 'items-start'}
+          />
+        ) : null}
+      </div>
+      <span className="max-w-[5.5rem] truncate text-xs font-medium">{name}</span>
+    </div>
+  );
+}
+
 function TeamEventColumn({ lines, className }) {
   if (!lines.length) return null;
 
@@ -152,21 +217,23 @@ function MatchTeamsLayout({
 
   return (
     <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
-      <div className="flex flex-col items-center gap-1 text-center">
-        {homeFlag ? (
-          <img src={homeFlag} alt={homeName} className="size-8 rounded-sm border object-cover" />
-        ) : null}
-        <span className="max-w-[5.5rem] truncate text-xs font-medium">{homeName}</span>
-      </div>
+      <TeamHeaderCell
+        name={homeName}
+        flag={homeFlag}
+        bookings={homeBookings}
+        substitutions={homeSubstitutions}
+        side="home"
+      />
 
       <div className="flex min-h-10 items-center justify-center self-center px-1">{center}</div>
 
-      <div className="flex flex-col items-center gap-1 text-center">
-        {awayFlag ? (
-          <img src={awayFlag} alt={awayName} className="size-8 rounded-sm border object-cover" />
-        ) : null}
-        <span className="max-w-[5.5rem] truncate text-xs font-medium">{awayName}</span>
-      </div>
+      <TeamHeaderCell
+        name={awayName}
+        flag={awayFlag}
+        bookings={awayBookings}
+        substitutions={awaySubstitutions}
+        side="away"
+      />
 
       {showScorers ? (
         <>
@@ -392,22 +459,34 @@ function MatchSummary({
   );
 }
 
-function FinishedTeamsHeader({ homeName, awayName, homeFlag, awayFlag, center }) {
+function FinishedTeamsHeader({
+  homeName,
+  awayName,
+  homeFlag,
+  awayFlag,
+  center,
+  homeBookings = [],
+  awayBookings = [],
+  homeSubstitutions = [],
+  awaySubstitutions = [],
+}) {
   return (
     <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
-      <div className="flex flex-col items-center gap-1 text-center">
-        {homeFlag ? (
-          <img src={homeFlag} alt={homeName} className="size-8 rounded-sm border object-cover" />
-        ) : null}
-        <span className="max-w-[5.5rem] truncate text-xs font-medium">{homeName}</span>
-      </div>
+      <TeamHeaderCell
+        name={homeName}
+        flag={homeFlag}
+        bookings={homeBookings}
+        substitutions={homeSubstitutions}
+        side="home"
+      />
       <div className="flex min-h-10 items-center justify-center px-1">{center}</div>
-      <div className="flex flex-col items-center gap-1 text-center">
-        {awayFlag ? (
-          <img src={awayFlag} alt={awayName} className="size-8 rounded-sm border object-cover" />
-        ) : null}
-        <span className="max-w-[5.5rem] truncate text-xs font-medium">{awayName}</span>
-      </div>
+      <TeamHeaderCell
+        name={awayName}
+        flag={awayFlag}
+        bookings={awayBookings}
+        substitutions={awaySubstitutions}
+        side="away"
+      />
     </div>
   );
 }
@@ -495,6 +574,10 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           awayName={awayName}
           homeFlag={homeFlag}
           awayFlag={awayFlag}
+          homeBookings={match.homeBookings}
+          awayBookings={match.awayBookings}
+          homeSubstitutions={match.homeSubstitutions}
+          awaySubstitutions={match.awaySubstitutions}
           center={
             <div className="flex items-center gap-1 text-xl font-bold tabular-nums">
               <span>{match.homeScore}</span>

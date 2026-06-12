@@ -45,4 +45,4 @@ Tras editar `mcp.json`: **MCP Reload** en Cursor.
 - Variables sensibles solo en `.env` (nunca en git ni Engram).
 - Commits en español o inglés claro; mensaje con el *por qué*.
 - Tests: `npm test` (backend, puntuación y rutas críticas).
-- Deploy Heroku: `git push heroku main` desde la raíz del repo.
+- Deploy Heroku: tras cambios implementados, commit + `git push heroku main` + `git push origin main` (sin esperar confirmación del usuario).
