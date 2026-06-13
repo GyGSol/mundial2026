@@ -149,6 +149,19 @@ function countRedCards(bookings = []) {
   }).length;
 }
 
+function CardStatIcon({ variant }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'inline-block size-2 shrink-0 rounded-[1px] border',
+        variant === 'yellow' && 'border-yellow-600/40 bg-yellow-400',
+        variant === 'red' && 'border-red-700/40 bg-red-500'
+      )}
+    />
+  );
+}
+
 function TeamSideStats({ bookings = [], substitutions = [], className }) {
   const yellowCount = countYellowCards(bookings);
   const redCount = countRedCards(bookings);
@@ -159,29 +172,29 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-1 text-[11px] leading-tight tabular-nums text-muted-foreground',
+        'flex flex-col gap-px text-[9px] leading-none tabular-nums text-muted-foreground',
         className
       )}
     >
       {yellowCount > 0 ? (
         <span className="inline-flex items-center gap-0.5" title="Tarjetas amarillas">
-          <span aria-hidden="true">🟨</span>
+          <CardStatIcon variant="yellow" />
           <span>{yellowCount}</span>
         </span>
       ) : null}
       {redCount > 0 ? (
         <span className="inline-flex items-center gap-0.5" title="Tarjetas rojas">
-          <span aria-hidden="true">🟥</span>
+          <CardStatIcon variant="red" />
           <span>{redCount}</span>
         </span>
       ) : null}
       {substitutionCount > 0 ? (
-        <span className="inline-flex items-center gap-1" title="Cambios">
+        <span className="inline-flex items-center gap-0.5" title="Cambios">
           <span className="inline-flex items-center gap-px" aria-hidden="true">
-            <ArrowDown className="size-3.5 shrink-0 text-red-500" strokeWidth={2.75} />
-            <ArrowUp className="size-3.5 shrink-0 text-emerald-500" strokeWidth={2.75} />
+            <ArrowDown className="size-2 shrink-0 text-red-500" strokeWidth={2.5} />
+            <ArrowUp className="size-2 shrink-0 text-emerald-500" strokeWidth={2.5} />
           </span>
-          <span className="font-semibold text-foreground">{substitutionCount}</span>
+          <span className="font-medium text-foreground">{substitutionCount}</span>
         </span>
       ) : null}
     </div>
@@ -196,15 +209,15 @@ function TeamHeaderCell({ name, flag, bookings = [], substitutions = [], side = 
   const isAway = side === 'away';
 
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
+    <div className="flex flex-col items-center gap-0.5 text-center">
       <div
         className={cn(
-          'flex items-center justify-center gap-1.5',
+          'flex items-center justify-center gap-1',
           isAway && 'flex-row-reverse'
         )}
       >
         {flag ? (
-          <img src={flag} alt={name} className="size-8 shrink-0 rounded-sm border object-cover" />
+          <img src={flag} alt={name} className="size-7 shrink-0 rounded-sm border object-cover" />
         ) : null}
         {showStats ? (
           <TeamSideStats
@@ -214,7 +227,7 @@ function TeamHeaderCell({ name, flag, bookings = [], substitutions = [], side = 
           />
         ) : null}
       </div>
-      <span className="max-w-[5.5rem] truncate text-xs font-medium">{name}</span>
+      <span className="max-w-[5rem] truncate text-[11px] font-medium leading-tight">{name}</span>
     </div>
   );
 }
