@@ -9,6 +9,38 @@ import {
   attachTimelinePlayerIds,
 } from '../utils/fifaSquadShirtMap.js';
 
+/** Máximo goles plausibles en un partido (incluye prórroga). */
+export const MAX_PLAUSIBLE_MATCH_GOALS = 15;
+
+export function isPlausibleMatchGoalCount(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 && n <= MAX_PLAUSIBLE_MATCH_GOALS && Math.floor(n) === n;
+}
+
+export function sanitizeMatchGoalCount(value, fallback = 0) {
+  return isPlausibleMatchGoalCount(value) ? Number(value) : fallback;
+}
+
+export function sanitizeMatchScores(
+  home,
+  away,
+  fallback = { homeScore: 0, awayScore: 0 }
+) {
+  return {
+    homeScore: sanitizeMatchGoalCount(home, fallback.homeScore ?? 0),
+    awayScore: sanitizeMatchGoalCount(away, fallback.awayScore ?? 0),
+  };
+}
+
+/** Ignora marcadores corruptos (p. ej. año persa 1405 de worldcup26) y toma el máximo válido. */
+export function mergePlausibleGoalCounts(...values) {
+  const plausible = values
+    .map((value) => (isPlausibleMatchGoalCount(value) ? Number(value) : null))
+    .filter((value) => value != null);
+
+  return plausible.length ? Math.max(...plausible) : 0;
+}
+
 export function splitFootballDataEvents(matchData, homeFdTeamId, awayFdTeamId) {
   const homeId = Number(homeFdTeamId);
   const awayId = Number(awayFdTeamId);
@@ -804,6 +836,10 @@ export function readFifaAuthoritativeScores(raw = {}) {
     return null;
   }
 
+  if (!isPlausibleMatchGoalCount(homeScore) || !isPlausibleMatchGoalCount(awayScore)) {
+    return null;
+  }
+
   return { homeScore, awayScore };
 }
 
@@ -819,8 +855,8 @@ export function resolveEffectiveLiveScores(match, timeline = [], raw = {}) {
   const { home, away } = goalCountsFromTimeline(timeline);
 
   return {
-    homeScore: Math.max(Number(match.homeScore ?? 0), home),
-    awayScore: Math.max(Number(match.awayScore ?? 0), away),
+    homeScore: mergePlausibleGoalCounts(match.homeScore, home),
+    awayScore: mergePlausibleGoalCounts(match.awayScore, away),
   };
 }
 

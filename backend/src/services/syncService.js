@@ -31,7 +31,12 @@ import {
 import { syncLiveLineups } from './lineupSyncService.js';
 import { syncFifaMatchEvents, syncFifaReportsForMatchIds } from './fifaEventSyncService.js';
 import { assistLiveMatchEvents } from './liveMatchEventAssistService.js';
-import { readFifaAuthoritativeScores } from './matchLiveData.js';
+import {
+  mergePlausibleGoalCounts,
+  readFifaAuthoritativeScores,
+  sanitizeMatchGoalCount,
+  sanitizeMatchScores,
+} from './matchLiveData.js';
 
 async function upsertTeams() {
   const data = await fetchTeams();
@@ -125,8 +130,9 @@ export function mergeSyncedMatch(existing, incoming) {
 
   if (existing.status === 'finished' && kickoffInFuture) {
     merged.status = incoming.status === 'live' ? 'live' : 'upcoming';
-    merged.homeScore = Number(incoming.homeScore ?? 0);
-    merged.awayScore = Number(incoming.awayScore ?? 0);
+    const scores = sanitizeMatchScores(incoming.homeScore, incoming.awayScore);
+    merged.homeScore = scores.homeScore;
+    merged.awayScore = scores.awayScore;
     return merged;
   }
 
@@ -137,8 +143,8 @@ export function mergeSyncedMatch(existing, incoming) {
       merged.homeScore = fifaScores.homeScore;
       merged.awayScore = fifaScores.awayScore;
     } else {
-      merged.homeScore = existing.homeScore;
-      merged.awayScore = existing.awayScore;
+      merged.homeScore = mergePlausibleGoalCounts(existing.homeScore, incoming.homeScore);
+      merged.awayScore = mergePlausibleGoalCounts(existing.awayScore, incoming.awayScore);
     }
     return merged;
   }
@@ -155,8 +161,8 @@ export function mergeSyncedMatch(existing, incoming) {
 
   if (existing.status === 'live' && incoming.status === 'upcoming' && kickoffPassed) {
     merged.status = 'live';
-    merged.homeScore = Math.max(Number(existing.homeScore ?? 0), Number(incoming.homeScore ?? 0));
-    merged.awayScore = Math.max(Number(existing.awayScore ?? 0), Number(incoming.awayScore ?? 0));
+    merged.homeScore = mergePlausibleGoalCounts(existing.homeScore, incoming.homeScore);
+    merged.awayScore = mergePlausibleGoalCounts(existing.awayScore, incoming.awayScore);
     return merged;
   }
 
@@ -166,10 +172,13 @@ export function mergeSyncedMatch(existing, incoming) {
       merged.homeScore = fifaScores.homeScore;
       merged.awayScore = fifaScores.awayScore;
     } else {
-      merged.homeScore = Math.max(Number(existing.homeScore ?? 0), Number(incoming.homeScore ?? 0));
-      merged.awayScore = Math.max(Number(existing.awayScore ?? 0), Number(incoming.awayScore ?? 0));
+      merged.homeScore = mergePlausibleGoalCounts(existing.homeScore, incoming.homeScore);
+      merged.awayScore = mergePlausibleGoalCounts(existing.awayScore, incoming.awayScore);
     }
   }
+
+  merged.homeScore = sanitizeMatchGoalCount(merged.homeScore, 0);
+  merged.awayScore = sanitizeMatchGoalCount(merged.awayScore, 0);
 
   return merged;
 }

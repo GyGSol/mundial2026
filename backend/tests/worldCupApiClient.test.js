@@ -43,6 +43,12 @@ describe('worldCupApiClient normalization', () => {
     expect(game.group).toBe('H');
   });
 
+  it('descarta marcadores corruptos al normalizar', () => {
+    const game = normalizeGame({ ...sampleGame, home_score: '1405', away_score: '1' });
+    expect(game.homeScore).toBe(0);
+    expect(game.awayScore).toBe(1);
+  });
+
   it('calcula kickoffAt desde fixture oficial Argentina', () => {
     const game = normalizeGame({ ...sampleGame, id: '14' });
     expect(game.kickoffAt.toISOString()).toBe('2026-06-15T16:00:00.000Z');

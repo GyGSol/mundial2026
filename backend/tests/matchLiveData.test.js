@@ -7,11 +7,14 @@ import {
   parseElapsedClockToSortKey,
   resolveLiveTimeElapsed,
   goalCountsFromTimeline,
+  isPlausibleMatchGoalCount,
+  mergePlausibleGoalCounts,
   parseBookingsField,
   parseScorersField,
   readMatchTimeline,
   readFifaAuthoritativeScores,
   resolveEffectiveLiveScores,
+  sanitizeMatchScores,
   scorersFromTimeline,
   splitFootballDataEvents,
 } from '../src/services/matchLiveData.js';
@@ -360,6 +363,27 @@ describe('matchLiveData', () => {
         )
       ).toEqual({ homeScore: 2, awayScore: 1 });
     });
+
+    it('ignora marcadores corruptos (año persa 1405) y usa la cronología', () => {
+      expect(
+        resolveEffectiveLiveScores(
+          { homeScore: 1405, awayScore: 1 },
+          [{ type: 'goal', side: 'away', minute: 12 }]
+        )
+      ).toEqual({ homeScore: 0, awayScore: 1 });
+    });
+  });
+
+  describe('score sanitization', () => {
+    it('rechaza el año persa 1405 como marcador', () => {
+      expect(isPlausibleMatchGoalCount(1405)).toBe(false);
+      expect(sanitizeMatchScores(1405, 1)).toEqual({ homeScore: 0, awayScore: 1 });
+    });
+
+    it('mergePlausibleGoalCounts descarta valores corruptos', () => {
+      expect(mergePlausibleGoalCounts(1405, 0, 1)).toBe(1);
+      expect(mergePlausibleGoalCounts(1405, 0)).toBe(0);
+    });
   });
 
   describe('completeTimelineEvents', () => {
@@ -428,6 +452,14 @@ describe('matchLiveData', () => {
   describe('readFifaAuthoritativeScores', () => {
     it('devuelve null sin syncedAt', () => {
       expect(readFifaAuthoritativeScores({ fifaMeta: { homeScore: 2, awayScore: 1 } })).toBeNull();
+    });
+
+    it('devuelve null con marcadores implausibles', () => {
+      expect(
+        readFifaAuthoritativeScores({
+          fifaMeta: { homeScore: 1405, awayScore: 1, syncedAt: '2026-06-13T20:00:00.000Z' },
+        })
+      ).toBeNull();
     });
   });
 

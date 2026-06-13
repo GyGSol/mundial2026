@@ -23,6 +23,15 @@ describe('mergeSyncedMatch', () => {
     expect(merged.awayScore).toBe(0);
   });
 
+  it('descarta marcador corrupto 1405 y conserva el válido', () => {
+    const merged = mergeSyncedMatch(
+      { status: 'live', homeScore: 1405, awayScore: 1 },
+      { status: 'live', homeScore: 0, awayScore: 1 }
+    );
+    expect(merged.homeScore).toBe(0);
+    expect(merged.awayScore).toBe(1);
+  });
+
   it('prioriza marcador FIFA ante worldcup26 desactualizado tras gol anulado', () => {
     const merged = mergeSyncedMatch(
       {

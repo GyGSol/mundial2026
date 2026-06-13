@@ -1,6 +1,7 @@
 import { env } from '../config/env.js';
 import { resolveKickoffAt } from './kickoffTimeService.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
+import { sanitizeMatchScores } from './matchLiveData.js';
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -118,8 +119,9 @@ export function mapGameStatus(game) {
     return 'live';
   }
 
-  const home = Number(game.home_score ?? game.homeScore ?? 0);
-  const away = Number(game.away_score ?? game.awayScore ?? 0);
+  const scores = sanitizeMatchScores(game.home_score ?? game.homeScore ?? 0, game.away_score ?? game.awayScore ?? 0);
+  const home = scores.homeScore;
+  const away = scores.awayScore;
   if (home + away > 0 && finished !== 'FALSE' && finished !== false) {
     return 'live';
   }
@@ -146,13 +148,14 @@ export function normalizeGame(game, options = {}) {
   const id = String(game.id ?? game._id ?? game.idGame);
   const kickoffAt = resolveKickoffAt(game, options);
   const stadiumTimezone = options.stadiumTimezone ?? null;
+  const scores = sanitizeMatchScores(game.home_score ?? game.homeScore ?? 0, game.away_score ?? game.awayScore ?? 0);
 
   return {
     externalId: id,
     homeTeamId: String(game.home_team_id ?? game.homeTeamId ?? ''),
     awayTeamId: String(game.away_team_id ?? game.awayTeamId ?? ''),
-    homeScore: Number(game.home_score ?? game.homeScore ?? 0),
-    awayScore: Number(game.away_score ?? game.awayScore ?? 0),
+    homeScore: scores.homeScore,
+    awayScore: scores.awayScore,
     group: game.group ?? game.group_name ?? '',
     matchday: String(game.matchday ?? game.match_day ?? ''),
     localDate: game.local_date ?? game.localDate ?? '',

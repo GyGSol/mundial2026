@@ -9,7 +9,12 @@ import {
 } from './fifaApiClient.js';
 import { parseFifaTimeline } from './fifaTimelineParser.js';
 import { fetchFifaReportStats, FIFA_REPORT_STATS_VERSION } from './fifaReportPdfService.js';
-import { goalCountsFromTimeline } from './matchLiveData.js';
+import {
+  goalCountsFromTimeline,
+  isPlausibleMatchGoalCount,
+  mergePlausibleGoalCounts,
+  sanitizeMatchGoalCount,
+} from './matchLiveData.js';
 import {
   applyShirtNumbersToTimeline,
   buildShirtLookups,
@@ -178,7 +183,11 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
         if (timeline.length > 0) {
           const fifaHomeScore = Number(fifaEntry.Home?.Score);
           const fifaAwayScore = Number(fifaEntry.Away?.Score);
-          const hasFifaScore = Number.isFinite(fifaHomeScore) && Number.isFinite(fifaAwayScore);
+          const hasFifaScore =
+            Number.isFinite(fifaHomeScore) &&
+            Number.isFinite(fifaAwayScore) &&
+            isPlausibleMatchGoalCount(fifaHomeScore) &&
+            isPlausibleMatchGoalCount(fifaAwayScore);
 
           rawUpdate['raw.fifaMeta'] = {
             idMatch: String(fifaEntry.IdMatch),
@@ -203,12 +212,18 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
           };
 
           const timelineGoals = goalCountsFromTimeline(timeline);
-          const resolvedHomeScore = hasFifaScore
-            ? fifaHomeScore
-            : Math.max(Number(match.homeScore ?? 0), timelineGoals.home);
-          const resolvedAwayScore = hasFifaScore
-            ? fifaAwayScore
-            : Math.max(Number(match.awayScore ?? 0), timelineGoals.away);
+          const resolvedHomeScore = sanitizeMatchGoalCount(
+            hasFifaScore
+              ? fifaHomeScore
+              : mergePlausibleGoalCounts(match.homeScore, timelineGoals.home),
+            timelineGoals.home
+          );
+          const resolvedAwayScore = sanitizeMatchGoalCount(
+            hasFifaScore
+              ? fifaAwayScore
+              : mergePlausibleGoalCounts(match.awayScore, timelineGoals.away),
+            timelineGoals.away
+          );
           const scoreChanged =
             resolvedHomeScore !== Number(match.homeScore ?? 0) ||
             resolvedAwayScore !== Number(match.awayScore ?? 0);
