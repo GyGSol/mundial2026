@@ -10,6 +10,7 @@ import {
   callAiForText,
   formatMatchAiInsight,
   hasAiProvider,
+  WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
 } from './aiPredictionService.js';
 
 const AI_MESSAGE_MAX_LEN = 2000;
@@ -226,7 +227,9 @@ async function buildTopicContext(userId, topicType, topicKey) {
 
 function topicInstructions(topicType) {
   if (topicType === 'match') {
-    return 'Analizá el partido según el contexto y las predicciones del usuario. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.';
+    return `${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
+
+Analizá el partido según el contexto, la sede del estadio y las predicciones del usuario. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
   }
   if (topicType === 'group') {
     return 'Proyectá resultados del grupo completo según las predicciones del usuario y el fixture restante. Podés estimar la tabla final y quién clasifica.';

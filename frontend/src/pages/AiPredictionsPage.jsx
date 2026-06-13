@@ -26,6 +26,7 @@ const QUICK_PROMPTS = {
     '¿Quién es favorito?',
     'Factores clave del partido',
     '¿Cómo afectan las bajas?',
+    'Clima y sede del estadio',
   ],
   group: [
     '¿Quién pasa del grupo?',
@@ -260,8 +261,9 @@ export default function AiPredictionsPage() {
           <h1 className="text-xl font-semibold tracking-tight">Predicciones IA</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Consultá partidos, grupos o quién clasifica a los 16avos. Tus preguntas y respuestas quedan
-          guardadas para que la IA recuerde el contexto.
+          Consultá partidos, grupos o quién clasifica a los 16avos. En el Mundial, local y visitante
+          son solo la posición en el fixture: la IA analiza sede, estadio y condiciones del partido.
+          Tus preguntas y respuestas quedan guardadas para que recuerde el contexto.
         </p>
         {!aiAvailable ? (
           <p className="text-sm text-amber-200">La IA no está disponible en este momento.</p>

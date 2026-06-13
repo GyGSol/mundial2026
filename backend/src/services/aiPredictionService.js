@@ -3,7 +3,9 @@ import { Prediction } from '../models/Prediction.js';
 import { Team } from '../models/Team.js';
 import { Group } from '../models/Group.js';
 import { Player } from '../models/Player.js';
+import { Stadium } from '../models/Stadium.js';
 import { User } from '../models/User.js';
+import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import { env } from '../config/env.js';
 import { isPredictionLocked } from './predictionLockService.js';
 import { computeGroupStandings } from './worldCupStatsService.js';
@@ -20,6 +22,56 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const AI_REASONING_MAX_LEN = 500;
 const AI_FOLLOWUP_MAX_LEN = 1200;
 const AI_FOLLOWUP_QUESTION_MAX_LEN = 500;
+
+/** Instrucciones compartidas: local/visitante en el Mundial es solo fixture, no sede del equipo. */
+export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mundo FIFA 2026:
+- "Local" y "visitante" (home/away) son SOLO la posición en el fixture; NO indican sede nacional del equipo ni ventaja de localía de clubes o ligas.
+- No asumas que el "local" juega en su país. Ambos seleccionados son visitantes en el país/ciudad donde se disputa el partido.
+- Analizá el partido según la sede real: estadio, ciudad, país anfitrión del encuentro, horario local previsto y condiciones típicas de esa ubicación en la fecha (temperatura, humedad, altitud si aplica, césped/clima).
+- El factor sede aplica por ubicación del estadio (desplazamiento, aclimatación, calor, altura), no por quién figura como "local" en el fixture.`;
+
+export function formatKickoffLocalDescription(kickoffAt, timezone) {
+  if (!kickoffAt || !timezone) return null;
+  try {
+    const date = kickoffAt instanceof Date ? kickoffAt : new Date(kickoffAt);
+    if (Number.isNaN(date.getTime())) return null;
+    return new Intl.DateTimeFormat('es-AR', {
+      timeZone: timezone,
+      dateStyle: 'full',
+      timeStyle: 'short',
+    }).format(date);
+  } catch {
+    return null;
+  }
+}
+
+export function buildVenueContextForPrompt(match, stadium) {
+  const timezone =
+    match?.kickoffTimezone ||
+    stadium?.timezone ||
+    resolveStadiumTimezone(stadium) ||
+    null;
+
+  return {
+    fixtureNote:
+      'En el Mundial, local/visitante es solo orden en el fixture; no implica que el local juegue en su país.',
+    stadium: stadium
+      ? {
+          name: stadium.nameEn ?? null,
+          city: stadium.city ?? null,
+          country: stadium.country ?? null,
+          timezone,
+          capacity: stadium.capacity > 0 ? stadium.capacity : null,
+        }
+      : null,
+    kickoffUtc: match?.kickoffAt?.toISOString?.() ?? match?.kickoffAt ?? null,
+    kickoffLocal: formatKickoffLocalDescription(match?.kickoffAt, timezone),
+    analysisHints: [
+      'Estimar condiciones ambientales típicas (temperatura, humedad, altitud) según ciudad y horario local en junio-julio 2026.',
+      'Considerar viaje y aclimatación de ambos equipos respecto a la sede del partido, no la etiqueta local/visitante.',
+    ],
+  };
+}
 
 /** Partido en ventana T-90 ± window si kickoff cae en [now+lead-window, now+lead+window]. */
 export function isInAiPredictionWindow(match, now = Date.now()) {
@@ -110,7 +162,7 @@ export function computeHeuristicScore(context) {
   return {
     homeGoals,
     awayGoals,
-    reasoning: 'Heurística local (promedios de grupo)',
+    reasoning: 'Heurística por promedios de grupo',
     source: 'heuristic',
   };
 }
@@ -130,12 +182,15 @@ async function countInjuredPlayers(teamExternalId) {
 }
 
 export async function buildPromptContext(match, aiUserId) {
-  const [homeTeam, awayTeam, teams, allMatches, groups] = await Promise.all([
+  const [homeTeam, awayTeam, teams, allMatches, groups, stadium] = await Promise.all([
     Team.findOne({ externalId: match.homeTeamId }).lean(),
     Team.findOne({ externalId: match.awayTeamId }).lean(),
     Team.find({ group: { $exists: true, $ne: '' } }).lean(),
     Match.find().sort({ kickoffAt: 1 }).lean(),
     Group.find().lean(),
+    match.stadiumId
+      ? Stadium.findOne({ externalId: match.stadiumId }).lean()
+      : Promise.resolve(null),
   ]);
 
   const groupStandings = computeGroupStandings(teams, allMatches, groups);
@@ -182,16 +237,31 @@ export async function buildPromptContext(match, aiUserId) {
           name: resolvedHome.nameEn,
           code: resolvedHome.fifaCode,
           group: resolvedHome.group,
+          fixtureRole: 'local (solo fixture)',
         }
-      : { externalId: match.homeTeamId, name: match.homeTeamId, code: null, group: null },
+      : {
+          externalId: match.homeTeamId,
+          name: match.homeTeamId,
+          code: null,
+          group: null,
+          fixtureRole: 'local (solo fixture)',
+        },
     awayTeam: resolvedAway
       ? {
           externalId: resolvedAway.externalId,
           name: resolvedAway.nameEn,
           code: resolvedAway.fifaCode,
           group: resolvedAway.group,
+          fixtureRole: 'visitante (solo fixture)',
         }
-      : { externalId: match.awayTeamId, name: match.awayTeamId, code: null, group: null },
+      : {
+          externalId: match.awayTeamId,
+          name: match.awayTeamId,
+          code: null,
+          group: null,
+          fixtureRole: 'visitante (solo fixture)',
+        },
+    venue: buildVenueContextForPrompt(match, stadium),
     groupStandings: relevantGroup
       ? relevantGroup.standings.map((row) => ({
           rank: row.rank,
@@ -211,6 +281,10 @@ export async function buildPromptContext(match, aiUserId) {
 
 function buildAiPredictionPrompt(context) {
   return `Sos un analista de fútbol para el Mundial FIFA 2026. Predecí el marcador final del partido.
+
+${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
+
+En el campo "reasoning", incluí factores de sede/estadio/clima cuando sean relevantes. No uses "localía" en el sentido de club.
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<breve explicación en español>"}
@@ -427,6 +501,8 @@ function buildFollowUpPrompt(context, insight, question, history = []) {
     : '';
 
   return `Sos un analista de fútbol para el Mundial FIFA 2026. Ya predijiste este partido.
+
+${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
 Contexto del partido:
 ${JSON.stringify(context, null, 2)}

@@ -9,6 +9,8 @@ import {
   callAiForText,
   hasAiProvider,
   askMatchAiFollowUp,
+  buildVenueContextForPrompt,
+  WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
 } from '../src/services/aiPredictionService.js';
 import { env } from '../src/config/env.js';
 
@@ -291,6 +293,38 @@ describe('aiPredictionService', () => {
       env.cerebrasApiKey = previousCerebrasKey;
       env.googleAiApiKey = previousGeminiKey;
       env.groqApiKey = previousGroqKey;
+    });
+  });
+
+  describe('buildVenueContextForPrompt', () => {
+    it('incluye estadio, horario local y nota de fixture', () => {
+      const kickoffAt = new Date('2026-06-15T20:00:00.000Z');
+      const venue = buildVenueContextForPrompt(
+        { kickoffAt, kickoffTimezone: 'America/Los_Angeles', stadiumId: '1' },
+        {
+          nameEn: 'SoFi Stadium',
+          city: 'Los Angeles',
+          country: 'USA',
+          timezone: 'America/Los_Angeles',
+          capacity: 70000,
+        }
+      );
+
+      expect(venue.fixtureNote).toMatch(/solo orden en el fixture/i);
+      expect(venue.stadium).toMatchObject({
+        name: 'SoFi Stadium',
+        city: 'Los Angeles',
+        country: 'USA',
+      });
+      expect(venue.kickoffLocal).toMatch(/2026/i);
+      expect(venue.analysisHints).toHaveLength(2);
+    });
+  });
+
+  describe('WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS', () => {
+    it('aclara que local/visitante es solo fixture', () => {
+      expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/SOLO la posición en el fixture/i);
+      expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/temperatura/i);
     });
   });
 
