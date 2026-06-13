@@ -3,6 +3,7 @@ import { ExternalLink, Maximize2, Minimize2, MonitorPlay, RefreshCw } from 'luci
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
+import StreamAccessNoticeDialog from './StreamAccessNoticeDialog.jsx';
 
 const LiveStreamPlayer = lazy(() => import('./LiveStreamPlayer.jsx'));
 
@@ -21,6 +22,7 @@ export default function La18StreamPlayer({
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
   const hlsRetryCountRef = useRef(0);
+  const accessNoticeShownRef = useRef(false);
   const iosDevice = isIosDevice();
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
@@ -28,6 +30,13 @@ export default function La18StreamPlayer({
   const [useFallback, setUseFallback] = useState(() => !primary?.url && !primary?.hlsUrl && Boolean(fallback?.url));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [showAccessNotice, setShowAccessNotice] = useState(false);
+
+  const openAccessNotice = useCallback(() => {
+    if (accessNoticeShownRef.current) return;
+    accessNoticeShownRef.current = true;
+    setShowAccessNotice(true);
+  }, []);
 
   const openUrl = primary?.pageUrl || primary?.url;
   const iframeSrc = primary?.pageUrl || primary?.url;
@@ -42,6 +51,8 @@ export default function La18StreamPlayer({
     setUseFallback(false);
     setStatusMessage('');
     hlsRetryCountRef.current = 0;
+    accessNoticeShownRef.current = false;
+    setShowAccessNotice(false);
   }, [primary?.url, primary?.pageUrl, primary?.hlsUrl]);
 
   useEffect(() => {
@@ -58,11 +69,12 @@ export default function La18StreamPlayer({
       if (!iframeLoaded) {
         setIframeFailed(true);
         setStatusMessage('Buscando señal alternativa…');
+        openAccessNotice();
       }
     }, timeoutMs);
 
     return () => window.clearTimeout(timer);
-  }, [iframeSrc, iframeLoaded, showFallback, useDirectHls, iosDevice]);
+  }, [iframeSrc, iframeLoaded, showFallback, useDirectHls, iosDevice, openAccessNotice]);
 
   const toggleFullscreen = useCallback(async () => {
     const node = containerRef.current;
@@ -104,6 +116,11 @@ export default function La18StreamPlayer({
     }
     setDirectHlsFailed(true);
     setStatusMessage('Probando reproductor La18HD…');
+    openAccessNotice();
+  };
+
+  const handleDirectHlsStall = () => {
+    openAccessNotice();
   };
 
   if (!primary?.url && !primary?.hlsUrl && !fallback?.url) return null;
@@ -137,6 +154,7 @@ export default function La18StreamPlayer({
               channelName="La18HD"
               className="h-full"
               onError={handleDirectHlsError}
+              onStall={handleDirectHlsStall}
             />
           </Suspense>
         ) : null}
@@ -152,6 +170,7 @@ export default function La18StreamPlayer({
             onError={() => {
               setIframeFailed(true);
               setStatusMessage('Buscando señal alternativa…');
+              openAccessNotice();
             }}
           />
         ) : null}
@@ -202,6 +221,13 @@ export default function La18StreamPlayer({
         ) : null}
       </div>
 
+      <StreamAccessNoticeDialog
+        open={showAccessNotice}
+        onOpenChange={setShowAccessNotice}
+        openUrl={openUrl}
+        onRetry={retryPrimary}
+      />
+
       <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-muted/20 p-2">
         <Button
           type="button"
@@ -246,6 +272,16 @@ export default function La18StreamPlayer({
             </a>
           </Button>
         ) : null}
+
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="text-xs text-muted-foreground"
+          onClick={() => setShowAccessNotice(true)}
+        >
+          ¿Se cortó la señal?
+        </Button>
       </div>
     </div>
   );

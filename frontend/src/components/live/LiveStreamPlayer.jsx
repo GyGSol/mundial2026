@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Maximize2,
   Minimize2,
@@ -23,7 +23,14 @@ function PlayerFallback() {
   );
 }
 
-export default function LiveStreamPlayer({ url, type = 'youtube', channelName, className, onError }) {
+export default function LiveStreamPlayer({
+  url,
+  type = 'youtube',
+  channelName,
+  className,
+  onError,
+  onStall,
+}) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
   const iosDevice = isIosDevice();
@@ -84,6 +91,31 @@ export default function LiveStreamPlayer({ url, type = 'youtube', channelName, c
     setHasError(false);
     setPlaying(true);
   };
+
+  useEffect(() => {
+    if (!playing || hasError || !url?.includes('.m3u8') || !onStall) return undefined;
+
+    let lastTime = 0;
+    let stalledTicks = 0;
+
+    const interval = window.setInterval(() => {
+      const internal = playerRef.current?.getInternalPlayer?.();
+      const video =
+        internal?.tagName === 'VIDEO' ? internal : internal?.querySelector?.('video');
+      if (!video || video.paused || video.ended) return;
+
+      if (video.currentTime > 0 && video.currentTime === lastTime) {
+        stalledTicks += 1;
+        if (stalledTicks >= 2) onStall();
+      } else {
+        stalledTicks = 0;
+      }
+
+      lastTime = video.currentTime;
+    }, 6000);
+
+    return () => window.clearInterval(interval);
+  }, [playing, hasError, url, onStall]);
 
   if (!url) return null;
 
