@@ -22,7 +22,7 @@ function PlayerFallback() {
   );
 }
 
-export default function LiveStreamPlayer({ url, playing: playingProp, className, onError }) {
+export default function LiveStreamPlayer({ url, type = 'youtube', channelName, className, onError }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
   const [playing, setPlaying] = useState(playingProp ?? true);
@@ -84,6 +84,23 @@ export default function LiveStreamPlayer({ url, playing: playingProp, className,
   };
 
   if (!url) return null;
+
+  if (type === 'external') {
+    return (
+      <div className={cn('live-stream-player flex flex-col gap-3', className)}>
+        <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border/70 bg-muted/20 px-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            {channelName || 'Este canal'} se ve en su app o sitio oficial (no permite reproductor embebido).
+          </p>
+          <Button type="button" asChild>
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              Abrir {channelName || 'canal'}
+            </a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className={cn('live-stream-player flex flex-col gap-2', className)}>

@@ -102,24 +102,30 @@ heroku run npm run mark-ai-user -w backend -a mundial2026-pred
 
 Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `CEREBRAS_API_KEY` (proveedor principal), `AI_CEREBRAS_MODEL` (default `gpt-oss-120b`), `GOOGLE_AI_API_KEY` / `GROQ_API_KEY` (fallback), `AI_GEMINI_MODEL`, `AI_GROQ_MODEL`.
 
-### Transmisión en vivo (Live Match)
+### Transmisión en vivo (Fubo Sports Network)
 
-Módulo separado de los broadcasters oficiales. Las URLs **no** van en el frontend.
+Módulo separado de los broadcasters oficiales. Canales según [fubosportsnetwork.com](https://www.fubosportsnetwork.com/).
+
+**Sin configurar nada**, ya funcionan con URLs oficiales por defecto (YouTube en vivo + enlaces a Tubi, Roku, Fubo app, etc.). Solo override si cambian:
 
 ```bash
-# Habilitar módulo (default: true salvo LIVE_STREAM_ENABLED=false)
 heroku config:set LIVE_STREAM_ENABLED=true -a mundial2026-pred
 
-# URLs por canal (HLS, YouTube embed o página embed). Placeholders: {matchId}, {channelId}
+# Opcional: solo si querés reemplazar el default
 heroku config:set \
-  LIVE_STREAM_URL_DSPORTS="https://ejemplo.com/live/dsports.m3u8" \
-  LIVE_STREAM_URL_TYC="https://ejemplo.com/live/tyc.m3u8" \
+  LIVE_STREAM_URL_FUBO_YOUTUBE="https://www.youtube.com/@FuboSports/live" \
+  LIVE_STREAM_URL_FUBO_WEB="https://www.fubosportsnetwork.com/" \
   -a mundial2026-pred
 ```
 
-Endpoint: `GET /api/stream-config?matchId=<externalId>&channelId=<opcional>` — solo responde stream activo si el partido está `live`.
+Variables opcionales: `LIVE_STREAM_URL_FUBO_YOUTUBE`, `LIVE_STREAM_URL_FUBO_WEB`, `LIVE_STREAM_URL_FUBO_APP`, `LIVE_STREAM_URL_FUBO_ROKU`, `LIVE_STREAM_URL_FUBO_TUBI`, `LIVE_STREAM_URL_FUBO_SAMSUNG`, `LIVE_STREAM_URL_FUBO_SLING`, `LIVE_STREAM_URL_FUBO_PRIME`, `LIVE_STREAM_URL_FUBO_PLEX`, `LIVE_STREAM_URL_FUBO_LG`, `LIVE_STREAM_URL_FUBO_VIZIO`, `LIVE_STREAM_URL_FUBO_TCL`, `LIVE_STREAM_URL_FUBO_TABLO`.
 
-Canales soportados: `dsports`, `dsports2`, `tyc`, `telefe`, `disney`, `tv-publica`, `espn`, `fox-sports`.
+- **Embebido en la app:** solo `FUBO_YOUTUBE` (react-player).
+- **Resto:** abren app/sitio externo (FAST / Fubo TV).
+
+Endpoint: `GET /api/stream-config?matchId=<externalId>&channelId=<opcional>` — solo si el partido está `live`.
+
+**Nota:** Fubo no publica un `.m3u8` libre; la señal en apps usa DRM/login. No hay `LIVE_STREAM_URL` mágica que saque el partido del Mundial desde Fubo automáticamente.
 
 ### Notificaciones push (Web Push / FCM)
 

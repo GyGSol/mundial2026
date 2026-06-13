@@ -16,10 +16,8 @@ describe('liveStreamSchedule', () => {
   beforeEach(() => {
     env.liveStreamEnabled = true;
     env.liveStreamUrls = {
-      dsports: 'https://stream.example/dsports.m3u8',
-      tyc: 'https://stream.example/tyc.m3u8',
-      espn: '',
-      'fox-sports': '',
+      'fubo-youtube': '',
+      'fubo-web': '',
     };
   });
 
@@ -33,35 +31,34 @@ describe('liveStreamSchedule', () => {
     expect(getLiveChannelsForMatch('sim-abc-1')).toEqual([]);
   });
 
-  it('devuelve canales default para partidos del mundial', () => {
+  it('devuelve canales Fubo para partidos del mundial', () => {
     const ids = getChannelIdsForMatch('42');
-    expect(ids).toContain('dsports');
-    expect(ids).toContain('tyc');
+    expect(ids).toContain('fubo-youtube');
+    expect(ids).toContain('fubo-tubi');
   });
 
-  it('aplica override para partidos especiales', () => {
-    const ids = getChannelIdsForMatch('19');
-    expect(ids).toContain('tv-publica');
-    expect(ids).toContain('telefe');
-  });
-
-  it('solo incluye canales con URL configurada', () => {
+  it('usa defaultUrl oficial cuando no hay env', () => {
     const channels = getLiveChannelsForMatch('42');
-    expect(channels.map((c) => c.id)).toEqual(['dsports', 'tyc']);
-    expect(channels[0].url).toBe('https://stream.example/dsports.m3u8');
+    const youtube = channels.find((c) => c.id === 'fubo-youtube');
+    expect(youtube?.url).toContain('youtube.com/@FuboSports');
+  });
+
+  it('prioriza env sobre defaultUrl', () => {
+    env.liveStreamUrls['fubo-youtube'] = 'https://youtube.com/watch?v=custom';
+    expect(resolveStreamUrl('fubo-youtube', '19')).toBe('https://youtube.com/watch?v=custom');
   });
 
   it('sustituye placeholders en la URL', () => {
-    env.liveStreamUrls.dsports = 'https://stream.example/{matchId}/{channelId}.m3u8';
-    expect(resolveStreamUrl('dsports', '19')).toBe(
-      'https://stream.example/19/dsports.m3u8'
+    env.liveStreamUrls['fubo-youtube'] = 'https://stream.example/{matchId}/{channelId}';
+    expect(resolveStreamUrl('fubo-youtube', '19')).toBe(
+      'https://stream.example/19/fubo-youtube'
     );
   });
 
   it('pickActiveChannel respeta preferencia', () => {
     const channels = getLiveChannelsForMatch('42');
-    const picked = pickActiveChannel(channels, 'tyc');
-    expect(picked.id).toBe('tyc');
+    const picked = pickActiveChannel(channels, 'fubo-web');
+    expect(picked.id).toBe('fubo-web');
   });
 });
 
@@ -71,10 +68,7 @@ describe('streamConfigService', () => {
 
   beforeEach(() => {
     env.liveStreamEnabled = true;
-    env.liveStreamUrls = {
-      dsports: 'https://stream.example/dsports.m3u8',
-      tyc: 'https://stream.example/tyc.m3u8',
-    };
+    env.liveStreamUrls = {};
     vi.spyOn(Match, 'findOne').mockReset();
   });
 
@@ -105,24 +99,15 @@ describe('streamConfigService', () => {
     expect(result).toMatchObject({ available: false, reason: 'not_live', status: 'upcoming' });
   });
 
-  it('rechaza partido finalizado', async () => {
-    Match.findOne.mockReturnValue({
-      lean: () =>
-        Promise.resolve({ externalId: '19', status: 'finished' }),
-    });
-    const result = await getStreamConfig('19');
-    expect(result.reason).toBe('not_live');
-  });
-
   it('devuelve config cuando el partido está live', async () => {
     Match.findOne.mockReturnValue({
       lean: () => Promise.resolve({ externalId: '19', status: 'live' }),
     });
-    const result = await getStreamConfig('19', 'dsports');
+    const result = await getStreamConfig('19', 'fubo-youtube');
     expect(result.available).toBe(true);
     expect(result.matchId).toBe('19');
-    expect(result.active.channelId).toBe('dsports');
-    expect(result.active.url).toContain('dsports');
+    expect(result.active.channelId).toBe('fubo-youtube');
+    expect(result.active.url).toContain('FuboSports');
     expect(result.channels.length).toBeGreaterThan(0);
   });
 

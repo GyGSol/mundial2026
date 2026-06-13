@@ -72,7 +72,11 @@ export default function LiveMatchPanel({ match, className }) {
             onSelect={setSelectedChannelId}
           />
           {streamUrl ? (
-            <LiveStreamPlayer url={streamUrl} />
+            <LiveStreamPlayer
+              url={streamUrl}
+              type={config.active?.type}
+              channelName={config.channels?.find((c) => c.id === activeChannelId)?.name}
+            />
           ) : null}
         </>
       ) : null}
