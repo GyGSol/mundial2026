@@ -42,7 +42,10 @@ const sourceLabels = {
   default: 'Default',
 };
 
-const emptyCreateForm = { userId: '', matchId: '', homeGoals: '0', awayGoals: '0' };
+function formatMatchOptionLabel(match) {
+  const label = match.label ?? `${match.homeTeamId} vs ${match.awayTeamId}`;
+  return match.group ? `${label} (${match.group})` : label;
+}
 
 function FilterField({ label, children }) {
   return (
@@ -239,8 +242,7 @@ export default function AdminPredictionsPage() {
               <SelectItem value="all">Todos los partidos</SelectItem>
               {matchesForFilter.map((m) => (
                 <SelectItem key={m.id} value={m.id}>
-                  {m.homeTeamId} vs {m.awayTeamId}
-                  {m.group ? ` (${m.group})` : ''}
+                  {formatMatchOptionLabel(m)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -370,8 +372,7 @@ export default function AdminPredictionsPage() {
               <SelectContent>
                 {matches.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
-                    {m.homeTeamId} vs {m.awayTeamId}
-                    {m.group ? ` (${m.group})` : ''}
+                    {formatMatchOptionLabel(m)}
                   </SelectItem>
                 ))}
               </SelectContent>

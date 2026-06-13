@@ -498,7 +498,26 @@ export async function listAdminMatches({ status, group } = {}) {
   if (group) filter.group = group;
 
   const matches = await Match.find(filter).sort({ kickoffAt: 1 }).limit(500).lean();
-  return matches.map(serializeMatch);
+
+  const teamIds = new Set();
+  for (const m of matches) {
+    if (m.homeTeamId) teamIds.add(m.homeTeamId);
+    if (m.awayTeamId) teamIds.add(m.awayTeamId);
+  }
+
+  const teams = teamIds.size
+    ? await Team.find({ externalId: { $in: [...teamIds] } }).lean()
+    : [];
+  const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
+
+  return matches.map((match) => {
+    const homeLabel = teamLabel(teamMap[match.homeTeamId], match.homeTeamId);
+    const awayLabel = teamLabel(teamMap[match.awayTeamId], match.awayTeamId);
+    return {
+      ...serializeMatch(match),
+      label: `${homeLabel} vs ${awayLabel}`,
+    };
+  });
 }
 
 export async function updateAdminMatch(matchId, { homeScore, awayScore, status, group, matchday, kickoffAt }) {
