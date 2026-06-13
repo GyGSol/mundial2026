@@ -183,6 +183,16 @@ export const adminApi = {
       body: JSON.stringify(body),
     }),
   deletePrediction: (id) => adminRequest(`/predictions/${id}`, { method: 'DELETE' }),
+  listStreamLinks: () => adminRequest('/stream-links'),
+  suggestStreamLinks: (matchId) =>
+    adminRequest(`/stream-links/suggest?matchId=${encodeURIComponent(matchId)}`),
+  upsertStreamLink: (matchExternalId, body) =>
+    adminRequest(`/stream-links/${encodeURIComponent(matchExternalId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  deleteStreamLink: (matchExternalId) =>
+    adminRequest(`/stream-links/${encodeURIComponent(matchExternalId)}`, { method: 'DELETE' }),
 };
 
 export const adminSimulationApi = {

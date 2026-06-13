@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import {
@@ -53,6 +53,7 @@ function LiveMatchSummary({ match }) {
 
 export default function LiveMatchShell({ match, open, onOpenChange, sideContent }) {
   const dialogRef = useRef(null);
+  const [theaterMode, setTheaterMode] = useState(false);
   const homeName = match?.homeTeam?.nameEn || 'Local';
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
 
@@ -69,6 +70,10 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
     }
   }, [open, match?.status, onOpenChange]);
 
+  useEffect(() => {
+    if (!open) setTheaterMode(false);
+  }, [open]);
+
   const handleClose = () => onOpenChange(false);
 
   if (!match) return null;
@@ -77,19 +82,22 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
     <dialog
       ref={dialogRef}
       className={cn(
-        'live-match-shell max-h-[95vh] w-[min(100%,56rem)] overflow-hidden rounded-lg border border-border bg-card p-0 shadow-lg backdrop:bg-black/50',
-        'open:flex open:flex-col'
+        'live-match-shell max-h-[95dvh] w-[min(100%,56rem)] overflow-hidden rounded-lg border border-border bg-card p-0 shadow-lg backdrop:bg-black/50',
+        'open:flex open:flex-col',
+        theaterMode && 'w-[min(100%,72rem)] max-w-[100vw]'
       )}
       onClose={handleClose}
       onCancel={handleClose}
     >
-      <Card className="flex max-h-[95vh] flex-col border-0 shadow-none">
+      <Card className="flex max-h-[95dvh] flex-col border-0 shadow-none">
         <CardHeader className="flex shrink-0 flex-row items-start justify-between gap-3 space-y-0 border-b border-border/60 pb-3">
           <div className="min-w-0 space-y-1">
             <CardTitle className="text-base md:text-lg">
               {homeName} vs {awayName}
             </CardTitle>
-            <CardDescription>Transmisión en vivo</CardDescription>
+            <CardDescription>
+              {theaterMode ? 'Modo teatro · La18HD' : 'Transmisión en vivo'}
+            </CardDescription>
           </div>
           <Button type="button" size="icon" variant="ghost" onClick={handleClose} aria-label="Cerrar">
             <X className="size-4" />
@@ -97,15 +105,33 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
         </CardHeader>
 
         <CardContent className="min-h-0 flex-1 overflow-y-auto p-0">
-          <div className="flex flex-col md:grid md:grid-cols-2 md:divide-x md:divide-border/60">
-            <div className="sticky top-0 z-10 max-h-[40vh] shrink-0 border-b border-border/60 bg-card p-3 md:static md:max-h-none md:border-b-0 md:p-4">
-              <LiveMatchPanel match={match} />
+          <div
+            className={cn(
+              'flex flex-col',
+              !theaterMode && 'md:grid md:grid-cols-2 md:divide-x md:divide-border/60',
+              theaterMode && 'h-full'
+            )}
+          >
+            <div
+              className={cn(
+                'sticky top-0 z-10 shrink-0 border-b border-border/60 bg-card p-3',
+                !theaterMode && 'max-h-[40vh] md:static md:max-h-none md:border-b-0 md:p-4',
+                theaterMode && 'w-full border-b-0 p-2 sm:p-3'
+              )}
+            >
+              <LiveMatchPanel
+                match={match}
+                theaterMode={theaterMode}
+                onTheaterModeChange={setTheaterMode}
+              />
             </div>
 
-            <div className="flex flex-col gap-4 p-4 md:max-h-[calc(95vh-5rem)] md:overflow-y-auto">
-              <LiveMatchSummary match={match} />
-              {sideContent}
-            </div>
+            {!theaterMode ? (
+              <div className="flex flex-col gap-4 p-4 md:max-h-[calc(95vh-5rem)] md:overflow-y-auto">
+                <LiveMatchSummary match={match} />
+                {sideContent}
+              </div>
+            ) : null}
           </div>
         </CardContent>
       </Card>

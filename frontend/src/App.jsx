@@ -17,6 +17,7 @@ const AdminSetupPage = lazy(() => import('./pages/admin/AdminSetupPage.jsx'));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'));
 const AdminSyncPage = lazy(() => import('./pages/admin/AdminSyncPage.jsx'));
 const AdminMatchesPage = lazy(() => import('./pages/admin/AdminMatchesPage.jsx'));
+const AdminStreamLinksPage = lazy(() => import('./pages/admin/AdminStreamLinksPage.jsx'));
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage.jsx'));
 const AdminGroupsPage = lazy(() => import('./pages/admin/AdminGroupsPage.jsx'));
 const AdminPredictionsPage = lazy(() => import('./pages/admin/AdminPredictionsPage.jsx'));
@@ -56,6 +57,7 @@ export default function App() {
                         <Route index element={<AdminDashboardPage />} />
                         <Route path="sync" element={<AdminSyncPage />} />
                         <Route path="matches" element={<AdminMatchesPage />} />
+                        <Route path="stream-links" element={<AdminStreamLinksPage />} />
                         <Route path="users" element={<AdminUsersPage />} />
                         <Route path="groups" element={<AdminGroupsPage />} />
                         <Route path="predictions" element={<AdminPredictionsPage />} />

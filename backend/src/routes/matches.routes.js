@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Match } from '../models/Match.js';
-import { optionalAuth } from '../middleware/auth.middleware.js';
+import { authMiddleware, optionalAuth } from '../middleware/auth.middleware.js';
+import { getMatchStreamConfig } from '../services/streamLinkService.js';
 import {
   enrichMatchesFull,
   enrichMatchesLight,
@@ -8,6 +9,20 @@ import {
 } from '../services/matchEnrichmentService.js';
 
 const router = Router();
+
+router.get('/:id/stream', authMiddleware, async (req, res, next) => {
+  try {
+    const config = await getMatchStreamConfig(req.params.id, req.user._id);
+
+    if (config.reason === 'not_found') {
+      return res.status(404).json(config);
+    }
+
+    res.json(config);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/', optionalAuth, async (req, res, next) => {
   try {

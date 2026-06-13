@@ -266,3 +266,7 @@ export const streamApi = {
     return data;
   },
 };
+
+export const matchStreamApi = {
+  getStream: (matchId) => request(`/matches/${encodeURIComponent(matchId)}/stream`),
+};

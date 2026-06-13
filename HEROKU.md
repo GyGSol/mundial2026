@@ -127,6 +127,40 @@ Endpoint: `GET /api/stream-config?matchId=<externalId>&channelId=<opcional>` —
 
 **Nota:** Fubo no publica un `.m3u8` libre; la señal en apps usa DRM/login. No hay `LIVE_STREAM_URL` mágica que saque el partido del Mundial desde Fubo automáticamente.
 
+### Transmisión La18HD (admin, sin redeploy)
+
+Fuente primaria configurable por partido desde el panel admin (`/admin/stream-links`). Solo se muestra cuando el partido está `live` y el usuario tiene sesión iniciada.
+
+**Endpoint autenticado:** `GET /api/matches/:externalId/stream` (Bearer JWT de usuario).
+
+**Fallback automático:** si el iframe La18HD falla o tarda, la UI muestra Fubo Sports (YouTube `@FuboSports/live`).
+
+**Admin API:**
+
+| Ruta | Acción |
+|------|--------|
+| `GET /api/admin/stream-links` | Listar mappings |
+| `PUT /api/admin/stream-links/:matchExternalId` | Crear/actualizar URL |
+| `DELETE /api/admin/stream-links/:matchExternalId` | Eliminar |
+| `GET /api/admin/stream-links/suggest?matchId=` | Sugerencias (scraper opcional) |
+
+Variables opcionales:
+
+```bash
+heroku config:set \
+  LA18HD_BASE_URL="https://la18hd.com" \
+  LA18HD_SCRAPER_ENABLED=false \
+  -a mundial2026-pred
+```
+
+Flujo operativo:
+
+1. En `/admin/stream-links`, asignar `matchExternalId` + URL del evento en [la18hd.com](https://la18hd.com/eventos/).
+2. Cuando el sync marque el partido como `live`, los usuarios autenticados verán el reproductor en "Ver en vivo".
+3. Actualizar URLs desde admin **no requiere redeploy**.
+
+**Nota:** no guardar URLs `blob:` ni manifests MPD con token expirable; usar la página/evento estable de La18HD.
+
 ### Notificaciones push (Web Push / FCM)
 
 Aviso cuando un partido pasa de `upcoming` a `live` (usuarios con predicción cargada y suscripción activa).

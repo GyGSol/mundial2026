@@ -953,3 +953,63 @@ export async function getAdminSyncStatus() {
     syncIntervalMs: env.syncIntervalMs,
   };
 }
+
+export async function listAdminStreamLinks() {
+  const { listStreamLinkMappings } = await import('./streamLinkService.js');
+  const mappings = await listStreamLinkMappings();
+  return mappings.map((row) => ({
+    matchExternalId: row.matchExternalId,
+    la18EventId: row.la18EventId ?? '',
+    la18PageUrl: row.la18PageUrl,
+    embedUrl: row.embedUrl,
+    enabled: row.enabled !== false,
+    notes: row.notes ?? '',
+    updatedBy: row.updatedBy ?? '',
+    updatedAt: row.updatedAt,
+  }));
+}
+
+export async function upsertAdminStreamLink(matchExternalId, payload, adminUsername = 'admin') {
+  const { upsertStreamLinkMapping } = await import('./streamLinkService.js');
+  return upsertStreamLinkMapping(matchExternalId, payload, adminUsername);
+}
+
+export async function deleteAdminStreamLink(matchExternalId) {
+  const { deleteStreamLinkMapping } = await import('./streamLinkService.js');
+  return deleteStreamLinkMapping(matchExternalId);
+}
+
+export async function suggestAdminStreamLinks(matchExternalId) {
+  const id = String(matchExternalId ?? '').trim();
+  if (!id) {
+    const error = new Error('matchId requerido');
+    error.status = 400;
+    throw error;
+  }
+
+  const match = await Match.findOne({ externalId: id }).lean();
+  if (!match) {
+    const error = new Error('Partido no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const [homeTeam, awayTeam] = await Promise.all([
+    Team.findOne({ externalId: match.homeTeamId }).lean(),
+    Team.findOne({ externalId: match.awayTeamId }).lean(),
+  ]);
+
+  const { fetchLa18EventSuggestions } = await import('./la18hdScraper.js');
+  const result = await fetchLa18EventSuggestions(
+    match,
+    homeTeam?.nameEn || homeTeam?.name || '',
+    awayTeam?.nameEn || awayTeam?.name || ''
+  );
+
+  return {
+    matchExternalId: id,
+    homeTeam: homeTeam?.nameEn || homeTeam?.name || match.homeTeamId,
+    awayTeam: awayTeam?.nameEn || awayTeam?.name || match.awayTeamId,
+    ...result,
+  };
+}

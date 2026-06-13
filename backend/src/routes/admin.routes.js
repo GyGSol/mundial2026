@@ -30,11 +30,13 @@ import {
   listAdminGroups,
   listAdminMatches,
   listAdminPredictions,
+  listAdminStreamLinks,
   listAdminUsers,
   recalculateAdminMatch,
   recalculateAllFinishedMatches,
   rejectAdminJoinRequest,
   removeAdminGroupMember,
+  suggestAdminStreamLinks,
   updateAdminGroup,
   updateAdminGroupMemberRole,
   updateAdminMatch,
@@ -42,6 +44,8 @@ import {
   updateAdminUserPassword,
   updateAdminUserPoints,
   updateAdminUserProfile,
+  upsertAdminStreamLink,
+  deleteAdminStreamLink,
 } from '../services/adminService.js';
 
 const router = Router();
@@ -431,6 +435,45 @@ router.post('/matches/recalculate-all', adminMiddleware, async (req, res, next) 
 router.post('/matches/:id/recalculate', adminMiddleware, async (req, res, next) => {
   try {
     res.json(await recalculateAdminMatch(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/stream-links', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json({ streamLinks: await listAdminStreamLinks() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/stream-links/suggest', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await suggestAdminStreamLinks(req.query.matchId));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/stream-links/:matchExternalId', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(
+      await upsertAdminStreamLink(req.params.matchExternalId, req.body ?? {}, 'admin')
+    );
+  } catch (err) {
+    if (err.message?.includes('no encontrado') || err.message?.includes('requerido')) {
+      return res.status(400).json({ error: err.message });
+    }
+    next(err);
+  }
+});
+
+router.delete('/stream-links/:matchExternalId', adminMiddleware, async (req, res, next) => {
+  try {
+    const deleted = await deleteAdminStreamLink(req.params.matchExternalId);
+    if (!deleted) return res.status(404).json({ error: 'Mapping no encontrado' });
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

@@ -36,6 +36,8 @@ export const env = {
   aiGeminiModel: process.env.AI_GEMINI_MODEL || 'gemini-2.5-flash',
   aiGroqModel: process.env.AI_GROQ_MODEL || 'llama-3.3-70b-versatile',
   liveStreamEnabled: process.env.LIVE_STREAM_ENABLED !== 'false',
+  la18hdBaseUrl: (process.env.LA18HD_BASE_URL || 'https://la18hd.com').replace(/\/$/, ''),
+  la18hdScraperEnabled: process.env.LA18HD_SCRAPER_ENABLED === 'true',
   liveStreamUrls: {
     'fubo-youtube': process.env.LIVE_STREAM_URL_FUBO_YOUTUBE || '',
     'fubo-web': process.env.LIVE_STREAM_URL_FUBO_WEB || '',

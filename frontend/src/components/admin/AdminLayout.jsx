@@ -9,6 +9,7 @@ const navItems = [
   { to: '/admin', label: 'Resumen', end: true },
   { to: '/admin/sync', label: 'Sync' },
   { to: '/admin/matches', label: 'Partidos' },
+  { to: '/admin/stream-links', label: 'La18HD' },
   { to: '/admin/users', label: 'Usuarios' },
   { to: '/admin/groups', label: 'Grupos' },
   { to: '/admin/predictions', label: 'Predicciones' },

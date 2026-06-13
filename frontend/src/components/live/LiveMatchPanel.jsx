@@ -1,54 +1,42 @@
-import { useState } from 'react';
-import { Loader2, Radio } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
-import { useStreamConfig } from '@/hooks/useStreamConfig.js';
-import LiveStreamPlayer from './LiveStreamPlayer.jsx';
+import { useAuth } from '@/context/AuthContext.jsx';
+import { useMatchStream } from '@/hooks/useMatchStream.js';
+import La18StreamPlayer from './La18StreamPlayer.jsx';
 
-function ChannelPicker({ channels, activeId, onSelect }) {
-  if (!channels?.length) return null;
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {channels.map((channel) => (
-        <Button
-          key={channel.id}
-          type="button"
-          size="sm"
-          variant={channel.id === activeId ? 'default' : 'outline'}
-          className={cn('gap-1.5', channel.id === activeId && 'ring-1 ring-primary/40')}
-          onClick={() => onSelect(channel.id)}
-        >
-          {channel.logo ? (
-            <img src={channel.logo} alt="" className="h-4 w-auto object-contain" loading="lazy" />
-          ) : (
-            <Radio className="size-3.5 shrink-0" aria-hidden />
-          )}
-          {channel.name}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-export default function LiveMatchPanel({ match, className }) {
+export default function LiveMatchPanel({
+  match,
+  className,
+  theaterMode = false,
+  onTheaterModeChange,
+}) {
   const matchId = match?.externalId ?? match?.id;
   const isLive = match?.status === 'live';
-  const [selectedChannelId, setSelectedChannelId] = useState(null);
+  const { isAuthenticated } = useAuth();
 
-  const { config, loading, error } = useStreamConfig(matchId, selectedChannelId, {
-    enabled: isLive && Boolean(matchId),
+  const { config, loading, error } = useMatchStream(matchId, {
+    enabled: isLive && Boolean(matchId) && isAuthenticated,
   });
 
   if (!isLive) return null;
 
-  const activeChannelId = config?.active?.channelId ?? selectedChannelId;
-  const streamUrl = config?.available ? config.active?.url : null;
+  if (!isAuthenticated) {
+    return (
+      <div className={cn('live-match-panel rounded-md border border-dashed border-border/70 bg-muted/20 px-3 py-4 text-center text-sm', className)}>
+        <p className="text-muted-foreground">Iniciá sesión para ver la transmisión en vivo.</p>
+        <Button type="button" size="sm" className="mt-3" asChild>
+          <Link to="/login">Iniciar sesión</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className={cn('live-match-panel flex flex-col gap-3', className)}>
+    <div className={cn('live-match-panel flex w-full flex-col gap-3', className)}>
       <p className="text-[11px] leading-snug text-muted-foreground">
-        Transmisión alternativa · independiente de la programación oficial del partido.
+        Transmisión La18HD · alternativa independiente de la programación oficial.
       </p>
 
       {loading ? (
@@ -61,24 +49,25 @@ export default function LiveMatchPanel({ match, className }) {
       {!loading && error ? (
         <div className="rounded-md border border-dashed border-border/70 bg-muted/20 px-3 py-4 text-center text-sm text-muted-foreground">
           {error}
+          {config?.fallback?.url ? (
+            <La18StreamPlayer
+              primary={null}
+              fallback={config.fallback}
+              theaterMode={theaterMode}
+              onTheaterModeChange={onTheaterModeChange}
+              className="mt-3"
+            />
+          ) : null}
         </div>
       ) : null}
 
       {!loading && config?.available ? (
-        <>
-          <ChannelPicker
-            channels={config.channels}
-            activeId={activeChannelId}
-            onSelect={setSelectedChannelId}
-          />
-          {streamUrl ? (
-            <LiveStreamPlayer
-              url={streamUrl}
-              type={config.active?.type}
-              channelName={config.channels?.find((c) => c.id === activeChannelId)?.name}
-            />
-          ) : null}
-        </>
+        <La18StreamPlayer
+          primary={config.primary}
+          fallback={config.fallback}
+          theaterMode={theaterMode}
+          onTheaterModeChange={onTheaterModeChange}
+        />
       ) : null}
     </div>
   );

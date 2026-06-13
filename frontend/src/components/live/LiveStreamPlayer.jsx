@@ -25,7 +25,7 @@ function PlayerFallback() {
 export default function LiveStreamPlayer({ url, type = 'youtube', channelName, className, onError }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
-  const [playing, setPlaying] = useState(playingProp ?? true);
+  const [playing, setPlaying] = useState(true);
   const [volume, setVolume] = useState(0.8);
   const [muted, setMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
