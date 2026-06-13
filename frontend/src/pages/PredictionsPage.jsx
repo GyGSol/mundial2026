@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
+import PushOptInBanner from '@/components/PushOptInBanner.jsx';
 
 const views = [
   { id: 'matches', label: 'Partidos' },
@@ -230,6 +231,10 @@ export default function PredictionsPage() {
             </Link>
           </CardContent>
         </Card>
+      ) : null}
+
+      {activeView === 'matches' && isAuthenticated ? (
+        <PushOptInBanner enabled={isAuthenticated} />
       ) : null}
 
       {message && <p className="text-sm text-foreground">{message}</p>}

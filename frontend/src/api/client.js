@@ -3,7 +3,7 @@ import { clearStoredSession, getStoredToken } from '../lib/sessionStorage.js';
 
 const API_BASE = '/api';
 
-async function request(path, options = {}) {
+export async function request(path, options = {}) {
   const token = getStoredToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -228,4 +228,41 @@ export const simulationApi = {
     request('/simulation', {
       method: 'DELETE',
     }),
+};
+
+export const pushApi = {
+  getVapidPublicKey: () => request('/push/vapid-public-key'),
+  subscribe: (subscription) =>
+    request('/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ subscription }),
+    }),
+};
+
+export const streamApi = {
+  getConfig: async (matchId, channelId) => {
+    const params = new URLSearchParams({ matchId: String(matchId) });
+    if (channelId) params.set('channelId', channelId);
+    const path = `/stream-config?${params}`;
+
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    let res;
+    try {
+      res = await fetch(`${API_BASE}${path}`, { headers });
+    } catch (err) {
+      throw new Error(formatRequestError(err, null, {}));
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 404 || res.status === 400) return data;
+    if (!res.ok) {
+      throw new Error(formatRequestError(null, res, data));
+    }
+    return data;
+  },
 };

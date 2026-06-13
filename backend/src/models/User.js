@@ -21,6 +21,16 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
     isAiUser: { type: Boolean, default: false, index: true },
+    pushSubscriptions: [
+      {
+        endpoint: { type: String, required: true },
+        keys: {
+          p256dh: { type: String, required: true },
+          auth: { type: String, required: true },
+        },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

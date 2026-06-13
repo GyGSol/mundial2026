@@ -11,6 +11,7 @@ import { matchInvolvesArgentina } from '@/lib/teamMeta';
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import MatchScheduleBadge from '@/components/MatchScheduleBadge.jsx';
 import StadiumBadge from '@/components/StadiumBadge.jsx';
+import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -112,8 +113,17 @@ export default function MatchCard({
           <StadiumBadge stadium={match.stadium} size="xs" className="justify-start" />
         ) : null}
         {hasBadges ? (
-          <div className="flex flex-wrap items-center gap-1.5">{headerBadges}</div>
-        ) : null}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {headerBadges}
+            <LiveMatchTrigger match={match} variant="outline" />
+          </div>
+        ) : (
+          match.status === 'live' ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <LiveMatchTrigger match={match} variant="outline" />
+            </div>
+          ) : null
+        )}
       </CardHeader>
 
       <CardContent className="flex flex-col gap-2 md:gap-3 lg:gap-4">

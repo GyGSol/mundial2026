@@ -1,6 +1,7 @@
 import { Match } from '../models/Match.js';
 import { recalculateMatchScores, recalculateAllLiveMatches } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
+import { notifyMatchesLiveStarted } from './pushNotificationService.js';
 
 /** Pasa a live los upcoming cuyo kickoff ya empezó (si el sync externo aún no lo hizo). */
 export async function promoteMatchesAtKickoff() {
@@ -28,6 +29,12 @@ export async function promoteMatchesAtKickoff() {
     matchIds: promotedIds.map((id) => id.toString()),
   });
   notifyLeaderboardUpdated({ reason: 'kickoff_live' });
+
+  if (due.length) {
+    notifyMatchesLiveStarted(due).catch((err) => {
+      console.error('[push] notifyMatchesLiveStarted failed:', err.message);
+    });
+  }
 
   return promotedIds;
 }

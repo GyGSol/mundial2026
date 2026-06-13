@@ -32,6 +32,7 @@ import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
+import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 
 function normalizeScorerEntry(entry) {
   if (typeof entry === 'string') {
@@ -631,6 +632,9 @@ function ResultMatchCard({ match, variant = 'live' }) {
         <span className="match-live-text-meta text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}
         </span>
+        {isLive ? (
+          <LiveMatchTrigger match={match} variant="outline" className="w-full sm:w-auto" />
+        ) : null}
         <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
       </CardContent>
     </Card>
@@ -698,6 +702,9 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
         <span className="match-live-text-meta text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}
         </span>
+        {isLive ? (
+          <LiveMatchTrigger match={match} variant="outline" className="w-full sm:w-auto" />
+        ) : null}
         <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
       </CardContent>
     </Card>

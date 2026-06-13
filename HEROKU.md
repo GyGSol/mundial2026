@@ -102,6 +102,50 @@ heroku run npm run mark-ai-user -w backend -a mundial2026-pred
 
 Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `CEREBRAS_API_KEY` (proveedor principal), `AI_CEREBRAS_MODEL` (default `gpt-oss-120b`), `GOOGLE_AI_API_KEY` / `GROQ_API_KEY` (fallback), `AI_GEMINI_MODEL`, `AI_GROQ_MODEL`.
 
+### Transmisión en vivo (Live Match)
+
+Módulo separado de los broadcasters oficiales. Las URLs **no** van en el frontend.
+
+```bash
+# Habilitar módulo (default: true salvo LIVE_STREAM_ENABLED=false)
+heroku config:set LIVE_STREAM_ENABLED=true -a mundial2026-pred
+
+# URLs por canal (HLS, YouTube embed o página embed). Placeholders: {matchId}, {channelId}
+heroku config:set \
+  LIVE_STREAM_URL_DSPORTS="https://ejemplo.com/live/dsports.m3u8" \
+  LIVE_STREAM_URL_TYC="https://ejemplo.com/live/tyc.m3u8" \
+  -a mundial2026-pred
+```
+
+Endpoint: `GET /api/stream-config?matchId=<externalId>&channelId=<opcional>` — solo responde stream activo si el partido está `live`.
+
+Canales soportados: `dsports`, `dsports2`, `tyc`, `telefe`, `disney`, `tv-publica`, `espn`, `fox-sports`.
+
+### Notificaciones push (Web Push / FCM)
+
+Aviso cuando un partido pasa de `upcoming` a `live` (usuarios con predicción cargada y suscripción activa).
+
+Generar claves VAPID (local):
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Config en Heroku:
+
+```bash
+heroku config:set \
+  PUSH_NOTIFICATIONS_ENABLED=true \
+  VAPID_PUBLIC_KEY="..." \
+  VAPID_PRIVATE_KEY="..." \
+  VAPID_SUBJECT="mailto:gonzalomlopolito@gmail.com" \
+  -a mundial2026-pred
+```
+
+Opcional Firebase Cloud Messaging (fase posterior): `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` — el servicio actual usa Web Push estándar vía `web-push`.
+
+UI: banner de opt-in en `/predictions` → `POST /api/push/subscribe` (requiere login).
+
 ## Deploy de cambios futuros
 
 ```bash
