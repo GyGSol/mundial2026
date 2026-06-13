@@ -47,16 +47,26 @@ export default function LiveMatchPanel({
       ) : null}
 
       {!loading && error ? (
-        <div className="rounded-md border border-dashed border-border/70 bg-muted/20 px-3 py-4 text-center text-sm text-muted-foreground">
-          {error}
+        <div className="flex flex-col gap-3">
+          <div className="rounded-md border border-dashed border-border/70 bg-muted/20 px-3 py-3 text-center text-sm text-muted-foreground">
+            {error}
+            {config?.reason === 'no_la18_mapping' ? (
+              <p className="mt-2 text-xs">
+                Falta configurar la URL de La18HD para el partido{' '}
+                <strong>{matchId}</strong> en el panel admin.
+              </p>
+            ) : null}
+          </div>
           {config?.fallback?.url ? (
-            <La18StreamPlayer
-              primary={null}
-              fallback={config.fallback}
-              theaterMode={theaterMode}
-              onTheaterModeChange={onTheaterModeChange}
-              className="mt-3"
-            />
+            <>
+              <p className="text-xs text-muted-foreground">Señal alternativa (Fubo Sports):</p>
+              <La18StreamPlayer
+                primary={null}
+                fallback={config.fallback}
+                theaterMode={theaterMode}
+                onTheaterModeChange={onTheaterModeChange}
+              />
+            </>
           ) : null}
         </div>
       ) : null}

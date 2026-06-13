@@ -18,7 +18,7 @@ export default function La18StreamPlayer({
   const iframeRef = useRef(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
-  const [useFallback, setUseFallback] = useState(false);
+  const [useFallback, setUseFallback] = useState(() => !primary?.url && Boolean(fallback?.url));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
@@ -151,7 +151,7 @@ export default function La18StreamPlayer({
           </div>
         ) : null}
 
-        {!iframeLoaded && !showFallback ? (
+        {!iframeLoaded && !showFallback && primary?.url ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 text-sm text-white/80">
             Conectando señal La18HD…
           </div>
