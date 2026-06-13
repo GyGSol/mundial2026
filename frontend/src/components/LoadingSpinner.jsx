@@ -11,7 +11,7 @@ function TriondaBall({ className }) {
       draggable={false}
       className={cn(
         'size-full rounded-full object-cover object-center',
-        'drop-shadow-[0_10px_18px_rgba(0,0,0,0.45)]',
+        'drop-shadow-[0_4px_10px_rgba(0,0,0,0.45)]',
         className
       )}
     />
@@ -48,18 +48,11 @@ export default function LoadingSpinner({
         <div className="loading-spinner__orbit" aria-hidden />
         <div className="loading-spinner__glow" aria-hidden />
 
-        <div className="loading-spinner__ball-wrap relative z-10 flex items-center justify-center">
-          <div
-            className={cn(
-              'loading-spinner__ball overflow-hidden rounded-full bg-transparent',
-              isCompact ? 'size-10' : 'size-14'
-            )}
-          >
+        <div className="loading-spinner__arena" aria-hidden>
+          <div className="loading-spinner__ball">
             <TriondaBall />
           </div>
         </div>
-
-        <div className="loading-spinner__shadow" aria-hidden />
       </div>
 
       {label ? (

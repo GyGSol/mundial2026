@@ -762,34 +762,51 @@ body:has(.game-shell) {
   }
 }
 
-@keyframes wc-loading-ball-float {
-  0%,
+@keyframes wc-loading-ball-bounce-in-circle {
+  0% {
+    transform: translate(-50%, -50%) translate(0, 26%) rotate(0deg) scale(1, 1);
+  }
+  7% {
+    transform: translate(-50%, -50%) translate(0, -24%) rotate(48deg) scale(0.96, 1.04);
+  }
+  14% {
+    transform: translate(-50%, -50%) translate(0, 26%) rotate(96deg) scale(1.04, 0.94);
+  }
+  21% {
+    transform: translate(-50%, -50%) translate(24%, -10%) rotate(144deg) scale(0.97, 1.03);
+  }
+  28% {
+    transform: translate(-50%, -50%) translate(24%, 24%) rotate(192deg) scale(1.03, 0.96);
+  }
+  35% {
+    transform: translate(-50%, -50%) translate(0, 26%) rotate(240deg) scale(1, 1);
+  }
+  42% {
+    transform: translate(-50%, -50%) translate(-24%, 24%) rotate(288deg) scale(1.03, 0.96);
+  }
+  49% {
+    transform: translate(-50%, -50%) translate(-24%, -10%) rotate(336deg) scale(0.97, 1.03);
+  }
+  56% {
+    transform: translate(-50%, -50%) translate(0, -24%) rotate(384deg) scale(0.96, 1.04);
+  }
+  63% {
+    transform: translate(-50%, -50%) translate(18%, -20%) rotate(432deg) scale(1, 1);
+  }
+  70% {
+    transform: translate(-50%, -50%) translate(22%, 14%) rotate(480deg) scale(1.02, 0.97);
+  }
+  77% {
+    transform: translate(-50%, -50%) translate(-20%, 22%) rotate(528deg) scale(1.02, 0.97);
+  }
+  84% {
+    transform: translate(-50%, -50%) translate(-22%, -16%) rotate(576deg) scale(0.98, 1.02);
+  }
+  91% {
+    transform: translate(-50%, -50%) translate(8%, -22%) rotate(624deg) scale(0.97, 1.03);
+  }
   100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-9px);
-  }
-}
-
-@keyframes wc-loading-ball-roll {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes wc-loading-shadow-pulse {
-  0%,
-  100% {
-    transform: translateX(-50%) scaleX(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateX(-50%) scaleX(0.62);
-    opacity: 0.22;
+    transform: translate(-50%, -50%) translate(0, 26%) rotate(672deg) scale(1, 1);
   }
 }
 
@@ -844,27 +861,24 @@ body:has(.game-shell) {
   animation: wc-loading-glow-breathe 2s ease-in-out infinite;
 }
 
-.loading-spinner__ball-wrap {
-  animation: wc-loading-ball-float 2s cubic-bezier(0.45, 0.05, 0.25, 1) infinite;
+.loading-spinner__arena {
+  position: absolute;
+  inset: 9%;
+  z-index: 5;
+  overflow: hidden;
+  border-radius: 9999px;
 }
 
 .loading-spinner__ball {
-  animation: wc-loading-ball-roll 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  transform-origin: center center;
-}
-
-.loading-spinner__shadow {
   position: absolute;
-  bottom: 6%;
   left: 50%;
-  height: 0.4rem;
-  width: 2.25rem;
-  transform: translateX(-50%);
+  top: 50%;
+  width: 44%;
+  height: 44%;
+  overflow: hidden;
   border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.4);
-  filter: blur(3px);
-  animation: wc-loading-shadow-pulse 2s cubic-bezier(0.45, 0.05, 0.25, 1) infinite;
-  transform-origin: center;
+  animation: wc-loading-ball-bounce-in-circle 2.8s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  will-change: transform;
 }
 
 .loading-spinner__label {
@@ -873,19 +887,13 @@ body:has(.game-shell) {
 
 @media (prefers-reduced-motion: reduce) {
   .loading-spinner__orbit,
-  .loading-spinner__ball-wrap,
   .loading-spinner__ball,
-  .loading-spinner__shadow,
   .loading-spinner__glow,
   .loading-spinner__label {
     animation: none;
   }
 
-  .loading-spinner__ball-wrap {
-    transform: translateY(-4px);
-  }
-
-  .loading-spinner__shadow {
-    transform: translateX(-50%);
+  .loading-spinner__ball {
+    transform: translate(-50%, -50%);
   }
 }
