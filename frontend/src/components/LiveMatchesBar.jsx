@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BrokenLegIcon } from '@/components/icons/BrokenLegIcon.jsx';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
 import {
   filterTimelineForDisplay,
@@ -117,6 +118,16 @@ function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn, align = 'c
   );
 }
 
+function FoulTimelineRow({ minutePrefix, label }) {
+  return (
+    <span className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+      {minutePrefix ? <span>{minutePrefix}</span> : null}
+      <BrokenLegIcon className="text-orange-600 dark:text-orange-400" title="Falta" />
+      <span>{label}</span>
+    </span>
+  );
+}
+
 function TimelineEntryContent({ entry }) {
   if (entry.kind === 'substitution') {
     return (
@@ -127,6 +138,10 @@ function TimelineEntryContent({ entry }) {
         align="center"
       />
     );
+  }
+
+  if (entry.kind === 'foul') {
+    return <FoulTimelineRow minutePrefix={entry.minutePrefix} label={entry.label} />;
   }
 
   return entry.text;
@@ -389,11 +404,11 @@ function formatTimelineEntry(event) {
     case 'foul':
       return {
         side: event.side,
-        text: `${prefix}🦴 ${
-          event.player
-            ? `Falta · ${formatPlayerWithPosition(event.player, event.playerPosition)}`
-            : 'Falta'
-        }`,
+        kind: 'foul',
+        minutePrefix: prefix,
+        label: event.player
+          ? `Falta · ${formatPlayerWithPosition(event.player, event.playerPosition)}`
+          : 'Falta',
       };
     default:
       return null;
