@@ -570,7 +570,49 @@ function teamLabel(team, fallbackId) {
   return team.fifaCode || team.nameEn || team.externalId || fallbackId || '—';
 }
 
-export async function listAdminPredictions({ userId } = {}) {
+async function resolvePredictionMatchIds({ matchId, status, group } = {}) {
+  if (matchId) {
+    if (!mongoose.Types.ObjectId.isValid(matchId)) {
+      const error = new Error('matchId inválido');
+      error.status = 400;
+      throw error;
+    }
+    const objectId = new mongoose.Types.ObjectId(matchId);
+    if (status || group) {
+      const matchFilter = { _id: objectId };
+      if (status) matchFilter.status = status;
+      if (group) matchFilter.group = group;
+      const found = await Match.findOne(matchFilter).select('_id').lean();
+      return found ? [found._id] : [];
+    }
+    return [objectId];
+  }
+
+  if (!status && !group) return null;
+
+  const matchFilter = {};
+  if (status) {
+    if (!['upcoming', 'live', 'finished'].includes(status)) {
+      const error = new Error('status inválido');
+      error.status = 400;
+      throw error;
+    }
+    matchFilter.status = status;
+  }
+  if (group) matchFilter.group = group;
+
+  const matching = await Match.find(matchFilter).select('_id').lean();
+  return matching.map((m) => m._id);
+}
+
+export async function listAdminPredictions({
+  userId,
+  matchId,
+  status,
+  group,
+  scored,
+  source,
+} = {}) {
   const filter = {};
   if (userId) {
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -579,6 +621,27 @@ export async function listAdminPredictions({ userId } = {}) {
       throw error;
     }
     filter.userId = userId;
+  }
+
+  const matchIds = await resolvePredictionMatchIds({ matchId, status, group });
+  if (matchIds !== null) {
+    if (!matchIds.length) return [];
+    filter.matchId = matchIds.length === 1 ? matchIds[0] : { $in: matchIds };
+  }
+
+  if (scored === 'true') {
+    filter.pointsEarned = { $ne: null };
+  } else if (scored === 'false') {
+    filter.pointsEarned = null;
+  }
+
+  if (source) {
+    if (!['user', 'ai', 'admin', 'default'].includes(source)) {
+      const error = new Error('source inválido');
+      error.status = 400;
+      throw error;
+    }
+    filter.predictionSource = source;
   }
 
   const predictions = await Prediction.find(filter)
@@ -616,6 +679,8 @@ export async function listAdminPredictions({ userId } = {}) {
       homeGoals: p.homeGoals,
       awayGoals: p.awayGoals,
       pointsEarned: p.pointsEarned,
+      bonusPoint: p.bonusPoint ?? 0,
+      predictionSource: p.predictionSource ?? 'user',
       updatedAt: p.updatedAt,
       match: match
         ? {
@@ -679,6 +744,7 @@ async function serializeAdminPredictionRow(prediction) {
     awayGoals: populated.awayGoals,
     pointsEarned: populated.pointsEarned,
     bonusPoint: populated.bonusPoint ?? 0,
+    predictionSource: populated.predictionSource ?? 'user',
     updatedAt: populated.updatedAt,
     match: match
       ? {

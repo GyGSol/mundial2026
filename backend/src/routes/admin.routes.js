@@ -441,6 +441,11 @@ router.get('/predictions', adminMiddleware, async (req, res, next) => {
     res.json({
       predictions: await listAdminPredictions({
         userId: req.query.userId,
+        matchId: req.query.matchId,
+        status: req.query.status,
+        group: req.query.group,
+        scored: req.query.scored,
+        source: req.query.source,
       }),
     });
   } catch (err) {

@@ -5,7 +5,6 @@ import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import {
   adminInput,
-  adminMuted,
   adminPage,
   adminTableWrap,
 } from '../../components/admin/adminTheme.js';
@@ -28,26 +27,67 @@ import {
 } from '@/components/ui/table.jsx';
 import { formatMatchDate } from '@/lib/dateFormat';
 
+const GROUP_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
 const statusLabels = {
   upcoming: 'Próximo',
   live: 'En vivo',
   finished: 'Finalizado',
 };
 
+const sourceLabels = {
+  user: 'Usuario',
+  ai: 'IA',
+  admin: 'Admin',
+  default: 'Default',
+};
+
 const emptyCreateForm = { userId: '', matchId: '', homeGoals: '0', awayGoals: '0' };
+
+function FilterField({ label, children }) {
+  return (
+    <div className="flex min-w-[140px] flex-col gap-1">
+      <label className="text-xs text-slate-400">{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export default function AdminPredictionsPage() {
   const [userFilter, setUserFilter] = useState('all');
+  const [matchFilter, setMatchFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [groupFilter, setGroupFilter] = useState('');
+  const [scoredFilter, setScoredFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [busyId, setBusyId] = useState(null);
   const [message, setMessage] = useState('');
 
-  const fetchPredictions = useCallback(
-    () => adminApi.listPredictions(userFilter !== 'all' ? { userId: userFilter } : {}),
-    [userFilter]
-  );
-  const { data, loading, error, refresh } = useLiveData(fetchPredictions, [userFilter]);
+  const filterDeps = [
+    userFilter,
+    matchFilter,
+    statusFilter,
+    groupFilter,
+    scoredFilter,
+    sourceFilter,
+  ];
+
+  const fetchPredictions = useCallback(() => {
+    const params = {};
+    if (userFilter !== 'all') params.userId = userFilter;
+    if (matchFilter !== 'all') params.matchId = matchFilter;
+    if (statusFilter) params.status = statusFilter;
+    if (groupFilter) params.group = groupFilter;
+    if (scoredFilter === 'scored') params.scored = 'true';
+    if (scoredFilter === 'pending') params.scored = 'false';
+    if (sourceFilter !== 'all') params.source = sourceFilter;
+    return adminApi.listPredictions(params);
+  }, filterDeps);
+
+  const { data, loading, error, refresh } = useLiveData(fetchPredictions, filterDeps);
 
   const fetchUsers = useCallback(() => adminApi.listUsers({ page: 1, limit: 200 }), []);
   const { data: usersData } = useLiveData(fetchUsers, []);
@@ -58,6 +98,15 @@ export default function AdminPredictionsPage() {
   const predictions = data?.predictions ?? [];
   const allUsers = usersData?.users ?? [];
   const matches = matchesData?.matches ?? [];
+
+  const hasActiveFilters =
+    userFilter !== 'all' ||
+    matchFilter !== 'all' ||
+    statusFilter ||
+    groupFilter ||
+    scoredFilter !== 'all' ||
+    sourceFilter !== 'all' ||
+    search.trim();
 
   const usersForFilter = useMemo(() => {
     const byId = new Map();
@@ -75,6 +124,36 @@ export default function AdminPredictionsPage() {
       a.label.localeCompare(b.label, 'es', { sensitivity: 'base' })
     );
   }, [allUsers, predictions]);
+
+  const matchesForFilter = useMemo(() => {
+    return matches.filter((m) => {
+      if (statusFilter && m.status !== statusFilter) return false;
+      if (groupFilter && m.group !== groupFilter) return false;
+      return true;
+    });
+  }, [matches, statusFilter, groupFilter]);
+
+  const filteredPredictions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return predictions;
+    return predictions.filter(
+      (p) =>
+        p.userName?.toLowerCase().includes(q) ||
+        p.userEmail?.toLowerCase().includes(q) ||
+        p.match?.label?.toLowerCase().includes(q) ||
+        p.match?.group?.toLowerCase().includes(q)
+    );
+  }, [predictions, search]);
+
+  function clearFilters() {
+    setUserFilter('all');
+    setMatchFilter('all');
+    setStatusFilter('');
+    setGroupFilter('');
+    setScoredFilter('all');
+    setSourceFilter('all');
+    setSearch('');
+  }
 
   async function savePrediction(id, patch) {
     setBusyId(id);
@@ -134,12 +213,11 @@ export default function AdminPredictionsPage() {
         </Button>
       </AdminPageHeader>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-slate-400">Usuario</label>
+      <div className="flex flex-wrap items-end gap-3">
+        <FilterField label="Usuario">
           <Select value={userFilter} onValueChange={setUserFilter}>
-            <SelectTrigger className={`w-72 ${adminInput}`}>
-              <SelectValue placeholder="Todos los usuarios" />
+            <SelectTrigger className={`w-56 ${adminInput}`}>
+              <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los usuarios</SelectItem>
@@ -150,11 +228,117 @@ export default function AdminPredictionsPage() {
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <p className="self-end text-sm text-slate-500">
+        </FilterField>
+
+        <FilterField label="Partido">
+          <Select value={matchFilter} onValueChange={setMatchFilter}>
+            <SelectTrigger className={`w-56 ${adminInput}`}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los partidos</SelectItem>
+              {matchesForFilter.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.homeTeamId} vs {m.awayTeamId}
+                  {m.group ? ` (${m.group})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Estado partido">
+          <Select
+            value={statusFilter || 'all'}
+            onValueChange={(v) => {
+              setStatusFilter(v === 'all' ? '' : v);
+              setMatchFilter('all');
+            }}
+          >
+            <SelectTrigger className={`w-40 ${adminInput}`}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="upcoming">Próximos</SelectItem>
+              <SelectItem value="live">En vivo</SelectItem>
+              <SelectItem value="finished">Finalizados</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Grupo">
+          <Select
+            value={groupFilter || 'all'}
+            onValueChange={(v) => {
+              setGroupFilter(v === 'all' ? '' : v);
+              setMatchFilter('all');
+            }}
+          >
+            <SelectTrigger className={`w-36 ${adminInput}`}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {GROUP_OPTIONS.map((g) => (
+                <SelectItem key={g} value={g}>
+                  Grupo {g}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Puntos">
+          <Select value={scoredFilter} onValueChange={setScoredFilter}>
+            <SelectTrigger className={`w-40 ${adminInput}`}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="scored">Puntuadas</SelectItem>
+              <SelectItem value="pending">Sin puntuar</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Origen">
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className={`w-36 ${adminInput}`}>
+              <SelectValue placeholder="Todos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="user">Usuario</SelectItem>
+              <SelectItem value="ai">IA</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterField>
+
+        <FilterField label="Buscar">
+          <Input
+            placeholder="Usuario o partido…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`w-48 ${adminInput}`}
+          />
+        </FilterField>
+
+        {hasActiveFilters ? (
+          <Button variant="ghost" size="sm" className="text-slate-400" onClick={clearFilters}>
+            Limpiar filtros
+          </Button>
+        ) : null}
+
+        <p className="text-sm text-slate-500">
           {loading
             ? 'Cargando…'
-            : `${predictions.length} predicción${predictions.length === 1 ? '' : 'es'}`}
+            : `${filteredPredictions.length} predicción${filteredPredictions.length === 1 ? '' : 'es'}`}
+          {!loading && search.trim() && filteredPredictions.length !== predictions.length
+            ? ` (de ${predictions.length})`
+            : ''}
         </p>
       </div>
 
@@ -219,33 +403,35 @@ export default function AdminPredictionsPage() {
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
 
       <AdminCard accent flush contentClassName="p-0">
-      <div className={adminTableWrap}>
-        <Table>
-          <TableHeader>
-            <TableRow className="border-slate-800">
-              <TableHead>Partido</TableHead>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Predicción</TableHead>
-              <TableHead>Pts / Bonus</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {predictions.map((p) => (
-              <PredictionRow
-                key={p.id}
-                prediction={p}
-                busy={busyId === p.id}
-                onSave={savePrediction}
-                onDelete={removePrediction}
-              />
-            ))}
-          </TableBody>
-        </Table>
-        {!loading && !predictions.length && !error ? (
-          <p className="p-4 text-sm text-slate-500">Sin predicciones cargadas.</p>
-        ) : null}
-      </div>
+        <div className={adminTableWrap}>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-slate-800">
+                <TableHead>Partido</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Predicción</TableHead>
+                <TableHead>Pts / Bonus</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPredictions.map((p) => (
+                <PredictionRow
+                  key={p.id}
+                  prediction={p}
+                  busy={busyId === p.id}
+                  onSave={savePrediction}
+                  onDelete={removePrediction}
+                />
+              ))}
+            </TableBody>
+          </Table>
+          {!loading && !filteredPredictions.length && !error ? (
+            <p className="p-4 text-sm text-slate-500">
+              {hasActiveFilters ? 'Ninguna predicción coincide con los filtros.' : 'Sin predicciones cargadas.'}
+            </p>
+          ) : null}
+        </div>
       </AdminCard>
     </div>
   );
@@ -277,7 +463,14 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
       </TableCell>
       <TableCell>
         <p>{prediction.userName || '—'}</p>
-        <p className="text-xs text-slate-500">{prediction.userEmail}</p>
+        <p className="text-xs text-slate-500">
+          {prediction.userEmail}
+          {prediction.predictionSource && prediction.predictionSource !== 'user' ? (
+            <span className="ml-1 text-violet-400">
+              · {sourceLabels[prediction.predictionSource] ?? prediction.predictionSource}
+            </span>
+          ) : null}
+        </p>
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
