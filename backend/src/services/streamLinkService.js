@@ -2,6 +2,7 @@ import { Match } from '../models/Match.js';
 import { StreamLinkMapping } from '../models/StreamLinkMapping.js';
 import { env } from '../config/env.js';
 import { resolveStreamUrl } from '../data/liveStreamSchedule.js';
+import { fetchLa18HlsUrl } from './la18hdScraper.js';
 
 function buildFallbackConfig(matchExternalId) {
   const fuboUrl = resolveStreamUrl('fubo-youtube', matchExternalId);
@@ -60,14 +61,22 @@ export async function getMatchStreamConfig(matchExternalId, _userId) {
     };
   }
 
+  let hlsUrl = null;
+  try {
+    hlsUrl = await fetchLa18HlsUrl(mapping.la18PageUrl || mapping.embedUrl);
+  } catch {
+    hlsUrl = null;
+  }
+
   return {
     available: true,
     matchId: match.externalId,
     status: match.status,
     primary: {
       provider: 'la18hd',
-      type: 'iframe',
+      type: hlsUrl ? 'hls' : 'iframe',
       url: mapping.embedUrl,
+      hlsUrl,
       eventId: mapping.la18EventId || null,
       pageUrl: mapping.la18PageUrl,
     },

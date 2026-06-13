@@ -60,6 +60,37 @@ export function parseLa18EventList(html, baseUrl = env.la18hdBaseUrl) {
   return events;
 }
 
+const HLS_URL_PATTERN = /https?:\/\/[^"'<>\s]+\.m3u8[^"'<>\s]*/i;
+
+/** Extrae la primera URL .m3u8 del HTML de una página La18HD. */
+export function extractHlsUrlFromHtml(html) {
+  if (!html?.trim()) return null;
+  const match = html.match(HLS_URL_PATTERN);
+  return match?.[0] ?? null;
+}
+
+/**
+ * Resuelve la URL HLS actual desde la página La18HD (token con expiración corta).
+ * @param {string} pageUrl
+ * @param {typeof fetch} [fetchImpl]
+ */
+export async function fetchLa18HlsUrl(pageUrl, fetchImpl = fetch) {
+  const url = String(pageUrl ?? '').trim();
+  if (!url) return null;
+
+  const response = await fetchImpl(url, {
+    headers: {
+      'User-Agent': 'Mundial2026-Stream/1.0',
+      Accept: 'text/html,application/xhtml+xml',
+    },
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) return null;
+  const html = await response.text();
+  return extractHlsUrlFromHtml(html);
+}
+
 function normalizeTeamToken(value) {
   return String(value ?? '')
     .toLowerCase()

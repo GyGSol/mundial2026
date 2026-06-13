@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   parseLa18EventList,
   rankLa18EventsForMatch,
+  extractHlsUrlFromHtml,
 } from '../src/services/la18hdScraper.js';
 
 describe('la18hdScraper', () => {
@@ -13,6 +14,14 @@ describe('la18hdScraper', () => {
     const events = parseLa18EventList(html, 'https://la18hd.com');
     expect(events.length).toBeGreaterThanOrEqual(1);
     expect(events[0].url).toContain('la18hd.com');
+  });
+
+  it('extractHlsUrlFromHtml obtiene m3u8 embebido', () => {
+    const html =
+      'var src="https://cdn.example.com/disney6/mono.m3u8?token=abc123-d0-999-888";';
+    expect(extractHlsUrlFromHtml(html)).toBe(
+      'https://cdn.example.com/disney6/mono.m3u8?token=abc123-d0-999-888'
+    );
   });
 
   it('rankLa18EventsForMatch prioriza coincidencias de equipos', () => {

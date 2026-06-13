@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ExternalLink, Maximize2, Minimize2, MonitorPlay, RefreshCw, Smartphone } from 'lucide-react';
+import { ExternalLink, Maximize2, Minimize2, MonitorPlay, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
@@ -16,39 +16,40 @@ export default function La18StreamPlayer({
   className,
   theaterMode = false,
   onTheaterModeChange,
+  onReloadPrimary,
 }) {
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
   const iosDevice = isIosDevice();
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
-  const [useFallback, setUseFallback] = useState(() => !primary?.url && Boolean(fallback?.url));
-  const [preferExternal, setPreferExternal] = useState(
-    () => iosDevice && Boolean(primary?.pageUrl)
-  );
+  const [directHlsFailed, setDirectHlsFailed] = useState(false);
+  const [useFallback, setUseFallback] = useState(() => !primary?.url && !primary?.hlsUrl && Boolean(fallback?.url));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
-  const showFallback = useFallback || iframeFailed;
-  const showEmbedded = !preferExternal && !showFallback && primary?.url;
   const openUrl = primary?.pageUrl || primary?.url;
+  const iframeSrc = primary?.pageUrl || primary?.url;
+  const showFallback = useFallback || iframeFailed;
+  const useDirectHls = Boolean(primary?.hlsUrl) && !directHlsFailed && !showFallback;
+  const showEmbedded = !useDirectHls && !showFallback && iframeSrc;
 
   useEffect(() => {
     setIframeLoaded(false);
     setIframeFailed(false);
+    setDirectHlsFailed(false);
     setUseFallback(false);
     setStatusMessage('');
-    setPreferExternal(iosDevice && Boolean(primary?.pageUrl));
-  }, [primary?.url, primary?.pageUrl, iosDevice]);
+  }, [primary?.url, primary?.pageUrl, primary?.hlsUrl]);
 
   useEffect(() => {
-    if (!primary?.url && fallback?.url) {
+    if (!primary?.url && !primary?.hlsUrl && fallback?.url) {
       setUseFallback(true);
     }
-  }, [primary?.url, fallback?.url]);
+  }, [primary?.url, primary?.hlsUrl, fallback?.url]);
 
   useEffect(() => {
-    if (!primary?.url || showFallback || preferExternal) return undefined;
+    if (!iframeSrc || showFallback || useDirectHls) return undefined;
 
     const timeoutMs = iosDevice ? IOS_LOAD_TIMEOUT_MS : LOAD_TIMEOUT_MS;
     const timer = window.setTimeout(() => {
@@ -59,7 +60,7 @@ export default function La18StreamPlayer({
     }, timeoutMs);
 
     return () => window.clearTimeout(timer);
-  }, [primary?.url, iframeLoaded, showFallback, preferExternal, iosDevice]);
+  }, [iframeSrc, iframeLoaded, showFallback, useDirectHls, iosDevice]);
 
   const toggleFullscreen = useCallback(async () => {
     const node = containerRef.current;
@@ -80,10 +81,11 @@ export default function La18StreamPlayer({
 
   const retryPrimary = () => {
     setIframeFailed(false);
+    setDirectHlsFailed(false);
     setUseFallback(false);
     setIframeLoaded(false);
-    setPreferExternal(false);
     setStatusMessage('');
+    onReloadPrimary?.();
   };
 
   const activateFallback = () => {
@@ -91,75 +93,12 @@ export default function La18StreamPlayer({
     setStatusMessage('Buscando señal alternativa…');
   };
 
-  if (!primary?.url && !fallback?.url) return null;
+  const handleDirectHlsError = () => {
+    setDirectHlsFailed(true);
+    setStatusMessage('Probando reproductor La18HD…');
+  };
 
-  if (preferExternal && openUrl) {
-    return (
-      <div
-        ref={containerRef}
-        className={cn('la18-stream-player flex w-full flex-col gap-3', className)}
-      >
-        <div className="flex min-h-[200px] w-full flex-col items-center justify-center gap-4 rounded-md border border-border/60 bg-muted/20 p-4 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Smartphone className="size-6" aria-hidden />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium">Ver en Safari</p>
-            <p className="text-xs text-muted-foreground">
-              En iPhone e iPad la señal La18HD suele funcionar mejor abriéndola fuera del
-              reproductor embebido.
-            </p>
-          </div>
-          <div className="flex w-full max-w-sm flex-col gap-2">
-            <Button type="button" className="w-full gap-2" asChild>
-              <a href={openUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4 shrink-0" aria-hidden />
-                Abrir transmisión en Safari
-              </a>
-            </Button>
-            <Button type="button" variant="outline" className="w-full gap-2" asChild>
-              <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4 shrink-0" aria-hidden />
-                Más opciones en La18HD
-              </a>
-            </Button>
-            {primary?.url ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full"
-                onClick={() => setPreferExternal(false)}
-              >
-                Probar reproductor embebido
-              </Button>
-            ) : null}
-          </div>
-        </div>
-
-        {fallback?.url ? (
-          <div className="rounded-md border border-dashed border-border/60 bg-muted/10 p-3">
-            <p className="mb-2 text-center text-xs text-muted-foreground">
-              Señal alternativa (puede no estar disponible en tu país):
-            </p>
-            <Suspense
-              fallback={
-                <div className="flex aspect-video items-center justify-center text-sm text-muted-foreground">
-                  Cargando Fubo Sports…
-                </div>
-              }
-            >
-              <LiveStreamPlayer
-                url={fallback.url}
-                type={fallback.type}
-                channelName="Fubo Sports"
-              />
-            </Suspense>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
+  if (!primary?.url && !primary?.hlsUrl && !fallback?.url) return null;
 
   return (
     <div
@@ -176,15 +115,31 @@ export default function La18StreamPlayer({
           theaterMode ? 'min-h-[50dvh] flex-1' : 'aspect-video'
         )}
       >
+        {useDirectHls ? (
+          <Suspense
+            fallback={
+              <div className="flex aspect-video items-center justify-center text-sm text-muted-foreground">
+                Conectando señal La18HD…
+              </div>
+            }
+          >
+            <LiveStreamPlayer
+              url={primary.hlsUrl}
+              type="file"
+              channelName="La18HD"
+              className="h-full"
+              onError={handleDirectHlsError}
+            />
+          </Suspense>
+        ) : null}
+
         {showEmbedded ? (
           <iframe
             ref={iframeRef}
             title="Transmisión La18HD"
-            src={primary.url}
+            src={iframeSrc}
             className="h-full min-h-[200px] w-full"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-fullscreen"
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture; web-share"
-            referrerPolicy="no-referrer"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
             onLoad={() => setIframeLoaded(true)}
             onError={() => {
               setIframeFailed(true);
@@ -271,6 +226,15 @@ export default function La18StreamPlayer({
             <a href={openUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="size-4 shrink-0" aria-hidden />
               {iosDevice ? 'Abrir en Safari' : 'Abrir La18HD'}
+            </a>
+          </Button>
+        ) : null}
+
+        {iosDevice ? (
+          <Button type="button" size="sm" variant="outline" className="gap-1.5" asChild>
+            <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="size-4 shrink-0" aria-hidden />
+              Más en La18HD
             </a>
           </Button>
         ) : null}

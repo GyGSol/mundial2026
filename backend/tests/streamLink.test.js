@@ -8,6 +8,7 @@ import {
   upsertStreamLinkMapping,
   deleteStreamLinkMapping,
 } from '../src/services/streamLinkService.js';
+import * as la18hdScraper from '../src/services/la18hdScraper.js';
 
 describe('streamLinkService', () => {
   const originalEnabled = env.liveStreamEnabled;
@@ -18,6 +19,7 @@ describe('streamLinkService', () => {
     env.liveStreamUrls = {};
     vi.spyOn(Match, 'findOne').mockReset();
     vi.spyOn(StreamLinkMapping, 'findOne').mockReset();
+    vi.spyOn(la18hdScraper, 'fetchLa18HlsUrl').mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -84,9 +86,33 @@ describe('streamLinkService', () => {
       type: 'iframe',
       url: 'https://la18hd.com/evento/arg-bra',
       eventId: 'arg-bra',
+      hlsUrl: null,
     });
     expect(result.fallback?.provider).toBe('fubo');
     expect(result.fallback?.type).toBe('youtube');
+  });
+
+  it('devuelve HLS directo cuando La18HD expone m3u8', async () => {
+    la18hdScraper.fetchLa18HlsUrl.mockResolvedValueOnce(
+      'https://cgxheq.fubo18.com/disney6/mono.m3u8?token=test-d0-1-2'
+    );
+
+    Match.findOne.mockReturnValue({
+      lean: () => Promise.resolve({ externalId: '7', status: 'live' }),
+    });
+    StreamLinkMapping.findOne.mockReturnValue({
+      lean: () =>
+        Promise.resolve({
+          matchExternalId: '7',
+          la18PageUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
+          embedUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
+          enabled: true,
+        }),
+    });
+
+    const result = await getMatchStreamConfig('7');
+    expect(result.primary.type).toBe('hls');
+    expect(result.primary.hlsUrl).toContain('.m3u8');
   });
 });
 

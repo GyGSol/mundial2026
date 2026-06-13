@@ -16,7 +16,7 @@ export default function LiveMatchPanel({
   const isLive = match?.status === 'live';
   const { isAuthenticated } = useAuth();
 
-  const { config, loading, error } = useMatchStream(matchId, {
+  const { config, loading, error, reload } = useMatchStream(matchId, {
     enabled: isLive && Boolean(matchId) && isAuthenticated,
   });
 
@@ -65,6 +65,7 @@ export default function LiveMatchPanel({
                 fallback={config.fallback}
                 theaterMode={theaterMode}
                 onTheaterModeChange={onTheaterModeChange}
+                onReloadPrimary={reload}
               />
             </>
           ) : null}
@@ -77,6 +78,7 @@ export default function LiveMatchPanel({
           fallback={config.fallback}
           theaterMode={theaterMode}
           onTheaterModeChange={onTheaterModeChange}
+          onReloadPrimary={reload}
         />
       ) : null}
     </div>
