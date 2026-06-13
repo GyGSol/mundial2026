@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 const FOUL_ICON_SRC = '/icons/broken-leg-foul.png';
 
 /**
- * Icono de pierna rota (generado) para faltas en la cronología del partido.
+ * Hueso roto (PNG transparente) para faltas en la cronología del partido.
  */
 export function BrokenLegIcon({ className, ...props }) {
   return (
