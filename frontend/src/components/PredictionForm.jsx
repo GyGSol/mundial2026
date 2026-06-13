@@ -19,13 +19,13 @@ function ScoreCell({ children }) {
 
 function ScoreValue({ value, label }) {
   return (
-    <div className="w-16 text-center">
+    <div className="w-16 text-center md:w-20 lg:w-24">
       {label && (
-        <span className="mb-0.5 block text-[10px] font-normal uppercase tracking-wide text-muted-foreground">
+        <span className="mb-0.5 block text-[10px] font-normal uppercase tracking-wide text-muted-foreground md:text-xs">
           {label}
         </span>
       )}
-      <p className="text-xl font-bold tabular-nums text-foreground">{value}</p>
+      <p className="text-xl font-bold tabular-nums text-foreground md:text-2xl lg:text-3xl">{value}</p>
     </div>
   );
 }
@@ -44,18 +44,18 @@ function MatchScoreboard({
   awayInput,
 }) {
   return (
-    <div className="flex w-full flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
+    <div className="flex w-full flex-col gap-3 md:gap-4 lg:gap-5">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6">
         <TeamHeader team={homeTeam} slotLabel={homeTeamSlotLabel} />
         <TeamHeader team={awayTeam} slotLabel={awayTeamSlotLabel} />
       </div>
 
       {showActualScores && (
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-3">
           <ScoreCell>
             <ScoreValue value={homeScore} label="Resultado" />
           </ScoreCell>
-          <span className="text-lg font-medium text-muted-foreground">-</span>
+          <span className="text-lg font-medium text-muted-foreground md:text-xl lg:text-2xl">-</span>
           <ScoreCell>
             <ScoreValue value={awayScore} label="Resultado" />
           </ScoreCell>
@@ -63,11 +63,11 @@ function MatchScoreboard({
       )}
 
       {(homePrediction != null || awayPrediction != null || homeInput || awayInput) && (
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-3">
           <ScoreCell>
             {homeInput ?? <ScoreValue value={homePrediction} label={showActualScores ? 'Tu predicción' : null} />}
           </ScoreCell>
-          <span className="text-lg font-medium text-muted-foreground">-</span>
+          <span className="text-lg font-medium text-muted-foreground md:text-xl lg:text-2xl">-</span>
           <ScoreCell>
             {awayInput ?? <ScoreValue value={awayPrediction} label={showActualScores ? 'Tu predicción' : null} />}
           </ScoreCell>
@@ -169,7 +169,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
     max: MAX_GOALS_PER_TEAM,
     value: side === 'home' ? home : away,
     onChange: (e) => (side === 'home' ? setHome : setAway)(e.target.value),
-    className: 'w-16 text-center text-xl font-bold tabular-nums',
+    className: 'w-16 text-center text-xl font-bold tabular-nums md:w-20 md:text-2xl lg:w-24 lg:text-3xl',
     'aria-label': side === 'home' ? 'Goles local' : 'Goles visitante',
   });
 

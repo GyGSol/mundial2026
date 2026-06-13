@@ -95,9 +95,9 @@ export default function MatchCard({
         isArgentinaMatch && hasPrediction && 'ring-amber-500/18'
       )}
     >
-      <CardHeader className="space-y-2 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <CardDescription className="min-w-0 flex-1 text-xs leading-snug sm:text-sm">
+      <CardHeader className="space-y-2 pb-3 md:space-y-2.5 md:pb-4 lg:space-y-3">
+        <div className="flex items-start justify-between gap-3 md:gap-4">
+          <CardDescription className="min-w-0 flex-1 text-xs leading-snug sm:text-sm md:text-base">
             {matchMeta}
           </CardDescription>
           {onScheduled ? (
@@ -116,7 +116,7 @@ export default function MatchCard({
         ) : null}
       </CardHeader>
 
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className="flex flex-col gap-2 md:gap-3 lg:gap-4">
         <PredictionForm
           match={match}
           onSave={onSave}

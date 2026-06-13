@@ -98,7 +98,7 @@ export default function PredictionsMatchList({
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-8 md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
       {sections.map((section) => {
         const sorted = sortByKickoff(section.matches);
         const active = sorted.filter((m) => m.status !== 'finished');
@@ -108,7 +108,7 @@ export default function PredictionsMatchList({
         return (
           <section key={section.key} className="flex flex-col gap-4">
             <div className="border-b border-border pb-2">
-              <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+              <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg md:text-xl">
                 {section.label}
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
