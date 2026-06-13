@@ -122,7 +122,7 @@ function FoulTimelineRow({ minutePrefix, label }) {
   return (
     <span className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
       {minutePrefix ? <span>{minutePrefix}</span> : null}
-      <BrokenLegIcon className="text-orange-600 dark:text-orange-400" title="Falta" />
+      <BrokenLegIcon />
       <span>{label}</span>
     </span>
   );
