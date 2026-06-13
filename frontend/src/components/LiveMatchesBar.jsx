@@ -426,9 +426,15 @@ function formatTimelineEntry(event) {
 }
 
 function timelineSortKey(event) {
-  if (event?.sortKey != null && Number.isFinite(event.sortKey)) return event.sortKey;
-  const minute = Number(event?.minute ?? 0);
-  const extra = Number(event?.extraMinute ?? 0);
+  if (event?.sortKey != null) {
+    const key = Number(event.sortKey);
+    if (Number.isFinite(key)) return key;
+  }
+  if (event?.minute == null || !Number.isFinite(Number(event.minute))) {
+    return Number.NEGATIVE_INFINITY;
+  }
+  const minute = Number(event.minute);
+  const extra = Number(event.extraMinute ?? 0);
   return minute + extra / 100;
 }
 

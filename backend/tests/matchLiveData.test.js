@@ -380,6 +380,19 @@ describe('matchLiveData', () => {
       expect(timeline).toHaveLength(1);
       expect(timeline[0].player).toBeNull();
     });
+
+    it('no agrega goles fantasma sin minuto cuando el marcador supera la cronología', () => {
+      const timeline = completeTimelineEvents(
+        [
+          { type: 'foul', side: 'away', minute: 7, player: 'Embolo', sortKey: 7 },
+          { type: 'period_start', side: null, minute: 0, phase: 'first', sortKey: 0 },
+        ],
+        { homeScore: 0, awayScore: 1 }
+      );
+
+      expect(goalCountsFromTimeline(timeline)).toEqual({ home: 0, away: 0 });
+      expect(timeline.every((event) => event.type !== 'goal' || event.minute != null)).toBe(true);
+    });
   });
 
   describe('readFifaAuthoritativeScores', () => {

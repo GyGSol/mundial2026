@@ -14,8 +14,15 @@ export const TIMELINE_DISPLAY_TYPES = new Set([
   'match_end',
 ]);
 
+/** Gol sintético sin minuto ni autor: solo refleja el marcador, no un evento cronológico. */
+export function isPlaceholderTimelineGoal(event) {
+  return event?.type === 'goal' && event.minute == null && !event.player;
+}
+
 export function filterTimelineForDisplay(events = []) {
-  return (events ?? []).filter((event) => TIMELINE_DISPLAY_TYPES.has(event.type));
+  return (events ?? []).filter(
+    (event) => TIMELINE_DISPLAY_TYPES.has(event.type) && !isPlaceholderTimelineGoal(event)
+  );
 }
 
 /** Identidad estable de un evento para keys y detectar cambios reales en la cronología. */

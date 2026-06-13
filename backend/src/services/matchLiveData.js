@@ -493,39 +493,6 @@ export function completeTimelineEvents(
     });
   }
 
-  let { home, away } = goalCountsFromTimeline(merged);
-  let placeholderIndex = 0;
-
-  while (home < Number(homeScore ?? 0)) {
-    merged.push({
-      sortKey: Number.POSITIVE_INFINITY - placeholderIndex,
-      minute: null,
-      extraMinute: null,
-      type: 'goal',
-      side: 'home',
-      player: null,
-      playerIn: null,
-      playerOut: null,
-    });
-    home += 1;
-    placeholderIndex += 1;
-  }
-
-  while (away < Number(awayScore ?? 0)) {
-    merged.push({
-      sortKey: Number.POSITIVE_INFINITY - placeholderIndex,
-      minute: null,
-      extraMinute: null,
-      type: 'goal',
-      side: 'away',
-      player: null,
-      playerIn: null,
-      playerOut: null,
-    });
-    away += 1;
-    placeholderIndex += 1;
-  }
-
   return merged.sort((a, b) => {
     const keyDiff = (a.sortKey ?? toSortKey(a.minute)) - (b.sortKey ?? toSortKey(b.minute));
     if (keyDiff !== 0) return keyDiff;
