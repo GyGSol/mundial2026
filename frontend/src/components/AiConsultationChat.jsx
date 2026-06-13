@@ -79,6 +79,19 @@ export default function AiConsultationChat({
               <p className="text-xs text-muted-foreground">
                 Predicción guardada · {insight.model ?? insight.source}
               </p>
+              {showInsightAction ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={onGenerateInsight}
+                  disabled={asking}
+                  className="self-start gap-1.5 border-violet-500/30 text-violet-100 hover:bg-violet-500/10"
+                >
+                  {asking ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                  Predecir marcador
+                </Button>
+              ) : null}
             </div>
           ) : showInsightAction ? (
             <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-violet-500/40 bg-violet-500/5 px-4 py-8 text-center">

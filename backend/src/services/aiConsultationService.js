@@ -284,9 +284,7 @@ export async function generateMatchInsight(userId, matchId, { fetchImpl = fetch 
   if (!match) throw new Error('Partido no encontrado');
 
   const thread = await getOrCreateThread(userId, 'match', matchId);
-  if (thread.initialInsight?.reasoning) {
-    return formatThreadResponse(thread);
-  }
+  const isUpdate = Boolean(thread.initialInsight?.reasoning);
 
   const context = await buildPromptContext(match, userId);
   const score = await callAiForScore(context, { fetchImpl });
@@ -294,7 +292,9 @@ export async function generateMatchInsight(userId, matchId, { fetchImpl = fetch 
 
   thread.initialInsight = insight;
   thread.title = await resolveMatchTitle(match);
-  const insightText = formatInsightMessage(insight);
+  const insightText = isUpdate
+    ? `Predicción actualizada:\n\n${formatInsightMessage(insight)}`
+    : formatInsightMessage(insight);
   thread.messages.push({
     role: 'assistant',
     content: insightText,

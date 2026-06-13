@@ -240,11 +240,11 @@ export default function AiPredictionsPage() {
 
   const quickPrompts = useMemo(() => {
     const base = QUICK_PROMPTS[topicType] ?? [];
-    if (topicType === 'match' && !thread?.initialInsight) {
+    if (topicType === 'match') {
       return ['Predecir marcador', ...base];
     }
     return base;
-  }, [topicType, thread?.initialInsight]);
+  }, [topicType]);
 
   const threadTitle = useMemo(() => {
     if (thread?.title) return thread.title;
@@ -382,7 +382,7 @@ export default function AiPredictionsPage() {
               onQuestionChange={setQuestion}
               onAsk={handleAsk}
               onGenerateInsight={handleGenerateInsight}
-              showInsightAction={topicType === 'match' && !thread?.initialInsight}
+              showInsightAction={topicType === 'match'}
               quickPrompts={quickPrompts}
               onQuickPrompt={handleQuickPrompt}
             />
