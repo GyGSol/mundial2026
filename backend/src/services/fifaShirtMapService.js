@@ -1,6 +1,6 @@
 import { Match } from '../models/Match.js';
 import { fetchLiveMatchFootball } from './fifaApiClient.js';
-import { buildShirtByPlayerId } from '../utils/fifaSquadShirtMap.js';
+import { buildShirtLookups } from '../utils/fifaSquadShirtMap.js';
 
 function matchNeedsShirtMap(match) {
   const meta = match.raw?.fifaMeta;
@@ -10,7 +10,8 @@ function matchNeedsShirtMap(match) {
     timeline.length > 0 &&
     meta?.idMatch &&
     meta?.idStage &&
-    !meta?.shirtByPlayerId
+    !meta?.shirtByPlayerId &&
+    !meta?.shirtBySideName
   );
 }
 
@@ -29,7 +30,7 @@ export async function ensureFifaShirtMaps(matches = []) {
           idStage: meta.idStage,
           idMatch: meta.idMatch,
         });
-        const shirtByPlayerId = buildShirtByPlayerId(live);
+        const { shirtByPlayerId, shirtBySideName } = buildShirtLookups(live);
         if (!Object.keys(shirtByPlayerId).length) return;
 
         match.raw = {
@@ -37,6 +38,7 @@ export async function ensureFifaShirtMaps(matches = []) {
           fifaMeta: {
             ...meta,
             shirtByPlayerId,
+            shirtBySideName,
             shirtMapSyncedAt: new Date().toISOString(),
           },
         };
@@ -46,6 +48,7 @@ export async function ensureFifaShirtMaps(matches = []) {
           {
             $set: {
               'raw.fifaMeta.shirtByPlayerId': shirtByPlayerId,
+              'raw.fifaMeta.shirtBySideName': shirtBySideName,
               'raw.fifaMeta.shirtMapSyncedAt': match.raw.fifaMeta.shirtMapSyncedAt,
             },
           }

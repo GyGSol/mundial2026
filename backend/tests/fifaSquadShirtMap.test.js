@@ -58,9 +58,30 @@ describe('fifaSquadShirtMap', () => {
           idPlayer: '395050',
         },
       ],
-      { 395050: 6 }
+      { shirtByPlayerId: { 395050: 6 } }
     );
 
     expect(timeline[0].playerShirtNumber).toBe(6);
+  });
+
+  it('applyShirtNumbersToTimeline resuelve dorsal por nombre si falta idPlayer', () => {
+    const timeline = applyShirtNumbersToTimeline(
+      [
+        {
+          type: 'goal',
+          side: 'home',
+          minute: 9,
+          player: 'Julian Quinones',
+        },
+      ],
+      {
+        shirtBySideName: {
+          home: { 'julian quinones': 16 },
+          away: {},
+        },
+      }
+    );
+
+    expect(timeline[0].playerShirtNumber).toBe(16);
   });
 });

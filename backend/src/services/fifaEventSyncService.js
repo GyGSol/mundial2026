@@ -12,7 +12,7 @@ import { fetchFifaReportStats, FIFA_REPORT_STATS_VERSION } from './fifaReportPdf
 import { goalCountsFromTimeline } from './matchLiveData.js';
 import {
   applyShirtNumbersToTimeline,
-  buildShirtByPlayerId,
+  buildShirtLookups,
 } from '../utils/fifaSquadShirtMap.js';
 
 async function loadMatchTeams(match) {
@@ -169,9 +169,10 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
           fifaEntry.Home?.IdTeam,
           fifaEntry.Away?.IdTeam
         );
-        const shirtByPlayerId = liveMatch ? buildShirtByPlayerId(liveMatch) : {};
+        const shirtLookups = liveMatch ? buildShirtLookups(liveMatch) : { shirtByPlayerId: {}, shirtBySideName: { home: {}, away: {} } };
+        const { shirtByPlayerId, shirtBySideName } = shirtLookups;
         if (Object.keys(shirtByPlayerId).length > 0) {
-          timeline = applyShirtNumbersToTimeline(timeline, shirtByPlayerId);
+          timeline = applyShirtNumbersToTimeline(timeline, shirtLookups);
         }
 
         if (timeline.length > 0) {
@@ -185,7 +186,7 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
             matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
             homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
             awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
-            ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId } : {}),
+            ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId, shirtBySideName } : {}),
             ...(Object.keys(shirtByPlayerId).length > 0
               ? { shirtMapSyncedAt: new Date().toISOString() }
               : {}),

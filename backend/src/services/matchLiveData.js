@@ -886,10 +886,10 @@ export function enrichMatchLiveFields(match, options = {}) {
 
     baseTimeline = attachTimelinePlayerIds(baseTimeline, rawEvents, homeTeamId, awayTeamId);
     baseTimeline = attachTimelinePitchCoords(baseTimeline, rawEvents, homeTeamId, awayTeamId);
-    baseTimeline = applyShirtNumbersToTimeline(
-      baseTimeline,
-      raw.fifaMeta?.shirtByPlayerId ?? {}
-    );
+    baseTimeline = applyShirtNumbersToTimeline(baseTimeline, {
+      shirtByPlayerId: raw.fifaMeta?.shirtByPlayerId ?? {},
+      shirtBySideName: raw.fifaMeta?.shirtBySideName ?? {},
+    });
     if (homePlayers.length > 0 || awayPlayers.length > 0) {
       baseTimeline = enrichTimelineRosterFields(baseTimeline, homePlayers, awayPlayers);
     }
