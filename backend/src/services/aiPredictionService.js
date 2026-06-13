@@ -6,6 +6,7 @@ import { Player } from '../models/Player.js';
 import { Stadium } from '../models/Stadium.js';
 import { User } from '../models/User.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
+import { buildMatchTeamsAnalysis } from './aiTeamMatchContextService.js';
 import { env } from '../config/env.js';
 import { isPredictionLocked } from './predictionLockService.js';
 import { computeGroupStandings } from './worldCupStatsService.js';
@@ -28,7 +29,8 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - "Local" y "visitante" (home/away) son SOLO la posición en el fixture; NO indican sede nacional del equipo ni ventaja de localía de clubes o ligas.
 - No asumas que el "local" juega en su país. Ambos seleccionados son visitantes en el país/ciudad donde se disputa el partido.
 - Analizá el partido según la sede real: estadio, ciudad, país anfitrión del encuentro, horario local previsto y condiciones típicas de esa ubicación en la fecha (temperatura, humedad, altitud si aplica, césped/clima).
-- El factor sede aplica por ubicación del estadio (desplazamiento, aclimatación, calor, altura), no por quién figura como "local" en el fixture.`;
+- El factor sede aplica por ubicación del estadio (desplazamiento, aclimatación, calor, altura), no por quién figura como "local" en el fixture.
+- Usá ranking FIFA, resultados previos del torneo 2026, poder ofensivo/defensivo, historial en Mundiales y enfrentamientos directos del contexto cuando estén disponibles.`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;
@@ -225,42 +227,43 @@ export async function buildPromptContext(match, aiUserId) {
     ? groupStandings.find((g) => g.group === String(match.group).toUpperCase())
     : null;
 
+  const teamById = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+  const homeForAnalysis =
+    resolvedHome ??
+    ({
+      externalId: match.homeTeamId,
+      nameEn: match.homeTeamId,
+      fifaCode: null,
+      group: match.group ?? null,
+    });
+  const awayForAnalysis =
+    resolvedAway ??
+    ({
+      externalId: match.awayTeamId,
+      nameEn: match.awayTeamId,
+      fifaCode: null,
+      group: match.group ?? null,
+    });
+
+  const teamsAnalysis = await buildMatchTeamsAnalysis({
+    homeTeam: homeForAnalysis,
+    awayTeam: awayForAnalysis,
+    match,
+    allMatches,
+    standingsByGroup: groupStandings,
+    teamById,
+  });
+
   return {
     matchExternalId: match.externalId,
     phase: isKnockout ? 'knockout' : 'group',
     group: match.group ?? null,
     matchday: match.matchday ?? null,
     kickoffAt: match.kickoffAt?.toISOString?.() ?? match.kickoffAt,
-    homeTeam: resolvedHome
-      ? {
-          externalId: resolvedHome.externalId,
-          name: resolvedHome.nameEn,
-          code: resolvedHome.fifaCode,
-          group: resolvedHome.group,
-          fixtureRole: 'local (solo fixture)',
-        }
-      : {
-          externalId: match.homeTeamId,
-          name: match.homeTeamId,
-          code: null,
-          group: null,
-          fixtureRole: 'local (solo fixture)',
-        },
-    awayTeam: resolvedAway
-      ? {
-          externalId: resolvedAway.externalId,
-          name: resolvedAway.nameEn,
-          code: resolvedAway.fifaCode,
-          group: resolvedAway.group,
-          fixtureRole: 'visitante (solo fixture)',
-        }
-      : {
-          externalId: match.awayTeamId,
-          name: match.awayTeamId,
-          code: null,
-          group: null,
-          fixtureRole: 'visitante (solo fixture)',
-        },
+    homeTeam: teamsAnalysis.home,
+    awayTeam: teamsAnalysis.away,
+    headToHead2026: teamsAnalysis.headToHead2026,
+    fifaRankingsAsOf: teamsAnalysis.rankingsAsOf,
     venue: buildVenueContextForPrompt(match, stadium),
     groupStandings: relevantGroup
       ? relevantGroup.standings.map((row) => ({
@@ -284,7 +287,7 @@ function buildAiPredictionPrompt(context) {
 
 ${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-En el campo "reasoning", incluí factores de sede/estadio/clima cuando sean relevantes. No uses "localía" en el sentido de club.
+En el campo "reasoning", incluí sede/estadio/clima y también ranking FIFA, forma reciente, poder ofensivo/defensivo u otros datos del contexto cuando sean relevantes. No uses "localía" en el sentido de club.
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<breve explicación en español>"}

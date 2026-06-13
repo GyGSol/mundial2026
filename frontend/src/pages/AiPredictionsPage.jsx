@@ -27,6 +27,7 @@ const QUICK_PROMPTS = {
     'Factores clave del partido',
     '¿Cómo afectan las bajas?',
     'Clima y sede del estadio',
+    'Compará ranking FIFA y forma reciente',
   ],
   group: [
     '¿Quién pasa del grupo?',
