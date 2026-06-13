@@ -118,15 +118,13 @@ function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn, align = 'c
 }
 
 function TimelineEntryContent({ entry }) {
-  const align = entry.side === 'home' ? 'right' : entry.side === 'away' ? 'left' : 'center';
-
   if (entry.kind === 'substitution') {
     return (
       <SubstitutionTimelineRow
         minutePrefix={entry.minutePrefix}
         playerOut={entry.playerOut}
         playerIn={entry.playerIn}
-        align={align}
+        align="center"
       />
     );
   }
@@ -234,6 +232,14 @@ function TeamEventColumn({ lines, className }) {
   );
 }
 
+/** Misma grilla que banderas + marcador para alinear la cronología debajo de cada país. */
+const MATCH_SIDE_GRID_CLASS =
+  'grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3';
+
+const MATCH_SIDE_CELL_CLASS = 'flex flex-col items-center px-1 text-center';
+const MATCH_CENTER_CELL_CLASS =
+  'flex min-w-[3.25rem] items-start justify-center self-stretch px-1 text-center';
+
 function MatchTeamsLayout({
   homeName,
   awayName,
@@ -263,7 +269,7 @@ function MatchTeamsLayout({
   const showSubstitutions = homeSubstitutionLines.length > 0 || awaySubstitutionLines.length > 0;
 
   return (
-    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1">
+    <div className={MATCH_SIDE_GRID_CLASS}>
       <TeamHeaderCell
         name={homeName}
         flag={homeFlag}
@@ -314,7 +320,6 @@ const liveCardClassName = (isArgentina) =>
     'w-full',
     isArgentina && 'border-sky-300/80 bg-sky-50/95 ring-1 ring-sky-200/90'
   );
-
 
 function formatTimelineMinute(event) {
   if (event?.extraMinute != null && event?.minute != null) {
@@ -441,22 +446,29 @@ function MatchTimeline({ events = [] }) {
   return (
     <div
       ref={scrollRef}
-      className="max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
         {displayEntries.map((entry) => (
-          <div
-            key={entry.key}
-            className="grid w-full grid-cols-[minmax(0,1fr)_minmax(5.5rem,auto)_minmax(0,1fr)] items-start gap-x-2"
-          >
-            <div className="min-w-0 text-right">
-              {entry.side === 'home' ? <TimelineEntryContent entry={entry} /> : null}
+          <div key={entry.key} className={MATCH_SIDE_GRID_CLASS}>
+            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0')}>
+              {entry.side === 'home' ? (
+                <span className="max-w-[9rem] break-words sm:max-w-[11rem]">
+                  <TimelineEntryContent entry={entry} />
+                </span>
+              ) : null}
             </div>
-            <div className="px-0.5 text-center">
-              {entry.side === 'neutral' ? entry.text : null}
+            <div className={MATCH_CENTER_CELL_CLASS}>
+              {entry.side === 'neutral' ? (
+                <span className="max-w-[7rem] break-words">{entry.text}</span>
+              ) : null}
             </div>
-            <div className="min-w-0 text-left">
-              {entry.side === 'away' ? <TimelineEntryContent entry={entry} /> : null}
+            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0')}>
+              {entry.side === 'away' ? (
+                <span className="max-w-[9rem] break-words sm:max-w-[11rem]">
+                  <TimelineEntryContent entry={entry} />
+                </span>
+              ) : null}
             </div>
           </div>
         ))}
@@ -521,7 +533,7 @@ function FinishedTeamsHeader({
   awaySubstitutions = [],
 }) {
   return (
-    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
+    <div className={cn(MATCH_SIDE_GRID_CLASS, 'items-center gap-y-1')}>
       <TeamHeaderCell
         name={homeName}
         flag={homeFlag}
@@ -619,25 +631,27 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           </Badge>
         )}
 
-        <FinishedTeamsHeader
-          homeName={homeName}
-          awayName={awayName}
-          homeFlag={homeFlag}
-          awayFlag={awayFlag}
-          homeBookings={match.homeBookings}
-          awayBookings={match.awayBookings}
-          homeSubstitutions={match.homeSubstitutions}
-          awaySubstitutions={match.awaySubstitutions}
-          center={
-            <div className="flex items-center gap-1 text-xl font-bold tabular-nums">
-              <span>{match.homeScore}</span>
-              <span className="text-muted-foreground">-</span>
-              <span>{match.awayScore}</span>
-            </div>
-          }
-        />
+        <div className="flex w-full flex-col gap-1.5">
+          <FinishedTeamsHeader
+            homeName={homeName}
+            awayName={awayName}
+            homeFlag={homeFlag}
+            awayFlag={awayFlag}
+            homeBookings={match.homeBookings}
+            awayBookings={match.awayBookings}
+            homeSubstitutions={match.homeSubstitutions}
+            awaySubstitutions={match.awaySubstitutions}
+            center={
+              <div className="flex items-center gap-1 text-xl font-bold tabular-nums">
+                <span>{match.homeScore}</span>
+                <span className="text-muted-foreground">-</span>
+                <span>{match.awayScore}</span>
+              </div>
+            }
+          />
 
-        <MatchTimeline events={match.matchTimeline} />
+          <MatchTimeline events={match.matchTimeline} />
+        </div>
 
         <MatchSummary
           events={match.matchTimeline}
