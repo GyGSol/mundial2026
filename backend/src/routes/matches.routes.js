@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
+import { Player } from '../models/Player.js';
 import { Stadium } from '../models/Stadium.js';
 import { Prediction } from '../models/Prediction.js';
 import { optionalAuth } from '../middleware/auth.middleware.js';
@@ -47,6 +48,19 @@ async function enrichMatches(matches, userId) {
   const teams = await Team.find({ externalId: { $in: [...teamIds] } });
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
 
+  const players = await Player.find({ teamExternalId: { $in: [...teamIds] } });
+  const playersByTeamId = {};
+  for (const player of players) {
+    if (!playersByTeamId[player.teamExternalId]) {
+      playersByTeamId[player.teamExternalId] = [];
+    }
+    playersByTeamId[player.teamExternalId].push({
+      fullName: player.fullName,
+      position: player.position,
+      shirtNumber: player.shirtNumber ?? null,
+    });
+  }
+
   const stadiumIds = [...new Set(matches.map((m) => m.stadiumId).filter(Boolean))];
   const stadiums = await Stadium.find({ externalId: { $in: stadiumIds } });
   const stadiumMap = Object.fromEntries(stadiums.map((s) => [s.externalId, s]));
@@ -82,7 +96,10 @@ async function enrichMatches(matches, userId) {
     const meta = enrichMatchPredictionMeta(m, prediction);
 
     const phaseFields = enrichMatchPhaseFields(m);
-    const liveFields = enrichMatchLiveFields(m);
+    const liveFields = enrichMatchLiveFields(m, {
+      homePlayers: playersByTeamId[m.homeTeamId] ?? [],
+      awayPlayers: playersByTeamId[m.awayTeamId] ?? [],
+    });
 
     const base = {
       id: m._id.toString(),

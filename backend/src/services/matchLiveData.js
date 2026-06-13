@@ -2,6 +2,9 @@
 /** @typedef {{ minute: number | null, player: string, card: string }} MatchBooking */
 /** @typedef {{ minute: number | null, playerOut: string, playerIn: string }} MatchSubstitution */
 
+import { buildFifaTimelineEntry } from './fifaTimelineParser.js';
+import { enrichNameFromRoster } from '../utils/playerNameMatch.js';
+
 export function splitFootballDataEvents(matchData, homeFdTeamId, awayFdTeamId) {
   const homeId = Number(homeFdTeamId);
   const awayId = Number(awayFdTeamId);
@@ -667,6 +670,9 @@ export function scorersFromTimeline(timeline = []) {
       name: String(event.player).trim(),
       minute: event.minute ?? null,
       position: event.playerPosition ?? null,
+      shirtNumber: event.playerShirtNumber ?? null,
+      positionX: event.positionX ?? null,
+      positionY: event.positionY ?? null,
     };
     if (event.side === 'home') home.push(entry);
     else if (event.side === 'away') away.push(entry);
@@ -693,6 +699,9 @@ export function bookingsFromTimeline(timeline = []) {
       player: String(event.player).trim(),
       card,
       position: event.playerPosition ?? null,
+      shirtNumber: event.playerShirtNumber ?? null,
+      positionX: event.positionX ?? null,
+      positionY: event.positionY ?? null,
     };
 
     if (event.side === 'home') homeBookings.push(entry);
@@ -716,6 +725,12 @@ export function substitutionsFromTimeline(timeline = []) {
       playerIn: String(event.playerIn).trim(),
       playerOutPosition: event.playerOutPosition ?? null,
       playerInPosition: event.playerInPosition ?? null,
+      playerOutShirtNumber: event.playerOutShirtNumber ?? null,
+      playerInShirtNumber: event.playerInShirtNumber ?? null,
+      playerOutPositionX: event.positionX ?? null,
+      playerOutPositionY: event.positionY ?? null,
+      playerInPositionX: event.positionX ?? null,
+      playerInPositionY: event.positionY ?? null,
     };
 
     if (event.side === 'home') homeSubstitutions.push(entry);
@@ -781,14 +796,96 @@ function pickNonEmptyList(primary = [], fallback = []) {
   return primary.length > 0 ? primary : fallback;
 }
 
+function timelineCoordKey(event) {
+  return [
+    event.type,
+    event.side ?? '',
+    event.minute ?? '',
+    event.extraMinute ?? '',
+    event.player ?? '',
+    event.playerIn ?? '',
+    event.playerOut ?? '',
+  ].join('|');
+}
+
+/** @param {Array<Record<string, unknown>>} timeline */
+export function attachTimelinePitchCoords(timeline, rawEvents, homeTeamId, awayTeamId) {
+  if (!Array.isArray(timeline) || timeline.length === 0) return timeline;
+  if (!Array.isArray(rawEvents) || rawEvents.length === 0) return timeline;
+  if (!homeTeamId || !awayTeamId) return timeline;
+
+  const coordByKey = new Map();
+  for (const rawEvent of rawEvents) {
+    const entry = buildFifaTimelineEntry(rawEvent, homeTeamId, awayTeamId);
+    if (!entry || entry.positionX == null || entry.positionY == null) continue;
+    coordByKey.set(timelineCoordKey(entry), {
+      positionX: entry.positionX,
+      positionY: entry.positionY,
+    });
+  }
+
+  if (coordByKey.size === 0) return timeline;
+
+  return timeline.map((event) => {
+    if (event.positionX != null && event.positionY != null) return event;
+    const coords = coordByKey.get(timelineCoordKey(event));
+    if (!coords) return event;
+    return { ...event, ...coords };
+  });
+}
+
+/** @param {Array<Record<string, unknown>>} timeline */
+export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlayers = []) {
+  return timeline.map((event) => {
+    const roster =
+      event.side === 'home' ? homePlayers : event.side === 'away' ? awayPlayers : [];
+    const next = { ...event };
+
+    if (next.player) {
+      const enriched = enrichNameFromRoster(next.player, roster);
+      next.player = enriched.name;
+      next.playerPosition = next.playerPosition ?? enriched.position ?? null;
+      next.playerShirtNumber = next.playerShirtNumber ?? enriched.shirtNumber ?? null;
+    }
+    if (next.playerIn) {
+      const enriched = enrichNameFromRoster(next.playerIn, roster);
+      next.playerIn = enriched.name;
+      next.playerInPosition = next.playerInPosition ?? enriched.position ?? null;
+      next.playerInShirtNumber = next.playerInShirtNumber ?? enriched.shirtNumber ?? null;
+    }
+    if (next.playerOut) {
+      const enriched = enrichNameFromRoster(next.playerOut, roster);
+      next.playerOut = enriched.name;
+      next.playerOutPosition = next.playerOutPosition ?? enriched.position ?? null;
+      next.playerOutShirtNumber = next.playerOutShirtNumber ?? enriched.shirtNumber ?? null;
+    }
+
+    return next;
+  });
+}
+
 /**
  * @param {{ status?: string, homeScore?: number | null, awayScore?: number | null, raw?: Record<string, unknown> | null }} match
+ * @param {{ homePlayers?: Array<{ fullName: string, position?: string, shirtNumber?: number }>, awayPlayers?: Array<{ fullName: string, position?: string, shirtNumber?: number }> }} [options]
  */
-export function enrichMatchLiveFields(match) {
+export function enrichMatchLiveFields(match, options = {}) {
   const raw = match.raw ?? {};
   const showResults = match.status === 'live' || match.status === 'finished';
   const events = readStoredMatchEvents(raw);
-  const baseTimeline = showResults ? readMatchTimeline(raw) : [];
+  const { homePlayers = [], awayPlayers = [] } = options;
+  let baseTimeline = showResults ? readMatchTimeline(raw) : [];
+
+  if (showResults && baseTimeline.length > 0) {
+    baseTimeline = attachTimelinePitchCoords(
+      baseTimeline,
+      raw.fifaEvents?.rawEvents,
+      raw.fifaMeta?.homeTeamId,
+      raw.fifaMeta?.awayTeamId
+    );
+    if (homePlayers.length > 0 || awayPlayers.length > 0) {
+      baseTimeline = enrichTimelineRosterFields(baseTimeline, homePlayers, awayPlayers);
+    }
+  }
   const baseTimelineScorers = scorersFromTimeline(baseTimeline);
   const parsedHomeScorers = parseScorersField(raw.home_scorers ?? raw.homeScorers);
   const parsedAwayScorers = parseScorersField(raw.away_scorers ?? raw.awayScorers);

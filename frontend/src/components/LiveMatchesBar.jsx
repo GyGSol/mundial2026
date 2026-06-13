@@ -24,22 +24,14 @@ import {
   formatMatchAttendance,
   getMatchSummaryNotice,
 } from '@/lib/matchSummary';
-import BroadcastBadges from '@/components/BroadcastBadges.jsx';
+import {
+  formatSummaryPlayer,
+  formatTimelinePlayer,
+} from '@/lib/playerPositionLabel.js';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
-const POSITION_SHORT = {
-  GK: 'POR',
-  DEF: 'DEF',
-  MID: 'MED',
-  FWD: 'DEL',
-};
-
-function formatPlayerWithPosition(name, position) {
-  if (!name) return '';
-  const tag = position ? POSITION_SHORT[position] ?? position : null;
-  return tag ? `${tag} · ${name}` : name;
-}
+import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
 function normalizeScorerEntry(entry) {
   if (typeof entry === 'string') {
@@ -64,6 +56,9 @@ function normalizeScorerEntry(entry) {
       name: String(entry.name).trim(),
       minute: entry.minute != null ? Number(entry.minute) : null,
       position: entry.position ?? null,
+      shirtNumber: entry.shirtNumber ?? null,
+      positionX: entry.positionX ?? null,
+      positionY: entry.positionY ?? null,
     };
   }
 
@@ -78,7 +73,7 @@ function normalizeScorerList(scorers) {
 
 function formatScorerLine(scorer) {
   if (!scorer?.name) return null;
-  const label = formatPlayerWithPosition(scorer.name, scorer.position);
+  const label = formatSummaryPlayer(scorer);
   return scorer.minute != null ? `${scorer.minute}' ${label}` : label;
 }
 
@@ -92,7 +87,13 @@ function cardSymbol(card) {
 function formatBookingLine(booking) {
   if (!booking?.player) return null;
   const minute = booking.minute != null ? `${booking.minute}' ` : '';
-  const label = formatPlayerWithPosition(booking.player, booking.position);
+  const label = formatSummaryPlayer({
+    name: booking.player,
+    position: booking.position,
+    shirtNumber: booking.shirtNumber,
+    positionX: booking.positionX,
+    positionY: booking.positionY,
+  });
   return `${minute}${cardSymbol(booking.card)} ${label}`;
 }
 
@@ -150,11 +151,20 @@ function TimelineEntryContent({ entry }) {
 function formatSubstitutionLine(substitution) {
   if (!substitution?.playerOut || !substitution?.playerIn) return null;
   const minute = substitution.minute != null ? `${substitution.minute}' ` : '';
-  const playerOut = formatPlayerWithPosition(
-    substitution.playerOut,
-    substitution.playerOutPosition
-  );
-  const playerIn = formatPlayerWithPosition(substitution.playerIn, substitution.playerInPosition);
+  const playerOut = formatSummaryPlayer({
+    name: substitution.playerOut,
+    position: substitution.playerOutPosition,
+    shirtNumber: substitution.playerOutShirtNumber,
+    positionX: substitution.playerOutPositionX,
+    positionY: substitution.playerOutPositionY,
+  });
+  const playerIn = formatSummaryPlayer({
+    name: substitution.playerIn,
+    position: substitution.playerInPosition,
+    shirtNumber: substitution.playerInShirtNumber,
+    positionX: substitution.playerInPositionX,
+    positionY: substitution.playerInPositionY,
+  });
   return `${minute}${SUBSTITUTION_OUT_ICON} ${playerOut}  ${SUBSTITUTION_IN_ICON} ${playerIn}`;
 }
 
@@ -381,29 +391,25 @@ function formatTimelineEntry(event) {
     case 'goal':
       return {
         side: event.side,
-        text: `${prefix}⚽ ${
-          event.player
-            ? formatPlayerWithPosition(event.player, event.playerPosition)
-            : 'Gol'
-        }`,
+        text: `${prefix}⚽ ${event.player ? formatTimelinePlayer(event) : 'Gol'}`,
       };
     case 'yellow_card':
       return {
         side: event.side,
-        text: `${prefix}🟨 ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+        text: `${prefix}🟨 ${formatTimelinePlayer(event)}`,
       };
     case 'red_card':
       return {
         side: event.side,
-        text: `${prefix}🟥 ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+        text: `${prefix}🟥 ${formatTimelinePlayer(event)}`,
       };
     case 'substitution':
       return {
         side: event.side,
         kind: 'substitution',
         minutePrefix: prefix,
-        playerOut: formatPlayerWithPosition(event.playerOut, event.playerOutPosition),
-        playerIn: formatPlayerWithPosition(event.playerIn, event.playerInPosition),
+        playerOut: formatTimelinePlayer(event, 'out'),
+        playerIn: formatTimelinePlayer(event, 'in'),
       };
     case 'foul':
       return {
@@ -411,7 +417,7 @@ function formatTimelineEntry(event) {
         kind: 'foul',
         minutePrefix: prefix,
         label: event.player
-          ? `Falta · ${formatPlayerWithPosition(event.player, event.playerPosition)}`
+          ? `Falta · ${formatTimelinePlayer(event)}`
           : 'Falta',
       };
     default:

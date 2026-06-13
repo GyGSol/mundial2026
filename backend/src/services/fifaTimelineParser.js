@@ -175,6 +175,15 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
   const side = resolveSide(event.IdTeam, homeTeamId, awayTeamId);
   if (!side && !neutral) return null;
 
+  const positionX =
+    event.PositionX != null && Number.isFinite(Number(event.PositionX))
+      ? Number(event.PositionX)
+      : null;
+  const positionY =
+    event.PositionY != null && Number.isFinite(Number(event.PositionY))
+      ? Number(event.PositionY)
+      : null;
+
   const entry = {
     sortKey: timing.sortKey,
     minute: timing.minute,
@@ -185,6 +194,8 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     player: null,
     playerIn: null,
     playerOut: null,
+    positionX,
+    positionY,
     description,
   };
 

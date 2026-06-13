@@ -33,13 +33,14 @@ export function rosterPositionForName(name, rosterPlayers = []) {
 
 export function enrichNameFromRoster(name, rosterPlayers = []) {
   const trimmed = String(name ?? '').trim();
-  if (!trimmed) return { name: trimmed, position: null };
+  if (!trimmed) return { name: trimmed, position: null, shirtNumber: null };
 
   const matched = matchNameToRosterPlayer(trimmed, rosterPlayers);
-  if (!matched) return { name: trimmed, position: null };
+  if (!matched) return { name: trimmed, position: null, shirtNumber: null };
 
   return {
     name: matched.fullName,
     position: matched.position ?? null,
+    shirtNumber: matched.shirtNumber ?? null,
   };
 }

@@ -33,15 +33,16 @@ describe('liveMatchEventAssistService', () => {
       expect(timeline[0].player).toBe('Julian Quinones');
     });
 
-    it('agrega posición desde el roster', () => {
+    it('agrega posición y dorsal desde el roster', () => {
       const timeline = normalizeTimelinePlayerNames(
         [{ type: 'yellow_card', side: 'away', minute: 17, player: 'Mokoena' }],
-        [{ fullName: 'Julian Quinones', position: 'FWD' }],
-        [{ fullName: 'Teboho Mokoena', position: 'DEF' }]
+        [{ fullName: 'Julian Quinones', position: 'FWD', shirtNumber: 9 }],
+        [{ fullName: 'Teboho Mokoena', position: 'DEF', shirtNumber: 4 }]
       );
 
       expect(timeline[0].player).toBe('Teboho Mokoena');
       expect(timeline[0].playerPosition).toBe('DEF');
+      expect(timeline[0].playerShirtNumber).toBe(4);
     });
   });
 

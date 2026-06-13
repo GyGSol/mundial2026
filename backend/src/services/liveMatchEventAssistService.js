@@ -125,16 +125,22 @@ export function normalizeTimelinePlayerNames(timeline, homePlayers, awayPlayers)
       const enriched = enrichNameFromRoster(normalized.player, roster);
       normalized.player = enriched.name;
       normalized.playerPosition = enriched.position ?? normalized.playerPosition ?? null;
+      normalized.playerShirtNumber =
+        enriched.shirtNumber ?? normalized.playerShirtNumber ?? null;
     }
     if (normalized.playerIn) {
       const enriched = enrichNameFromRoster(normalized.playerIn, roster);
       normalized.playerIn = enriched.name;
       normalized.playerInPosition = enriched.position ?? normalized.playerInPosition ?? null;
+      normalized.playerInShirtNumber =
+        enriched.shirtNumber ?? normalized.playerInShirtNumber ?? null;
     }
     if (normalized.playerOut) {
       const enriched = enrichNameFromRoster(normalized.playerOut, roster);
       normalized.playerOut = enriched.name;
       normalized.playerOutPosition = enriched.position ?? normalized.playerOutPosition ?? null;
+      normalized.playerOutShirtNumber =
+        enriched.shirtNumber ?? normalized.playerOutShirtNumber ?? null;
     }
 
     return normalized;
