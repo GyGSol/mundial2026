@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
-import { Radio, TvMinimalPlay } from 'lucide-react';
+import { ExternalLink, Radio, TvMinimalPlay } from 'lucide-react';
 import { transmissionsApi } from '../api/client.js';
 import { useLiveData } from '../hooks/useLiveData.js';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import LiveMatchTrigger from '../components/live/LiveMatchTrigger.jsx';
 import TeamHeader from '../components/TeamHeader.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
+import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
   CardContent,
@@ -14,6 +15,8 @@ import {
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
+
+const LA18_EVENTS_URL = 'https://la18hd.com/eventos/';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -105,16 +108,34 @@ function TransmissionMatchCard({ match }) {
           <TeamHeader team={match.awayTeam} slotLabel={match.awayTeamSlotLabel} />
         </div>
 
-        {match.status === 'live' && match.stream?.canWatch ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <LiveMatchTrigger match={match} label="Ver transmisión" />
+        {match.status === 'live' ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {match.stream?.canWatch ? (
+                <LiveMatchTrigger match={match} label="Ver transmisión" />
+              ) : null}
+              <Button variant="outline" size="sm" className="gap-1.5" asChild>
+                <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="size-4 shrink-0" aria-hidden />
+                  Más opciones en La18HD
+                </a>
+              </Button>
+            </div>
+            {!match.stream?.configured ? (
+              <p className="text-sm text-muted-foreground">
+                Todavía no hay señal configurada para este partido. Podés buscarlo en{' '}
+                <a
+                  href={LA18_EVENTS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-200/90 underline-offset-2 hover:underline"
+                >
+                  Partidos de hoy (La18HD)
+                </a>
+                .
+              </p>
+            ) : null}
           </div>
-        ) : null}
-
-        {match.status === 'live' && !match.stream?.configured ? (
-          <p className="text-sm text-muted-foreground">
-            El partido está en vivo pero aún no hay URL La18HD asignada para este encuentro.
-          </p>
         ) : null}
 
         {match.status === 'upcoming' && match.stream?.configured ? (
