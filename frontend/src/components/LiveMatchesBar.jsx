@@ -98,9 +98,16 @@ function formatBookingLine(booking) {
 const SUBSTITUTION_OUT_ICON = '⬇️';
 const SUBSTITUTION_IN_ICON = '⬆️';
 
-function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn }) {
+function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn, align = 'center' }) {
   return (
-    <span className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+    <span
+      className={cn(
+        'inline-flex flex-wrap items-center gap-x-1 gap-y-0.5',
+        align === 'right' && 'justify-end',
+        align === 'left' && 'justify-start',
+        align === 'center' && 'justify-center'
+      )}
+    >
       {minutePrefix ? <span>{minutePrefix}</span> : null}
       <ArrowDown className="size-3 shrink-0 text-red-500" strokeWidth={2.75} aria-hidden="true" />
       <span>{playerOut}</span>
@@ -111,12 +118,15 @@ function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn }) {
 }
 
 function TimelineEntryContent({ entry }) {
+  const align = entry.side === 'home' ? 'right' : entry.side === 'away' ? 'left' : 'center';
+
   if (entry.kind === 'substitution') {
     return (
       <SubstitutionTimelineRow
         minutePrefix={entry.minutePrefix}
         playerOut={entry.playerOut}
         playerIn={entry.playerIn}
+        align={align}
       />
     );
   }
@@ -425,35 +435,23 @@ function MatchTimeline({ events = [] }) {
       ref={scrollRef}
       className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className="flex flex-col gap-1 text-[10px] leading-snug text-muted-foreground">
-        {displayEntries.map((entry) =>
-          entry.side === 'neutral' ? (
-            <div key={entry.key} className="text-center">
-              {entry.text}
+      <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
+        {displayEntries.map((entry) => (
+          <div
+            key={entry.key}
+            className="grid w-full grid-cols-[minmax(0,1fr)_minmax(5.5rem,auto)_minmax(0,1fr)] items-start gap-x-2"
+          >
+            <div className="min-w-0 text-right">
+              {entry.side === 'home' ? <TimelineEntryContent entry={entry} /> : null}
             </div>
-          ) : (
-            <div
-              key={entry.key}
-              className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3"
-            >
-              {entry.side === 'home' ? (
-                <div className="flex flex-col items-center text-center">
-                  <TimelineEntryContent entry={entry} />
-                </div>
-              ) : (
-                <span aria-hidden="true" />
-              )}
-              <span aria-hidden="true" />
-              {entry.side === 'away' ? (
-                <div className="flex flex-col items-center text-center">
-                  <TimelineEntryContent entry={entry} />
-                </div>
-              ) : (
-                <span aria-hidden="true" />
-              )}
+            <div className="px-0.5 text-center">
+              {entry.side === 'neutral' ? entry.text : null}
             </div>
-          )
-        )}
+            <div className="min-w-0 text-left">
+              {entry.side === 'away' ? <TimelineEntryContent entry={entry} /> : null}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
