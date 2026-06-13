@@ -266,6 +266,7 @@ export default function PredictionsPage() {
             savingId={savingId}
             isScheduled={isScheduled}
             onScheduled={markScheduled}
+            expandFinished={statusFilter === 'finished'}
           />
         </>
       ) : !isAuthenticated ? (
