@@ -9,8 +9,17 @@ export function getBrowserTimezone() {
   }
 }
 
+function formatWeekday(date, timeZone) {
+  const weekday = new Intl.DateTimeFormat('es-AR', {
+    weekday: 'long',
+    timeZone,
+  }).format(date);
+  return weekday.charAt(0).toUpperCase() + weekday.slice(1);
+}
+
 function formatInTimezone(date, timeZone) {
-  return new Intl.DateTimeFormat('es-AR', {
+  const weekday = formatWeekday(date, timeZone);
+  const dateTime = new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -19,6 +28,7 @@ function formatInTimezone(date, timeZone) {
     hour12: false,
     timeZone,
   }).format(date);
+  return `${weekday} ${dateTime}`;
 }
 
 function tryFormatFromDate(value, timeZone) {
