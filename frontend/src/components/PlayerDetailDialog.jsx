@@ -244,9 +244,9 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
 
               {followUps.length > 0 ? (
                 <div className="flex max-h-40 flex-col gap-2 overflow-y-auto">
-                  {followUps.map((entry, index) => (
+                  {[...followUps].reverse().map((entry, index) => (
                     <div
-                      key={`${entry.role}-${index}`}
+                      key={`${entry.role}-${followUps.length - index}`}
                       className={cn(
                         'rounded-lg border px-3 py-2 text-sm',
                         entry.role === 'user'

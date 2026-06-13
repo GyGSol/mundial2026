@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Loader2, SendHorizontal, Sparkles } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -64,6 +65,10 @@ export default function AiConsultationChat({
 }) {
   const hasMessages = (thread?.messages?.length ?? 0) > 0;
   const insight = thread?.initialInsight;
+  const messagesNewestFirst = useMemo(
+    () => [...(thread?.messages ?? [])].reverse(),
+    [thread?.messages]
+  );
 
   return (
     <div className="flex min-h-[24rem] flex-col gap-4">
@@ -73,6 +78,19 @@ export default function AiConsultationChat({
         <LoadingSpinner variant="compact" label="Cargando consulta…" className="flex-1" />
       ) : (
         <>
+          {hasMessages ? (
+            <div className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto pr-1">
+              {messagesNewestFirst.map((entry) => (
+                <ChatMessage
+                  key={entry.id ?? `${entry.role}-${entry.createdAt}`}
+                  role={entry.role}
+                  content={entry.content}
+                  createdAt={entry.createdAt}
+                />
+              ))}
+            </div>
+          ) : null}
+
           {insight ? (
             <div className="flex flex-col gap-3">
               <InsightScore homeGoals={insight.homeGoals} awayGoals={insight.awayGoals} />
@@ -114,19 +132,6 @@ export default function AiConsultationChat({
             <p className="py-6 text-center text-sm text-muted-foreground">
               Elegí una consulta rápida o escribí tu pregunta. El historial se guarda para seguir la charla.
             </p>
-          ) : null}
-
-          {hasMessages ? (
-            <div className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto pr-1">
-              {thread.messages.map((entry) => (
-                <ChatMessage
-                  key={entry.id ?? `${entry.role}-${entry.createdAt}`}
-                  role={entry.role}
-                  content={entry.content}
-                  createdAt={entry.createdAt}
-                />
-              ))}
-            </div>
           ) : null}
 
           {quickPrompts.length > 0 ? (
