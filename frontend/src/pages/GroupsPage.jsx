@@ -6,6 +6,7 @@ import FormField from '../components/FormField.jsx';
 import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
 import GroupInvitePanel from '../components/GroupInvitePanel.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -289,7 +290,7 @@ export default function GroupsPage() {
   };
 
   if (authLoading || pageLoading) {
-    return <p className="text-sm text-muted-foreground">Cargando grupos...</p>;
+    return <LoadingSpinner label="Cargando grupos…" />;
   }
 
   return (

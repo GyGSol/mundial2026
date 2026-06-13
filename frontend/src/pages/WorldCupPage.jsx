@@ -14,6 +14,7 @@ import FixtureSection from '@/components/worldcup/FixtureSection.jsx';
 import HistorySection from '@/components/worldcup/HistorySection.jsx';
 import PlayersSection from '@/components/worldcup/PlayersSection.jsx';
 import AiStatsBriefing from '@/components/worldcup/AiStatsBriefing.jsx';
+import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
 import { cn } from '@/lib/utils';
 
@@ -95,7 +96,7 @@ export default function WorldCupPage() {
       ) : (
         <>
           {pageLoading && (
-            <p className="text-muted-foreground">Cargando información del mundial...</p>
+            <LoadingSpinner label="Cargando información del mundial…" />
           )}
           {error && <p className="text-destructive">{error}</p>}
           {!pageLoading && !error && (

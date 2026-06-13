@@ -4,6 +4,7 @@ import { worldCupApi } from '../../api/client.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
+import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 
 function formatFetchedAt(value) {
@@ -119,7 +120,7 @@ export default function AiStatsBriefing() {
       </div>
 
       {loading && !data ? (
-        <p className="text-sm text-muted-foreground">Generando briefing con IA...</p>
+        <LoadingSpinner variant="compact" label="Generando briefing con IA…" />
       ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

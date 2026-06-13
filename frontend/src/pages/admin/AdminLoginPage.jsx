@@ -9,6 +9,7 @@ import AdminCard from '../../components/admin/AdminCard.jsx';
 import { adminInput, adminLabel } from '../../components/admin/adminTheme.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
+import LoadingSpinner from '../../components/LoadingSpinner.jsx';
 
 export default function AdminLoginPage() {
   const { login, isAuthenticated, loading } = useAdminAuth();
@@ -34,8 +35,8 @@ export default function AdminLoginPage() {
 
   if (!setupChecked || loading) {
     return (
-      <div className="admin-theme admin-mesh flex min-h-screen items-center justify-center text-slate-300">
-        Cargando…
+      <div className="admin-theme admin-mesh min-h-screen">
+        <LoadingSpinner variant="fullscreen" label="Cargando…" />
       </div>
     );
   }

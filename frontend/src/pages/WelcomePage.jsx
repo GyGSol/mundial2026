@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 
@@ -8,11 +9,7 @@ export default function WelcomePage() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Cargando...
-      </div>
-    );
+    return <LoadingSpinner variant="fullscreen" label="Preparando tu sesión…" />;
   }
 
   if (isAuthenticated) {

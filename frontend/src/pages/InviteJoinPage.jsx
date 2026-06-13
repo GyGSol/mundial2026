@@ -4,6 +4,7 @@ import { competitionGroupsApi } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { buildAuthPathWithJoin } from '../lib/inviteLink.js';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 
@@ -57,7 +58,7 @@ export default function InviteJoinPage() {
   }, [authLoading, loading, isAuthenticated, preview, groupId, joining, navigate, refreshUser]);
 
   if (loading || authLoading) {
-    return <p className="text-sm text-muted-foreground">Cargando invitación...</p>;
+    return <LoadingSpinner label="Cargando invitación…" />;
   }
 
   if (error && !preview) {

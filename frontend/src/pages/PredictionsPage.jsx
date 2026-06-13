@@ -19,6 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
+import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 
 const views = [
   { id: 'matches', label: 'Partidos' },
@@ -237,7 +238,7 @@ export default function PredictionsPage() {
         <>
           {error && <p className="text-sm text-destructive">{error}</p>}
           {loading && !matches.length && (
-            <p className="text-muted-foreground">Cargando partidos...</p>
+            <LoadingSpinner label="Cargando partidos…" />
           )}
 
           {!loading && !matches.length && !error ? (

@@ -1,15 +1,12 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import LoadingSpinner from './LoadingSpinner.jsx';
 
 export default function GuestRoute() {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Cargando...
-      </div>
-    );
+    return <LoadingSpinner variant="fullscreen" label="Preparando tu sesión…" />;
   }
 
   if (isAuthenticated) {

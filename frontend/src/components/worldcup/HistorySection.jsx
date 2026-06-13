@@ -3,6 +3,7 @@ import { worldCupApi } from '../../api/client.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import { getTeamFlag } from '../../lib/teamMeta.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import {
   Table,
   TableBody,
@@ -29,7 +30,7 @@ export default function HistorySection() {
   const { data, loading, error } = useLiveData(fetchHistory, []);
 
   if (loading && !data) {
-    return <p className="text-sm text-muted-foreground">Cargando historia del Mundial…</p>;
+    return <LoadingSpinner variant="compact" label="Cargando historia del Mundial…" />;
   }
   if (error) {
     return <p className="text-sm text-destructive">{error}</p>;

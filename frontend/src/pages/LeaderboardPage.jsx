@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 
 function formatLastUpdated(date) {
   if (!date) return '';
@@ -182,7 +183,7 @@ export default function LeaderboardPage() {
         </p>
       )}
 
-      {rankingLoading && <p className="text-muted-foreground">Cargando ranking...</p>}
+      {rankingLoading && <LoadingSpinner label="Cargando ranking…" />}
       {error && <p className="text-destructive">{error}</p>}
 
       {hasPrizes ? (

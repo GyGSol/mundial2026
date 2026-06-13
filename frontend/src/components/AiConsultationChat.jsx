@@ -1,4 +1,5 @@
 import { Loader2, SendHorizontal, Sparkles } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 
@@ -69,10 +70,7 @@ export default function AiConsultationChat({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {loading ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
-          <p className="text-sm text-muted-foreground">Cargando consulta...</p>
-        </div>
+        <LoadingSpinner variant="compact" label="Cargando consulta…" className="flex-1" />
       ) : (
         <>
           {insight ? (

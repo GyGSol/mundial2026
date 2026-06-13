@@ -6,6 +6,7 @@ import PlayerDetailDialog from '../PlayerDetailDialog.jsx';
 import { getTeamFlag } from '../../lib/teamMeta.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
+import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
   Select,
@@ -244,7 +245,7 @@ export default function PlayersSection() {
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {loading && !players.length ? (
-        <p className="text-sm text-muted-foreground">Cargando jugadores...</p>
+        <LoadingSpinner variant="compact" label="Cargando jugadores…" />
       ) : null}
 
       {!loading && !players.length ? (

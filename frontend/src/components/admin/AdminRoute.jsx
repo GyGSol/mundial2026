@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { adminAuthApi } from '../../api/adminClient.js';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
+import LoadingSpinner from '../LoadingSpinner.jsx';
 
 export default function AdminRoute() {
   const { isAuthenticated, loading } = useAdminAuth();
@@ -17,8 +18,8 @@ export default function AdminRoute() {
 
   if (!setupChecked || loading) {
     return (
-      <div className="admin-theme admin-mesh flex min-h-screen items-center justify-center text-slate-300">
-        Cargando panel…
+      <div className="admin-theme admin-mesh min-h-screen">
+        <LoadingSpinner variant="fullscreen" label="Cargando panel…" />
       </div>
     );
   }

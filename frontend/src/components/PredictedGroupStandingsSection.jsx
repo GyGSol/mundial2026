@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import PredictedKnockoutSection from '@/components/PredictedKnockoutSection.jsx';
+import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import { GroupStandingsSection } from '@/components/worldcup/WorldCupSections.jsx';
 
 function buildTeamMap(groups, teams = []) {
@@ -25,7 +26,7 @@ export default function PredictedGroupStandingsSection({
   onGroupSelect,
 }) {
   if (loading && !groups?.length) {
-    return <p className="text-sm text-muted-foreground">Cargando tablas de grupos...</p>;
+    return <LoadingSpinner variant="compact" label="Cargando tablas de grupos…" />;
   }
 
   if (error) {
