@@ -762,54 +762,6 @@ body:has(.game-shell) {
   }
 }
 
-@keyframes wc-loading-ball-bounce-in-circle {
-  0% {
-    transform: translate(-50%, -50%) translate(0, 26%) rotate(0deg) scale(1, 1);
-  }
-  7% {
-    transform: translate(-50%, -50%) translate(0, -24%) rotate(48deg) scale(0.96, 1.04);
-  }
-  14% {
-    transform: translate(-50%, -50%) translate(0, 26%) rotate(96deg) scale(1.04, 0.94);
-  }
-  21% {
-    transform: translate(-50%, -50%) translate(24%, -10%) rotate(144deg) scale(0.97, 1.03);
-  }
-  28% {
-    transform: translate(-50%, -50%) translate(24%, 24%) rotate(192deg) scale(1.03, 0.96);
-  }
-  35% {
-    transform: translate(-50%, -50%) translate(0, 26%) rotate(240deg) scale(1, 1);
-  }
-  42% {
-    transform: translate(-50%, -50%) translate(-24%, 24%) rotate(288deg) scale(1.03, 0.96);
-  }
-  49% {
-    transform: translate(-50%, -50%) translate(-24%, -10%) rotate(336deg) scale(0.97, 1.03);
-  }
-  56% {
-    transform: translate(-50%, -50%) translate(0, -24%) rotate(384deg) scale(0.96, 1.04);
-  }
-  63% {
-    transform: translate(-50%, -50%) translate(18%, -20%) rotate(432deg) scale(1, 1);
-  }
-  70% {
-    transform: translate(-50%, -50%) translate(22%, 14%) rotate(480deg) scale(1.02, 0.97);
-  }
-  77% {
-    transform: translate(-50%, -50%) translate(-20%, 22%) rotate(528deg) scale(1.02, 0.97);
-  }
-  84% {
-    transform: translate(-50%, -50%) translate(-22%, -16%) rotate(576deg) scale(0.98, 1.02);
-  }
-  91% {
-    transform: translate(-50%, -50%) translate(8%, -22%) rotate(624deg) scale(0.97, 1.03);
-  }
-  100% {
-    transform: translate(-50%, -50%) translate(0, 26%) rotate(672deg) scale(1, 1);
-  }
-}
-
 @keyframes wc-loading-label-pulse {
   0%,
   100% {
@@ -877,7 +829,7 @@ body:has(.game-shell) {
   height: 44%;
   overflow: hidden;
   border-radius: 9999px;
-  animation: wc-loading-ball-bounce-in-circle 2.8s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  transform: translate(-50%, -50%);
   will-change: transform;
 }
 

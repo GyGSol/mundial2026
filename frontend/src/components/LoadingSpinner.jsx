@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { useCircularBallPhysics } from '../hooks/useCircularBallPhysics.js';
 
 const TRIONDA_BALL_SRC = '/balls/trionda-official.webp';
 
@@ -23,8 +25,12 @@ export default function LoadingSpinner({
   variant = 'default',
   className,
 }) {
+  const arenaRef = useRef(null);
+  const ballRef = useRef(null);
   const isFullscreen = variant === 'fullscreen';
   const isCompact = variant === 'compact';
+
+  useCircularBallPhysics(arenaRef, ballRef);
 
   return (
     <div
@@ -48,8 +54,8 @@ export default function LoadingSpinner({
         <div className="loading-spinner__orbit" aria-hidden />
         <div className="loading-spinner__glow" aria-hidden />
 
-        <div className="loading-spinner__arena" aria-hidden>
-          <div className="loading-spinner__ball">
+        <div ref={arenaRef} className="loading-spinner__arena" aria-hidden>
+          <div ref={ballRef} className="loading-spinner__ball">
             <TriondaBall />
           </div>
         </div>
