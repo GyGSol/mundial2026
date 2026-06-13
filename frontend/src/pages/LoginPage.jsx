@@ -60,62 +60,67 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4 py-10">
-      <p className="text-center text-sm text-muted-foreground">
-        <Link to="/" className="text-foreground underline">
-          Volver al inicio
-        </Link>
-      </p>
-      <Card>
-        <CardHeader>
-          <CardTitle>Ingresar</CardTitle>
-          <CardDescription>
-            {joinGroupId
-              ? 'Ingresá para unirte al grupo de la invitación. La sesión dura 2 horas.'
-              : 'Solo jugadores registrados. Tu sesión permanece activa 2 horas después de ingresar.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit">{joinGroupId ? 'Ingresar y unirme' : 'Ingresar'}</Button>
-            <p className="text-sm text-muted-foreground">
-              ¿No tenés cuenta?{' '}
-              <Link
-                to={joinGroupId ? buildAuthPathWithJoin('/register', joinGroupId) : '/register'}
-                className="text-foreground underline"
-              >
-                Registrate
-              </Link>
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="game-login-shell">
+      <div className="game-login-shell__content mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4 py-10">
+        <p className="game-login-brand text-center text-sm font-medium tracking-[0.18em] text-slate-200 uppercase">
+          Mundial 2026
+        </p>
+        <p className="text-center text-sm">
+          <Link to="/" className="game-login-back underline-offset-4 hover:underline">
+            Volver al inicio
+          </Link>
+        </p>
+        <Card className="game-login-card">
+          <CardHeader>
+            <CardTitle>Ingresar</CardTitle>
+            <CardDescription>
+              {joinGroupId
+                ? 'Ingresá para unirte al grupo de la invitación. La sesión dura 2 horas.'
+                : 'Solo jugadores registrados. Tu sesión permanece activa 2 horas después de ingresar.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button type="submit">{joinGroupId ? 'Ingresar y unirme' : 'Ingresar'}</Button>
+              <p className="text-sm text-muted-foreground">
+                ¿No tenés cuenta?{' '}
+                <Link
+                  to={joinGroupId ? buildAuthPathWithJoin('/register', joinGroupId) : '/register'}
+                  className="text-foreground underline underline-offset-4"
+                >
+                  Registrate
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
 
-      {joinGroupId ? (
-        <InfoPanel title="Invitación pendiente">
-          <InfoList
-            items={[
-              'Después de ingresar quedás en el grupo del enlace.',
-              'Si ya participabas, no pasa nada: seguís en el grupo.',
-            ]}
-          />
-        </InfoPanel>
-      ) : null}
+        {joinGroupId ? (
+          <InfoPanel title="Invitación pendiente">
+            <InfoList
+              items={[
+                'Después de ingresar quedás en el grupo del enlace.',
+                'Si ya participabas, no pasa nada: seguís en el grupo.',
+              ]}
+            />
+          </InfoPanel>
+        ) : null}
+      </div>
     </div>
   );
 }
