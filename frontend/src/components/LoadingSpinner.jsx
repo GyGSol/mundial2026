@@ -1,57 +1,81 @@
+import { useId } from 'react';
 import { cn } from '@/lib/utils';
 
-function SoccerBall({ className }) {
+function ModernSoccerBall({ className, gradientId }) {
   return (
     <svg
-      viewBox="0 0 64 64"
+      viewBox="0 0 100 100"
       className={className}
       aria-hidden
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx="32" cy="32" r="29" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.5" />
+      <defs>
+        <radialGradient id={gradientId} cx="38%" cy="32%" r="68%" fx="32%" fy="26%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="45%" stopColor="#f4f4f5" />
+          <stop offset="100%" stopColor="#a1a1aa" />
+        </radialGradient>
+        <linearGradient id={`${gradientId}-panel`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#18181b" />
+          <stop offset="100%" stopColor="#09090b" />
+        </linearGradient>
+      </defs>
+
+      <circle cx="50" cy="50" r="46" fill={`url(#${gradientId})`} />
+      <circle cx="50" cy="50" r="46" stroke="rgba(255,255,255,0.35)" strokeWidth="0.75" />
+
+      {/* Patrón icosaédrico simplificado — legible también en tamaño chico */}
       <path
-        d="M32 10 L38.5 22 L34 34 L30 34 L25.5 22 Z"
-        fill="#0f172a"
-        stroke="#0f172a"
+        d="M50 14 L58.2 28.5 L54.5 44 L45.5 44 L41.8 28.5 Z"
+        fill={`url(#${gradientId}-panel)`}
+      />
+      <path
+        d="M50 14 L58.2 28.5 L68 24 L64 36 L74 44 L62 48 L58.2 28.5"
+        fill="#e4e4e7"
+        stroke="#d4d4d8"
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M50 14 L41.8 28.5 L32 24 L36 36 L26 44 L38 48 L41.8 28.5"
+        fill="#e4e4e7"
+        stroke="#d4d4d8"
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M45.5 44 L36 36 L32 52 L40 62 L50 68 L60 62 L68 52 L64 36 L54.5 44 Z"
+        fill="#f4f4f5"
+        stroke="#d4d4d8"
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M45.5 44 L36 36 L32 52 L40 62 L50 68"
+        fill="#fafafa"
+        stroke="#d4d4d8"
         strokeWidth="0.5"
         strokeLinejoin="round"
       />
       <path
-        d="M32 10 L38.5 22 L48 18 L44 28 L52 34 L42 38 L38.5 22"
-        fill="#e2e8f0"
-        stroke="#94a3b8"
-        strokeWidth="0.75"
+        d="M54.5 44 L64 36 L68 52 L60 62 L50 68"
+        fill="#fafafa"
+        stroke="#d4d4d8"
+        strokeWidth="0.5"
         strokeLinejoin="round"
       />
       <path
-        d="M32 10 L25.5 22 L16 18 L20 28 L12 34 L22 38 L25.5 22"
-        fill="#e2e8f0"
-        stroke="#94a3b8"
-        strokeWidth="0.75"
+        d="M50 68 L40 62 L34 74 L42 84 L50 86 L58 84 L66 74 L60 62"
+        fill="#e4e4e7"
+        stroke="#d4d4d8"
+        strokeWidth="0.6"
         strokeLinejoin="round"
       />
-      <path
-        d="M34 34 L44 28 L48 38 L40 46 L32 54 L24 46 L16 38 L20 28 L30 34"
-        fill="#e2e8f0"
-        stroke="#94a3b8"
-        strokeWidth="0.75"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M30 34 L20 28 L16 38 L24 46"
-        fill="#f1f5f9"
-        stroke="#94a3b8"
-        strokeWidth="0.75"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M34 34 L44 28 L48 38 L40 46"
-        fill="#f1f5f9"
-        stroke="#94a3b8"
-        strokeWidth="0.75"
-        strokeLinejoin="round"
-      />
+
+      {/* Brillo especular */}
+      <ellipse cx="36" cy="34" rx="14" ry="9" fill="white" opacity="0.42" transform="rotate(-28 36 34)" />
+      <ellipse cx="62" cy="58" rx="6" ry="4" fill="white" opacity="0.12" transform="rotate(-12 62 58)" />
     </svg>
   );
 }
@@ -61,6 +85,7 @@ export default function LoadingSpinner({
   variant = 'default',
   className,
 }) {
+  const gradientId = useId().replace(/:/g, '');
   const isFullscreen = variant === 'fullscreen';
   const isCompact = variant === 'compact';
 
@@ -79,27 +104,34 @@ export default function LoadingSpinner({
     >
       <div
         className={cn(
-          'loading-spinner__stage relative flex items-end justify-center',
-          isCompact ? 'h-12 w-12' : 'h-20 w-20'
+          'loading-spinner__stage relative flex items-center justify-center',
+          isCompact ? 'size-14' : 'size-[5.5rem]'
         )}
       >
-        <div className="loading-spinner__ring absolute inset-0 rounded-full border-2 border-dashed border-amber-500/35" />
-        <div className="loading-spinner__glow absolute inset-2 rounded-full bg-amber-500/10 blur-md" />
-        <div className={cn('loading-spinner__ball relative z-10', isCompact ? 'size-7' : 'size-10')}>
-          <SoccerBall className="size-full drop-shadow-md" />
+        <div className="loading-spinner__orbit" aria-hidden />
+        <div className="loading-spinner__glow" aria-hidden />
+
+        <div className="loading-spinner__ball-wrap relative z-10 flex items-center justify-center">
+          <div
+            className={cn(
+              'loading-spinner__ball',
+              isCompact ? 'size-8' : 'size-11'
+            )}
+          >
+            <ModernSoccerBall
+              gradientId={gradientId}
+              className="size-full drop-shadow-[0_8px_16px_rgba(0,0,0,0.35)]"
+            />
+          </div>
         </div>
-        <div
-          className={cn(
-            'loading-spinner__shadow absolute bottom-0 rounded-full bg-black/35 blur-[2px]',
-            isCompact ? 'h-1 w-5' : 'h-1.5 w-8'
-          )}
-        />
+
+        <div className="loading-spinner__shadow" aria-hidden />
       </div>
 
       {label ? (
         <p
           className={cn(
-            'loading-spinner__label font-medium text-muted-foreground',
+            'loading-spinner__label font-medium tracking-wide text-muted-foreground',
             isCompact ? 'text-xs' : 'text-sm'
           )}
         >
