@@ -36,7 +36,9 @@ export default function LiveMatchPanel({
   return (
     <div className={cn('live-match-panel flex w-full flex-col gap-3', className)}>
       <p className="text-[11px] leading-snug text-muted-foreground">
-        Transmisión La18HD · alternativa independiente de la programación oficial.
+        Transmisión La18HD · alternativa independiente de la programación oficial. Fuera de
+        LATAM la señal puede cortarse a los pocos minutos por restricciones del proveedor; en ese
+        caso probá <strong>Abrir La18HD</strong> o un canal oficial del partido.
       </p>
 
       {loading ? (

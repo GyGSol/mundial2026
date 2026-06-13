@@ -20,6 +20,7 @@ export default function La18StreamPlayer({
 }) {
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
+  const hlsRetryCountRef = useRef(0);
   const iosDevice = isIosDevice();
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
@@ -40,6 +41,7 @@ export default function La18StreamPlayer({
     setDirectHlsFailed(false);
     setUseFallback(false);
     setStatusMessage('');
+    hlsRetryCountRef.current = 0;
   }, [primary?.url, primary?.pageUrl, primary?.hlsUrl]);
 
   useEffect(() => {
@@ -94,6 +96,12 @@ export default function La18StreamPlayer({
   };
 
   const handleDirectHlsError = () => {
+    if (hlsRetryCountRef.current < 2) {
+      hlsRetryCountRef.current += 1;
+      setStatusMessage('Renovando señal…');
+      onReloadPrimary?.();
+      return;
+    }
     setDirectHlsFailed(true);
     setStatusMessage('Probando reproductor La18HD…');
   };
