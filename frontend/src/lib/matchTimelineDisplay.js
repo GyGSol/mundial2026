@@ -1,9 +1,10 @@
-/** Eventos visibles en cronología (sin faltas: ocultan goles en el scroll). */
+/** Eventos visibles en cronología del partido en vivo. */
 export const TIMELINE_DISPLAY_TYPES = new Set([
   'goal',
   'yellow_card',
   'red_card',
   'substitution',
+  'foul',
   'goal_disallowed',
   'hydration_break',
   'period_start',

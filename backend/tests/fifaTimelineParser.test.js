@@ -141,5 +141,25 @@ describe('fifaTimelineParser', () => {
       expect(timeline[2]).toMatchObject({ type: 'period_start', phase: 'second', minute: 45 });
       expect(timeline[2].sortKey).toBeGreaterThan(timeline[1].sortKey);
     });
+
+    it('conserva goles aunque no se pueda extraer el jugador', () => {
+      const timeline = parseFifaTimeline(
+        {
+          Event: [
+            {
+              Type: 0,
+              IdTeam: '43911',
+              MatchMinute: "12'",
+              EventDescription: [{ Locale: 'en-GB', Description: 'Goal scored' }],
+            },
+          ],
+        },
+        '43911',
+        '43883'
+      );
+
+      expect(timeline).toHaveLength(1);
+      expect(timeline[0]).toMatchObject({ type: 'goal', side: 'home', minute: 12, player: null });
+    });
   });
 });

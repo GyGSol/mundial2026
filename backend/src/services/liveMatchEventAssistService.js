@@ -62,7 +62,16 @@ function isAssistFresh(assistedAt, matchStatus, now = Date.now()) {
 
 function eventIdentity(event) {
   const phase = event.phase ?? '';
-  return [event.type, event.side ?? '', event.minute ?? '', event.extraMinute ?? '', phase].join(':');
+  return [
+    event.type,
+    event.side ?? '',
+    event.minute ?? '',
+    event.extraMinute ?? '',
+    phase,
+    event.player ?? '',
+    event.playerIn ?? '',
+    event.playerOut ?? '',
+  ].join(':');
 }
 
 function timelineHasIdentity(timeline, entry) {
@@ -70,9 +79,24 @@ function timelineHasIdentity(timeline, entry) {
   return timeline.some((event) => eventIdentity(event) === key);
 }
 
+function timelineHasEquivalentSlot(timeline, entry) {
+  const phase = entry.phase ?? '';
+  return timeline.some((event) => {
+    const eventPhase = event.phase ?? '';
+    return (
+      event.type === entry.type &&
+      (event.side ?? null) === (entry.side ?? null) &&
+      (event.minute ?? null) === (entry.minute ?? null) &&
+      (event.extraMinute ?? null) === (entry.extraMinute ?? null) &&
+      eventPhase === phase
+    );
+  });
+}
+
 function isEntryComplete(entry) {
   if (isNeutralTimelineEvent(entry.type)) return true;
   if (entry.type === 'substitution') return Boolean(entry.playerIn && entry.playerOut);
+  if (entry.type === 'goal') return true;
   return Boolean(entry.player);
 }
 
@@ -313,7 +337,7 @@ export function validateAssistedTimeline(assisted, original, fifaMeta = {}) {
   }
 
   for (const originalEvent of original) {
-    if (!timelineHasIdentity(assisted, originalEvent)) return false;
+    if (!timelineHasEquivalentSlot(assisted, originalEvent)) return false;
   }
 
   return true;

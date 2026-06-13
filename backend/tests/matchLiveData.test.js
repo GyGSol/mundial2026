@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  completeTimelineEvents,
   enrichMatchLiveFields,
   formatTimeElapsed,
   latestClockFromTimeline,
@@ -346,6 +347,32 @@ describe('matchLiveData', () => {
           }
         )
       ).toEqual({ homeScore: 2, awayScore: 1 });
+    });
+  });
+
+  describe('completeTimelineEvents', () => {
+    it('agrega goles faltantes según marcador y goleadores', () => {
+      const timeline = completeTimelineEvents(
+        [{ type: 'goal', side: 'home', minute: 31, player: 'Balogun', sortKey: 31 }],
+        {
+          homeScorers: [{ name: 'Pulisic', minute: 12 }],
+          homeScore: 2,
+          awayScore: 0,
+        }
+      );
+
+      expect(goalCountsFromTimeline(timeline)).toEqual({ home: 2, away: 0 });
+      expect(timeline.some((event) => event.player === 'Pulisic' && event.minute === 12)).toBe(true);
+    });
+
+    it('incluye goles sin jugador parseado', () => {
+      const timeline = completeTimelineEvents(
+        [{ type: 'goal', side: 'home', minute: 9, player: null, sortKey: 9 }],
+        { homeScore: 1, awayScore: 0 }
+      );
+
+      expect(timeline).toHaveLength(1);
+      expect(timeline[0].player).toBeNull();
     });
   });
 

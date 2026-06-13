@@ -62,7 +62,8 @@ function extractPlayerName(description, fallback = '') {
   if (!trimmed) return fallback;
 
   const patterns = [
-    /^(.+?)\s*\([^)]+\)\s+(?:scores!!|is booked|is sent off!|commits a foul\.)/i,
+    /^(.+?)\s*\([^)]+\)\s+(?:scores!!|scores a goal|is booked|is sent off!|commits a foul\.)/i,
+    /^(.+?)\s+scores(?:!!| a goal| for\b)/i,
     /^(.+?)\s*\(in\)/i,
     /^(.+?)\s*\(out\)/i,
   ];
@@ -169,7 +170,7 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     return entry;
   }
 
-  entry.player = extractPlayerName(description);
+  entry.player = extractPlayerName(description) || null;
 
   if (type === 'substitution') {
     const { playerIn, playerOut } = parseSubstitution(description);
@@ -201,7 +202,6 @@ export function parseFifaTimeline(timelineJson, homeTeamId, awayTeamId) {
     }
 
     if (entry.type === 'substitution' && (!entry.playerIn || !entry.playerOut)) continue;
-    if (!entry.player) continue;
 
     parsed.push(entry);
   }

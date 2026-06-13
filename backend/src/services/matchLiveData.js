@@ -424,6 +424,108 @@ function toSortKey(minute) {
   return Number(minute);
 }
 
+function normalizeGoalPlayer(name) {
+  return String(name ?? '').trim().toLowerCase();
+}
+
+function timelineIncludesGoal(timeline, { side, minute, player }) {
+  return timeline.some((event) => {
+    if (event.type !== 'goal' || event.side !== side) return false;
+
+    const sameMinute =
+      minute == null || event.minute == null || Number(event.minute) === Number(minute);
+    const samePlayer =
+      !player ||
+      !event.player ||
+      normalizeGoalPlayer(event.player) === normalizeGoalPlayer(player);
+
+    return sameMinute && samePlayer;
+  });
+}
+
+/** Completa goles faltantes desde goleadores o marcador oficial. */
+export function completeTimelineEvents(
+  timeline = [],
+  { homeScorers = [], awayScorers = [], homeScore = 0, awayScore = 0 } = {}
+) {
+  const merged = timeline.map((event) => ({ ...event }));
+
+  for (const scorer of homeScorers) {
+    if (!scorer?.name) continue;
+    if (timelineIncludesGoal(merged, { side: 'home', minute: scorer.minute, player: scorer.name })) {
+      continue;
+    }
+    merged.push({
+      sortKey: toSortKey(scorer.minute),
+      minute: scorer.minute ?? null,
+      extraMinute: null,
+      type: 'goal',
+      side: 'home',
+      player: scorer.name,
+      playerPosition: scorer.position ?? null,
+      playerIn: null,
+      playerOut: null,
+    });
+  }
+
+  for (const scorer of awayScorers) {
+    if (!scorer?.name) continue;
+    if (timelineIncludesGoal(merged, { side: 'away', minute: scorer.minute, player: scorer.name })) {
+      continue;
+    }
+    merged.push({
+      sortKey: toSortKey(scorer.minute),
+      minute: scorer.minute ?? null,
+      extraMinute: null,
+      type: 'goal',
+      side: 'away',
+      player: scorer.name,
+      playerPosition: scorer.position ?? null,
+      playerIn: null,
+      playerOut: null,
+    });
+  }
+
+  let { home, away } = goalCountsFromTimeline(merged);
+  let placeholderIndex = 0;
+
+  while (home < Number(homeScore ?? 0)) {
+    merged.push({
+      sortKey: Number.POSITIVE_INFINITY - placeholderIndex,
+      minute: null,
+      extraMinute: null,
+      type: 'goal',
+      side: 'home',
+      player: null,
+      playerIn: null,
+      playerOut: null,
+    });
+    home += 1;
+    placeholderIndex += 1;
+  }
+
+  while (away < Number(awayScore ?? 0)) {
+    merged.push({
+      sortKey: Number.POSITIVE_INFINITY - placeholderIndex,
+      minute: null,
+      extraMinute: null,
+      type: 'goal',
+      side: 'away',
+      player: null,
+      playerIn: null,
+      playerOut: null,
+    });
+    away += 1;
+    placeholderIndex += 1;
+  }
+
+  return merged.sort((a, b) => {
+    const keyDiff = (a.sortKey ?? toSortKey(a.minute)) - (b.sortKey ?? toSortKey(b.minute));
+    if (keyDiff !== 0) return keyDiff;
+    return String(a.player ?? '').localeCompare(String(b.player ?? ''), 'es');
+  });
+}
+
 export function buildTimelineFromLegacy(raw = {}, events = {}) {
   const timeline = [];
 
@@ -686,23 +788,31 @@ export function enrichMatchLiveFields(match) {
   const raw = match.raw ?? {};
   const showResults = match.status === 'live' || match.status === 'finished';
   const events = readStoredMatchEvents(raw);
+  const baseTimeline = showResults ? readMatchTimeline(raw) : [];
+  const baseTimelineScorers = scorersFromTimeline(baseTimeline);
+  const parsedHomeScorers = parseScorersField(raw.home_scorers ?? raw.homeScorers);
+  const parsedAwayScorers = parseScorersField(raw.away_scorers ?? raw.awayScorers);
+  const effectiveScores = showResults
+    ? resolveEffectiveLiveScores(match, baseTimeline, raw)
+    : { homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 };
 
-  const matchTimeline = showResults ? readMatchTimeline(raw) : [];
+  const matchTimeline = showResults
+    ? completeTimelineEvents(baseTimeline, {
+        homeScorers: pickNonEmptyList(parsedHomeScorers, baseTimelineScorers.home),
+        awayScorers: pickNonEmptyList(parsedAwayScorers, baseTimelineScorers.away),
+        homeScore: effectiveScores.homeScore,
+        awayScore: effectiveScores.awayScore,
+      })
+    : [];
   const timelineScorers = scorersFromTimeline(matchTimeline);
   const timelineBookings = bookingsFromTimeline(matchTimeline);
   const timelineSubstitutions = substitutionsFromTimeline(matchTimeline);
 
   const homeScorers = showResults
-    ? pickNonEmptyList(
-        parseScorersField(raw.home_scorers ?? raw.homeScorers),
-        timelineScorers.home
-      )
+    ? pickNonEmptyList(parsedHomeScorers, timelineScorers.home)
     : [];
   const awayScorers = showResults
-    ? pickNonEmptyList(
-        parseScorersField(raw.away_scorers ?? raw.awayScorers),
-        timelineScorers.away
-      )
+    ? pickNonEmptyList(parsedAwayScorers, timelineScorers.away)
     : [];
 
   const homeBookings = showResults
@@ -724,10 +834,6 @@ export function enrichMatchLiveFields(match) {
       : match.status === 'finished'
         ? 'Final'
         : null;
-
-  const effectiveScores = showResults
-    ? resolveEffectiveLiveScores(match, matchTimeline, raw)
-    : { homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 };
 
   return {
     timeElapsed,

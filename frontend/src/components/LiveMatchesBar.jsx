@@ -357,7 +357,11 @@ function formatTimelineEntry(event) {
     case 'goal':
       return {
         side: event.side,
-        text: `${prefix}⚽ ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+        text: `${prefix}⚽ ${
+          event.player
+            ? formatPlayerWithPosition(event.player, event.playerPosition)
+            : 'Gol'
+        }`,
       };
     case 'yellow_card':
       return {
@@ -380,7 +384,11 @@ function formatTimelineEntry(event) {
     case 'foul':
       return {
         side: event.side,
-        text: `${prefix}Falta ${formatPlayerWithPosition(event.player, event.playerPosition)}`,
+        text: `${prefix}🦶 ${
+          event.player
+            ? `Falta · ${formatPlayerWithPosition(event.player, event.playerPosition)}`
+            : 'Falta'
+        }`,
       };
     default:
       return null;
@@ -433,7 +441,7 @@ function MatchTimeline({ events = [] }) {
   return (
     <div
       ref={scrollRef}
-      className="max-h-48 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
         {displayEntries.map((entry) => (
