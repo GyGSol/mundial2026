@@ -47,6 +47,8 @@ function formatMatchOptionLabel(match) {
   return match.group ? `${label} (${match.group})` : label;
 }
 
+const emptyCreateForm = { userId: '', matchId: '', homeGoals: '0', awayGoals: '0' };
+
 function FilterField({ label, children }) {
   return (
     <div className="flex min-w-[140px] flex-col gap-1">
