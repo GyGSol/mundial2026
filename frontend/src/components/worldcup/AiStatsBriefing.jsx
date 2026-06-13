@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ExternalLink, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { worldCupApi } from '../../api/client.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -15,57 +15,6 @@ function formatFetchedAt(value) {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function NewsCard({ article }) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const showImage = article.imageUrl && !imageFailed;
-
-  return (
-    <a
-      href={article.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex flex-col overflow-hidden rounded-xl border border-border/70 bg-card transition hover:border-violet-500/40 hover:bg-muted/20"
-    >
-      <div className="relative aspect-[16/9] overflow-hidden bg-muted/40">
-        {showImage ? (
-          <img
-            src={article.imageUrl}
-            alt=""
-            className="size-full object-cover transition duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
-            Sin imagen
-          </div>
-        )}
-        {article.isOfficial ? (
-          <Badge className="absolute left-2 top-2 border-emerald-500/40 bg-emerald-500/15 text-[10px] text-emerald-700 dark:text-emerald-300">
-            Oficial
-          </Badge>
-        ) : null}
-      </div>
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <p className="line-clamp-2 text-sm font-medium leading-snug group-hover:text-violet-600 dark:group-hover:text-violet-300">
-          {article.title}
-        </p>
-        {article.summary ? (
-          <p className="line-clamp-2 text-xs text-muted-foreground">{article.summary}</p>
-        ) : null}
-        <div className="mt-auto flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-          <span>{article.sourceName}</span>
-          <span className="inline-flex items-center gap-1">
-            Fuente
-            <ExternalLink className="size-3" />
-          </span>
-        </div>
-      </div>
-    </a>
-  );
 }
 
 export default function AiStatsBriefing() {
@@ -87,9 +36,6 @@ export default function AiStatsBriefing() {
   };
 
   const briefing = data?.briefing;
-  const news = data?.news ?? [];
-  const officialNews = news.filter((n) => n.isOfficial);
-  const otherNews = news.filter((n) => !n.isOfficial);
 
   return (
     <div className="flex flex-col gap-4">
@@ -225,45 +171,6 @@ export default function AiStatsBriefing() {
           </CardContent>
         </Card>
       ) : null}
-
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h3 className="text-base font-semibold">Noticias con fuentes</h3>
-            <p className="text-xs text-muted-foreground">
-              Enlaces externos verificados · actualizado {formatFetchedAt(data?.newsFetchedAt) || '—'}
-            </p>
-          </div>
-        </div>
-
-        {!news.length && !loading ? (
-          <p className="text-sm text-muted-foreground">
-            No se pudieron cargar titulares en este momento. Probá actualizar más tarde.
-          </p>
-        ) : null}
-
-        {officialNews.length ? (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Fuentes oficiales</p>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {officialNews.map((article) => (
-                <NewsCard key={article.id} article={article} />
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {otherNews.length ? (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Prensa internacional</p>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {otherNews.map((article) => (
-                <NewsCard key={article.id} article={article} />
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }

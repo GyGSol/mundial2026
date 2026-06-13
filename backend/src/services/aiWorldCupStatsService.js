@@ -5,7 +5,6 @@ import { Stadium } from '../models/Stadium.js';
 import { AiWorldCupStatsBriefing } from '../models/AiWorldCupStatsBriefing.js';
 import { getLastSyncAt } from './syncService.js';
 import { buildWorldCupOverview } from './worldCupStatsService.js';
-import { fetchWorldCupNews } from './worldCupNewsService.js';
 import {
   aiModelForScoreSource,
   callAiForJson,
@@ -44,23 +43,18 @@ function buildStatsContext(overview) {
   };
 }
 
-function buildAiPrompt(statsContext, newsArticles) {
-  const newsLines = newsArticles.slice(0, 12).map((n) => `- ${n.title} (${n.sourceName})`);
-
+function buildAiPrompt(statsContext) {
   return `Sos analista del Mundial FIFA 2026 (USA, Canadá y México).
-Generá un briefing enriquecido en español rioplatense usando SOLO los datos locales provistos y el contexto de titulares recientes.
+Generá un briefing enriquecido en español rioplatense usando SOLO los datos locales provistos.
 NO inventes resultados de partidos, goleadores ni URLs. Si un dato no está en el JSON, mencionalo como pendiente del torneo.
 
 Datos locales del torneo:
 ${JSON.stringify(statsContext, null, 2)}
 
-Titulares recientes de prensa (referencia, no copies URLs):
-${newsLines.length ? newsLines.join('\n') : '- Sin titulares cargados'}
-
 Respondé ÚNICAMENTE JSON válido con esta forma:
 {
   "overview": "2-4 oraciones sobre el estado del torneo",
-  "newsDigest": "1-2 oraciones resumiendo el clima informativo actual",
+  "newsDigest": "1-2 oraciones sobre el contexto informativo del torneo según los datos locales",
   "keyNumbers": [{"label":"...", "value":"...", "note":"..."}],
   "records": [{"title":"...", "description":"..."}],
   "trivia": ["dato curioso verificable o histórico del formato 2026"],
@@ -124,7 +118,7 @@ function normalizeBriefingPayload(raw) {
   };
 }
 
-function formatBriefingResponse(doc, newsPayload, meta = {}) {
+function formatBriefingResponse(doc, meta = {}) {
   return {
     aiAvailable: hasAiProvider(),
     briefing: doc
@@ -142,13 +136,11 @@ function formatBriefingResponse(doc, newsPayload, meta = {}) {
           stale: meta.stale ?? false,
         }
       : null,
-    news: newsPayload?.articles ?? [],
-    newsFetchedAt: newsPayload?.fetchedAt ?? null,
   };
 }
 
-async function generateAiBriefing(statsContext, newsArticles) {
-  const prompt = buildAiPrompt(statsContext, newsArticles);
+async function generateAiBriefing(statsContext) {
+  const prompt = buildAiPrompt(statsContext);
   const result = await callAiForJson(prompt);
   const normalized = normalizeBriefingPayload(result?.data);
   if (!normalized?.overview) return null;
@@ -173,9 +165,8 @@ async function generateAiBriefing(statsContext, newsArticles) {
 }
 
 export async function getWorldCupAiBriefing({ refresh = false } = {}) {
-  const [overview, newsPayload, cachedBriefing] = await Promise.all([
+  const [overview, cachedBriefing] = await Promise.all([
     buildWorldCupOverview({ Match, Team, Group, Stadium, getLastSyncAt }),
-    fetchWorldCupNews({ force: refresh }),
     AiWorldCupStatsBriefing.findOne({ briefingKey: BRIEFING_KEY }).lean(),
   ]);
 
@@ -185,14 +176,14 @@ export async function getWorldCupAiBriefing({ refresh = false } = {}) {
 
   if (needsRefresh && hasAiProvider()) {
     try {
-      const generated = await generateAiBriefing(statsContext, newsPayload.articles);
+      const generated = await generateAiBriefing(statsContext);
       if (generated) briefingDoc = generated;
     } catch {
       // keep stale briefing if refresh fails
     }
   }
 
-  return formatBriefingResponse(briefingDoc, newsPayload, {
+  return formatBriefingResponse(briefingDoc, {
     stale: Boolean(briefingDoc && !isBriefingFresh(briefingDoc)),
   });
 }
