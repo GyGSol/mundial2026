@@ -107,6 +107,12 @@ describe('matchLiveData', () => {
         { name: 'R. Jiménez', minute: 67 },
       ]);
     });
+
+    it('parsea goleador con penal al final del texto', () => {
+      expect(parseScorersField("Breel Embolo 17' (p)")).toEqual([
+        { name: 'Breel Embolo', minute: 17, isPenalty: true },
+      ]);
+    });
   });
 
   describe('enrichMatchLiveFields', () => {
@@ -392,6 +398,30 @@ describe('matchLiveData', () => {
 
       expect(goalCountsFromTimeline(timeline)).toEqual({ home: 0, away: 0 });
       expect(timeline.every((event) => event.type !== 'goal' || event.minute != null)).toBe(true);
+    });
+
+    it('ubica el gol de penal desde away_scorers en el minuto correcto', () => {
+      const timeline = completeTimelineEvents(
+        [
+          { type: 'foul', side: 'away', minute: 7, player: 'Embolo', sortKey: 7 },
+          { type: 'yellow_card', side: 'home', minute: 16, player: 'Abunada', sortKey: 16 },
+          { type: 'period_start', side: null, minute: 0, phase: 'first', sortKey: 0 },
+        ],
+        {
+          awayScorers: [{ name: "Breel Embolo 17' (p)" }],
+          homeScore: 0,
+          awayScore: 1,
+        }
+      );
+
+      const goal = timeline.find((event) => event.type === 'goal');
+      expect(goal).toMatchObject({
+        side: 'away',
+        minute: 17,
+        player: 'Breel Embolo',
+        isPenalty: true,
+        sortKey: 17,
+      });
     });
   });
 

@@ -232,6 +232,64 @@ export function normalizeSmartQuotes(value) {
 }
 
 /**
+ * @param {string} trimmed
+ * @returns {{ name: string, minute: number | null, isPenalty?: boolean }}
+ */
+function parseScorerText(trimmed) {
+  const withPenalty = trimmed.match(/^(.+?)\s+(\d+)\s*['']?\s*\(p(?:en(?:alty)?)?\)\s*$/i);
+  if (withPenalty) {
+    return {
+      name: withPenalty[1].trim(),
+      minute: Number(withPenalty[2]),
+      isPenalty: true,
+    };
+  }
+
+  const withTrailingNote = trimmed.match(/^(.+?)\s+(\d+)\s*['']?\s*\([^)]+\)\s*$/);
+  if (withTrailingNote) {
+    const note = withTrailingNote[0].match(/\(([^)]+)\)/)?.[1]?.toLowerCase() ?? '';
+    return {
+      name: withTrailingNote[1].trim(),
+      minute: Number(withTrailingNote[2]),
+      isPenalty: note === 'p' || note === 'pen' || note === 'penalty',
+    };
+  }
+
+  const minuteSuffix = trimmed.match(/^(.+?)\s+(\d+)\s*['']?\s*$/);
+  if (minuteSuffix) {
+    return {
+      name: minuteSuffix[1].trim(),
+      minute: Number(minuteSuffix[2]),
+    };
+  }
+
+  const minutePrefix = trimmed.match(/^(\d+)\s*['']?\s+(.+)$/);
+  if (minutePrefix) {
+    return {
+      name: minutePrefix[2].trim(),
+      minute: Number(minutePrefix[1]),
+    };
+  }
+
+  return { name: trimmed, minute: null };
+}
+
+function normalizeGoalEvent(event) {
+  if (event?.type !== 'goal' || event.minute != null || !event.player) return event;
+
+  const parsed = parseScorerText(String(event.player).trim());
+  if (parsed.minute == null) return event;
+
+  return {
+    ...event,
+    player: parsed.name,
+    minute: parsed.minute,
+    sortKey: toSortKey(parsed.minute),
+    ...(parsed.isPenalty ? { isPenalty: true } : {}),
+  };
+}
+
+/**
  * @param {unknown} entry
  * @returns {MatchScorer | null}
  */
@@ -239,24 +297,7 @@ function normalizeScorerEntry(entry) {
   if (typeof entry === 'string') {
     const trimmed = entry.trim();
     if (!trimmed || isNullishScorerValue(trimmed)) return null;
-
-    const minuteSuffix = trimmed.match(/^(.+?)\s+(\d+)\s*['']?\s*$/);
-    if (minuteSuffix) {
-      return {
-        name: minuteSuffix[1].trim(),
-        minute: Number(minuteSuffix[2]),
-      };
-    }
-
-    const minutePrefix = trimmed.match(/^(\d+)\s*['']?\s+(.+)$/);
-    if (minutePrefix) {
-      return {
-        name: minutePrefix[2].trim(),
-        minute: Number(minutePrefix[1]),
-      };
-    }
-
-    return { name: trimmed, minute: null };
+    return parseScorerText(trimmed);
   }
 
   if (entry && typeof entry === 'object') {
@@ -265,14 +306,30 @@ function normalizeScorerEntry(entry) {
     if (!name) return null;
 
     const minuteRaw = record.minute ?? record.time ?? record.min ?? record.elapsed;
-    const minute =
+    let minute =
       minuteRaw == null || minuteRaw === ''
         ? null
         : Number.isFinite(Number(minuteRaw))
           ? Number(minuteRaw)
           : null;
 
-    return { name: String(name).trim(), minute };
+    let parsedName = String(name).trim();
+    let isPenalty = Boolean(record.isPenalty);
+
+    if (minute == null) {
+      const parsed = parseScorerText(parsedName);
+      if (parsed.minute != null) {
+        parsedName = parsed.name;
+        minute = parsed.minute;
+        isPenalty = isPenalty || Boolean(parsed.isPenalty);
+      }
+    }
+
+    return {
+      name: parsedName,
+      minute,
+      ...(isPenalty ? { isPenalty: true } : {}),
+    };
   }
 
   return null;
@@ -455,42 +512,46 @@ export function completeTimelineEvents(
   timeline = [],
   { homeScorers = [], awayScorers = [], homeScore = 0, awayScore = 0 } = {}
 ) {
-  const merged = timeline.map((event) => ({ ...event }));
+  const merged = timeline.map((event) => normalizeGoalEvent({ ...event }));
 
-  for (const scorer of homeScorers) {
-    if (!scorer?.name) continue;
-    if (timelineIncludesGoal(merged, { side: 'home', minute: scorer.minute, player: scorer.name })) {
-      continue;
+  const pushScorerGoal = (side, scorer) => {
+    if (!scorer?.name) return;
+
+    let name = String(scorer.name).trim();
+    let minute = scorer.minute ?? null;
+    let isPenalty = Boolean(scorer.isPenalty);
+
+    if (minute == null) {
+      const parsed = parseScorerText(name);
+      if (parsed.minute != null) {
+        name = parsed.name;
+        minute = parsed.minute;
+        isPenalty = isPenalty || Boolean(parsed.isPenalty);
+      }
     }
+
+    if (timelineIncludesGoal(merged, { side, minute, player: name })) return;
+
     merged.push({
-      sortKey: toSortKey(scorer.minute),
-      minute: scorer.minute ?? null,
+      sortKey: toSortKey(minute),
+      minute,
       extraMinute: null,
       type: 'goal',
-      side: 'home',
-      player: scorer.name,
+      side,
+      player: name,
       playerPosition: scorer.position ?? null,
       playerIn: null,
       playerOut: null,
+      ...(isPenalty ? { isPenalty: true } : {}),
     });
+  };
+
+  for (const scorer of homeScorers) {
+    pushScorerGoal('home', scorer);
   }
 
   for (const scorer of awayScorers) {
-    if (!scorer?.name) continue;
-    if (timelineIncludesGoal(merged, { side: 'away', minute: scorer.minute, player: scorer.name })) {
-      continue;
-    }
-    merged.push({
-      sortKey: toSortKey(scorer.minute),
-      minute: scorer.minute ?? null,
-      extraMinute: null,
-      type: 'goal',
-      side: 'away',
-      player: scorer.name,
-      playerPosition: scorer.position ?? null,
-      playerIn: null,
-      playerOut: null,
-    });
+    pushScorerGoal('away', scorer);
   }
 
   return merged.sort((a, b) => {

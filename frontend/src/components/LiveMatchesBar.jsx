@@ -388,11 +388,14 @@ function formatTimelineEntry(event) {
   }
 
   switch (event.type) {
-    case 'goal':
+    case 'goal': {
+      const playerLabel = event.player ? formatTimelinePlayer(event) : 'Gol';
+      const penaltySuffix = event.isPenalty ? ' (p)' : '';
       return {
         side: event.side,
-        text: `${prefix}⚽ ${event.player ? formatTimelinePlayer(event) : 'Gol'}`,
+        text: `${prefix}⚽ ${playerLabel}${penaltySuffix}`,
       };
+    }
     case 'yellow_card':
       return {
         side: event.side,
