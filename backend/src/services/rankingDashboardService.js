@@ -54,7 +54,6 @@ export async function getRankingDashboard(groupId, userId) {
     Match.find({ status: 'finished', kickoffAt: { $gte: cutoff } })
       .sort({ kickoffAt: -1 })
       .limit(RECENT_FINISHED_MAX)
-      .select('-raw')
       .lean(),
     Match.find({ status: 'upcoming' }).select('-raw').sort({ kickoffAt: 1 }).lean(),
   ]);
