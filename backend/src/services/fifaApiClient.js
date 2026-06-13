@@ -1,4 +1,7 @@
 import { env } from '../config/env.js';
+import { resolveStadiumTimezone } from './stadiumTimezones.js';
+
+export const ARGENTINA_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
 const DEFAULT_HEADERS = {
   Accept: 'application/json',
@@ -38,6 +41,122 @@ export function extractTeamAbbreviation(teamSide) {
     localizedText(teamSide?.TeamName) ??
     ''
   );
+}
+
+
+export function extractStadiumName(entry) {
+  const stadium = entry?.Stadium;
+  if (!stadium) return '';
+  const names = stadium.Name ?? stadium.name;
+  if (Array.isArray(names)) {
+    return names.find((item) => item.Locale === 'en-GB')?.Description ?? names[0]?.Description ?? '';
+  }
+  return localizedText(stadium);
+}
+
+/** FIFA LocalDate: wall-clock at stadium with misleading Z suffix — not UTC. */
+export function parseFifaLocalDateWallClock(localDateStr) {
+  const raw = String(localDateStr || '').trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!match) return null;
+
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+    hour: Number(match[4]),
+    minute: Number(match[5]),
+  };
+}
+
+function normalizeWallClockHour(hour) {
+  return hour === 24 ? 0 : hour;
+}
+
+export function readWallClockInTimezone(utcMs, timeZone) {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  });
+
+  const chunk = Object.fromEntries(
+    formatter
+      .formatToParts(new Date(utcMs))
+      .filter((p) => p.type !== 'literal')
+      .map((p) => [p.type, Number(p.value)])
+  );
+
+  return {
+    year: chunk.year,
+    month: chunk.month,
+    day: chunk.day,
+    hour: normalizeWallClockHour(chunk.hour),
+    minute: chunk.minute,
+  };
+}
+
+/** FIFA Date (UTC) → ART wall clock "YYYY-MM-DDTHH:mm". */
+export function fifaDateToArtIso(dateUtc, timeZone = ARGENTINA_TIMEZONE) {
+  const date = dateUtc instanceof Date ? dateUtc : new Date(dateUtc);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const parts = readWallClockInTimezone(date.getTime(), timeZone);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}`;
+}
+
+function wallClockPartsEqual(a, b) {
+  if (!a || !b) return false;
+  return (
+    a.year === b.year &&
+    a.month === b.month &&
+    a.day === b.day &&
+    a.hour === b.hour &&
+    a.minute === b.minute
+  );
+}
+
+/** Cross-check FIFA Date (UTC) vs LocalDate (stadium wall clock). */
+export function validateFifaKickoffConsistency(entry, stadiumTimezone) {
+  if (!entry?.Date || !entry?.LocalDate) {
+    return { ok: true, skipped: true, reason: 'missing Date or LocalDate' };
+  }
+  if (!stadiumTimezone) {
+    return { ok: true, skipped: true, reason: 'unknown stadium timezone' };
+  }
+
+  const utcMs = new Date(entry.Date).getTime();
+  if (Number.isNaN(utcMs)) {
+    return { ok: false, reason: 'invalid Date', matchNumber: entry.MatchNumber };
+  }
+
+  const localWall = parseFifaLocalDateWallClock(entry.LocalDate);
+  if (!localWall) {
+    return { ok: false, reason: 'invalid LocalDate', matchNumber: entry.MatchNumber };
+  }
+
+  const fromUtc = readWallClockInTimezone(utcMs, stadiumTimezone);
+  const ok = wallClockPartsEqual(fromUtc, localWall);
+
+  return {
+    ok,
+    matchNumber: entry.MatchNumber,
+    fromUtc,
+    localWall,
+    stadiumTimezone,
+    dateUtc: entry.Date,
+    localDateRaw: entry.LocalDate,
+  };
+}
+
+export function resolveFifaEntryStadiumTimezone(entry) {
+  const nameEn = extractStadiumName(entry);
+  return resolveStadiumTimezone({ nameEn }) || null;
 }
 
 export async function fetchAllCalendarMatches() {

@@ -32,9 +32,30 @@ describe('official Argentina kickoffs', () => {
     expect(kickoff.toISOString()).toBe('2026-06-17T01:00:00.000Z');
   });
 
-  it('Brasil vs Haití (31) respeta los 21:30 ART', () => {
+
+  it('Haití vs Escocia (5) a las 22:00 ART', () => {
+    const kickoff = resolveOfficialKickoffAt('5');
+    expect(kickoff.toISOString()).toBe('2026-06-14T01:00:00.000Z');
+  });
+
+  it('Brasil vs Marruecos (7) a las 19:00 ART', () => {
+    const kickoff = resolveOfficialKickoffAt('7');
+    expect(kickoff.toISOString()).toBe('2026-06-13T22:00:00.000Z');
+  });
+
+  it('Qatar vs Suiza (8) a las 16:00 ART', () => {
+    const kickoff = resolveOfficialKickoffAt('8');
+    expect(kickoff.toISOString()).toBe('2026-06-13T19:00:00.000Z');
+  });
+
+  it('medianoche ART (31) convierte correctamente', () => {
     const kickoff = resolveOfficialKickoffAt('31');
-    expect(kickoff.toISOString()).toBe('2026-06-20T00:30:00.000Z');
+    expect(kickoff.toISOString()).toBe('2026-06-20T03:00:00.000Z');
+  });
+
+  it('partido 32 a las 16:00 ART', () => {
+    const kickoff = resolveOfficialKickoffAt('32');
+    expect(kickoff.toISOString()).toBe('2026-06-19T19:00:00.000Z');
   });
 });
 

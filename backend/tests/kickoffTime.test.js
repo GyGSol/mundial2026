@@ -56,6 +56,11 @@ describe('kickoffTimeService', () => {
     );
   });
 
+  it('convierte medianoche ART sin desplazar un día', () => {
+    const kickoff = localWallClockToUtc('06/20/2026 00:00', 'America/Argentina/Buenos_Aires');
+    expect(kickoff?.toISOString()).toBe('2026-06-20T03:00:00.000Z');
+  });
+
   it('bloqueo de predicción 1h antes del kickoff canónico', () => {
     const kickoff = localWallClockToUtc('06/11/2026 13:00', 'America/Mexico_City');
     const lockAt = getLockAt(kickoff);

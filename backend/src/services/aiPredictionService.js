@@ -714,13 +714,13 @@ export async function askMatchAiFollowUp(
   { question, history = [], insight },
   { fetchImpl = fetch } = {}
 ) {
-  if (!hasAiProvider()) {
-    throw new Error('IA no configurada');
-  }
-
   const trimmedQuestion = String(question ?? '').trim();
   if (!trimmedQuestion) {
     throw new Error('Escribí una pregunta');
+  }
+
+  if (!hasAiProvider()) {
+    throw new Error('IA no configurada');
   }
   if (trimmedQuestion.length > AI_FOLLOWUP_QUESTION_MAX_LEN) {
     throw new Error('La pregunta es demasiado larga');

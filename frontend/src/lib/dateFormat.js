@@ -42,7 +42,7 @@ function formatTimezoneShort(timeZone) {
 }
 
 export function formatMatchDate(match, { showTimezone = false, timeZone } = {}) {
-  const resolvedTimeZone = timeZone ?? getBrowserTimezone();
+  const resolvedTimeZone = timeZone ?? ARGENTINA_TIMEZONE;
   const fromKickoff = tryFormatFromDate(match?.kickoffAt, resolvedTimeZone);
   if (fromKickoff) {
     if (!showTimezone) return fromKickoff;

@@ -48,7 +48,7 @@ export function localWallClockToUtc(localDate, timeZone) {
       year: chunk.year,
       month: chunk.month,
       day: chunk.day,
-      hour: chunk.hour,
+      hour: chunk.hour === 24 ? 0 : chunk.hour,
       minute: chunk.minute,
     };
   };

@@ -1,4 +1,4 @@
-import { formatMatchDate, getBrowserTimezone } from '@/lib/dateFormat.js';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat.js';
 
 const LOCK_MS = 60 * 60 * 1000;
 const REMINDER_BEFORE_LOCK_MS = 30 * 60 * 1000;
@@ -31,7 +31,7 @@ function formatLockAt(lockAt) {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone: getBrowserTimezone(),
+    timeZone: ARGENTINA_TIMEZONE,
   }).format(date);
 }
 
