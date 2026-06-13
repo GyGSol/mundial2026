@@ -17,23 +17,26 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
+    <div className="game-hero-shell">
+      <header className="game-hero-header">
         <div className="mx-auto flex max-w-3xl items-center px-4 py-4">
-          <span className="text-lg font-semibold tracking-tight">Mundial 2026</span>
+          <span className="game-hero-brand text-lg font-semibold tracking-tight text-slate-100">
+            Mundial 2026
+          </span>
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-10">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Prode del Mundial 2026</h1>
-          <p className="text-muted-foreground">
+      <main className="game-hero-shell__content mx-auto flex max-w-3xl flex-col gap-6 px-4 py-10 pb-16">
+        <div className="game-hero-intro flex flex-col gap-3">
+          <p className="game-hero-eyebrow">Prode privado</p>
+          <h1 className="text-slate-50">Prode del Mundial 2026</h1>
+          <p className="max-w-2xl text-base leading-relaxed text-slate-300">
             Plataforma privada para jugadores registrados. Cargá pronósticos, competí en grupos con
             amigos y seguí el ranking en vivo.
           </p>
         </div>
 
-        <Card>
+        <Card className="game-hero-card">
           <CardHeader>
             <CardTitle>¿Quién puede entrar?</CardTitle>
             <CardDescription>
@@ -44,13 +47,18 @@ export default function WelcomePage() {
             <Button asChild size="lg" className="w-full sm:w-auto sm:min-w-[9.5rem]">
               <Link to="/login">Ingresar</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="w-full sm:w-auto sm:min-w-[9.5rem]">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="game-hero-btn-outline w-full sm:w-auto sm:min-w-[9.5rem]"
+            >
               <Link to="/register">Registrarse</Link>
             </Button>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="game-hero-card">
           <CardHeader>
             <CardTitle>Cómo funciona el juego</CardTitle>
           </CardHeader>
@@ -66,7 +74,7 @@ export default function WelcomePage() {
           </CardContent>
         </Card>
 
-        <InfoPanel title="Tu sesión de ingreso">
+        <InfoPanel title="Tu sesión de ingreso" className="game-hero-panel">
           <InfoList
             items={[
               'Al ingresar abrís una sesión de 2 horas para que no se cierre al poco tiempo de usar la app.',
@@ -76,7 +84,7 @@ export default function WelcomePage() {
           />
         </InfoPanel>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-slate-400">
           ¿Te pasaron un enlace de invitación a un grupo? Abrilo desde el chat; te llevará a registrarte
           o ingresar y unirte automáticamente.
         </p>

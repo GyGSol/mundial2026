@@ -60,17 +60,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="game-login-shell">
-      <div className="game-login-shell__content mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4 py-10">
-        <p className="game-login-brand text-center text-sm font-medium tracking-[0.18em] text-slate-200 uppercase">
+    <div className="game-hero-shell">
+      <div className="game-hero-shell__content mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 px-4 py-10">
+        <p className="game-hero-brand text-center text-sm font-medium tracking-[0.18em] text-slate-200 uppercase">
           Mundial 2026
         </p>
         <p className="text-center text-sm">
-          <Link to="/" className="game-login-back underline-offset-4 hover:underline">
+          <Link to="/" className="game-hero-link underline-offset-4 hover:underline">
             Volver al inicio
           </Link>
         </p>
-        <Card className="game-login-card">
+        <Card className="game-hero-card">
           <CardHeader>
             <CardTitle>Ingresar</CardTitle>
             <CardDescription>
