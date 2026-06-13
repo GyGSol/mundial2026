@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.jsx';
+import TeamFlag from '../../components/TeamFlag.jsx';
 
 export default function AdminStreamLinksPage() {
   const [message, setMessage] = useState('');
@@ -170,8 +171,14 @@ export default function AdminStreamLinksPage() {
                   return (
                     <TableRow key={match.externalId} className="border-slate-800">
                       <TableCell>
-                        {home} vs {away}
-                        <span className={`ml-2 text-xs ${adminMuted}`}>#{match.externalId}</span>
+                        <div className="flex items-center gap-2">
+                          <TeamFlag team={match.homeTeam} sizeClass="size-5" />
+                          <span>{home}</span>
+                          <span className={adminMuted}>vs</span>
+                          <TeamFlag team={match.awayTeam} sizeClass="size-5" />
+                          <span>{away}</span>
+                          <span className={`text-xs ${adminMuted}`}>#{match.externalId}</span>
+                        </div>
                       </TableCell>
                       <TableCell>{match.status}</TableCell>
                       <TableCell className="max-w-xs truncate">

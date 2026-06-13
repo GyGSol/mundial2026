@@ -11,22 +11,42 @@ import {
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
 import { formatMatchDate } from '@/lib/dateFormat';
+import TeamFlag from '../TeamFlag.jsx';
 import LiveMatchPanel from './LiveMatchPanel.jsx';
+
+function FlagInline({ team }) {
+  const flagUrl = getTeamFlag(team);
+  if (!flagUrl) return null;
+  return (
+    <img
+      src={flagUrl}
+      alt=""
+      width={20}
+      height={15}
+      referrerPolicy="no-referrer"
+      className="inline-block size-4 shrink-0 rounded-sm border border-border/60 object-cover align-middle"
+    />
+  );
+}
 
 function LiveMatchSummary({ match }) {
   const homeName = match?.homeTeam?.nameEn || 'Local';
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
-  const homeFlag = getTeamFlag(match?.homeTeam);
-  const awayFlag = getTeamFlag(match?.awayTeam);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="truncate">{homeFlag} {homeName}</span>
+        <span className="flex min-w-0 items-center gap-1.5 truncate">
+          <FlagInline team={match?.homeTeam} />
+          {homeName}
+        </span>
         <span className="shrink-0 font-bold tabular-nums">
           {match?.homeScore ?? 0} - {match?.awayScore ?? 0}
         </span>
-        <span className="truncate text-right">{awayName} {awayFlag}</span>
+        <span className="flex min-w-0 items-center justify-end gap-1.5 truncate text-right">
+          {awayName}
+          <FlagInline team={match?.awayTeam} />
+        </span>
       </div>
 
       {match?.timeElapsed ? (

@@ -1,5 +1,6 @@
 import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
-import { getTeamFlag, getWorldCupTitles } from '@/lib/teamMeta';
+import { getWorldCupTitles } from '@/lib/teamMeta';
+import TeamFlag from './TeamFlag.jsx';
 
 function WorldCupStars({ count }) {
   return (
@@ -28,23 +29,11 @@ export default function TeamHeader({ team, slotLabel }) {
   }
 
   const name = team?.nameEn || team?.externalId || '—';
-  const flagUrl = getTeamFlag(team);
   const titles = getWorldCupTitles(team?.fifaCode);
 
   return (
     <div className="flex flex-col items-center gap-1 text-center">
-      {flagUrl ? (
-        <img
-          src={flagUrl}
-          alt={`Bandera de ${name}`}
-          className="size-10 shrink-0 rounded-sm border border-border/60 object-cover shadow-sm md:size-12 lg:size-14"
-          loading="lazy"
-        />
-      ) : (
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-sm border border-border/60 bg-muted text-xs text-muted-foreground md:size-12 lg:size-14">
-          ?
-        </div>
-      )}
+      <TeamFlag team={team} />
 
       <WorldCupStars count={titles} />
 
