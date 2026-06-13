@@ -6,6 +6,8 @@ export const TIMELINE_DISPLAY_TYPES = new Set([
   'substitution',
   'foul',
   'goal_disallowed',
+  'yellow_card_reassigned',
+  'var_decision',
   'hydration_break',
   'period_start',
   'period_end',
@@ -41,7 +43,15 @@ export function timelineEventsSignature(events = []) {
 export function formatNeutralTimelineLabel(event) {
   switch (event?.type) {
     case 'goal_disallowed':
-      return 'Gol anulado';
+      return 'Gol anulado (VAR)';
+    case 'yellow_card_reassigned':
+      return 'Tarjeta amarilla reasignada (VAR)';
+    case 'var_decision': {
+      const desc = String(event?.description ?? '').trim();
+      if (/yellow card reassigned/i.test(desc)) return 'Tarjeta amarilla reasignada (VAR)';
+      if (/goal disallowed/i.test(desc)) return 'Gol anulado (VAR)';
+      return desc || 'Decisión VAR';
+    }
     case 'hydration_break':
       return 'Pausa hidratación';
     case 'period_end':

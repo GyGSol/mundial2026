@@ -1,4 +1,4 @@
-/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'goal_disallowed' | 'hydration_break' | 'period_start' | 'period_end' | 'match_end'} TimelineEventType */
+/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'goal_disallowed' | 'yellow_card_reassigned' | 'var_decision' | 'hydration_break' | 'period_start' | 'period_end' | 'match_end'} TimelineEventType */
 
 export const FIFA_INCLUDED_EVENT_TYPES = new Set([0, 2, 3, 5, 7, 8, 18, 26, 71, 83]);
 
@@ -6,6 +6,8 @@ const INCLUDED_TYPES = FIFA_INCLUDED_EVENT_TYPES;
 
 export const FIFA_NEUTRAL_EVENT_TYPES = new Set([
   'goal_disallowed',
+  'yellow_card_reassigned',
+  'var_decision',
   'hydration_break',
   'period_start',
   'period_end',
@@ -21,11 +23,32 @@ export const FIFA_EVENT_TYPE_MAP = {
   8: 'period_end',
   18: 'foul',
   26: 'match_end',
-  71: 'goal_disallowed',
+  71: 'var_decision',
   83: 'hydration_break',
 };
 
 const TYPE_MAP = FIFA_EVENT_TYPE_MAP;
+
+/** Type 71 es VAR genérico: gol anulado, tarjeta reasignada, etc. */
+export function resolveVarEventType(description) {
+  const desc = String(description ?? '').trim().toLowerCase();
+  if (!desc) return 'var_decision';
+  if (desc.includes('goal disallowed') || desc.includes('goal cancelled')) {
+    return 'goal_disallowed';
+  }
+  if (
+    desc.includes('yellow card reassigned') ||
+    desc.includes('card reassigned') ||
+    desc.includes('yellow card rescinded') ||
+    desc.includes('card rescinded') ||
+    desc.includes('yellow card overturned') ||
+    desc.includes('yellow card cancelled') ||
+    desc.includes('card cancelled')
+  ) {
+    return 'yellow_card_reassigned';
+  }
+  return 'var_decision';
+}
 
 export function isNeutralTimelineEvent(type) {
   return FIFA_NEUTRAL_EVENT_TYPES.has(type);
@@ -99,7 +122,13 @@ function resolveSide(teamId, homeTeamId, awayTeamId) {
 export function inferPeriodPhase(type, description, minute) {
   const desc = String(description ?? '').toLowerCase();
 
-  if (type === 'hydration_break' || type === 'match_end' || type === 'goal_disallowed') {
+  if (
+    type === 'hydration_break' ||
+    type === 'match_end' ||
+    type === 'goal_disallowed' ||
+    type === 'yellow_card_reassigned' ||
+    type === 'var_decision'
+  ) {
     return null;
   }
 
@@ -138,7 +167,10 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
 
   const description = localizedDescription(event);
   const timing = parseFifaMinute(event.MatchMinute);
-  const type = /** @type {TimelineEventType} */ (TYPE_MAP[event.Type]);
+  let type = /** @type {TimelineEventType} */ (TYPE_MAP[event.Type]);
+  if (event.Type === 71) {
+    type = resolveVarEventType(description);
+  }
   const neutral = isNeutralTimelineEvent(type);
   const side = resolveSide(event.IdTeam, homeTeamId, awayTeamId);
   if (!side && !neutral) return null;

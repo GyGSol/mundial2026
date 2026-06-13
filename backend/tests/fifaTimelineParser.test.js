@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { parseFifaMinute, parseFifaTimeline } from '../src/services/fifaTimelineParser.js';
+import {
+  parseFifaMinute,
+  parseFifaTimeline,
+  resolveVarEventType,
+} from '../src/services/fifaTimelineParser.js';
 
 describe('fifaTimelineParser', () => {
+  describe('resolveVarEventType', () => {
+    it('distingue gol anulado de tarjeta reasignada', () => {
+      expect(resolveVarEventType('Goal disallowed')).toBe('goal_disallowed');
+      expect(resolveVarEventType('Yellow card reassigned')).toBe('yellow_card_reassigned');
+      expect(resolveVarEventType('VAR review complete')).toBe('var_decision');
+    });
+  });
   describe('parseFifaMinute', () => {
     it('parsea minutos simples y tiempo añadido', () => {
       expect(parseFifaMinute("9'")).toEqual({ minute: 9, extraMinute: null, sortKey: 9 });
@@ -160,6 +171,37 @@ describe('fifaTimelineParser', () => {
 
       expect(timeline).toHaveLength(1);
       expect(timeline[0]).toMatchObject({ type: 'goal', side: 'home', minute: 12, player: null });
+    });
+
+    it('clasifica Type 71 de VAR como tarjeta reasignada cuando corresponde', () => {
+      const timeline = parseFifaTimeline(
+        {
+          Event: [
+            {
+              Type: 71,
+              MatchMinute: "52'",
+              EventDescription: [{ Locale: 'en-GB', Description: 'Yellow card reassigned' }],
+            },
+            {
+              Type: 71,
+              MatchMinute: "78'",
+              EventDescription: [{ Locale: 'en-GB', Description: 'Goal disallowed' }],
+            },
+          ],
+        },
+        'home',
+        'away'
+      );
+
+      expect(timeline.map((event) => event.type)).toEqual([
+        'yellow_card_reassigned',
+        'goal_disallowed',
+      ]);
+      expect(timeline[0]).toMatchObject({
+        type: 'yellow_card_reassigned',
+        minute: 52,
+        description: 'Yellow card reassigned',
+      });
     });
   });
 });

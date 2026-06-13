@@ -34,6 +34,8 @@ const ALLOWED_EVENT_TYPES = new Set([
   'substitution',
   'foul',
   'goal_disallowed',
+  'yellow_card_reassigned',
+  'var_decision',
   'hydration_break',
   'period_start',
   'period_end',
@@ -200,7 +202,7 @@ function tryRecoverEntryHeuristic(entry, roster) {
       recovered.playerOut = playerOut ?? recovered.playerOut;
       recovered.player = recovered.playerIn ?? recovered.playerOut ?? recovered.player;
     }
-  } else if (recovered.type !== 'goal_disallowed' && !recovered.player) {
+  } else if (!isNeutralTimelineEvent(recovered.type) && !recovered.player) {
     recovered.player =
       extractPlayerNameFromDescription(description) ||
       description.match(/^(.+?)\s*\(/)?.[1]?.trim() ||
@@ -234,7 +236,7 @@ function normalizeAiRecoveredEntry(rawEntry, missingItem, roster) {
     entry.playerOut =
       String(rawEntry.playerOut ?? rawEntry.player_out ?? entry.playerOut ?? '').trim() || null;
     entry.player = entry.playerIn ?? entry.playerOut ?? entry.player;
-  } else if (entry.type !== 'goal_disallowed') {
+  } else if (!isNeutralTimelineEvent(entry.type)) {
     entry.player = String(rawEntry.player ?? entry.player ?? '').trim() || null;
   }
 

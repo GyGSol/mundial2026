@@ -348,6 +348,10 @@ function neutralTimelineIcon(type) {
   switch (type) {
     case 'goal_disallowed':
       return '🚫';
+    case 'yellow_card_reassigned':
+      return '🟨';
+    case 'var_decision':
+      return '📺';
     case 'hydration_break':
       return '💧';
     case 'period_end':
