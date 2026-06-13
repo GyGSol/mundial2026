@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
+import { isIosDevice } from '@/lib/device';
 
 const ReactPlayer = lazy(() => import('react-player/lazy'));
 
@@ -25,7 +26,8 @@ function PlayerFallback() {
 export default function LiveStreamPlayer({ url, type = 'youtube', channelName, className, onError }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
-  const [playing, setPlaying] = useState(true);
+  const iosDevice = isIosDevice();
+  const [playing, setPlaying] = useState(() => !iosDevice);
   const [volume, setVolume] = useState(0.8);
   const [muted, setMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -114,25 +116,46 @@ export default function LiveStreamPlayer({ url, type = 'youtube', channelName, c
             </Button>
           </div>
         ) : (
-          <Suspense fallback={<PlayerFallback />}>
-            <ReactPlayer
-              ref={playerRef}
-              url={url}
-              playing={playing}
-              volume={volume}
-              muted={muted}
-              controls={false}
-              width="100%"
-              height="100%"
-              className="aspect-video [&>video]:object-contain"
-              onError={handlePlayerError}
-              config={{
-                file: {
-                  forceHLS: url.includes('.m3u8'),
-                },
-              }}
-            />
-          </Suspense>
+          <>
+            <Suspense fallback={<PlayerFallback />}>
+              <ReactPlayer
+                ref={playerRef}
+                url={url}
+                playing={playing}
+                volume={volume}
+                muted={muted}
+                controls={false}
+                width="100%"
+                height="100%"
+                playsinline
+                className="aspect-video [&>video]:object-contain"
+                onError={handlePlayerError}
+                config={{
+                  youtube: {
+                    playerVars: {
+                      playsinline: 1,
+                    },
+                  },
+                  file: {
+                    forceHLS: url.includes('.m3u8'),
+                    attributes: {
+                      playsInline: true,
+                    },
+                  },
+                }}
+              />
+            </Suspense>
+            {!playing ? (
+              <button
+                type="button"
+                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/55 text-sm text-white"
+                onClick={() => setPlaying(true)}
+              >
+                <Play className="size-10" aria-hidden />
+                Tocá para reproducir
+              </button>
+            ) : null}
+          </>
         )}
       </div>
 

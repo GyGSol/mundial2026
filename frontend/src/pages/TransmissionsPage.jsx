@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
+import { isIosDevice } from '@/lib/device';
 
 const LA18_EVENTS_URL = 'https://la18hd.com/eventos/';
 
@@ -69,6 +70,8 @@ function StreamStatusBadge({ match }) {
 function TransmissionMatchCard({ match }) {
   const status = statusLabels[match.status] || statusLabels.upcoming;
   const kickoff = formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
+  const iosDevice = isIosDevice();
+  const streamPageUrl = match.stream?.pageUrl;
   const scoreLine =
     match.status !== 'upcoming' &&
     match.homeScore != null &&
@@ -111,8 +114,16 @@ function TransmissionMatchCard({ match }) {
         {match.status === 'live' ? (
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
+              {match.stream?.canWatch && iosDevice && streamPageUrl ? (
+                <Button size="sm" className="gap-1.5" asChild>
+                  <a href={streamPageUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="size-4 shrink-0" aria-hidden />
+                    Abrir en Safari
+                  </a>
+                </Button>
+              ) : null}
               {match.stream?.canWatch ? (
-                <LiveMatchTrigger match={match} label="Ver transmisión" />
+                <LiveMatchTrigger match={match} label={iosDevice ? 'Ver en la app' : 'Ver transmisión'} />
               ) : null}
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
                 <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">

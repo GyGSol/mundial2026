@@ -36,6 +36,7 @@ function attachStreamMeta(match, mappingById) {
     configured,
     canWatch: env.liveStreamEnabled && match.status === 'live' && configured,
     la18EventId: mapping?.la18EventId || null,
+    pageUrl: mapping?.la18PageUrl || null,
     updatedAt: mapping?.updatedAt || null,
   };
 }

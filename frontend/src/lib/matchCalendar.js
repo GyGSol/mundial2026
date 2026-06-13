@@ -1,4 +1,5 @@
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat.js';
+import { isIosDevice } from '@/lib/device.js';
 
 const LOCK_MS = 60 * 60 * 1000;
 const REMINDER_BEFORE_LOCK_MS = 30 * 60 * 1000;
@@ -223,14 +224,6 @@ export function buildAllMatchesIcs(matches = [], standingsByGroup = {}) {
 
 export function getSchedulableMatches(matches = []) {
   return matches.filter(canScheduleMatchReminder);
-}
-
-function isIosDevice() {
-  if (typeof navigator === 'undefined') return false;
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  );
 }
 
 function openIcsBlob(ics, filename) {
