@@ -7,6 +7,7 @@ import {
   getCompetitionGroupById,
   listUserCompetitionGroups,
 } from '../services/competitionGroupService.js';
+import { ensureDefaultPredictionsForUser } from '../services/predictionLockService.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 
 const router = Router();
@@ -59,6 +60,7 @@ router.post('/register', async (req, res, next) => {
     });
 
     const session = await createUserSession(user._id);
+    await ensureDefaultPredictionsForUser(user._id);
     res.status(201).json({
       token: session.token,
       expiresAt: session.expiresAt,
@@ -79,6 +81,7 @@ router.post('/login', async (req, res, next) => {
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
     const session = await createUserSession(user._id);
+    await ensureDefaultPredictionsForUser(user._id);
     res.json({
       token: session.token,
       expiresAt: session.expiresAt,

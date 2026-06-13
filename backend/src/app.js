@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import { existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
+import { requestTimingMiddleware } from './middleware/requestTiming.middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import matchesRoutes from './routes/matches.routes.js';
 import teamsRoutes from './routes/teams.routes.js';
@@ -26,6 +28,8 @@ export function createApp() {
   const app = express();
 
   app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(compression());
+  app.use(requestTimingMiddleware);
   app.use(
     cors({
       origin: env.clientOrigin,

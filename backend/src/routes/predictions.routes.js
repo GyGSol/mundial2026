@@ -4,7 +4,7 @@ import { Prediction } from '../models/Prediction.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { notifyMatchesUpdated } from '../services/websocketService.js';
 import { isPredictionLocked } from '../services/predictionLockService.js';
-import { backfillLegacyUserSubmittedPredictions } from '../services/predictionMigrationService.js';
+import { backfillLegacyUserSubmittedPredictions, ensureLegacyUserSubmittedBackfillOnce } from '../services/predictionMigrationService.js';
 import { buildUserPredictedMatchContext } from '../services/predictedMatchContextService.js';
 import {
   askMatchAiFollowUp,
@@ -16,7 +16,7 @@ const router = Router();
 
 router.get('/group-standings', authMiddleware, async (req, res, next) => {
   try {
-    await backfillLegacyUserSubmittedPredictions();
+    await ensureLegacyUserSubmittedBackfillOnce();
     const groupFilter = req.query.group
       ? String(req.query.group).trim().toUpperCase()
       : null;

@@ -108,6 +108,10 @@ export const matchesApi = {
     const query = new URLSearchParams(params).toString();
     return request(`/matches${query ? `?${query}` : ''}`);
   },
+  listFull: (params = {}) => {
+    const query = new URLSearchParams({ ...params, full: '1' }).toString();
+    return request(`/matches?${query}`);
+  },
 };
 
 export const aiConsultationsApi = {
@@ -154,6 +158,8 @@ export const leaderboardApi = {
     const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : '';
     return request(`/leaderboard${query}`);
   },
+  dashboard: (groupId) =>
+    request(`/leaderboard/dashboard?groupId=${encodeURIComponent(groupId)}`),
 };
 
 export const teamsApi = {

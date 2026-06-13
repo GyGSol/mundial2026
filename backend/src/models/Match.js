@@ -22,4 +22,7 @@ const matchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+matchSchema.index({ status: 1, kickoffAt: 1 });
+matchSchema.index({ group: 1, kickoffAt: 1 });
+
 export const Match = mongoose.model('Match', matchSchema);

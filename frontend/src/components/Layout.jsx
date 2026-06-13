@@ -1,16 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
+import { useState } from 'react';
+import { Link, Outlet } from 'react-router-dom';
 import EditPlayerDialog from './EditPlayerDialog.jsx';
 import GameMobileNav from './GameMobileNav.jsx';
 export default function Layout() {
-  const { refresh: refreshPendingApprovals } = usePendingApprovals();
-  const location = useLocation();
   const [editPlayerOpen, setEditPlayerOpen] = useState(false);
-
-  useEffect(() => {
-    refreshPendingApprovals();
-  }, [location.pathname, refreshPendingApprovals]);
 
   return (
     <div className="game-shell game-mesh min-h-screen bg-background">

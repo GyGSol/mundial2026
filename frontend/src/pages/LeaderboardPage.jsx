@@ -1,15 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
+import { leaderboardApi } from '../api/client.js';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../lib/apiError.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
-import LiveMatchesBar from '../components/LiveMatchesBar.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { findNextUpcomingMatches } from '../lib/nextLockedMatch.js';
 import { shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
-import { pickRecentFinishedMatches } from '../lib/recentFinishedMatches.js';
 import {
   Select,
   SelectContent,
@@ -19,7 +16,9 @@ import {
 } from '@/components/ui/select.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import LoadingSpinner from '@/components/LoadingSpinner.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+
+const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
 
 function formatLastUpdated(date) {
   if (!date) return '';
@@ -39,7 +38,7 @@ function buildRankingGroupOptions(groups, { includeNoGroup = false } = {}) {
 
 export default function LeaderboardPage() {
   const { user, isAuthenticated } = useAuth();
-  const [myGroups, setMyGroups] = useState([]);
+  const myGroups = user?.competitionGroups ?? [];
   const [selectedGroupId, setSelectedGroupId] = useState('');
 
   const canViewNoGroupRanking = useMemo(
@@ -56,17 +55,6 @@ export default function LeaderboardPage() {
     () => rankingGroupOptions.find((g) => g.id === selectedGroupId) ?? rankingGroupOptions[0],
     [rankingGroupOptions, selectedGroupId]
   );
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setMyGroups([]);
-      return;
-    }
-    competitionGroupsApi
-      .my()
-      .then((data) => setMyGroups(data.groups ?? []))
-      .catch(() => setMyGroups([]));
-  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!rankingGroupOptions.length) return;
@@ -86,20 +74,10 @@ export default function LeaderboardPage() {
 
   const canLoadRanking = Boolean(effectiveGroupId);
 
-  const fetchLeaderboard = useCallback(async () => {
-    const [leaderboardData, liveData, finishedData, upcomingData] = await Promise.all([
-      leaderboardApi.list(effectiveGroupId),
-      matchesApi.list({ status: 'live' }),
-      matchesApi.list({ status: 'finished' }),
-      matchesApi.list({ status: 'upcoming' }),
-    ]);
-    return {
-      ...leaderboardData,
-      liveMatches: liveData.matches ?? [],
-      recentFinishedMatches: pickRecentFinishedMatches(finishedData.matches ?? []),
-      nextUpcomingMatches: findNextUpcomingMatches(upcomingData.matches),
-    };
-  }, [effectiveGroupId]);
+  const fetchLeaderboard = useCallback(
+    () => leaderboardApi.dashboard(effectiveGroupId),
+    [effectiveGroupId]
+  );
 
   const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId], {
     enabled: canLoadRanking,
@@ -128,13 +106,15 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {rankingReady && (
-        <LiveMatchesBar
-          matches={data?.liveMatches ?? []}
-          finishedMatches={data?.recentFinishedMatches ?? []}
-          nextMatches={data?.nextUpcomingMatches ?? []}
-        />
-      )}
+      {rankingReady ? (
+        <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
+          <LiveMatchesBar
+            matches={data?.liveMatches ?? []}
+            finishedMatches={data?.recentFinishedMatches ?? []}
+            nextMatches={data?.nextUpcomingMatches ?? []}
+          />
+        </Suspense>
+      ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
         <div className="min-w-0 flex flex-col gap-1">

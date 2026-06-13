@@ -58,7 +58,7 @@ export default function PredictionsPage() {
     const params = {};
     if (statusFilter) params.status = statusFilter;
     if (groupFilter) params.group = groupFilter;
-    return matchesApi.list(params);
+    return matchesApi.listFull(params);
   }, [statusFilter, groupFilter]);
 
   const fetchGroupStandings = useCallback(() => {

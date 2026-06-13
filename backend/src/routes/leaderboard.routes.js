@@ -2,9 +2,28 @@ import { Router } from 'express';
 import { getLeaderboard } from '../services/leaderboardService.js';
 import { getLastSyncAt } from '../services/syncService.js';
 import { getCompetitionGroupById } from '../services/competitionGroupService.js';
+import { getRankingDashboard } from '../services/rankingDashboardService.js';
 import { optionalAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
+
+router.get('/dashboard', optionalAuth, async (req, res, next) => {
+  try {
+    const groupId = req.query.groupId || null;
+    if (!groupId) {
+      return res.status(400).json({ error: 'groupId es obligatorio' });
+    }
+
+    const payload = await getRankingDashboard(groupId, req.user?._id);
+    if (payload.notFound) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
+    res.json(payload);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/', optionalAuth, async (req, res, next) => {
   try {

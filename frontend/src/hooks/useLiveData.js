@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRealtimeRefresh } from './useWebSocket.js';
+import { useRealtimeSubscription } from '../context/RealtimeContext.jsx';
 
 export function useLiveData(
   fetchFn,
@@ -35,7 +35,7 @@ export function useLiveData(
     refresh();
   }, [refresh, enabled]);
 
-  useRealtimeRefresh(refresh);
+  useRealtimeSubscription(enabled ? refresh : null, enabled ? refresh : null);
 
   useEffect(() => {
     if (!enabled || !pollIntervalMs) return undefined;

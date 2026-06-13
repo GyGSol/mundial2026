@@ -6,33 +6,38 @@ import { startSyncJob } from './jobs/syncMatches.job.js';
 import { startKickoffWatchJob } from './jobs/kickoffWatch.job.js';
 import { startAiPredictionsJob } from './jobs/aiPredictions.job.js';
 import { initWebSocket } from './services/websocketService.js';
-import { backfillLegacyUserSubmittedPredictions } from './services/predictionMigrationService.js';
+import { ensureLegacyUserSubmittedBackfillOnce } from './services/predictionMigrationService.js';
+
+const BOOT_DEFER_MS = 5_000;
 
 async function main() {
   await connectDb();
-
-  try {
-    const { updated, rescoredMatches } = await backfillLegacyUserSubmittedPredictions();
-    if (updated > 0) {
-      console.log(
-        `Backfill userSubmitted: ${updated} predicciones, ${rescoredMatches} partidos rescored`
-      );
-    }
-  } catch (err) {
-    console.error('Backfill userSubmitted failed:', err);
-  }
 
   const app = createApp();
   const server = createServer(app);
 
   initWebSocket(server);
-  startSyncJob();
   startKickoffWatchJob();
   startAiPredictionsJob();
 
   server.listen(env.port, () => {
     console.log(`Server listening on port ${env.port} (HTTP + WS /ws)`);
   });
+
+  setTimeout(() => {
+    startSyncJob();
+    ensureLegacyUserSubmittedBackfillOnce()
+      .then((result) => {
+        if (!result.skipped && result.updated > 0) {
+          console.log(
+            `Backfill userSubmitted: ${result.updated} predicciones, ${result.rescoredMatches} partidos rescored`
+          );
+        }
+      })
+      .catch((err) => {
+        console.error('Deferred backfill userSubmitted failed:', err);
+      });
+  }, BOOT_DEFER_MS);
 }
 
 main().catch((err) => {

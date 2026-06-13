@@ -1,7 +1,10 @@
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
+import { SyncMeta } from '../models/SyncMeta.js';
 import { getLockAt } from './predictionLockService.js';
 import { recalculateMatchScores } from './syncService.js';
+
+const LEGACY_BACKFILL_META_KEY = 'legacyUserSubmittedBackfill';
 
 const LEGACY_CREATED_BEFORE_LOCK_MS = 1000;
 
@@ -57,4 +60,31 @@ export async function backfillLegacyUserSubmittedPredictions() {
   }
 
   return { updated: idsToUpdate.length, rescoredMatches };
+}
+
+let legacyBackfillOncePromise = null;
+
+/** Runs legacy backfill at most once per deployment (flag in SyncMeta). */
+export async function ensureLegacyUserSubmittedBackfillOnce() {
+  if (legacyBackfillOncePromise) return legacyBackfillOncePromise;
+
+  legacyBackfillOncePromise = (async () => {
+    const existing = await SyncMeta.findOne({ key: LEGACY_BACKFILL_META_KEY }).lean();
+    if (existing?.lastSyncAt) {
+      return { skipped: true, updated: 0, rescoredMatches: 0 };
+    }
+
+    const result = await backfillLegacyUserSubmittedPredictions();
+    await SyncMeta.findOneAndUpdate(
+      { key: LEGACY_BACKFILL_META_KEY },
+      { lastSyncAt: new Date() },
+      { upsert: true }
+    );
+    return { skipped: false, ...result };
+  })().catch((err) => {
+    legacyBackfillOncePromise = null;
+    throw err;
+  });
+
+  return legacyBackfillOncePromise;
 }
