@@ -159,7 +159,7 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-1 text-[11px] leading-tight tabular-nums text-muted-foreground',
+        'flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[11px] leading-tight tabular-nums text-muted-foreground',
         className
       )}
     >
