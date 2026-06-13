@@ -34,9 +34,16 @@ export default function AdminStreamLinksPage() {
   const [suggestions, setSuggestions] = useState([]);
 
   const fetchLinks = useCallback(() => adminApi.listStreamLinks(), []);
+  const fetchToday = useCallback(() => adminApi.listTodayTransmissions(), []);
   const { data, loading, error, refresh } = useLiveData(fetchLinks, []);
+  const {
+    data: todayData,
+    loading: todayLoading,
+    refresh: refreshToday,
+  } = useLiveData(fetchToday, []);
 
   const streamLinks = data?.streamLinks ?? [];
+  const todayMatches = todayData?.matches ?? [];
 
   function updateForm(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -60,7 +67,7 @@ export default function AdminStreamLinksPage() {
         enabled: true,
       });
       setMessage('Link guardado');
-      await refresh();
+      await Promise.all([refresh(), refreshToday()]);
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -74,7 +81,7 @@ export default function AdminStreamLinksPage() {
     try {
       await adminApi.deleteStreamLink(matchExternalId);
       setMessage('Link eliminado');
-      await refresh();
+      await Promise.all([refresh(), refreshToday()]);
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -115,6 +122,19 @@ export default function AdminStreamLinksPage() {
     }));
   }
 
+  function fillFormFromMatch(match) {
+    const mapping = match.mapping;
+    setForm({
+      matchExternalId: String(match.externalId),
+      la18PageUrl: mapping?.la18PageUrl ?? '',
+      embedUrl: mapping?.embedUrl ?? '',
+      la18EventId: mapping?.la18EventId ?? '',
+      notes: mapping?.notes ?? '',
+    });
+    setSuggestions([]);
+    setMessage('');
+  }
+
   return (
     <div className={adminPage}>
       <AdminPageHeader
@@ -124,6 +144,58 @@ export default function AdminStreamLinksPage() {
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
+
+      <AdminCard accent flush contentClassName="p-0" title="Partidos de hoy">
+        {todayLoading && !todayMatches.length ? (
+          <p className={`p-4 ${adminMuted}`}>Cargando partidos…</p>
+        ) : null}
+        {!todayLoading && !todayMatches.length ? (
+          <p className={`p-4 ${adminMuted}`}>No hay partidos programados para hoy.</p>
+        ) : null}
+        {todayMatches.length ? (
+          <div className={adminTableWrap}>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-800 hover:bg-transparent">
+                  <TableHead>Partido</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Señal</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {todayMatches.map((match) => {
+                  const home = match.homeTeam?.nameEn || match.homeTeamId;
+                  const away = match.awayTeam?.nameEn || match.awayTeamId;
+                  return (
+                    <TableRow key={match.externalId} className="border-slate-800">
+                      <TableCell>
+                        {home} vs {away}
+                        <span className={`ml-2 text-xs ${adminMuted}`}>#{match.externalId}</span>
+                      </TableCell>
+                      <TableCell>{match.status}</TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {match.mapping?.embedUrl || '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className={adminBtnOutline}
+                          onClick={() => fillFormFromMatch(match)}
+                        >
+                          {match.mapping ? 'Editar URL' : 'Asignar URL'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        ) : null}
+      </AdminCard>
 
       <AdminCard accent title="Nuevo / editar mapping">
         <form className="grid gap-4 md:grid-cols-2" onSubmit={saveLink}>

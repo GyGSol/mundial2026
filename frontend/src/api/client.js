@@ -270,3 +270,7 @@ export const streamApi = {
 export const matchStreamApi = {
   getStream: (matchId) => request(`/matches/${encodeURIComponent(matchId)}/stream`),
 };
+
+export const transmissionsApi = {
+  today: () => request('/transmissions/today'),
+};

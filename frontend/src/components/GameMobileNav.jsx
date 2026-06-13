@@ -10,6 +10,7 @@ import {
   Play,
   Sparkles,
   Trophy,
+  TvMinimalPlay,
   Users,
   X,
 } from 'lucide-react';
@@ -24,7 +25,7 @@ const primaryTabs = [
   { to: '/groups', label: 'Grupos', icon: Users, end: false, showBadge: true },
 ];
 
-const morePaths = ['/simulation', '/rules', '/ai-predictions'];
+const morePaths = ['/simulation', '/rules', '/ai-predictions', '/transmissions'];
 
 function TabItem({ to, label, icon: Icon, end, badge }) {
   return (
@@ -101,6 +102,16 @@ export default function GameMobileNav({ onEditPlayer }) {
             ) : null}
 
             <nav className="game-mobile-more__links">
+              <NavLink
+                to="/transmissions"
+                className={({ isActive }) =>
+                  cn('game-mobile-more__link', isActive && 'game-mobile-more__link--active')
+                }
+                onClick={() => setMoreOpen(false)}
+              >
+                <TvMinimalPlay className="size-5 shrink-0" strokeWidth={1.75} />
+                Transmisiones
+              </NavLink>
               <NavLink
                 to="/ai-predictions"
                 className={({ isActive }) =>

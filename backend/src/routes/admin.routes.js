@@ -31,6 +31,7 @@ import {
   listAdminMatches,
   listAdminPredictions,
   listAdminStreamLinks,
+  listAdminTodayTransmissions,
   listAdminUsers,
   recalculateAdminMatch,
   recalculateAllFinishedMatches,
@@ -443,6 +444,14 @@ router.post('/matches/:id/recalculate', adminMiddleware, async (req, res, next) 
 router.get('/stream-links', adminMiddleware, async (req, res, next) => {
   try {
     res.json({ streamLinks: await listAdminStreamLinks() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/transmissions/today', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await listAdminTodayTransmissions());
   } catch (err) {
     next(err);
   }

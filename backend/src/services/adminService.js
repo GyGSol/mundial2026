@@ -979,6 +979,21 @@ export async function deleteAdminStreamLink(matchExternalId) {
   return deleteStreamLinkMapping(matchExternalId);
 }
 
+export async function listAdminTodayTransmissions() {
+  const { listTransmissionMatchesForDay } = await import('./transmissionService.js');
+  const { listStreamLinkMappings } = await import('./streamLinkService.js');
+  const data = await listTransmissionMatchesForDay(null, null);
+  const mappings = await listStreamLinkMappings();
+  const byId = new Map(mappings.map((row) => [String(row.matchExternalId), row]));
+  return {
+    ...data,
+    matches: data.matches.map((match) => ({
+      ...match,
+      mapping: byId.get(String(match.externalId)) || null,
+    })),
+  };
+}
+
 export async function suggestAdminStreamLinks(matchExternalId) {
   const id = String(matchExternalId ?? '').trim();
   if (!id) {

@@ -28,6 +28,7 @@ const AiPredictionsPage = lazy(() => import('./pages/AiPredictionsPage.jsx'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage.jsx'));
 const RulesPage = lazy(() => import('./pages/RulesPage.jsx'));
 const WorldCupPage = lazy(() => import('./pages/WorldCupPage.jsx'));
+const TransmissionsPage = lazy(() => import('./pages/TransmissionsPage.jsx'));
 const SimulationPage = lazy(() => import('./pages/SimulationPage.jsx'));
 const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage.jsx'));
@@ -82,6 +83,7 @@ export default function App() {
                       <Route path="groups/new" element={<CreateGroupPage />} />
                       <Route path="groups" element={<GroupsPage />} />
                       <Route path="mundial" element={<WorldCupPage />} />
+                      <Route path="transmissions" element={<TransmissionsPage />} />
                       <Route path="simulation" element={<SimulationPage />} />
                       <Route path="rules" element={<RulesPage />} />
                       <Route path="*" element={<Navigate to="/ranking" replace />} />

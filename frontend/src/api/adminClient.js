@@ -193,6 +193,7 @@ export const adminApi = {
     }),
   deleteStreamLink: (matchExternalId) =>
     adminRequest(`/stream-links/${encodeURIComponent(matchExternalId)}`, { method: 'DELETE' }),
+  listTodayTransmissions: () => adminRequest('/transmissions/today'),
 };
 
 export const adminSimulationApi = {

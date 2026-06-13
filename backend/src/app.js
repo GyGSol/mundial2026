@@ -21,6 +21,7 @@ import adminRoutes from './routes/admin.routes.js';
 import playersRoutes from './routes/players.routes.js';
 import streamRoutes from './routes/stream.routes.js';
 import pushRoutes from './routes/push.routes.js';
+import transmissionsRoutes from './routes/transmissions.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -54,6 +55,7 @@ export function createApp() {
   app.use('/api/players', playersRoutes);
   app.use('/api/stream-config', streamRoutes);
   app.use('/api/push', pushRoutes);
+  app.use('/api/transmissions', transmissionsRoutes);
 
   if (existsSync(publicDir)) {
     app.use(express.static(publicDir));

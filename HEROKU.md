@@ -133,6 +133,10 @@ Fuente primaria configurable por partido desde el panel admin (`/admin/stream-li
 
 **Endpoint autenticado:** `GET /api/matches/:externalId/stream` (Bearer JWT de usuario).
 
+**Sección usuarios:** `/transmissions` — lista los partidos del día (hora Argentina) con estado de señal y botón "Ver transmisión" si el partido está en vivo y tiene URL configurada.
+
+**Endpoint listado:** `GET /api/transmissions/today` (Bearer JWT de usuario).
+
 **Fallback automático:** si el iframe La18HD falla o tarda, la UI muestra Fubo Sports (YouTube `@FuboSports/live`).
 
 **Admin API:**
@@ -140,6 +144,7 @@ Fuente primaria configurable por partido desde el panel admin (`/admin/stream-li
 | Ruta | Acción |
 |------|--------|
 | `GET /api/admin/stream-links` | Listar mappings |
+| `GET /api/admin/transmissions/today` | Partidos de hoy + mapping actual |
 | `PUT /api/admin/stream-links/:matchExternalId` | Crear/actualizar URL |
 | `DELETE /api/admin/stream-links/:matchExternalId` | Eliminar |
 | `GET /api/admin/stream-links/suggest?matchId=` | Sugerencias (scraper opcional) |
@@ -155,9 +160,10 @@ heroku config:set \
 
 Flujo operativo:
 
-1. En `/admin/stream-links`, asignar `matchExternalId` + URL del evento en [la18hd.com](https://la18hd.com/eventos/).
-2. Cuando el sync marque el partido como `live`, los usuarios autenticados verán el reproductor en "Ver en vivo".
-3. Actualizar URLs desde admin **no requiere redeploy**.
+1. En `/admin/stream-links`, tabla **Partidos de hoy** o formulario manual: asignar `matchExternalId` + URL del evento en [la18hd.com](https://la18hd.com/eventos/).
+2. Los usuarios ven el calendario del día en `/transmissions` (menú **Más → Transmisiones**).
+3. Cuando el sync marque el partido como `live`, aparece "Ver transmisión" si hay URL configurada.
+4. Actualizar URLs desde admin **no requiere redeploy**.
 
 **Nota:** no guardar URLs `blob:` ni manifests MPD con token expirable; usar la página/evento estable de La18HD.
 
