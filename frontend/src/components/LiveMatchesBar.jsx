@@ -110,9 +110,9 @@ function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn, align = 'c
       )}
     >
       {minutePrefix ? <span>{minutePrefix}</span> : null}
-      <ArrowDown className="size-3 shrink-0 text-red-500" strokeWidth={2.75} aria-hidden="true" />
+      <ArrowDown className="match-live-icon size-3 shrink-0 text-red-500" strokeWidth={2.75} aria-hidden="true" />
       <span>{playerOut}</span>
-      <ArrowUp className="size-3 shrink-0 text-emerald-500" strokeWidth={2.75} aria-hidden="true" />
+      <ArrowUp className="match-live-icon size-3 shrink-0 text-emerald-500" strokeWidth={2.75} aria-hidden="true" />
       <span>{playerIn}</span>
     </span>
   );
@@ -182,7 +182,7 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[11px] leading-tight tabular-nums text-muted-foreground',
+        'flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 match-live-text-meta text-[11px] leading-tight tabular-nums text-muted-foreground',
         className
       )}
     >
@@ -201,8 +201,8 @@ function TeamSideStats({ bookings = [], substitutions = [], className }) {
       {substitutionCount > 0 ? (
         <span className="inline-flex items-center gap-1" title="Cambios">
           <span className="inline-flex items-center gap-px" aria-hidden="true">
-            <ArrowDown className="size-3.5 shrink-0 text-red-500" strokeWidth={2.75} />
-            <ArrowUp className="size-3.5 shrink-0 text-emerald-500" strokeWidth={2.75} />
+            <ArrowDown className="match-live-icon-lg size-3.5 shrink-0 text-red-500" strokeWidth={2.75} />
+            <ArrowUp className="match-live-icon-lg size-3.5 shrink-0 text-emerald-500" strokeWidth={2.75} />
           </span>
           <span className="font-semibold text-foreground">{substitutionCount}</span>
         </span>
@@ -223,9 +223,9 @@ function TeamHeaderCell({ name, flag, bookings = [], substitutions = [], side = 
         <TeamSideStats bookings={bookings} substitutions={substitutions} className="items-center" />
       ) : null}
       {flag ? (
-        <img src={flag} alt={name} className="size-8 shrink-0 rounded-sm border object-cover" />
+        <img src={flag} alt={name} className="match-live-flag size-8 shrink-0 rounded-sm border object-cover" />
       ) : null}
-      <span className="max-w-[5.5rem] truncate text-xs font-medium">{name}</span>
+      <span className="match-live-team-name max-w-[5.5rem] truncate text-xs font-medium">{name}</span>
     </div>
   );
 }
@@ -236,7 +236,7 @@ function TeamEventColumn({ lines, className }) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-0.5 text-center text-[10px] leading-snug text-muted-foreground',
+        'flex flex-col items-center gap-0.5 text-center match-live-text text-[10px] leading-snug text-muted-foreground',
         className
       )}
     >
@@ -249,7 +249,7 @@ function TeamEventColumn({ lines, className }) {
 
 /** Misma grilla que banderas + marcador para alinear la cronología debajo de cada país. */
 const MATCH_SIDE_GRID_CLASS =
-  'grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3';
+  'match-live-grid grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-3';
 
 const MATCH_SIDE_CELL_CLASS = 'flex flex-col items-center px-1 text-center';
 const MATCH_CENTER_CELL_CLASS =
@@ -293,7 +293,7 @@ function MatchTeamsLayout({
         side="home"
       />
 
-      <div className="flex min-h-10 items-center justify-center self-center px-1">{center}</div>
+      <div className="match-live-score-cell flex min-h-10 items-center justify-center self-center px-1">{center}</div>
 
       <TeamHeaderCell
         name={awayName}
@@ -461,26 +461,26 @@ function MatchTimeline({ events = [] }) {
   return (
     <div
       ref={scrollRef}
-      className="max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="match-live-timeline max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className="flex flex-col gap-0.5 text-[10px] leading-snug text-muted-foreground">
+      <div className="flex flex-col gap-0.5 match-live-text text-[10px] leading-snug text-muted-foreground">
         {displayEntries.map((entry) => (
           <div key={entry.key} className={MATCH_SIDE_GRID_CLASS}>
             <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0')}>
               {entry.side === 'home' ? (
-                <span className="max-w-[9rem] break-words sm:max-w-[11rem]">
+                <span className="match-live-entry max-w-[9rem] break-words sm:max-w-[11rem]">
                   <TimelineEntryContent entry={entry} />
                 </span>
               ) : null}
             </div>
             <div className={MATCH_CENTER_CELL_CLASS}>
               {entry.side === 'neutral' ? (
-                <span className="max-w-[7rem] break-words">{entry.text}</span>
+                <span className="match-live-center-entry max-w-[7rem] break-words">{entry.text}</span>
               ) : null}
             </div>
             <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0')}>
               {entry.side === 'away' ? (
-                <span className="max-w-[9rem] break-words sm:max-w-[11rem]">
+                <span className="match-live-entry max-w-[9rem] break-words sm:max-w-[11rem]">
                   <TimelineEntryContent entry={entry} />
                 </span>
               ) : null}
@@ -505,17 +505,17 @@ function MatchSummary({
   if (!rows.length) return null;
 
   return (
-    <div className="w-full rounded-md border bg-muted/20 px-3 py-2 text-left">
-      <p className="mb-2 text-center text-[11px] font-medium text-foreground">Resumen del partido</p>
+    <div className="w-full rounded-md border bg-muted/20 px-3 py-2 text-left match-live-text">
+      <p className="mb-2 text-center match-live-text-meta text-[11px] font-medium text-foreground">Resumen del partido</p>
       {notice ? (
-        <p className="mb-2 text-center text-[10px] text-muted-foreground">{notice}</p>
+        <p className="mb-2 text-center match-live-text-meta text-[10px] text-muted-foreground">{notice}</p>
       ) : null}
       {attendance ? (
-        <p className="mb-2 text-center text-[10px] text-muted-foreground">
+        <p className="mb-2 text-center match-live-text-meta text-[10px] text-muted-foreground">
           Asistencia: {attendance}
         </p>
       ) : null}
-      <div className="mb-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] font-medium text-muted-foreground">
+      <div className="mb-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2 match-live-text-meta text-[10px] font-medium text-muted-foreground">
         <span className="text-right">{homeCode}</span>
         <span className="text-center" aria-hidden="true" />
         <span className="text-left">{awayCode}</span>
@@ -524,7 +524,7 @@ function MatchSummary({
         {rows.map((row) => (
           <div
             key={row.label}
-            className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] leading-snug"
+            className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 match-live-text text-[10px] leading-snug"
           >
             <span className="text-right font-medium tabular-nums text-foreground">{row.home}</span>
             <span className="min-w-[4.5rem] text-center text-muted-foreground">{row.label}</span>
@@ -556,7 +556,7 @@ function FinishedTeamsHeader({
         substitutions={homeSubstitutions}
         side="home"
       />
-      <div className="flex min-h-10 items-center justify-center px-1">{center}</div>
+      <div className="match-live-score-cell flex min-h-10 items-center justify-center px-1">{center}</div>
       <TeamHeaderCell
         name={awayName}
         flag={awayFlag}
@@ -578,7 +578,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
 
   return (
     <Card className={liveCardClassName(isArgentina)}>
-      <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
+      <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
         {isLive ? (
           <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
             En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
@@ -601,7 +601,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
           homeSubstitutions={match.homeSubstitutions}
           awaySubstitutions={match.awaySubstitutions}
           center={
-            <div className="flex items-center gap-1 text-xl font-bold tabular-nums">
+            <div className="match-live-score flex items-center gap-1 text-xl font-bold tabular-nums">
               <span>{match.homeScore}</span>
               <span className="text-muted-foreground">-</span>
               <span>{match.awayScore}</span>
@@ -609,7 +609,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
           }
         />
 
-        <span className="text-[11px] text-muted-foreground">
+        <span className="match-live-text-meta text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}
         </span>
         <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
@@ -635,7 +635,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
 
   return (
     <Card className={liveCardClassName(isArgentina)}>
-      <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
+      <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
         {isLive ? (
           <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
             En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
@@ -657,7 +657,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             homeSubstitutions={match.homeSubstitutions}
             awaySubstitutions={match.awaySubstitutions}
             center={
-              <div className="flex items-center gap-1 text-xl font-bold tabular-nums">
+              <div className="match-live-score flex items-center gap-1 text-xl font-bold tabular-nums">
                 <span>{match.homeScore}</span>
                 <span className="text-muted-foreground">-</span>
                 <span>{match.awayScore}</span>
@@ -676,7 +676,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           status={match.status}
         />
 
-        <span className="text-[11px] text-muted-foreground">
+        <span className="match-live-text-meta text-[11px] text-muted-foreground">
           Grupo {match.group} · {formatMatchDate(match)}
         </span>
         <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
@@ -779,7 +779,7 @@ function NextMatchCard({ match }) {
           'cursor-pointer transition-shadow hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
         )}
       >
-        <CardContent className="flex w-full flex-col items-center gap-2 p-4 text-center">
+        <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
           {predictionsOpen ? (
             <Badge variant="outline" className="border-sky-300/70 bg-sky-50 text-sky-900">
               Predicciones abiertas
@@ -795,15 +795,15 @@ function NextMatchCard({ match }) {
             awayName={awayName}
             homeFlag={homeFlag}
             awayFlag={awayFlag}
-            center={<span className="text-lg font-semibold text-muted-foreground">vs</span>}
+            center={<span className="match-live-vs text-lg font-semibold text-muted-foreground">vs</span>}
           />
 
           <KickoffCountdown
             kickoffAt={match.kickoffAt}
-            className="text-sm font-medium text-foreground"
+            className="match-live-text text-sm font-medium text-foreground"
           />
 
-          <span className="text-[11px] text-muted-foreground">
+          <span className="match-live-text-meta text-[11px] text-muted-foreground">
             {match.group ? `Grupo ${match.group} · ` : ''}
             {formatMatchDate(match)}
           </span>

@@ -849,3 +849,77 @@ body:has(.game-shell) {
     transform: translate(-50%, -50%);
   }
 }
+
+/* Partidos en vivo / finalizados: tipografía e iconos fluidos en web */
+@media (min-width: 768px) {
+  .match-live-ui {
+    --match-text: clamp(0.8125rem, 0.55rem + 0.75vw, 1.125rem);
+    --match-text-meta: clamp(0.75rem, 0.5rem + 0.55vw, 1rem);
+    --match-text-score: clamp(1.5rem, 1rem + 1.8vw, 2.75rem);
+    --match-icon: clamp(1rem, 0.7rem + 0.8vw, 1.375rem);
+    --match-icon-lg: clamp(1.125rem, 0.8rem + 0.9vw, 1.5rem);
+    --match-flag: clamp(2.5rem, 1.75rem + 2.5vw, 4rem);
+    --match-timeline-h: clamp(12rem, 8rem + 16vw, 26rem);
+    --match-name-max: clamp(6rem, 4rem + 10vw, 16rem);
+    --match-entry-max: clamp(10rem, 6rem + 16vw, 20rem);
+    --match-center-max: clamp(8rem, 5rem + 10vw, 14rem);
+    --match-grid-gap: clamp(0.75rem, 0.4rem + 0.65vw, 1.25rem);
+  }
+
+  .match-live-ui .match-live-text {
+    font-size: var(--match-text);
+  }
+
+  .match-live-ui .match-live-text-meta {
+    font-size: var(--match-text-meta);
+  }
+
+  .match-live-ui .match-live-score {
+    font-size: var(--match-text-score);
+    line-height: 1.1;
+  }
+
+  .match-live-ui .match-live-vs {
+    font-size: clamp(1rem, 0.7rem + 1vw, 1.5rem);
+  }
+
+  .match-live-ui .match-live-flag {
+    width: var(--match-flag);
+    height: var(--match-flag);
+  }
+
+  .match-live-ui .match-live-team-name {
+    font-size: var(--match-text);
+    max-width: var(--match-name-max);
+  }
+
+  .match-live-ui .match-live-icon {
+    width: var(--match-icon);
+    height: var(--match-icon);
+  }
+
+  .match-live-ui .match-live-icon-lg {
+    width: var(--match-icon-lg);
+    height: var(--match-icon-lg);
+  }
+
+  .match-live-ui .match-live-timeline {
+    max-height: var(--match-timeline-h);
+  }
+
+  .match-live-ui .match-live-entry {
+    max-width: var(--match-entry-max);
+  }
+
+  .match-live-ui .match-live-center-entry {
+    max-width: var(--match-center-max);
+  }
+
+  .match-live-ui .match-live-grid {
+    column-gap: var(--match-grid-gap);
+  }
+
+  .match-live-ui .match-live-score-cell {
+    min-height: var(--match-flag);
+  }
+}

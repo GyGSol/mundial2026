@@ -12,7 +12,7 @@ export function BrokenLegIcon({ className, ...props }) {
       alt=""
       width={16}
       height={16}
-      className={cn('size-4 shrink-0 object-contain', className)}
+      className={cn('match-live-icon size-4 shrink-0 object-contain', className)}
       aria-hidden="true"
       {...props}
     />
