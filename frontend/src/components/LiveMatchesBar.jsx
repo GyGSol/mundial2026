@@ -389,7 +389,7 @@ function formatTimelineEntry(event) {
     case 'foul':
       return {
         side: event.side,
-        text: `${prefix}🦶 ${
+        text: `${prefix}🦴 ${
           event.player
             ? `Falta · ${formatPlayerWithPosition(event.player, event.playerPosition)}`
             : 'Falta'
