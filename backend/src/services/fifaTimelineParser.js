@@ -194,6 +194,9 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     player: null,
     playerIn: null,
     playerOut: null,
+    idPlayer: event.IdPlayer != null ? String(event.IdPlayer) : null,
+    idPlayerIn: null,
+    idPlayerOut: null,
     positionX,
     positionY,
     description,
@@ -220,6 +223,8 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     entry.playerIn = playerIn;
     entry.playerOut = playerOut;
     entry.player = playerIn ?? playerOut ?? entry.player;
+    entry.idPlayerIn = event.IdPlayer != null ? String(event.IdPlayer) : null;
+    entry.idPlayerOut = event.IdSubPlayer != null ? String(event.IdSubPlayer) : null;
     if (!entry.playerIn || !entry.playerOut) return entry;
   } else if (!entry.player) {
     return entry;

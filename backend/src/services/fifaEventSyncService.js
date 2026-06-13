@@ -3,12 +3,17 @@ import { Team } from '../models/Team.js';
 import {
   extractTeamAbbreviation,
   fetchAllCalendarMatches,
+  fetchLiveMatchFootball,
   fetchMatchTimeline,
   resolveFifaMatchEntry,
 } from './fifaApiClient.js';
 import { parseFifaTimeline } from './fifaTimelineParser.js';
 import { fetchFifaReportStats, FIFA_REPORT_STATS_VERSION } from './fifaReportPdfService.js';
 import { goalCountsFromTimeline } from './matchLiveData.js';
+import {
+  applyShirtNumbersToTimeline,
+  buildShirtByPlayerId,
+} from '../utils/fifaSquadShirtMap.js';
 
 async function loadMatchTeams(match) {
   const [homeTeam, awayTeam] = await Promise.all([
@@ -148,16 +153,26 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
       const fifaEntry = await resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam);
 
       if (fifaEntry?.IdMatch && fifaEntry?.IdStage) {
-        const timelineJson = await fetchMatchTimeline({
-          idStage: fifaEntry.IdStage,
-          idMatch: fifaEntry.IdMatch,
-        });
+        const [timelineJson, liveMatch] = await Promise.all([
+          fetchMatchTimeline({
+            idStage: fifaEntry.IdStage,
+            idMatch: fifaEntry.IdMatch,
+          }),
+          fetchLiveMatchFootball({
+            idStage: fifaEntry.IdStage,
+            idMatch: fifaEntry.IdMatch,
+          }).catch(() => null),
+        ]);
 
-        const timeline = parseFifaTimeline(
+        let timeline = parseFifaTimeline(
           timelineJson,
           fifaEntry.Home?.IdTeam,
           fifaEntry.Away?.IdTeam
         );
+        const shirtByPlayerId = liveMatch ? buildShirtByPlayerId(liveMatch) : {};
+        if (Object.keys(shirtByPlayerId).length > 0) {
+          timeline = applyShirtNumbersToTimeline(timeline, shirtByPlayerId);
+        }
 
         if (timeline.length > 0) {
           const fifaHomeScore = Number(fifaEntry.Home?.Score);
@@ -170,6 +185,10 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
             matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
             homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
             awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
+            ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId } : {}),
+            ...(Object.keys(shirtByPlayerId).length > 0
+              ? { shirtMapSyncedAt: new Date().toISOString() }
+              : {}),
             ...(hasFifaScore ? { homeScore: fifaHomeScore, awayScore: fifaAwayScore } : {}),
             syncedAt: new Date().toISOString(),
           };

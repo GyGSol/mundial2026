@@ -4,6 +4,10 @@
 
 import { buildFifaTimelineEntry } from './fifaTimelineParser.js';
 import { enrichNameFromRoster } from '../utils/playerNameMatch.js';
+import {
+  applyShirtNumbersToTimeline,
+  attachTimelinePlayerIds,
+} from '../utils/fifaSquadShirtMap.js';
 
 export function splitFootballDataEvents(matchData, homeFdTeamId, awayFdTeamId) {
   const homeId = Number(homeFdTeamId);
@@ -876,11 +880,15 @@ export function enrichMatchLiveFields(match, options = {}) {
   let baseTimeline = showResults ? readMatchTimeline(raw) : [];
 
   if (showResults && baseTimeline.length > 0) {
-    baseTimeline = attachTimelinePitchCoords(
+    const homeTeamId = raw.fifaMeta?.homeTeamId;
+    const awayTeamId = raw.fifaMeta?.awayTeamId;
+    const rawEvents = raw.fifaEvents?.rawEvents;
+
+    baseTimeline = attachTimelinePlayerIds(baseTimeline, rawEvents, homeTeamId, awayTeamId);
+    baseTimeline = attachTimelinePitchCoords(baseTimeline, rawEvents, homeTeamId, awayTeamId);
+    baseTimeline = applyShirtNumbersToTimeline(
       baseTimeline,
-      raw.fifaEvents?.rawEvents,
-      raw.fifaMeta?.homeTeamId,
-      raw.fifaMeta?.awayTeamId
+      raw.fifaMeta?.shirtByPlayerId ?? {}
     );
     if (homePlayers.length > 0 || awayPlayers.length > 0) {
       baseTimeline = enrichTimelineRosterFields(baseTimeline, homePlayers, awayPlayers);

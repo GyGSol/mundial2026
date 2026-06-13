@@ -17,6 +17,7 @@ import {
 } from '../services/predictedMatchContextService.js';
 import { enrichMatchPhaseFields } from '../services/matchPhaseUtils.js';
 import { enrichMatchLiveFields } from '../services/matchLiveData.js';
+import { ensureFifaShirtMaps } from '../services/fifaShirtMapService.js';
 import { formatStadiumForClient } from '../services/stadiumPayload.js';
 let legacyBackfillPromise = null;
 
@@ -160,6 +161,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
     if (req.query.group) filter.group = req.query.group;
 
     const matches = await Match.find(filter).sort({ kickoffAt: 1 });
+    await ensureFifaShirtMaps(matches);
     const enriched = await enrichMatches(matches, req.user?._id);
     res.json({ matches: enriched, total: enriched.length });
   } catch (err) {

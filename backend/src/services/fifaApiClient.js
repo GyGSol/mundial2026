@@ -92,6 +92,12 @@ export async function fetchMatchTimeline({ idStage, idMatch }) {
   });
 }
 
+export async function fetchLiveMatchFootball({ idStage, idMatch }) {
+  return fifaRequest(
+    `/live/football/${env.fifaCompetitionId}/${env.fifaSeasonId}/${idStage}/${idMatch}`
+  );
+}
+
 export async function resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam) {
   if (match.raw?.fifaMeta?.idMatch && match.raw?.fifaMeta?.idStage) {
     const cached = calendar.find((entry) => String(entry.IdMatch) === String(match.raw.fifaMeta.idMatch));
