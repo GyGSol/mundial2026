@@ -1,0 +1,567 @@
+{
+  "source": "Wikipedia + referencias públicas (población UN estimada 2026, ligas domésticas)",
+  "sourceUrls": [
+    "https://en.wikipedia.org/wiki/FIFA_World_Cup",
+    "https://en.wikipedia.org/wiki/List_of_FIFA_World_Cup_finals"
+  ],
+  "syncedAt": "2026-06-14T11:55:43.705Z",
+  "tierLegend": {
+    "1": "Liga élite global (Big 5 europeas)",
+    "2": "Liga fuerte / competitiva internacionalmente",
+    "3": "Liga media con exportación de talento",
+    "4": "Liga regional / menor",
+    "5": "Liga microestatal o muy limitada"
+  },
+  "profiles": {
+    "ARG": {
+      "name": "Argentina",
+      "populationMillions": 47,
+      "domesticLeagueName": "Liga Profesional",
+      "domesticLeagueTier": 2,
+      "climateHome": "templado",
+      "worldCupAppearances": 19,
+      "worldCupBestFinish": "Campeón (3)",
+      "wikiNote": "Campeón 1978, 1986, 2022; subcampeón 1930, 1990, 2014"
+    },
+    "ESP": {
+      "name": "España",
+      "populationMillions": 48.8,
+      "domesticLeagueName": "La Liga",
+      "domesticLeagueTier": 1,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 17,
+      "worldCupBestFinish": "Campeón (1)",
+      "wikiNote": "Campeón 2010; subcampeón 2022 (no); semifinalista histórico"
+    },
+    "FRA": {
+      "name": "Francia",
+      "populationMillions": 68.5,
+      "domesticLeagueName": "Ligue 1",
+      "domesticLeagueTier": 1,
+      "climateHome": "templado",
+      "worldCupAppearances": 17,
+      "worldCupBestFinish": "Campeón (2)",
+      "wikiNote": "Campeón 1998, 2018; subcampeón 2006, 2022"
+    },
+    "ENG": {
+      "name": "Inglaterra",
+      "populationMillions": 57,
+      "domesticLeagueName": "Premier League",
+      "domesticLeagueTier": 1,
+      "climateHome": "templado",
+      "worldCupAppearances": 17,
+      "worldCupBestFinish": "Campeón (1)",
+      "wikiNote": "Campeón 1966; semifinal 1990, 2018"
+    },
+    "POR": {
+      "name": "Portugal",
+      "populationMillions": 10.4,
+      "domesticLeagueName": "Primeira Liga",
+      "domesticLeagueTier": 2,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 9,
+      "worldCupBestFinish": "Semifinal",
+      "wikiNote": "Semifinal 1966; subcampeón Euro, fuerte en fases finales recientes"
+    },
+    "BRA": {
+      "name": "Brasil",
+      "populationMillions": 203,
+      "domesticLeagueName": "Brasileirão",
+      "domesticLeagueTier": 2,
+      "climateHome": "tropical",
+      "worldCupAppearances": 23,
+      "worldCupBestFinish": "Campeón (5)",
+      "wikiNote": "Máximo ganador mundial; subcampeón 1950, 1998, 2022"
+    },
+    "MAR": {
+      "name": "Marruecos",
+      "populationMillions": 38,
+      "domesticLeagueName": "Botola Pro",
+      "domesticLeagueTier": 3,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Semifinal",
+      "wikiNote": "Semifinalista 2022; primer equipo africano en semifinales"
+    },
+    "NED": {
+      "name": "Países Bajos",
+      "populationMillions": 17.9,
+      "domesticLeagueName": "Eredivisie",
+      "domesticLeagueTier": 2,
+      "climateHome": "templado",
+      "worldCupAppearances": 11,
+      "worldCupBestFinish": "Subcampeón (3)",
+      "wikiNote": "Subcampeón 1974, 1978, 2010; semifinal 2014"
+    },
+    "BEL": {
+      "name": "Bélgica",
+      "populationMillions": 11.8,
+      "domesticLeagueName": "Pro League",
+      "domesticLeagueTier": 2,
+      "climateHome": "templado",
+      "worldCupAppearances": 15,
+      "worldCupBestFinish": "Tercer puesto",
+      "wikiNote": "Tercero 2018; cuartos en varias ediciones"
+    },
+    "GER": {
+      "name": "Alemania",
+      "populationMillions": 84,
+      "domesticLeagueName": "Bundesliga",
+      "domesticLeagueTier": 1,
+      "climateHome": "templado",
+      "worldCupAppearances": 20,
+      "worldCupBestFinish": "Campeón (4)",
+      "wikiNote": "Campeón 1954, 1974, 1990, 2014; subcampeón 1966, 1982, 1986, 2002"
+    },
+    "CRO": {
+      "name": "Croacia",
+      "populationMillions": 3.9,
+      "domesticLeagueName": "HNL",
+      "domesticLeagueTier": 3,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Subcampeón",
+      "wikiNote": "Subcampeón 2018; tercero 2022"
+    },
+    "ITA": {
+      "name": "Italia",
+      "populationMillions": 59,
+      "domesticLeagueName": "Serie A",
+      "domesticLeagueTier": 1,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 19,
+      "worldCupBestFinish": "Campeón (4)",
+      "wikiNote": "Campeón 1934, 1938, 1982, 2006; subcampeón 1970, 1994"
+    },
+    "COL": {
+      "name": "Colombia",
+      "populationMillions": 52,
+      "domesticLeagueName": "Liga BetPlay",
+      "domesticLeagueTier": 3,
+      "climateHome": "tropical",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 2014; histórico James Rodríguez goleador 2014"
+    },
+    "MEX": {
+      "name": "México",
+      "populationMillions": 130,
+      "domesticLeagueName": "Liga MX",
+      "domesticLeagueTier": 2,
+      "climateHome": "subtropical",
+      "worldCupAppearances": 18,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 1970 y 1986 como anfitrión; octavos frecuentes"
+    },
+    "SEN": {
+      "name": "Senegal",
+      "populationMillions": 18,
+      "domesticLeagueName": "Ligue 1 Sénégal",
+      "domesticLeagueTier": 4,
+      "climateHome": "tropical",
+      "worldCupAppearances": 4,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 2002; campeón AFCON 2021"
+    },
+    "URU": {
+      "name": "Uruguay",
+      "populationMillions": 3.4,
+      "domesticLeagueName": "Primera División",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 15,
+      "worldCupBestFinish": "Campeón (2)",
+      "wikiNote": "Campeón 1930, 1950; cuarto 1954, 1970, 2010"
+    },
+    "USA": {
+      "name": "Estados Unidos",
+      "populationMillions": 341,
+      "domesticLeagueName": "MLS",
+      "domesticLeagueTier": 2,
+      "climateHome": "variado",
+      "worldCupAppearances": 12,
+      "worldCupBestFinish": "Tercer puesto",
+      "wikiNote": "Tercero 1930; octavos 2014; coanfitrión 2026"
+    },
+    "JPN": {
+      "name": "Japón",
+      "populationMillions": 123,
+      "domesticLeagueName": "J1 League",
+      "domesticLeagueTier": 2,
+      "climateHome": "templado",
+      "worldCupAppearances": 8,
+      "worldCupBestFinish": "Octavos de final",
+      "wikiNote": "Octavos en varias ediciones; Asia dominante"
+    },
+    "SUI": {
+      "name": "Suiza",
+      "populationMillions": 9,
+      "domesticLeagueName": "Super League",
+      "domesticLeagueTier": 3,
+      "climateHome": "alpino",
+      "worldCupAppearances": 13,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 1934, 1938, 1954"
+    },
+    "IRN": {
+      "name": "Irán",
+      "populationMillions": 89,
+      "domesticLeagueName": "Persian Gulf Pro League",
+      "domesticLeagueTier": 3,
+      "climateHome": "árido",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Dominante en Asia; pocos avances en eliminatoria"
+    },
+    "DEN": {
+      "name": "Dinamarca",
+      "populationMillions": 5.9,
+      "domesticLeagueName": "Superliga",
+      "domesticLeagueTier": 2,
+      "climateHome": "templado",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 1998; campeón Euro 1992"
+    },
+    "TUR": {
+      "name": "Turquía",
+      "populationMillions": 86,
+      "domesticLeagueName": "Süper Lig",
+      "domesticLeagueTier": 2,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 3,
+      "worldCupBestFinish": "Tercer puesto",
+      "wikiNote": "Tercero 2002; semifinal Euro 2008"
+    },
+    "ECU": {
+      "name": "Ecuador",
+      "populationMillions": 18,
+      "domesticLeagueName": "Liga Pro",
+      "domesticLeagueTier": 3,
+      "climateHome": "tropical",
+      "worldCupAppearances": 5,
+      "worldCupBestFinish": "Octavos de final",
+      "wikiNote": "Octavos 2022; altitud Quito factor histórico"
+    },
+    "AUT": {
+      "name": "Austria",
+      "populationMillions": 9.1,
+      "domesticLeagueName": "Bundesliga (Austria)",
+      "domesticLeagueTier": 3,
+      "climateHome": "alpino",
+      "worldCupAppearances": 8,
+      "worldCupBestFinish": "Tercer puesto",
+      "wikiNote": "Tercero 1954; regreso reciente a fases finales"
+    },
+    "KOR": {
+      "name": "Corea del Sur",
+      "populationMillions": 51,
+      "domesticLeagueName": "K League",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 12,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 2002 como coanfitrión"
+    },
+    "NGA": {
+      "name": "Nigeria",
+      "populationMillions": 223,
+      "domesticLeagueName": "NPFL",
+      "domesticLeagueTier": 4,
+      "climateHome": "tropical",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Octavos de final",
+      "wikiNote": "Octavos 1994, 1998, 2014; potencia africana"
+    },
+    "AUS": {
+      "name": "Australia",
+      "populationMillions": 27,
+      "domesticLeagueName": "A-League",
+      "domesticLeagueTier": 3,
+      "climateHome": "variado",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Octavos de final",
+      "wikiNote": "Octavos 2006, 2022"
+    },
+    "ALG": {
+      "name": "Argelia",
+      "populationMillions": 46,
+      "domesticLeagueName": "Ligue 1",
+      "domesticLeagueTier": 3,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 5,
+      "worldCupBestFinish": "Octavos de final",
+      "wikiNote": "Octavos 2014; campeón AFCON"
+    },
+    "EGY": {
+      "name": "Egipto",
+      "populationMillions": 112,
+      "domesticLeagueName": "Premier League",
+      "domesticLeagueTier": 3,
+      "climateHome": "árido",
+      "worldCupAppearances": 4,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "7 veces campeón AFCON; Salah referente"
+    },
+    "CAN": {
+      "name": "Canadá",
+      "populationMillions": 41,
+      "domesticLeagueName": "MLS / CPL",
+      "domesticLeagueTier": 2,
+      "climateHome": "frío",
+      "worldCupAppearances": 3,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Debut 1986; coanfitrión 2026; crecimiento post-2022"
+    },
+    "NOR": {
+      "name": "Noruega",
+      "populationMillions": 5.5,
+      "domesticLeagueName": "Eliteserien",
+      "domesticLeagueTier": 3,
+      "climateHome": "frío",
+      "worldCupAppearances": 4,
+      "worldCupBestFinish": "Octavos de final",
+      "wikiNote": "Octavos 1998; Haaland referente"
+    },
+    "CIV": {
+      "name": "Costa de Marfil",
+      "populationMillions": 31,
+      "domesticLeagueName": "Ligue 1",
+      "domesticLeagueTier": 4,
+      "climateHome": "tropical",
+      "worldCupAppearances": 4,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Campeón AFCON 2015, 2023"
+    },
+    "PAN": {
+      "name": "Panamá",
+      "populationMillions": 4.5,
+      "domesticLeagueName": "Liga Panameña",
+      "domesticLeagueTier": 4,
+      "climateHome": "tropical",
+      "worldCupAppearances": 2,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Debut 2018; segunda participación 2026"
+    },
+    "POL": {
+      "name": "Polonia",
+      "populationMillions": 37,
+      "domesticLeagueName": "Ekstraklasa",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 10,
+      "worldCupBestFinish": "Tercer puesto",
+      "wikiNote": "Tercero 1974, 1982; octavos 2022"
+    },
+    "WAL": {
+      "name": "Gales",
+      "populationMillions": 3.2,
+      "domesticLeagueName": "Premier League / Championship",
+      "domesticLeagueTier": 2,
+      "climateHome": "templado",
+      "worldCupAppearances": 2,
+      "worldCupBestFinish": "Semifinal",
+      "wikiNote": "Semifinal 1958; regreso 2022"
+    },
+    "SWE": {
+      "name": "Suecia",
+      "populationMillions": 10.6,
+      "domesticLeagueName": "Allsvenskan",
+      "domesticLeagueTier": 3,
+      "climateHome": "frío",
+      "worldCupAppearances": 13,
+      "worldCupBestFinish": "Subcampeón",
+      "wikiNote": "Subcampeón 1958; tercero 1994"
+    },
+    "CZE": {
+      "name": "Rep. Checa",
+      "populationMillions": 10.8,
+      "domesticLeagueName": "Fortuna Liga",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Subcampeón (Checoslovaquia)",
+      "wikiNote": "Subcampeón 1934, 1962 como TCH; finalista Euro 1996"
+    },
+    "PAR": {
+      "name": "Paraguay",
+      "populationMillions": 6.9,
+      "domesticLeagueName": "División Profesional",
+      "domesticLeagueTier": 4,
+      "climateHome": "subtropical",
+      "worldCupAppearances": 9,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 2010, 1998"
+    },
+    "SCO": {
+      "name": "Escocia",
+      "populationMillions": 5.5,
+      "domesticLeagueName": "Premiership",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 9,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Participaciones históricas; racha de clasificación"
+    },
+    "SRB": {
+      "name": "Serbia",
+      "populationMillions": 6.7,
+      "domesticLeagueName": "SuperLiga",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 4,
+      "worldCupBestFinish": "Cuartos (Yugoslavia)",
+      "wikiNote": "Cuartos 1990 como Yugoslavia; talento en ligas top"
+    },
+    "CMR": {
+      "name": "Camerún",
+      "populationMillions": 28,
+      "domesticLeagueName": "Elite One",
+      "domesticLeagueTier": 4,
+      "climateHome": "tropical",
+      "worldCupAppearances": 9,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 1990; múltiples títulos AFCON"
+    },
+    "TUN": {
+      "name": "Túnez",
+      "populationMillions": 12,
+      "domesticLeagueName": "Ligue 1",
+      "domesticLeagueTier": 4,
+      "climateHome": "mediterráneo",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Primera selección africana en ganar un partido mundialista (1978)"
+    },
+    "COD": {
+      "name": "RD Congo",
+      "populationMillions": 102,
+      "domesticLeagueName": "Linafoot",
+      "domesticLeagueTier": 5,
+      "climateHome": "tropical",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Debut 1974 como Zaire; regreso 2026"
+    },
+    "UZB": {
+      "name": "Uzbekistán",
+      "populationMillions": 36,
+      "domesticLeagueName": "Super League",
+      "domesticLeagueTier": 4,
+      "climateHome": "continental",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Debut",
+      "wikiNote": "Primer mundial 2026; potencia emergente en Asia"
+    },
+    "QAT": {
+      "name": "Catar",
+      "populationMillions": 2.9,
+      "domesticLeagueName": "Qatar Stars League",
+      "domesticLeagueTier": 3,
+      "climateHome": "árido",
+      "worldCupAppearances": 3,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Anfitrión 2022; inversión fuerte en fútbol"
+    },
+    "IRQ": {
+      "name": "Irak",
+      "populationMillions": 45,
+      "domesticLeagueName": "Stars League",
+      "domesticLeagueTier": 4,
+      "climateHome": "árido",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Debut 1986; campeón Asia 2007"
+    },
+    "RSA": {
+      "name": "Sudáfrica",
+      "populationMillions": 61,
+      "domesticLeagueName": "Premier Soccer League",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 4,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Anfitrión 2010; campeón AFCON 1996, 2013"
+    },
+    "SAU": {
+      "name": "Arabia Saudita",
+      "populationMillions": 37,
+      "domesticLeagueName": "Saudi Pro League",
+      "domesticLeagueTier": 2,
+      "climateHome": "árido",
+      "worldCupAppearances": 7,
+      "worldCupBestFinish": "Octavos de final",
+      "wikiNote": "Octavos 1994; victoria histórica vs Argentina 2022"
+    },
+    "JOR": {
+      "name": "Jordania",
+      "populationMillions": 11,
+      "domesticLeagueName": "Jordan Pro League",
+      "domesticLeagueTier": 4,
+      "climateHome": "árido",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Debut",
+      "wikiNote": "Primer mundial 2026"
+    },
+    "BIH": {
+      "name": "Bosnia y Herzegovina",
+      "populationMillions": 3.2,
+      "domesticLeagueName": "Premier Liga",
+      "domesticLeagueTier": 4,
+      "climateHome": "continental",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Debut 2014"
+    },
+    "CPV": {
+      "name": "Cabo Verde",
+      "populationMillions": 0.6,
+      "domesticLeagueName": "Campeonato Nacional",
+      "domesticLeagueTier": 5,
+      "climateHome": "tropical",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Debut",
+      "wikiNote": "Primer mundial 2026; diáspora en ligas europeas"
+    },
+    "GHA": {
+      "name": "Ghana",
+      "populationMillions": 34,
+      "domesticLeagueName": "Premier League",
+      "domesticLeagueTier": 4,
+      "climateHome": "tropical",
+      "worldCupAppearances": 5,
+      "worldCupBestFinish": "Cuartos de final",
+      "wikiNote": "Cuartos 2010; histórico en Africa"
+    },
+    "CUW": {
+      "name": "Curaçao",
+      "populationMillions": 0.15,
+      "domesticLeagueName": "Prome Divishon",
+      "domesticLeagueTier": 5,
+      "climateHome": "tropical",
+      "worldCupAppearances": 1,
+      "worldCupBestFinish": "Debut",
+      "wikiNote": "Primer mundial 2026; clima caribeño; plantel en ligas europeas menores"
+    },
+    "HAI": {
+      "name": "Haití",
+      "populationMillions": 11.8,
+      "domesticLeagueName": "Ligue Haïtienne",
+      "domesticLeagueTier": 5,
+      "climateHome": "tropical",
+      "worldCupAppearances": 2,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Debut 1974; regreso 2026"
+    },
+    "NZL": {
+      "name": "Nueva Zelanda",
+      "populationMillions": 5.3,
+      "domesticLeagueName": "A-League / NZ Football",
+      "domesticLeagueTier": 3,
+      "climateHome": "templado",
+      "worldCupAppearances": 3,
+      "worldCupBestFinish": "Fase de grupos",
+      "wikiNote": "Invicto en 2010 (3 empates); Oceanía"
+    }
+  }
+}
