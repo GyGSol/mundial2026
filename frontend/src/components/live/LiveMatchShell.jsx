@@ -106,14 +106,15 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
     <dialog
       ref={dialogRef}
       className={cn(
-        'live-match-shell max-h-[95dvh] w-[min(100%,56rem)] overflow-hidden rounded-lg border border-border bg-card p-0 shadow-lg backdrop:bg-black/50',
-        'open:flex open:flex-col',
-        theaterMode && 'w-[min(100%,72rem)] max-w-[100vw]'
+        'live-match-shell z-[100] max-h-[min(95dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-0.5rem))]',
+        'w-[min(calc(100vw-1rem),56rem)] overflow-hidden rounded-lg border border-border bg-card p-0 shadow-lg backdrop:bg-black/55',
+        'open:fixed open:inset-0 open:m-auto open:flex open:flex-col',
+        theaterMode && 'w-[min(calc(100vw-0.5rem),72rem)]'
       )}
       onClose={handleClose}
       onCancel={handleClose}
     >
-      <Card className="flex max-h-[95dvh] flex-col border-0 shadow-none">
+      <Card className="flex min-h-0 max-h-[inherit] flex-col border-0 shadow-none">
         <CardHeader className="flex shrink-0 flex-row items-start justify-between gap-3 space-y-0 border-b border-border/60 pb-3">
           <div className="min-w-0 space-y-1">
             <CardTitle className="text-base md:text-lg">
@@ -142,8 +143,8 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
           >
             <div
               className={cn(
-                'sticky top-0 z-10 shrink-0 border-b border-border/60 bg-card p-3',
-                !theaterMode && 'max-h-[40vh] md:static md:max-h-none md:border-b-0 md:p-4',
+                'shrink-0 border-b border-border/60 bg-card p-3',
+                !theaterMode && 'md:static md:border-b-0 md:p-4',
                 theaterMode && 'w-full border-b-0 p-2 sm:p-3'
               )}
             >

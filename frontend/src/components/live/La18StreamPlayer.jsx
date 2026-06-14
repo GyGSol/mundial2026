@@ -300,35 +300,48 @@ export default function La18StreamPlayer({
       />
 
       {!isFullscreen ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-muted/20 p-2">
+        <div className="grid grid-cols-2 gap-2 rounded-md border border-border/60 bg-muted/20 p-2 sm:flex sm:flex-wrap sm:items-center">
           <Button
             type="button"
             size="sm"
             variant={theaterMode ? 'default' : 'outline'}
             onClick={toggleTheater}
             aria-pressed={theaterMode}
+            className="justify-center"
           >
             <MonitorPlay className="mr-1.5 size-4" aria-hidden />
             {theaterMode ? 'Salir de teatro' : 'Modo teatro'}
           </Button>
 
-          <Button type="button" size="sm" variant="outline" onClick={toggleFullscreen}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={toggleFullscreen}
+            className="justify-center"
+          >
             {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </Button>
 
           {!showFallback ? (
-            <Button type="button" size="sm" variant="outline" onClick={activateFallback}>
+            <Button type="button" size="sm" variant="outline" onClick={activateFallback} className="justify-center">
               Señal alternativa
             </Button>
           ) : (
-            <Button type="button" size="sm" variant="outline" onClick={retryPrimary}>
+            <Button type="button" size="sm" variant="outline" onClick={retryPrimary} className="justify-center">
               <RefreshCw className="mr-1.5 size-4" aria-hidden />
               Reintentar {USER_STREAM_BRAND}
             </Button>
           )}
 
           {openUrl ? (
-            <Button type="button" size="sm" variant="secondary" className="ml-auto gap-1.5" asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="col-span-2 justify-center gap-1.5 sm:col-span-1 sm:ml-auto"
+              asChild
+            >
               <a href={openUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4 shrink-0" aria-hidden />
                 {iosDevice ? 'Abrir en Safari' : `Abrir ${USER_STREAM_BRAND}`}
@@ -337,7 +350,7 @@ export default function La18StreamPlayer({
           ) : null}
 
           {iosDevice ? (
-            <Button type="button" size="sm" variant="outline" className="gap-1.5" asChild>
+            <Button type="button" size="sm" variant="outline" className="col-span-2 justify-center gap-1.5 sm:col-span-1" asChild>
               <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4 shrink-0" aria-hidden />
                 Más en {USER_STREAM_BRAND}
@@ -349,7 +362,7 @@ export default function La18StreamPlayer({
             type="button"
             size="sm"
             variant="ghost"
-            className="text-xs text-muted-foreground"
+            className="col-span-2 justify-center text-xs text-muted-foreground sm:col-span-1"
             onClick={() => setShowAccessNotice(true)}
           >
             ¿Se cortó la señal?
