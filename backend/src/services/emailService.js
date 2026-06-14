@@ -10,6 +10,7 @@ function createTransporter() {
     host: env.smtpHost,
     port: env.smtpPort,
     secure: env.smtpPort === 465,
+    requireTLS: env.smtpPort === 587,
     auth: {
       user: env.smtpUser,
       pass: env.smtpPass,

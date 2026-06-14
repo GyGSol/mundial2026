@@ -60,7 +60,7 @@ export const env = {
   smtpHost: process.env.SMTP_HOST || '',
   smtpPort: Number(process.env.SMTP_PORT || 587),
   smtpUser: process.env.SMTP_USER || '',
-  smtpPass: process.env.SMTP_PASS || '',
+  smtpPass: (process.env.SMTP_PASS || '').replace(/\s+/g, ''),
   smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || '',
   appPublicName: process.env.APP_PUBLIC_NAME || 'Mundial 2026',
 };

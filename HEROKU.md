@@ -209,7 +209,9 @@ heroku config:set \
   -a mundial2026-pred
 ```
 
-Reemplazá `SMTP_PASS` por la contraseña de aplicación real (sin comillas especiales raras). Verificá con `heroku config:get SMTP_PASS -a mundial2026-pred` que no quede el placeholder `contraseña-de-aplicacion`.
+Reemplazá `SMTP_PASS` por la contraseña de aplicación real (16 caracteres, sin la contraseña normal de Gmail). Podés pegarla con espacios (`abcd efgh ijkl mnop`); la app los quita sola.
+
+Si en logs aparece `534 Application-specific password required`, estás usando la clave de la cuenta y no una **contraseña de aplicación**. Si aparece `535 BadCredentials`, la clave de aplicación es incorrecta o expiró.
 
 **Local sin SMTP:** si no configurás `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS`, el backend loguea la clave provisoria en consola al pedir reset (útil para desarrollo).
 
