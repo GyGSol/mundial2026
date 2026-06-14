@@ -40,9 +40,14 @@ export default function La18StreamPlayer({
 
   const openUrl = primary?.pageUrl || primary?.url;
   const iframeSrc = primary?.pageUrl || primary?.url;
-  const showFallback = useFallback || iframeFailed;
-  const useDirectHls = Boolean(primary?.hlsUrl) && !directHlsFailed && !showFallback;
-  const showEmbedded = !useDirectHls && !showFallback && iframeSrc;
+  const hasHls = Boolean(primary?.hlsUrl);
+  const showFallback =
+    useFallback ||
+    (directHlsFailed && iframeFailed) ||
+    (iframeFailed && !hasHls);
+  const useDirectHls =
+    hasHls && !directHlsFailed && !useFallback && (iosDevice ? !iframeFailed : iframeFailed);
+  const showEmbedded = Boolean(iframeSrc) && !useFallback && !useDirectHls && !iframeFailed;
 
   useEffect(() => {
     setIframeLoaded(false);
@@ -62,19 +67,26 @@ export default function La18StreamPlayer({
   }, [primary?.url, primary?.hlsUrl, fallback?.url]);
 
   useEffect(() => {
-    if (!iframeSrc || showFallback || useDirectHls) return undefined;
+    if (!showFallback || !directHlsFailed || !iframeFailed) return;
+    openAccessNotice();
+  }, [showFallback, directHlsFailed, iframeFailed, openAccessNotice]);
+
+  useEffect(() => {
+    if (showFallback || useDirectHls || !iframeSrc) return;
 
     const timeoutMs = iosDevice ? IOS_LOAD_TIMEOUT_MS : LOAD_TIMEOUT_MS;
     const timer = window.setTimeout(() => {
       if (!iframeLoaded) {
         setIframeFailed(true);
-        setStatusMessage('Buscando señal alternativa…');
-        openAccessNotice();
+        if (!hasHls) {
+          setStatusMessage('Buscando señal alternativa…');
+          openAccessNotice();
+        }
       }
     }, timeoutMs);
 
     return () => window.clearTimeout(timer);
-  }, [iframeSrc, iframeLoaded, showFallback, useDirectHls, iosDevice, openAccessNotice]);
+  }, [iframeSrc, iframeLoaded, showFallback, useDirectHls, iosDevice, openAccessNotice, hasHls]);
 
   const toggleFullscreen = useCallback(async () => {
     const node = containerRef.current;
@@ -115,7 +127,11 @@ export default function La18StreamPlayer({
       return;
     }
     setDirectHlsFailed(true);
-    setStatusMessage('Probando reproductor La18HD…');
+    if (iosDevice && iframeSrc) {
+      setStatusMessage('Probando reproductor La18HD…');
+      return;
+    }
+    setStatusMessage('Buscando señal alternativa…');
     openAccessNotice();
   };
 
@@ -169,8 +185,10 @@ export default function La18StreamPlayer({
             onLoad={() => setIframeLoaded(true)}
             onError={() => {
               setIframeFailed(true);
-              setStatusMessage('Buscando señal alternativa…');
-              openAccessNotice();
+              if (!hasHls) {
+                setStatusMessage('Buscando señal alternativa…');
+                openAccessNotice();
+              }
             }}
           />
         ) : null}
