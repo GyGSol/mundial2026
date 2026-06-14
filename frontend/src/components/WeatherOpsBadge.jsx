@@ -68,9 +68,10 @@ export default function WeatherOpsBadge({ weatherOps, weatherRisk, className }) 
 }
 
 export function LiveScheduleAlert({ liveScheduleContext, className }) {
-  if (!liveScheduleContext?.integrityWarning && !liveScheduleContext?.hasSchedulePressure) {
-    return null;
-  }
+  const integrityWarning = liveScheduleContext?.integrityWarning;
+  const concurrentLive = (liveScheduleContext?.concurrentLiveCount ?? 0) > 1;
+
+  if (!integrityWarning && !concurrentLive) return null;
 
   return (
     <div
@@ -79,10 +80,10 @@ export function LiveScheduleAlert({ liveScheduleContext, className }) {
         className
       )}
     >
-      {liveScheduleContext.integrityWarning ? (
-        <p className="font-medium">{liveScheduleContext.integrityWarning}</p>
+      {integrityWarning ? (
+        <p className="font-medium">{integrityWarning}</p>
       ) : null}
-      {(liveScheduleContext.concurrentLiveCount ?? 0) > 1 ? (
+      {concurrentLive ? (
         <p className="text-muted-foreground">
           {liveScheduleContext.concurrentLiveCount} partidos en vivo simultáneos
           {(liveScheduleContext.weatherDelayedLiveCount ?? 0) > 0

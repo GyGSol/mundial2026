@@ -109,10 +109,7 @@ export function buildLiveScheduleContext(targetMatch, allMatches = []) {
         }
       : null,
     integrityWarning,
-    hasSchedulePressure:
-      concurrentLiveCount > 1 ||
-      overlappingKickoffs.length > 0 ||
-      Boolean(integrityWarning),
+    hasSchedulePressure: Boolean(integrityWarning) || concurrentLiveCount > 1,
   };
 }
 

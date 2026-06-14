@@ -598,12 +598,22 @@ function ResultMatchCard({ match, variant = 'live' }) {
   const isLive = variant === 'live';
   const weatherLabel = getWeatherOpsLabel(match.weatherOps);
   const showLiveBadge = isLive && !weatherLabel;
+  const showWeatherLayer =
+    isLive ||
+    weatherLabel ||
+    match.weatherRisk?.riskLevel === 'stop' ||
+    match.weatherRisk?.riskLevel === 'high' ||
+    match.liveScheduleContext?.integrityWarning;
 
   return (
     <Card className={liveCardClassName(isArgentina)}>
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
-        <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
-        <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
+        {showWeatherLayer ? (
+          <>
+            <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+            <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
+          </>
+        ) : null}
         {showLiveBadge ? (
           <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
             En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
@@ -661,6 +671,12 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
   const isLive = variant === 'live';
   const weatherLabel = getWeatherOpsLabel(match.weatherOps);
   const showLiveBadge = isLive && !weatherLabel;
+  const showWeatherLayer =
+    isLive ||
+    weatherLabel ||
+    match.weatherRisk?.riskLevel === 'stop' ||
+    match.weatherRisk?.riskLevel === 'high' ||
+    match.liveScheduleContext?.integrityWarning;
   const hasTimeline = (match.matchTimeline?.length ?? 0) > 0;
 
   if (!hasTimeline) {
@@ -670,8 +686,12 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
   return (
     <Card className={liveCardClassName(isArgentina)}>
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
-        <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
-        <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
+        {showWeatherLayer ? (
+          <>
+            <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+            <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
+          </>
+        ) : null}
         {showLiveBadge ? (
           <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
             En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
