@@ -28,6 +28,8 @@ function InsightScore({ homeGoals, awayGoals }) {
   );
 }
 
+export { InsightScore };
+
 function ChatMessage({ role, content, createdAt }) {
   const isUser = role === 'user';
   return (
@@ -72,6 +74,7 @@ export default function AiConsultationChat({
   onQuickPrompt,
   onClearConversation,
   clearingConversation = false,
+  hideInsightScore = false,
 }) {
   const hasMessages = (thread?.messages?.length ?? 0) > 0;
   const insight = thread?.initialInsight;
@@ -125,7 +128,9 @@ export default function AiConsultationChat({
 
           {insight ? (
             <div className="flex flex-col gap-3">
-              <InsightScore homeGoals={insight.homeGoals} awayGoals={insight.awayGoals} />
+              {!hideInsightScore ? (
+                <InsightScore homeGoals={insight.homeGoals} awayGoals={insight.awayGoals} />
+              ) : null}
               {insight.reasoning ? (
                 <MarkdownContent className="text-sm">{insight.reasoning}</MarkdownContent>
               ) : null}

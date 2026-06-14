@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { aiConsultationsApi, matchesApi } from '../api/client.js';
-import AiConsultationChat from '../components/AiConsultationChat.jsx';
+import AiConsultationChat, { InsightScore } from '../components/AiConsultationChat.jsx';
 import MatchVenueWeather from '../components/MatchVenueWeather.jsx';
 import { GROUP_LETTERS } from '../lib/groupColors.js';
 import { cn } from '@/lib/utils';
@@ -413,6 +413,12 @@ export default function AiPredictionsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
+            {topicType === 'match' && thread?.initialInsight ? (
+              <InsightScore
+                homeGoals={thread.initialInsight.homeGoals}
+                awayGoals={thread.initialInsight.awayGoals}
+              />
+            ) : null}
             {topicType === 'match' && matchVenue ? (
               <MatchVenueWeather matchVenue={matchVenue} />
             ) : null}
@@ -430,6 +436,7 @@ export default function AiPredictionsPage() {
               onQuickPrompt={handleQuickPrompt}
               onClearConversation={handleClearConversation}
               clearingConversation={clearingConversation}
+              hideInsightScore={topicType === 'match' && Boolean(thread?.initialInsight)}
             />
           </CardContent>
         </Card>
