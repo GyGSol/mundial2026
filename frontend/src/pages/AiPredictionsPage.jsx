@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { aiConsultationsApi, matchesApi } from '../api/client.js';
 import AiConsultationChat, { InsightScore } from '../components/AiConsultationChat.jsx';
+import ClearConversationDialog from '../components/ClearConversationDialog.jsx';
 import MatchVenueWeather from '../components/MatchVenueWeather.jsx';
 import { GROUP_LETTERS } from '../lib/groupColors.js';
 import { cn } from '@/lib/utils';
@@ -78,6 +79,7 @@ export default function AiPredictionsPage() {
   const [loading, setLoading] = useState(false);
   const [asking, setAsking] = useState(false);
   const [clearingConversation, setClearingConversation] = useState(false);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [error, setError] = useState('');
   const [question, setQuestion] = useState('');
 
@@ -245,15 +247,15 @@ export default function AiPredictionsPage() {
     await submitQuestion(prompt);
   };
 
-  const handleClearConversation = async () => {
+  const handleOpenClearDialog = () => {
+    if (clearingConversation || asking) return;
+    if ((thread?.messages?.length ?? 0) === 0) return;
+    setClearDialogOpen(true);
+  };
+
+  const handleConfirmClearConversation = async () => {
     const resolvedKey = topicType === 'round_of_16' ? 'round_of_16' : topicKey;
     if (!resolvedKey || clearingConversation || asking) return;
-    if ((thread?.messages?.length ?? 0) === 0) return;
-
-    const confirmed = window.confirm(
-      '¿Borrar las preguntas y respuestas de esta conversación? La predicción de marcador guardada se mantiene.'
-    );
-    if (!confirmed) return;
 
     setClearingConversation(true);
     setError('');
@@ -264,6 +266,7 @@ export default function AiPredictionsPage() {
       });
       setThread(data.thread);
       setMatchVenue(data.matchVenue ?? null);
+      setClearDialogOpen(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -434,13 +437,23 @@ export default function AiPredictionsPage() {
               showInsightAction={topicType === 'match'}
               quickPrompts={quickPrompts}
               onQuickPrompt={handleQuickPrompt}
-              onClearConversation={handleClearConversation}
+              onClearConversation={handleOpenClearDialog}
               clearingConversation={clearingConversation}
               hideInsightScore={topicType === 'match' && Boolean(thread?.initialInsight)}
             />
           </CardContent>
         </Card>
       </div>
+
+      <ClearConversationDialog
+        open={clearDialogOpen}
+        onOpenChange={setClearDialogOpen}
+        topicTitle={threadTitle}
+        messageCount={thread?.messages?.length ?? 0}
+        hasSavedPrediction={Boolean(thread?.initialInsight)}
+        onConfirm={handleConfirmClearConversation}
+        confirming={clearingConversation}
+      />
     </div>
   );
 }
