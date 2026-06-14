@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
 import { formatMatchDate } from '@/lib/dateFormat';
+import { isMatchStreamWarmup } from '@/lib/streamWatch.js';
 import TeamFlag from '../TeamFlag.jsx';
 import LiveMatchPanel from './LiveMatchPanel.jsx';
 
@@ -98,6 +99,8 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
 
   if (!match) return null;
 
+  const isWarmup = isMatchStreamWarmup(match);
+
   return (
     <dialog
       ref={dialogRef}
@@ -116,7 +119,11 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
               {homeName} vs {awayName}
             </CardTitle>
             <CardDescription>
-              {theaterMode ? 'Modo teatro · La18HD' : 'Transmisión en vivo'}
+              {theaterMode
+                ? 'Modo teatro · La18HD'
+                : isWarmup
+                  ? 'Calentamiento · La18HD'
+                  : 'Transmisión en vivo'}
             </CardDescription>
           </div>
           <Button type="button" size="icon" variant="ghost" onClick={handleClose} aria-label="Cerrar">

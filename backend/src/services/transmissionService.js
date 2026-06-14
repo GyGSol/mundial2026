@@ -5,6 +5,7 @@ import {
   enrichMatchesLight,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
+import { canWatchConfiguredStream } from './streamWatchEligibility.js';
 
 export const TRANSMISSIONS_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
@@ -34,7 +35,10 @@ function attachStreamMeta(match, mappingById) {
   const configured = Boolean(mapping?.enabled && mapping?.embedUrl);
   return {
     configured,
-    canWatch: env.liveStreamEnabled && match.status === 'live' && configured,
+    canWatch: canWatchConfiguredStream(match, {
+      liveStreamEnabled: env.liveStreamEnabled,
+      configured,
+    }),
     la18EventId: mapping?.la18EventId || null,
     pageUrl: mapping?.la18PageUrl || null,
     updatedAt: mapping?.updatedAt || null,

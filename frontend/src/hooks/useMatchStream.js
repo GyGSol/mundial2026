@@ -22,8 +22,8 @@ export function useMatchStream(matchId, { enabled = true } = {}) {
         setConfig(data);
         if (!data.available) {
           setError(
-            data.reason === 'not_live'
-              ? 'El partido ya no está en vivo.'
+            data.reason === 'not_available' || data.reason === 'not_live'
+              ? 'La transmisión todavía no está disponible.'
               : data.reason === 'no_la18_mapping'
                 ? 'No hay transmisión La18HD configurada para este partido.'
                 : data.reason === 'disabled'

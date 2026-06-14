@@ -3,6 +3,7 @@ import { StreamLinkMapping } from '../models/StreamLinkMapping.js';
 import { env } from '../config/env.js';
 import { resolveStreamUrl } from '../data/liveStreamSchedule.js';
 import { fetchLa18HlsUrl } from './la18hdScraper.js';
+import { isStreamWatchEligible } from './streamWatchEligibility.js';
 
 function buildFallbackConfig(matchExternalId) {
   const fuboUrl = resolveStreamUrl('fubo-youtube', matchExternalId);
@@ -35,10 +36,10 @@ export async function getMatchStreamConfig(matchExternalId, _userId) {
     return { available: false, reason: 'not_found' };
   }
 
-  if (match.status !== 'live') {
+  if (!isStreamWatchEligible(match)) {
     return {
       available: false,
-      reason: 'not_live',
+      reason: 'not_available',
       matchId: match.externalId,
       status: match.status,
     };

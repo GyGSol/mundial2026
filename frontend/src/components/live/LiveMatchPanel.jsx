@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext.jsx';
 import { useMatchStream } from '@/hooks/useMatchStream.js';
+import { canShowMatchStream, isMatchStreamWarmup } from '@/lib/streamWatch.js';
 import La18StreamPlayer from './La18StreamPlayer.jsx';
 
 export default function LiveMatchPanel({
@@ -13,14 +14,15 @@ export default function LiveMatchPanel({
   onTheaterModeChange,
 }) {
   const matchId = match?.externalId ?? match?.id;
-  const isLive = match?.status === 'live';
+  const canWatch = canShowMatchStream(match);
+  const isWarmup = isMatchStreamWarmup(match);
   const { isAuthenticated } = useAuth();
 
   const { config, loading, error, reload } = useMatchStream(matchId, {
-    enabled: isLive && Boolean(matchId) && isAuthenticated,
+    enabled: canWatch && Boolean(matchId) && isAuthenticated,
   });
 
-  if (!isLive) return null;
+  if (!canWatch) return null;
 
   if (!isAuthenticated) {
     return (
@@ -37,12 +39,13 @@ export default function LiveMatchPanel({
     <div className={cn('live-match-panel flex w-full flex-col gap-3', className)}>
       <p className="text-[11px] leading-snug text-muted-foreground">
         Transmisión La18HD · alternativa independiente de la programación oficial.
+        {isWarmup ? ' Calentamiento previo al partido.' : null}
       </p>
 
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Buscando señal en vivo…
+          {isWarmup ? 'Buscando señal de calentamiento…' : 'Buscando señal en vivo…'}
         </div>
       ) : null}
 

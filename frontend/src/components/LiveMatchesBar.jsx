@@ -833,6 +833,15 @@ function NextMatchCard({ match }) {
             {match.group ? `Grupo ${match.group} · ` : ''}
             {formatMatchDate(match)}
           </span>
+          {!predictionsOpen ? (
+            <div
+              className="w-full"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <LiveMatchTrigger match={match} variant="outline" className="w-full sm:w-auto" />
+            </div>
+          ) : null}
           <BroadcastBadges broadcasters={match.broadcasters} size="md" className="w-full" />
         </CardContent>
       </Card>

@@ -39,6 +39,13 @@ function formatDayLabel(dateKey) {
 
 function StreamStatusBadge({ match }) {
   const { stream, status } = match;
+  if (stream?.canWatch && status === 'upcoming') {
+    return (
+      <Badge variant="outline" className="border-amber-500/35 bg-amber-500/10 text-amber-100">
+        Calentamiento
+      </Badge>
+    );
+  }
   if (status === 'live' && stream?.canWatch) {
     return (
       <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-100">
@@ -83,7 +90,10 @@ function TransmissionMatchCard({ match }) {
     <Card
       className={cn(
         'transition-colors',
-        match.status === 'live' && 'border-emerald-500/30 ring-1 ring-emerald-500/20'
+        match.status === 'live' && 'border-emerald-500/30 ring-1 ring-emerald-500/20',
+        match.status === 'upcoming' &&
+          match.stream?.canWatch &&
+          'border-amber-500/30 ring-1 ring-amber-500/20'
       )}
     >
       <CardHeader className="space-y-2 pb-3">
@@ -111,8 +121,13 @@ function TransmissionMatchCard({ match }) {
           <TeamHeader team={match.awayTeam} slotLabel={match.awayTeamSlotLabel} />
         </div>
 
-        {match.status === 'live' ? (
+        {match.stream?.canWatch ? (
           <div className="flex flex-col gap-2">
+            {match.status === 'upcoming' ? (
+              <p className="text-sm text-muted-foreground">
+                Predicciones cerradas · podés ver el calentamiento antes del kickoff.
+              </p>
+            ) : null}
             <div className="flex flex-wrap items-center gap-2">
               {match.stream?.canWatch && iosDevice && streamPageUrl ? (
                 <Button size="sm" className="gap-1.5" asChild>
@@ -122,9 +137,16 @@ function TransmissionMatchCard({ match }) {
                   </a>
                 </Button>
               ) : null}
-              {match.stream?.canWatch ? (
-                <LiveMatchTrigger match={match} label={iosDevice ? 'Ver en la app' : 'Ver transmisión'} />
-              ) : null}
+              <LiveMatchTrigger
+                match={match}
+                label={
+                  match.status === 'upcoming'
+                    ? 'Ver calentamiento'
+                    : iosDevice
+                      ? 'Ver en la app'
+                      : 'Ver transmisión'
+                }
+              />
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
                 <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="size-4 shrink-0" aria-hidden />
@@ -132,7 +154,7 @@ function TransmissionMatchCard({ match }) {
                 </a>
               </Button>
             </div>
-            {!match.stream?.configured ? (
+            {match.status === 'live' && !match.stream?.configured ? (
               <p className="text-sm text-muted-foreground">
                 Todavía no hay señal configurada para este partido. Podés buscarlo en{' '}
                 <a
@@ -149,7 +171,14 @@ function TransmissionMatchCard({ match }) {
           </div>
         ) : null}
 
-        {match.status === 'upcoming' && match.stream?.configured ? (
+        {match.status === 'upcoming' && match.stream?.configured && !match.stream?.canWatch ? (
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <TvMinimalPlay className="size-4 shrink-0" aria-hidden />
+            Cuando cierren las predicciones podrás ver el calentamiento acá.
+          </p>
+        ) : null}
+
+        {match.status === 'upcoming' && !match.stream?.configured ? (
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <TvMinimalPlay className="size-4 shrink-0" aria-hidden />
             Cuando empiece el partido podrás ver la transmisión acá.

@@ -40,12 +40,49 @@ describe('streamLinkService', () => {
     expect(result.reason).toBe('not_found');
   });
 
-  it('rechaza partido que no está en vivo', async () => {
+  it('rechaza partido upcoming con predicciones abiertas', async () => {
     Match.findOne.mockReturnValue({
-      lean: () => Promise.resolve({ externalId: '19', status: 'upcoming' }),
+      lean: () =>
+        Promise.resolve({
+          externalId: '19',
+          status: 'upcoming',
+          kickoffAt: new Date(Date.now() + 3 * 60 * 60 * 1000),
+        }),
     });
     const result = await getMatchStreamConfig('19');
-    expect(result).toMatchObject({ available: false, reason: 'not_live', status: 'upcoming' });
+    expect(result).toMatchObject({ available: false, reason: 'not_available', status: 'upcoming' });
+  });
+
+  it('permite calentamiento en upcoming con predicciones cerradas', async () => {
+    Match.findOne.mockReturnValue({
+      lean: () =>
+        Promise.resolve({
+          externalId: '19',
+          status: 'upcoming',
+          kickoffAt: new Date(Date.now() + 30 * 60 * 1000),
+        }),
+    });
+    StreamLinkMapping.findOne.mockReturnValue({
+      lean: () =>
+        Promise.resolve({
+          matchExternalId: '19',
+          la18PageUrl: 'https://la18hd.com/evento/arg-bra',
+          embedUrl: 'https://la18hd.com/evento/arg-bra',
+          enabled: true,
+        }),
+    });
+
+    const result = await getMatchStreamConfig('19');
+    expect(result.available).toBe(true);
+    expect(result.status).toBe('upcoming');
+  });
+
+  it('rechaza partido que no está en vivo ni en calentamiento', async () => {
+    Match.findOne.mockReturnValue({
+      lean: () => Promise.resolve({ externalId: '19', status: 'finished' }),
+    });
+    const result = await getMatchStreamConfig('19');
+    expect(result).toMatchObject({ available: false, reason: 'not_available', status: 'finished' });
   });
 
   it('rechaza sin mapping La18', async () => {
