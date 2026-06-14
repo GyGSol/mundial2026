@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { aiConsultationsApi, matchesApi } from '../api/client.js';
 import AiConsultationChat from '../components/AiConsultationChat.jsx';
+import MatchVenueWeather from '../components/MatchVenueWeather.jsx';
 import { GROUP_LETTERS } from '../lib/groupColors.js';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button.jsx';
@@ -70,6 +71,7 @@ export default function AiPredictionsPage() {
   const [topicType, setTopicType] = useState(initial.topicType);
   const [topicKey, setTopicKey] = useState(initial.topicKey);
   const [thread, setThread] = useState(null);
+  const [matchVenue, setMatchVenue] = useState(null);
   const [threads, setThreads] = useState([]);
   const [matches, setMatches] = useState([]);
   const [aiAvailable, setAiAvailable] = useState(true);
@@ -109,6 +111,7 @@ export default function AiPredictionsPage() {
   const loadThread = useCallback(async (type, key) => {
     if (!key && type !== 'round_of_16') {
       setThread(null);
+      setMatchVenue(null);
       return;
     }
     const resolvedKey = type === 'round_of_16' ? 'round_of_16' : key;
@@ -117,6 +120,7 @@ export default function AiPredictionsPage() {
     try {
       const data = await aiConsultationsApi.getThread(type, resolvedKey);
       setThread(data.thread);
+      setMatchVenue(data.matchVenue ?? null);
       setAiAvailable(data.aiAvailable !== false);
     } catch (err) {
       setError(err.message);
@@ -194,6 +198,7 @@ export default function AiPredictionsPage() {
     try {
       const data = await aiConsultationsApi.generateInsight(topicKey);
       setThread(data.thread);
+      setMatchVenue(data.matchVenue ?? null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -221,6 +226,7 @@ export default function AiPredictionsPage() {
         question: trimmed,
       });
       setThread(data.thread);
+      setMatchVenue(data.matchVenue ?? null);
     } catch (err) {
       setError(err.message);
       setQuestion(trimmed);
@@ -379,7 +385,10 @@ export default function AiPredictionsPage() {
               Historial guardado por tema · la IA usa conversaciones anteriores
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
+            {topicType === 'match' && matchVenue ? (
+              <MatchVenueWeather matchVenue={matchVenue} />
+            ) : null}
             <AiConsultationChat
               thread={thread}
               loading={loading}

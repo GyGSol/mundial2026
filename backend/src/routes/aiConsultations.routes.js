@@ -30,8 +30,8 @@ router.get('/thread', async (req, res, next) => {
       return res.status(400).json({ error: 'Tema de consulta inválido' });
     }
 
-    const thread = await getConsultationThread(req.user._id, topicType, topicKey);
-    res.json({ thread, aiAvailable: hasAiProvider() });
+    const result = await getConsultationThread(req.user._id, topicType, topicKey);
+    res.json({ ...result, aiAvailable: hasAiProvider() });
   } catch (err) {
     next(err);
   }
@@ -48,8 +48,8 @@ router.post('/insight', async (req, res, next) => {
       return res.status(400).json({ error: 'Partido requerido' });
     }
 
-    const thread = await generateMatchInsight(req.user._id, matchId);
-    res.json({ thread });
+    const result = await generateMatchInsight(req.user._id, matchId);
+    res.json(result);
   } catch (err) {
     if (err.message === 'Partido no encontrado') {
       return res.status(404).json({ error: err.message });

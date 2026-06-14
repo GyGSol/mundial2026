@@ -15,6 +15,7 @@ import {
   isOfficialKnockoutMatch,
 } from './predictedMatchContextService.js';
 import { notifyMatchesUpdated } from './websocketService.js';
+import { getVenueWeatherForStadium, formatWeatherForPrompt } from './weatherService.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -32,7 +33,8 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - Usá ranking FIFA, resultados previos del torneo 2026, poder ofensivo/defensivo, historial en Mundiales y enfrentamientos directos del contexto cuando estén disponibles.
 - Usá nationContext: historial Wikipedia (wikiRecords, finalHighlights), población, liga doméstica, talentPoolIndex y factores anímicos (morale).
 - Usá squadAnalysis: titulares probables, lesiones, dudas, suspendidos y riesgo de tarjetas.
-- Usá positionMatchups: compará GK/DEF/MID/FWD y su edge (home/away/even) para ponderar el marcador.`;
+- Usá positionMatchups: compará GK/DEF/MID/FWD y su edge (home/away/even) para ponderar el marcador.
+- Usá venue.weather cuando esté disponible: clima actual en la sede y pronóstico para el día y hora local del kickoff.`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;
@@ -74,6 +76,18 @@ export function buildVenueContextForPrompt(match, stadium) {
       'Estimar condiciones ambientales típicas (temperatura, humedad, altitud) según ciudad y horario local en junio-julio 2026.',
       'Considerar viaje y aclimatación de ambos equipos respecto a la sede del partido, no la etiqueta local/visitante.',
     ],
+  };
+}
+
+export async function enrichVenueWithWeather(venue, match, stadium, { fetchImpl = fetch } = {}) {
+  if (!venue) return venue;
+  const weatherRaw = await getVenueWeatherForStadium(stadium, {
+    kickoffAt: match?.kickoffAt,
+    fetchImpl,
+  });
+  return {
+    ...venue,
+    weather: formatWeatherForPrompt(weatherRaw),
   };
 }
 
@@ -243,7 +257,7 @@ export async function buildPromptContext(match, aiUserId) {
     teamById,
   });
 
-  const venue = buildVenueContextForPrompt(match, stadium);
+  const venue = await enrichVenueWithWeather(buildVenueContextForPrompt(match, stadium), match, stadium);
   const enriched = await buildEnrichedMatchContext({
     homeTeam: homeForAnalysis,
     awayTeam: awayForAnalysis,
@@ -283,7 +297,7 @@ function buildAiPredictionPrompt(context) {
 
 ${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-En el campo "reasoning", incluí sede/estadio/clima, ranking FIFA, historial wiki, población/liga, lesiones y titulares probables, duelos por puesto (positionMatchups) y factores anímicos cuando sean relevantes. No uses "localía" en el sentido de club. En "reasoning" podés usar markdown ligero (negritas, listas).
+En el campo "reasoning", incluí sede/estadio, clima actual y pronóstico del kickoff (venue.weather), ranking FIFA, historial wiki, población/liga, lesiones y titulares probables, duelos por puesto (positionMatchups) y factores anímicos cuando sean relevantes. No uses "localía" en el sentido de club. En "reasoning" podés usar markdown ligero (negritas, listas).
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown fuera del campo reasoning):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<explicación en español; markdown ligero permitido>"}

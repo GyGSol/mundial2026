@@ -1,4 +1,5 @@
 import { Match } from '../models/Match.js';
+import { Stadium } from '../models/Stadium.js';
 import { Team } from '../models/Team.js';
 import { AiConsultation } from '../models/AiConsultation.js';
 import { GROUP_LETTERS } from '../services/simulationTournamentService.js';
@@ -7,12 +8,20 @@ import {
   aiModelForScoreSource,
   AI_QUESTION_MAX_LEN,
   buildPromptContext,
+  buildVenueContextForPrompt,
   callAiForScore,
   callAiForText,
+  enrichVenueWithWeather,
   formatMatchAiInsight,
   hasAiProvider,
   WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
 } from './aiPredictionService.js';
+import { formatStadiumForClient } from './stadiumPayload.js';
+import {
+  getVenueWeatherForStadium,
+  formatWeatherForPrompt,
+  formatWeatherForClient,
+} from './weatherService.js';
 
 const AI_HISTORY_FOR_PROMPT = 20;
 const AI_MESSAGES_STORED_MAX = 80;
@@ -101,6 +110,31 @@ export function formatThreadResponse(doc) {
   };
 }
 
+export async function buildMatchVenueContext(matchId, { fetchImpl = fetch } = {}) {
+  const match = await Match.findById(matchId).lean();
+  if (!match) return null;
+
+  const stadium = match.stadiumId
+    ? await Stadium.findOne({ externalId: match.stadiumId }).lean()
+    : null;
+
+  const weatherRaw = await getVenueWeatherForStadium(stadium, {
+    kickoffAt: match.kickoffAt,
+    fetchImpl,
+  });
+  const venue = buildVenueContextForPrompt(match, stadium);
+
+  return {
+    kickoffAt: match.kickoffAt?.toISOString?.() ?? match.kickoffAt ?? null,
+    stadium: formatStadiumForClient(stadium),
+    venue: {
+      ...venue,
+      weather: formatWeatherForPrompt(weatherRaw),
+    },
+    weather: formatWeatherForClient(weatherRaw),
+  };
+}
+
 export async function getConsultationThread(userId, topicType, topicKey) {
   if (!isValidTopic(topicType, topicKey)) {
     throw new Error('Tema de consulta inválido');
@@ -108,7 +142,12 @@ export async function getConsultationThread(userId, topicType, topicKey) {
 
   const key = normalizeTopicKey(topicType, topicKey);
   const thread = await AiConsultation.findOne({ userId, topicType, topicKey: key });
-  return formatThreadResponse(thread);
+  const matchVenue =
+    topicType === 'match' ? await buildMatchVenueContext(key) : null;
+  return {
+    thread: formatThreadResponse(thread),
+    matchVenue,
+  };
 }
 
 export async function listConsultationThreads(userId, { limit = 30 } = {}) {
@@ -228,7 +267,7 @@ function topicInstructions(topicType) {
   if (topicType === 'match') {
     return `${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-Analizá el partido según el contexto, la sede del estadio y las predicciones del usuario. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
+Analizá el partido según el contexto, la sede del estadio, el clima (venue.weather) y las predicciones del usuario. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
   }
   if (topicType === 'group') {
     return 'Proyectá resultados del grupo completo según las predicciones del usuario y el fixture restante. Podés estimar la tabla final y quién clasifica.';
@@ -307,7 +346,11 @@ export async function generateMatchInsight(userId, matchId, { fetchImpl = fetch 
   thread.messages = trimMessages(thread.messages);
   await thread.save();
 
-  return formatThreadResponse(thread);
+  const matchVenue = await buildMatchVenueContext(matchId, { fetchImpl });
+  return {
+    thread: formatThreadResponse(thread),
+    matchVenue,
+  };
 }
 
 export async function askConsultation(
@@ -344,8 +387,11 @@ export async function askConsultation(
   });
 
   const updated = await AiConsultation.findById(thread._id);
+  const matchVenue =
+    topicType === 'match' ? await buildMatchVenueContext(key, { fetchImpl }) : null;
   return {
     thread: formatThreadResponse(updated),
+    matchVenue,
     reply: {
       answer: result.text,
       source: result.source,
