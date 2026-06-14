@@ -8,9 +8,27 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 
+function readNotificationPermission() {
+  if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+  return Notification.permission;
+}
+
+async function hasActivePushSubscription() {
+  if (!('serviceWorker' in navigator)) return false;
+  try {
+    const registration = await navigator.serviceWorker.getRegistration('/push-sw.js');
+    if (!registration) return false;
+    const subscription = await registration.pushManager.getSubscription();
+    return Boolean(subscription);
+  } catch {
+    return false;
+  }
+}
+
 export function usePushNotifications({ enabled = true } = {}) {
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [permission, setPermission] = useState('unsupported');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,18 +40,43 @@ export function usePushNotifications({ enabled = true } = {}) {
       'PushManager' in window &&
       'Notification' in window;
     setSupported(ok);
+    if (!ok) {
+      setPermission('unsupported');
+      return;
+    }
+
+    const currentPermission = readNotificationPermission();
+    setPermission(currentPermission);
+
+    if (currentPermission !== 'granted') return;
+
+    let cancelled = false;
+    hasActivePushSubscription().then((active) => {
+      if (!cancelled && active) setSubscribed(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [enabled]);
 
   const subscribe = useCallback(async () => {
     if (!supported) return false;
 
+    const currentPermission = readNotificationPermission();
+    if (currentPermission === 'denied') {
+      setPermission('denied');
+      setError('');
+      return false;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        setError('Permiso de notificaciones denegado.');
+      const nextPermission = await Notification.requestPermission();
+      setPermission(nextPermission);
+      if (nextPermission !== 'granted') {
+        setError('');
         return false;
       }
 
@@ -62,5 +105,5 @@ export function usePushNotifications({ enabled = true } = {}) {
     }
   }, [supported]);
 
-  return { supported, subscribed, loading, error, subscribe };
+  return { supported, subscribed, permission, loading, error, subscribe };
 }
