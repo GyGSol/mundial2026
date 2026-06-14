@@ -670,6 +670,12 @@ body:has(.game-shell) {
     padding: 0.9rem 1rem;
   }
 
+  .game-mobile-more__title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .game-mobile-more__title {
     font-size: 0.9375rem;
     font-weight: 600;

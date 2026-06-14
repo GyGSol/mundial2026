@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
+import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
+import { PopupStadiumIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card.jsx';
 import {
   formatStadiumLine,
@@ -36,6 +37,7 @@ export default function StadiumDetailDialog({ stadium, open, onOpenChange }) {
       className="max-h-[90vh] w-[min(100%,24rem)] overflow-y-auto rounded-lg border border-border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/40"
       onClose={handleClose}
       onCancel={handleClose}
+      aria-labelledby="stadium-detail-title"
     >
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
@@ -48,9 +50,15 @@ export default function StadiumDetailDialog({ stadium, open, onOpenChange }) {
               />
             ) : null}
             <div className="min-w-0">
-              <CardTitle className="text-lg leading-tight">
+              <DialogTitleWithIcon
+                icon={PopupStadiumIcon}
+                id="stadium-detail-title"
+                titleClassName="text-lg leading-tight"
+                className="justify-center sm:justify-start"
+                iconLabel="Tour por la cancha"
+              >
                 {stadium.nameEn || 'Estadio'}
-              </CardTitle>
+              </DialogTitleWithIcon>
               {subtitle ? (
                 <CardDescription className="mt-1">{subtitle}</CardDescription>
               ) : null}

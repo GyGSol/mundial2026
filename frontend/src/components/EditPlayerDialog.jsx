@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
+import { PopupEditIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
@@ -8,7 +10,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card.jsx';
 
 export default function EditPlayerDialog({ open, onOpenChange }) {
@@ -57,11 +58,18 @@ export default function EditPlayerDialog({ open, onOpenChange }) {
       className="max-w-md rounded-lg border border-border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/40"
       onClose={handleClose}
       onCancel={handleClose}
+      aria-labelledby="edit-player-title"
     >
       <form onSubmit={handleSubmit}>
         <Card className="border-0 shadow-none">
           <CardHeader>
-            <CardTitle>Editar jugador</CardTitle>
+            <DialogTitleWithIcon
+              icon={PopupEditIcon}
+              id="edit-player-title"
+              iconLabel="¿Cómo te llamás en la cancha?"
+            >
+              Editar jugador
+            </DialogTitleWithIcon>
             <CardDescription>
               Cambiá cómo aparecés en el ranking y en los grupos. El email no se puede modificar.
             </CardDescription>

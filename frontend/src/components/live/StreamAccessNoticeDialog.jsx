@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { ExternalLink, Globe2, RefreshCw, X } from 'lucide-react';
+import { ExternalLink, RefreshCw, X } from 'lucide-react';
+import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
+import { PopupStreamIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card.jsx';
 import { isIosDevice } from '@/lib/device';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
@@ -47,12 +48,14 @@ export default function StreamAccessNoticeDialog({
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-amber-500">
-              <Globe2 className="size-5 shrink-0" aria-hidden />
-              <CardTitle id="stream-access-notice-title" className="text-base">
-                Señal interrumpida
-              </CardTitle>
-            </div>
+            <DialogTitleWithIcon
+              icon={PopupStreamIcon}
+              id="stream-access-notice-title"
+              titleClassName="text-base"
+              iconLabel="Dificultades técnicas, aguantá un cachito"
+            >
+              Señal interrumpida
+            </DialogTitleWithIcon>
             <CardDescription>{USER_STREAM_BRAND} · restricciones por región</CardDescription>
           </div>
           <Button type="button" size="icon" variant="ghost" onClick={handleClose} aria-label="Cerrar">

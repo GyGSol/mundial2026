@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
+import { PopupLiveIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
@@ -118,13 +119,19 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
       )}
       onClose={handleClose}
       onCancel={handleClose}
+      aria-labelledby="live-match-title"
     >
       <Card className="flex min-h-0 max-h-[inherit] flex-col border-0 shadow-none">
         <CardHeader className="flex shrink-0 flex-row items-start justify-between gap-3 space-y-0 border-b border-border/60 pb-3">
           <div className="min-w-0 space-y-1">
-            <CardTitle className="text-base md:text-lg">
+            <DialogTitleWithIcon
+              icon={PopupLiveIcon}
+              id="live-match-title"
+              titleClassName="text-base md:text-lg"
+              iconLabel="¡A la cancha, en vivo!"
+            >
               {homeName} vs {awayName}
-            </CardTitle>
+            </DialogTitleWithIcon>
             <CardDescription>
               {theaterMode
                 ? `Modo teatro · ${USER_STREAM_BRAND}`

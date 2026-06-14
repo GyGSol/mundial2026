@@ -1,7 +1,9 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
 import { BrokenLegIcon } from '@/components/icons/BrokenLegIcon.jsx';
+import { PopupClosedIcon } from '@/components/icons/popup/index.js';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
 import {
   filterTimelineForDisplay,
@@ -15,7 +17,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat';
@@ -776,11 +777,19 @@ function PredictionClosedDialog({ match, open, onOpenChange }) {
       className="max-h-[90vh] w-[min(100%,28rem)] overflow-y-auto rounded-lg border border-border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/40"
       onClose={handleClose}
       onCancel={handleClose}
+      aria-labelledby="prediction-closed-title"
     >
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
-            <CardTitle className="text-lg">Predicción cerrada</CardTitle>
+            <DialogTitleWithIcon
+              icon={PopupClosedIcon}
+              id="prediction-closed-title"
+              titleClassName="text-lg"
+              iconLabel="Se acabó el tiempo, loco"
+            >
+              Predicción cerrada
+            </DialogTitleWithIcon>
             <CardDescription>
               {homeName} vs {awayName}
               {match.group ? ` · Grupo ${match.group}` : ''}

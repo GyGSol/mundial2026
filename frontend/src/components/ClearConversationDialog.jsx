@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { Loader2, MessageSquareOff, Sparkles, Trash2, X } from 'lucide-react';
+import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
+import { PopupClearIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card.jsx';
 
 export default function ClearConversationDialog({
@@ -47,12 +48,14 @@ export default function ClearConversationDialog({
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-destructive">
-              <Trash2 className="size-5 shrink-0" aria-hidden />
-              <CardTitle id="clear-conversation-title" className="text-base">
-                Limpiar conversación
-              </CardTitle>
-            </div>
+            <DialogTitleWithIcon
+              icon={PopupClearIcon}
+              id="clear-conversation-title"
+              titleClassName="text-base"
+              iconLabel="El operador borró la pizarra"
+            >
+              Limpiar conversación
+            </DialogTitleWithIcon>
             {topicTitle ? (
               <CardDescription className="text-foreground/80">{topicTitle}</CardDescription>
             ) : null}

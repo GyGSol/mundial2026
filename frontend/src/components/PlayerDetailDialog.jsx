@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, RefreshCw, SendHorizontal, Sparkles } from 'lucide-react';
+import { PopupPlayerIcon } from '@/components/icons/popup/index.js';
 import { playersApi } from '../api/client.js';
 import { getTeamFlag } from '../lib/teamMeta.js';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -109,20 +110,23 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
       className="max-h-[90vh] w-[min(100%,42rem)] overflow-y-auto rounded-lg border border-border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/40"
       onClose={handleClose}
       onCancel={handleClose}
+      aria-labelledby="player-detail-title"
     >
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              {loading ? <Skeleton className="h-7 w-48" /> : player?.fullName}
-              {!loading && player ? (
-                <Badge className="gap-1 border-violet-500/40 bg-violet-500/10 text-violet-200">
-                  <Sparkles className="size-3" aria-hidden />
-                  IA
-                </Badge>
-              ) : null}
-            </CardTitle>
-            <CardDescription>
+          <div className="flex min-w-0 items-start gap-2.5">
+            <PopupPlayerIcon className="mt-0.5" title="Ficha del crack" />
+            <div className="flex min-w-0 flex-col gap-2">
+              <CardTitle id="player-detail-title" className="flex items-center gap-2 text-xl">
+                {loading ? <Skeleton className="h-7 w-48" /> : player?.fullName}
+                {!loading && player ? (
+                  <Badge className="gap-1 border-violet-500/40 bg-violet-500/10 text-violet-200">
+                    <Sparkles className="size-3" aria-hidden />
+                    IA
+                  </Badge>
+                ) : null}
+              </CardTitle>
+              <CardDescription>
               {loading ? (
                 <Skeleton className="h-4 w-64" />
               ) : (
@@ -146,6 +150,7 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
                 </span>
               )}
             </CardDescription>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button
