@@ -1,6 +1,7 @@
-import { Cloud, CloudRain, MapPin, Sun, Thermometer, Wind } from 'lucide-react';
+import { Cloud, CloudLightning, CloudRain, MapPin, Sun, Thermometer, Wind } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat.js';
+import WeatherOpsBadge, { LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 
 function WeatherMetric({ icon: Icon, label, value }) {
   if (!value) return null;
@@ -32,6 +33,9 @@ export default function MatchVenueWeather({ matchVenue, className }) {
 
   const stadium = matchVenue.stadium;
   const weather = matchVenue.weather;
+  const weatherRisk = matchVenue.weatherRisk;
+  const weatherOps = matchVenue.weatherOps;
+  const liveScheduleContext = matchVenue.liveScheduleContext;
   const venue = matchVenue.venue;
   const kickoffLabel = venue?.kickoffLocal
     ? venue.kickoffLocal
@@ -64,6 +68,23 @@ export default function MatchVenueWeather({ matchVenue, className }) {
           ) : null}
         </div>
       </div>
+
+      <WeatherOpsBadge
+        weatherOps={weatherOps}
+        weatherRisk={weatherRisk}
+        className="mt-2 w-full items-start"
+      />
+      <LiveScheduleAlert liveScheduleContext={liveScheduleContext} className="mt-2 w-full" />
+
+      {weatherRisk?.protocol ? (
+        <div className="mt-2 rounded-md border border-sky-500/25 bg-sky-500/5 px-2 py-1.5 text-[11px] text-muted-foreground">
+          <p className="inline-flex items-center gap-1 font-medium text-foreground">
+            <CloudLightning className="size-3.5 text-sky-400" aria-hidden />
+            {weatherRisk.protocol.title}
+          </p>
+          <p className="mt-0.5">{weatherRisk.protocol.summary}</p>
+        </div>
+      ) : null}
 
       {weather?.available ? (
         <div className="mt-3 flex flex-col gap-2 border-t border-border/60 pt-3">
@@ -106,8 +127,7 @@ export default function MatchVenueWeather({ matchVenue, className }) {
             </div>
           ) : weather?.kickoffForecast?.reason === 'forecast_out_of_range' ? (
             <p className="text-xs text-muted-foreground">
-              El pronóstico horario para el kickoff aún no está disponible; la IA usará clima
-              típico de la sede.
+              El pronóstico horario para el kickoff aún no está disponible.
             </p>
           ) : null}
         </div>

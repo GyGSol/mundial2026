@@ -16,6 +16,24 @@ const matchSchema = new mongoose.Schema(
     kickoffAt: Date,
     /** IANA zone used to derive kickoffAt from localDate (stadium local time). */
     kickoffTimezone: String,
+    /** Overlay operacional de clima (suspensión NOAA, demora pre-kickoff). Ver matchWeatherOpsRules.js */
+    weatherOps: {
+      phase: {
+        type: String,
+        enum: ['normal', 'pre_kickoff_delay', 'suspended', 'postponed'],
+        default: 'normal',
+      },
+      reason: { type: String, enum: ['lightning', 'severe_weather', 'heat', 'other', null], default: null },
+      protocol: { type: String, default: null },
+      since: Date,
+      resumeEarliestAt: Date,
+      originalKickoffAt: Date,
+      delayedKickoffAt: Date,
+      lastAlertAt: Date,
+      nwsAlertId: String,
+      source: { type: String, enum: ['nws', 'admin', 'sync', null], default: null },
+      overlapGroupKey: String,
+    },
     lastSyncedAt: Date,
     raw: mongoose.Schema.Types.Mixed,
   },

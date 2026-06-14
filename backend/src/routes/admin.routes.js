@@ -41,6 +41,7 @@ import {
   updateAdminGroup,
   updateAdminGroupMemberRole,
   updateAdminMatch,
+  updateAdminMatchWeatherOps,
   updateAdminPrediction,
   updateAdminUserPassword,
   updateAdminUserPoints,
@@ -418,8 +419,17 @@ router.patch('/matches/:id', adminMiddleware, async (req, res, next) => {
         group: req.body?.group,
         matchday: req.body?.matchday,
         kickoffAt: req.body?.kickoffAt,
+        weatherOps: req.body?.weatherOps,
       })
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/matches/:id/weather-ops', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await updateAdminMatchWeatherOps(req.params.id, req.body?.weatherOps ?? req.body));
   } catch (err) {
     next(err);
   }

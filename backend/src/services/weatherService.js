@@ -118,12 +118,22 @@ function pickNearestHourlyIndex(times, kickoffAt) {
   return bestIdx;
 }
 
-function formatWeatherSnapshot({ temperatureC, humidityPct, precipitationPct, windKmh, weatherCode }) {
+function formatWeatherSnapshot({
+  temperatureC,
+  humidityPct,
+  precipitationPct,
+  precipitationMm,
+  windKmh,
+  windGustKmh,
+  weatherCode,
+}) {
   return {
     temperatureC: temperatureC ?? null,
     humidityPct: humidityPct ?? null,
     precipitationPct: precipitationPct ?? null,
+    precipitationMm: precipitationMm ?? null,
     windKmh: windKmh ?? null,
+    windGustKmh: windGustKmh ?? null,
     description: describeWeatherCode(weatherCode),
     weatherCode: weatherCode ?? null,
   };
@@ -133,8 +143,9 @@ async function fetchOpenMeteo({ latitude, longitude, timezone, kickoffAt }, { fe
   const params = new URLSearchParams({
     latitude: String(latitude),
     longitude: String(longitude),
-    current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
-    hourly: 'temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m',
+    current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation',
+    hourly:
+      'temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m',
     timezone: timezone || 'auto',
     wind_speed_unit: 'kmh',
   });
@@ -194,6 +205,8 @@ export async function getVenueWeatherForStadium(
           temperatureC: data.current.temperature_2m,
           humidityPct: data.current.relative_humidity_2m,
           windKmh: data.current.wind_speed_10m,
+          windGustKmh: data.current.wind_gusts_10m,
+          precipitationMm: data.current.precipitation,
           weatherCode: data.current.weather_code,
         })
       : null;
@@ -207,7 +220,9 @@ export async function getVenueWeatherForStadium(
           temperatureC: hourly.temperature_2m?.[idx],
           humidityPct: hourly.relative_humidity_2m?.[idx],
           precipitationPct: hourly.precipitation_probability?.[idx],
+          precipitationMm: hourly.precipitation?.[idx],
           windKmh: hourly.wind_speed_10m?.[idx],
+          windGustKmh: hourly.wind_gusts_10m?.[idx],
           weatherCode: hourly.weather_code?.[idx],
         }),
         atUtc: hourly.time?.[idx] ?? null,

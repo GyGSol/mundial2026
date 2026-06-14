@@ -33,6 +33,7 @@ import { Button } from '@/components/ui/button.jsx';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
+import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 
 function normalizeScorerEntry(entry) {
   if (typeof entry === 'string') {
@@ -595,13 +596,21 @@ function ResultMatchCard({ match, variant = 'live' }) {
   const awayFlag = getTeamFlag(match.awayTeam);
   const isArgentina = matchInvolvesArgentina(match);
   const isLive = variant === 'live';
+  const weatherLabel = getWeatherOpsLabel(match.weatherOps);
+  const showLiveBadge = isLive && !weatherLabel;
 
   return (
     <Card className={liveCardClassName(isArgentina)}>
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
-        {isLive ? (
+        <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+        <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
+        {showLiveBadge ? (
           <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
             En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
+          </Badge>
+        ) : isLive && weatherLabel ? (
+          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
+            {match.timeElapsed ? `${match.timeElapsed}` : 'En pausa'}
           </Badge>
         ) : (
           <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
@@ -650,6 +659,8 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
   const awayCode = match.awayTeam?.fifaCode || 'VIS';
   const isArgentina = matchInvolvesArgentina(match);
   const isLive = variant === 'live';
+  const weatherLabel = getWeatherOpsLabel(match.weatherOps);
+  const showLiveBadge = isLive && !weatherLabel;
   const hasTimeline = (match.matchTimeline?.length ?? 0) > 0;
 
   if (!hasTimeline) {
@@ -659,9 +670,15 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
   return (
     <Card className={liveCardClassName(isArgentina)}>
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
-        {isLive ? (
+        <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+        <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
+        {showLiveBadge ? (
           <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
             En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
+          </Badge>
+        ) : isLive && weatherLabel ? (
+          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
+            {match.timeElapsed ? `${match.timeElapsed}` : 'En pausa'}
           </Badge>
         ) : (
           <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">

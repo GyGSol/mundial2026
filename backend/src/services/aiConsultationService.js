@@ -23,6 +23,9 @@ import {
   formatWeatherForClient,
   buildMatchWeatherPredictionContext,
 } from './weatherService.js';
+import { assessVenueWeatherRisk, formatWeatherRiskForClient } from './weatherRiskService.js';
+import { buildLiveScheduleContext } from './liveScheduleOverlapService.js';
+import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 
 const AI_HISTORY_FOR_PROMPT = 20;
 const AI_MESSAGES_STORED_MAX = 80;
@@ -125,10 +128,18 @@ export async function buildMatchVenueContext(matchId, { fetchImpl = fetch } = {}
   });
   const venue = buildVenueContextForPrompt(match, stadium);
   const matchWeather = buildMatchWeatherPredictionContext(weatherRaw);
+  const weatherRisk = formatWeatherRiskForClient(
+    await assessVenueWeatherRisk(stadium, { weather: weatherRaw, kickoffAt: match.kickoffAt, fetchImpl })
+  );
+  const allMatches = await Match.find().select('_id group matchday kickoffAt status weatherOps homeTeamId awayTeamId').lean();
+  const liveScheduleContext = buildLiveScheduleContext(match, allMatches);
 
   return {
     kickoffAt: match.kickoffAt?.toISOString?.() ?? match.kickoffAt ?? null,
     stadium: formatStadiumForClient(stadium),
+    weatherOps: serializeWeatherOpsForClient(match.weatherOps),
+    weatherRisk,
+    liveScheduleContext,
     venue: {
       ...venue,
       analysisHints:
@@ -277,7 +288,7 @@ function topicInstructions(topicType) {
   if (topicType === 'match') {
     return `${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-Analizá el partido según el contexto, la sede del estadio y venue.matchWeather (panel Sede y clima). Para el pronóstico y el clima en tus respuestas, usá venue.matchWeather.kickoffForecast cuando status=ok. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
+Analizá el partido según el contexto, la sede del estadio y venue.matchWeather (panel Sede y clima). Para el pronóstico y el clima en tus respuestas, usá venue.matchWeather.kickoffForecast cuando status=ok. Usá weatherOps, weatherRisk y liveScheduleContext: si hay demora NOAA (pre_kickoff_delay/suspended) o integrityWarning en parejas de grupo, mencionarlo. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
   }
   if (topicType === 'group') {
     return 'Proyectá resultados del grupo completo según las predicciones del usuario y el fixture restante. Podés estimar la tabla final y quién clasifica.';

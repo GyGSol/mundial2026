@@ -16,6 +16,9 @@ import {
 } from './predictedMatchContextService.js';
 import { notifyMatchesUpdated } from './websocketService.js';
 import { getVenueWeatherForStadium, formatWeatherForPrompt, buildMatchWeatherPredictionContext } from './weatherService.js';
+import { assessVenueWeatherRisk, formatWeatherRiskForClient } from './weatherRiskService.js';
+import { buildLiveScheduleContext } from './liveScheduleOverlapService.js';
+import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -36,7 +39,8 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - Usá nationContext: historial Wikipedia (wikiRecords, finalHighlights), población, liga doméstica, talentPoolIndex y factores anímicos (morale).
 - Usá squadAnalysis: titulares probables, lesiones, dudas, suspendidos y riesgo de tarjetas.
 - Usá positionMatchups: compará GK/DEF/MID/FWD y su edge (home/away/even) para ponderar el marcador.
-- Usá venue.matchWeather.kickoffForecast para ponderar ritmo, desgaste, errores técnicos y adaptación de cada selección al calor/humedad/viento/lluvia del kickoff.`;
+- Usá venue.matchWeather.kickoffForecast para ponderar ritmo, desgaste, errores técnicos y adaptación de cada selección al calor/humedad/viento/lluvia del kickoff.
+- Usá weatherOps y weatherRisk: si phase=pre_kickoff_delay o suspended, el partido está demorado por clima (protocolo NOAA 8 mi / 30 min en sedes USA). Si liveScheduleContext.integrityWarning existe, advertí desbalance en parejas de grupo simultáneas.`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;
@@ -272,6 +276,12 @@ export async function buildPromptContext(match, aiUserId) {
   });
 
   const venue = await enrichVenueWithWeather(buildVenueContextForPrompt(match, stadium), match, stadium);
+  const weatherRaw = await getVenueWeatherForStadium(stadium, { kickoffAt: match.kickoffAt });
+  const weatherRisk = formatWeatherRiskForClient(
+    await assessVenueWeatherRisk(stadium, { weather: weatherRaw, kickoffAt: match.kickoffAt })
+  );
+  const liveScheduleContext = buildLiveScheduleContext(match, allMatches);
+
   const enriched = await buildEnrichedMatchContext({
     homeTeam: homeForAnalysis,
     awayTeam: awayForAnalysis,
@@ -290,6 +300,9 @@ export async function buildPromptContext(match, aiUserId) {
     headToHead2026: teamsAnalysis.headToHead2026,
     fifaRankingsAsOf: teamsAnalysis.rankingsAsOf,
     venue,
+    weatherOps: serializeWeatherOpsForClient(match.weatherOps),
+    weatherRisk,
+    liveScheduleContext,
     groupStandings: relevantGroup
       ? relevantGroup.standings.map((row) => ({
           rank: row.rank,

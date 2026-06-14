@@ -18,6 +18,10 @@ import { formatStadiumForClient } from './stadiumPayload.js';
 import { formatTeamForClient } from './teamPayload.js';
 import { getFifaWorldRankings } from './aiTeamMatchContextService.js';
 import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
+import {
+  attachWeatherAndScheduleToEnrichedMatches,
+} from './matchWeatherEnrichmentService.js';
+import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 
 /**
  * @param {import('mongoose').LeanDocument[]} matches
@@ -96,7 +100,7 @@ export async function enrichMatches(matches, userId, options = {}) {
     resolvedKnockoutByExternalId = ctx.resolvedKnockoutByExternalId;
   }
 
-  return matches.map((m) => {
+  const enrichedBase = matches.map((m) => {
     const prediction = predictionMap[m._id.toString()] || null;
     const meta = enrichMatchPredictionMeta(m, prediction);
 
@@ -131,6 +135,7 @@ export async function enrichMatches(matches, userId, options = {}) {
         awayTeam: teamMap[m.awayTeamId],
       }),
       stadium: formatStadiumForClient(stadiumMap[m.stadiumId]),
+      weatherOps: serializeWeatherOpsForClient(m.weatherOps),
       prediction,
       ...liveFields,
       ...meta,
@@ -141,6 +146,8 @@ export async function enrichMatches(matches, userId, options = {}) {
       resolvedKnockoutByExternalId?.get(String(m.externalId))
     );
   });
+
+  return attachWeatherAndScheduleToEnrichedMatches(matches, enrichedBase, stadiumMap);
 }
 
 export async function enrichMatchesLight(matches, userId) {

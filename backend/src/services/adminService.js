@@ -25,6 +25,13 @@ import { revokeAllUserSessions } from './sessionService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { env } from '../config/env.js';
 import { isAdminConfigured } from './adminSetupService.js';
+import {
+  WEATHER_OPS_PHASES,
+  WEATHER_OPS_REASONS,
+  computeResumeEarliestAt,
+  normalizeWeatherOps,
+  serializeWeatherOpsForClient,
+} from './matchWeatherOpsRules.js';
 
 const MIN_USER_PASSWORD_LENGTH = 8;
 
@@ -67,6 +74,7 @@ function serializeMatch(match) {
     status: match.status,
     kickoffAt: match.kickoffAt,
     type: match.type,
+    weatherOps: serializeWeatherOpsForClient(match.weatherOps),
     lastSyncedAt: match.lastSyncedAt,
   };
 }
@@ -520,7 +528,10 @@ export async function listAdminMatches({ status, group } = {}) {
   });
 }
 
-export async function updateAdminMatch(matchId, { homeScore, awayScore, status, group, matchday, kickoffAt }) {
+export async function updateAdminMatch(
+  matchId,
+  { homeScore, awayScore, status, group, matchday, kickoffAt, weatherOps }
+) {
   const match = await Match.findById(matchId);
   if (!match) {
     const error = new Error('Partido no encontrado');
@@ -550,8 +561,21 @@ export async function updateAdminMatch(matchId, { homeScore, awayScore, status, 
         error.status = 400;
         throw error;
       }
+      if (!match.weatherOps?.originalKickoffAt && match.kickoffAt) {
+        match.weatherOps = {
+          ...normalizeWeatherOps(match.weatherOps),
+          originalKickoffAt: match.kickoffAt,
+        };
+      }
       match.kickoffAt = parsed;
+      match.weatherOps = {
+        ...normalizeWeatherOps(match.weatherOps),
+        delayedKickoffAt: parsed,
+      };
     }
+  }
+  if (weatherOps !== undefined) {
+    await applyWeatherOpsToMatch(match, weatherOps);
   }
 
   await match.save();
@@ -562,6 +586,80 @@ export async function updateAdminMatch(matchId, { homeScore, awayScore, status, 
     await clearMatchScores(match._id);
   }
 
+  notifyMatchesUpdated({ reason: 'admin_match_update', matchId: match._id.toString() });
+  return serializeMatch(match);
+}
+
+async function applyWeatherOpsToMatch(match, input) {
+  const current = normalizeWeatherOps(match.weatherOps);
+  const phase = input.phase ?? current.phase;
+  if (!WEATHER_OPS_PHASES.includes(phase)) {
+    const error = new Error('weatherOps.phase inválido');
+    error.status = 400;
+    throw error;
+  }
+
+  const reason = input.reason ?? current.reason;
+  if (reason && !WEATHER_OPS_REASONS.includes(reason)) {
+    const error = new Error('weatherOps.reason inválido');
+    error.status = 400;
+    throw error;
+  }
+
+  const lastAlertAt = input.lastAlertAt ? new Date(input.lastAlertAt) : current.lastAlertAt ?? new Date();
+  const resumeEarliestAt = input.resumeEarliestAt
+    ? new Date(input.resumeEarliestAt)
+    : phase === 'suspended' || phase === 'pre_kickoff_delay'
+      ? computeResumeEarliestAt(lastAlertAt)
+      : null;
+
+  match.weatherOps = {
+    phase,
+    reason: phase === 'normal' ? null : reason ?? 'severe_weather',
+    protocol: phase === 'normal' ? null : input.protocol ?? 'noaa-8mi-30min',
+    since: phase === 'normal' ? null : input.since ? new Date(input.since) : current.since ?? new Date(),
+    resumeEarliestAt: phase === 'normal' ? null : resumeEarliestAt,
+    originalKickoffAt:
+      input.originalKickoffAt != null
+        ? new Date(input.originalKickoffAt)
+        : current.originalKickoffAt ?? match.kickoffAt ?? null,
+    delayedKickoffAt:
+      input.delayedKickoffAt != null
+        ? new Date(input.delayedKickoffAt)
+        : current.delayedKickoffAt,
+    lastAlertAt: phase === 'normal' ? null : lastAlertAt,
+    nwsAlertId: input.nwsAlertId ?? current.nwsAlertId ?? null,
+    source: input.source ?? 'admin',
+    overlapGroupKey: input.overlapGroupKey ?? current.overlapGroupKey ?? null,
+  };
+
+  if (phase === 'postponed' && input.delayedKickoffAt) {
+    match.kickoffAt = new Date(input.delayedKickoffAt);
+    match.status = 'upcoming';
+  }
+
+  if (phase === 'suspended' && match.status === 'upcoming') {
+    match.status = 'live';
+    if (match.homeScore == null) match.homeScore = 0;
+    if (match.awayScore == null) match.awayScore = 0;
+  }
+}
+
+export async function updateAdminMatchWeatherOps(matchId, weatherOps) {
+  const match = await Match.findById(matchId);
+  if (!match) {
+    const error = new Error('Partido no encontrado');
+    error.status = 404;
+    throw error;
+  }
+  await applyWeatherOpsToMatch(match, weatherOps ?? { phase: 'normal' });
+  await match.save();
+
+  if (match.status === 'finished' || match.status === 'live') {
+    await recalculateMatchScores(match._id);
+  }
+
+  notifyMatchesUpdated({ reason: 'admin_weather_ops', matchId: match._id.toString() });
   return serializeMatch(match);
 }
 

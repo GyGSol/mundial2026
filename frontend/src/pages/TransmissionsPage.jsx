@@ -14,6 +14,7 @@ import {
   CardHeader,
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
+import WeatherOpsBadge, { LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import { isIosDevice } from '@/lib/device';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
@@ -117,6 +118,9 @@ function TransmissionMatchCard({ match }) {
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
+        <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+        <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} />
+
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-4">
           <TeamHeader team={match.homeTeam} slotLabel={match.homeTeamSlotLabel} />
           <div className="flex flex-col items-center gap-1 px-1 text-center">
