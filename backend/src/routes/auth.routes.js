@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import { User } from '../models/User.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
@@ -9,8 +10,20 @@ import {
 } from '../services/competitionGroupService.js';
 import { ensureDefaultPredictionsForUser } from '../services/predictionLockService.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
+import {
+  changeUserPassword,
+  requestPasswordReset,
+} from '../services/passwordResetService.js';
 
 const router = Router();
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Probá más tarde.' },
+});
 
 async function serializeUser(user) {
   // Backfill memberships for legacy users (single-group mode).
@@ -33,6 +46,7 @@ async function serializeUser(user) {
     name: user.name,
     email: user.email,
     totalPoints: user.totalPoints,
+    mustChangePassword: Boolean(user.mustChangePassword),
     competitionGroup: group,
     competitionGroups: groups,
   };
@@ -88,6 +102,31 @@ router.post('/login', async (req, res, next) => {
       user: await serializeUser(user),
     });
   } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res, next) => {
+  try {
+    const result = await requestPasswordReset(req.body?.email);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/change-password', authMiddleware, async (req, res, next) => {
+  try {
+    const user = await changeUserPassword(req.user._id, {
+      currentPassword: req.body?.currentPassword,
+      newPassword: req.body?.newPassword,
+    });
+
+    res.json({ user: await serializeUser(user) });
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
     next(err);
   }
 });

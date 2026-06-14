@@ -192,6 +192,27 @@ Opcional Firebase Cloud Messaging (fase posterior): `FIREBASE_PROJECT_ID`, `FIRE
 
 UI: banner de opt-in en `/predictions` → `POST /api/push/subscribe` (requiere login).
 
+### Recuperación de contraseña (jugadores)
+
+Flujo: el jugador pide reset en `/forgot-password` → recibe clave provisoria por email → ingresa → define contraseña nueva en `/change-password`.
+
+**Producción (Gmail SMTP):** crear [contraseña de aplicación](https://myaccount.google.com/apppasswords) en la cuenta emisora.
+
+```bash
+heroku config:set \
+  SMTP_HOST=smtp.gmail.com \
+  SMTP_PORT=587 \
+  SMTP_USER=gonzalomlopolito@gmail.com \
+  SMTP_PASS="contraseña-de-aplicacion" \
+  SMTP_FROM="Mundial 2026 <gonzalomlopolito@gmail.com>" \
+  APP_PUBLIC_NAME="Mundial 2026" \
+  -a mundial2026-pred
+```
+
+**Local sin SMTP:** si no configurás `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS`, el backend loguea la clave provisoria en consola al pedir reset (útil para desarrollo).
+
+Variables: `SMTP_HOST`, `SMTP_PORT` (default 587), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (default `SMTP_USER`), `APP_PUBLIC_NAME`.
+
 ## Deploy de cambios futuros
 
 ```bash

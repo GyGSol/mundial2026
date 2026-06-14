@@ -21,7 +21,12 @@ export async function request(path, options = {}) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    if (res.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/register')) {
+    if (
+      res.status === 401 &&
+      !path.startsWith('/auth/login') &&
+      !path.startsWith('/auth/register') &&
+      !path.startsWith('/auth/forgot-password')
+    ) {
       clearStoredSession();
     }
     throw new Error(formatRequestError(null, res, data));
@@ -47,6 +52,16 @@ export const authApi = {
     request('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify({ name }),
+    }),
+  forgotPassword: (email) =>
+    request('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  changePassword: (currentPassword, newPassword) =>
+    request('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
     }),
 };
 

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import LoadingSpinner from './LoadingSpinner.jsx';
 
 export default function ProtectedRoute() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, mustChangePassword, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -12,6 +12,10 @@ export default function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace state={{ from: location }} />;
+  }
+
+  if (mustChangePassword) {
+    return <Navigate to="/change-password" replace />;
   }
 
   return <Outlet />;

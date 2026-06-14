@@ -34,7 +34,12 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
+
+      if (loggedInUser?.mustChangePassword) {
+        navigate('/change-password', { replace: true });
+        return;
+      }
 
       if (joinGroupId) {
         const group = await joinGroupAfterAuth(joinGroupId);
@@ -97,6 +102,16 @@ export default function LoginPage() {
               />
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit">{joinGroupId ? 'Ingresar y unirme' : 'Ingresar'}</Button>
+              <p className="text-sm text-muted-foreground">
+                <Link
+                  to={
+                    joinGroupId ? buildAuthPathWithJoin('/forgot-password', joinGroupId) : '/forgot-password'
+                  }
+                  className="text-foreground underline underline-offset-4"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </p>
               <p className="text-sm text-muted-foreground">
                 ¿No tenés cuenta?{' '}
                 <Link

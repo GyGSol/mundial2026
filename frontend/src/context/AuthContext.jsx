@@ -71,6 +71,7 @@ export function AuthProvider({ children }) {
       sessionExpiresAt,
       sessionExpiresLabel: formatSessionExpiry(sessionExpiresAt),
       isAuthenticated: Boolean(user),
+      mustChangePassword: Boolean(user?.mustChangePassword),
       async login(email, password) {
         const data = await authApi.login(email, password);
         persistSession(data);
@@ -88,6 +89,11 @@ export function AuthProvider({ children }) {
       },
       async updateProfile(name) {
         const data = await authApi.updateProfile(name);
+        setUser(data.user);
+        return data.user;
+      },
+      async changePassword(currentPassword, newPassword) {
+        const data = await authApi.changePassword(currentPassword, newPassword);
         setUser(data.user);
         return data.user;
       },

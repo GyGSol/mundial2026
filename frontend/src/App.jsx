@@ -10,6 +10,7 @@ import AdminLayout from './components/admin/AdminLayout.jsx';
 import Layout from './components/Layout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import GuestRoute from './components/GuestRoute.jsx';
+import ChangePasswordRoute from './components/ChangePasswordRoute.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
 
 const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage.jsx'));
@@ -32,6 +33,8 @@ const TransmissionsPage = lazy(() => import('./pages/TransmissionsPage.jsx'));
 const SimulationPage = lazy(() => import('./pages/SimulationPage.jsx'));
 const LoginPage = lazy(() => import('./pages/LoginPage.jsx'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage.jsx'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage.jsx'));
+const ChangePasswordPage = lazy(() => import('./pages/ChangePasswordPage.jsx'));
 const WelcomePage = lazy(() => import('./pages/WelcomePage.jsx'));
 const CreateGroupPage = lazy(() => import('./pages/CreateGroupPage.jsx'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage.jsx'));
@@ -72,6 +75,12 @@ export default function App() {
                   </Route>
                   <Route path="/register" element={<GuestRoute />}>
                     <Route index element={<RegisterPage />} />
+                  </Route>
+                  <Route path="/forgot-password" element={<GuestRoute />}>
+                    <Route index element={<ForgotPasswordPage />} />
+                  </Route>
+                  <Route path="/change-password" element={<ChangePasswordRoute />}>
+                    <Route index element={<ChangePasswordPage />} />
                   </Route>
                   <Route path="/invite/:groupId" element={<InviteJoinPage />} />
                   <Route element={<ProtectedRoute />}>
