@@ -183,14 +183,8 @@ export function annotateGroupQualification(groupStandings) {
   }));
 }
 
-function formatTeamRef(team) {
-  if (!team) return null;
-  return {
-    externalId: team.externalId,
-    nameEn: team.nameEn,
-    fifaCode: team.fifaCode,
-    flag: team.flag,
-  };
+function formatTeamRef(team, rankings = null) {
+  return formatTeamForClient(team, rankings);
 }
 
 function isSimulationMatch(match) {
@@ -199,6 +193,8 @@ function isSimulationMatch(match) {
 
 import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
+import { formatTeamForClient } from './teamPayload.js';
+import { getFifaWorldRankings } from './aiTeamMatchContextService.js';
 
 function isTeamSlotAssigned(teamId, teamMap) {
   if (!teamId || teamId === '0') return false;
@@ -259,7 +255,7 @@ function resolveTeamSlotLabel(match, side, teamMap) {
   return rawLabel ? formatKnockoutSlotLabelEs(rawLabel) : null;
 }
 
-export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
+export function formatMatchSummary(match, teamMap, stadiumMap = {}, rankings = null) {
   const phase = resolveKnockoutPhase(match.type);
   const stadium = stadiumMap[match.stadiumId];
 
@@ -277,10 +273,10 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
     type: match.type,
     phaseLabel: phase?.label ?? (normalizePhaseKey(match.type) === 'group' ? 'Fase de grupos' : match.type),
     homeTeam: isTeamSlotAssigned(match.homeTeamId, teamMap)
-      ? formatTeamRef(teamMap[match.homeTeamId])
+      ? formatTeamRef(teamMap[match.homeTeamId], rankings)
       : null,
     awayTeam: isTeamSlotAssigned(match.awayTeamId, teamMap)
-      ? formatTeamRef(teamMap[match.awayTeamId])
+      ? formatTeamRef(teamMap[match.awayTeamId], rankings)
       : null,
     homeTeamSlotLabel: resolveTeamSlotLabel(match, 'home', teamMap),
     awayTeamSlotLabel: resolveTeamSlotLabel(match, 'away', teamMap),
@@ -300,7 +296,7 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
 export const WORLD_CUP_MATCH_SELECT =
   'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate status kickoffAt kickoffTimezone type stadiumId raw.home_team_label raw.away_team_label raw.homeTeamLabel raw.awayTeamLabel';
 
-export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}) {
+export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}, rankings = null) {
   const buckets = new Map();
   const knockoutMatches = matches.filter((match) => resolveKnockoutPhase(match.type));
   const hasSimKnockout = knockoutMatches.some(isSimulationMatch);
@@ -315,7 +311,7 @@ export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}) {
       buckets.set(phase.order, { ...phase, matches: [] });
     }
 
-    buckets.get(phase.order).matches.push(formatMatchSummary(match, teamMap, stadiumMap));
+    buckets.get(phase.order).matches.push(formatMatchSummary(match, teamMap, stadiumMap, rankings));
   }
 
   return [...buckets.values()]
@@ -443,12 +439,13 @@ export async function buildWorldCupOverview({
 
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
   const stadiumMap = Object.fromEntries(stadiums.map((s) => [s.externalId, s]));
+  const fifaRankings = await getFifaWorldRankings();
 
   const rawStandings = computeGroupStandings(teams, matches, groups);
   const thirdPlaceStandings = rankBestThirdPlaceTeams(rawStandings);
   const groupStandings = annotateGroupQualification(rawStandings);
 
-  let knockout = buildKnockoutPhases(matches, teamMap, stadiumMap);
+  let knockout = buildKnockoutPhases(matches, teamMap, stadiumMap, fifaRankings);
   const officialKnockoutMatches = matches.filter((match) => {
     const id = String(match.externalId || '');
     return /^\d+$/.test(id) && Number(id) >= 73 && Number(id) <= 104;
@@ -481,7 +478,7 @@ export async function buildWorldCupOverview({
 
   const groupMatches = matches
     .filter((m) => normalizePhaseKey(m.type) === 'group' || Boolean(m.group))
-    .map((m) => formatMatchSummary(m, teamMap, stadiumMap));
+    .map((m) => formatMatchSummary(m, teamMap, stadiumMap, fifaRankings));
 
   const stadiumUsage = stadiums.map((stadium) => {
     const hosted = matches.filter((m) => m.stadiumId === stadium.externalId);
@@ -511,12 +508,9 @@ export async function buildWorldCupOverview({
     knockout,
     groupMatches,
     teams: teams.map((t) => ({
-      externalId: t.externalId,
-      nameEn: t.nameEn,
+      ...formatTeamForClient(t, fifaRankings),
       nameFa: t.nameFa,
-      fifaCode: t.fifaCode,
       group: t.group,
-      flag: t.flag,
     })),
     stadiums: stadiumUsage,
     stats,

@@ -1,6 +1,20 @@
 import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
-import { getWorldCupTitles } from '@/lib/teamMeta';
+import { getFifaRankingForTeam, getWorldCupTitles } from '@/lib/teamMeta';
 import TeamFlag from './TeamFlag.jsx';
+
+function FifaRankingLabel({ team }) {
+  const ranking = getFifaRankingForTeam(team);
+  if (!ranking?.rank) return null;
+
+  return (
+    <p
+      className="text-[10px] font-semibold tabular-nums text-muted-foreground md:text-xs"
+      title={ranking.asOf ? `Ranking FIFA actualizado al ${ranking.asOf}` : 'Ranking FIFA'}
+    >
+      FIFA #{ranking.rank}
+    </p>
+  );
+}
 
 function WorldCupStars({ count }) {
   return (
@@ -34,6 +48,7 @@ export default function TeamHeader({ team, slotLabel }) {
   return (
     <div className="flex flex-col items-center gap-1 text-center">
       <TeamFlag team={team} />
+      <FifaRankingLabel team={team} />
 
       <WorldCupStars count={titles} />
 

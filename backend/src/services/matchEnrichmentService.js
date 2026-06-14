@@ -15,6 +15,8 @@ import { enrichMatchPhaseFields } from './matchPhaseUtils.js';
 import { enrichMatchLiveFields } from './matchLiveData.js';
 import { ensureFifaShirtMaps } from './fifaShirtMapService.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
+import { formatTeamForClient } from './teamPayload.js';
+import { getFifaWorldRankings } from './aiTeamMatchContextService.js';
 import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
 
 /**
@@ -36,6 +38,8 @@ export async function enrichMatches(matches, userId, options = {}) {
   if (userId && ensureUserDefaults) {
     await ensureDefaultPredictionsForUser(userId);
   }
+
+  const fifaRankings = await getFifaWorldRankings();
 
   const teamIds = new Set();
   for (const m of matches) {
@@ -120,22 +124,8 @@ export async function enrichMatches(matches, userId, options = {}) {
       kickoffAt: m.kickoffAt,
       kickoffTimezone: m.kickoffTimezone || stadiumMap[m.stadiumId]?.timezone || null,
       lockAt: meta.lockAt,
-      homeTeam: teamMap[m.homeTeamId]
-        ? {
-            nameEn: teamMap[m.homeTeamId].nameEn,
-            fifaCode: teamMap[m.homeTeamId].fifaCode,
-            flag: teamMap[m.homeTeamId].flag,
-            externalId: teamMap[m.homeTeamId].externalId,
-          }
-        : null,
-      awayTeam: teamMap[m.awayTeamId]
-        ? {
-            nameEn: teamMap[m.awayTeamId].nameEn,
-            fifaCode: teamMap[m.awayTeamId].fifaCode,
-            flag: teamMap[m.awayTeamId].flag,
-            externalId: teamMap[m.awayTeamId].externalId,
-          }
-        : null,
+      homeTeam: formatTeamForClient(teamMap[m.homeTeamId], fifaRankings),
+      awayTeam: formatTeamForClient(teamMap[m.awayTeamId], fifaRankings),
       broadcasters: getBroadcastersForMatch(m.externalId, {
         homeTeam: teamMap[m.homeTeamId],
         awayTeam: teamMap[m.awayTeamId],
