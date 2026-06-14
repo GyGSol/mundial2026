@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
 import MarkdownContent from './MarkdownContent.jsx';
+import PredictionLockCountdown from './PredictionLockCountdown.jsx';
 
 export const AI_QUESTION_MAX_LEN = 146;
 
@@ -75,6 +76,7 @@ export default function AiConsultationChat({
   onClearConversation,
   clearingConversation = false,
   hideInsightScore = false,
+  predictionLock,
 }) {
   const hasMessages = (thread?.messages?.length ?? 0) > 0;
   const insight = thread?.initialInsight;
@@ -133,6 +135,14 @@ export default function AiConsultationChat({
               ) : null}
               {insight.reasoning ? (
                 <MarkdownContent className="text-sm">{insight.reasoning}</MarkdownContent>
+              ) : null}
+              {predictionLock ? (
+                <PredictionLockCountdown
+                  kickoffAt={predictionLock.kickoffAt}
+                  lockAt={predictionLock.lockAt}
+                  predictionOpen={predictionLock.predictionOpen}
+                  status={predictionLock.status}
+                />
               ) : null}
               <p className="text-xs text-muted-foreground">
                 {(insight.predictedAt ?? thread?.updatedAt)

@@ -26,6 +26,7 @@ import {
 import { assessVenueWeatherRisk, formatWeatherRiskForClient } from './weatherRiskService.js';
 import { buildLiveScheduleContext } from './liveScheduleOverlapService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
+import { getLockAt, isPredictionOpen } from './predictionLockService.js';
 
 const AI_HISTORY_FOR_PROMPT = 20;
 const AI_MESSAGES_STORED_MAX = 80;
@@ -136,6 +137,9 @@ export async function buildMatchVenueContext(matchId, { fetchImpl = fetch } = {}
 
   return {
     kickoffAt: match.kickoffAt?.toISOString?.() ?? match.kickoffAt ?? null,
+    status: match.status,
+    predictionOpen: isPredictionOpen(match),
+    lockAt: getLockAt(match.kickoffAt)?.toISOString?.() ?? null,
     stadium: formatStadiumForClient(stadium),
     weatherOps: serializeWeatherOpsForClient(match.weatherOps),
     weatherRisk,
