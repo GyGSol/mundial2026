@@ -50,7 +50,8 @@ export default function ThirdPlaceStandingsSection({ thirdPlaceStandings, teamMa
         <CardTitle className="text-base">Mejores terceros</CardTitle>
         <p className="text-xs text-muted-foreground">
           De los 12 terceros del torneo clasifican los 8 mejores según puntos, diferencia de goles
-          y goles a favor. Si están empatados en todo, se usa el orden alfabético del grupo (A…L).
+          y goles a favor. Sin partidos disputados, el orden provisional usa el ranking FIFA; con
+          partidos en juego, los empates totales se desempatan por letra de grupo (A…L).
           Los cruces de dieciseisavos se asignan con Annex C según qué grupos aportan esos ocho
           terceros.
           {provisional

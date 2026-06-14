@@ -83,6 +83,14 @@ describe('worldCupStatsService', () => {
     expect(result[0].standings[0].points).toBe(3);
   });
 
+  it('ordena por ranking FIFA cuando el grupo no tiene partidos disputados', () => {
+    const result = computeGroupStandings(teams, []);
+    expect(result).toHaveLength(1);
+    expect(result[0].standings.map((row) => row.teamId)).toEqual(['3', '4', '1', '2']);
+    expect(result[0].standings[0].fifaCode).toBe('BRA');
+    expect(result[0].standings[3].fifaCode).toBe('RSA');
+  });
+
   it('incluye partidos en vivo en la tabla calculada', () => {
     const matches = [
       {

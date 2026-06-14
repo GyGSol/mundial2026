@@ -1,4 +1,9 @@
-import { applyResult, createStanding, sortStandings } from './groupStandingsUtils.js';
+import {
+  applyResult,
+  createStanding,
+  sortStandings,
+  totalPlayedInStandings,
+} from './groupStandingsUtils.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
 
 const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
@@ -35,10 +40,6 @@ function resolveKnockoutPhase(type) {
     KNOCKOUT_PHASES.find((phase) => phase.keys.some((candidate) => key.includes(candidate))) ||
     null
   );
-}
-
-function totalPlayedInStandings(rows) {
-  return (rows ?? []).reduce((sum, row) => sum + Number(row.played ?? 0), 0);
 }
 
 /** Prefiere la fuente con más partidos jugados (API puede venir en cero al inicio del torneo). */
@@ -147,9 +148,16 @@ export function computeGroupStandings(teams, matches, groupDocs = []) {
         apiByGroup.get(groupName),
         computed.get(groupName)
       );
+      let standings = resolved.standings;
+      if (totalPlayedInStandings(standings) === 0) {
+        standings = sortStandings(standings).map((row, index) => ({
+          ...row,
+          rank: index + 1,
+        }));
+      }
       return {
         group: groupName,
-        standings: resolved.standings,
+        standings,
         source: resolved.source,
       };
     })

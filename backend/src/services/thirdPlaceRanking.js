@@ -1,13 +1,29 @@
+import { resolveFifaRank } from './groupStandingsUtils.js';
+
 const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
+
+function compareThirdPlacesByFifaRank(a, b) {
+  const rankA = resolveFifaRank(a);
+  const rankB = resolveFifaRank(b);
+  if (rankA != null && rankB != null && rankA !== rankB) return rankA - rankB;
+  if (rankA != null && rankB == null) return -1;
+  if (rankA == null && rankB != null) return 1;
+  return String(a.group || '').localeCompare(String(b.group || ''), 'es', {
+    sensitivity: 'base',
+  });
+}
 
 /**
  * FIFA WC 2026 entre los 12 terceros: puntos → dif. goles → goles a favor.
- * Si siguen empatados, orden alfabético del grupo (A…L).
+ * Sin partidos jugados: ranking FIFA. Luego letra de grupo (A…L).
  */
 export function compareThirdPlaces(a, b) {
   if (b.points !== a.points) return b.points - a.points;
   if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
   if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+  if (Number(a.played ?? 0) === 0 && Number(b.played ?? 0) === 0) {
+    return compareThirdPlacesByFifaRank(a, b);
+  }
   return String(a.group || '').localeCompare(String(b.group || ''), 'es', {
     sensitivity: 'base',
   });

@@ -8,6 +8,7 @@ function thirdRow(group, overrides = {}) {
   return {
     teamId: `${group}3`,
     rank: 3,
+    fifaCode: overrides.fifaCode,
     played: overrides.played ?? 3,
     points: overrides.points ?? 0,
     goalDiff: overrides.goalDiff ?? 0,
@@ -17,6 +18,7 @@ function thirdRow(group, overrides = {}) {
     drawn: 0,
     lost: 0,
     nameEn: `Team ${group}3`,
+    ...overrides,
   };
 }
 
@@ -82,9 +84,13 @@ describe('thirdPlaceRanking', () => {
     expect(result.qualified.some((row) => row.group === 'B')).toBe(true);
   });
 
-  it('con todos en cero desempata por orden alfabético de grupo', () => {
-    const standings = buildGroupStandings();
+  it('con todos en cero desempata por ranking FIFA', () => {
+    const standings = buildGroupStandings({
+      A: { played: 0, points: 0, goalDiff: 0, goalsFor: 0, fifaCode: 'GHA' },
+      B: { played: 0, points: 0, goalDiff: 0, goalsFor: 0, fifaCode: 'BRA' },
+    });
     for (const entry of standings) {
+      if (entry.group === 'A' || entry.group === 'B') continue;
       entry.standings[2].played = 0;
       entry.standings[2].points = 0;
       entry.standings[2].goalDiff = 0;
@@ -93,12 +99,13 @@ describe('thirdPlaceRanking', () => {
 
     const result = rankBestThirdPlaceTeams(standings);
 
-    expect(result.ranked.map((row) => row.group).join('')).toBe('ABCDEFGHIJKL');
-    expect(result.combinationKey).toBe('ABCDEFGH');
-    expect(result.qualified.map((row) => row.group).join('')).toBe('ABCDEFGH');
+    expect(result.ranked[0].group).toBe('B');
+    expect(result.ranked.find((row) => row.group === 'A')?.thirdRank).toBeGreaterThan(1);
+    expect(result.combinationKey).toBeTruthy();
+    expect(result.qualified).toHaveLength(8);
   });
 
-  it('desempata empate total por letra de grupo', () => {
+  it('desempata empate total con partidos jugados por letra de grupo', () => {
     expect(
       compareThirdPlaces(
         { points: 0, goalDiff: 0, goalsFor: 0, group: 'B' },

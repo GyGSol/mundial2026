@@ -1,9 +1,34 @@
+import fifaRankingsData from '../data/fifaWorldRankings2026.json' with { type: 'json' };
+
+const DEFAULT_FIFA_RANKINGS_BY_CODE = fifaRankingsData.rankings ?? {};
+
+export function getDefaultFifaRankingsByCode() {
+  return DEFAULT_FIFA_RANKINGS_BY_CODE;
+}
+
+export function resolveFifaRank(row, rankingsByCode = DEFAULT_FIFA_RANKINGS_BY_CODE) {
+  if (row?.fifaRank != null && Number.isFinite(Number(row.fifaRank))) {
+    return Number(row.fifaRank);
+  }
+  const code = String(row?.fifaCode ?? '').toUpperCase();
+  if (code && rankingsByCode[code] != null) {
+    return rankingsByCode[code];
+  }
+  return null;
+}
+
+export function totalPlayedInStandings(rows) {
+  return (rows ?? []).reduce((sum, row) => sum + Number(row.played ?? 0), 0);
+}
+
 export function createStanding(team) {
+  const fifaRank = resolveFifaRank(team);
   return {
     teamId: team.externalId,
     nameEn: team.nameEn,
     fifaCode: team.fifaCode,
     flag: team.flag,
+    ...(fifaRank != null ? { fifaRank } : {}),
     played: 0,
     won: 0,
     drawn: 0,
@@ -32,13 +57,29 @@ export function applyResult(standing, goalsFor, goalsAgainst) {
   }
 }
 
-export function sortStandings(rows) {
-  return [...rows].sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
-    if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-    return (a.nameEn || '').localeCompare(b.nameEn || '');
-  });
+function compareByFifaRank(a, b, rankingsByCode) {
+  const rankA = resolveFifaRank(a, rankingsByCode);
+  const rankB = resolveFifaRank(b, rankingsByCode);
+  if (rankA != null && rankB != null && rankA !== rankB) return rankA - rankB;
+  if (rankA != null && rankB == null) return -1;
+  if (rankA == null && rankB != null) return 1;
+  return (a.nameEn || '').localeCompare(b.nameEn || '');
+}
+
+function compareByResults(a, b, rankingsByCode) {
+  if (b.points !== a.points) return b.points - a.points;
+  if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
+  if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+  return compareByFifaRank(a, b, rankingsByCode);
+}
+
+export function sortStandings(rows, rankingsByCode = DEFAULT_FIFA_RANKINGS_BY_CODE) {
+  const compare =
+    totalPlayedInStandings(rows) === 0
+      ? (a, b) => compareByFifaRank(a, b, rankingsByCode)
+      : (a, b) => compareByResults(a, b, rankingsByCode);
+
+  return [...rows].sort(compare);
 }
 
 export function normalizePhaseKey(type) {
