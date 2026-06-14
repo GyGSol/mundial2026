@@ -11,7 +11,7 @@ function FifaRankingLabel({ team }) {
       className="text-[10px] font-semibold tabular-nums text-muted-foreground md:text-xs"
       title={ranking.asOf ? `Ranking FIFA actualizado al ${ranking.asOf}` : 'Ranking FIFA'}
     >
-      FIFA #{ranking.rank}
+      Ranking {ranking.rank}
     </p>
   );
 }
@@ -47,8 +47,8 @@ export default function TeamHeader({ team, slotLabel }) {
 
   return (
     <div className="flex flex-col items-center gap-1 text-center">
-      <TeamFlag team={team} />
       <FifaRankingLabel team={team} />
+      <TeamFlag team={team} />
 
       <WorldCupStars count={titles} />
 
