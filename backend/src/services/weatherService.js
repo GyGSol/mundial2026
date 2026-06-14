@@ -136,7 +136,6 @@ async function fetchOpenMeteo({ latitude, longitude, timezone, kickoffAt }, { fe
     current: 'temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m',
     hourly: 'temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m',
     timezone: timezone || 'auto',
-    forecast_days: '16',
     wind_speed_unit: 'kmh',
   });
 
@@ -144,6 +143,8 @@ async function fetchOpenMeteo({ latitude, longitude, timezone, kickoffAt }, { fe
   if (kickoffParts?.date) {
     params.set('start_date', kickoffParts.date);
     params.set('end_date', kickoffParts.date);
+  } else {
+    params.set('forecast_days', '16');
   }
 
   const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;

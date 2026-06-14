@@ -58,6 +58,9 @@ describe('weatherService', () => {
     expect(weather.available).toBe(true);
     expect(weather.current.temperatureC).toBe(31);
     expect(formatWeatherForPrompt(weather).status).toBe('ok');
+    const calledUrl = mockFetch.mock.calls[0][0];
+    expect(calledUrl).toContain('start_date=2026-06-15');
+    expect(calledUrl).not.toContain('forecast_days');
     expect(mockFetch).toHaveBeenCalledOnce();
   });
 });
