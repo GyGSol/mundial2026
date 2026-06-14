@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
-import { matchesApi, predictionsApi } from '../api/client.js';
+import { predictionsApi } from '../api/client.js';
 import PredictionsMatchList from '../components/PredictionsMatchList.jsx';
-import PredictedGroupStandingsSection from '../components/PredictedGroupStandingsSection.jsx';
 import ScheduleAllButton from '../components/ScheduleAllButton.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useScheduledMatches } from '../hooks/useScheduledMatches.js';
@@ -21,6 +20,10 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import PushOptInBanner from '@/components/PushOptInBanner.jsx';
+
+const PredictedGroupStandingsSection = lazy(
+  () => import('../components/PredictedGroupStandingsSection.jsx')
+);
 
 const views = [
   { id: 'matches', label: 'Partidos' },
@@ -59,7 +62,7 @@ export default function PredictionsPage() {
     const params = {};
     if (statusFilter) params.status = statusFilter;
     if (groupFilter) params.group = groupFilter;
-    return matchesApi.listFull(params);
+    return predictionsApi.listMatches(params);
   }, [statusFilter, groupFilter]);
 
   const fetchGroupStandings = useCallback(() => {
@@ -101,7 +104,11 @@ export default function PredictionsPage() {
       await predictionsApi.save(matchId, homeGoals, awayGoals);
       unmarkScheduled(matchId);
       setMessage('Predicción guardada');
-      await Promise.all([refresh(), refreshStandings()]);
+      const refreshTasks = [refresh()];
+      if (activeView === 'standings') {
+        refreshTasks.push(refreshStandings());
+      }
+      await Promise.all(refreshTasks);
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -277,15 +284,17 @@ export default function PredictionsPage() {
       ) : !isAuthenticated ? (
         <p className="text-sm text-muted-foreground">Iniciá sesión para ver tus tablas de grupos.</p>
       ) : (
-        <PredictedGroupStandingsSection
-          groups={standingsGroups}
-          knockout={standingsData?.knockout}
-          thirdPlaceStandings={standingsData?.thirdPlaceStandings}
-          teams={standingsData?.teams}
-          loading={standingsLoading}
-          error={standingsError}
-          onGroupSelect={handleGroupSelect}
-        />
+        <Suspense fallback={<LoadingSpinner label="Cargando tablas de grupos…" />}>
+          <PredictedGroupStandingsSection
+            groups={standingsGroups}
+            knockout={standingsData?.knockout}
+            thirdPlaceStandings={standingsData?.thirdPlaceStandings}
+            teams={standingsData?.teams}
+            loading={standingsLoading}
+            error={standingsError}
+            onGroupSelect={handleGroupSelect}
+          />
+        </Suspense>
       )}
     </div>
   );

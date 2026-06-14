@@ -5,7 +5,11 @@ import { authMiddleware } from '../middleware/auth.middleware.js';
 import { notifyMatchesUpdated } from '../services/websocketService.js';
 import { isPredictionLocked } from '../services/predictionLockService.js';
 import { backfillLegacyUserSubmittedPredictions, ensureLegacyUserSubmittedBackfillOnce } from '../services/predictionMigrationService.js';
-import { buildUserPredictedMatchContext } from '../services/predictedMatchContextService.js';
+import { listPredictionsMatches } from '../services/predictionsMatchesService.js';
+import {
+  getCachedUserPredictedMatchContext,
+  invalidateUserPredictedMatchContext,
+} from '../services/userPredictedMatchContextCache.js';
 import {
   askMatchAiFollowUp,
   getMatchAiInsightForUser,
@@ -14,6 +18,21 @@ import {
 
 const router = Router();
 
+router.get('/matches', authMiddleware, async (req, res, next) => {
+  try {
+    const result = await listPredictionsMatches(
+      {
+        status: req.query.status ? String(req.query.status) : undefined,
+        group: req.query.group ? String(req.query.group) : undefined,
+      },
+      req.user._id
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/group-standings', authMiddleware, async (req, res, next) => {
   try {
     await ensureLegacyUserSubmittedBackfillOnce();
@@ -21,7 +40,7 @@ router.get('/group-standings', authMiddleware, async (req, res, next) => {
       ? String(req.query.group).trim().toUpperCase()
       : null;
 
-    const ctx = await buildUserPredictedMatchContext(req.user._id);
+    const ctx = await getCachedUserPredictedMatchContext(req.user._id);
     const { teams, thirdPlaceRanked, knockout } = ctx;
     let groups = ctx.groups;
 
@@ -141,6 +160,7 @@ router.put('/:matchId', authMiddleware, async (req, res, next) => {
       { upsert: true, new: true }
     );
 
+    invalidateUserPredictedMatchContext(req.user._id);
     notifyMatchesUpdated({ reason: 'prediction_saved', matchId: match._id.toString() });
 
     res.json({

@@ -1,11 +1,23 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   enrichMatchPredictionMeta,
+  ensureDefaultPredictionsForUser,
   getLockAt,
   hasUserPrediction,
   isPredictionLocked,
   isPredictionOpen,
 } from '../src/services/predictionLockService.js';
+
+vi.mock('../src/models/Match.js', () => ({
+  Match: { find: vi.fn() },
+}));
+
+vi.mock('../src/models/Prediction.js', () => ({
+  Prediction: { bulkWrite: vi.fn() },
+}));
+
+import { Match } from '../src/models/Match.js';
+import { Prediction } from '../src/models/Prediction.js';
 
 const kickoff = new Date('2026-06-15T16:00:00Z');
 
@@ -47,5 +59,24 @@ describe('predictionLockService', () => {
         .hasPrediction
     ).toBe(false);
     expect(hasUserPrediction({ homeGoals: 0, awayGoals: 0, userSubmitted: true })).toBe(true);
+  });
+
+  it('ensureDefaultPredictionsForUser usa bulkWrite para partidos cerrados', async () => {
+    vi.setSystemTime(new Date('2026-06-15T17:30:00Z'));
+    const lockedMatch = {
+      _id: 'match-1',
+      status: 'upcoming',
+      kickoffAt: new Date('2026-06-15T18:00:00Z'),
+    };
+    Match.find.mockReturnValue({
+      lean: vi.fn().mockResolvedValue([lockedMatch]),
+    });
+    Prediction.bulkWrite.mockResolvedValue({ ok: 1 });
+
+    await ensureDefaultPredictionsForUser('user-1');
+
+    expect(Prediction.bulkWrite).toHaveBeenCalledTimes(1);
+    expect(Prediction.bulkWrite.mock.calls[0][0]).toHaveLength(1);
+    expect(Prediction.bulkWrite.mock.calls[0][1]).toEqual({ ordered: false });
   });
 });

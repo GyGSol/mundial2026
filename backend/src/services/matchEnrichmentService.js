@@ -8,9 +8,9 @@ import {
 } from './predictionLockService.js';
 import {
   applyResolvedKnockoutToMatch,
-  buildUserPredictedMatchContext,
   isOfficialKnockoutMatch,
 } from './predictedMatchContextService.js';
+import { getCachedUserPredictedMatchContext } from './userPredictedMatchContextCache.js';
 import { enrichMatchPhaseFields } from './matchPhaseUtils.js';
 import { enrichMatchLiveFields } from './matchLiveData.js';
 import { ensureFifaShirtMaps } from './fifaShirtMapService.js';
@@ -87,7 +87,7 @@ export async function enrichMatches(matches, userId, options = {}) {
 
   let resolvedKnockoutByExternalId = null;
   if (userId && includeKnockoutContext && matches.some(isOfficialKnockoutMatch)) {
-    const ctx = await buildUserPredictedMatchContext(userId);
+    const ctx = await getCachedUserPredictedMatchContext(userId);
     resolvedKnockoutByExternalId = ctx.resolvedKnockoutByExternalId;
   }
 
@@ -164,7 +164,15 @@ export async function enrichMatchesFull(matches, userId) {
   return enrichMatches(matches, userId, {
     includePlayers: true,
     includeKnockoutContext: true,
-    ensureUserDefaults: true,
+    ensureUserDefaults: false,
+  });
+}
+
+export async function enrichMatchesForPredictions(matches, userId) {
+  return enrichMatches(matches, userId, {
+    includePlayers: false,
+    includeKnockoutContext: true,
+    ensureUserDefaults: false,
   });
 }
 

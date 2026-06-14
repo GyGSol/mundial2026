@@ -133,6 +133,10 @@ export const aiConsultationsApi = {
 };
 
 export const predictionsApi = {
+  listMatches: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/predictions/matches${query ? `?${query}` : ''}`);
+  },
   save: (matchId, homeGoals, awayGoals) =>
     request(`/predictions/${matchId}`, {
       method: 'PUT',

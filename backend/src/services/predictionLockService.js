@@ -38,27 +38,30 @@ export function enrichMatchPredictionMeta(match, prediction) {
 }
 
 export async function ensureDefaultPredictionsForUser(userId) {
-  const matches = await Match.find({ status: 'upcoming', kickoffAt: { $ne: null } });
+  const matches = await Match.find({ status: 'upcoming', kickoffAt: { $ne: null } }).lean();
+  const lockedMatches = matches.filter(isPredictionLocked);
+  if (!lockedMatches.length) return;
 
-  for (const match of matches) {
-    if (!isPredictionLocked(match)) continue;
-
-    await Prediction.findOneAndUpdate(
-      { userId, matchId: match._id },
-      {
-        $setOnInsert: {
-          homeGoals: 0,
-          awayGoals: 0,
-          userSubmitted: false,
-          pointsEarned: null,
-          bonusPoint: 0,
-          bonusReason: null,
-          pointsBreakdown: null,
+  await Prediction.bulkWrite(
+    lockedMatches.map((match) => ({
+      updateOne: {
+        filter: { userId, matchId: match._id },
+        update: {
+          $setOnInsert: {
+            homeGoals: 0,
+            awayGoals: 0,
+            userSubmitted: false,
+            pointsEarned: null,
+            bonusPoint: 0,
+            bonusReason: null,
+            pointsBreakdown: null,
+          },
         },
+        upsert: true,
       },
-      { upsert: true }
-    );
-  }
+    })),
+    { ordered: false }
+  );
 }
 
 /** Crea 0-0 para todos los usuarios que aún no tienen predicción en este partido. */

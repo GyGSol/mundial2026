@@ -33,7 +33,7 @@ export function indexResolvedKnockoutPhases(phases = []) {
 export async function buildUserPredictedMatchContext(userId) {
   const [teams, allMatches, stadiums] = await Promise.all([
     Team.find({ group: { $exists: true, $ne: '' } }).lean(),
-    Match.find().sort({ kickoffAt: 1 }).lean(),
+    Match.find().select('-raw').sort({ kickoffAt: 1 }).lean(),
     Stadium.find().lean(),
   ]);
 
