@@ -399,7 +399,7 @@ Resumen: ${player.aiSummary || 'sin resumen'}
 
 Pregunta: ${trimmed}
 
-Respondé en español, breve y concreto (máximo 3 párrafos).`;
+Respondé en español, breve y concreto (máximo 3 párrafos). Usá markdown ligero cuando ayude (negritas, listas). No uses HTML ni bloques de código.`;
 
   const result = await callAiForText(prompt, { fetchImpl });
   return {

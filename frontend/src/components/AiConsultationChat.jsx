@@ -4,6 +4,7 @@ import LoadingSpinner from './LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
+import MarkdownContent from './MarkdownContent.jsx';
 
 export const AI_QUESTION_MAX_LEN = 146;
 
@@ -48,7 +49,11 @@ function ChatMessage({ role, content, createdAt }) {
           </time>
         ) : null}
       </div>
-      <p className="whitespace-pre-wrap text-foreground">{content}</p>
+      {isUser ? (
+        <p className="whitespace-pre-wrap text-foreground">{content}</p>
+      ) : (
+        <MarkdownContent className="text-sm">{content}</MarkdownContent>
+      )}
     </div>
   );
 }
@@ -98,7 +103,7 @@ export default function AiConsultationChat({
             <div className="flex flex-col gap-3">
               <InsightScore homeGoals={insight.homeGoals} awayGoals={insight.awayGoals} />
               {insight.reasoning ? (
-                <p className="whitespace-pre-wrap text-sm text-foreground">{insight.reasoning}</p>
+                <MarkdownContent className="text-sm">{insight.reasoning}</MarkdownContent>
               ) : null}
               <p className="text-xs text-muted-foreground">
                 {(insight.predictedAt ?? thread?.updatedAt)

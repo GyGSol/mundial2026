@@ -283,10 +283,10 @@ function buildAiPredictionPrompt(context) {
 
 ${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-En el campo "reasoning", incluí sede/estadio/clima, ranking FIFA, historial wiki, población/liga, lesiones y titulares probables, duelos por puesto (positionMatchups) y factores anímicos cuando sean relevantes. No uses "localía" en el sentido de club.
+En el campo "reasoning", incluí sede/estadio/clima, ranking FIFA, historial wiki, población/liga, lesiones y titulares probables, duelos por puesto (positionMatchups) y factores anímicos cuando sean relevantes. No uses "localía" en el sentido de club. En "reasoning" podés usar markdown ligero (negritas, listas).
 
-Respondé ÚNICAMENTE con JSON válido (sin markdown):
-{"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<breve explicación en español>"}
+Respondé ÚNICAMENTE con JSON válido (sin markdown fuera del campo reasoning):
+{"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<explicación en español; markdown ligero permitido>"}
 
 Contexto del partido:
 ${JSON.stringify(context, null, 2)}`;
@@ -516,7 +516,7 @@ Tu razonamiento: ${insight.reasoning}
 ${historyBlock}
 Pregunta del usuario: ${question}
 
-Respondé en español, de forma clara y completa. No cambies el marcador salvo que te lo pidan explícitamente.`;
+Respondé en español, de forma clara y completa. Usá markdown ligero cuando ayude (negritas, listas, tablas). No uses HTML ni bloques de código. No cambies el marcador salvo que te lo pidan explícitamente.`;
 }
 
 async function callOpenAiProviderForText(

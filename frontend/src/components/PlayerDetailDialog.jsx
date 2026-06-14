@@ -14,6 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { cn } from '@/lib/utils';
 import { ClubCell } from './ClubDisplay.jsx';
+import MarkdownContent from './MarkdownContent.jsx';
 
 function healthBadgeClass(status) {
   if (status === 'injured') return 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400';
@@ -233,7 +234,9 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
               {player.aiSummary ? (
                 <div className="flex flex-col gap-2">
                   <h3 className="text-sm font-medium">Informe IA</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{player.aiSummary}</p>
+                  <MarkdownContent className="text-sm leading-relaxed text-muted-foreground">
+                    {player.aiSummary}
+                  </MarkdownContent>
                 </div>
               ) : player.healthStatus === 'unknown' ? (
                 <p className="text-sm text-muted-foreground">
@@ -257,7 +260,11 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
                       <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                         {entry.role === 'user' ? 'Vos' : 'IA'}
                       </p>
-                      <p className="whitespace-pre-wrap">{entry.content}</p>
+                      {entry.role === 'user' ? (
+                        <p className="whitespace-pre-wrap">{entry.content}</p>
+                      ) : (
+                        <MarkdownContent className="text-sm">{entry.content}</MarkdownContent>
+                      )}
                     </div>
                   ))}
                 </div>

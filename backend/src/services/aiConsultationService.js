@@ -253,7 +253,7 @@ ${JSON.stringify(context, null, 2)}
 ${historyBlock}
 Pregunta del usuario: ${question}
 
-Respondé en español, claro y completo. Usá datos del contexto y la conversación previa.`;
+Respondé en español, claro y completo. Usá markdown ligero cuando ayude (negritas, listas, tablas). No uses HTML ni bloques de código. Usá datos del contexto y la conversación previa.`;
 }
 
 function formatInsightMessage(insight) {
