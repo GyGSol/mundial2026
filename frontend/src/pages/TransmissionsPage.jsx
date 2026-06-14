@@ -155,12 +155,6 @@ function TransmissionMatchCard({ match }) {
                       : 'Ver transmisión'
                 }
               />
-              <Button variant="outline" size="sm" className="gap-1.5" asChild>
-                <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="size-4 shrink-0" aria-hidden />
-                  Más opciones en {USER_STREAM_BRAND}
-                </a>
-              </Button>
             </div>
             {match.status === 'live' && !match.stream?.configured ? (
               <p className="text-sm text-muted-foreground">
