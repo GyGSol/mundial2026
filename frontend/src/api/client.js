@@ -131,6 +131,11 @@ export const aiConsultationsApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  clearConversation: (body) =>
+    request('/ai-consultations/clear-conversation', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
 
 export const predictionsApi = {

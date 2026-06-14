@@ -77,6 +77,7 @@ export default function AiPredictionsPage() {
   const [aiAvailable, setAiAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
   const [asking, setAsking] = useState(false);
+  const [clearingConversation, setClearingConversation] = useState(false);
   const [error, setError] = useState('');
   const [question, setQuestion] = useState('');
 
@@ -244,6 +245,32 @@ export default function AiPredictionsPage() {
     await submitQuestion(prompt);
   };
 
+  const handleClearConversation = async () => {
+    const resolvedKey = topicType === 'round_of_16' ? 'round_of_16' : topicKey;
+    if (!resolvedKey || clearingConversation || asking) return;
+    if ((thread?.messages?.length ?? 0) === 0) return;
+
+    const confirmed = window.confirm(
+      '¿Borrar las preguntas y respuestas de esta conversación? La predicción de marcador guardada se mantiene.'
+    );
+    if (!confirmed) return;
+
+    setClearingConversation(true);
+    setError('');
+    try {
+      const data = await aiConsultationsApi.clearConversation({
+        topicType,
+        topicKey: resolvedKey,
+      });
+      setThread(data.thread);
+      setMatchVenue(data.matchVenue ?? null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setClearingConversation(false);
+    }
+  };
+
   const quickPrompts = useMemo(() => {
     const base = QUICK_PROMPTS[topicType] ?? [];
     if (topicType === 'match') {
@@ -401,6 +428,8 @@ export default function AiPredictionsPage() {
               showInsightAction={topicType === 'match'}
               quickPrompts={quickPrompts}
               onQuickPrompt={handleQuickPrompt}
+              onClearConversation={handleClearConversation}
+              clearingConversation={clearingConversation}
             />
           </CardContent>
         </Card>

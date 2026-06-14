@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Loader2, SendHorizontal, Sparkles } from 'lucide-react';
+import { Loader2, SendHorizontal, Sparkles, Trash2 } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
@@ -70,6 +70,8 @@ export default function AiConsultationChat({
   showInsightAction,
   quickPrompts = [],
   onQuickPrompt,
+  onClearConversation,
+  clearingConversation = false,
 }) {
   const hasMessages = (thread?.messages?.length ?? 0) > 0;
   const insight = thread?.initialInsight;
@@ -87,15 +89,37 @@ export default function AiConsultationChat({
       ) : (
         <>
           {hasMessages ? (
-            <div className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto pr-1">
-              {messagesNewestFirst.map((entry) => (
-                <ChatMessage
-                  key={entry.id ?? `${entry.role}-${entry.createdAt}`}
-                  role={entry.role}
-                  content={entry.content}
-                  createdAt={entry.createdAt}
-                />
-              ))}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">Conversación guardada</p>
+                {onClearConversation ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-destructive"
+                    disabled={asking || clearingConversation}
+                    onClick={onClearConversation}
+                  >
+                    {clearingConversation ? (
+                      <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                    ) : (
+                      <Trash2 className="size-3.5" aria-hidden />
+                    )}
+                    Limpiar conversación
+                  </Button>
+                ) : null}
+              </div>
+              <div className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto pr-1">
+                {messagesNewestFirst.map((entry) => (
+                  <ChatMessage
+                    key={entry.id ?? `${entry.role}-${entry.createdAt}`}
+                    role={entry.role}
+                    content={entry.content}
+                    createdAt={entry.createdAt}
+                  />
+                ))}
+              </div>
             </div>
           ) : null}
 

@@ -420,3 +420,30 @@ export async function askConsultation(
     },
   };
 }
+
+/** Borra solo el historial Q&A; conserva initialInsight (predicción de marcador). */
+export async function clearConsultationConversation(userId, topicType, topicKey) {
+  if (!isValidTopic(topicType, topicKey)) {
+    throw new Error('Tema de consulta inválido');
+  }
+
+  const key = normalizeTopicKey(topicType, topicKey);
+  const thread = await AiConsultation.findOne({ userId, topicType, topicKey: key });
+  const matchVenue = topicType === 'match' ? await buildMatchVenueContext(key) : null;
+
+  if (!thread) {
+    return { thread: null, matchVenue };
+  }
+
+  if ((thread.messages?.length ?? 0) === 0) {
+    return { thread: formatThreadResponse(thread), matchVenue };
+  }
+
+  thread.messages = [];
+  await thread.save();
+
+  return {
+    thread: formatThreadResponse(thread),
+    matchVenue,
+  };
+}

@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.middleware.js';
 import { hasAiProvider } from '../services/aiPredictionService.js';
 import {
   askConsultation,
+  clearConsultationConversation,
   generateMatchInsight,
   getConsultationThread,
   isValidTopic,
@@ -86,6 +87,24 @@ router.post('/ask', async (req, res, next) => {
     }
     if (err.message === 'IA no configurada') {
       return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
+    }
+    next(err);
+  }
+});
+
+router.post('/clear-conversation', async (req, res, next) => {
+  try {
+    const topicType = String(req.body?.topicType ?? '').trim();
+    const topicKey = String(req.body?.topicKey ?? '').trim();
+    if (!isValidTopic(topicType, topicKey)) {
+      return res.status(400).json({ error: 'Tema de consulta inválido' });
+    }
+
+    const result = await clearConsultationConversation(req.user._id, topicType, topicKey);
+    res.json({ ...result, aiAvailable: hasAiProvider() });
+  } catch (err) {
+    if (err.message === 'Tema de consulta inválido') {
+      return res.status(400).json({ error: err.message });
     }
     next(err);
   }
