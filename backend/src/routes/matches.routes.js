@@ -12,7 +12,9 @@ const router = Router();
 
 router.get('/:id/stream', authMiddleware, async (req, res, next) => {
   try {
-    const config = await getMatchStreamConfig(req.params.id, req.user._id);
+    const config = await getMatchStreamConfig(req.params.id, req.user._id, {
+      sourceId: req.query.sourceId,
+    });
 
     if (config.reason === 'not_found') {
       return res.status(404).json(config);

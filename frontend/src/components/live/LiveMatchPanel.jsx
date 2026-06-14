@@ -18,7 +18,7 @@ export default function LiveMatchPanel({
   const isWarmup = isMatchStreamWarmup(match);
   const { isAuthenticated } = useAuth();
 
-  const { config, loading, error, reload } = useMatchStream(matchId, {
+  const { config, loading, error, reload, selectSource, selectedSourceId } = useMatchStream(matchId, {
     enabled: canWatch && Boolean(matchId) && isAuthenticated,
   });
 
@@ -78,6 +78,9 @@ export default function LiveMatchPanel({
       {!loading && config?.available ? (
         <La18StreamPlayer
           primary={config.primary}
+          sources={config.sources}
+          selectedSourceId={selectedSourceId}
+          onSourceChange={selectSource}
           fallback={config.fallback}
           theaterMode={theaterMode}
           onTheaterModeChange={onTheaterModeChange}

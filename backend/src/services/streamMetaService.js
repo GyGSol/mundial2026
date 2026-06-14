@@ -1,43 +1,48 @@
 import { StreamLinkMapping } from '../models/StreamLinkMapping.js';
 import { Team } from '../models/Team.js';
 import { env } from '../config/env.js';
-import { resolveAutoLa18Mapping } from './la18ChannelResolver.js';
+import {
+  fetchLa18AgendaEvents,
+  mergeStreamSources,
+  rankLa18EventsForMatch,
+} from './la18hdScraper.js';
 import { canWatchConfiguredStream } from './streamWatchEligibility.js';
 
 function buildTeamMap(teams) {
   return Object.fromEntries(teams.map((team) => [team.externalId, team]));
 }
 
-export async function resolveEffectiveLa18Mapping(match, explicitMapping = null) {
-  if (explicitMapping?.enabled !== false && explicitMapping?.embedUrl) {
-    return { mapping: explicitMapping, source: 'admin' };
-  }
+function resolveStreamsForMatch(match, teamById, agendaEvents) {
+  const homeTeam = teamById[match.homeTeamId] || null;
+  const awayTeam = teamById[match.awayTeamId] || null;
+  const homeTeamName = homeTeam?.nameEn || homeTeam?.name || '';
+  const awayTeamName = awayTeam?.nameEn || awayTeam?.name || '';
 
-  const [homeTeam, awayTeam] = await Promise.all([
-    Team.findOne({ externalId: match.homeTeamId }).lean(),
-    Team.findOne({ externalId: match.awayTeamId }).lean(),
-  ]);
+  const ranked = rankLa18EventsForMatch(
+    match,
+    agendaEvents,
+    homeTeamName,
+    awayTeamName,
+    homeTeam,
+    awayTeam
+  );
 
-  const auto = resolveAutoLa18Mapping(match.externalId, { homeTeam, awayTeam });
-  if (!auto) {
-    return { mapping: null, source: null };
-  }
-
-  return { mapping: auto, source: 'auto' };
+  return ranked[0]?.streams ?? [];
 }
 
-export function buildStreamMeta(match, mapping, source) {
-  const configured = Boolean(mapping?.embedUrl || mapping?.la18PageUrl);
+export function buildStreamMeta(match, sources, source) {
+  const configured = sources.length > 0;
   return {
     configured,
     canWatch: canWatchConfiguredStream(match, {
       liveStreamEnabled: env.liveStreamEnabled,
       configured,
     }),
-    la18EventId: mapping?.la18EventId || null,
-    pageUrl: mapping?.la18PageUrl || null,
-    source: source || null,
-    updatedAt: mapping?.updatedAt || null,
+    streamCount: sources.length,
+    la18EventId: sources[0]?.eventId || sources[0]?.id || null,
+    pageUrl: sources[0]?.url || null,
+    source: source || (sources.length ? 'la18hd' : null),
+    updatedAt: null,
   };
 }
 
@@ -67,25 +72,22 @@ export async function attachStreamMetaToMatches(matches) {
     : [];
   const teamById = buildTeamMap(teams);
 
+  let agendaEvents = [];
+  try {
+    agendaEvents = await fetchLa18AgendaEvents();
+  } catch {
+    agendaEvents = [];
+  }
+
   return matches.map((match) => {
     const explicit = mappingById.get(String(match.externalId)) || null;
-    let mapping = explicit;
-    let source = explicit ? 'admin' : null;
-
-    if (!mapping) {
-      const auto = resolveAutoLa18Mapping(match.externalId, {
-        homeTeam: teamById[match.homeTeamId],
-        awayTeam: teamById[match.awayTeamId],
-      });
-      if (auto) {
-        mapping = auto;
-        source = 'auto';
-      }
-    }
+    const la18Streams = resolveStreamsForMatch(match, teamById, agendaEvents);
+    const sources = mergeStreamSources(explicit, la18Streams);
+    const source = explicit ? 'admin' : sources.length ? 'la18hd' : null;
 
     return {
       ...match,
-      stream: buildStreamMeta(match, mapping, source),
+      stream: buildStreamMeta(match, sources, source),
     };
   });
 }

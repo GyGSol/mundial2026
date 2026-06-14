@@ -274,14 +274,14 @@ export default function AdminStreamLinksPage() {
               disabled={busyId === 'suggest'}
               onClick={loadSuggestions}
             >
-              Sugerencias scraper
+              Cargar señales La18HD
             </Button>
           </div>
         </form>
 
         {suggestions.length ? (
           <div className="mt-4 space-y-2">
-            <p className={adminMuted}>Sugerencias (click para aplicar)</p>
+            <p className={adminMuted}>Señales del evento (click para usar una como override admin)</p>
             <ul className="space-y-1 text-sm">
               {suggestions.map((item) => (
                 <li key={item.url}>
@@ -290,7 +290,7 @@ export default function AdminStreamLinksPage() {
                     className="text-left text-sky-300 hover:underline"
                     onClick={() => applySuggestion(item)}
                   >
-                    [{item.score}] {item.title} — {item.url}
+                    {item.label || item.title} — {item.url}
                   </button>
                 </li>
               ))}

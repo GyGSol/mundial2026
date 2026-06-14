@@ -46,6 +46,13 @@ function StreamStatusBadge({ match }) {
       </Badge>
     );
   }
+  if (stream?.canWatch && (stream?.streamCount ?? 0) > 1) {
+    return (
+      <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-100">
+        {stream.streamCount} señales
+      </Badge>
+    );
+  }
   if (status === 'live' && stream?.canWatch) {
     return (
       <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-100">

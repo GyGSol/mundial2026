@@ -11,6 +11,31 @@ import {
 } from '../src/services/streamLinkService.js';
 import * as la18hdScraper from '../src/services/la18hdScraper.js';
 
+const SAMPLE_STREAMS = [
+  {
+    id: 'dsports',
+    label: 'DSports',
+    language: 'Español',
+    url: 'https://la18hd.com/vivo/canales.php?stream=dsports',
+    pageUrl: 'https://la18hd.com/vivo/canales.php?stream=dsports',
+    embedUrl: 'https://la18hd.com/vivo/canales.php?stream=dsports',
+    eventId: 'dsports',
+    embeddable: true,
+    provider: 'la18hd',
+  },
+  {
+    id: 'tycsports',
+    label: 'TyC Sports',
+    language: 'Español',
+    url: 'https://la18hd.com/vivo/canales.php?stream=tycsports',
+    pageUrl: 'https://la18hd.com/vivo/canales.php?stream=tycsports',
+    embedUrl: 'https://la18hd.com/vivo/canales.php?stream=tycsports',
+    eventId: 'tycsports',
+    embeddable: true,
+    provider: 'la18hd',
+  },
+];
+
 describe('streamLinkService', () => {
   const originalEnabled = env.liveStreamEnabled;
   const originalUrls = { ...env.liveStreamUrls };
@@ -23,6 +48,11 @@ describe('streamLinkService', () => {
     vi.spyOn(Team, 'findOne').mockReset();
     vi.spyOn(Team, 'findOne').mockReturnValue({ lean: () => Promise.resolve(null) });
     vi.spyOn(la18hdScraper, 'fetchLa18HlsUrl').mockResolvedValue(null);
+    vi.spyOn(la18hdScraper, 'resolveLa18StreamsForMatch').mockResolvedValue({
+      event: { title: 'Copa del Mundo: Haití vs Escocia' },
+      streams: SAMPLE_STREAMS,
+      sourceUrl: 'https://la18hd.com/eventos/json/agenda123.json',
+    });
   });
 
   afterEach(() => {
@@ -56,7 +86,7 @@ describe('streamLinkService', () => {
     expect(result).toMatchObject({ available: false, reason: 'not_available', status: 'upcoming' });
   });
 
-  it('permite calentamiento en upcoming con predicciones cerradas', async () => {
+  it('permite calentamiento y devuelve todas las señales La18HD', async () => {
     Match.findOne.mockReturnValue({
       lean: () =>
         Promise.resolve({
@@ -72,11 +102,28 @@ describe('streamLinkService', () => {
     const result = await getMatchStreamConfig('5');
     expect(result.available).toBe(true);
     expect(result.status).toBe('upcoming');
-    expect(result.source).toBe('auto');
+    expect(result.source).toBe('la18hd');
+    expect(result.sources).toHaveLength(2);
     expect(result.primary.pageUrl).toContain('stream=dsports');
   });
 
-  it('respeta mapping admin sobre auto', async () => {
+  it('respeta sourceId al elegir señal', async () => {
+    Match.findOne.mockReturnValue({
+      lean: () =>
+        Promise.resolve({
+          externalId: '5',
+          status: 'live',
+          kickoffAt: new Date(),
+        }),
+    });
+    StreamLinkMapping.findOne.mockReturnValue({ lean: () => Promise.resolve(null) });
+
+    const result = await getMatchStreamConfig('5', undefined, { sourceId: 'tycsports' });
+    expect(result.selectedSourceId).toBe('tycsports');
+    expect(result.primary.pageUrl).toContain('stream=tycsports');
+  });
+
+  it('respeta mapping admin y mantiene otras señales', async () => {
     Match.findOne.mockReturnValue({
       lean: () =>
         Promise.resolve({
@@ -101,7 +148,7 @@ describe('streamLinkService', () => {
     const result = await getMatchStreamConfig('7');
     expect(result.available).toBe(true);
     expect(result.source).toBe('admin');
-    expect(result.primary.pageUrl).toContain('disney6');
+    expect(result.sources.some((row) => row.id === 'disney6')).toBe(true);
   });
 
   it('rechaza partido que no está en vivo ni en calentamiento', async () => {
@@ -112,7 +159,13 @@ describe('streamLinkService', () => {
     expect(result).toMatchObject({ available: false, reason: 'not_available', status: 'finished' });
   });
 
-  it('rechaza sin mapping La18 ni auto (simulación)', async () => {
+  it('rechaza sin streams La18 (simulación)', async () => {
+    la18hdScraper.resolveLa18StreamsForMatch.mockResolvedValueOnce({
+      event: null,
+      streams: [],
+      sourceUrl: '',
+    });
+
     Match.findOne.mockReturnValue({
       lean: () => Promise.resolve({ externalId: 'sim-1', status: 'live' }),
     });
@@ -127,7 +180,7 @@ describe('streamLinkService', () => {
     expect(result.fallback?.provider).toBe('fubo');
   });
 
-  it('auto-mapea Disney+ cuando no hay mapping admin', async () => {
+  it('devuelve config La18 con fallback Fubo cuando está live', async () => {
     Match.findOne.mockReturnValue({
       lean: () => Promise.resolve({ externalId: '19', status: 'live' }),
     });
@@ -135,32 +188,9 @@ describe('streamLinkService', () => {
 
     const result = await getMatchStreamConfig('19');
     expect(result.available).toBe(true);
-    expect(result.source).toBe('auto');
-    expect(result.primary.pageUrl).toContain('stream=disney6');
-  });
-
-  it('devuelve config La18 con fallback Fubo cuando está live', async () => {
-    Match.findOne.mockReturnValue({
-      lean: () => Promise.resolve({ externalId: '19', status: 'live' }),
-    });
-    StreamLinkMapping.findOne.mockReturnValue({
-      lean: () =>
-        Promise.resolve({
-          matchExternalId: '19',
-          la18EventId: 'arg-bra',
-          la18PageUrl: 'https://la18hd.com/evento/arg-bra',
-          embedUrl: 'https://la18hd.com/evento/arg-bra',
-          enabled: true,
-        }),
-    });
-
-    const result = await getMatchStreamConfig('19');
-    expect(result.available).toBe(true);
     expect(result.primary).toMatchObject({
       provider: 'la18hd',
       type: 'iframe',
-      url: 'https://la18hd.com/evento/arg-bra',
-      eventId: 'arg-bra',
       hlsUrl: null,
     });
     expect(result.fallback?.provider).toBe('fubo');

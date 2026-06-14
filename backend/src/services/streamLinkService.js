@@ -1,10 +1,14 @@
 import { Match } from '../models/Match.js';
 import { StreamLinkMapping } from '../models/StreamLinkMapping.js';
+import { Team } from '../models/Team.js';
 import { env } from '../config/env.js';
 import { resolveStreamUrl } from '../data/liveStreamSchedule.js';
-import { fetchLa18HlsUrl } from './la18hdScraper.js';
+import {
+  fetchLa18HlsUrl,
+  mergeStreamSources,
+  resolveLa18StreamsForMatch,
+} from './la18hdScraper.js';
 import { isStreamWatchEligible } from './streamWatchEligibility.js';
-import { resolveEffectiveLa18Mapping } from './streamMetaService.js';
 
 function buildFallbackConfig(matchExternalId) {
   const fuboUrl = resolveStreamUrl('fubo-youtube', matchExternalId);
@@ -18,11 +22,51 @@ function buildFallbackConfig(matchExternalId) {
   };
 }
 
+async function loadTeamsForMatch(match) {
+  const [homeTeam, awayTeam] = await Promise.all([
+    Team.findOne({ externalId: match.homeTeamId }).lean(),
+    Team.findOne({ externalId: match.awayTeamId }).lean(),
+  ]);
+  return { homeTeam, awayTeam };
+}
+
+function pickStreamSource(sources, sourceId) {
+  if (!sources?.length) return null;
+  if (!sourceId) return sources[0];
+
+  const id = String(sourceId).trim();
+  return sources.find((source) => source.id === id) || sources[0];
+}
+
+async function buildPrimaryFromSource(source) {
+  if (!source?.url) return null;
+
+  let hlsUrl = null;
+  try {
+    hlsUrl = await fetchLa18HlsUrl(source.pageUrl || source.url);
+  } catch {
+    hlsUrl = null;
+  }
+
+  return {
+    provider: 'la18hd',
+    type: hlsUrl ? 'hls' : 'iframe',
+    url: source.embedUrl || source.url,
+    hlsUrl,
+    eventId: source.eventId || source.id || null,
+    pageUrl: source.pageUrl || source.url,
+    label: source.label,
+    sourceKey: source.id,
+    embeddable: source.embeddable !== false,
+  };
+}
+
 /**
  * @param {string} matchExternalId
  * @param {import('mongoose').Types.ObjectId} [_userId]
+ * @param {{ sourceId?: string }} [options]
  */
-export async function getMatchStreamConfig(matchExternalId, _userId) {
+export async function getMatchStreamConfig(matchExternalId, _userId, options = {}) {
   if (!env.liveStreamEnabled) {
     return { available: false, reason: 'disabled' };
   }
@@ -51,39 +95,52 @@ export async function getMatchStreamConfig(matchExternalId, _userId) {
     enabled: true,
   }).lean();
 
-  const fallback = buildFallbackConfig(match.externalId);
-  const { mapping, source } = await resolveEffectiveLa18Mapping(match, explicitMapping);
+  const { homeTeam, awayTeam } = await loadTeamsForMatch(match);
 
-  if (!mapping) {
+  let la18Event = null;
+  let la18Streams = [];
+  try {
+    const resolved = await resolveLa18StreamsForMatch(match, { homeTeam, awayTeam });
+    la18Event = resolved.event;
+    la18Streams = resolved.streams;
+  } catch {
+    la18Streams = [];
+  }
+
+  const sources = mergeStreamSources(explicitMapping, la18Streams);
+  const fallback = buildFallbackConfig(match.externalId);
+
+  if (!sources.length) {
     return {
       available: false,
       reason: 'no_la18_mapping',
       matchId: match.externalId,
       status: match.status,
       fallback,
+      sources: [],
     };
   }
 
-  let hlsUrl = null;
-  try {
-    hlsUrl = await fetchLa18HlsUrl(mapping.la18PageUrl || mapping.embedUrl);
-  } catch {
-    hlsUrl = null;
-  }
+  const selected = pickStreamSource(sources, options.sourceId);
+  const primary = await buildPrimaryFromSource(selected);
+  const sourceKind = explicitMapping && selected?.source === 'admin' ? 'admin' : 'la18hd';
 
   return {
     available: true,
     matchId: match.externalId,
     status: match.status,
-    source,
-    primary: {
-      provider: 'la18hd',
-      type: hlsUrl ? 'hls' : 'iframe',
-      url: mapping.embedUrl,
-      hlsUrl,
-      eventId: mapping.la18EventId || null,
-      pageUrl: mapping.la18PageUrl,
-    },
+    source: sourceKind,
+    event: la18Event,
+    sources: sources.map((source) => ({
+      id: source.id,
+      label: source.label,
+      language: source.language || '',
+      url: source.url,
+      embeddable: source.embeddable !== false,
+      origin: source.source || 'la18hd',
+    })),
+    selectedSourceId: selected?.id || null,
+    primary,
     fallback,
     expiresAt: null,
   };

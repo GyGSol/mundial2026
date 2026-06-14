@@ -268,7 +268,10 @@ export const streamApi = {
 };
 
 export const matchStreamApi = {
-  getStream: (matchId) => request(`/matches/${encodeURIComponent(matchId)}/stream`),
+  getStream: (matchId, { sourceId } = {}) => {
+    const params = sourceId ? `?sourceId=${encodeURIComponent(sourceId)}` : '';
+    return request(`/matches/${encodeURIComponent(matchId)}/stream${params}`);
+  },
 };
 
 export const transmissionsApi = {

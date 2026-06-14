@@ -13,6 +13,9 @@ const IOS_LOAD_TIMEOUT_MS = 20000;
 
 export default function La18StreamPlayer({
   primary,
+  sources = [],
+  selectedSourceId,
+  onSourceChange,
   fallback,
   className,
   theaterMode = false,
@@ -141,6 +144,8 @@ export default function La18StreamPlayer({
 
   if (!primary?.url && !primary?.hlsUrl && !fallback?.url) return null;
 
+  const showSourcePicker = sources.length > 1;
+
   return (
     <div
       ref={containerRef}
@@ -150,6 +155,31 @@ export default function La18StreamPlayer({
         className
       )}
     >
+      {showSourcePicker ? (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[11px] font-medium text-muted-foreground">
+            Elegí señal ({sources.length} disponibles)
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {sources.map((source) => {
+              const active = source.id === (selectedSourceId || primary?.sourceKey);
+              return (
+                <Button
+                  key={source.id}
+                  type="button"
+                  size="sm"
+                  variant={active ? 'default' : 'outline'}
+                  className="h-8 max-w-full truncate text-xs"
+                  aria-pressed={active}
+                  onClick={() => onSourceChange?.(source.id)}
+                >
+                  {source.label}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
       <div
         className={cn(
           'relative w-full overflow-hidden rounded-md border border-border/60 bg-black shadow-inner',
