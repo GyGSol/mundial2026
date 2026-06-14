@@ -5,7 +5,7 @@ import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketServi
 import { notifyMatchesLiveStarted } from './pushNotificationService.js';
 import { blocksKickoffPromotion } from './matchWeatherOpsRules.js';
 import {
-  applyNwsWeatherOpsSuggestion,
+  applyWeatherOpsSuggestion,
 } from './matchWeatherEnrichmentService.js';
 import { assessVenueWeatherRisk, shouldSuggestPreKickoffDelay } from './weatherRiskService.js';
 import { getVenueWeatherForStadium } from './weatherService.js';
@@ -33,7 +33,7 @@ async function maybeApplyNwsPreKickoffDelay(match, stadium) {
 
   if (!shouldSuggestPreKickoffDelay(risk, match)) return false;
 
-  const suggestion = applyNwsWeatherOpsSuggestion(match, risk);
+  const suggestion = applyWeatherOpsSuggestion(match, risk, stadium);
   if (!suggestion) return false;
 
   match.weatherOps = suggestion;

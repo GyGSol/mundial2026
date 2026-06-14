@@ -288,7 +288,7 @@ function topicInstructions(topicType) {
   if (topicType === 'match') {
     return `${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-Analizá el partido según el contexto, la sede del estadio y venue.matchWeather (panel Sede y clima). Para el pronóstico y el clima en tus respuestas, usá venue.matchWeather.kickoffForecast cuando status=ok. Usá weatherOps, weatherRisk y liveScheduleContext: si hay demora NOAA (pre_kickoff_delay/suspended) o integrityWarning en parejas de grupo, mencionarlo. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
+Analizá el partido según el contexto, la sede del estadio y venue.matchWeather (panel Sede y clima). Para el pronóstico y el clima en tus respuestas, usá venue.matchWeather.kickoffForecast cuando status=ok. Usá weatherOps, weatherRisk y liveScheduleContext: si hay demora climática (pre_kickoff_delay/suspended) o integrityWarning en parejas de grupo, mencionarlo según la sede (NOAA en USA, MSC en Canadá, protocolo local en México). Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
   }
   if (topicType === 'group') {
     return 'Proyectá resultados del grupo completo según las predicciones del usuario y el fixture restante. Podés estimar la tabla final y quién clasifica.';

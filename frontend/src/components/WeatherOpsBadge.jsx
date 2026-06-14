@@ -26,11 +26,22 @@ export function getWeatherOpsLabel(weatherOps) {
   return null;
 }
 
+export function getWeatherRiskBadgeLabel(weatherRisk) {
+  const label = weatherRisk?.protocol?.badgeLabel;
+  if (label) return label;
+  const region = weatherRisk?.profile?.lightningProtocolRegion;
+  if (region === 'usa-noaa') return 'Alerta NOAA';
+  if (region === 'canada') return 'Alerta MSC';
+  return 'Riesgo climático';
+}
+
 export default function WeatherOpsBadge({ weatherOps, weatherRisk, className }) {
   const opsLabel = getWeatherOpsLabel(weatherOps);
   const resumeLabel = formatResumeCountdown(weatherOps?.resumeEarliestAt);
-  const nwsAlert = weatherRisk?.nws?.primaryAlert?.event;
+  const authorityAlert =
+    weatherRisk?.nws?.primaryAlert?.event ?? weatherRisk?.msc?.primaryAlert?.event ?? null;
   const riskLevel = weatherRisk?.riskLevel;
+  const riskBadgeLabel = getWeatherRiskBadgeLabel(weatherRisk);
 
   if (!opsLabel && riskLevel !== 'stop' && riskLevel !== 'high') return null;
 
@@ -51,7 +62,8 @@ export default function WeatherOpsBadge({ weatherOps, weatherRisk, className }) 
           className="border-amber-400/70 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100"
         >
           <AlertTriangle className="mr-1 size-3" aria-hidden />
-          Alerta NOAA{riskLevel === 'stop' ? ' · alto riesgo de demora' : ''}
+          {riskBadgeLabel}
+          {riskLevel === 'stop' ? ' · alto riesgo de demora' : ''}
         </Badge>
       ) : null}
       {resumeLabel ? (
@@ -60,8 +72,8 @@ export default function WeatherOpsBadge({ weatherOps, weatherRisk, className }) 
           {resumeLabel}
         </span>
       ) : null}
-      {nwsAlert ? (
-        <span className="text-[10px] text-muted-foreground">{nwsAlert}</span>
+      {authorityAlert ? (
+        <span className="text-[10px] text-muted-foreground">{authorityAlert}</span>
       ) : null}
     </div>
   );

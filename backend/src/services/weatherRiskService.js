@@ -1,13 +1,13 @@
 import { resolveStadiumCoordinates } from '../data/stadiumCoordinates.js';
 import {
-  noaaProtocolCopy,
+  resolveLightningProtocolCopy,
   resolveStadiumWeatherProfile,
 } from '../data/stadiumWeatherProfile.js';
 import { NOAA_RESUME_WAIT_MS } from './matchWeatherOpsRules.js';
 
-const NWS_CACHE_TTL_LIVE_MS = 3 * 60 * 1000;
-const NWS_CACHE_TTL_DEFAULT_MS = 30 * 60 * 1000;
-const nwsCache = new Map();
+const AUTHORITY_ALERTS_CACHE_TTL_LIVE_MS = 3 * 60 * 1000;
+const AUTHORITY_ALERTS_CACHE_TTL_DEFAULT_MS = 30 * 60 * 1000;
+const authorityAlertsCache = new Map();
 
 const STOP_EVENT_TYPES = new Set([
   'Tornado Warning',
@@ -26,22 +26,22 @@ const ELEVATED_EVENT_TYPES = new Set([
 
 const STORM_WMO_CODES = new Set([95, 96, 99]);
 
-function nwsCacheKey(lat, lon) {
-  return `${lat.toFixed(3)},${lon.toFixed(3)}`;
+function authorityAlertsCacheKey(source, lat, lon) {
+  return `${source}:${lat.toFixed(3)},${lon.toFixed(3)}`;
 }
 
-function readNwsCache(key, ttlMs) {
-  const entry = nwsCache.get(key);
+function readAuthorityAlertsCache(key, ttlMs) {
+  const entry = authorityAlertsCache.get(key);
   if (!entry) return null;
   if (Date.now() - entry.at > ttlMs) {
-    nwsCache.delete(key);
+    authorityAlertsCache.delete(key);
     return null;
   }
   return entry.value;
 }
 
-function writeNwsCache(key, value) {
-  nwsCache.set(key, { at: Date.now(), value });
+function writeAuthorityAlertsCache(key, value) {
+  authorityAlertsCache.set(key, { at: Date.now(), value });
 }
 
 export function assessOpenMeteoRisk(weather) {
@@ -104,6 +104,46 @@ export function assessNwsAlerts(alerts = []) {
   return { contribution, alerts: parsed, primaryAlert };
 }
 
+const MSC_STOP_NAME_RE =
+  /thunderstorm|tornado|lightning|severe|hail|rainfall warning|wind warning|winter storm warning/i;
+
+export function assessMscAlerts(alerts = []) {
+  if (!alerts.length) {
+    return { contribution: 'low', alerts: [], primaryAlert: null };
+  }
+
+  const parsed = alerts.map((a) => ({
+    id: a.id ?? a.properties?.id ?? null,
+    event: a.properties?.alert_name_en ?? a.properties?.alert_short_name_en ?? 'Alerta',
+    alertType: a.properties?.alert_type ?? null,
+    headline: a.properties?.alert_short_name_en ?? null,
+    severity: a.properties?.risk_colour_en ?? null,
+    sent: a.properties?.publication_datetime ?? null,
+    expires: a.properties?.expiration_datetime ?? null,
+  }));
+
+  const isStormRelated = (alert) => MSC_STOP_NAME_RE.test(String(alert.event ?? ''));
+  const hasStop = parsed.some((a) => a.alertType === 'warning' && isStormRelated(a));
+  const hasElevated = parsed.some(
+    (a) => (a.alertType === 'watch' || a.alertType === 'advisory') && isStormRelated(a)
+  );
+
+  const contribution = hasStop ? 'stop' : hasElevated ? 'elevated' : 'low';
+  const primaryAlert =
+    parsed.find((a) => a.alertType === 'warning' && isStormRelated(a)) ?? parsed[0] ?? null;
+
+  return { contribution, alerts: parsed, primaryAlert };
+}
+
+function formatAuthorityAlertsBlock(result) {
+  return {
+    alertCount: result.alerts.length,
+    primaryAlert: result.primaryAlert,
+    alerts: result.alerts.slice(0, 5),
+    fetchError: result.fetchError ?? null,
+  };
+}
+
 export function mergeRiskLevels(...levels) {
   const order = { low: 0, elevated: 1, high: 2, stop: 3 };
   let best = 'low';
@@ -117,9 +157,9 @@ export async function fetchNwsAlertsForPoint(
   { latitude, longitude },
   { fetchImpl = fetch, urgent = false } = {}
 ) {
-  const key = nwsCacheKey(latitude, longitude);
-  const ttl = urgent ? NWS_CACHE_TTL_LIVE_MS : NWS_CACHE_TTL_DEFAULT_MS;
-  const cached = readNwsCache(key, ttl);
+  const key = authorityAlertsCacheKey('nws', latitude, longitude);
+  const ttl = urgent ? AUTHORITY_ALERTS_CACHE_TTL_LIVE_MS : AUTHORITY_ALERTS_CACHE_TTL_DEFAULT_MS;
+  const cached = readAuthorityAlertsCache(key, ttl);
   if (cached) return cached;
 
   const url = `https://api.weather.gov/alerts/active?point=${latitude},${longitude}`;
@@ -136,7 +176,39 @@ export async function fetchNwsAlertsForPoint(
     }
     const data = await response.json();
     const features = Array.isArray(data?.features) ? data.features : [];
-    writeNwsCache(key, features);
+    writeAuthorityAlertsCache(key, features);
+    return features;
+  } catch (err) {
+    return { error: err.message, features: [] };
+  }
+}
+
+export async function fetchMscAlertsForPoint(
+  { latitude, longitude },
+  { fetchImpl = fetch, urgent = false } = {}
+) {
+  const key = authorityAlertsCacheKey('msc', latitude, longitude);
+  const ttl = urgent ? AUTHORITY_ALERTS_CACHE_TTL_LIVE_MS : AUTHORITY_ALERTS_CACHE_TTL_DEFAULT_MS;
+  const cached = readAuthorityAlertsCache(key, ttl);
+  if (cached) return cached;
+
+  const pad = 0.12;
+  const bbox = `${longitude - pad},${latitude - pad},${longitude + pad},${latitude + pad}`;
+  const url = `https://api.weather.gc.ca/collections/weather-alerts/items?bbox=${bbox}&f=json&limit=20`;
+  try {
+    const response = await fetchImpl(url, {
+      headers: {
+        Accept: 'application/geo+json',
+        'User-Agent': 'mundial2026-pred/1.0 (weather-risk)',
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+      throw new Error(`MSC respondió ${response.status}`);
+    }
+    const data = await response.json();
+    const features = Array.isArray(data?.features) ? data.features : [];
+    writeAuthorityAlertsCache(key, features);
     return features;
   } catch (err) {
     return { error: err.message, features: [] };
@@ -149,7 +221,7 @@ export async function assessVenueWeatherRisk(
 ) {
   const coordinates = resolveStadiumCoordinates(stadium);
   const profile = resolveStadiumWeatherProfile(stadium);
-  const protocol = noaaProtocolCopy(profile);
+  const protocol = resolveLightningProtocolCopy(profile);
 
   if (!coordinates) {
     return {
@@ -162,20 +234,34 @@ export async function assessVenueWeatherRisk(
   }
 
   const openMeteo = assessOpenMeteoRisk(weather);
-  let nwsResult = { contribution: 'low', alerts: [], primaryAlert: null };
+  let authorityResult = { contribution: 'low', alerts: [], primaryAlert: null, source: null };
 
   if (profile.lightningProtocolRegion === 'usa-noaa') {
     const nwsRaw = await fetchNwsAlertsForPoint(coordinates, { fetchImpl, urgent });
     const features = Array.isArray(nwsRaw) ? nwsRaw : nwsRaw?.features ?? [];
-    nwsResult = assessNwsAlerts(features);
+    authorityResult = { ...assessNwsAlerts(features), source: 'nws' };
     if (nwsRaw?.error) {
-      nwsResult.fetchError = nwsRaw.error;
+      authorityResult.fetchError = nwsRaw.error;
+    }
+  } else if (profile.lightningProtocolRegion === 'canada') {
+    const mscRaw = await fetchMscAlertsForPoint(coordinates, { fetchImpl, urgent });
+    const features = Array.isArray(mscRaw) ? mscRaw : mscRaw?.features ?? [];
+    authorityResult = { ...assessMscAlerts(features), source: 'msc' };
+    if (mscRaw?.error) {
+      authorityResult.fetchError = mscRaw.error;
     }
   }
 
-  const riskLevel = mergeRiskLevels(openMeteo.contribution, nwsResult.contribution);
+  const riskLevel = mergeRiskLevels(openMeteo.contribution, authorityResult.contribution);
   const now = Date.now();
-  const lastAlertAt = nwsResult.primaryAlert?.sent ?? null;
+  const lastAlertAt = authorityResult.primaryAlert?.sent ?? null;
+  const authorityAlertId = authorityResult.primaryAlert?.id ?? null;
+  const authorityAlertSource =
+    authorityResult.contribution !== 'low'
+      ? authorityResult.source
+      : openMeteo.contribution === 'stop'
+        ? 'open-meteo'
+        : null;
   const resumeEarliestAt =
     riskLevel === 'stop' && lastAlertAt
       ? new Date(new Date(lastAlertAt).getTime() + NOAA_RESUME_WAIT_MS)
@@ -188,6 +274,13 @@ export async function assessVenueWeatherRisk(
     urgent ||
     (Number.isFinite(kickoffMs) && Math.abs(kickoffMs - now) <= 2 * 60 * 60 * 1000);
 
+  const emptyAlerts = {
+    alertCount: 0,
+    primaryAlert: null,
+    alerts: [],
+    fetchError: null,
+  };
+
   return {
     available: true,
     riskLevel,
@@ -195,12 +288,15 @@ export async function assessVenueWeatherRisk(
     profile,
     protocol,
     openMeteo: openMeteo.signals,
-    nws: {
-      alertCount: nwsResult.alerts.length,
-      primaryAlert: nwsResult.primaryAlert,
-      alerts: nwsResult.alerts.slice(0, 5),
-      fetchError: nwsResult.fetchError ?? null,
-    },
+    authorityAlertSource,
+    nws:
+      authorityResult.source === 'nws'
+        ? formatAuthorityAlertsBlock(authorityResult)
+        : emptyAlerts,
+    msc:
+      authorityResult.source === 'msc'
+        ? formatAuthorityAlertsBlock(authorityResult)
+        : emptyAlerts,
     recommendation:
       riskLevel === 'stop'
         ? 'high_delay_likely'
@@ -211,7 +307,8 @@ export async function assessVenueWeatherRisk(
             : 'normal',
     resumeEarliestAt: resumeEarliestAt?.toISOString?.() ?? null,
     lastAlertAt: lastAlertAt ?? null,
-    nwsAlertId: nwsResult.primaryAlert?.id ?? null,
+    authorityAlertId,
+    nwsAlertId: authorityAlertId,
     fetchedAt: new Date().toISOString(),
   };
 }
@@ -226,7 +323,9 @@ export function formatWeatherRiskForClient(risk) {
     profile: risk.profile ?? null,
     protocol: risk.protocol ?? null,
     openMeteo: risk.openMeteo ?? [],
+    authorityAlertSource: risk.authorityAlertSource ?? null,
     nws: risk.nws ?? null,
+    msc: risk.msc ?? null,
     resumeEarliestAt: risk.resumeEarliestAt ?? null,
     lastAlertAt: risk.lastAlertAt ?? null,
     fetchedAt: risk.fetchedAt ?? null,

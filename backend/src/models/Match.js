@@ -31,7 +31,11 @@ const matchSchema = new mongoose.Schema(
       delayedKickoffAt: Date,
       lastAlertAt: Date,
       nwsAlertId: String,
-      source: { type: String, enum: ['nws', 'admin', 'sync', null], default: null },
+      source: {
+        type: String,
+        enum: ['nws', 'msc', 'open-meteo', 'admin', 'sync', null],
+        default: null,
+      },
       overlapGroupKey: String,
     },
     lastSyncedAt: Date,

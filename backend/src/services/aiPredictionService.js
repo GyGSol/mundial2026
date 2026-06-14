@@ -40,7 +40,7 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - Usá squadAnalysis: titulares probables, lesiones, dudas, suspendidos y riesgo de tarjetas.
 - Usá positionMatchups: compará GK/DEF/MID/FWD y su edge (home/away/even) para ponderar el marcador.
 - Usá venue.matchWeather.kickoffForecast para ponderar ritmo, desgaste, errores técnicos y adaptación de cada selección al calor/humedad/viento/lluvia del kickoff.
-- Usá weatherOps y weatherRisk: si phase=pre_kickoff_delay o suspended, el partido está demorado por clima (protocolo NOAA 8 mi / 30 min en sedes USA). Si liveScheduleContext.integrityWarning existe, advertí desbalance en parejas de grupo simultáneas.`;
+- Usá weatherOps y weatherRisk: si phase=pre_kickoff_delay o suspended, el partido está demorado por clima. En sedes USA aplica protocolo NOAA (8 mi / 30 min); en Canadá alertas MSC; en México protocolo local SMN con señal Open-Meteo. Si liveScheduleContext.integrityWarning existe, advertí desbalance en parejas de grupo simultáneas.`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;

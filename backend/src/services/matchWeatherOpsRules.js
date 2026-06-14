@@ -47,7 +47,7 @@ export function normalizeWeatherOps(raw) {
   return {
     phase,
     reason: WEATHER_OPS_REASONS.includes(raw.reason) ? raw.reason : raw.reason ?? null,
-    protocol: raw.protocol ?? (phase !== 'normal' ? 'noaa-8mi-30min' : null),
+    protocol: raw.protocol ?? null,
     since: raw.since ? new Date(raw.since) : null,
     resumeEarliestAt: raw.resumeEarliestAt ? new Date(raw.resumeEarliestAt) : null,
     originalKickoffAt: raw.originalKickoffAt ? new Date(raw.originalKickoffAt) : null,

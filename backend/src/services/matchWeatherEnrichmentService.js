@@ -13,6 +13,10 @@ import {
   normalizeWeatherOps,
   serializeWeatherOpsForClient,
 } from './matchWeatherOpsRules.js';
+import {
+  resolveStadiumWeatherProfile,
+  resolveWeatherOpsProtocolKey,
+} from '../data/stadiumWeatherProfile.js';
 
 const WEATHER_ENRICH_WINDOW_MS = 2 * 60 * 60 * 1000;
 
@@ -98,24 +102,35 @@ export async function attachWeatherAndScheduleToEnrichedMatches(
   });
 }
 
-export function applyNwsWeatherOpsSuggestion(match, risk) {
+export function applyWeatherOpsSuggestion(match, risk, stadium = {}) {
   if (!shouldSuggestPreKickoffDelay(risk, match)) return null;
 
   const ops = normalizeWeatherOps(match.weatherOps);
   if (ops.phase !== 'normal') return null;
 
+  const profile = resolveStadiumWeatherProfile(stadium);
+  const region = profile.lightningProtocolRegion;
   const lastAlertAt = risk.lastAlertAt ? new Date(risk.lastAlertAt) : new Date();
+  const source =
+    risk.authorityAlertSource ??
+    (region === 'usa-noaa' ? 'nws' : region === 'canada' ? 'msc' : 'open-meteo');
+
   return {
     phase: 'pre_kickoff_delay',
     reason: 'lightning',
-    protocol: 'noaa-8mi-30min',
+    protocol: resolveWeatherOpsProtocolKey(region),
     since: new Date(),
     resumeEarliestAt: computeResumeEarliestAt(lastAlertAt),
     originalKickoffAt: ops.originalKickoffAt ?? match.kickoffAt ?? null,
     delayedKickoffAt: null,
     lastAlertAt,
-    nwsAlertId: risk.nwsAlertId ?? null,
-    source: 'nws',
+    nwsAlertId: risk.authorityAlertId ?? risk.nwsAlertId ?? null,
+    source,
     overlapGroupKey: ops.overlapGroupKey ?? null,
   };
+}
+
+/** @deprecated Usar applyWeatherOpsSuggestion */
+export function applyNwsWeatherOpsSuggestion(match, risk, stadium) {
+  return applyWeatherOpsSuggestion(match, risk, stadium);
 }

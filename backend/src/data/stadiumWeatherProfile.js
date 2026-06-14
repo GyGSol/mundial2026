@@ -43,13 +43,60 @@ export function resolveStadiumWeatherProfile(stadium = {}) {
   return { ...DEFAULT_PROFILE };
 }
 
+export function resolveWeatherOpsProtocolKey(region) {
+  switch (region) {
+    case 'usa-noaa':
+      return 'noaa-8mi-30min';
+    case 'canada':
+      return 'msc-lightning-30min';
+    case 'mexico':
+      return 'mexico-local';
+    default:
+      return 'weather-delay';
+  }
+}
+
+export function resolveLightningProtocolCopy(profile) {
+  switch (profile?.lightningProtocolRegion) {
+    case 'usa-noaa':
+      return {
+        region: 'usa-noaa',
+        title: 'Protocolo NOAA (sedes USA)',
+        summary:
+          'Parada si hay rayo dentro de 8 millas; espera mínima de 30 min sin nuevos impactos antes de reanudar.',
+        detail:
+          'FIFA sigue las autoridades locales. En EE.UU. se aplica la guía NOAA: evacuación del campo y gradas, cronómetro de 30 min que se reinicia con cada rayo cercano.',
+        badgeLabel: 'Alerta NOAA',
+        authorityName: 'NWS',
+      };
+    case 'canada':
+      return {
+        region: 'canada',
+        title: 'Protocolo MSC (sedes Canadá)',
+        summary:
+          'Suspensión por rayos o alertas severas de Environment Canada; espera típica de 30 min antes de reanudar.',
+        detail:
+          'FIFA sigue las autoridades locales. En Canadá las alertas provienen del Meteorological Service of Canada (GeoMet).',
+        badgeLabel: 'Alerta MSC',
+        authorityName: 'MSC',
+      };
+    case 'mexico':
+      return {
+        region: 'mexico',
+        title: 'Protocolo local (sedes México)',
+        summary:
+          'El árbitro puede suspender por rayos o condiciones severas según SMN-CONAGUA y protocolos FIFA locales.',
+        detail:
+          'No hay feed público de alertas en tiempo real como NWS; usamos pronóstico Open-Meteo como señal de riesgo.',
+        badgeLabel: 'Riesgo climático',
+        authorityName: 'SMN',
+      };
+    default:
+      return null;
+  }
+}
+
+/** @deprecated Usar resolveLightningProtocolCopy */
 export function noaaProtocolCopy(profile) {
-  if (profile?.lightningProtocolRegion !== 'usa-noaa') return null;
-  return {
-    title: 'Protocolo NOAA (sedes USA)',
-    summary:
-      'Parada si hay rayo dentro de 8 millas; espera mínima de 30 min sin nuevos impactos antes de reanudar.',
-    detail:
-      'FIFA sigue las autoridades locales. En EE.UU. se aplica la guía NOAA: evacuación del campo y gradas, cronómetro de 30 min que se reinicia con cada rayo cercano.',
-  };
+  return profile?.lightningProtocolRegion === 'usa-noaa' ? resolveLightningProtocolCopy(profile) : null;
 }
