@@ -80,6 +80,7 @@ export async function enrichMatches(matches, userId, options = {}) {
           userSubmitted: Boolean(p.userSubmitted),
           pointsEarned: p.pointsEarned,
           pointsBreakdown: p.pointsBreakdown,
+          updatedAt: p.updatedAt,
         },
       ])
     );

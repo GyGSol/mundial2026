@@ -51,6 +51,19 @@ function formatTimezoneShort(timeZone) {
   }
 }
 
+export function formatPredictionUpdatedAt(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function formatMatchDate(match, { showTimezone = false, timeZone } = {}) {
   const resolvedTimeZone = timeZone ?? ARGENTINA_TIMEZONE;
   const fromKickoff = tryFormatFromDate(match?.kickoffAt, resolvedTimeZone);

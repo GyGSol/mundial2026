@@ -20,9 +20,8 @@ const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const AI_REASONING_MAX_LEN = 800;
-const AI_FOLLOWUP_MAX_LEN = 1200;
-const AI_FOLLOWUP_QUESTION_MAX_LEN = 500;
+/** Máximo de caracteres en preguntas del usuario (no aplica a respuestas de la IA). */
+export const AI_QUESTION_MAX_LEN = 146;
 
 /** Instrucciones compartidas: local/visitante en el Mundial es solo fixture, no sede del equipo. */
 export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mundo FIFA 2026:
@@ -305,7 +304,7 @@ function parseAiScoreResponse(text, source) {
   return {
     homeGoals,
     awayGoals,
-    reasoning: String(parsed?.reasoning ?? '').slice(0, AI_REASONING_MAX_LEN),
+    reasoning: String(parsed?.reasoning ?? '').trim(),
     source,
   };
 }
@@ -486,10 +485,15 @@ function normalizeFollowUpHistory(history) {
   return history
     .filter((entry) => entry && typeof entry.content === 'string')
     .slice(-8)
-    .map((entry) => ({
-      role: entry.role === 'assistant' ? 'assistant' : 'user',
-      content: entry.content.trim().slice(0, AI_FOLLOWUP_MAX_LEN),
-    }))
+    .map((entry) => {
+      const role = entry.role === 'assistant' ? 'assistant' : 'user';
+      const content = entry.content.trim();
+      return {
+        role,
+        content:
+          role === 'user' ? content.slice(0, AI_QUESTION_MAX_LEN) : content,
+      };
+    })
     .filter((entry) => entry.content);
 }
 
@@ -512,7 +516,7 @@ Tu razonamiento: ${insight.reasoning}
 ${historyBlock}
 Pregunta del usuario: ${question}
 
-Respondé en español, de forma clara y breve (máximo 3 párrafos cortos). No cambies el marcador salvo que te lo pidan explícitamente.`;
+Respondé en español, de forma clara y completa. No cambies el marcador salvo que te lo pidan explícitamente.`;
 }
 
 async function callOpenAiProviderForText(
@@ -534,7 +538,7 @@ async function callOpenAiProviderForText(
   if (!text) {
     throw new Error(`${providerLabel} devolvió respuesta vacía`);
   }
-  return { text: text.slice(0, AI_FOLLOWUP_MAX_LEN), source };
+  return { text, source };
 }
 
 async function callCerebrasForText(prompt, options = {}) {
@@ -591,7 +595,7 @@ async function callGeminiForText(prompt, { fetchImpl = fetch } = {}) {
   const data = await response.json();
   const text = String(data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ?? '').trim();
   if (!text) throw new Error('Gemini devolvió respuesta vacía');
-  return { text: text.slice(0, AI_FOLLOWUP_MAX_LEN), source: 'gemini' };
+  return { text, source: 'gemini' };
 }
 
 export async function callAiForJson(prompt, { fetchImpl = fetch } = {}) {
@@ -719,7 +723,7 @@ export async function askMatchAiFollowUp(
   if (!hasAiProvider()) {
     throw new Error('IA no configurada');
   }
-  if (trimmedQuestion.length > AI_FOLLOWUP_QUESTION_MAX_LEN) {
+  if (trimmedQuestion.length > AI_QUESTION_MAX_LEN) {
     throw new Error('La pregunta es demasiado larga');
   }
 
@@ -773,7 +777,7 @@ export async function submitAiPrediction(userId, matchId, { homeGoals, awayGoals
       pointsBreakdown: null,
       predictionSource: 'ai',
       aiModel: aiModel ?? env.aiCerebrasModel,
-      aiReasoning: aiReasoning?.slice(0, AI_REASONING_MAX_LEN) ?? null,
+      aiReasoning: aiReasoning?.trim() || null,
     },
     { upsert: true, new: true }
   );

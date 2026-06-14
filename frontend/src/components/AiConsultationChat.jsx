@@ -3,6 +3,9 @@ import { Loader2, SendHorizontal, Sparkles } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
+import { formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
+
+export const AI_QUESTION_MAX_LEN = 146;
 
 function formatMessageTime(value) {
   if (!value) return '';
@@ -94,8 +97,14 @@ export default function AiConsultationChat({
           {insight ? (
             <div className="flex flex-col gap-3">
               <InsightScore homeGoals={insight.homeGoals} awayGoals={insight.awayGoals} />
+              {insight.reasoning ? (
+                <p className="whitespace-pre-wrap text-sm text-foreground">{insight.reasoning}</p>
+              ) : null}
               <p className="text-xs text-muted-foreground">
-                Predicción guardada · {insight.model ?? insight.source}
+                {(insight.predictedAt ?? thread?.updatedAt)
+                  ? `Última predicción: ${formatPredictionUpdatedAt(insight.predictedAt ?? thread.updatedAt)}`
+                  : 'Predicción guardada'}
+                {insight.model || insight.source ? ` · ${insight.model ?? insight.source}` : ''}
               </p>
               {showInsightAction ? (
                 <Button
@@ -155,14 +164,17 @@ export default function AiConsultationChat({
           <form onSubmit={onAsk} className="mt-auto flex flex-col gap-2 border-t border-border pt-4">
             <label htmlFor="ai-consultation-question" className="text-sm font-medium">
               Tu pregunta
+              <span className="ml-2 font-normal text-muted-foreground">
+                ({question.length}/{AI_QUESTION_MAX_LEN})
+              </span>
             </label>
             <textarea
               id="ai-consultation-question"
               value={question}
               onChange={(e) => onQuestionChange(e.target.value)}
-              placeholder="Ej: ¿Quién clasifica como tercero del grupo?"
+              placeholder="Ej: ¿Quién es favorito?"
               rows={3}
-              maxLength={500}
+              maxLength={AI_QUESTION_MAX_LEN}
               disabled={asking}
               className="flex min-h-[5rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />

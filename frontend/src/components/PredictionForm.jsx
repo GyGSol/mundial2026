@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input.jsx';
 import { MAX_GOALS_PER_TEAM, randomMatchScore } from '@/lib/randomMatchScore.js';
+import { formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 
@@ -27,6 +28,16 @@ function ScoreValue({ value, label }) {
       )}
       <p className="text-xl font-bold tabular-nums text-foreground md:text-2xl lg:text-3xl">{value}</p>
     </div>
+  );
+}
+
+function PredictionUpdatedAt({ updatedAt }) {
+  const label = formatPredictionUpdatedAt(updatedAt);
+  if (!label) return null;
+  return (
+    <p className="text-center text-xs text-muted-foreground">
+      Última predicción: {label}
+    </p>
   );
 }
 
@@ -187,6 +198,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homePrediction={hasPrediction ? prediction?.homeGoals : undefined}
           awayPrediction={hasPrediction ? prediction?.awayGoals : undefined}
         />
+        {hasPrediction ? <PredictionUpdatedAt updatedAt={prediction?.updatedAt} /> : null}
         {prediction?.pointsEarned != null && (
           <p className="text-sm font-medium text-foreground">+{prediction.pointsEarned} pts</p>
         )}
@@ -210,6 +222,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homePrediction={prediction.homeGoals}
           awayPrediction={prediction.awayGoals}
         />
+        <PredictionUpdatedAt updatedAt={prediction.updatedAt} />
         <PredictionActions match={match}>
           <Button
             type="button"

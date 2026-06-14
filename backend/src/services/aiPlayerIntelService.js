@@ -3,6 +3,7 @@ import { Team } from '../models/Team.js';
 import { AiPlayerIntel } from '../models/AiPlayerIntel.js';
 import {
   aiModelForScoreSource,
+  AI_QUESTION_MAX_LEN,
   callAiForJson,
   callAiForText,
   hasAiProvider,
@@ -385,7 +386,7 @@ export async function askPlayerIntelFollowUp(playerId, question, { fetchImpl = f
 
   const trimmed = String(question ?? '').trim();
   if (!trimmed) throw new Error('Escribí una pregunta');
-  if (trimmed.length > 500) throw new Error('La pregunta es demasiado larga');
+  if (trimmed.length > AI_QUESTION_MAX_LEN) throw new Error('La pregunta es demasiado larga');
 
   const player = await getPlayerByIdWithIntel(playerId);
   if (!player) throw new Error('Jugador no encontrado');

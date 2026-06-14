@@ -5,6 +5,7 @@ import { GROUP_LETTERS } from '../services/simulationTournamentService.js';
 import { buildUserPredictedMatchContext } from './predictedMatchContextService.js';
 import {
   aiModelForScoreSource,
+  AI_QUESTION_MAX_LEN,
   buildPromptContext,
   callAiForScore,
   callAiForText,
@@ -13,9 +14,7 @@ import {
   WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
 } from './aiPredictionService.js';
 
-const AI_MESSAGE_MAX_LEN = 2000;
-const AI_QUESTION_MAX_LEN = 500;
-const AI_HISTORY_FOR_PROMPT = 12;
+const AI_HISTORY_FOR_PROMPT = 20;
 const AI_MESSAGES_STORED_MAX = 80;
 
 export const AI_TOPIC_TYPES = ['match', 'group', 'round_of_16'];
@@ -254,7 +253,7 @@ ${JSON.stringify(context, null, 2)}
 ${historyBlock}
 Pregunta del usuario: ${question}
 
-Respondé en español, claro y breve (máximo 4 párrafos cortos). Usá datos del contexto y la conversación previa.`;
+Respondé en español, claro y completo. Usá datos del contexto y la conversación previa.`;
 }
 
 function formatInsightMessage(insight) {
@@ -290,7 +289,10 @@ export async function generateMatchInsight(userId, matchId, { fetchImpl = fetch 
   const score = await callAiForScore(context, { fetchImpl });
   const insight = formatMatchAiInsight(score);
 
-  thread.initialInsight = insight;
+  thread.initialInsight = {
+    ...insight,
+    predictedAt: new Date(),
+  };
   thread.title = await resolveMatchTitle(match);
   const insightText = isUpdate
     ? `Predicción actualizada:\n\n${formatInsightMessage(insight)}`
@@ -336,7 +338,7 @@ export async function askConsultation(
   const result = await callAiForText(prompt, { fetchImpl });
 
   await appendExchange(thread, trimmedQuestion, {
-    text: result.text.slice(0, AI_MESSAGE_MAX_LEN),
+    text: result.text,
     source: result.source,
     model: aiModelForScoreSource(result.source),
   });

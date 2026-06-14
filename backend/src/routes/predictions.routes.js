@@ -168,6 +168,7 @@ router.put('/:matchId', authMiddleware, async (req, res, next) => {
         homeGoals: prediction.homeGoals,
         awayGoals: prediction.awayGoals,
         pointsEarned: prediction.pointsEarned,
+        updatedAt: prediction.updatedAt,
       },
     });
   } catch (err) {

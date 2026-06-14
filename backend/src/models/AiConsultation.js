@@ -27,6 +27,7 @@ const aiConsultationSchema = new mongoose.Schema(
       reasoning: String,
       source: String,
       model: String,
+      predictedAt: Date,
     },
     messages: { type: [aiMessageSchema], default: [] },
   },

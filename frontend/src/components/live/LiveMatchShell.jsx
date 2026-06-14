@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
-import { formatMatchDate } from '@/lib/dateFormat';
+import { formatMatchDate, formatPredictionUpdatedAt } from '@/lib/dateFormat';
 import { isMatchStreamWarmup } from '@/lib/streamWatch.js';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import TeamFlag from '../TeamFlag.jsx';
@@ -61,6 +61,11 @@ function LiveMatchSummary({ match }) {
           <p className="font-semibold tabular-nums">
             {match.prediction.homeGoals} - {match.prediction.awayGoals}
           </p>
+          {match.prediction.updatedAt ? (
+            <p className="mt-1 text-muted-foreground">
+              Última predicción: {formatPredictionUpdatedAt(match.prediction.updatedAt)}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
