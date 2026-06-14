@@ -254,6 +254,13 @@ export default function AiPredictionsPage() {
     return match ? matchLabel(match) : 'Partido';
   }, [thread, topicType, topicKey, matches]);
 
+  const predictionsBackUrl = useMemo(() => {
+    if (topicType === 'match' && topicKey) {
+      return `/predictions?match=${encodeURIComponent(topicKey)}`;
+    }
+    return '/predictions';
+  }, [topicType, topicKey]);
+
   return (
     <div className="flex w-full flex-col gap-6 px-0 py-6 pb-24">
       <div className="flex flex-col gap-2">
@@ -284,7 +291,7 @@ export default function AiPredictionsPage() {
           </Button>
         ))}
         <Button type="button" size="sm" variant="ghost" asChild className="ml-auto">
-          <Link to="/predictions">Volver a predicciones</Link>
+          <Link to={predictionsBackUrl}>Volver a predicciones</Link>
         </Button>
       </div>
 
