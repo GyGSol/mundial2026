@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 /** Logo height (px) and max width ≈ height × φ² (φ ≈ 1.618) for balanced proportions */
@@ -42,19 +43,24 @@ export default function BroadcastBadges({
       )}
     >
       {broadcasters.map((broadcaster) => (
-        <img
+        <Link
           key={broadcaster.id}
-          src={broadcaster.logo}
-          alt={broadcaster.name}
-          title={broadcaster.name}
-          loading="lazy"
-          decoding="async"
-          className={cn(
-            styles.height,
-            styles.maxWidth,
-            'w-auto shrink-0 object-contain object-center'
-          )}
-        />
+          to="/transmissions"
+          title={`Transmisiones · ${broadcaster.name}`}
+          className="inline-flex shrink-0 rounded-sm outline-none ring-offset-background transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <img
+            src={broadcaster.logo}
+            alt={broadcaster.name}
+            loading="lazy"
+            decoding="async"
+            className={cn(
+              styles.height,
+              styles.maxWidth,
+              'w-auto shrink-0 object-contain object-center'
+            )}
+          />
+        </Link>
       ))}
     </div>
   );
