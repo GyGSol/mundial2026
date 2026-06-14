@@ -6,6 +6,7 @@ import {
   enrichMatchesLight,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
+import { attachStreamMetaToMatches } from './streamMetaService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 const RECENT_FINISHED_MAX = 12;
@@ -71,12 +72,17 @@ export async function getRankingDashboard(groupId, userId) {
     upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
   );
 
+  const [liveWithStream, nextWithStream] = await Promise.all([
+    attachStreamMetaToMatches(liveMatches),
+    attachStreamMetaToMatches(nextUpcomingMatches),
+  ]);
+
   return {
     leaderboard,
     group: groupResult.group,
     lastSyncAt,
-    liveMatches,
+    liveMatches: liveWithStream,
     recentFinishedMatches,
-    nextUpcomingMatches,
+    nextUpcomingMatches: nextWithStream,
   };
 }

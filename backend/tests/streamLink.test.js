@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { env } from '../src/config/env.js';
 import { Match } from '../src/models/Match.js';
 import { StreamLinkMapping } from '../src/models/StreamLinkMapping.js';
+import { Team } from '../src/models/Team.js';
 import {
   getMatchStreamConfig,
   listStreamLinkMappings,
@@ -19,6 +20,8 @@ describe('streamLinkService', () => {
     env.liveStreamUrls = {};
     vi.spyOn(Match, 'findOne').mockReset();
     vi.spyOn(StreamLinkMapping, 'findOne').mockReset();
+    vi.spyOn(Team, 'findOne').mockReset();
+    vi.spyOn(Team, 'findOne').mockReturnValue({ lean: () => Promise.resolve(null) });
     vi.spyOn(la18hdScraper, 'fetchLa18HlsUrl').mockResolvedValue(null);
   });
 
@@ -57,24 +60,48 @@ describe('streamLinkService', () => {
     Match.findOne.mockReturnValue({
       lean: () =>
         Promise.resolve({
-          externalId: '19',
+          externalId: '5',
           status: 'upcoming',
           kickoffAt: new Date(Date.now() + 30 * 60 * 1000),
+          homeTeamId: 'HTI',
+          awayTeamId: 'SCO',
+        }),
+    });
+    StreamLinkMapping.findOne.mockReturnValue({ lean: () => Promise.resolve(null) });
+
+    const result = await getMatchStreamConfig('5');
+    expect(result.available).toBe(true);
+    expect(result.status).toBe('upcoming');
+    expect(result.source).toBe('auto');
+    expect(result.primary.pageUrl).toContain('stream=dsports');
+  });
+
+  it('respeta mapping admin sobre auto', async () => {
+    Match.findOne.mockReturnValue({
+      lean: () =>
+        Promise.resolve({
+          externalId: '7',
+          status: 'live',
+          kickoffAt: new Date(),
+          homeTeamId: 'BRA',
+          awayTeamId: 'MAR',
         }),
     });
     StreamLinkMapping.findOne.mockReturnValue({
       lean: () =>
         Promise.resolve({
-          matchExternalId: '19',
-          la18PageUrl: 'https://la18hd.com/evento/arg-bra',
-          embedUrl: 'https://la18hd.com/evento/arg-bra',
+          matchExternalId: '7',
+          la18PageUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
+          embedUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
+          la18EventId: 'disney6',
           enabled: true,
         }),
     });
 
-    const result = await getMatchStreamConfig('19');
+    const result = await getMatchStreamConfig('7');
     expect(result.available).toBe(true);
-    expect(result.status).toBe('upcoming');
+    expect(result.source).toBe('admin');
+    expect(result.primary.pageUrl).toContain('disney6');
   });
 
   it('rechaza partido que no está en vivo ni en calentamiento', async () => {
@@ -85,20 +112,31 @@ describe('streamLinkService', () => {
     expect(result).toMatchObject({ available: false, reason: 'not_available', status: 'finished' });
   });
 
-  it('rechaza sin mapping La18', async () => {
+  it('rechaza sin mapping La18 ni auto (simulación)', async () => {
+    Match.findOne.mockReturnValue({
+      lean: () => Promise.resolve({ externalId: 'sim-1', status: 'live' }),
+    });
+    StreamLinkMapping.findOne.mockReturnValue({ lean: () => Promise.resolve(null) });
+
+    const result = await getMatchStreamConfig('sim-1');
+    expect(result).toMatchObject({
+      available: false,
+      reason: 'no_la18_mapping',
+      matchId: 'sim-1',
+    });
+    expect(result.fallback?.provider).toBe('fubo');
+  });
+
+  it('auto-mapea Disney+ cuando no hay mapping admin', async () => {
     Match.findOne.mockReturnValue({
       lean: () => Promise.resolve({ externalId: '19', status: 'live' }),
     });
     StreamLinkMapping.findOne.mockReturnValue({ lean: () => Promise.resolve(null) });
 
     const result = await getMatchStreamConfig('19');
-    expect(result).toMatchObject({
-      available: false,
-      reason: 'no_la18_mapping',
-      matchId: '19',
-    });
-    expect(result.fallback?.provider).toBe('fubo');
-    expect(result.fallback?.url).toContain('FuboSports');
+    expect(result.available).toBe(true);
+    expect(result.source).toBe('auto');
+    expect(result.primary.pageUrl).toContain('stream=disney6');
   });
 
   it('devuelve config La18 con fallback Fubo cuando está live', async () => {

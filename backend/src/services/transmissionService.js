@@ -1,11 +1,9 @@
 import { Match } from '../models/Match.js';
-import { StreamLinkMapping } from '../models/StreamLinkMapping.js';
-import { env } from '../config/env.js';
 import {
   enrichMatchesLight,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
-import { canWatchConfiguredStream } from './streamWatchEligibility.js';
+import { attachStreamMetaToMatches } from './streamMetaService.js';
 
 export const TRANSMISSIONS_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
@@ -28,21 +26,6 @@ function sortMatchesForDay(matches) {
     if (statusDiff !== 0) return statusDiff;
     return new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime();
   });
-}
-
-function attachStreamMeta(match, mappingById) {
-  const mapping = mappingById.get(String(match.externalId));
-  const configured = Boolean(mapping?.enabled && mapping?.embedUrl);
-  return {
-    configured,
-    canWatch: canWatchConfiguredStream(match, {
-      liveStreamEnabled: env.liveStreamEnabled,
-      configured,
-    }),
-    la18EventId: mapping?.la18EventId || null,
-    pageUrl: mapping?.la18PageUrl || null,
-    updatedAt: mapping?.updatedAt || null,
-  };
 }
 
 /**
@@ -75,29 +58,17 @@ export async function listTransmissionMatchesForDay(dayKey, userId) {
     };
   }
 
-  const externalIds = dayMatches.map((m) => String(m.externalId));
-  const mappings = await StreamLinkMapping.find({
-    matchExternalId: { $in: externalIds },
-    enabled: true,
-  }).lean();
-
-  const mappingById = new Map(mappings.map((row) => [String(row.matchExternalId), row]));
-
   await prepareFifaShirtMapsForMatches(dayMatches);
   const enriched = await enrichMatchesLight(dayMatches, userId);
-
-  const matches = sortMatchesForDay(enriched).map((match) => ({
-    ...match,
-    stream: attachStreamMeta(match, mappingById),
-  }));
+  const withStream = await attachStreamMetaToMatches(sortMatchesForDay(enriched));
 
   return {
     date: targetDay,
     timezone: TRANSMISSIONS_TIMEZONE,
-    matches,
-    total: matches.length,
-    liveCount: matches.filter((m) => m.status === 'live').length,
-    configuredCount: matches.filter((m) => m.stream?.configured).length,
+    matches: withStream,
+    total: withStream.length,
+    liveCount: withStream.filter((m) => m.status === 'live').length,
+    configuredCount: withStream.filter((m) => m.stream?.configured).length,
   };
 }
 

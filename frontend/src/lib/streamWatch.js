@@ -1,9 +1,9 @@
-/** Partido en vivo o previo con predicciones cerradas (calentamiento). */
+/** Partido en vivo o previo con predicciones cerradas y señal disponible. */
 export function canShowMatchStream(match) {
   if (!match) return false;
+  if (match.stream != null) return Boolean(match.stream.canWatch);
   if (match.status === 'live') return true;
-  if (match.status === 'upcoming' && match.predictionOpen === false) return true;
-  return false;
+  return match.status === 'upcoming' && match.predictionOpen === false;
 }
 
 export function isMatchStreamWarmup(match) {

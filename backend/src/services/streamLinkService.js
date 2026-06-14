@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { resolveStreamUrl } from '../data/liveStreamSchedule.js';
 import { fetchLa18HlsUrl } from './la18hdScraper.js';
 import { isStreamWatchEligible } from './streamWatchEligibility.js';
+import { resolveEffectiveLa18Mapping } from './streamMetaService.js';
 
 function buildFallbackConfig(matchExternalId) {
   const fuboUrl = resolveStreamUrl('fubo-youtube', matchExternalId);
@@ -45,12 +46,13 @@ export async function getMatchStreamConfig(matchExternalId, _userId) {
     };
   }
 
-  const mapping = await StreamLinkMapping.findOne({
+  const explicitMapping = await StreamLinkMapping.findOne({
     matchExternalId: id,
     enabled: true,
   }).lean();
 
   const fallback = buildFallbackConfig(match.externalId);
+  const { mapping, source } = await resolveEffectiveLa18Mapping(match, explicitMapping);
 
   if (!mapping) {
     return {
@@ -73,6 +75,7 @@ export async function getMatchStreamConfig(matchExternalId, _userId) {
     available: true,
     matchId: match.externalId,
     status: match.status,
+    source,
     primary: {
       provider: 'la18hd',
       type: hlsUrl ? 'hls' : 'iframe',
