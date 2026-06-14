@@ -39,6 +39,27 @@ describe('passwordResetService', () => {
     expect(result.message).toBe(FORGOT_PASSWORD_SUCCESS_MESSAGE);
   });
 
+  it('requestPasswordReset no cambia la clave si falla el envío de email', async () => {
+    await User.deleteMany({ email: TEST_EMAIL });
+    const originalHash = await bcrypt.hash('keep-this-pass', 10);
+    await User.create({
+      name: 'Email Fail Test',
+      email: TEST_EMAIL,
+      passwordHash: originalHash,
+    });
+
+    const { sendPasswordResetEmail } = await import('../src/services/emailService.js');
+    sendPasswordResetEmail.mockRejectedValueOnce(new Error('EMAIL_DELIVERY_FAILED'));
+
+    await expect(requestPasswordReset(TEST_EMAIL)).rejects.toMatchObject({
+      status: 503,
+    });
+
+    const unchanged = await User.findOne({ email: TEST_EMAIL });
+    expect(unchanged.mustChangePassword).toBe(false);
+    expect(await bcrypt.compare('keep-this-pass', unchanged.passwordHash)).toBe(true);
+  });
+
   it('reset permite login con clave provisoria y change-password limpia el flag', async () => {
     await User.deleteMany({ email: TEST_EMAIL });
     const originalHash = await bcrypt.hash('original-pass', 10);

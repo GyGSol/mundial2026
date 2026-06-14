@@ -12,6 +12,9 @@ const TEMP_PASSWORD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxy
 export const FORGOT_PASSWORD_SUCCESS_MESSAGE =
   'Si el email está registrado, te enviamos una clave provisoria. Revisá tu bandeja (y spam).';
 
+export const FORGOT_PASSWORD_DELIVERY_ERROR_MESSAGE =
+  'No pudimos enviar el email en este momento. Probá más tarde o contactá al administrador del grupo.';
+
 export function generateTemporaryPassword(length = 12) {
   const bytes = crypto.randomBytes(length);
   let password = '';
@@ -41,17 +44,25 @@ export async function requestPasswordReset(email) {
   }
 
   const temporaryPassword = generateTemporaryPassword();
+
+  try {
+    await sendPasswordResetEmail({
+      to: user.email,
+      name: user.name,
+      temporaryPassword,
+    });
+  } catch (err) {
+    if (err?.message === 'EMAIL_DELIVERY_FAILED') {
+      throw createHttpError(FORGOT_PASSWORD_DELIVERY_ERROR_MESSAGE, 503);
+    }
+    throw err;
+  }
+
   user.passwordHash = await bcrypt.hash(temporaryPassword, 10);
   user.mustChangePassword = true;
   user.passwordResetAt = new Date();
   await user.save();
   await revokeAllUserSessions(user._id);
-
-  await sendPasswordResetEmail({
-    to: user.email,
-    name: user.name,
-    temporaryPassword,
-  });
 
   return { message: FORGOT_PASSWORD_SUCCESS_MESSAGE };
 }

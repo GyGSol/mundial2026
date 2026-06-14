@@ -111,6 +111,9 @@ router.post('/forgot-password', forgotPasswordLimiter, async (req, res, next) =>
     const result = await requestPasswordReset(req.body?.email);
     res.json(result);
   } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
     next(err);
   }
 });

@@ -42,12 +42,19 @@ export async function sendPasswordResetEmail({ to, name, temporaryPassword }) {
   }
 
   const transporter = createTransporter();
-  await transporter.sendMail({
-    from: env.smtpFrom,
-    to,
-    subject,
-    text,
-  });
+  try {
+    await transporter.sendMail({
+      from: env.smtpFrom,
+      to,
+      subject,
+      text,
+    });
+  } catch (err) {
+    console.error('[emailService] Error al enviar clave provisoria:', err?.message || err);
+    const error = new Error('EMAIL_DELIVERY_FAILED');
+    error.cause = err;
+    throw error;
+  }
 
   return { delivered: true, logged: false };
 }
