@@ -91,16 +91,23 @@ export default function La18StreamPlayer({
     return () => window.clearTimeout(timer);
   }, [iframeSrc, iframeLoaded, showFallback, useDirectHls, iosDevice, openAccessNotice, hasHls]);
 
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === containerRef.current);
+    };
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
   const toggleFullscreen = useCallback(async () => {
     const node = containerRef.current;
     if (!node) return;
 
     if (!document.fullscreenElement) {
       await node.requestFullscreen?.();
-      setIsFullscreen(true);
     } else {
       await document.exitFullscreen?.();
-      setIsFullscreen(false);
     }
   }, []);
 
@@ -148,14 +155,13 @@ export default function La18StreamPlayer({
 
   return (
     <div
-      ref={containerRef}
       className={cn(
         'la18-stream-player flex w-full flex-col gap-2',
         theaterMode && 'min-h-[60dvh]',
         className
       )}
     >
-      {showSourcePicker ? (
+      {showSourcePicker && !isFullscreen ? (
         <div className="flex flex-col gap-1.5">
           <p className="text-[11px] font-medium text-muted-foreground">
             Elegí señal ({sources.length} disponibles)
@@ -181,9 +187,12 @@ export default function La18StreamPlayer({
         </div>
       ) : null}
       <div
+        ref={containerRef}
         className={cn(
           'relative w-full overflow-hidden rounded-md border border-border/60 bg-black shadow-inner',
-          theaterMode ? 'min-h-[50dvh] flex-1' : 'aspect-video'
+          theaterMode && !isFullscreen ? 'min-h-[50dvh] flex-1' : 'aspect-video',
+          isFullscreen && 'aspect-auto h-full min-h-0 rounded-none border-0',
+          'fullscreen:aspect-auto fullscreen:h-full fullscreen:min-h-0 fullscreen:rounded-none fullscreen:border-0'
         )}
       >
         {useDirectHls ? (
@@ -210,7 +219,7 @@ export default function La18StreamPlayer({
             ref={iframeRef}
             title="Transmisión La18HD"
             src={iframeSrc}
-            className="h-full min-h-[200px] w-full"
+            className="h-full min-h-[200px] w-full fullscreen:min-h-0 fullscreen:h-full"
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
             onLoad={() => setIframeLoaded(true)}
             onError={() => {
@@ -267,6 +276,19 @@ export default function La18StreamPlayer({
             Conectando señal La18HD…
           </div>
         ) : null}
+
+        {isFullscreen ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className="absolute right-3 top-3 z-20 bg-black/70 text-white hover:bg-black/85"
+            onClick={toggleFullscreen}
+            aria-label="Salir de pantalla completa"
+          >
+            <Minimize2 className="size-4" aria-hidden />
+          </Button>
+        ) : null}
       </div>
 
       <StreamAccessNoticeDialog
@@ -276,61 +298,63 @@ export default function La18StreamPlayer({
         onRetry={retryPrimary}
       />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-muted/20 p-2">
-        <Button
-          type="button"
-          size="sm"
-          variant={theaterMode ? 'default' : 'outline'}
-          onClick={toggleTheater}
-          aria-pressed={theaterMode}
-        >
-          <MonitorPlay className="mr-1.5 size-4" aria-hidden />
-          {theaterMode ? 'Salir de teatro' : 'Modo teatro'}
-        </Button>
-
-        <Button type="button" size="sm" variant="outline" onClick={toggleFullscreen}>
-          {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-        </Button>
-
-        {!showFallback ? (
-          <Button type="button" size="sm" variant="outline" onClick={activateFallback}>
-            Señal alternativa
+      {!isFullscreen ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-muted/20 p-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={theaterMode ? 'default' : 'outline'}
+            onClick={toggleTheater}
+            aria-pressed={theaterMode}
+          >
+            <MonitorPlay className="mr-1.5 size-4" aria-hidden />
+            {theaterMode ? 'Salir de teatro' : 'Modo teatro'}
           </Button>
-        ) : (
-          <Button type="button" size="sm" variant="outline" onClick={retryPrimary}>
-            <RefreshCw className="mr-1.5 size-4" aria-hidden />
-            Reintentar La18HD
-          </Button>
-        )}
 
-        {openUrl ? (
-          <Button type="button" size="sm" variant="secondary" className="ml-auto gap-1.5" asChild>
-            <a href={openUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-4 shrink-0" aria-hidden />
-              {iosDevice ? 'Abrir en Safari' : 'Abrir La18HD'}
-            </a>
+          <Button type="button" size="sm" variant="outline" onClick={toggleFullscreen}>
+            {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </Button>
-        ) : null}
 
-        {iosDevice ? (
-          <Button type="button" size="sm" variant="outline" className="gap-1.5" asChild>
-            <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-4 shrink-0" aria-hidden />
-              Más en La18HD
-            </a>
+          {!showFallback ? (
+            <Button type="button" size="sm" variant="outline" onClick={activateFallback}>
+              Señal alternativa
+            </Button>
+          ) : (
+            <Button type="button" size="sm" variant="outline" onClick={retryPrimary}>
+              <RefreshCw className="mr-1.5 size-4" aria-hidden />
+              Reintentar La18HD
+            </Button>
+          )}
+
+          {openUrl ? (
+            <Button type="button" size="sm" variant="secondary" className="ml-auto gap-1.5" asChild>
+              <a href={openUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="size-4 shrink-0" aria-hidden />
+                {iosDevice ? 'Abrir en Safari' : 'Abrir La18HD'}
+              </a>
+            </Button>
+          ) : null}
+
+          {iosDevice ? (
+            <Button type="button" size="sm" variant="outline" className="gap-1.5" asChild>
+              <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="size-4 shrink-0" aria-hidden />
+                Más en La18HD
+              </a>
+            </Button>
+          ) : null}
+
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="text-xs text-muted-foreground"
+            onClick={() => setShowAccessNotice(true)}
+          >
+            ¿Se cortó la señal?
           </Button>
-        ) : null}
-
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="text-xs text-muted-foreground"
-          onClick={() => setShowAccessNotice(true)}
-        >
-          ¿Se cortó la señal?
-        </Button>
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
