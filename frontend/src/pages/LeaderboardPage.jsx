@@ -115,6 +115,18 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {canLoadRanking ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-fit"
+          onClick={scrollToGroupStandings}
+        >
+          Ver Tabla de Posiciones del grupo {displayGroup?.name ?? 'Sin grupo'}
+        </Button>
+      ) : null}
+
       {rankingReady ? (
         <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
           <LiveMatchesBar
@@ -136,17 +148,6 @@ export default function LeaderboardPage() {
               : `Tabla del grupo ${displayGroup?.name}`}
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
           </p>
-          {canLoadRanking && !rankingLoading ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-1 w-fit"
-              onClick={scrollToGroupStandings}
-            >
-              Ver Tabla de Posiciones del grupo {displayGroup?.name ?? 'Sin grupo'}
-            </Button>
-          ) : null}
         </div>
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
