@@ -1,4 +1,5 @@
 import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
+import { FifaRankingIcon } from '@/components/icons/FifaRankingIcon.jsx';
 import { getFifaRankingForTeam, getWorldCupTitles } from '@/lib/teamMeta';
 import TeamFlag from './TeamFlag.jsx';
 
@@ -8,10 +9,12 @@ function FifaRankingLabel({ team }) {
 
   return (
     <p
-      className="text-[10px] font-semibold tabular-nums text-muted-foreground md:text-xs"
+      className="inline-flex items-center justify-center gap-1 text-[10px] font-semibold tabular-nums text-muted-foreground md:text-xs"
       title={ranking.asOf ? `Ranking FIFA actualizado al ${ranking.asOf}` : 'Ranking FIFA'}
+      aria-label={`Ranking FIFA ${ranking.rank}`}
     >
-      Ranking {ranking.rank}
+      <FifaRankingIcon />
+      <span>{ranking.rank}</span>
     </p>
   );
 }
