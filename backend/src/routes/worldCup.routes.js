@@ -1,16 +1,11 @@
 import { Router } from 'express';
-import { Match } from '../models/Match.js';
-import { Team } from '../models/Team.js';
-import { Group } from '../models/Group.js';
-import { Stadium } from '../models/Stadium.js';
-import { getLastSyncAt } from '../services/syncService.js';
-import { buildWorldCupOverview } from '../services/worldCupStatsService.js';
+import { optionalAuth } from '../middleware/auth.middleware.js';
+import { getCachedWorldCupOverview } from '../services/worldCupOverviewCache.js';
 import { buildWorldCupHistoryOverview } from '../services/worldCupHistoryService.js';
 import {
   getWorldCupAiBriefing,
   refreshWorldCupAiBriefing,
 } from '../services/aiWorldCupStatsService.js';
-import { optionalAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -46,13 +41,9 @@ router.post('/ai-briefing/refresh', optionalAuth, async (_req, res, next) => {
 
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const overview = await buildWorldCupOverview({
-      Match,
-      Team,
-      Group,
-      Stadium,
-      getLastSyncAt,
-    });
+    const includePlayerStats =
+      req.query.playerStats === '1' || req.query.playerStats === 'true';
+    const overview = await getCachedWorldCupOverview({ includePlayerStats });
     res.json(overview);
   } catch (err) {
     next(err);

@@ -293,9 +293,12 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}) {
       : match.stadiumId
         ? { externalId: match.stadiumId }
         : null,
-    raw: match.raw ?? null,
   };
 }
+
+/** Campos mínimos de partido para overview (sin blob `raw` completo). */
+export const WORLD_CUP_MATCH_SELECT =
+  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate status kickoffAt kickoffTimezone type stadiumId raw.home_team_label raw.away_team_label raw.homeTeamLabel raw.awayTeamLabel';
 
 export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}) {
   const buckets = new Map();
@@ -426,12 +429,16 @@ export async function buildWorldCupOverview({
   Group,
   Stadium,
   getLastSyncAt,
+  includePlayerStats = false,
 }) {
   const [teams, matches, groups, stadiums] = await Promise.all([
-    Team.find().sort({ nameEn: 1 }),
-    Match.find().sort({ kickoffAt: 1 }),
-    Group.find().sort({ name: 1 }),
-    Stadium.find().sort({ nameEn: 1 }),
+    Team.find().select('externalId nameEn nameFa fifaCode group flag').sort({ nameEn: 1 }).lean(),
+    Match.find().select(WORLD_CUP_MATCH_SELECT).sort({ kickoffAt: 1 }).lean(),
+    Group.find().select('name raw').sort({ name: 1 }).lean(),
+    Stadium.find()
+      .select('externalId nameEn city country capacity timezone')
+      .sort({ nameEn: 1 })
+      .lean(),
   ]);
 
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
@@ -463,11 +470,13 @@ export async function buildWorldCupOverview({
   const stats = computeTournamentStats(matches, teams);
 
   let tournament2026PlayerStats = null;
-  try {
-    const { buildWorldCup2026PlayerStats } = await import('./worldCupHistoryService.js');
-    tournament2026PlayerStats = await buildWorldCup2026PlayerStats();
-  } catch {
-    tournament2026PlayerStats = null;
+  if (includePlayerStats) {
+    try {
+      const { buildWorldCup2026PlayerStats } = await import('./worldCupHistoryService.js');
+      tournament2026PlayerStats = await buildWorldCup2026PlayerStats();
+    } catch {
+      tournament2026PlayerStats = null;
+    }
   }
 
   const groupMatches = matches

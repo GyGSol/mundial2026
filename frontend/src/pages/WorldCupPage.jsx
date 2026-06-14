@@ -1,22 +1,41 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { worldCupApi } from '../api/client.js';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { Button } from '@/components/ui/button.jsx';
-import {
-  GroupMatchesSection,
-  GroupStandingsSection,
-  KnockoutSection,
-  StatsSection,
-  TeamsSection,
-} from '@/components/worldcup/WorldCupSections.jsx';
-import FixtureSection from '@/components/worldcup/FixtureSection.jsx';
-import HistorySection from '@/components/worldcup/HistorySection.jsx';
-import PlayersSection from '@/components/worldcup/PlayersSection.jsx';
-import AiStatsBriefing from '@/components/worldcup/AiStatsBriefing.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
 import { cn } from '@/lib/utils';
+
+const GroupStandingsSection = lazy(() =>
+  import('@/components/worldcup/WorldCupSections.jsx').then((m) => ({
+    default: m.GroupStandingsSection,
+  }))
+);
+const KnockoutSection = lazy(() =>
+  import('@/components/worldcup/WorldCupSections.jsx').then((m) => ({
+    default: m.KnockoutSection,
+  }))
+);
+const GroupMatchesSection = lazy(() =>
+  import('@/components/worldcup/WorldCupSections.jsx').then((m) => ({
+    default: m.GroupMatchesSection,
+  }))
+);
+const StatsSection = lazy(() =>
+  import('@/components/worldcup/WorldCupSections.jsx').then((m) => ({
+    default: m.StatsSection,
+  }))
+);
+const TeamsSection = lazy(() =>
+  import('@/components/worldcup/WorldCupSections.jsx').then((m) => ({
+    default: m.TeamsSection,
+  }))
+);
+const FixtureSection = lazy(() => import('@/components/worldcup/FixtureSection.jsx'));
+const HistorySection = lazy(() => import('@/components/worldcup/HistorySection.jsx'));
+const PlayersSection = lazy(() => import('@/components/worldcup/PlayersSection.jsx'));
+const AiStatsBriefing = lazy(() => import('@/components/worldcup/AiStatsBriefing.jsx'));
 
 const tabs = [
   { id: 'groups', label: 'Grupos' },
@@ -38,16 +57,24 @@ function shouldPollWorldCupLive(data) {
   return (data?.stats?.matches?.live ?? 0) > 0;
 }
 
+function TabFallback() {
+  return <LoadingSpinner label="Cargando sección…" />;
+}
+
 export default function WorldCupPage() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('groups');
-  const fetchOverview = useCallback(() => worldCupApi.overview(), []);
-  const { data, loading, error, lastUpdated } = useLiveData(fetchOverview, [], {
-    enabled: true,
+  const needsOverview = activeTab !== 'history' && activeTab !== 'players';
+  const fetchOverview = useCallback(
+    () => worldCupApi.overview({ playerStats: activeTab === 'stats' }),
+    [activeTab]
+  );
+  const { data, loading, error, lastUpdated } = useLiveData(fetchOverview, [activeTab], {
+    enabled: needsOverview,
     pollIntervalMs: 15000,
     pollWhen: shouldPollWorldCupLive,
   });
-  const pageLoading = loading;
+  const pageLoading = loading && needsOverview;
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -90,9 +117,13 @@ export default function WorldCupPage() {
       </div>
 
       {activeTab === 'players' ? (
-        <PlayersSection />
+        <Suspense fallback={<TabFallback />}>
+          <PlayersSection />
+        </Suspense>
       ) : activeTab === 'history' ? (
-        <HistorySection />
+        <Suspense fallback={<TabFallback />}>
+          <HistorySection />
+        </Suspense>
       ) : (
         <>
           {pageLoading && (
@@ -100,7 +131,7 @@ export default function WorldCupPage() {
           )}
           {error && <p className="text-destructive">{error}</p>}
           {!pageLoading && !error && (
-            <>
+            <Suspense fallback={<TabFallback />}>
               {activeTab === 'groups' && (
                 <GroupStandingsSection
                   groups={data?.groups}
@@ -130,7 +161,7 @@ export default function WorldCupPage() {
                   teamMap={Object.fromEntries((data?.teams ?? []).map((t) => [t.externalId, t]))}
                 />
               )}
-            </>
+            </Suspense>
           )}
         </>
       )}

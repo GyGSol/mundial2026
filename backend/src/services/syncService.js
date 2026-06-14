@@ -346,6 +346,8 @@ export async function runSync({ includeMetadata = true } = {}) {
       fifaEventsSynced: fifaResult.events ?? 0,
     });
     notifyLeaderboardUpdated({ reason: 'sync_complete' });
+    const { invalidateWorldCupOverviewCache } = await import('./worldCupOverviewCache.js');
+    invalidateWorldCupOverviewCache();
 
     if (lineupResult.updated > 0 || lineupResult.events > 0) {
       console.log(

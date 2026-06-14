@@ -68,43 +68,15 @@ export default function GroupsPage() {
   });
   const [error, setError] = useState('');
 
-  const loadAdminGroupDetails = async (groups) => {
-    const adminGroups = groups.filter((g) => g.isAdmin);
-    if (!adminGroups.length) {
-      setGroupJoinRequests({});
-      setGroupMembers({});
-      return;
-    }
-
-    const requestsEntries = await Promise.all(
-      adminGroups.map(async (g) => {
-        const data = await competitionGroupsApi.listJoinRequests(g.id);
-        return [g.id, data.requests ?? []];
-      })
-    );
-    const membersEntries = await Promise.all(
-      adminGroups.map(async (g) => {
-        const data = await competitionGroupsApi.members(g.id);
-        return [g.id, data.members ?? []];
-      })
-    );
-    setGroupJoinRequests(Object.fromEntries(requestsEntries));
-    setGroupMembers(Object.fromEntries(membersEntries));
-  };
-
   const loadData = async () => {
-    const all = await competitionGroupsApi.list();
-    setAllGroups(all.groups ?? []);
+    const page = await competitionGroupsApi.dashboard();
+    setAllGroups(page.groups ?? []);
 
     if (isAuthenticated) {
-      const [mine, pending] = await Promise.all([
-        competitionGroupsApi.my(),
-        competitionGroupsApi.myJoinRequests(),
-      ]);
-      const groups = mine.groups ?? [];
-      setMyGroups(groups);
-      setPendingJoinGroupIds(new Set(pending.pendingGroupIds ?? []));
-      await loadAdminGroupDetails(groups);
+      setMyGroups(page.myGroups ?? []);
+      setPendingJoinGroupIds(new Set(page.pendingGroupIds ?? []));
+      setGroupJoinRequests(page.joinRequests ?? {});
+      setGroupMembers(page.members ?? {});
     } else {
       setMyGroups([]);
       setPendingJoinGroupIds(new Set());

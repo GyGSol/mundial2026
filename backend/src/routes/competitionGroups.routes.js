@@ -21,6 +21,7 @@ import {
   setActiveCompetitionGroup,
   updateCompetitionGroup,
 } from '../services/competitionGroupService.js';
+import { getCompetitionGroupsPage } from '../services/competitionGroupsDashboardService.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 const router = Router();
@@ -29,6 +30,15 @@ router.get('/', async (req, res, next) => {
   try {
     const groups = await listCompetitionGroups();
     res.json({ groups });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/dashboard', optionalAuth, async (req, res, next) => {
+  try {
+    const page = await getCompetitionGroupsPage(req.user?._id);
+    res.json(page);
   } catch (err) {
     next(err);
   }

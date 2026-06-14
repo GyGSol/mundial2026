@@ -52,6 +52,7 @@ export const authApi = {
 
 export const competitionGroupsApi = {
   list: () => request('/competition-groups'),
+  dashboard: () => request('/competition-groups/dashboard'),
   my: () => request('/competition-groups/my'),
   create: (name, description = '', prizesWinnersCount = 0, prizes = []) =>
     request('/competition-groups', {
@@ -201,9 +202,11 @@ export const healthApi = {
 };
 
 export const worldCupApi = {
-  overview: (groupId) => {
-    const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : '';
-    return request(`/world-cup${query}`);
+  overview: ({ playerStats = false } = {}) => {
+    const params = new URLSearchParams();
+    if (playerStats) params.set('playerStats', '1');
+    const query = params.toString();
+    return request(`/world-cup${query ? `?${query}` : ''}`);
   },
   history: () => request('/world-cup/history'),
   aiBriefing: () => request('/world-cup/ai-briefing'),
