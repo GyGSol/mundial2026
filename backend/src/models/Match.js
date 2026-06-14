@@ -14,6 +14,8 @@ const matchSchema = new mongoose.Schema(
     type: { type: String, default: 'group' },
     status: { type: String, enum: ['upcoming', 'live', 'finished'], default: 'upcoming' },
     kickoffAt: Date,
+    /** Push enviado ~15 min antes del cierre de predicciones (lockAt). */
+    predictionLockReminderSentAt: Date,
     /** IANA zone used to derive kickoffAt from localDate (stadium local time). */
     kickoffTimezone: String,
     /** Overlay operacional de clima (suspensión NOAA, demora pre-kickoff). Ver matchWeatherOpsRules.js */

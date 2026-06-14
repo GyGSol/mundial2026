@@ -35,7 +35,7 @@ export default function PushOptInBanner({ enabled = true }) {
     <Card className="border-sky-400/25 bg-sky-500/5">
       <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium">Avisame cuando empiece un partido en vivo</p>
+          <p className="text-sm font-medium">Avisame sobre predicciones y partidos en vivo</p>
           {denied ? (
             <p className="text-xs text-muted-foreground">
               Bloqueaste las notificaciones en este navegador. Para activarlas, abrí el candado o ícono
@@ -43,7 +43,8 @@ export default function PushOptInBanner({ enabled = true }) {
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Te avisamos si tenés predicción cargada y el partido pasa a en vivo.
+              Te avisamos 15 min antes de que cierre una predicción sin cargar y cuando empiece un partido
+              en vivo.
             </p>
           )}
           {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}

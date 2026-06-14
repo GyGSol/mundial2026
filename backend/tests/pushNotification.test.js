@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { env } from '../src/config/env.js';
-import { getVapidPublicKey, notifyMatchesLiveStarted } from '../src/services/pushNotificationService.js';
+import { getVapidPublicKey, notifyMatchesLiveStarted, notifyPredictionLockClosing } from '../src/services/pushNotificationService.js';
 
 describe('pushNotificationService', () => {
   const originalPushEnabled = env.pushNotificationsEnabled;
@@ -30,5 +30,14 @@ describe('pushNotificationService', () => {
     env.vapidPrivateKey = '';
     const result = await notifyMatchesLiveStarted([{ _id: '1', externalId: '19' }]);
     expect(result).toMatchObject({ sent: 0, skipped: true, reason: 'push_disabled' });
+  });
+
+  it('notifyPredictionLockClosing se omite si push está deshabilitado', async () => {
+    env.pushNotificationsEnabled = false;
+    const result = await notifyPredictionLockClosing(
+      { _id: '1', externalId: '19', homeTeamId: 'a', awayTeamId: 'b' },
+      [{ _id: 'u1', pushSubscriptions: [{ endpoint: 'x', keys: {} }] }]
+    );
+    expect(result).toMatchObject({ sent: 0, skipped: true });
   });
 });

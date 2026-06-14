@@ -3,10 +3,29 @@ import { Prediction } from '../models/Prediction.js';
 import { User } from '../models/User.js';
 
 export const LOCK_MS = 60 * 60 * 1000;
+/** Aviso push esta cantidad de ms antes del cierre (lockAt). */
+export const LOCK_REMINDER_BEFORE_LOCK_MS = 15 * 60 * 1000;
 
 export function getLockAt(kickoffAt) {
   if (!kickoffAt) return null;
   return new Date(new Date(kickoffAt).getTime() - LOCK_MS);
+}
+
+export function getLockReminderAt(kickoffAt) {
+  const lockAt = getLockAt(kickoffAt);
+  if (!lockAt) return null;
+  return new Date(lockAt.getTime() - LOCK_REMINDER_BEFORE_LOCK_MS);
+}
+
+export function isLockReminderDue(match, now = Date.now()) {
+  if (match.status !== 'upcoming' || !match.kickoffAt || match.predictionLockReminderSentAt) {
+    return false;
+  }
+  const lockAt = getLockAt(match.kickoffAt);
+  const reminderAt = getLockReminderAt(match.kickoffAt);
+  if (!lockAt || !reminderAt) return false;
+  const nowMs = typeof now === 'number' ? now : now.getTime();
+  return nowMs >= reminderAt.getTime() && nowMs < lockAt.getTime();
 }
 
 export function isPredictionLocked(match) {

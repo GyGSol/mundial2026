@@ -91,6 +91,34 @@ async function sendToSubscription(subscription, payload) {
 }
 
 /**
+ * Notifica a usuarios sin predicción cargada que el cierre es en ~15 minutos.
+ * @param {import('mongoose').Document|object} match
+ * @param {Array<{ _id: import('mongoose').Types.ObjectId, pushSubscriptions?: object[] }>} users
+ */
+export async function notifyPredictionLockClosing(match, users = []) {
+  if (!users.length) return { sent: 0, skipped: true };
+  if (!ensureVapidConfigured()) return { sent: 0, skipped: true, reason: 'push_disabled' };
+
+  const matchLabel = await buildMatchLabel(match);
+  const payload = {
+    title: 'Cierra pronto tu predicción',
+    body: `${matchLabel} — te quedan 15 min para cargar tu marcador`,
+    url: `/predictions?match=${match.externalId}`,
+    matchId: match.externalId,
+  };
+
+  let sent = 0;
+  for (const user of users) {
+    for (const subscription of user.pushSubscriptions ?? []) {
+      const result = await sendToSubscription(subscription, payload);
+      if (result.ok) sent += 1;
+    }
+  }
+
+  return { sent, skipped: false };
+}
+
+/**
  * Notifica a usuarios con predicción en el partido que acaba de pasar a live.
  * @param {import('mongoose').Document[]} matches
  */

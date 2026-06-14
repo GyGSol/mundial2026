@@ -4,6 +4,7 @@ import { connectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { startSyncJob } from './jobs/syncMatches.job.js';
 import { startKickoffWatchJob } from './jobs/kickoffWatch.job.js';
+import { startPredictionLockReminderJob } from './jobs/predictionLockReminder.job.js';
 import { startAiPredictionsJob } from './jobs/aiPredictions.job.js';
 import { initWebSocket } from './services/websocketService.js';
 import { ensureLegacyUserSubmittedBackfillOnce } from './services/predictionMigrationService.js';
@@ -18,6 +19,7 @@ async function main() {
 
   initWebSocket(server);
   startKickoffWatchJob();
+  startPredictionLockReminderJob();
   startAiPredictionsJob();
 
   server.listen(env.port, () => {

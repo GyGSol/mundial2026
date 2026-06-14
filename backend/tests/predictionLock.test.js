@@ -4,6 +4,7 @@ import {
   ensureDefaultPredictionsForUser,
   getLockAt,
   hasUserPrediction,
+  isLockReminderDue,
   isPredictionLocked,
   isPredictionOpen,
 } from '../src/services/predictionLockService.js';
@@ -35,6 +36,17 @@ describe('predictionLockService', () => {
 
     vi.setSystemTime(new Date('2026-06-15T15:01:00Z'));
     expect(isPredictionLocked({ status: 'upcoming', kickoffAt: kickoff })).toBe(true);
+  });
+
+  it('no reenvía recordatorio si ya fue enviado', () => {
+    vi.setSystemTime(new Date('2026-06-15T14:50:00Z'));
+    expect(
+      isLockReminderDue({
+        status: 'upcoming',
+        kickoffAt: kickoff,
+        predictionLockReminderSentAt: new Date('2026-06-15T14:45:00Z'),
+      })
+    ).toBe(false);
   });
 
   it('partidos live o finished siempre bloqueados', () => {
