@@ -282,7 +282,26 @@ export function buildPositionMatchups(homeSquad, awaySquad) {
   });
 }
 
+function kickoffWeatherSnapshot(venue) {
+  const kickoff = venue?.matchWeather?.kickoffForecast ?? venue?.weather?.kickoffForecast;
+  if (!kickoff || kickoff.available === false) return null;
+  if (kickoff.temperatureC == null || !Number.isFinite(Number(kickoff.temperatureC))) return null;
+  return kickoff;
+}
+
 function venueClimateHint(venue) {
+  const kickoff = kickoffWeatherSnapshot(venue);
+  if (kickoff) {
+    const temp = Number(kickoff.temperatureC);
+    const humidity = Number(kickoff.humidityPct ?? 0);
+    const rain = Number(kickoff.precipitationPct ?? 0);
+    if (temp >= 30 && humidity >= 60) return 'tropical_caluroso';
+    if (temp >= 26 && humidity >= 70) return 'tropical_caluroso';
+    if (rain >= 50) return 'lluvioso';
+    if (temp <= 12) return 'frio';
+    return 'templado';
+  }
+
   const city = String(venue?.stadium?.city ?? '').toLowerCase();
   const country = String(venue?.stadium?.country ?? '').toLowerCase();
   const hotHumid =
@@ -318,7 +337,9 @@ export function buildMoraleFactors({
   ownRanking,
 }) {
   const debut = isWorldCupDebut(profile);
+  const kickoffWeather = kickoffWeatherSnapshot(venue);
   const venueClimate = venueClimateHint(venue);
+  const venueClimateSource = kickoffWeather ? 'open-meteo-kickoff' : 'heuristic';
   const climateAdaptation = teamClimateFit(profile?.climateHome, venueClimate);
 
   const ownRank = Number(ownRanking?.rank);
@@ -354,6 +375,18 @@ export function buildMoraleFactors({
   return {
     isWorldCupDebut: debut,
     venueClimate,
+    venueClimateSource,
+    kickoffWeather: kickoffWeather
+      ? {
+          source: 'sede-y-clima',
+          description: kickoffWeather.description,
+          temperatureC: kickoffWeather.temperatureC,
+          humidityPct: kickoffWeather.humidityPct,
+          precipitationPct: kickoffWeather.precipitationPct,
+          windKmh: kickoffWeather.windKmh,
+          atLocal: kickoffWeather.atLocal ?? venue?.matchWeather?.kickoffAtLocal ?? null,
+        }
+      : null,
     climateAdaptation,
     favoriteOrUnderdog,
     tournamentMomentum,

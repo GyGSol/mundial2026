@@ -15,7 +15,7 @@ import {
   isOfficialKnockoutMatch,
 } from './predictedMatchContextService.js';
 import { notifyMatchesUpdated } from './websocketService.js';
-import { getVenueWeatherForStadium, formatWeatherForPrompt } from './weatherService.js';
+import { getVenueWeatherForStadium, formatWeatherForPrompt, buildMatchWeatherPredictionContext } from './weatherService.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -28,13 +28,15 @@ export const AI_QUESTION_MAX_LEN = 146;
 export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mundo FIFA 2026:
 - "Local" y "visitante" (home/away) son SOLO la posición en el fixture; NO indican sede nacional del equipo ni ventaja de localía de clubes o ligas.
 - No asumas que el "local" juega en su país. Ambos seleccionados son visitantes en el país/ciudad donde se disputa el partido.
-- Analizá el partido según la sede real: estadio, ciudad, país anfitrión del encuentro, horario local previsto y condiciones típicas de esa ubicación en la fecha (temperatura, humedad, altitud si aplica, césped/clima).
+- Analizá el partido según la sede real: estadio, ciudad, país anfitrión y horario local del kickoff.
+- Para el clima del partido usá EXCLUSIVAMENTE venue.matchWeather (panel Sede y clima, Open-Meteo). Si status=ok, el pronóstico al kickoff es la fuente autoritativa: temperatura, humedad, viento y lluvia del horario del partido.
+- NO estimes ni inventes clima cuando venue.matchWeather.status=ok. NO uses clima típico de junio-julio ni reemplaces por morale.venueClimate heurístico si hay kickoffForecast.
 - El factor sede aplica por ubicación del estadio (desplazamiento, aclimatación, calor, altura), no por quién figura como "local" en el fixture.
 - Usá ranking FIFA, resultados previos del torneo 2026, poder ofensivo/defensivo, historial en Mundiales y enfrentamientos directos del contexto cuando estén disponibles.
 - Usá nationContext: historial Wikipedia (wikiRecords, finalHighlights), población, liga doméstica, talentPoolIndex y factores anímicos (morale).
 - Usá squadAnalysis: titulares probables, lesiones, dudas, suspendidos y riesgo de tarjetas.
 - Usá positionMatchups: compará GK/DEF/MID/FWD y su edge (home/away/even) para ponderar el marcador.
-- Usá venue.weather cuando esté disponible: clima actual en la sede y pronóstico para el día y hora local del kickoff.`;
+- Usá venue.matchWeather.kickoffForecast para ponderar ritmo, desgaste, errores técnicos y adaptación de cada selección al calor/humedad/viento/lluvia del kickoff.`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;
@@ -73,7 +75,8 @@ export function buildVenueContextForPrompt(match, stadium) {
     kickoffUtc: match?.kickoffAt?.toISOString?.() ?? match?.kickoffAt ?? null,
     kickoffLocal: formatKickoffLocalDescription(match?.kickoffAt, timezone),
     analysisHints: [
-      'Estimar condiciones ambientales típicas (temperatura, humedad, altitud) según ciudad y horario local en junio-julio 2026.',
+      'Si venue.matchWeather.status=ok, usar kickoffForecast como clima del partido (panel Sede y clima).',
+      'Sin datos de clima: no inventes temperatura, humedad ni lluvia concretas; mencioná solo incertidumbre.',
       'Considerar viaje y aclimatación de ambos equipos respecto a la sede del partido, no la etiqueta local/visitante.',
     ],
   };
@@ -85,9 +88,20 @@ export async function enrichVenueWithWeather(venue, match, stadium, { fetchImpl 
     kickoffAt: match?.kickoffAt,
     fetchImpl,
   });
+  const matchWeather = buildMatchWeatherPredictionContext(weatherRaw);
+  const analysisHints =
+    matchWeather.status === 'ok'
+      ? [
+          'Clima del partido: usar venue.matchWeather.kickoffForecast (mismo dato que el panel Sede y clima).',
+          'Evaluar aclimatación de cada selección respecto a temperatura, humedad, viento y lluvia del kickoff.',
+        ]
+      : venue.analysisHints;
+
   return {
     ...venue,
+    analysisHints,
     weather: formatWeatherForPrompt(weatherRaw),
+    matchWeather,
   };
 }
 
@@ -297,7 +311,7 @@ function buildAiPredictionPrompt(context) {
 
 ${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-En el campo "reasoning", incluí sede/estadio, clima actual y pronóstico del kickoff (venue.weather), ranking FIFA, historial wiki, población/liga, lesiones y titulares probables, duelos por puesto (positionMatchups) y factores anímicos cuando sean relevantes. No uses "localía" en el sentido de club. En "reasoning" podés usar markdown ligero (negritas, listas).
+En el campo "reasoning", incluí sede/estadio y el clima del kickoff desde venue.matchWeather.kickoffForecast (temperatura, humedad, viento, lluvia, descripción). Si matchWeather.status=ok, citá esos valores concretos. También ranking FIFA, historial wiki, lesiones, duelos por puesto y factores anímicos cuando sean relevantes. No uses "localía" en el sentido de club. En "reasoning" podés usar markdown ligero (negritas, listas).
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown fuera del campo reasoning):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<explicación en español; markdown ligero permitido>"}

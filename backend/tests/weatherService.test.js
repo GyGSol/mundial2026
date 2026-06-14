@@ -6,6 +6,7 @@ import {
 import {
   getVenueWeatherForStadium,
   formatWeatherForPrompt,
+  buildMatchWeatherPredictionContext,
 } from '../src/services/weatherService.js';
 
 describe('stadiumCoordinates', () => {
@@ -58,6 +59,10 @@ describe('weatherService', () => {
     expect(weather.available).toBe(true);
     expect(weather.current.temperatureC).toBe(31);
     expect(formatWeatherForPrompt(weather).status).toBe('ok');
+    const matchWeather = buildMatchWeatherPredictionContext(weather);
+    expect(matchWeather.status).toBe('ok');
+    expect(matchWeather.authoritativeForPrediction).toBe(true);
+    expect(matchWeather.kickoffForecast?.temperatureC).toBe(28);
     const calledUrl = mockFetch.mock.calls[0][0];
     expect(calledUrl).toContain('start_date=2026-06-15');
     expect(calledUrl).not.toContain('forecast_days');

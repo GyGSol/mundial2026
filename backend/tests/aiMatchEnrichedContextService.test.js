@@ -123,6 +123,33 @@ describe('aiMatchEnrichedContextService', () => {
     expect(cuwMorale.favoriteOrUnderdog).toBe('underdog');
   });
 
+  it('buildMoraleFactors usa kickoff real de matchWeather para venueClimate', () => {
+    const morale = buildMoraleFactors({
+      teamAnalysis: { fifaRanking: { rank: 10 } },
+      profile: { climateHome: 'templado', worldCupAppearances: 20 },
+      squad: homeSquad,
+      venue: {
+        stadium: { city: 'Seattle', country: 'USA' },
+        matchWeather: {
+          status: 'ok',
+          kickoffForecast: {
+            temperatureC: 32,
+            humidityPct: 75,
+            precipitationPct: 10,
+            windKmh: 8,
+            description: 'Parcialmente nublado',
+          },
+        },
+      },
+      opponentRanking: { rank: 50 },
+      ownRanking: { rank: 10 },
+    });
+
+    expect(morale.venueClimate).toBe('tropical_caluroso');
+    expect(morale.venueClimateSource).toBe('open-meteo-kickoff');
+    expect(morale.kickoffWeather?.temperatureC).toBe(32);
+  });
+
   it('talentPoolIndex GER >> CUW', () => {
     const ger = buildTalentPoolIndex({
       populationMillions: 84,

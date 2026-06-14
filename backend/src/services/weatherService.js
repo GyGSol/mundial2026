@@ -268,6 +268,49 @@ export function formatWeatherForClient(weather) {
   };
 }
 
+export function buildMatchWeatherPredictionContext(weather) {
+  if (!weather?.available) {
+    return {
+      status: 'unavailable',
+      reason: weather?.reason ?? 'unknown',
+      locationLine: weather?.locationLine ?? null,
+      instruction:
+        'Sin datos del panel Sede y clima: no inventes temperatura, humedad ni lluvia concretas en el pronóstico.',
+    };
+  }
+
+  const kickoff = weather.kickoffForecast;
+  const kickoffUsable =
+    kickoff &&
+    kickoff.available !== false &&
+    kickoff.temperatureC != null &&
+    Number.isFinite(Number(kickoff.temperatureC));
+
+  return {
+    status: 'ok',
+    source: 'sede-y-clima-open-meteo',
+    authoritativeForPrediction: true,
+    instruction:
+      'OBLIGATORIO: usá venue.matchWeather.kickoffForecast como clima real del partido. No sustituyas por estimaciones genéricas de junio-julio, clima típico de la ciudad ni morale.venueClimate heurístico.',
+    locationLine: weather.locationLine,
+    region: weather.region,
+    country: weather.country,
+    timezone: weather.timezone,
+    fetchedAt: weather.fetchedAt,
+    kickoffAtLocal: kickoff?.atLocal ?? null,
+    kickoffForecast: kickoffUsable
+      ? {
+          description: kickoff.description,
+          temperatureC: kickoff.temperatureC,
+          humidityPct: kickoff.humidityPct,
+          precipitationPct: kickoff.precipitationPct,
+          windKmh: kickoff.windKmh,
+        }
+      : null,
+    currentAtVenue: weather.current ?? null,
+  };
+}
+
 export function formatWeatherForPrompt(weather) {
   if (!weather?.available) {
     return {

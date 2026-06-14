@@ -21,6 +21,7 @@ import {
   getVenueWeatherForStadium,
   formatWeatherForPrompt,
   formatWeatherForClient,
+  buildMatchWeatherPredictionContext,
 } from './weatherService.js';
 
 const AI_HISTORY_FOR_PROMPT = 20;
@@ -123,13 +124,22 @@ export async function buildMatchVenueContext(matchId, { fetchImpl = fetch } = {}
     fetchImpl,
   });
   const venue = buildVenueContextForPrompt(match, stadium);
+  const matchWeather = buildMatchWeatherPredictionContext(weatherRaw);
 
   return {
     kickoffAt: match.kickoffAt?.toISOString?.() ?? match.kickoffAt ?? null,
     stadium: formatStadiumForClient(stadium),
     venue: {
       ...venue,
+      analysisHints:
+        matchWeather.status === 'ok'
+          ? [
+              'Clima del partido: usar venue.matchWeather.kickoffForecast (panel Sede y clima).',
+              'Evaluar aclimatación según temperatura, humedad, viento y lluvia del kickoff.',
+            ]
+          : venue.analysisHints,
       weather: formatWeatherForPrompt(weatherRaw),
+      matchWeather,
     },
     weather: formatWeatherForClient(weatherRaw),
   };
@@ -267,7 +277,7 @@ function topicInstructions(topicType) {
   if (topicType === 'match') {
     return `${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-Analizá el partido según el contexto, la sede del estadio, el clima (venue.weather) y las predicciones del usuario. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
+Analizá el partido según el contexto, la sede del estadio y venue.matchWeather (panel Sede y clima). Para el pronóstico y el clima en tus respuestas, usá venue.matchWeather.kickoffForecast cuando status=ok. Si ya diste una predicción inicial, mantené coherencia salvo que te pidan cambiarla.`;
   }
   if (topicType === 'group') {
     return 'Proyectá resultados del grupo completo según las predicciones del usuario y el fixture restante. Podés estimar la tabla final y quién clasifica.';
