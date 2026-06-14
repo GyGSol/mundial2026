@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { matchStreamApi } from '../api/client.js';
+import { USER_STREAM_BRAND } from '../lib/streamBrand.js';
 
 export function useMatchStream(matchId, { enabled = true } = {}) {
   const [config, setConfig] = useState(null);
@@ -33,7 +34,7 @@ export function useMatchStream(matchId, { enabled = true } = {}) {
               data.reason === 'not_available' || data.reason === 'not_live'
                 ? 'La transmisión todavía no está disponible.'
                 : data.reason === 'no_la18_mapping'
-                  ? 'No hay transmisión La18HD configurada para este partido.'
+                  ? `No hay transmisión ${USER_STREAM_BRAND} configurada para este partido.`
                   : data.reason === 'disabled'
                     ? 'El módulo de transmisión está desactivado.'
                     : 'Transmisión no disponible.'

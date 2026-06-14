@@ -105,7 +105,7 @@ export function labelStreamLink(url, language = '') {
     }
 
     if (parsed.pathname.includes('/mpd/drm')) {
-      return language ? `DRM La18HD (${language || '—'})` : 'DRM La18HD';
+      return language ? `DRM (${language || '—'})` : 'DRM';
     }
   } catch {
     // ignore invalid URL

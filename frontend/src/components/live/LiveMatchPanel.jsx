@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext.jsx';
 import { useMatchStream } from '@/hooks/useMatchStream.js';
 import { canShowMatchStream, isMatchStreamWarmup } from '@/lib/streamWatch.js';
+import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import La18StreamPlayer from './La18StreamPlayer.jsx';
 
 export default function LiveMatchPanel({
@@ -38,7 +39,7 @@ export default function LiveMatchPanel({
   return (
     <div className={cn('live-match-panel flex w-full flex-col gap-3', className)}>
       <p className="text-[11px] leading-snug text-muted-foreground">
-        Transmisión La18HD · alternativa independiente de la programación oficial.
+        Transmisión {USER_STREAM_BRAND} · alternativa independiente de la programación oficial.
         {isWarmup ? ' Calentamiento previo al partido.' : null}
       </p>
 
@@ -55,8 +56,7 @@ export default function LiveMatchPanel({
             {error}
             {config?.reason === 'no_la18_mapping' ? (
               <p className="mt-2 text-xs">
-                Falta configurar la URL de La18HD para el partido{' '}
-                <strong>{matchId}</strong> en el panel admin.
+                Todavía no hay señal {USER_STREAM_BRAND} disponible para este partido.
               </p>
             ) : null}
           </div>

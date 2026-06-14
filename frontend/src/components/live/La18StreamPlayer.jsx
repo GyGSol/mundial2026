@@ -3,6 +3,7 @@ import { ExternalLink, Maximize2, Minimize2, MonitorPlay, RefreshCw } from 'luci
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
+import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import StreamAccessNoticeDialog from './StreamAccessNoticeDialog.jsx';
 
 const LiveStreamPlayer = lazy(() => import('./LiveStreamPlayer.jsx'));
@@ -138,7 +139,7 @@ export default function La18StreamPlayer({
     }
     setDirectHlsFailed(true);
     if (iosDevice && iframeSrc) {
-      setStatusMessage('Probando reproductor La18HD…');
+      setStatusMessage(`Probando reproductor ${USER_STREAM_BRAND}…`);
       return;
     }
     setStatusMessage('Buscando señal alternativa…');
@@ -199,14 +200,14 @@ export default function La18StreamPlayer({
           <Suspense
             fallback={
               <div className="flex aspect-video items-center justify-center text-sm text-muted-foreground">
-                Conectando señal La18HD…
+                Conectando señal {USER_STREAM_BRAND}…
               </div>
             }
           >
             <LiveStreamPlayer
               url={primary.hlsUrl}
               type="file"
-              channelName="La18HD"
+              channelName={USER_STREAM_BRAND}
               className="h-full"
               onError={handleDirectHlsError}
               onStall={handleDirectHlsStall}
@@ -217,7 +218,7 @@ export default function La18StreamPlayer({
         {showEmbedded ? (
           <iframe
             ref={iframeRef}
-            title="Transmisión La18HD"
+            title={`Transmisión ${USER_STREAM_BRAND}`}
             src={iframeSrc}
             className="h-full min-h-[200px] w-full fullscreen:min-h-0 fullscreen:h-full"
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
@@ -264,7 +265,7 @@ export default function La18StreamPlayer({
               <Button type="button" variant="default" className="mx-auto gap-2" asChild>
                 <a href={openUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="size-4 shrink-0" aria-hidden />
-                  {iosDevice ? 'Abrir La18HD en Safari' : 'Abrir La18HD en nueva pestaña'}
+                  {iosDevice ? `Abrir ${USER_STREAM_BRAND} en Safari` : `Abrir ${USER_STREAM_BRAND} en nueva pestaña`}
                 </a>
               </Button>
             ) : null}
@@ -273,7 +274,7 @@ export default function La18StreamPlayer({
 
         {!iframeLoaded && showEmbedded ? (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 text-sm text-white/80">
-            Conectando señal La18HD…
+            Conectando señal {USER_STREAM_BRAND}…
           </div>
         ) : null}
 
@@ -322,7 +323,7 @@ export default function La18StreamPlayer({
           ) : (
             <Button type="button" size="sm" variant="outline" onClick={retryPrimary}>
               <RefreshCw className="mr-1.5 size-4" aria-hidden />
-              Reintentar La18HD
+              Reintentar {USER_STREAM_BRAND}
             </Button>
           )}
 
@@ -330,7 +331,7 @@ export default function La18StreamPlayer({
             <Button type="button" size="sm" variant="secondary" className="ml-auto gap-1.5" asChild>
               <a href={openUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4 shrink-0" aria-hidden />
-                {iosDevice ? 'Abrir en Safari' : 'Abrir La18HD'}
+                {iosDevice ? 'Abrir en Safari' : `Abrir ${USER_STREAM_BRAND}`}
               </a>
             </Button>
           ) : null}
@@ -339,7 +340,7 @@ export default function La18StreamPlayer({
             <Button type="button" size="sm" variant="outline" className="gap-1.5" asChild>
               <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4 shrink-0" aria-hidden />
-                Más en La18HD
+                Más en {USER_STREAM_BRAND}
               </a>
             </Button>
           ) : null}

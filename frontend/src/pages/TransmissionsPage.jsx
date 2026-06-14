@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import { isIosDevice } from '@/lib/device';
+import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 
 const LA18_EVENTS_URL = 'https://la18hd.com/eventos/';
 
@@ -157,7 +158,7 @@ function TransmissionMatchCard({ match }) {
               <Button variant="outline" size="sm" className="gap-1.5" asChild>
                 <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="size-4 shrink-0" aria-hidden />
-                  Más opciones en La18HD
+                  Más opciones en {USER_STREAM_BRAND}
                 </a>
               </Button>
             </div>
@@ -170,7 +171,7 @@ function TransmissionMatchCard({ match }) {
                   rel="noopener noreferrer"
                   className="text-amber-200/90 underline-offset-2 hover:underline"
                 >
-                  Partidos de hoy (La18HD)
+                  Partidos de hoy ({USER_STREAM_BRAND})
                 </a>
                 .
               </p>
@@ -219,7 +220,7 @@ export default function TransmissionsPage() {
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Transmisiones</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Partidos de {dayLabel}. Las señales en vivo usan La18HD cuando están configuradas.
+          Partidos de {dayLabel}. Las señales en vivo usan {USER_STREAM_BRAND} cuando están disponibles.
           {lastUpdated
             ? ` · Actualizado ${lastUpdated.toLocaleTimeString('es-AR', {
                 hour: '2-digit',

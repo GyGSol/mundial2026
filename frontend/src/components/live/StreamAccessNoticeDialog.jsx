@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card.jsx';
 import { isIosDevice } from '@/lib/device';
+import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 
 const LA18_EVENTS_URL = 'https://la18hd.com/eventos/';
 
@@ -52,7 +53,7 @@ export default function StreamAccessNoticeDialog({
                 Señal interrumpida
               </CardTitle>
             </div>
-            <CardDescription>La18HD · restricciones por región</CardDescription>
+            <CardDescription>{USER_STREAM_BRAND} · restricciones por región</CardDescription>
           </div>
           <Button type="button" size="icon" variant="ghost" onClick={handleClose} aria-label="Cerrar">
             <X className="size-4" />
@@ -66,14 +67,14 @@ export default function StreamAccessNoticeDialog({
             ejemplo España u otras zonas de Europa).
           </p>
           <p>
-            La18HD usa un proveedor externo que limita el acceso por{' '}
+            El proveedor de {USER_STREAM_BRAND} limita el acceso por{' '}
             <strong className="font-medium text-foreground">derechos de televisión</strong>. Eso lo
             decide el emisor del stream, no esta app de predicciones.
           </p>
           <ul className="list-disc space-y-1.5 pl-5">
             <li>Probá <strong className="font-medium text-foreground">Reintentar</strong> para renovar la URL de la señal.</li>
             <li>
-              Abrí La18HD en {iosDevice ? 'Safari' : 'una pestaña nueva'} por si el reproductor
+              Abrí {USER_STREAM_BRAND} en {iosDevice ? 'Safari' : 'una pestaña nueva'} por si el reproductor
               embebido falla.
             </li>
             <li>
@@ -87,7 +88,7 @@ export default function StreamAccessNoticeDialog({
               <Button type="button" className="w-full gap-2" asChild>
                 <a href={openUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="size-4 shrink-0" aria-hidden />
-                  {iosDevice ? 'Abrir La18HD en Safari' : 'Abrir La18HD en nueva pestaña'}
+                  {iosDevice ? `Abrir ${USER_STREAM_BRAND} en Safari` : `Abrir ${USER_STREAM_BRAND} en nueva pestaña`}
                 </a>
               </Button>
             ) : null}
@@ -98,7 +99,7 @@ export default function StreamAccessNoticeDialog({
             <Button type="button" variant="ghost" className="w-full gap-2" asChild>
               <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4 shrink-0" aria-hidden />
-                Más opciones en La18HD
+                Más opciones en {USER_STREAM_BRAND}
               </a>
             </Button>
             <Button type="button" variant="secondary" className="w-full" onClick={handleClose}>
