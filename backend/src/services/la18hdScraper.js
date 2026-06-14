@@ -1,10 +1,19 @@
 import { createHash } from 'node:crypto';
 import { env } from '../config/env.js';
+import nationProfiles from '../data/nationFootballProfiles.json' with { type: 'json' };
 
 const EVENT_LINK_PATTERN = /href=["']([^"']*(?:\/evento\/|\/eventos\/)[^"']*)["']/gi;
 const TITLE_PATTERN = />([^<]{4,120})<\//g;
 const AGENDA_JSON_PATH = '/eventos/json/agenda123.json';
+const AGENDA_PAGE_PATH = '/eventos/';
 const AGENDA_CACHE_TTL_MS = 60_000;
+
+const SPANISH_NATION_NAMES_BY_FIFA = Object.fromEntries(
+  Object.entries(nationProfiles.profiles ?? {}).map(([code, profile]) => [
+    code.toUpperCase(),
+    profile?.name ?? '',
+  ])
+);
 
 const STREAM_SLUG_LABELS = {
   disney6: 'Disney+',
@@ -65,10 +74,18 @@ function normalizeTeamToken(value) {
 
 function collectTeamTokens(team) {
   const tokens = new Set();
-  for (const value of [team?.name, team?.nameEn, team?.shortName, team?.externalId, team?.fifaCode]) {
+  for (const value of [team?.nameEn, team?.nameFa, team?.fifaCode, team?.externalId]) {
     const normalized = normalizeTeamToken(value);
     if (normalized) tokens.add(normalized);
   }
+
+  const fifaCode = String(team?.fifaCode ?? '').trim().toUpperCase();
+  const spanishName = SPANISH_NATION_NAMES_BY_FIFA[fifaCode];
+  if (spanishName) {
+    const normalized = normalizeTeamToken(spanishName);
+    if (normalized) tokens.add(normalized);
+  }
+
   return [...tokens];
 }
 
@@ -253,6 +270,7 @@ export async function fetchLa18AgendaEntries(fetchImpl = fetch, { forceRefresh =
     headers: {
       'User-Agent': 'Mundial2026-Stream/1.0',
       Accept: 'application/json',
+      Referer: `${env.la18hdBaseUrl}${AGENDA_PAGE_PATH}`,
     },
     signal: AbortSignal.timeout(12000),
   });

@@ -85,6 +85,29 @@ describe('la18hdScraper', () => {
     expect(ranked[0].score).toBeGreaterThan(0);
   });
 
+  it('rankLa18EventsForMatch matchea títulos en español con equipos en inglés', () => {
+    const events = groupAgendaEntries([
+      {
+        title: 'Copa del Mundo: Países Bajos vs Japón',
+        link: 'https://la18hd.com/vivo/canales.php?stream=dsports',
+        time: '15:00',
+        date: '2026-06-14',
+      },
+    ]);
+
+    const ranked = rankLa18EventsForMatch(
+      {},
+      events,
+      'Netherlands',
+      'Japan',
+      { nameEn: 'Netherlands', fifaCode: 'NED' },
+      { nameEn: 'Japan', fifaCode: 'JPN' }
+    );
+
+    expect(ranked).toHaveLength(1);
+    expect(ranked[0].streams[0].id).toBe('dsports');
+  });
+
   it('mergeStreamSources combina admin + agenda sin duplicar URL', () => {
     const admin = {
       la18PageUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
