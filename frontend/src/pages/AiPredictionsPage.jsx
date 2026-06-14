@@ -297,16 +297,6 @@ export default function AiPredictionsPage() {
     return '/predictions';
   }, [topicType, topicKey]);
 
-  const predictionLock = useMemo(() => {
-    if (topicType !== 'match' || !matchVenue) return null;
-    return {
-      kickoffAt: matchVenue.kickoffAt ?? null,
-      lockAt: matchVenue.lockAt ?? null,
-      predictionOpen: matchVenue.predictionOpen,
-      status: matchVenue.status ?? 'upcoming',
-    };
-  }, [topicType, matchVenue]);
-
   return (
     <div className="flex w-full flex-col gap-6 px-0 py-6 pb-24">
       <div className="flex flex-col gap-2">
@@ -450,7 +440,6 @@ export default function AiPredictionsPage() {
               onClearConversation={handleOpenClearDialog}
               clearingConversation={clearingConversation}
               hideInsightScore={topicType === 'match' && Boolean(thread?.initialInsight)}
-              predictionLock={predictionLock}
             />
           </CardContent>
         </Card>

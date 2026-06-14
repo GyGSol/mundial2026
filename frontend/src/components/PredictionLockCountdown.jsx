@@ -75,11 +75,11 @@ export default function PredictionLockCountdown({
     <p className={cn('text-center text-xs text-muted-foreground', className)}>
       {isOpen ? (
         <>
-          Cuenta regresiva para hacer la predicción:{' '}
+          Cuenta regresiva para cerrar la predicción:{' '}
           <span className="font-medium text-foreground">{remainingLabel}</span>
         </>
       ) : (
-        <span className="font-medium text-amber-200/90">Predicciones cerradas para este partido</span>
+        <span className="font-medium text-amber-200/90">Predicciones cerradas: no podés cambiar tu marcador</span>
       )}
     </p>
   );

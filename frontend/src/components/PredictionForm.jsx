@@ -8,6 +8,7 @@ import { MAX_GOALS_PER_TEAM, randomMatchScore } from '@/lib/randomMatchScore.js'
 import { formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
+import PredictionLockCountdown from '@/components/PredictionLockCountdown.jsx';
 
 /** Mismo ancho/alto en web y móvil para Guardar y Editar */
 const PREDICTION_ACTION_BUTTON_CLASS = 'min-w-28 px-4';
@@ -38,6 +39,18 @@ function PredictionUpdatedAt({ updatedAt }) {
     <p className="text-center text-xs text-muted-foreground">
       Última predicción: {label}
     </p>
+  );
+}
+
+function PredictionLockNotice({ match }) {
+  if (match.status !== 'upcoming' || match.predictionOpen === false) return null;
+  return (
+    <PredictionLockCountdown
+      kickoffAt={match.kickoffAt}
+      lockAt={match.lockAt}
+      predictionOpen={match.predictionOpen}
+      status={match.status}
+    />
   );
 }
 
@@ -222,6 +235,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homePrediction={prediction.homeGoals}
           awayPrediction={prediction.awayGoals}
         />
+        <PredictionLockNotice match={match} />
         <PredictionUpdatedAt updatedAt={prediction.updatedAt} />
         <PredictionActions match={match}>
           <Button
@@ -252,6 +266,8 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
         homeInput={<Input {...inputProps('home')} />}
         awayInput={<Input {...inputProps('away')} />}
       />
+
+      <PredictionLockNotice match={match} />
 
       <div className="flex flex-col items-center gap-2">
         <PredictionActions match={match}>
