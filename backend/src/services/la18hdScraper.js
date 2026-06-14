@@ -382,7 +382,7 @@ function mappingToStreamSource(mapping) {
     ...source,
     id: mapping.la18EventId || source.id,
     label: mapping.notes?.trim() ? mapping.notes.trim() : source.label,
-    source: 'admin',
+    source: mapping.auto ? 'auto' : 'admin',
   };
 }
 

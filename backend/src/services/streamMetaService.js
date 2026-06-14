@@ -6,6 +6,7 @@ import {
   mergeStreamSources,
   rankLa18EventsForMatch,
 } from './la18hdScraper.js';
+import { resolveAutoLa18Mapping } from './la18ChannelResolver.js';
 import { canWatchConfiguredStream } from './streamWatchEligibility.js';
 
 function buildTeamMap(teams) {
@@ -28,6 +29,30 @@ function resolveStreamsForMatch(match, teamById, agendaEvents) {
   );
 
   return ranked[0]?.streams ?? [];
+}
+
+/**
+ * Admin → agenda La18HD → canal auto por televisor (broadcastSchedule).
+ */
+export function resolveEffectiveStreamSources(
+  match,
+  explicitMapping,
+  la18Streams,
+  { homeTeam = null, awayTeam = null } = {}
+) {
+  const sources = mergeStreamSources(explicitMapping, la18Streams);
+  if (sources.length) return sources;
+
+  const auto = resolveAutoLa18Mapping(match.externalId, { homeTeam, awayTeam });
+  if (!auto) return [];
+
+  return mergeStreamSources(auto, []);
+}
+
+export function inferStreamSourceKind(explicitMapping, selectedSource) {
+  if (explicitMapping?.enabled !== false && explicitMapping?.embedUrl) return 'admin';
+  if (selectedSource?.source === 'auto') return 'auto';
+  return 'la18hd';
 }
 
 export function buildStreamMeta(match, sources, source) {
@@ -81,9 +106,16 @@ export async function attachStreamMetaToMatches(matches) {
 
   return matches.map((match) => {
     const explicit = mappingById.get(String(match.externalId)) || null;
+    const homeTeam = teamById[match.homeTeamId] || null;
+    const awayTeam = teamById[match.awayTeamId] || null;
     const la18Streams = resolveStreamsForMatch(match, teamById, agendaEvents);
-    const sources = mergeStreamSources(explicit, la18Streams);
-    const source = explicit ? 'admin' : sources.length ? 'la18hd' : null;
+    const sources = resolveEffectiveStreamSources(match, explicit, la18Streams, {
+      homeTeam,
+      awayTeam,
+    });
+    const source = sources.length
+      ? inferStreamSourceKind(explicit, sources[0])
+      : null;
 
     return {
       ...match,

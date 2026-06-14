@@ -180,6 +180,32 @@ describe('streamLinkService', () => {
     expect(result.fallback?.provider).toBe('fubo');
   });
 
+  it('usa canal auto por televisor cuando la agenda no tiene el partido', async () => {
+    la18hdScraper.resolveLa18StreamsForMatch.mockResolvedValueOnce({
+      event: null,
+      streams: [],
+      sourceUrl: '',
+    });
+
+    Match.findOne.mockReturnValue({
+      lean: () =>
+        Promise.resolve({
+          externalId: '5',
+          status: 'live',
+          kickoffAt: new Date(),
+          homeTeamId: 'HTI',
+          awayTeamId: 'SCO',
+        }),
+    });
+    StreamLinkMapping.findOne.mockReturnValue({ lean: () => Promise.resolve(null) });
+
+    const result = await getMatchStreamConfig('5');
+    expect(result.available).toBe(true);
+    expect(result.source).toBe('auto');
+    expect(result.sources).toHaveLength(1);
+    expect(result.primary.pageUrl).toContain('stream=dsports');
+  });
+
   it('devuelve config La18 con fallback Fubo cuando está live', async () => {
     Match.findOne.mockReturnValue({
       lean: () => Promise.resolve({ externalId: '19', status: 'live' }),

@@ -5,9 +5,12 @@ import { env } from '../config/env.js';
 import { resolveStreamUrl } from '../data/liveStreamSchedule.js';
 import {
   fetchLa18HlsUrl,
-  mergeStreamSources,
   resolveLa18StreamsForMatch,
 } from './la18hdScraper.js';
+import {
+  inferStreamSourceKind,
+  resolveEffectiveStreamSources,
+} from './streamMetaService.js';
 import { isStreamWatchEligible } from './streamWatchEligibility.js';
 
 function buildFallbackConfig(matchExternalId) {
@@ -107,7 +110,10 @@ export async function getMatchStreamConfig(matchExternalId, _userId, options = {
     la18Streams = [];
   }
 
-  const sources = mergeStreamSources(explicitMapping, la18Streams);
+  const sources = resolveEffectiveStreamSources(match, explicitMapping, la18Streams, {
+    homeTeam,
+    awayTeam,
+  });
   const fallback = buildFallbackConfig(match.externalId);
 
   if (!sources.length) {
@@ -123,7 +129,7 @@ export async function getMatchStreamConfig(matchExternalId, _userId, options = {
 
   const selected = pickStreamSource(sources, options.sourceId);
   const primary = await buildPrimaryFromSource(selected);
-  const sourceKind = explicitMapping && selected?.source === 'admin' ? 'admin' : 'la18hd';
+  const sourceKind = inferStreamSourceKind(explicitMapping, selected);
 
   return {
     available: true,
