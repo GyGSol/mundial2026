@@ -2,11 +2,11 @@ import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { Team } from '../models/Team.js';
 import { Group } from '../models/Group.js';
-import { Player } from '../models/Player.js';
 import { Stadium } from '../models/Stadium.js';
 import { User } from '../models/User.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import { buildMatchTeamsAnalysis } from './aiTeamMatchContextService.js';
+import { buildEnrichedMatchContext } from './aiMatchEnrichedContextService.js';
 import { env } from '../config/env.js';
 import { isPredictionLocked } from './predictionLockService.js';
 import { computeGroupStandings } from './worldCupStatsService.js';
@@ -20,7 +20,7 @@ const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const AI_REASONING_MAX_LEN = 500;
+const AI_REASONING_MAX_LEN = 800;
 const AI_FOLLOWUP_MAX_LEN = 1200;
 const AI_FOLLOWUP_QUESTION_MAX_LEN = 500;
 
@@ -30,7 +30,10 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - No asumas que el "local" juega en su país. Ambos seleccionados son visitantes en el país/ciudad donde se disputa el partido.
 - Analizá el partido según la sede real: estadio, ciudad, país anfitrión del encuentro, horario local previsto y condiciones típicas de esa ubicación en la fecha (temperatura, humedad, altitud si aplica, césped/clima).
 - El factor sede aplica por ubicación del estadio (desplazamiento, aclimatación, calor, altura), no por quién figura como "local" en el fixture.
-- Usá ranking FIFA, resultados previos del torneo 2026, poder ofensivo/defensivo, historial en Mundiales y enfrentamientos directos del contexto cuando estén disponibles.`;
+- Usá ranking FIFA, resultados previos del torneo 2026, poder ofensivo/defensivo, historial en Mundiales y enfrentamientos directos del contexto cuando estén disponibles.
+- Usá nationContext: historial Wikipedia (wikiRecords, finalHighlights), población, liga doméstica, talentPoolIndex y factores anímicos (morale).
+- Usá squadAnalysis: titulares probables, lesiones, dudas, suspendidos y riesgo de tarjetas.
+- Usá positionMatchups: compará GK/DEF/MID/FWD y su edge (home/away/even) para ponderar el marcador.`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;
@@ -175,14 +178,6 @@ export async function getAiUser() {
   return User.findOne({ email, isAiUser: true });
 }
 
-async function countInjuredPlayers(teamExternalId) {
-  if (!teamExternalId) return 0;
-  return Player.countDocuments({
-    teamExternalId,
-    healthStatus: { $in: ['injured', 'doubt'] },
-  });
-}
-
 export async function buildPromptContext(match, aiUserId) {
   const [homeTeam, awayTeam, teams, allMatches, groups, stadium] = await Promise.all([
     Team.findOne({ externalId: match.homeTeamId }).lean(),
@@ -218,11 +213,6 @@ export async function buildPromptContext(match, aiUserId) {
     }
   }
 
-  const [homeInjuries, awayInjuries] = await Promise.all([
-    countInjuredPlayers(resolvedHome?.externalId),
-    countInjuredPlayers(resolvedAway?.externalId),
-  ]);
-
   const relevantGroup = match.group
     ? groupStandings.find((g) => g.group === String(match.group).toUpperCase())
     : null;
@@ -254,6 +244,14 @@ export async function buildPromptContext(match, aiUserId) {
     teamById,
   });
 
+  const venue = buildVenueContextForPrompt(match, stadium);
+  const enriched = await buildEnrichedMatchContext({
+    homeTeam: homeForAnalysis,
+    awayTeam: awayForAnalysis,
+    venue,
+    teamsAnalysis,
+  });
+
   return {
     matchExternalId: match.externalId,
     phase: isKnockout ? 'knockout' : 'group',
@@ -264,7 +262,7 @@ export async function buildPromptContext(match, aiUserId) {
     awayTeam: teamsAnalysis.away,
     headToHead2026: teamsAnalysis.headToHead2026,
     fifaRankingsAsOf: teamsAnalysis.rankingsAsOf,
-    venue: buildVenueContextForPrompt(match, stadium),
+    venue,
     groupStandings: relevantGroup
       ? relevantGroup.standings.map((row) => ({
           rank: row.rank,
@@ -275,10 +273,9 @@ export async function buildPromptContext(match, aiUserId) {
           goalsAgainst: row.goalsAgainst,
         }))
       : [],
-    injuries: {
-      home: homeInjuries,
-      away: awayInjuries,
-    },
+    nationContext: enriched.nationContext,
+    squadAnalysis: enriched.squadAnalysis,
+    positionMatchups: enriched.positionMatchups,
   };
 }
 
@@ -287,7 +284,7 @@ function buildAiPredictionPrompt(context) {
 
 ${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 
-En el campo "reasoning", incluí sede/estadio/clima y también ranking FIFA, forma reciente, poder ofensivo/defensivo u otros datos del contexto cuando sean relevantes. No uses "localía" en el sentido de club.
+En el campo "reasoning", incluí sede/estadio/clima, ranking FIFA, historial wiki, población/liga, lesiones y titulares probables, duelos por puesto (positionMatchups) y factores anímicos cuando sean relevantes. No uses "localía" en el sentido de club.
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<breve explicación en español>"}

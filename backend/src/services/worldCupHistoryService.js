@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { Match } from '../models/Match.js';
 import { Player } from '../models/Player.js';
 import { Team } from '../models/Team.js';
+import { getNationProfile } from './nationFootballProfileService.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HISTORY_PATH = join(__dirname, '../data/worldCupHistory.json');
@@ -34,6 +35,94 @@ async function loadHistoryFile() {
 
 export async function getWorldCupHistory() {
   return loadHistoryFile();
+}
+
+const NATION_RECORDS_LIMIT = 8;
+
+/** Códigos FIFA históricos que cuentan como la misma selección. */
+const FIFA_CODE_ALIASES = {
+  GER: ['GER', 'FRG', 'DEU'],
+  FRG: ['GER', 'FRG', 'DEU'],
+};
+
+function codesForNation(fifaCode) {
+  const code = String(fifaCode ?? '').toUpperCase();
+  return FIFA_CODE_ALIASES[code] ?? [code];
+}
+
+export async function getNationWorldCupRecords(fifaCode, { limit = NATION_RECORDS_LIMIT } = {}) {
+  const history = await getWorldCupHistory();
+  const code = String(fifaCode ?? '').toUpperCase();
+  const records = (history.recordsByNation?.[code] ?? []).filter(
+    (row) =>
+      row.year >= 1930 &&
+      row.year <= 2022 &&
+      (row.round || row.position) &&
+      !String(row.round ?? '').includes('in progress')
+  );
+  if (!records.length) return [];
+
+  const sorted = [...records].sort((a, b) => b.year - a.year);
+  const slice = sorted.slice(0, limit).reverse();
+  return slice;
+}
+
+function finalsForNation(fifaCode, history) {
+  const codes = new Set(codesForNation(fifaCode));
+  return (history.finals ?? []).filter(
+    (row) =>
+      codes.has(String(row.winnerFifa ?? '').toUpperCase()) ||
+      codes.has(String(row.runnerUpFifa ?? '').toUpperCase())
+  );
+}
+
+function titlesForNation(fifaCode, history) {
+  const codes = new Set(codesForNation(fifaCode));
+  let titles = 0;
+  for (const row of history.titlesByNation ?? []) {
+    if (codes.has(String(row.fifaCode ?? '').toUpperCase())) {
+      titles += Number(row.titles ?? 0);
+    }
+  }
+  return titles;
+}
+
+export async function buildNationHistoricalSummary(fifaCode) {
+  const code = String(fifaCode ?? '').toUpperCase();
+  const [history, profile] = await Promise.all([
+    getWorldCupHistory(),
+    getNationProfile(code),
+  ]);
+
+  const wikiRecords = await getNationWorldCupRecords(code);
+  const finals = finalsForNation(code, history);
+  const worldCupTitles = titlesForNation(code, history);
+
+  const finalHighlights = finals.map((row) => {
+    const codes = new Set(codesForNation(code));
+    const role = codes.has(String(row.winnerFifa ?? '').toUpperCase()) ? 'campeón' : 'subcampeón';
+    return {
+      year: row.year,
+      role,
+      score: row.finalScore ?? null,
+      opponent:
+        role === 'campeón'
+          ? row.runnerUpName ?? row.runnerUpFifa
+          : row.winnerName ?? row.winnerFifa,
+    };
+  });
+
+  return {
+    fifaCode: code,
+    worldCupTitles,
+    finalsPlayed: finals.length,
+    lastFinalYear: finals.length ? finals[finals.length - 1].year : null,
+    wikiRecords,
+    finalHighlights: finalHighlights.slice(-6),
+    profileNote: profile?.wikiNote ?? null,
+    worldCupAppearances: profile?.worldCupAppearances ?? null,
+    worldCupBestFinish: profile?.worldCupBestFinish ?? null,
+  };
 }
 
 /**
