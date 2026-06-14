@@ -20,6 +20,8 @@ import LoadingSpinner from '../components/LoadingSpinner.jsx';
 
 const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
 
+const GROUP_POSITIONS_TABLE_ID = 'group-positions-table';
+
 function formatLastUpdated(date) {
   if (!date) return '';
   return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
@@ -94,6 +96,13 @@ export default function LeaderboardPage() {
   const groupPrizes = displayGroup?.prizes || [];
   const hasPrizes = !isNoGroupMode && prizesWinnersCount > 0;
 
+  const scrollToGroupStandings = useCallback(() => {
+    document.getElementById(GROUP_POSITIONS_TABLE_ID)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
+
   if (error && isSevereError(error)) {
     return (
       <TechnicalDifficulties
@@ -127,6 +136,17 @@ export default function LeaderboardPage() {
               : `Tabla del grupo ${displayGroup?.name}`}
             {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
           </p>
+          {canLoadRanking && !rankingLoading ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-1 w-fit"
+              onClick={scrollToGroupStandings}
+            >
+              Ver Tabla de Posiciones del grupo {displayGroup?.name ?? 'Sin grupo'}
+            </Button>
+          ) : null}
         </div>
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
@@ -187,11 +207,13 @@ export default function LeaderboardPage() {
       ) : null}
 
       {canLoadRanking ? (
-        <LeaderboardTable
-          leaderboard={data?.leaderboard}
-          showGroupName={false}
-          prizesWinnersCount={prizesWinnersCount}
-        />
+        <section id={GROUP_POSITIONS_TABLE_ID} className="scroll-mt-24">
+          <LeaderboardTable
+            leaderboard={data?.leaderboard}
+            showGroupName={false}
+            prizesWinnersCount={prizesWinnersCount}
+          />
+        </section>
       ) : null}
     </div>
   );
