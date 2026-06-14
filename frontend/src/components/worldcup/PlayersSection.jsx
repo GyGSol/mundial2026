@@ -105,7 +105,11 @@ export default function PlayersSection() {
         const result = await playersApi.refreshTeamIntel(teamFilter, { force });
         setRefreshMessage(
           result.message ??
-            `IA actualizó ${result.updated} jugador${result.updated === 1 ? '' : 'es'} de ${result.teamName ?? result.team}`
+            `IA actualizó ${result.updated} jugador${result.updated === 1 ? '' : 'es'} de ${result.teamName ?? result.team}${
+              result.performanceFetched
+                ? ` · stats ${result.performanceFetched} jugador${result.performanceFetched === 1 ? '' : 'es'}`
+                : ''
+            }`
         );
         await refresh();
       } catch (err) {
@@ -141,8 +145,8 @@ export default function PlayersSection() {
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          Planteles locales del mundial con lesiones, tarjetas y dolencias consultadas por IA (no
-          Football-Data).
+          Planteles locales del mundial con lesiones, tarjetas, forma reciente y estadísticas del año
+          (goles, PJ, minutos club/selección) consultadas por IA.
           {lastUpdated
             ? ` · Actualizado ${lastUpdated.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`
             : ''}

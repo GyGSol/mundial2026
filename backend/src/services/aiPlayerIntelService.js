@@ -10,6 +10,12 @@ import {
 } from './aiPredictionService.js';
 import { listPlayers, getPlayerById } from './playerService.js';
 import { matchNameToRosterPlayer } from '../utils/playerNameMatch.js';
+import {
+  buildCompactPerformanceContext,
+  hydrateRosterPerformanceSnapshots,
+  reloadRosterPlayersWithPerformance,
+  refreshPlayerPerformanceSnapshot,
+} from './playerPerformanceContextService.js';
 
 const INTEL_TTL_MS = 12 * 60 * 60 * 1000;
 const HEALTH_STATUSES = new Set(['available', 'injured', 'doubt']);
@@ -95,13 +101,16 @@ function buildTeamIntelPrompt(team, rosterPlayers) {
     position: p.position,
     club: p.currentClub,
     age: p.age,
+    stats2026: buildCompactPerformanceContext(p),
   }));
 
   return `Sos un periodista deportivo especializado en el Mundial FIFA 2026.
 Analizá el estado actual de la selección ${team.nameEn} (${team.fifaCode}) para el torneo.
 
-Plantel de referencia (no inventes jugadores fuera de esta lista):
+Plantel de referencia con estadísticas reales del año en curso (Football-Data / base local):
 ${JSON.stringify(squad, null, 2)}
+
+Usá stats2026 y ultimosPartidos como base factual: goles, tarjetas, partidos jugados (club y selección), minutos acumulados y kmPromedioPartido (estimado). Complementá lesiones y suspensiones con tu conocimiento actual.
 
 Devolvé JSON con esta forma:
 {
@@ -115,7 +124,7 @@ Devolvé JSON con esta forma:
       "suspended": false,
       "suspensionInfo": "",
       "isStarter": true,
-      "notes": "tarjetas, sanciones o contexto del mundial"
+      "notes": "tarjetas, sanciones, forma reciente y minutos"
     }
   ],
   "teamNotes": "resumen breve del estado del plantel"
@@ -123,17 +132,23 @@ Devolvé JSON con esta forma:
 
 Reglas:
 - Usá solo jugadores del plantel de referencia.
+- Priorizá stats2026 para goles, tarjetas, PJ y minutos; no inventes cifras distintas salvo corrección explícita en notas.
 - Incluí lesiones, dudas, amonestaciones y suspensiones relevantes para el Mundial 2026.
-- Si no hay novedad, healthStatus "available" y campos vacíos.
+- Si no hay novedad médica, healthStatus "available".
 - Respondé en español en los textos.`;
 }
 
 function buildPlayerDetailPrompt(player, team) {
+  const stats = buildCompactPerformanceContext(player);
+
   return `Sos un analista del Mundial FIFA 2026.
 Dame un informe actualizado del jugador ${player.fullName} (${team?.fifaCode ?? player.fifaCode}, ${player.position}).
 
 Club: ${player.currentClub || 'desconocido'}
 Edad: ${player.age ?? 'desconocida'}
+
+Estadísticas del año en curso (base factual):
+${JSON.stringify(stats, null, 2)}
 
 Devolvé JSON:
 {
@@ -145,9 +160,10 @@ Devolvé JSON:
   "suspensionInfo": "",
   "isStarter": true,
   "notes": "",
-  "aiSummary": "párrafo con estado físico, tarjetas, rol en la selección y riesgos para el mundial"
+  "aiSummary": "párrafo con estado físico, tarjetas, rol, forma reciente (PJ/minutos/goles) y riesgos para el mundial"
 }
 
+Usá las estadísticas provistas para goles, tarjetas, PJ club/selección y minutos. kmPromedioPartido es orientativo.
 Sin markdown. Textos en español.`;
 }
 
@@ -327,6 +343,12 @@ export async function refreshTeamPlayerIntel(teamCode, { force = false, fetchImp
     }
   }
 
+  const performanceHydration = await hydrateRosterPerformanceSnapshots(rosterPlayers, {
+    force,
+    maxFetches: force ? rosterPlayers.length : 10,
+  });
+  rosterPlayers = await reloadRosterPlayersWithPerformance(rosterPlayers);
+
   const { data, source } = await callAiForJson(buildTeamIntelPrompt(team, rosterPlayers), {
     fetchImpl,
   });
@@ -351,6 +373,7 @@ export async function refreshTeamPlayerIntel(teamCode, { force = false, fetchImp
     source,
     model: meta.model,
     teamNotes: String(data?.teamNotes ?? '').trim(),
+    performanceFetched: performanceHydration.fetched,
   };
 }
 
@@ -364,7 +387,10 @@ export async function refreshPlayerIntel(playerId, { fetchImpl = fetch } = {}) {
     $or: [{ externalId: player.teamExternalId }, { fifaCode: player.fifaCode }],
   }).lean();
 
-  const { data, source } = await callAiForJson(buildPlayerDetailPrompt(player, team), {
+  await refreshPlayerPerformanceSnapshot(player);
+  const freshPlayer = (await Player.findById(playerId).lean()) ?? player;
+
+  const { data, source } = await callAiForJson(buildPlayerDetailPrompt(freshPlayer, team), {
     fetchImpl,
   });
   const aiEntry = normalizeAiPlayerEntry({ ...data, fullName: player.fullName });
@@ -391,15 +417,21 @@ export async function askPlayerIntelFollowUp(playerId, question, { fetchImpl = f
   const player = await getPlayerByIdWithIntel(playerId);
   if (!player) throw new Error('Jugador no encontrado');
 
+  const dbPlayer = await Player.findById(playerId).lean();
+  const statsContext = buildCompactPerformanceContext(dbPlayer ?? player);
+
   const prompt = `Sos un analista del Mundial FIFA 2026.
 Jugador: ${player.fullName} (${player.fifaCode})
 Estado IA actual: ${player.healthLabel}. ${player.injuryInfo || 'Sin lesión reportada'}.
 Tarjetas: ${player.yellowCards ?? 0} amarillas, ${player.redCards ?? 0} rojas. Suspendido: ${player.suspended ? 'sí' : 'no'}.
 Resumen: ${player.aiSummary || 'sin resumen'}
 
+Estadísticas ${statsContext.temporada} (club/selección, minutos, goles, últimos partidos):
+${JSON.stringify(statsContext, null, 2)}
+
 Pregunta: ${trimmed}
 
-Respondé en español, breve y concreto (máximo 3 párrafos). Usá markdown ligero cuando ayude (negritas, listas). No uses HTML ni bloques de código.`;
+Respondé en español, breve y concreto (máximo 3 párrafos). Usá las estadísticas provistas cuando respondas sobre forma, minutos o goles. Usá markdown ligero cuando ayude (negritas, listas). No uses HTML ni bloques de código.`;
 
   const result = await callAiForText(prompt, { fetchImpl });
   return {

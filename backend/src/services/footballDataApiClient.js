@@ -144,22 +144,135 @@ export async function resolveFootballDataMatchId(match, homeTeam, awayTeam) {
   return found?.id ?? null;
 }
 
-export async function fetchPersonMatches(personId, { limit = 8 } = {}) {
-  const data = await request(`/persons/${personId}/matches?limit=${limit}`);
-  const matches = data?.matches ?? [];
-  return matches.map((m) => {
-    const home = m.homeTeam?.shortName ?? m.homeTeam?.name ?? '?';
-    const away = m.awayTeam?.shortName ?? m.awayTeam?.name ?? '?';
-    const score = `${m.score?.fullTime?.home ?? '-'}:${m.score?.fullTime?.away ?? '-'}`;
-    return {
-      date: m.utcDate?.slice(0, 10) ?? '',
-      opponent: `${home} vs ${away}`,
-      result: score,
-      minutes: null,
-      goals: 0,
-      competition: m.competition?.name ?? '',
-    };
-  });
+export async function fetchPersonMatches(personId, { limit = 8, dateFrom } = {}) {
+  const performance = await fetchPersonPerformance(personId, { limit, dateFrom });
+  return performance.recentMatches;
 }
 
-export { hasToken };
+const NATIONAL_COMPETITION_PATTERN =
+  /world cup|qualif|nations league|friendly|international|copa america|gold cup|euro|afcon|asian cup|concacaf|ofc|friendlies/i;
+
+function emptyTotals() {
+  return {
+    matches: 0,
+    starts: 0,
+    minutes: 0,
+    goals: 0,
+    assists: 0,
+    yellowCards: 0,
+    redCards: 0,
+  };
+}
+
+function addTotals(target, delta) {
+  target.matches += delta.matches ?? 0;
+  target.starts += delta.starts ?? 0;
+  target.minutes += delta.minutes ?? 0;
+  target.goals += delta.goals ?? 0;
+  target.assists += delta.assists ?? 0;
+  target.yellowCards += delta.yellowCards ?? 0;
+  target.redCards += delta.redCards ?? 0;
+}
+
+function inferMatchScope(competitionName = '', competitionCode = '') {
+  const label = `${competitionName} ${competitionCode}`.trim();
+  if (NATIONAL_COMPETITION_PATTERN.test(label)) return 'national';
+  if (label) return 'club';
+  return 'unknown';
+}
+
+function parsePersonMatchEntry(match) {
+  const home = match.homeTeam?.shortName ?? match.homeTeam?.name ?? '?';
+  const away = match.awayTeam?.shortName ?? match.awayTeam?.name ?? '?';
+  const score = `${match.score?.fullTime?.home ?? '-'}:${match.score?.fullTime?.away ?? '-'}`;
+  const competition = match.competition?.name ?? '';
+  const competitionCode = match.competition?.code ?? '';
+  const scope = inferMatchScope(competition, competitionCode);
+
+  const goals = Number(match.goals ?? match.statistics?.goals ?? 0) || 0;
+  const assists = Number(match.assists ?? match.statistics?.assists ?? 0) || 0;
+  const minutes = Number(match.minutes ?? match.statistics?.minutesPlayed ?? 0) || 0;
+  const yellowCards =
+    Number(match.yellowCards ?? match.statistics?.yellowCards ?? 0) || 0;
+  const redCards = Number(match.redCards ?? match.statistics?.redCards ?? 0) || 0;
+  const started = match.lineup === 'STARTING' || match.starting === true || minutes >= 60;
+
+  return {
+    date: match.utcDate?.slice(0, 10) ?? '',
+    opponent: `${home} vs ${away}`,
+    result: score,
+    minutes: minutes || null,
+    goals,
+    assists,
+    yellowCards,
+    redCards,
+    started,
+    scope,
+    competition,
+    totals: {
+      matches: minutes > 0 || goals > 0 || assists > 0 ? 1 : 0,
+      starts: started ? 1 : 0,
+      minutes,
+      goals,
+      assists,
+      yellowCards,
+      redCards,
+    },
+  };
+}
+
+function aggregationsToTotals(aggregations = {}) {
+  return {
+    matches: Number(aggregations.matchesOnPitch ?? 0) || 0,
+    starts: Number(aggregations.startingXI ?? 0) || 0,
+    minutes: Number(aggregations.minutesPlayed ?? 0) || 0,
+    goals: Number(aggregations.goals ?? 0) || 0,
+    assists: Number(aggregations.assists ?? 0) || 0,
+    yellowCards: Number(aggregations.yellowCards ?? 0) || 0,
+    redCards:
+      (Number(aggregations.redCards ?? 0) + Number(aggregations.yellowRedCards ?? 0)) || 0,
+  };
+}
+
+export async function fetchPersonPerformance(personId, { limit = 12, dateFrom } = {}) {
+  const year = new Date().getFullYear();
+  const from = dateFrom || `${year}-01-01`;
+  const query = new URLSearchParams({
+    dateFrom: from,
+    status: 'FINISHED',
+    limit: String(Math.min(Math.max(limit, 1), 30)),
+  });
+
+  const data = await request(`/persons/${personId}/matches?${query.toString()}`);
+  const matches = data?.matches ?? [];
+  const parsed = matches.map(parsePersonMatchEntry);
+
+  const club = emptyTotals();
+  const nationalTeam = emptyTotals();
+  for (const entry of parsed) {
+    if (entry.scope === 'national') addTotals(nationalTeam, entry.totals);
+    else addTotals(club, entry.totals);
+  }
+
+  const apiTotals = aggregationsToTotals(data?.aggregations);
+  if (!club.matches && !nationalTeam.matches && apiTotals.matches) {
+    addTotals(club, apiTotals);
+  }
+
+  return {
+    seasonYear: year,
+    fetchedAt: new Date(),
+    source: 'football-data.org',
+    club,
+    nationalTeam,
+    recentMatches: parsed.map(({ totals: _totals, ...match }) => match),
+    apiAggregations: apiTotals,
+  };
+}
+
+export {
+  hasToken,
+  inferMatchScope,
+  parsePersonMatchEntry,
+  aggregationsToTotals,
+};

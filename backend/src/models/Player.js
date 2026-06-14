@@ -7,7 +7,37 @@ const recentMatchSchema = new mongoose.Schema(
     result: String,
     minutes: Number,
     goals: Number,
+    assists: Number,
+    yellowCards: Number,
+    redCards: Number,
+    started: Boolean,
+    scope: { type: String, enum: ['club', 'national', 'unknown'], default: 'unknown' },
     competition: String,
+  },
+  { _id: false }
+);
+
+const performanceTotalsSchema = new mongoose.Schema(
+  {
+    matches: { type: Number, default: 0 },
+    starts: { type: Number, default: 0 },
+    minutes: { type: Number, default: 0 },
+    goals: { type: Number, default: 0 },
+    assists: { type: Number, default: 0 },
+    yellowCards: { type: Number, default: 0 },
+    redCards: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
+const performanceSnapshotSchema = new mongoose.Schema(
+  {
+    seasonYear: Number,
+    fetchedAt: Date,
+    source: { type: String, default: '' },
+    club: { type: performanceTotalsSchema, default: () => ({}) },
+    nationalTeam: { type: performanceTotalsSchema, default: () => ({}) },
+    recentMatches: { type: [recentMatchSchema], default: [] },
   },
   { _id: false }
 );
@@ -45,6 +75,7 @@ const playerSchema = new mongoose.Schema(
       default: undefined,
     },
     recentMatches: { type: [recentMatchSchema], default: [] },
+    performanceSnapshot: { type: performanceSnapshotSchema, default: null },
     dataSources: {
       structural: { type: String, default: 'seed' },
       injuries: { type: String, default: '' },
@@ -58,4 +89,4 @@ playerSchema.index({ teamExternalId: 1, position: 1 });
 playerSchema.index({ fullName: 'text' });
 
 export const Player = mongoose.model('Player', playerSchema);
-export { POSITIONS, HEALTH_STATUSES, LINEUP_STATUSES };
+export { POSITIONS, HEALTH_STATUSES, LINEUP_STATUSES, recentMatchSchema, performanceSnapshotSchema };
