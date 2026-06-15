@@ -227,6 +227,7 @@ export default function LeaderboardPage() {
           <LeaderboardTable
             leaderboard={dashboardLeaderboard}
             leaderboardKickoffBaseline={dashboardKickoffBaseline}
+            refreshStamp={lastUpdated?.getTime() ?? null}
             showGroupName={false}
             prizesWinnersCount={prizesWinnersCount}
           />

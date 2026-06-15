@@ -69,10 +69,15 @@ function StatValue({ value, direction, align = 'center' }) {
 export default function LeaderboardTable({
   leaderboard,
   leaderboardKickoffBaseline = null,
+  refreshStamp = null,
   showGroupName = false,
   prizesWinnersCount = 0,
 }) {
-  const statDeltas = useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline);
+  const statDeltas = useLeaderboardStatDeltas(
+    leaderboard,
+    leaderboardKickoffBaseline,
+    refreshStamp
+  );
 
   if (!leaderboard?.length) {
     return <p className="text-muted-foreground">Aún no hay jugadores en el ranking.</p>;

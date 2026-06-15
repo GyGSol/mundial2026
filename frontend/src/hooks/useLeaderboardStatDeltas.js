@@ -76,9 +76,13 @@ function baselineDiffersFromCurrent(leaderboardKickoffBaseline, leaderboard) {
   });
 }
 
-export function useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline) {
+export function useLeaderboardStatDeltas(
+  leaderboard,
+  leaderboardKickoffBaseline,
+  refreshStamp = null
+) {
   const previousByIdRef = useRef(null);
-  const kickoffCatchUpDoneRef = useRef(false);
+  const previousLeaderboardKeyRef = useRef('');
   const timersRef = useRef(new Map());
   const [deltas, setDeltas] = useState({});
 
@@ -126,29 +130,31 @@ export function useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline
       leaderboard.map((row) => [row.id, snapshotRow(row)])
     );
 
-    if (
-      !kickoffCatchUpDoneRef.current &&
-      baselineDiffersFromCurrent(leaderboardKickoffBaseline, leaderboard)
-    ) {
+    const hasKickoffBaseline =
+      leaderboardKickoffBaseline?.length &&
+      baselineDiffersFromCurrent(leaderboardKickoffBaseline, leaderboard);
+
+    if (hasKickoffBaseline) {
       const baselineById = Object.fromEntries(
         leaderboardKickoffBaseline.map((row) => [row.id, snapshotRow(row)])
       );
-      applyChanges(computeLeaderboardStatChanges(baselineById, leaderboard), CATCHUP_INDICATOR_TTL_MS);
-      kickoffCatchUpDoneRef.current = true;
-      previousByIdRef.current = currentById;
-      return undefined;
+      applyChanges(
+        computeLeaderboardStatChanges(baselineById, leaderboard),
+        CATCHUP_INDICATOR_TTL_MS
+      );
     }
 
+    const leaderboardChanged = leaderboardKey !== previousLeaderboardKeyRef.current;
     const previousById = previousByIdRef.current;
-    if (previousById) {
+    if (previousById && leaderboardChanged) {
       applyChanges(computeLeaderboardStatChanges(previousById, leaderboard));
     }
 
+    previousLeaderboardKeyRef.current = leaderboardKey;
     previousByIdRef.current = currentById;
-    kickoffCatchUpDoneRef.current = true;
 
     return undefined;
-  }, [leaderboardKey, kickoffBaselineKey]);
+  }, [leaderboardKey, kickoffBaselineKey, refreshStamp]);
 
   useEffect(
     () => () => {
