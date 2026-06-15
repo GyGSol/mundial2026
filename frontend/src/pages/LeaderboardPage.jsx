@@ -100,6 +100,7 @@ export default function LeaderboardPage() {
   const dashboardKickoffBaseline = dashboardMatchesGroup
     ? data?.leaderboardKickoffBaseline
     : null;
+  const hasLiveMatches = dashboardMatchesGroup && (data?.liveMatches?.length ?? 0) > 0;
   const rankingLoading = canLoadRanking && (loading || !dashboardMatchesGroup);
   const rankingReady = !canLoadRanking || (!loading && dashboardMatchesGroup);
 
@@ -227,7 +228,7 @@ export default function LeaderboardPage() {
           <LeaderboardTable
             leaderboard={dashboardLeaderboard}
             leaderboardKickoffBaseline={dashboardKickoffBaseline}
-            refreshStamp={lastUpdated?.getTime() ?? null}
+            hasLiveMatches={hasLiveMatches}
             showGroupName={false}
             prizesWinnersCount={prizesWinnersCount}
           />

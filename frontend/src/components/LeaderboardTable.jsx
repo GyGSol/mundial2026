@@ -35,13 +35,10 @@ function normalizeStatDelta(delta) {
   return delta;
 }
 
-function StatDeltaIndicator({ direction, amount }) {
+function StatDeltaIndicator({ direction, amount, showDown = true }) {
   if (direction === 'up') {
     return (
-      <span
-        className="inline-flex shrink-0 items-center gap-0.5 text-emerald-500"
-        title={amount == null ? 'Sumó puntos en este partido' : undefined}
-      >
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-emerald-500">
         <ArrowUp className="size-3" strokeWidth={2.75} aria-hidden="true" />
         {amount != null && amount > 0 ? (
           <span className="text-[10px] font-semibold tabular-nums leading-none">{amount}</span>
@@ -49,24 +46,13 @@ function StatDeltaIndicator({ direction, amount }) {
       </span>
     );
   }
-  if (direction === 'down') {
+  if (direction === 'down' && showDown) {
     return (
       <span className="inline-flex shrink-0 items-center gap-0.5 text-red-500">
         <ArrowDown className="size-3" strokeWidth={2.75} aria-hidden="true" />
         {amount != null && amount > 0 ? (
           <span className="text-[10px] font-semibold tabular-nums leading-none">{amount}</span>
         ) : null}
-      </span>
-    );
-  }
-  if (direction === 'neutral') {
-    return (
-      <span
-        className="inline-flex size-3 shrink-0 items-center justify-center"
-        aria-hidden="true"
-        title="Sin puntos nuevos en este partido"
-      >
-        <span className="size-2 rounded-full bg-yellow-400" />
       </span>
     );
   }
@@ -93,15 +79,13 @@ function StatValue({ value, delta, align = 'center', valueClassName }) {
 export default function LeaderboardTable({
   leaderboard,
   leaderboardKickoffBaseline = null,
-  refreshStamp = null,
+  hasLiveMatches = false,
   showGroupName = false,
   prizesWinnersCount = 0,
 }) {
-  const statDeltas = useLeaderboardStatDeltas(
-    leaderboard,
-    leaderboardKickoffBaseline,
-    refreshStamp
-  );
+  const statDeltas = useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline, {
+    hasLiveMatches,
+  });
 
   if (!leaderboard?.length) {
     return <p className="text-muted-foreground">Aún no hay jugadores en el ranking.</p>;
@@ -161,6 +145,7 @@ export default function LeaderboardTable({
                         <StatDeltaIndicator
                           direction={rankDelta?.direction}
                           amount={rankDelta?.amount}
+                          showDown
                         />
                       </span>
                       {showGroupName && row.groupName ? (
@@ -172,7 +157,7 @@ export default function LeaderboardTable({
                   </TableCell>
                   {statColumns.map((col) => (
                     <TableCell key={col.key} className={statCellClass}>
-                      {col.trackDelta ? (
+                      {col.trackDelta && hasLiveMatches ? (
                         <StatValue value={row[col.key] ?? 0} delta={rowDeltas[col.key]} />
                       ) : (
                         (row[col.key] ?? 0)
@@ -180,14 +165,14 @@ export default function LeaderboardTable({
                     </TableCell>
                   ))}
                   <TableCell className={statCellClass}>
-                    <StatValue value={row.pb ?? 0} delta={rowDeltas.pb} />
+                    {hasLiveMatches ? (
+                      <StatValue value={row.pb ?? 0} delta={rowDeltas.pb} />
+                    ) : (
+                      (row.pb ?? 0)
+                    )}
                   </TableCell>
                   <TableCell className="px-1 text-right text-xs font-semibold tabular-nums sm:px-2 sm:text-sm">
-                    <StatValue
-                      value={row.totalPoints}
-                      delta={rowDeltas.totalPoints}
-                      align="right"
-                    />
+                    {row.totalPoints}
                   </TableCell>
                 </TableRow>
               );
