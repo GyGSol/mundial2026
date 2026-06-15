@@ -9,7 +9,6 @@ import {
 import { attachStreamMetaToMatches } from './streamMetaService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
-const RECENT_FINISHED_MAX = 12;
 /** Tras el kickoff, seguimos enviando baseline para flechas de pts (en vivo y recién finalizado). */
 const BASELINE_MATCH_KICKOFF_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -74,7 +73,6 @@ export async function getRankingDashboard(groupId, userId) {
     Match.find({ status: 'live' }).lean(),
     Match.find({ status: 'finished', kickoffAt: { $gte: cutoff } })
       .sort({ kickoffAt: -1 })
-      .limit(RECENT_FINISHED_MAX)
       .lean(),
     Match.find({ status: 'upcoming' }).select('-raw').sort({ kickoffAt: 1 }).lean(),
   ]);
