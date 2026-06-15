@@ -740,7 +740,23 @@ function teamLabel(team, fallbackId) {
   return team.fifaCode || team.nameEn || team.externalId || fallbackId || '—';
 }
 
-async function resolvePredictionMatchIds({ matchId, status, group } = {}) {
+export async function resolvePredictionMatchIds({ matchId, matchNumber, status, group } = {}) {
+  if (matchNumber != null && String(matchNumber).trim() !== '') {
+    const externalId = String(matchNumber).trim();
+    const matchFilter = { externalId };
+    if (status) {
+      if (!['upcoming', 'live', 'finished'].includes(status)) {
+        const error = new Error('status inválido');
+        error.status = 400;
+        throw error;
+      }
+      matchFilter.status = status;
+    }
+    if (group) matchFilter.group = group;
+    const found = await Match.findOne(matchFilter).select('_id').lean();
+    return found ? [found._id] : [];
+  }
+
   if (matchId) {
     if (!mongoose.Types.ObjectId.isValid(matchId)) {
       const error = new Error('matchId inválido');
@@ -781,6 +797,7 @@ async function resolvePredictionMatchIds({ matchId, status, group } = {}) {
 export async function listAdminPredictions({
   userId,
   matchId,
+  matchNumber,
   status,
   group,
   scored,
@@ -796,7 +813,7 @@ export async function listAdminPredictions({
     filter.userId = userId;
   }
 
-  const matchIds = await resolvePredictionMatchIds({ matchId, status, group });
+  const matchIds = await resolvePredictionMatchIds({ matchId, matchNumber, status, group });
   if (matchIds !== null) {
     if (!matchIds.length) return [];
     filter.matchId = matchIds.length === 1 ? matchIds[0] : { $in: matchIds };

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   compareAdminPredictionsBySchedule,
   compareMatchesBySchedule,
+  resolvePredictionMatchIds,
 } from '../src/services/adminService.js';
 import { resolveOfficialKickoffAt } from '../src/services/kickoffTimeService.js';
 
@@ -70,5 +71,12 @@ describe('admin prediction sort', () => {
     expect(resolveOfficialKickoffAt('8').getTime()).toBeLessThan(
       resolveOfficialKickoffAt('7').getTime()
     );
+  });
+
+  it('resolvePredictionMatchIds rejects invalid matchId when matchNumber absent', async () => {
+    await expect(resolvePredictionMatchIds({ matchId: 'not-an-object-id' })).rejects.toMatchObject({
+      message: 'matchId inválido',
+      status: 400,
+    });
   });
 });

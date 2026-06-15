@@ -111,7 +111,7 @@ export default function AdminPredictionsPage() {
   const fetchPredictions = useCallback(() => {
     const params = {};
     if (userFilter !== 'all') params.userId = userFilter;
-    if (matchFilter !== 'all') params.matchId = matchFilter;
+    if (matchFilter !== 'all') params.matchNumber = matchFilter;
     if (statusFilter) params.status = statusFilter;
     if (groupFilter) params.group = groupFilter;
     if (scoredFilter === 'scored') params.scored = 'true';
@@ -161,6 +161,7 @@ export default function AdminPredictionsPage() {
   const matchesForFilter = useMemo(() => {
     return matches
       .filter((m) => {
+        if (!m.externalId) return false;
         if (statusFilter && m.status !== statusFilter) return false;
         if (groupFilter && m.group !== groupFilter) return false;
         return true;
@@ -170,7 +171,7 @@ export default function AdminPredictionsPage() {
 
   useEffect(() => {
     if (matchFilter === 'all') return;
-    if (!matchesForFilter.some((m) => m.id === matchFilter)) {
+    if (!matchesForFilter.some((m) => String(m.externalId) === matchFilter)) {
       setMatchFilter('all');
     }
   }, [matchFilter, matchesForFilter]);
@@ -274,13 +275,13 @@ export default function AdminPredictionsPage() {
 
         <FilterField label="Partido">
           <Select value={matchFilter} onValueChange={setMatchFilter}>
-            <SelectTrigger className={`w-56 ${adminInput}`}>
+            <SelectTrigger className={`w-72 ${adminInput}`}>
               <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los partidos</SelectItem>
               {matchesForFilter.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
+                <SelectItem key={String(m.externalId ?? m.id)} value={String(m.externalId)}>
                   {formatMatchOptionLabel(m)}
                 </SelectItem>
               ))}
