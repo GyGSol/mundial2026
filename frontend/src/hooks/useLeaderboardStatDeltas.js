@@ -15,6 +15,16 @@ function snapshotRow(row) {
   };
 }
 
+function leaderboardFingerprint(leaderboard) {
+  if (!leaderboard?.length) return '';
+  return leaderboard
+    .map((row) => {
+      const stats = snapshotRow(row);
+      return `${row.id}:${stats.rank},${stats.pa},${stats.gl},${stats.gv},${stats.gt},${stats.pb}`;
+    })
+    .join('|');
+}
+
 export function statDeltaForKey(key, previous, next, { upOnly = false } = {}) {
   if (previous === next) return null;
 
@@ -88,6 +98,10 @@ export function useLeaderboardStatDeltas(
       computeLeaderboardBaselineIndicators(leaderboard, leaderboardKickoffBaseline, {
         hasLiveMatches,
       }),
-    [leaderboard, leaderboardKickoffBaseline, hasLiveMatches]
+    [
+      leaderboardFingerprint(leaderboard),
+      leaderboardFingerprint(leaderboardKickoffBaseline),
+      hasLiveMatches,
+    ]
   );
 }

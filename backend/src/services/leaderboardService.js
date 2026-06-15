@@ -19,16 +19,21 @@ function accumulateStats(stats, breakdown, pointsEarned, bonusPoint = 0) {
   stats.totalPoints += (pointsEarned ?? 0) + (bonusPoint ?? 0);
 }
 
-async function getPredictionStatsByUserAggregated(userIds) {
+async function getPredictionStatsByUserAggregated(userIds, { excludeMatchIds = [] } = {}) {
   if (!userIds.length) return {};
 
+  const matchStage = {
+    userId: { $in: userIds },
+    pointsEarned: { $ne: null },
+  };
+  if (excludeMatchIds.length > 0) {
+    matchStage.matchId = {
+      $nin: excludeMatchIds.map((id) => new mongoose.Types.ObjectId(id)),
+    };
+  }
+
   const rows = await Prediction.aggregate([
-    {
-      $match: {
-        userId: { $in: userIds },
-        pointsEarned: { $ne: null },
-      },
-    },
+    { $match: matchStage },
     {
       $group: {
         _id: '$userId',
@@ -38,6 +43,11 @@ async function getPredictionStatsByUserAggregated(userIds) {
         gv: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.awayGoals', 0] }, 1, 0] } },
         gt: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.totalGoals', 0] }, 1, 0] } },
         pb: { $sum: { $ifNull: ['$bonusPoint', 0] } },
+        totalPoints: {
+          $sum: {
+            $add: [{ $ifNull: ['$pointsEarned', 0] }, { $ifNull: ['$bonusPoint', 0] }],
+          },
+        },
       },
     },
   ]);
@@ -52,7 +62,7 @@ async function getPredictionStatsByUserAggregated(userIds) {
         gv: row.gv ?? 0,
         gt: row.gt ?? 0,
         pb: row.pb ?? 0,
-        totalPoints: 0,
+        totalPoints: row.totalPoints ?? 0,
       },
     ])
   );
@@ -142,11 +152,12 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
   return statsMap;
 }
 
-async function getPredictionStatsByUser(userIds, { liveKickoffBaselineMatchIds = [] } = {}) {
+async function getPredictionStatsByUser(userIds, options = {}) {
+  const { liveKickoffBaselineMatchIds = [], excludeMatchIds = [] } = options;
   if (liveKickoffBaselineMatchIds.length > 0) {
     return getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselineMatchIds);
   }
-  return getPredictionStatsByUserAggregated(userIds);
+  return getPredictionStatsByUserAggregated(userIds, { excludeMatchIds });
 }
 
 export function compareRankingEntries(a, b) {
@@ -168,8 +179,10 @@ export function compareRankingEntries(a, b) {
 export const compareLeaderboardEntries = compareRankingEntries;
 
 export async function getLeaderboard(competitionGroupId, limit = 100, options = {}) {
-  const { liveKickoffBaselineMatchIds = [] } = options;
+  const { liveKickoffBaselineMatchIds = [], excludeMatchIds = [] } = options;
   const useKickoffBaseline = liveKickoffBaselineMatchIds.length > 0;
+  const useExcludedStats = excludeMatchIds.length > 0;
+  const useStatsTotalPoints = useKickoffBaseline || useExcludedStats;
   let filter = {};
   if (competitionGroupId === '__nogroup') {
     const memberUserIds = await UserGroupMembership.distinct('userId');
@@ -186,6 +199,7 @@ export async function getLeaderboard(competitionGroupId, limit = 100, options = 
   );
   const statsMap = await getPredictionStatsByUser(users.map((u) => u._id), {
     liveKickoffBaselineMatchIds,
+    excludeMatchIds,
   });
   const groupIds = [
     ...new Set(
@@ -205,7 +219,7 @@ export async function getLeaderboard(competitionGroupId, limit = 100, options = 
       name: user.name,
       isAiUser: Boolean(user.isAiUser),
       groupName: groupNameById[(user.activeCompetitionGroupId || user.competitionGroupId)?.toString()] || null,
-      totalPoints: useKickoffBaseline
+      totalPoints: useStatsTotalPoints
         ? (stats.totalPoints ?? user.totalPoints)
         : user.totalPoints,
       pj: stats.pj ?? 0,

@@ -80,12 +80,12 @@ export async function getRankingDashboard(groupId, userId) {
   ]);
 
   const liveMatchIds = liveRaw.map((match) => match._id.toString());
-  const pointsBaselineMatchIds = mergePointsBaselineMatchIds(liveMatchIds, finishedRaw);
+  const indicatorBaselineMatchIds = mergePointsBaselineMatchIds(liveMatchIds, finishedRaw);
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
     getLeaderboard(groupId || null),
-    pointsBaselineMatchIds.length > 0
+    indicatorBaselineMatchIds.length > 0
       ? getLeaderboard(groupId || null, 100, {
-          liveKickoffBaselineMatchIds: pointsBaselineMatchIds,
+          excludeMatchIds: indicatorBaselineMatchIds,
         })
       : Promise.resolve(null),
   ]);

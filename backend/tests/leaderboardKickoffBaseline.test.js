@@ -122,4 +122,48 @@ describe('leaderboard kickoff baseline', () => {
     expect(currentRow.totalPoints).toBe(6);
     expect(baselineRow.totalPoints).toBeLessThan(currentRow.totalPoints);
   });
+
+  it('baseline excluyendo partido en vivo difiere del ranking actual con live scoring', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST03' });
+    const user = await User.create({
+      name: 'En vivo',
+      email: 'vivo@example.com',
+      passwordHash: 'hash',
+      totalPoints: 6,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: user._id, groupId: group._id, role: 'member' });
+
+    const match = await Match.create({
+      externalId: 'live-exclude',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 0,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-13T01:00:00.000Z'),
+    });
+
+    await Prediction.create({
+      userId: user._id,
+      matchId: match._id,
+      homeGoals: 0,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+
+    const [current, excluded] = await Promise.all([
+      getLeaderboard(group._id.toString()),
+      getLeaderboard(group._id.toString(), 100, { excludeMatchIds: [match._id.toString()] }),
+    ]);
+
+    const currentRow = current.find((row) => row.id === user._id.toString());
+    const excludedRow = excluded.find((row) => row.id === user._id.toString());
+
+    expect(currentRow.pa).toBe(1);
+    expect(excludedRow.pa).toBe(0);
+    expect(currentRow.totalPoints).toBeGreaterThan(excludedRow.totalPoints);
+  });
 });
