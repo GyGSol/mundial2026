@@ -411,6 +411,10 @@ body:has(.game-shell) {
     text-shadow: 0 0 24px rgba(245, 158, 11, 0.15);
   }
 
+  .game-shell .mundial-brand-logo {
+    filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.12));
+  }
+
   .game-shell__frame {
     width: 100%;
     max-width: 42rem;

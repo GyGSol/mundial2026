@@ -86,13 +86,10 @@ export default function WorldCupPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Mundial 2026</h1>
-          <p className="text-sm text-muted-foreground">
-            Grupos, fixture y estadísticas del torneo.
-            {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Grupos, fixture y estadísticas del torneo.
+          {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
+        </p>
       </div>
 
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
