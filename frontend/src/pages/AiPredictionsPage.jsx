@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.jsx';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat.js';
 
 const TOPICS = [
   { id: 'match', label: 'Partido' },
@@ -47,7 +48,7 @@ function matchLabel(match) {
   const home = match.homeTeam?.fifaCode ?? match.homeTeam?.nameEn ?? '?';
   const away = match.awayTeam?.fifaCode ?? match.awayTeam?.nameEn ?? '?';
   const date = match.kickoffAt
-    ? new Date(match.kickoffAt).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
+    ? formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE })
     : '';
   return `${home} vs ${away}${date ? ` · ${date}` : ''}`;
 }

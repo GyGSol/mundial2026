@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/table.jsx';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { cn } from '@/lib/utils';
-import { formatMatchDate } from '@/lib/dateFormat';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 
 const LIVE_DELAY_MS = 800;
 const BETWEEN_MATCHES_MS = 300;
@@ -56,7 +56,9 @@ function MatchPreview({ match, highlight = false }) {
       <div className={`flex flex-wrap items-center gap-2 text-xs ${adminMuted}`}>
         {match.type && match.type !== 'group' && <Badge variant="outline">{match.type}</Badge>}
         {match.crossover && <span>Cruce: {match.crossover}</span>}
-        {formatMatchDate(match) && <span>{formatMatchDate(match)}</span>}
+        {formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE }) && (
+          <span>{formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE })}</span>
+        )}
         {match.scheduleOrder != null && (
           <span>#{match.scheduleOrder + 1}</span>
         )}

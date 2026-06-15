@@ -40,7 +40,7 @@ export default function MatchVenueWeather({ matchVenue, className }) {
   const kickoffLabel = venue?.kickoffLocal
     ? venue.kickoffLocal
     : matchVenue.kickoffAt
-      ? formatMatchDate({ kickoffAt: matchVenue.kickoffAt, kickoffTimezone: stadium?.timezone })
+      ? formatMatchDate(matchVenue, { useStadiumTimezone: true, showTimezone: true })
       : null;
 
   const locationParts = [

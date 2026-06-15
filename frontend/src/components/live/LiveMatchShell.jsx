@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
-import { formatMatchDate, formatPredictionUpdatedAt } from '@/lib/dateFormat';
+import { ARGENTINA_TIMEZONE, formatMatchDate, formatPredictionUpdatedAt } from '@/lib/dateFormat';
 import { isMatchStreamWarmup } from '@/lib/streamWatch.js';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import TeamFlag from '../TeamFlag.jsx';
@@ -72,7 +72,7 @@ function LiveMatchSummary({ match }) {
 
       {match?.group ? (
         <p className="text-[11px] text-muted-foreground">
-          Grupo {match.group} · {formatMatchDate(match)}
+          Grupo {match.group} · {formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE })}
         </p>
       ) : null}
     </div>

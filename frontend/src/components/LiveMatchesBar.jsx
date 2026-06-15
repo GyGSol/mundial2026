@@ -19,7 +19,7 @@ import {
   CardHeader,
 } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
-import { formatMatchDate } from '@/lib/dateFormat';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import {
   buildMatchSummaryRows,
   formatMatchAttendance,
@@ -35,6 +35,9 @@ import { Button } from '@/components/ui/button.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
+
+const matchDateLabel = (match) =>
+  formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
 
 function normalizeScorerEntry(entry) {
   if (typeof entry === 'string') {
@@ -650,7 +653,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
         />
 
         <span className="match-live-text-meta text-[11px] text-muted-foreground">
-          Grupo {match.group} · {formatMatchDate(match)}
+          Grupo {match.group} · {matchDateLabel(match)}
         </span>
         {isLive ? (
           <LiveMatchTrigger match={match} variant="outline" className="w-full sm:w-auto" />
@@ -738,7 +741,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
         />
 
         <span className="match-live-text-meta text-[11px] text-muted-foreground">
-          Grupo {match.group} · {formatMatchDate(match)}
+          Grupo {match.group} · {matchDateLabel(match)}
         </span>
         {isLive ? (
           <LiveMatchTrigger match={match} variant="outline" className="w-full sm:w-auto" />
@@ -806,7 +809,7 @@ function PredictionClosedDialog({ match, open, onOpenChange }) {
           </p>
           {match.kickoffAt ? (
             <p className="text-foreground">
-              Kickoff: <span className="font-medium">{formatMatchDate(match)}</span>
+              Kickoff: <span className="font-medium">{matchDateLabel(match)}</span>
             </p>
           ) : null}
         </CardContent>
@@ -877,7 +880,7 @@ function NextMatchCard({ match }) {
 
           <span className="match-live-text-meta text-[11px] text-muted-foreground">
             {match.group ? `Grupo ${match.group} · ` : ''}
-            {formatMatchDate(match)}
+            {matchDateLabel(match)}
           </span>
           {!predictionsOpen ? (
             <div

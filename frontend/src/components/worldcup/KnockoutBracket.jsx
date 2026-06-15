@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { formatMatchDate } from '@/lib/dateFormat';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
 import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
@@ -136,7 +136,7 @@ function BracketCountryLine({ team, slotLabel, slotSourceMatch, score, isWinner,
 }
 
 function BracketMatchMeta({ match }) {
-  const dateTime = formatMatchDate(match);
+  const dateTime = formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
   const stadiumLine = [match?.stadium?.nameEn, match?.stadium?.city].filter(Boolean).join(' · ');
 
   if (!dateTime && !stadiumLine) return null;

@@ -13,7 +13,10 @@ import { getGroupRowBorderStyle } from '@/lib/groupColors.js';
 import { QualificationLegend } from '@/components/worldcup/GroupColorUi.jsx';
 import ThirdPlaceStandingsSection from '@/components/worldcup/ThirdPlaceStandingsSection.jsx';
 import { getTeamFlag } from '@/lib/teamMeta';
-import { formatMatchDate } from '@/lib/dateFormat';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
+
+const matchDateLabel = (match) =>
+  formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import MatchTeamSide from '@/components/worldcup/MatchTeamSide.jsx';
 
@@ -255,7 +258,7 @@ export function KnockoutSection({ phases }) {
                 <MatchScore match={match} />
                 <div className="flex flex-wrap items-center gap-2 px-1 text-xs text-muted-foreground">
                   <Badge variant="secondary">{match.status}</Badge>
-                  {formatMatchDate(match) && <span>{formatMatchDate(match)}</span>}
+                  {matchDateLabel(match) && <span>{matchDateLabel(match)}</span>}
                   {match.stadium?.nameEn && (
                     <span>
                       {match.stadium.nameEn}
@@ -372,8 +375,8 @@ export function StatsSection({ stats, teams, stadiums, tournament2026PlayerStats
                 {stats.goals.highestScoringMatch.awayScore}
               </strong>{' '}
               ({stats.goals.highestScoringMatch.totalGoals} goles)
-              {formatMatchDate(stats.goals.highestScoringMatch) &&
-                ` · ${formatMatchDate(stats.goals.highestScoringMatch)}`}
+              {matchDateLabel(stats.goals.highestScoringMatch) &&
+                ` · ${matchDateLabel(stats.goals.highestScoringMatch)}`}
             </p>
           ) : (
             'Sin partidos finalizados todavía.'
@@ -457,7 +460,7 @@ export function TeamsSection({ teams }) {
 }
 
 function getMatchMetaParts(match) {
-  const localDate = formatMatchDate(match);
+  const localDate = matchDateLabel(match);
   const localDateHasGroupAndMatchday =
     localDate &&
     /fecha\s+\S+/i.test(localDate) &&

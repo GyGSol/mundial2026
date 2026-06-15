@@ -21,6 +21,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.jsx';
+import {
+  ARGENTINA_TIMEZONE,
+  datetimeLocalValueToUtcInstant,
+  formatMatchDate,
+  utcInstantToDatetimeLocalValue,
+} from '@/lib/dateFormat.js';
 export default function AdminMatchesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [busyId, setBusyId] = useState(null);
@@ -140,7 +146,7 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
   const [group, setGroup] = useState(match.group ?? '');
   const [matchday, setMatchday] = useState(match.matchday ?? '');
   const [kickoffAt, setKickoffAt] = useState(
-    match.kickoffAt ? new Date(match.kickoffAt).toISOString().slice(0, 16) : ''
+    match.kickoffAt ? utcInstantToDatetimeLocalValue(match.kickoffAt, ARGENTINA_TIMEZONE) : ''
   );
 
   return (
@@ -148,9 +154,14 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
       <TableCell className="text-sm">
         {match.homeTeamId} vs {match.awayTeamId}
         <p className="text-xs text-slate-500">{match.externalId}</p>
+        {match.kickoffAt ? (
+          <p className="text-xs text-slate-400">
+            {formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE })}
+          </p>
+        ) : null}
         <Input
           className={`mt-1 h-7 text-xs ${adminInput}`}
-          placeholder="Fecha (ISO local)"
+          placeholder="Kickoff (hora Argentina)"
           type="datetime-local"
           value={kickoffAt}
           onChange={(e) => setKickoffAt(e.target.value)}
@@ -209,7 +220,7 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
                 status,
                 group: group.trim() || null,
                 matchday: matchday.trim() || null,
-                kickoffAt: kickoffAt ? new Date(kickoffAt).toISOString() : null,
+                kickoffAt: kickoffAt ? datetimeLocalValueToUtcInstant(kickoffAt, ARGENTINA_TIMEZONE) : null,
               })
             }
           >

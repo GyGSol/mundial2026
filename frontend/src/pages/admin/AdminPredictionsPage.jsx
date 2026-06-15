@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table.jsx';
-import { formatMatchDate } from '@/lib/dateFormat';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 
 const GROUP_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
@@ -456,7 +456,7 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
           <p className="text-xs text-slate-500">
             Grupo {prediction.match.group || '—'}
             {prediction.match.kickoffAt
-              ? ` · ${formatMatchDate({ kickoffAt: prediction.match.kickoffAt })}`
+              ? ` · ${formatMatchDate(prediction.match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE })}`
               : ''}
             {prediction.match.status
               ? ` · ${statusLabels[prediction.match.status] ?? prediction.match.status}`

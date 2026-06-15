@@ -3,7 +3,7 @@ import { Loader2, SendHorizontal, Sparkles, Trash2 } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
-import { formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
+import { ARGENTINA_TIMEZONE, formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
 import MarkdownContent from './MarkdownContent.jsx';
 
 export const AI_QUESTION_MAX_LEN = 146;
@@ -15,6 +15,7 @@ function formatMessageTime(value) {
     month: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: ARGENTINA_TIMEZONE,
   });
 }
 
