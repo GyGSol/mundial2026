@@ -30,6 +30,7 @@ import {
 } from './websocketService.js';
 import { syncLiveLineups } from './lineupSyncService.js';
 import { syncFifaMatchEvents, syncFifaReportsForMatchIds } from './fifaEventSyncService.js';
+import { alignMatchesFromFifaCalendar } from './fifaFixtureAlignmentService.js';
 import { assistLiveMatchEvents } from './liveMatchEventAssistService.js';
 import {
   mergePlausibleGoalCounts,
@@ -309,6 +310,18 @@ export async function runSync({ includeMetadata = true } = {}) {
     }
 
     const { count, scoringIds, newlyFinishedIds, clearedScoreIds } = await upsertMatches();
+
+    let fixtureAlignment = { aligned: 0, predictionsMoved: 0 };
+    try {
+      fixtureAlignment = await alignMatchesFromFifaCalendar();
+      if (fixtureAlignment.aligned > 0 || fixtureAlignment.predictionsMoved > 0) {
+        console.log(
+          `FIFA fixture alignment: ${fixtureAlignment.aligned} partidos corregidos, ${fixtureAlignment.predictionsMoved} predicciones reubicadas`
+        );
+      }
+    } catch (err) {
+      console.warn('FIFA fixture alignment skipped:', err.message);
+    }
 
     for (const matchId of clearedScoreIds) {
       await clearMatchScores(matchId);

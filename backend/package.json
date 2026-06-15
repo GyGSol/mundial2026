@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync": "node src/scripts/runSync.js",
+    "align-fifa-fixture": "node src/scripts/alignFifaFixture.js",
     "sync:players": "node src/scripts/runPlayerSync.js",
     "build:players-seed": "node src/scripts/buildPlayersSeed.js",
     "fix-kickoffs": "node src/scripts/fixKickoffTimes.js",
