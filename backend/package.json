@@ -13,6 +13,9 @@
     "sync:players": "node src/scripts/runPlayerSync.js",
     "build:players-seed": "node src/scripts/buildPlayersSeed.js",
     "fix-kickoffs": "node src/scripts/fixKickoffTimes.js",
+    "audit-predictions": "node src/scripts/auditPredictionMatchLinks.js",
+    "repair-predictions": "node src/scripts/repairPredictionMatchLinks.js",
+    "backfill-prediction-source": "node src/scripts/backfillPredictionSource.js",
     "simulate": "node src/scripts/runSimulation.js",
     "reset-db": "node src/scripts/resetDatabase.js",
     "mark-ai-user": "node src/scripts/markAiUser.js"

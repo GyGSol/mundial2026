@@ -5,6 +5,7 @@ import { getLockAt } from './predictionLockService.js';
 import { recalculateMatchScores } from './syncService.js';
 
 const LEGACY_BACKFILL_META_KEY = 'legacyUserSubmittedBackfill';
+const PREDICTION_SOURCE_BACKFILL_META_KEY = 'predictionSourceUserBackfill';
 
 const LEGACY_CREATED_BEFORE_LOCK_MS = 1000;
 
@@ -87,4 +88,39 @@ export async function ensureLegacyUserSubmittedBackfillOnce() {
   });
 
   return legacyBackfillOncePromise;
+}
+
+export async function backfillSubmittedPredictionSource() {
+  const result = await Prediction.updateMany(
+    { userSubmitted: true, predictionSource: 'default' },
+    { $set: { predictionSource: 'user' } }
+  );
+  return { updated: result.modifiedCount };
+}
+
+let predictionSourceBackfillOncePromise = null;
+
+/** Runs predictionSource backfill at most once per deployment (flag in SyncMeta). */
+export async function ensurePredictionSourceBackfillOnce() {
+  if (predictionSourceBackfillOncePromise) return predictionSourceBackfillOncePromise;
+
+  predictionSourceBackfillOncePromise = (async () => {
+    const existing = await SyncMeta.findOne({ key: PREDICTION_SOURCE_BACKFILL_META_KEY }).lean();
+    if (existing?.lastSyncAt) {
+      return { skipped: true, updated: 0 };
+    }
+
+    const result = await backfillSubmittedPredictionSource();
+    await SyncMeta.findOneAndUpdate(
+      { key: PREDICTION_SOURCE_BACKFILL_META_KEY },
+      { lastSyncAt: new Date() },
+      { upsert: true }
+    );
+    return { skipped: false, ...result };
+  })().catch((err) => {
+    predictionSourceBackfillOncePromise = null;
+    throw err;
+  });
+
+  return predictionSourceBackfillOncePromise;
 }

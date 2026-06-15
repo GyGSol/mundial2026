@@ -31,6 +31,7 @@ import {
 import { syncLiveLineups } from './lineupSyncService.js';
 import { syncFifaMatchEvents, syncFifaReportsForMatchIds } from './fifaEventSyncService.js';
 import { alignMatchesFromFifaCalendar } from './fifaFixtureAlignmentService.js';
+import { auditPredictionMatchLinks } from './predictionMatchLinkService.js';
 import { assistLiveMatchEvents } from './liveMatchEventAssistService.js';
 import {
   mergePlausibleGoalCounts,
@@ -311,16 +312,60 @@ export async function runSync({ includeMetadata = true } = {}) {
 
     const { count, scoringIds, newlyFinishedIds, clearedScoreIds } = await upsertMatches();
 
-    let fixtureAlignment = { aligned: 0, predictionsMoved: 0 };
+    let fixtureAlignment = {
+      aligned: 0,
+      predictionsMoved: 0,
+      predictionsMerged: 0,
+      predictionsConflicted: 0,
+    };
     try {
       fixtureAlignment = await alignMatchesFromFifaCalendar();
-      if (fixtureAlignment.aligned > 0 || fixtureAlignment.predictionsMoved > 0) {
+      if (
+        fixtureAlignment.aligned > 0 ||
+        fixtureAlignment.predictionsMoved > 0 ||
+        fixtureAlignment.predictionsMerged > 0 ||
+        fixtureAlignment.predictionsConflicted > 0
+      ) {
         console.log(
-          `FIFA fixture alignment: ${fixtureAlignment.aligned} partidos corregidos, ${fixtureAlignment.predictionsMoved} predicciones reubicadas`
+          `FIFA fixture alignment: ${fixtureAlignment.aligned} partidos corregidos, ` +
+            `${fixtureAlignment.predictionsMoved} predicciones movidas, ` +
+            `${fixtureAlignment.predictionsMerged} fusionadas, ` +
+            `${fixtureAlignment.predictionsConflicted} en conflicto`
+        );
+      }
+
+      const linkAudit = await auditPredictionMatchLinks();
+      if (fixtureAlignment.predictionsMoved > 0 || linkAudit.summary.hasIssues) {
+        console.log('Prediction link audit:', JSON.stringify(linkAudit.summary));
+        await SyncMeta.findOneAndUpdate(
+          { key: 'predictionLinkAudit' },
+          {
+            lastSyncAt: new Date(),
+            lastSyncError: linkAudit.summary.hasIssues ? 'issues_detected' : null,
+            raw: {
+              summary: linkAudit.summary,
+              fixtureAlignment: {
+                predictionsMoved: fixtureAlignment.predictionsMoved,
+                predictionsMerged: fixtureAlignment.predictionsMerged,
+                predictionsConflicted: fixtureAlignment.predictionsConflicted,
+              },
+            },
+          },
+          { upsert: true }
         );
       }
     } catch (err) {
       console.warn('FIFA fixture alignment skipped:', err.message);
+    }
+
+    try {
+      const { ensurePredictionSourceBackfillOnce } = await import('./predictionMigrationService.js');
+      const sourceBackfill = await ensurePredictionSourceBackfillOnce();
+      if (sourceBackfill.updated > 0) {
+        console.log(`Prediction source backfill: ${sourceBackfill.updated} actualizadas`);
+      }
+    } catch (err) {
+      console.warn('Prediction source backfill skipped:', err.message);
     }
 
     for (const matchId of clearedScoreIds) {

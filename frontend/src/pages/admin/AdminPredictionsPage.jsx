@@ -174,6 +174,56 @@ export default function AdminPredictionsPage() {
     [matches]
   );
 
+  const activeFilterSummary = useMemo(() => {
+    const parts = [];
+    if (userFilter !== 'all') {
+      const user = usersForFilter.find((u) => u.id === userFilter);
+      parts.push(`usuario: ${user?.label ?? userFilter}`);
+    }
+    if (matchFilter !== 'all') {
+      const match = matchesForFilter.find((m) => String(m.externalId) === matchFilter);
+      parts.push(`partido: #${matchFilter}${match?.label ? ` (${match.label})` : ''}`);
+    }
+    if (statusFilter) parts.push(`estado: ${statusLabels[statusFilter] ?? statusFilter}`);
+    if (groupFilter) parts.push(`grupo: ${groupFilter}`);
+    if (scoredFilter === 'scored') parts.push('puntos: con score');
+    if (scoredFilter === 'pending') parts.push('puntos: pendientes');
+    if (sourceFilter !== 'all') parts.push(`origen: ${sourceLabels[sourceFilter] ?? sourceFilter}`);
+    return parts.join(' · ');
+  }, [
+    userFilter,
+    matchFilter,
+    statusFilter,
+    groupFilter,
+    scoredFilter,
+    sourceFilter,
+    usersForFilter,
+    matchesForFilter,
+  ]);
+
+  const [matchDiagnostics, setMatchDiagnostics] = useState(null);
+
+  useEffect(() => {
+    if (loading || matchFilter === 'all' || predictions.length > 0) {
+      setMatchDiagnostics(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    adminApi
+      .predictionDiagnostics(matchFilter)
+      .then((data) => {
+        if (!cancelled) setMatchDiagnostics(data.diagnostics ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setMatchDiagnostics(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, matchFilter, predictions.length]);
+
   useEffect(() => {
     if (matchFilter === 'all') return;
     if (!matchesForFilter.some((m) => String(m.externalId) === matchFilter)) {
@@ -445,7 +495,11 @@ export default function AdminPredictionsPage() {
         </AdminCard>
       ) : null}
 
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? (
+        <div className="rounded-md border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+          Error al cargar predicciones: {error}
+        </div>
+      ) : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
 
       <AdminCard accent flush contentClassName="p-0">
@@ -473,13 +527,28 @@ export default function AdminPredictionsPage() {
             </TableBody>
           </Table>
           {!loading && !filteredPredictions.length && !error ? (
-            <p className="p-4 text-sm text-slate-500">
-              {hasActiveFilters
-                ? matchFilter !== 'all' && statusFilter !== 'live' && statusFilter !== 'finished'
-                  ? 'Ninguna predicción coincide con los filtros. Si el partido aún no cerró (T-60), los usuarios sin carga aparecen recién al cierre o cuando envían su marcador.'
-                  : 'Ninguna predicción coincide con los filtros.'
-                : 'Sin predicciones cargadas.'}
-            </p>
+            <div className="space-y-2 p-4 text-sm text-slate-500">
+              {hasActiveFilters && activeFilterSummary ? (
+                <p>
+                  <span className="text-slate-400">Filtros activos:</span> {activeFilterSummary}
+                </p>
+              ) : null}
+              {matchDiagnostics?.found ? (
+                <p>
+                  En base de datos hay {matchDiagnostics.userSubmitted} predicción
+                  {matchDiagnostics.userSubmitted === 1 ? '' : 'es'} enviada
+                  {matchDiagnostics.userSubmitted === 1 ? '' : 's'} y {matchDiagnostics.valuable} con
+                  marcador para el partido #{matchFilter}.
+                </p>
+              ) : null}
+              <p>
+                {hasActiveFilters
+                  ? matchFilter !== 'all' && statusFilter !== 'live' && statusFilter !== 'finished'
+                    ? 'Ninguna predicción coincide con los filtros. Si el partido aún no cerró (T-60), los usuarios sin carga aparecen recién al cierre o cuando envían su marcador.'
+                    : 'Ninguna predicción coincide con los filtros.'
+                  : 'Sin predicciones cargadas.'}
+              </p>
+            </div>
           ) : null}
         </div>
       </AdminCard>

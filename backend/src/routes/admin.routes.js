@@ -11,6 +11,7 @@ import {
   setupAdminAccount,
 } from '../services/adminSetupService.js';
 import { runSync } from '../services/syncService.js';
+import { getMatchPredictionDiagnostics } from '../services/predictionMatchLinkService.js';
 import { runPlayerSync } from '../services/playerSyncService.js';
 import {
   addAdminGroupMember,
@@ -493,6 +494,16 @@ router.delete('/stream-links/:matchExternalId', adminMiddleware, async (req, res
     const deleted = await deleteAdminStreamLink(req.params.matchExternalId);
     if (!deleted) return res.status(404).json({ error: 'Mapping no encontrado' });
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/predictions/diagnostics', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json({
+      diagnostics: await getMatchPredictionDiagnostics(req.query.matchNumber),
+    });
   } catch (err) {
     next(err);
   }

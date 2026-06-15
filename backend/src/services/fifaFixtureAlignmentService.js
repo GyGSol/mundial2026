@@ -85,6 +85,9 @@ async function remapPredictionsForTeamRotation({
   externalIdByPair,
 }) {
   let moved = 0;
+  let merged = 0;
+  let deleted = 0;
+  let conflicted = 0;
 
   for (const [externalId, target] of targets) {
     const match = matchesByExternalId.get(externalId);
@@ -110,39 +113,48 @@ async function remapPredictionsForTeamRotation({
         matchId: destination._id,
       });
 
-      if (existingOnDestination) {
-        const sourceValuable = hasUserPrediction(prediction);
-        const destValuable = hasUserPrediction(existingOnDestination);
-
-        if (sourceValuable && !destValuable) {
-          await Prediction.updateOne(
-            { _id: existingOnDestination._id },
-            {
-              $set: {
-                homeGoals: prediction.homeGoals,
-                awayGoals: prediction.awayGoals,
-                userSubmitted: prediction.userSubmitted,
-                predictionSource: prediction.predictionSource ?? 'user',
-                aiModel: prediction.aiModel ?? null,
-                aiReasoning: prediction.aiReasoning ?? null,
-              },
-            }
-          );
-        }
-
-        // Solo descartar el origen si es 0-0 automático; nunca borrar predicciones reales.
-        if (!sourceValuable) {
-          await Prediction.deleteOne({ _id: prediction._id });
-        }
+      if (!existingOnDestination) {
+        await Prediction.updateOne({ _id: prediction._id }, { $set: { matchId: destination._id } });
+        moved += 1;
         continue;
       }
 
-      await Prediction.updateOne({ _id: prediction._id }, { $set: { matchId: destination._id } });
-      moved += 1;
+      const sourceValuable = hasUserPrediction(prediction);
+      const destValuable = hasUserPrediction(existingOnDestination);
+
+      if (sourceValuable && !destValuable) {
+        await Prediction.updateOne(
+          { _id: existingOnDestination._id },
+          {
+            $set: {
+              homeGoals: prediction.homeGoals,
+              awayGoals: prediction.awayGoals,
+              userSubmitted: prediction.userSubmitted,
+              predictionSource:
+                prediction.userSubmitted && prediction.predictionSource === 'default'
+                  ? 'user'
+                  : (prediction.predictionSource ?? 'user'),
+              aiModel: prediction.aiModel ?? null,
+              aiReasoning: prediction.aiReasoning ?? null,
+            },
+          }
+        );
+        await Prediction.deleteOne({ _id: prediction._id });
+        merged += 1;
+        continue;
+      }
+
+      if (!sourceValuable) {
+        await Prediction.deleteOne({ _id: prediction._id });
+        deleted += 1;
+        continue;
+      }
+
+      conflicted += 1;
     }
   }
 
-  return moved;
+  return { moved, merged, deleted, conflicted };
 }
 
 export async function alignMatchesFromFifaCalendar(calendar = null) {
@@ -174,7 +186,7 @@ export async function alignMatchesFromFifaCalendar(calendar = null) {
     })
   );
 
-  const predictionsMoved = await remapPredictionsForTeamRotation({
+  const remapResult = await remapPredictionsForTeamRotation({
     matchesByExternalId,
     targets,
     teamCodeByExternalId,
@@ -208,5 +220,13 @@ export async function alignMatchesFromFifaCalendar(calendar = null) {
     aligned += 1;
   }
 
-  return { aligned, skipped, predictionsMoved, targets: targets.size };
+  return {
+    aligned,
+    skipped,
+    predictionsMoved: remapResult.moved,
+    predictionsMerged: remapResult.merged,
+    predictionsDeleted: remapResult.deleted,
+    predictionsConflicted: remapResult.conflicted,
+    targets: targets.size,
+  };
 }

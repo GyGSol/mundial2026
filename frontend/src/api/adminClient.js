@@ -172,6 +172,8 @@ export const adminApi = {
     const query = new URLSearchParams(params).toString();
     return adminRequest(`/predictions${query ? `?${query}` : ''}`);
   },
+  predictionDiagnostics: (matchNumber) =>
+    adminRequest(`/predictions/diagnostics?matchNumber=${encodeURIComponent(matchNumber)}`),
   createPrediction: (body) =>
     adminRequest('/predictions', {
       method: 'POST',
