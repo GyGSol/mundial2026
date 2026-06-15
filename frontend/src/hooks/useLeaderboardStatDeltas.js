@@ -34,6 +34,13 @@ export function statDeltaForKey(key, previous, next, { includeNeutral = false } 
   }
   const rawDelta = next - previous;
   const delta = INVERT_DELTA_KEYS.has(key) ? -rawDelta : rawDelta;
+
+  // Pts: solo ↑ si sumó puntos o ● amarillo si no (en vivo); nunca ↓
+  if (key === 'totalPoints') {
+    if (delta > 0) return { direction: 'up' };
+    return includeNeutral ? { direction: 'neutral' } : null;
+  }
+
   if (delta > 0) {
     return {
       direction: 'up',
