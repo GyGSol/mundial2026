@@ -49,6 +49,10 @@ export function useLiveData(
       setLoading(true);
       return;
     }
+    requestIdRef.current += 1;
+    pendingRefreshRef.current = false;
+    inFlightRef.current = false;
+    setLoading(true);
     refresh();
   }, [refresh, enabled]);
 

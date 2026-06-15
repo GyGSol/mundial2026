@@ -53,6 +53,19 @@ export default function LeaderboardPage() {
     [myGroups, canViewNoGroupRanking]
   );
 
+  const resolveDefaultGroupId = useCallback(
+    (currentId) => {
+      if (currentId && rankingGroupOptions.some((g) => g.id === currentId)) return currentId;
+      const preferredId = user?.competitionGroup?.id;
+      if (preferredId && rankingGroupOptions.some((g) => g.id === preferredId)) {
+        return preferredId;
+      }
+      const firstRealGroup = rankingGroupOptions.find((g) => g.id !== '__nogroup');
+      return firstRealGroup?.id ?? rankingGroupOptions[0]?.id ?? '';
+    },
+    [rankingGroupOptions, user?.competitionGroup?.id]
+  );
+
   const selectedGroup = useMemo(
     () => rankingGroupOptions.find((g) => g.id === selectedGroupId) ?? rankingGroupOptions[0],
     [rankingGroupOptions, selectedGroupId]
@@ -60,19 +73,13 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (!rankingGroupOptions.length) return;
+    setSelectedGroupId((current) => resolveDefaultGroupId(current));
+  }, [rankingGroupOptions, resolveDefaultGroupId]);
 
-    setSelectedGroupId((current) => {
-      if (rankingGroupOptions.some((g) => g.id === current)) return current;
-      const preferredId = user?.competitionGroup?.id;
-      if (preferredId && rankingGroupOptions.some((g) => g.id === preferredId)) {
-        return preferredId;
-      }
-      return rankingGroupOptions[0].id;
-    });
-  }, [rankingGroupOptions, user?.competitionGroup?.id]);
-
-  const effectiveGroupId =
-    selectedGroup?.id ?? (canViewNoGroupRanking ? '__nogroup' : undefined);
+  const effectiveGroupId = useMemo(
+    () => resolveDefaultGroupId(selectedGroupId),
+    [resolveDefaultGroupId, selectedGroupId]
+  );
 
   const canLoadRanking = Boolean(effectiveGroupId);
 
@@ -87,10 +94,16 @@ export default function LeaderboardPage() {
     pollWhen: shouldPollLeaderboardLive,
   });
 
-  const rankingLoading = canLoadRanking && loading;
-  const rankingReady = !canLoadRanking || !loading;
+  const dashboardMatchesGroup =
+    Boolean(data) && String(data.group?.id ?? '') === String(effectiveGroupId);
+  const dashboardLeaderboard = dashboardMatchesGroup ? data?.leaderboard : undefined;
+  const dashboardKickoffBaseline = dashboardMatchesGroup
+    ? data?.leaderboardKickoffBaseline
+    : null;
+  const rankingLoading = canLoadRanking && (loading || !dashboardMatchesGroup);
+  const rankingReady = !canLoadRanking || (!loading && dashboardMatchesGroup);
 
-  const displayGroup = data?.group || selectedGroup;
+  const displayGroup = dashboardMatchesGroup ? data?.group || selectedGroup : selectedGroup;
   const isNoGroupMode = effectiveGroupId === '__nogroup';
   const prizesWinnersCount = displayGroup?.prizesWinnersCount || 0;
   const groupPrizes = displayGroup?.prizes || [];
@@ -146,7 +159,9 @@ export default function LeaderboardPage() {
             {isNoGroupMode
               ? 'Solo jugadores que no participan en ningún grupo de competencia'
               : `Tabla del grupo ${displayGroup?.name}`}
-            {lastUpdated && ` · Actualizado ${formatLastUpdated(lastUpdated)}`}
+            {dashboardMatchesGroup && lastUpdated
+              ? ` · Actualizado ${formatLastUpdated(lastUpdated)}`
+              : null}
           </p>
         </div>
 
@@ -210,8 +225,8 @@ export default function LeaderboardPage() {
       {canLoadRanking ? (
         <section id={GROUP_POSITIONS_TABLE_ID} className="scroll-mt-24">
           <LeaderboardTable
-            leaderboard={data?.leaderboard}
-            leaderboardKickoffBaseline={data?.leaderboardKickoffBaseline}
+            leaderboard={dashboardLeaderboard}
+            leaderboardKickoffBaseline={dashboardKickoffBaseline}
             showGroupName={false}
             prizesWinnersCount={prizesWinnersCount}
           />
