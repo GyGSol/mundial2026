@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { cn } from '@/lib/utils';
 import { ClubCell } from './ClubDisplay.jsx';
 import MarkdownContent from './MarkdownContent.jsx';
+import PlayerSeasonStatsPanel from './PlayerSeasonStatsPanel.jsx';
 
 function healthBadgeClass(status) {
   if (status === 'injured') return 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400';
@@ -215,6 +216,10 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
                       : 'Sin consultar'}
                   </p>
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-2 border-t border-border pt-4">
+                <PlayerSeasonStatsPanel stats={player.stats} />
               </div>
 
               {player.injuryInfo ? (

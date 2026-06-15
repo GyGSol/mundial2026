@@ -5,6 +5,7 @@ import {
   hasToken,
 } from './footballDataApiClient.js';
 import { enrichClubFields } from './clubMetaService.js';
+import { buildCompactPerformanceContext } from './playerPerformanceContextService.js';
 
 const POSITION_LABELS = {
   GK: 'Portero',
@@ -46,6 +47,7 @@ function serializePlayer(player, teamMap) {
     lineupStatus: player.lineupStatus || null,
     isStarter: player.lineupStatus === 'starter',
     recentMatches: player.recentMatches ?? [],
+    stats: buildCompactPerformanceContext(player),
   };
 }
 

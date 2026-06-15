@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/table.jsx';
 import { cn } from '@/lib/utils';
 import { ClubCell } from '../ClubDisplay.jsx';
+import { formatKm, formatStatValue, hasPlayerStats, totalSeasonGoals } from '../../lib/playerStats.js';
 
 const POSITIONS = [
   { value: 'GK', label: 'Portero' },
@@ -264,6 +265,10 @@ export default function PlayersSection() {
                 <TableHead>Posición</TableHead>
                 <TableHead>Club</TableHead>
                 <TableHead>Edad</TableHead>
+                <TableHead className="text-right">G</TableHead>
+                <TableHead className="text-right">Min</TableHead>
+                <TableHead className="text-right">PJ</TableHead>
+                <TableHead className="text-right">Km</TableHead>
                 <TableHead>Tarjetas</TableHead>
                 <TableHead>Estado IA</TableHead>
               </TableRow>
@@ -275,6 +280,8 @@ export default function PlayersSection() {
                   player.yellowCards != null || player.redCards != null
                     ? `${player.yellowCards ?? 0}A / ${player.redCards ?? 0}R`
                     : '—';
+                const stats = player.stats;
+                const showStats = hasPlayerStats(stats);
                 return (
                   <TableRow
                     key={player.id}
@@ -300,6 +307,20 @@ export default function PlayersSection() {
                       />
                     </TableCell>
                     <TableCell>{player.age ?? '—'}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {showStats ? totalSeasonGoals(stats) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {showStats ? formatStatValue(stats.acumuladoTemporada?.minutos, 0) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {showStats ? formatStatValue(stats.acumuladoTemporada?.PJ, 0) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {showStats && stats.acumuladoTemporada?.kmPromedioPartido != null
+                        ? formatKm(stats.acumuladoTemporada.kmPromedioPartido)
+                        : '—'}
+                    </TableCell>
                     <TableCell className="tabular-nums">{cards}</TableCell>
                     <TableCell>
                       <span className="inline-flex flex-wrap gap-1">
