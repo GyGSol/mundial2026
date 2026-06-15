@@ -58,7 +58,7 @@ async function getPredictionStatsByUserAggregated(userIds) {
   );
 }
 
-/** Stats del ranking como si los partidos en vivo siguieran en 0-0 (también sin snapshot guardado). */
+/** Stats del ranking como si los partidos indicados siguieran en 0-0 (en vivo o recién finalizados). */
 async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselineMatchIds) {
   if (!userIds.length || !liveKickoffBaselineMatchIds.length) return {};
 

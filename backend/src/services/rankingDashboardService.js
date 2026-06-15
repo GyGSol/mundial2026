@@ -10,11 +10,32 @@ import { attachStreamMetaToMatches } from './streamMetaService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 const RECENT_FINISHED_MAX = 12;
+/** Tras el kickoff, seguimos enviando baseline para flechas de pts (en vivo y recién finalizado). */
+const BASELINE_MATCH_KICKOFF_WINDOW_MS = 4 * 60 * 60 * 1000;
 
 function kickoffKey(kickoffAt) {
   if (!kickoffAt) return '';
   const ms = new Date(kickoffAt).getTime();
   return Number.isNaN(ms) ? String(kickoffAt) : String(ms);
+}
+
+/** Partidos finalizados recientes cuyos pts aún deben mostrar flecha vs baseline 0-0. */
+export function finishedMatchIdsForPointsBaseline(finishedMatches, now = Date.now()) {
+  return finishedMatches
+    .filter((match) => {
+      const kickoffMs = new Date(match.kickoffAt).getTime();
+      return Number.isFinite(kickoffMs) && now - kickoffMs < BASELINE_MATCH_KICKOFF_WINDOW_MS;
+    })
+    .map((match) => match._id.toString());
+}
+
+export function mergePointsBaselineMatchIds(liveMatchIds, finishedMatches, now = Date.now()) {
+  return [
+    ...new Set([
+      ...liveMatchIds,
+      ...finishedMatchIdsForPointsBaseline(finishedMatches, now),
+    ]),
+  ];
 }
 
 function findNextUpcomingMatches(matches) {
@@ -59,10 +80,13 @@ export async function getRankingDashboard(groupId, userId) {
   ]);
 
   const liveMatchIds = liveRaw.map((match) => match._id.toString());
+  const pointsBaselineMatchIds = mergePointsBaselineMatchIds(liveMatchIds, finishedRaw);
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
     getLeaderboard(groupId || null),
-    liveMatchIds.length > 0
-      ? getLeaderboard(groupId || null, 100, { liveKickoffBaselineMatchIds: liveMatchIds })
+    pointsBaselineMatchIds.length > 0
+      ? getLeaderboard(groupId || null, 100, {
+          liveKickoffBaselineMatchIds: pointsBaselineMatchIds,
+        })
       : Promise.resolve(null),
   ]);
 
