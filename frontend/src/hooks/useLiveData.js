@@ -11,19 +11,25 @@ export function useLiveData(
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const dataRef = useRef(data);
+  const requestIdRef = useRef(0);
   dataRef.current = data;
 
   const refresh = useCallback(async () => {
     if (!enabled) return;
+    const requestId = ++requestIdRef.current;
     try {
       setError(null);
       const result = await fetchFn();
+      if (requestId !== requestIdRef.current) return;
       setData(result);
       setLastUpdated(new Date());
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [...deps, enabled]);
 

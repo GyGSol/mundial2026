@@ -59,6 +59,12 @@ export async function getRankingDashboard(groupId, userId) {
     Match.find({ status: 'upcoming' }).select('-raw').sort({ kickoffAt: 1 }).lean(),
   ]);
 
+  const liveMatchIds = liveRaw.map((match) => match._id.toString());
+  const leaderboardKickoffBaseline =
+    liveMatchIds.length > 0
+      ? await getLeaderboard(groupId || null, 100, { liveKickoffBaselineMatchIds: liveMatchIds })
+      : null;
+
   const matchesToEnrich = [...liveRaw, ...finishedRaw, ...upcomingRaw];
   await prepareFifaShirtMapsForMatches(matchesToEnrich);
   const enriched = await enrichMatchesLight(matchesToEnrich, userId);
@@ -79,6 +85,7 @@ export async function getRankingDashboard(groupId, userId) {
 
   return {
     leaderboard,
+    leaderboardKickoffBaseline,
     group: groupResult.group,
     lastSyncAt,
     liveMatches: liveWithStream,

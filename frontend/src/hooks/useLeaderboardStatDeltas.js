@@ -16,6 +16,16 @@ function snapshotRow(row) {
   };
 }
 
+function leaderboardFingerprint(leaderboard) {
+  if (!leaderboard?.length) return '';
+  return leaderboard
+    .map((row) => {
+      const stats = snapshotRow(row);
+      return `${row.id}:${stats.rank},${stats.pa},${stats.gl},${stats.gv},${stats.gt},${stats.pb},${stats.totalPoints}`;
+    })
+    .join('|');
+}
+
 export function directionForStatChange(key, previous, next) {
   if (previous === next) return null;
   const rawDelta = next - previous;
@@ -50,57 +60,94 @@ export function computeLeaderboardStatChanges(previousById, leaderboard) {
   return changes;
 }
 
-export function useLeaderboardStatDeltas(leaderboard) {
+function baselineDiffersFromCurrent(leaderboardKickoffBaseline, leaderboard) {
+  if (!leaderboardKickoffBaseline?.length || !leaderboard?.length) return false;
+
+  const baselineById = Object.fromEntries(
+    leaderboardKickoffBaseline.map((row) => [row.id, snapshotRow(row)])
+  );
+
+  return leaderboard.some((row) => {
+    const baseline = baselineById[row.id];
+    if (!baseline) return false;
+    const current = snapshotRow(row);
+    return TRACKED_KEYS.some((key) => baseline[key] !== current[key]);
+  });
+}
+
+export function useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline) {
   const previousByIdRef = useRef(null);
+  const kickoffCatchUpDoneRef = useRef(false);
   const timersRef = useRef(new Map());
   const [deltas, setDeltas] = useState({});
+
+  const leaderboardKey = leaderboardFingerprint(leaderboard);
+  const kickoffBaselineKey = leaderboardFingerprint(leaderboardKickoffBaseline);
+
+  const applyChanges = (changes) => {
+    for (const [userId, rowChanges] of Object.entries(changes)) {
+      setDeltas((current) => ({
+        ...current,
+        [userId]: { ...(current[userId] ?? {}), ...rowChanges },
+      }));
+
+      for (const key of Object.keys(rowChanges)) {
+        const timerKey = `${userId}:${key}`;
+        const existing = timersRef.current.get(timerKey);
+        if (existing) window.clearTimeout(existing);
+
+        const timeoutId = window.setTimeout(() => {
+          setDeltas((current) => {
+            const row = current[userId];
+            if (!row?.[key]) return current;
+            const nextRow = { ...row };
+            delete nextRow[key];
+            const next = { ...current };
+            if (Object.keys(nextRow).length === 0) {
+              delete next[userId];
+            } else {
+              next[userId] = nextRow;
+            }
+            return next;
+          });
+          timersRef.current.delete(timerKey);
+        }, INDICATOR_TTL_MS);
+
+        timersRef.current.set(timerKey, timeoutId);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!leaderboard?.length) return undefined;
 
-    const previousById = previousByIdRef.current;
-    const nextById = Object.fromEntries(leaderboard.map((row) => [row.id, snapshotRow(row)]));
+    const currentById = Object.fromEntries(
+      leaderboard.map((row) => [row.id, snapshotRow(row)])
+    );
 
-    if (previousById) {
-      const changes = computeLeaderboardStatChanges(previousById, leaderboard);
-
-      for (const [userId, rowChanges] of Object.entries(changes)) {
-        setDeltas((current) => ({
-          ...current,
-          [userId]: { ...(current[userId] ?? {}), ...rowChanges },
-        }));
-
-        for (const key of Object.keys(rowChanges)) {
-          const timerKey = `${userId}:${key}`;
-          const existing = timersRef.current.get(timerKey);
-          if (existing) window.clearTimeout(existing);
-
-          const timeoutId = window.setTimeout(() => {
-            setDeltas((current) => {
-              const row = current[userId];
-              if (!row?.[key]) return current;
-              const nextRow = { ...row };
-              delete nextRow[key];
-              const next = { ...current };
-              if (Object.keys(nextRow).length === 0) {
-                delete next[userId];
-              } else {
-                next[userId] = nextRow;
-              }
-              return next;
-            });
-            timersRef.current.delete(timerKey);
-          }, INDICATOR_TTL_MS);
-
-          timersRef.current.set(timerKey, timeoutId);
-        }
-      }
+    if (
+      !kickoffCatchUpDoneRef.current &&
+      baselineDiffersFromCurrent(leaderboardKickoffBaseline, leaderboard)
+    ) {
+      const baselineById = Object.fromEntries(
+        leaderboardKickoffBaseline.map((row) => [row.id, snapshotRow(row)])
+      );
+      applyChanges(computeLeaderboardStatChanges(baselineById, leaderboard));
+      kickoffCatchUpDoneRef.current = true;
+      previousByIdRef.current = currentById;
+      return undefined;
     }
 
-    previousByIdRef.current = nextById;
+    const previousById = previousByIdRef.current;
+    if (previousById) {
+      applyChanges(computeLeaderboardStatChanges(previousById, leaderboard));
+    }
+
+    previousByIdRef.current = currentById;
+    kickoffCatchUpDoneRef.current = true;
 
     return undefined;
-  }, [leaderboard]);
+  }, [leaderboardKey, kickoffBaselineKey]);
 
   useEffect(
     () => () => {

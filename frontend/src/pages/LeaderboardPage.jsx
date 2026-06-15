@@ -211,6 +211,7 @@ export default function LeaderboardPage() {
         <section id={GROUP_POSITIONS_TABLE_ID} className="scroll-mt-24">
           <LeaderboardTable
             leaderboard={data?.leaderboard}
+            leaderboardKickoffBaseline={data?.leaderboardKickoffBaseline}
             showGroupName={false}
             prizesWinnersCount={prizesWinnersCount}
           />

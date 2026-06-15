@@ -6,25 +6,22 @@ import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { ensurePredictionsForMatch } from './predictionLockService.js';
 import { notifyLeaderboardUpdated } from './websocketService.js';
 
-export async function recalculateMatchScores(matchId) {
-  const match = await Match.findById(matchId);
-  if (!match || (match.status !== 'finished' && match.status !== 'live')) {
-    return { predictions: 0, users: 0 };
-  }
-
-  await ensurePredictionsForMatch(matchId);
-
-  const predictions = await Prediction.find({ matchId });
+async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickoffSnapshot = false } = {}) {
+  const predictions = await Prediction.find({ matchId: match._id });
   const affectedUsers = new Set();
 
   for (const prediction of predictions) {
     const { total, breakdown } = calculatePoints(
       { home: prediction.homeGoals, away: prediction.awayGoals },
-      { home: match.homeScore ?? 0, away: match.awayScore ?? 0 }
+      { home: scoreHome, away: scoreAway }
     );
 
     prediction.pointsEarned = total;
     prediction.pointsBreakdown = breakdown;
+    if (saveLiveKickoffSnapshot) {
+      prediction.liveKickoffPointsEarned = total;
+      prediction.liveKickoffBreakdown = { ...breakdown };
+    }
     prediction.bonusPoint = 0;
     prediction.bonusReason = null;
     await prediction.save();
@@ -39,14 +36,46 @@ export async function recalculateMatchScores(matchId) {
     await recalculateUserTotalPoints(userId);
   }
 
-  if (affectedUsers.size > 0) {
+  return { predictions: predictions.length, users: affectedUsers.size };
+}
+
+export async function recalculateMatchScores(matchId) {
+  const match = await Match.findById(matchId);
+  if (!match || (match.status !== 'finished' && match.status !== 'live')) {
+    return { predictions: 0, users: 0 };
+  }
+
+  await ensurePredictionsForMatch(matchId);
+
+  const actualHome = match.homeScore ?? 0;
+  const actualAway = match.awayScore ?? 0;
+  const needsLiveBaseline = match.status === 'live' && !match.liveScoringInitialized;
+
+  if (needsLiveBaseline) {
+    const baselineResult = await applyScoresForMatch(match, 0, 0, { saveLiveKickoffSnapshot: true });
+    match.liveScoringInitialized = true;
+    await match.save();
+
+    notifyLeaderboardUpdated({
+      reason: 'live_baseline',
+      matchId: matchId.toString(),
+    });
+
+    if (actualHome === 0 && actualAway === 0) {
+      return { ...baselineResult, liveBaseline: true };
+    }
+  }
+
+  const result = await applyScoresForMatch(match, actualHome, actualAway);
+
+  if (result.users > 0 || needsLiveBaseline) {
     notifyLeaderboardUpdated({
       reason: match.status === 'live' ? 'live_scores_updated' : 'scores_recalculated',
       matchId: matchId.toString(),
     });
   }
 
-  return { predictions: predictions.length, users: affectedUsers.size };
+  return { ...result, liveBaseline: needsLiveBaseline };
 }
 
 /** Quita puntos provisionales o erróneos cuando un partido vuelve a upcoming. */
@@ -58,7 +87,13 @@ export async function clearMatchScores(matchId) {
     matchId,
     pointsEarned: { $ne: null },
   });
-  if (!predictions.length) return { predictions: 0, users: 0 };
+  if (!predictions.length) {
+    if (match.liveScoringInitialized) {
+      match.liveScoringInitialized = false;
+      await match.save();
+    }
+    return { predictions: 0, users: 0 };
+  }
 
   const affectedUsers = new Set(predictions.map((prediction) => prediction.userId.toString()));
 
@@ -72,9 +107,16 @@ export async function clearMatchScores(matchId) {
       },
       $unset: {
         pointsBreakdown: '',
+        liveKickoffPointsEarned: '',
+        liveKickoffBreakdown: '',
       },
     }
   );
+
+  if (match.liveScoringInitialized) {
+    match.liveScoringInitialized = false;
+    await match.save();
+  }
 
   for (const userId of affectedUsers) {
     await recalculateConsolationBonuses(userId);

@@ -13,6 +13,8 @@ const matchSchema = new mongoose.Schema(
     stadiumId: String,
     type: { type: String, default: 'group' },
     status: { type: String, enum: ['upcoming', 'live', 'finished'], default: 'upcoming' },
+    /** Puntaje provisional inicializado en 0-0 al pasar a live. */
+    liveScoringInitialized: { type: Boolean, default: false },
     kickoffAt: Date,
     /** Push enviado ~15 min antes del cierre de predicciones (lockAt). */
     predictionLockReminderSentAt: Date,

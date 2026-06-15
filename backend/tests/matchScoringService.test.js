@@ -98,6 +98,44 @@ describe('matchScoringService', () => {
     expect(prediction.pointsEarned).toBeNull();
   });
 
+  it('al pasar a live puntúa primero en 0-0 y guarda snapshot de kickoff', async () => {
+    const user = await User.create({
+      name: 'Live baseline',
+      email: 'live-baseline@example.com',
+      passwordHash: 'hash',
+      totalPoints: 0,
+    });
+    const match = await Match.create({
+      externalId: 'score-live-baseline',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 1,
+      awayScore: 0,
+      status: 'live',
+      kickoffAt: new Date('2026-06-13T01:00:00.000Z'),
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: match._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: null,
+    });
+
+    await recalculateMatchScores(match._id);
+
+    const prediction = await Prediction.findOne({ matchId: match._id });
+    expect(prediction.liveKickoffBreakdown?.winner).toBe(0);
+    expect(prediction.pointsBreakdown?.winner).toBe(3);
+    expect(prediction.liveKickoffPointsEarned).toBe(1);
+
+    const updatedMatch = await Match.findById(match._id);
+    expect(updatedMatch.liveScoringInitialized).toBe(true);
+
+    const updatedUser = await User.findById(user._id);
+    expect(updatedUser.totalPoints).toBeGreaterThan(0);
+  });
+
   it('clearStaleUpcomingMatchScores repara partidos upcoming con puntos colgados', async () => {
     const user = await User.create({
       name: 'Tester 3',

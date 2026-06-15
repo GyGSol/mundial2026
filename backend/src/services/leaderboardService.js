@@ -8,8 +8,42 @@ function emptyStats() {
   return { pj: 0, pa: 0, gl: 0, gv: 0, gt: 0, pb: 0 };
 }
 
-async function getPredictionStatsByUser(userIds) {
+async function getPredictionStatsByUser(userIds, { liveKickoffBaselineMatchIds = [] } = {}) {
   if (!userIds.length) return {};
+
+  const liveMatchIds = liveKickoffBaselineMatchIds.map(
+    (id) => new mongoose.Types.ObjectId(id)
+  );
+  const useKickoffBaseline = liveMatchIds.length > 0;
+
+  const kickoffGuard = useKickoffBaseline
+    ? {
+        $and: [{ $in: ['$matchId', liveMatchIds] }, { $ne: ['$liveKickoffBreakdown', null] }],
+      }
+    : false;
+
+  const breakdownField = (field) =>
+    useKickoffBaseline
+      ? {
+          $cond: [
+            kickoffGuard,
+            `$liveKickoffBreakdown.${field}`,
+            `$pointsBreakdown.${field}`,
+          ],
+        }
+      : `$pointsBreakdown.${field}`;
+
+  const pointsField = useKickoffBaseline
+    ? {
+        $cond: [
+          {
+            $and: [{ $in: ['$matchId', liveMatchIds] }, { $ne: ['$liveKickoffPointsEarned', null] }],
+          },
+          '$liveKickoffPointsEarned',
+          '$pointsEarned',
+        ],
+      }
+    : '$pointsEarned';
 
   const rows = await Prediction.aggregate([
     {
@@ -22,11 +56,16 @@ async function getPredictionStatsByUser(userIds) {
       $group: {
         _id: '$userId',
         pj: { $sum: 1 },
-        pa: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.winner', 0] }, 1, 0] } },
-        gl: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.homeGoals', 0] }, 1, 0] } },
-        gv: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.awayGoals', 0] }, 1, 0] } },
-        gt: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.totalGoals', 0] }, 1, 0] } },
+        pa: { $sum: { $cond: [{ $gt: [breakdownField('winner'), 0] }, 1, 0] } },
+        gl: { $sum: { $cond: [{ $gt: [breakdownField('homeGoals'), 0] }, 1, 0] } },
+        gv: { $sum: { $cond: [{ $gt: [breakdownField('awayGoals'), 0] }, 1, 0] } },
+        gt: { $sum: { $cond: [{ $gt: [breakdownField('totalGoals'), 0] }, 1, 0] } },
         pb: { $sum: { $ifNull: ['$bonusPoint', 0] } },
+        totalPoints: {
+          $sum: {
+            $add: [pointsField, { $ifNull: ['$bonusPoint', 0] }],
+          },
+        },
       },
     },
   ]);
@@ -52,7 +91,9 @@ export function compareRankingEntries(a, b) {
 
 export const compareLeaderboardEntries = compareRankingEntries;
 
-export async function getLeaderboard(competitionGroupId, limit = 100) {
+export async function getLeaderboard(competitionGroupId, limit = 100, options = {}) {
+  const { liveKickoffBaselineMatchIds = [] } = options;
+  const useKickoffBaseline = liveKickoffBaselineMatchIds.length > 0;
   let filter = {};
   if (competitionGroupId === '__nogroup') {
     const memberUserIds = await UserGroupMembership.distinct('userId');
@@ -67,7 +108,9 @@ export async function getLeaderboard(competitionGroupId, limit = 100) {
   const users = await User.find(filter).select(
     'name totalPoints createdAt activeCompetitionGroupId competitionGroupId isAiUser'
   );
-  const statsMap = await getPredictionStatsByUser(users.map((u) => u._id));
+  const statsMap = await getPredictionStatsByUser(users.map((u) => u._id), {
+    liveKickoffBaselineMatchIds,
+  });
   const groupIds = [
     ...new Set(
       users
@@ -86,7 +129,9 @@ export async function getLeaderboard(competitionGroupId, limit = 100) {
       name: user.name,
       isAiUser: Boolean(user.isAiUser),
       groupName: groupNameById[(user.activeCompetitionGroupId || user.competitionGroupId)?.toString()] || null,
-      totalPoints: user.totalPoints,
+      totalPoints: useKickoffBaseline
+        ? (stats.totalPoints ?? user.totalPoints)
+        : user.totalPoints,
       pj: stats.pj ?? 0,
       pa: stats.pa ?? 0,
       gl: stats.gl ?? 0,
