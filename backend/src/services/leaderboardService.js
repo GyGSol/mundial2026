@@ -5,7 +5,7 @@ import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 function emptyStats() {
-  return { pa: 0, gl: 0, gv: 0, gt: 0, pb: 0 };
+  return { pj: 0, pa: 0, gl: 0, gv: 0, gt: 0, pb: 0 };
 }
 
 async function getPredictionStatsByUser(userIds) {
@@ -21,6 +21,7 @@ async function getPredictionStatsByUser(userIds) {
     {
       $group: {
         _id: '$userId',
+        pj: { $sum: 1 },
         pa: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.winner', 0] }, 1, 0] } },
         gl: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.homeGoals', 0] }, 1, 0] } },
         gv: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.awayGoals', 0] }, 1, 0] } },
@@ -86,6 +87,7 @@ export async function getLeaderboard(competitionGroupId, limit = 100) {
       isAiUser: Boolean(user.isAiUser),
       groupName: groupNameById[(user.activeCompetitionGroupId || user.competitionGroupId)?.toString()] || null,
       totalPoints: user.totalPoints,
+      pj: stats.pj ?? 0,
       pa: stats.pa ?? 0,
       gl: stats.gl ?? 0,
       gv: stats.gv ?? 0,

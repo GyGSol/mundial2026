@@ -10,11 +10,15 @@ import { Card, CardContent } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 
 const statColumns = [
+  { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)' },
   { key: 'pa', label: 'PA', title: 'Acierto resultado' },
   { key: 'gl', label: 'GL', title: 'Goles local' },
   { key: 'gv', label: 'GV', title: 'Goles visitante' },
   { key: 'gt', label: 'GT', title: 'Goles totales' },
 ];
+
+const statHeadClass = 'px-0.5 text-center text-[10px] sm:px-2 sm:text-xs';
+const statCellClass = 'px-0.5 text-center tabular-nums text-xs sm:px-2 sm:text-sm';
 
 const prizedRankCellClass =
   'border-l-4 border-l-emerald-500 text-primary font-semibold';
@@ -37,27 +41,20 @@ export default function LeaderboardTable({
   return (
     <Card>
       <CardContent className="overflow-x-auto p-0">
-        <Table className="min-w-[280px]">
+        <Table className="min-w-[520px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10">#</TableHead>
-              <TableHead>Jugador</TableHead>
+              <TableHead className="w-8 px-1 sm:w-10">#</TableHead>
+              <TableHead className="min-w-[5.5rem] px-1 sm:min-w-0 sm:px-2">Jugador</TableHead>
               {statColumns.map((col) => (
-                <TableHead
-                  key={col.key}
-                  className="hidden text-center sm:table-cell"
-                  title={col.title}
-                >
+                <TableHead key={col.key} className={statHeadClass} title={col.title}>
                   {col.label}
                 </TableHead>
               ))}
-              <TableHead
-                className="hidden text-center sm:table-cell"
-                title="Puntos bonus (consuelo)"
-              >
+              <TableHead className={statHeadClass} title="Puntos bonus (consuelo)">
                 PB
               </TableHead>
-              <TableHead className="text-right">Pts</TableHead>
+              <TableHead className="px-1 text-right text-[10px] sm:px-2 sm:text-xs">Pts</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -74,7 +71,7 @@ export default function LeaderboardTable({
                   >
                     {row.rank}
                   </TableCell>
-                  <TableCell className="max-w-[9rem] font-medium sm:max-w-none">
+                  <TableCell className="max-w-[5.5rem] px-1 font-medium sm:max-w-none sm:px-2">
                     <div className="flex min-w-0 items-center justify-between gap-2">
                       <span className="truncate">
                         {row.name}
@@ -95,17 +92,12 @@ export default function LeaderboardTable({
                     </div>
                   </TableCell>
                   {statColumns.map((col) => (
-                    <TableCell
-                      key={col.key}
-                      className="hidden text-center tabular-nums sm:table-cell"
-                    >
+                    <TableCell key={col.key} className={statCellClass}>
                       {row[col.key] ?? 0}
                     </TableCell>
                   ))}
-                  <TableCell className="hidden text-center tabular-nums sm:table-cell">
-                    {row.pb ?? 0}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums">
+                  <TableCell className={statCellClass}>{row.pb ?? 0}</TableCell>
+                  <TableCell className="px-1 text-right text-xs font-semibold tabular-nums sm:px-2 sm:text-sm">
                     {row.totalPoints}
                   </TableCell>
                 </TableRow>
