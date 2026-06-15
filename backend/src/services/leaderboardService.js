@@ -3,47 +3,24 @@ import { User } from '../models/User.js';
 import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
+import { calculatePoints } from './scoringService.js';
 
 function emptyStats() {
-  return { pj: 0, pa: 0, gl: 0, gv: 0, gt: 0, pb: 0 };
+  return { pj: 0, pa: 0, gl: 0, gv: 0, gt: 0, pb: 0, totalPoints: 0 };
 }
 
-async function getPredictionStatsByUser(userIds, { liveKickoffBaselineMatchIds = [] } = {}) {
+function accumulateStats(stats, breakdown, pointsEarned, bonusPoint = 0) {
+  stats.pj += 1;
+  if ((breakdown?.winner ?? 0) > 0) stats.pa += 1;
+  if ((breakdown?.homeGoals ?? 0) > 0) stats.gl += 1;
+  if ((breakdown?.awayGoals ?? 0) > 0) stats.gv += 1;
+  if ((breakdown?.totalGoals ?? 0) > 0) stats.gt += 1;
+  stats.pb += bonusPoint ?? 0;
+  stats.totalPoints += (pointsEarned ?? 0) + (bonusPoint ?? 0);
+}
+
+async function getPredictionStatsByUserAggregated(userIds) {
   if (!userIds.length) return {};
-
-  const liveMatchIds = liveKickoffBaselineMatchIds.map(
-    (id) => new mongoose.Types.ObjectId(id)
-  );
-  const useKickoffBaseline = liveMatchIds.length > 0;
-
-  const kickoffGuard = useKickoffBaseline
-    ? {
-        $and: [{ $in: ['$matchId', liveMatchIds] }, { $ne: ['$liveKickoffBreakdown', null] }],
-      }
-    : false;
-
-  const breakdownField = (field) =>
-    useKickoffBaseline
-      ? {
-          $cond: [
-            kickoffGuard,
-            `$liveKickoffBreakdown.${field}`,
-            `$pointsBreakdown.${field}`,
-          ],
-        }
-      : `$pointsBreakdown.${field}`;
-
-  const pointsField = useKickoffBaseline
-    ? {
-        $cond: [
-          {
-            $and: [{ $in: ['$matchId', liveMatchIds] }, { $ne: ['$liveKickoffPointsEarned', null] }],
-          },
-          '$liveKickoffPointsEarned',
-          '$pointsEarned',
-        ],
-      }
-    : '$pointsEarned';
 
   const rows = await Prediction.aggregate([
     {
@@ -56,21 +33,82 @@ async function getPredictionStatsByUser(userIds, { liveKickoffBaselineMatchIds =
       $group: {
         _id: '$userId',
         pj: { $sum: 1 },
-        pa: { $sum: { $cond: [{ $gt: [breakdownField('winner'), 0] }, 1, 0] } },
-        gl: { $sum: { $cond: [{ $gt: [breakdownField('homeGoals'), 0] }, 1, 0] } },
-        gv: { $sum: { $cond: [{ $gt: [breakdownField('awayGoals'), 0] }, 1, 0] } },
-        gt: { $sum: { $cond: [{ $gt: [breakdownField('totalGoals'), 0] }, 1, 0] } },
+        pa: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.winner', 0] }, 1, 0] } },
+        gl: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.homeGoals', 0] }, 1, 0] } },
+        gv: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.awayGoals', 0] }, 1, 0] } },
+        gt: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.totalGoals', 0] }, 1, 0] } },
         pb: { $sum: { $ifNull: ['$bonusPoint', 0] } },
-        totalPoints: {
-          $sum: {
-            $add: [pointsField, { $ifNull: ['$bonusPoint', 0] }],
-          },
-        },
       },
     },
   ]);
 
-  return Object.fromEntries(rows.map((row) => [row._id.toString(), row]));
+  return Object.fromEntries(
+    rows.map((row) => [
+      row._id.toString(),
+      {
+        pj: row.pj ?? 0,
+        pa: row.pa ?? 0,
+        gl: row.gl ?? 0,
+        gv: row.gv ?? 0,
+        gt: row.gt ?? 0,
+        pb: row.pb ?? 0,
+        totalPoints: 0,
+      },
+    ])
+  );
+}
+
+/** Stats del ranking como si los partidos en vivo siguieran en 0-0 (también sin snapshot guardado). */
+async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselineMatchIds) {
+  if (!userIds.length || !liveKickoffBaselineMatchIds.length) return {};
+
+  const liveMatchIdSet = new Set(liveKickoffBaselineMatchIds.map(String));
+  const statsMap = Object.fromEntries(userIds.map((id) => [id.toString(), emptyStats()]));
+
+  const predictions = await Prediction.find({
+    userId: { $in: userIds },
+    pointsEarned: { $ne: null },
+  })
+    .select('userId matchId homeGoals awayGoals pointsEarned pointsBreakdown bonusPoint liveKickoffBreakdown liveKickoffPointsEarned')
+    .lean();
+
+  for (const prediction of predictions) {
+    const userKey = prediction.userId.toString();
+    const stats = statsMap[userKey];
+    if (!stats) continue;
+
+    const isLiveMatch = liveMatchIdSet.has(prediction.matchId.toString());
+    let breakdown;
+    let pointsEarned;
+
+    if (isLiveMatch) {
+      if (prediction.liveKickoffBreakdown) {
+        breakdown = prediction.liveKickoffBreakdown;
+        pointsEarned = prediction.liveKickoffPointsEarned ?? prediction.pointsEarned ?? 0;
+      } else {
+        const kickoff = calculatePoints(
+          { home: prediction.homeGoals, away: prediction.awayGoals },
+          { home: 0, away: 0 }
+        );
+        breakdown = kickoff.breakdown;
+        pointsEarned = kickoff.total;
+      }
+    } else {
+      breakdown = prediction.pointsBreakdown;
+      pointsEarned = prediction.pointsEarned ?? 0;
+    }
+
+    accumulateStats(stats, breakdown, pointsEarned, prediction.bonusPoint ?? 0);
+  }
+
+  return statsMap;
+}
+
+async function getPredictionStatsByUser(userIds, { liveKickoffBaselineMatchIds = [] } = {}) {
+  if (liveKickoffBaselineMatchIds.length > 0) {
+    return getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselineMatchIds);
+  }
+  return getPredictionStatsByUserAggregated(userIds);
 }
 
 export function compareRankingEntries(a, b) {

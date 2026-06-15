@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 const TRACKED_KEYS = ['rank', 'pa', 'gl', 'gv', 'gt', 'pb', 'totalPoints'];
 const INVERT_DELTA_KEYS = new Set(['rank']);
 const INDICATOR_TTL_MS = 8000;
+const CATCHUP_INDICATOR_TTL_MS = 20000;
 
 function snapshotRow(row) {
   return {
@@ -84,7 +85,7 @@ export function useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline
   const leaderboardKey = leaderboardFingerprint(leaderboard);
   const kickoffBaselineKey = leaderboardFingerprint(leaderboardKickoffBaseline);
 
-  const applyChanges = (changes) => {
+  const applyChanges = (changes, ttlMs = INDICATOR_TTL_MS) => {
     for (const [userId, rowChanges] of Object.entries(changes)) {
       setDeltas((current) => ({
         ...current,
@@ -111,7 +112,7 @@ export function useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline
             return next;
           });
           timersRef.current.delete(timerKey);
-        }, INDICATOR_TTL_MS);
+          }, ttlMs);
 
         timersRef.current.set(timerKey, timeoutId);
       }
@@ -132,7 +133,7 @@ export function useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline
       const baselineById = Object.fromEntries(
         leaderboardKickoffBaseline.map((row) => [row.id, snapshotRow(row)])
       );
-      applyChanges(computeLeaderboardStatChanges(baselineById, leaderboard));
+      applyChanges(computeLeaderboardStatChanges(baselineById, leaderboard), CATCHUP_INDICATOR_TTL_MS);
       kickoffCatchUpDoneRef.current = true;
       previousByIdRef.current = currentById;
       return undefined;
