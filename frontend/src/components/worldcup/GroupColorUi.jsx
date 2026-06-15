@@ -41,6 +41,7 @@ export function MatchWinnerSlotLabel({ slotSourceMatch, label, className, compac
     );
   }
 
+  const prefix = /^Perdedor de /i.test(label) ? 'Perdedor' : 'Ganador';
   const flagSize = compact ? 'size-4' : 'size-5';
 
   return (
@@ -52,7 +53,7 @@ export function MatchWinnerSlotLabel({ slotSourceMatch, label, className, compac
       )}
       title={label}
     >
-      <span className="text-muted-foreground">Ganador de</span>
+      <span className="text-muted-foreground">{prefix} de</span>
       <MatchSideMiniFlag
         team={slotSourceMatch.homeTeam}
         slotLabel={slotSourceMatch.homeTeamSlotLabel}
@@ -145,7 +146,7 @@ export function KnockoutSlotLabel({ label, slotSourceMatch, className }) {
     );
   }
 
-  if (parsed.type === 'match_winner') {
+  if (parsed.type === 'match_winner' || parsed.type === 'match_loser') {
     return (
       <span className={cn('text-center leading-tight', className)} title={label}>
         {label}

@@ -1,5 +1,5 @@
 import { THIRD_PLACE_COMBINATIONS } from '../data/thirdPlaceCombinations.js';
-import { buildWinnerMatchSlotDisplay, formatKnockoutSlotLabelEs, formatMatchSummary } from './worldCupStatsService.js';
+import { buildLoserMatchSlotDisplay, buildWinnerMatchSlotDisplay, formatKnockoutSlotLabelEs, formatMatchSummary } from './worldCupStatsService.js';
 import { KNOCKOUT_ROUNDS } from './simulationTournamentService.js';
 import { hasUserPrediction } from './predictionLockService.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
@@ -183,6 +183,11 @@ function resolveSlotLabel({
   if (match) {
     const loser = matchLosers.get(match[1]);
     if (loser) return { team: loser, slotLabel: null, slotSourceMatch: null };
+    const sourceSides = resolvedMatchSides?.get(match[1]);
+    if (sourceSides) {
+      const display = buildLoserMatchSlotDisplay(sourceSides);
+      return { team: null, slotLabel: display.slotLabel, slotSourceMatch: display.slotSourceMatch };
+    }
     return { team: null, slotLabel: formatKnockoutSlotLabelEs(label), slotSourceMatch: null };
   }
 

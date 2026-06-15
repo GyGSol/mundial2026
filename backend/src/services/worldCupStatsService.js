@@ -292,6 +292,20 @@ export function buildWinnerMatchSlotDisplay(sourceSides) {
   };
 }
 
+export function buildLoserMatchSlotDisplay(sourceSides) {
+  if (!sourceSides) {
+    return { slotLabel: null, slotSourceMatch: null };
+  }
+
+  const homePart = formatMatchSideShortLabel(sourceSides.homeTeam, sourceSides.homeTeamSlotLabel);
+  const awayPart = formatMatchSideShortLabel(sourceSides.awayTeam, sourceSides.awayTeamSlotLabel);
+
+  return {
+    slotLabel: `Perdedor de ${homePart} vs ${awayPart}`,
+    slotSourceMatch: sourceSides,
+  };
+}
+
 function resolveWinnerMatchSlot(rawLabel, matchesByExternalId, teamMap, resolvedMatchSides) {
   const match = rawLabel.match(/^Winner Match (\d+)$/i);
   if (!match) return null;
@@ -305,6 +319,21 @@ function resolveWinnerMatchSlot(rawLabel, matchesByExternalId, teamMap, resolved
 
   if (!sourceSides) return null;
   return buildWinnerMatchSlotDisplay(sourceSides);
+}
+
+function resolveLoserMatchSlot(rawLabel, matchesByExternalId, teamMap, resolvedMatchSides) {
+  const match = rawLabel.match(/^Loser Match (\d+)$/i);
+  if (!match) return null;
+
+  const matchId = match[1];
+  const sourceSides =
+    resolvedMatchSides?.get(matchId) ??
+    (matchesByExternalId?.get(matchId)
+      ? buildMatchSidesPreview(matchesByExternalId.get(matchId), teamMap)
+      : null);
+
+  if (!sourceSides) return null;
+  return buildLoserMatchSlotDisplay(sourceSides);
 }
 
 function resolveTeamSlotLabel(match, side, teamMap) {
@@ -330,6 +359,14 @@ function resolveTeamSlot(match, side, teamMap, context = {}) {
     context.resolvedMatchSides
   );
   if (winnerSlot) return winnerSlot;
+
+  const loserSlot = resolveLoserMatchSlot(
+    rawLabel,
+    context.matchesByExternalId,
+    teamMap,
+    context.resolvedMatchSides
+  );
+  if (loserSlot) return loserSlot;
 
   return {
     slotLabel: formatKnockoutSlotLabelEs(rawLabel),

@@ -3,6 +3,7 @@ import {
   annotateGroupQualification,
   computeGroupStandings,
   buildKnockoutPhases,
+  buildLoserMatchSlotDisplay,
   buildWinnerMatchSlotDisplay,
   computeTournamentStats,
   formatKnockoutSlotLabelEs,
@@ -208,6 +209,49 @@ describe('worldCupStatsService', () => {
     });
     expect(display.slotLabel).toBe('Ganador de ARG vs FRA');
     expect(display.slotSourceMatch.homeTeam.fifaCode).toBe('ARG');
+  });
+
+  it('describe perdedores de partido con banderas de local y visitante', () => {
+    const display = buildLoserMatchSlotDisplay({
+      homeTeam: { fifaCode: 'ESP', nameEn: 'Spain' },
+      awayTeam: { fifaCode: 'GER', nameEn: 'Germany' },
+      homeTeamSlotLabel: null,
+      awayTeamSlotLabel: null,
+    });
+    expect(display.slotLabel).toBe('Perdedor de ESP vs GER');
+    expect(display.slotSourceMatch.awayTeam.fifaCode).toBe('GER');
+  });
+
+  it('resuelve Loser Match con partido fuente en tercer puesto', () => {
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const matches = [
+      {
+        externalId: '101',
+        homeTeamId: '1',
+        awayTeamId: '2',
+        homeScore: 0,
+        awayScore: 0,
+        type: 'semi_final',
+        status: 'upcoming',
+        raw: { home_team_label: 'Winner Match 97', away_team_label: 'Winner Match 98' },
+      },
+      {
+        externalId: '103',
+        homeTeamId: '0',
+        awayTeamId: '0',
+        homeScore: 0,
+        awayScore: 0,
+        type: 'third_place',
+        status: 'upcoming',
+        raw: { home_team_label: 'Loser Match 101', away_team_label: 'Loser Match 102' },
+      },
+    ];
+
+    const phases = buildKnockoutPhases(matches, teamMap);
+    const third = phases.find((phase) => phase.label === 'Tercer puesto');
+    expect(third.matches[0].homeTeamSlotLabel).toBe('Perdedor de MEX vs RSA');
+    expect(third.matches[0].homeTeamSlotSourceMatch.homeTeam.fifaCode).toBe('MEX');
+    expect(third.matches[0].homeTeamSlotSourceMatch.awayTeam.fifaCode).toBe('RSA');
   });
 
   it('resuelve Winner Match con partido fuente en fase final', () => {

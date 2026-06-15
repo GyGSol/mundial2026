@@ -271,4 +271,28 @@ describe('predictedKnockoutService', () => {
     expect(m74.homeTeam?.externalId).toBe('E1');
     expect(m74.awayTeam?.externalId).toBe('F3');
   });
+
+  it('muestra perdedores de semifinal en tercer puesto con banderas del partido fuente', () => {
+    const teams = mockTeams();
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const knockoutMatches = [
+      knockoutMatch(101, 'Winner Group A', 'Winner Group B', 'semi_final'),
+      knockoutMatch(102, 'Winner Group C', 'Winner Group D', 'semi_final'),
+      knockoutMatch(103, 'Loser Match 101', 'Loser Match 102', 'third_place'),
+    ];
+
+    const { phases } = buildPredictedKnockoutPhases({
+      groupStandings: completeGroupStandings(),
+      knockoutMatches,
+      predictionsByMatchId: new Map(),
+      teamMap,
+    });
+
+    const m103 = findMatch(phases, 103);
+    expect(m103.homeTeam).toBeNull();
+    expect(m103.homeTeamSlotLabel).toBe('Perdedor de A1 vs B1');
+    expect(m103.homeTeamSlotSourceMatch.homeTeam?.externalId).toBe('A1');
+    expect(m103.homeTeamSlotSourceMatch.awayTeam?.externalId).toBe('B1');
+    expect(m103.awayTeamSlotLabel).toBe('Perdedor de C1 vs D1');
+  });
 });

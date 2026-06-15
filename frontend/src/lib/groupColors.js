@@ -61,6 +61,9 @@ export function parseKnockoutSlotLabel(label) {
   match = trimmed.match(/^Ganador de (.+) vs (.+)$/i);
   if (match) return { type: 'match_winner', matchId: null, homePart: match[1].trim(), awayPart: match[2].trim() };
 
+  match = trimmed.match(/^Perdedor de (.+) vs (.+)$/i);
+  if (match) return { type: 'match_loser', matchId: null, homePart: match[1].trim(), awayPart: match[2].trim() };
+
   match = trimmed.match(/^Ganador del partido (\d+)$/i);
   if (match) return { type: 'match_winner', matchId: match[1] };
 
