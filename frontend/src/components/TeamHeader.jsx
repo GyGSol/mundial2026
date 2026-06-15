@@ -36,11 +36,15 @@ function WorldCupStars({ count }) {
   );
 }
 
-export default function TeamHeader({ team, slotLabel }) {
-  if (!team && slotLabel) {
+export default function TeamHeader({ team, slotLabel, slotSourceMatch }) {
+  if (!team && (slotLabel || slotSourceMatch)) {
     return (
       <div className="flex flex-col items-center gap-1 px-1 text-center">
-        <KnockoutSlotLabel label={slotLabel} className="text-xs sm:text-sm" />
+        <KnockoutSlotLabel
+          label={slotLabel}
+          slotSourceMatch={slotSourceMatch}
+          className="text-xs sm:text-sm"
+        />
       </div>
     );
   }

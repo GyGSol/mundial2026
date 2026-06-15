@@ -5,6 +5,68 @@ import {
   getGroupColor,
   parseKnockoutSlotLabel,
 } from '@/lib/groupColors.js';
+import TeamFlag from '@/components/TeamFlag.jsx';
+
+function MatchSideMiniFlag({ team, slotLabel, sizeClass = 'size-5' }) {
+  if (team) {
+    return <TeamFlag team={team} sizeClass={sizeClass} className="shadow-none" />;
+  }
+
+  if (slotLabel) {
+    const parsed = parseKnockoutSlotLabel(slotLabel);
+    if (parsed?.type === 'group_position') {
+      return (
+        <GroupColorSwatch group={parsed.group} position={parsed.position} size="md" title={slotLabel} />
+      );
+    }
+    if (parsed?.type === 'third_best') {
+      return <GroupColorDotList groups={parsed.groups} position={3} size="xs" />;
+    }
+  }
+
+  return (
+    <span
+      className={cn('shrink-0 rounded-sm border border-dashed border-border/60 bg-muted/30', sizeClass)}
+      aria-hidden
+    />
+  );
+}
+
+export function MatchWinnerSlotLabel({ slotSourceMatch, label, className, compact = false }) {
+  if (!slotSourceMatch) {
+    return (
+      <span className={cn('text-center leading-tight', className)} title={label}>
+        {label}
+      </span>
+    );
+  }
+
+  const flagSize = compact ? 'size-4' : 'size-5';
+
+  return (
+    <span
+      className={cn(
+        'inline-flex flex-wrap items-center justify-center gap-1.5 leading-tight',
+        compact ? 'text-[10px]' : 'text-xs sm:text-sm',
+        className
+      )}
+      title={label}
+    >
+      <span className="text-muted-foreground">Ganador de</span>
+      <MatchSideMiniFlag
+        team={slotSourceMatch.homeTeam}
+        slotLabel={slotSourceMatch.homeTeamSlotLabel}
+        sizeClass={flagSize}
+      />
+      <span className="font-medium text-muted-foreground">vs</span>
+      <MatchSideMiniFlag
+        team={slotSourceMatch.awayTeam}
+        slotLabel={slotSourceMatch.awayTeamSlotLabel}
+        sizeClass={flagSize}
+      />
+    </span>
+  );
+}
 
 export function GroupColorSwatch({ group, position = 1, size = 'sm', className, title }) {
   const color = getGroupColor(group, position);
@@ -40,7 +102,11 @@ export function GroupColorDotList({ groups, position = 3, size = 'xs' }) {
   );
 }
 
-export function KnockoutSlotLabel({ label, className }) {
+export function KnockoutSlotLabel({ label, slotSourceMatch, className }) {
+  if (slotSourceMatch) {
+    return <MatchWinnerSlotLabel slotSourceMatch={slotSourceMatch} label={label} className={className} />;
+  }
+
   const parsed = parseKnockoutSlotLabel(label);
 
   if (!parsed || parsed.type === 'unknown') {
@@ -75,6 +141,14 @@ export function KnockoutSlotLabel({ label, className }) {
           <span>3.º mejor</span>
           <GroupColorDotList groups={parsed.groups} position={3} />
         </span>
+      </span>
+    );
+  }
+
+  if (parsed.type === 'match_winner') {
+    return (
+      <span className={cn('text-center leading-tight', className)} title={label}>
+        {label}
       </span>
     );
   }

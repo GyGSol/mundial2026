@@ -70,7 +70,7 @@ function buildConnectorPath(fromId, toId, cellW, cellH) {
   return `M ${fromEdgeX} ${from.y} H ${midX} V ${to.y} H ${toEdgeX}`;
 }
 
-function BracketCountryLine({ team, slotLabel, score, isWinner, isLive }) {
+function BracketCountryLine({ team, slotLabel, slotSourceMatch, score, isWinner, isLive }) {
   const flagUrl = team ? getTeamFlag(team) : null;
   const title = team?.nameEn || team?.fifaCode || slotLabel || 'Por definir';
   const parsed = !team && slotLabel ? parseKnockoutSlotLabel(slotLabel) : null;
@@ -112,9 +112,10 @@ function BracketCountryLine({ team, slotLabel, score, isWinner, isLive }) {
         >
           {team.nameEn || team.fifaCode}
         </span>
-      ) : slotLabel ? (
+      ) : slotLabel || slotSourceMatch ? (
         <KnockoutSlotLabel
           label={slotLabel}
+          slotSourceMatch={slotSourceMatch}
           className="min-w-0 text-[10px] font-medium text-primary sm:text-[11px]"
         />
       ) : (
@@ -177,6 +178,7 @@ function BracketMatchCell({ match, highlight = false }) {
       <BracketCountryLine
         team={match?.homeTeam}
         slotLabel={match?.homeTeamSlotLabel}
+        slotSourceMatch={match?.homeTeamSlotSourceMatch}
         score={hasScore ? match.homeScore : null}
         isWinner={homeWinner}
         isLive={isLive}
@@ -187,6 +189,7 @@ function BracketMatchCell({ match, highlight = false }) {
       <BracketCountryLine
         team={match?.awayTeam}
         slotLabel={match?.awayTeamSlotLabel}
+        slotSourceMatch={match?.awayTeamSlotSourceMatch}
         score={hasScore ? match.awayScore : null}
         isWinner={awayWinner}
         isLive={isLive}

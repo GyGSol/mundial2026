@@ -58,6 +58,9 @@ export function parseKnockoutSlotLabel(label) {
     return { type: 'third_best', position: 3, groups };
   }
 
+  match = trimmed.match(/^Ganador de (.+) vs (.+)$/i);
+  if (match) return { type: 'match_winner', matchId: null, homePart: match[1].trim(), awayPart: match[2].trim() };
+
   match = trimmed.match(/^Ganador del partido (\d+)$/i);
   if (match) return { type: 'match_winner', matchId: match[1] };
 

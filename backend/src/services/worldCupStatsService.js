@@ -256,6 +256,57 @@ export function formatKnockoutSlotLabelEs(label) {
   return trimmed;
 }
 
+export function buildMatchSidesPreview(match, teamMap) {
+  const homeTeam = isTeamSlotAssigned(match.homeTeamId, teamMap)
+    ? formatTeamRef(teamMap[match.homeTeamId])
+    : null;
+  const awayTeam = isTeamSlotAssigned(match.awayTeamId, teamMap)
+    ? formatTeamRef(teamMap[match.awayTeamId])
+    : null;
+
+  return {
+    homeTeam,
+    awayTeam,
+    homeTeamSlotLabel: homeTeam ? null : resolveTeamSlotLabel(match, 'home', teamMap),
+    awayTeamSlotLabel: awayTeam ? null : resolveTeamSlotLabel(match, 'away', teamMap),
+  };
+}
+
+function formatMatchSideShortLabel(team, slotLabel) {
+  if (team?.fifaCode) return team.fifaCode;
+  if (slotLabel) return slotLabel;
+  return '?';
+}
+
+export function buildWinnerMatchSlotDisplay(sourceSides) {
+  if (!sourceSides) {
+    return { slotLabel: null, slotSourceMatch: null };
+  }
+
+  const homePart = formatMatchSideShortLabel(sourceSides.homeTeam, sourceSides.homeTeamSlotLabel);
+  const awayPart = formatMatchSideShortLabel(sourceSides.awayTeam, sourceSides.awayTeamSlotLabel);
+
+  return {
+    slotLabel: `Ganador de ${homePart} vs ${awayPart}`,
+    slotSourceMatch: sourceSides,
+  };
+}
+
+function resolveWinnerMatchSlot(rawLabel, matchesByExternalId, teamMap, resolvedMatchSides) {
+  const match = rawLabel.match(/^Winner Match (\d+)$/i);
+  if (!match) return null;
+
+  const matchId = match[1];
+  const sourceSides =
+    resolvedMatchSides?.get(matchId) ??
+    (matchesByExternalId?.get(matchId)
+      ? buildMatchSidesPreview(matchesByExternalId.get(matchId), teamMap)
+      : null);
+
+  if (!sourceSides) return null;
+  return buildWinnerMatchSlotDisplay(sourceSides);
+}
+
 function resolveTeamSlotLabel(match, side, teamMap) {
   const teamId = side === 'home' ? match.homeTeamId : match.awayTeamId;
   if (isTeamSlotAssigned(teamId, teamMap)) return null;
@@ -263,9 +314,34 @@ function resolveTeamSlotLabel(match, side, teamMap) {
   return rawLabel ? formatKnockoutSlotLabelEs(rawLabel) : null;
 }
 
-export function formatMatchSummary(match, teamMap, stadiumMap = {}, rankings = null) {
+function resolveTeamSlot(match, side, teamMap, context = {}) {
+  const teamId = side === 'home' ? match.homeTeamId : match.awayTeamId;
+  if (isTeamSlotAssigned(teamId, teamMap)) {
+    return { slotLabel: null, slotSourceMatch: null };
+  }
+
+  const rawLabel = extractRawTeamSlotLabel(match, side);
+  if (!rawLabel) return { slotLabel: null, slotSourceMatch: null };
+
+  const winnerSlot = resolveWinnerMatchSlot(
+    rawLabel,
+    context.matchesByExternalId,
+    teamMap,
+    context.resolvedMatchSides
+  );
+  if (winnerSlot) return winnerSlot;
+
+  return {
+    slotLabel: formatKnockoutSlotLabelEs(rawLabel),
+    slotSourceMatch: null,
+  };
+}
+
+export function formatMatchSummary(match, teamMap, stadiumMap = {}, rankings = null, context = {}) {
   const phase = resolveKnockoutPhase(match.type);
   const stadium = stadiumMap[match.stadiumId];
+  const homeSlot = resolveTeamSlot(match, 'home', teamMap, context);
+  const awaySlot = resolveTeamSlot(match, 'away', teamMap, context);
 
   return {
     id: match._id?.toString?.() ?? match.id,
@@ -286,8 +362,10 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}, rankings = n
     awayTeam: isTeamSlotAssigned(match.awayTeamId, teamMap)
       ? formatTeamRef(teamMap[match.awayTeamId], rankings)
       : null,
-    homeTeamSlotLabel: resolveTeamSlotLabel(match, 'home', teamMap),
-    awayTeamSlotLabel: resolveTeamSlotLabel(match, 'away', teamMap),
+    homeTeamSlotLabel: homeSlot.slotLabel,
+    awayTeamSlotLabel: awaySlot.slotLabel,
+    homeTeamSlotSourceMatch: homeSlot.slotSourceMatch,
+    awayTeamSlotSourceMatch: awaySlot.slotSourceMatch,
     broadcasters: getBroadcastersForMatch(match.externalId, {
       homeTeam: teamMap[match.homeTeamId],
       awayTeam: teamMap[match.awayTeamId],
@@ -308,6 +386,9 @@ export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}, rankings 
   const buckets = new Map();
   const knockoutMatches = matches.filter((match) => resolveKnockoutPhase(match.type));
   const hasSimKnockout = knockoutMatches.some(isSimulationMatch);
+  const matchesByExternalId = new Map(
+    knockoutMatches.map((match) => [String(match.externalId), match])
+  );
 
   for (const match of knockoutMatches) {
     if (hasSimKnockout && !isSimulationMatch(match)) continue;
@@ -319,7 +400,9 @@ export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}, rankings 
       buckets.set(phase.order, { ...phase, matches: [] });
     }
 
-    buckets.get(phase.order).matches.push(formatMatchSummary(match, teamMap, stadiumMap, rankings));
+    buckets.get(phase.order).matches.push(
+      formatMatchSummary(match, teamMap, stadiumMap, rankings, { matchesByExternalId })
+    );
   }
 
   return [...buckets.values()]

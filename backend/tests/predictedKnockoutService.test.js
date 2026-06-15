@@ -165,7 +165,13 @@ describe('predictedKnockoutService', () => {
 
     const m90 = findMatch(phases, 90);
     expect(m90.homeTeam).toBeNull();
-    expect(m90.homeTeamSlotLabel).toBe('Ganador del partido 73');
+    expect(m90.homeTeamSlotLabel).toBe('Ganador de A2 vs B2');
+    expect(m90.homeTeamSlotSourceMatch).toEqual({
+      homeTeam: expect.objectContaining({ externalId: 'A2', fifaCode: 'A2' }),
+      awayTeam: expect.objectContaining({ externalId: 'B2', fifaCode: 'B2' }),
+      homeTeamSlotLabel: null,
+      awayTeamSlotLabel: null,
+    });
     expect(m90.awayTeam?.externalId).toBe('F1');
   });
 

@@ -1,5 +1,5 @@
 import { THIRD_PLACE_COMBINATIONS } from '../data/thirdPlaceCombinations.js';
-import { formatKnockoutSlotLabelEs, formatMatchSummary } from './worldCupStatsService.js';
+import { buildWinnerMatchSlotDisplay, formatKnockoutSlotLabelEs, formatMatchSummary } from './worldCupStatsService.js';
 import { KNOCKOUT_ROUNDS } from './simulationTournamentService.js';
 import { hasUserPrediction } from './predictionLockService.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
@@ -139,21 +139,22 @@ function resolveSlotLabel({
   thirdByGroup,
   matchWinners,
   matchLosers,
+  resolvedMatchSides,
 }) {
-  if (!label) return { team: null, slotLabel: null };
+  if (!label) return { team: null, slotLabel: null, slotSourceMatch: null };
 
   let match = label.match(/^Winner Group ([A-L])$/i);
   if (match) {
     const row = standingsByGroup.get(match[1].toUpperCase())?.[0];
     const team = getTeamFromStandingRow(row, teamMap);
-    return { team, slotLabel: team ? null : formatKnockoutSlotLabelEs(label) };
+    return { team, slotLabel: team ? null : formatKnockoutSlotLabelEs(label), slotSourceMatch: null };
   }
 
   match = label.match(/^(?:Runner-up|2nd position) Group ([A-L])$/i);
   if (match) {
     const row = standingsByGroup.get(match[1].toUpperCase())?.[1];
     const team = getTeamFromStandingRow(row, teamMap);
-    return { team, slotLabel: team ? null : formatKnockoutSlotLabelEs(label) };
+    return { team, slotLabel: team ? null : formatKnockoutSlotLabelEs(label), slotSourceMatch: null };
   }
 
   if (isThirdPlaceLabel(label)) {
@@ -161,26 +162,31 @@ function resolveSlotLabel({
     if (thirdGroup) {
       const row = thirdByGroup.get(thirdGroup) || standingsByGroup.get(thirdGroup)?.[2];
       const team = getTeamFromStandingRow(row, teamMap);
-      if (team) return { team, slotLabel: null };
+      if (team) return { team, slotLabel: null, slotSourceMatch: null };
     }
-    return { team: null, slotLabel: formatKnockoutSlotLabelEs(label) };
+    return { team: null, slotLabel: formatKnockoutSlotLabelEs(label), slotSourceMatch: null };
   }
 
   match = label.match(/^Winner Match (\d+)$/i);
   if (match) {
     const winner = matchWinners.get(match[1]);
-    if (winner) return { team: winner, slotLabel: null };
-    return { team: null, slotLabel: formatKnockoutSlotLabelEs(label) };
+    if (winner) return { team: winner, slotLabel: null, slotSourceMatch: null };
+    const sourceSides = resolvedMatchSides?.get(match[1]);
+    if (sourceSides) {
+      const display = buildWinnerMatchSlotDisplay(sourceSides);
+      return { team: null, slotLabel: display.slotLabel, slotSourceMatch: display.slotSourceMatch };
+    }
+    return { team: null, slotLabel: formatKnockoutSlotLabelEs(label), slotSourceMatch: null };
   }
 
   match = label.match(/^Loser Match (\d+)$/i);
   if (match) {
     const loser = matchLosers.get(match[1]);
-    if (loser) return { team: loser, slotLabel: null };
-    return { team: null, slotLabel: formatKnockoutSlotLabelEs(label) };
+    if (loser) return { team: loser, slotLabel: null, slotSourceMatch: null };
+    return { team: null, slotLabel: formatKnockoutSlotLabelEs(label), slotSourceMatch: null };
   }
 
-  return { team: null, slotLabel: formatKnockoutSlotLabelEs(label) || label };
+  return { team: null, slotLabel: formatKnockoutSlotLabelEs(label) || label, slotSourceMatch: null };
 }
 
 function getSimulatedOutcome(match, prediction, teamMap) {
@@ -229,6 +235,8 @@ function buildPredictedMatchSummary({
   awayTeam,
   homeTeamSlotLabel,
   awayTeamSlotLabel,
+  homeTeamSlotSourceMatch,
+  awayTeamSlotSourceMatch,
   teamMap,
   stadiumMap,
 }) {
@@ -248,6 +256,8 @@ function buildPredictedMatchSummary({
     awayTeam,
     homeTeamSlotLabel: homeTeam ? null : homeTeamSlotLabel,
     awayTeamSlotLabel: awayTeam ? null : awayTeamSlotLabel,
+    homeTeamSlotSourceMatch: homeTeam ? null : homeTeamSlotSourceMatch,
+    awayTeamSlotSourceMatch: awayTeam ? null : awayTeamSlotSourceMatch,
     status: match.status === 'finished' ? 'finished' : 'upcoming',
   };
 }
@@ -283,6 +293,7 @@ export function buildPredictedKnockoutPhases({
   const { combinationKey, thirdByGroup } = getQualifiedThirdPlaceContext(groupStandings);
   const matchWinners = new Map();
   const matchLosers = new Map();
+  const resolvedMatchSides = new Map();
   const progress = initProgress();
   const buckets = new Map();
 
@@ -300,7 +311,7 @@ export function buildPredictedKnockoutPhases({
     const assignedAway = getAssignedTeam(match, 'away', teamMap);
 
     const homeResolved = assignedHome
-      ? { team: assignedHome, slotLabel: null }
+      ? { team: assignedHome, slotLabel: null, slotSourceMatch: null }
       : resolveSlotLabel({
       label: homeLabel,
       matchExternalId: match.externalId,
@@ -310,10 +321,11 @@ export function buildPredictedKnockoutPhases({
       thirdByGroup,
       matchWinners,
       matchLosers,
+      resolvedMatchSides,
         });
 
     const awayResolved = assignedAway
-      ? { team: assignedAway, slotLabel: null }
+      ? { team: assignedAway, slotLabel: null, slotSourceMatch: null }
       : resolveSlotLabel({
       label: awayLabel,
       matchExternalId: match.externalId,
@@ -323,6 +335,7 @@ export function buildPredictedKnockoutPhases({
       thirdByGroup,
       matchWinners,
       matchLosers,
+      resolvedMatchSides,
         });
 
     const summary = buildPredictedMatchSummary({
@@ -331,6 +344,8 @@ export function buildPredictedKnockoutPhases({
       awayTeam: awayResolved.team,
       homeTeamSlotLabel: homeResolved.slotLabel,
       awayTeamSlotLabel: awayResolved.slotLabel,
+      homeTeamSlotSourceMatch: homeResolved.slotSourceMatch,
+      awayTeamSlotSourceMatch: awayResolved.slotSourceMatch,
       teamMap,
       stadiumMap,
     });
@@ -351,6 +366,13 @@ export function buildPredictedKnockoutPhases({
       });
     }
     buckets.get(phase.order).matches.push(summary);
+
+    resolvedMatchSides.set(String(match.externalId), {
+      homeTeam: homeResolved.team,
+      awayTeam: awayResolved.team,
+      homeTeamSlotLabel: homeResolved.slotLabel,
+      awayTeamSlotLabel: awayResolved.slotLabel,
+    });
 
     const outcome = getSimulatedOutcome(
       {

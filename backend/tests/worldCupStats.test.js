@@ -3,6 +3,7 @@ import {
   annotateGroupQualification,
   computeGroupStandings,
   buildKnockoutPhases,
+  buildWinnerMatchSlotDisplay,
   computeTournamentStats,
   formatKnockoutSlotLabelEs,
   resolveGroupStandingsSource,
@@ -196,6 +197,49 @@ describe('worldCupStatsService', () => {
     expect(formatKnockoutSlotLabelEs('Runner-up Group A')).toBe('2.º del grupo A');
     expect(formatKnockoutSlotLabelEs('Winner Match 73')).toBe('Ganador del partido 73');
     expect(formatKnockoutSlotLabelEs('Loser Match 101')).toBe('Perdedor del partido 101');
+  });
+
+  it('describe ganadores de partido con banderas de local y visitante', () => {
+    const display = buildWinnerMatchSlotDisplay({
+      homeTeam: { fifaCode: 'ARG', nameEn: 'Argentina' },
+      awayTeam: { fifaCode: 'FRA', nameEn: 'France' },
+      homeTeamSlotLabel: null,
+      awayTeamSlotLabel: null,
+    });
+    expect(display.slotLabel).toBe('Ganador de ARG vs FRA');
+    expect(display.slotSourceMatch.homeTeam.fifaCode).toBe('ARG');
+  });
+
+  it('resuelve Winner Match con partido fuente en fase final', () => {
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const matches = [
+      {
+        externalId: '73',
+        homeTeamId: '0',
+        awayTeamId: '0',
+        homeScore: 0,
+        awayScore: 0,
+        type: 'r32',
+        status: 'upcoming',
+        raw: { home_team_label: 'Runner-up Group A', away_team_label: 'Runner-up Group B' },
+      },
+      {
+        externalId: '90',
+        homeTeamId: '0',
+        awayTeamId: '0',
+        homeScore: 0,
+        awayScore: 0,
+        type: 'round_of_16',
+        status: 'upcoming',
+        raw: { home_team_label: 'Winner Match 73', away_team_label: 'Winner Match 75' },
+      },
+    ];
+
+    const phases = buildKnockoutPhases(matches, teamMap);
+    const r16 = phases.find((phase) => phase.label === 'Octavos de final');
+    expect(r16.matches[0].homeTeamSlotLabel).toBe('Ganador de 2.º del grupo A vs 2.º del grupo B');
+    expect(r16.matches[0].homeTeamSlotSourceMatch.homeTeamSlotLabel).toBe('2.º del grupo A');
+    expect(r16.matches[0].homeTeamSlotSourceMatch.awayTeamSlotLabel).toBe('2.º del grupo B');
   });
 
   it('agrupa partidos de fase final por ronda', () => {

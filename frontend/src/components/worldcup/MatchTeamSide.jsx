@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
 import { getTeamFlag } from '@/lib/teamMeta';
-import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
+import { KnockoutSlotLabel, MatchWinnerSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
 
 function TeamCell({ team, fallback = '—' }) {
   const name = team?.nameEn || fallback;
@@ -27,7 +27,14 @@ export function getMatchSideShortLabel(team, slotLabel) {
   return 'TBD';
 }
 
-export default function MatchTeamSide({ team, slotLabel, align = 'left', compact = false, bracket = false }) {
+export default function MatchTeamSide({
+  team,
+  slotLabel,
+  slotSourceMatch,
+  align = 'left',
+  compact = false,
+  bracket = false,
+}) {
   if (team) {
     if (bracket) {
       const flagUrl = getTeamFlag(team);
@@ -96,8 +103,20 @@ export default function MatchTeamSide({ team, slotLabel, align = 'left', compact
     );
   }
 
-  if (slotLabel) {
+  if (slotLabel || slotSourceMatch) {
     if (bracket) {
+      if (slotSourceMatch) {
+        return (
+          <span className="flex min-w-0 flex-1 items-center justify-center px-1 py-0.5 text-primary">
+            <MatchWinnerSlotLabel
+              slotSourceMatch={slotSourceMatch}
+              label={slotLabel}
+              compact
+            />
+          </span>
+        );
+      }
+
       const parsed = parseKnockoutSlotLabel(slotLabel);
       const accentColor =
         parsed?.type === 'group_position'
@@ -127,7 +146,17 @@ export default function MatchTeamSide({ team, slotLabel, align = 'left', compact
         )}
         title={slotLabel}
       >
-        {compact && slotLabel.length > 20 ? `${slotLabel.slice(0, 18)}…` : slotLabel}
+        {slotSourceMatch ? (
+          <MatchWinnerSlotLabel
+            slotSourceMatch={slotSourceMatch}
+            label={slotLabel}
+            compact={compact}
+          />
+        ) : compact && slotLabel.length > 20 ? (
+          `${slotLabel.slice(0, 18)}…`
+        ) : (
+          slotLabel
+        )}
       </span>
     );
   }

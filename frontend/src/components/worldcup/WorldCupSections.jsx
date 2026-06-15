@@ -48,19 +48,28 @@ function MatchScore({ match }) {
   return (
     <div className="flex flex-col items-start gap-1 rounded-lg border border-border/70 bg-card px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
       <div className="min-w-0 sm:min-w-[140px] sm:flex-1">
-        <MatchTeamSide team={match.homeTeam} slotLabel={match.homeTeamSlotLabel} />
+        <MatchTeamSide
+          team={match.homeTeam}
+          slotLabel={match.homeTeamSlotLabel}
+          slotSourceMatch={match.homeTeamSlotSourceMatch}
+        />
       </div>
       <div className={cn('font-semibold tabular-nums sm:px-2 sm:text-center', statusClass)}>
         {scoreText}
       </div>
       <div className="min-w-0 sm:min-w-[140px] sm:flex-1 sm:text-right">
         <div className="sm:hidden">
-          <MatchTeamSide team={match.awayTeam} slotLabel={match.awayTeamSlotLabel} />
+          <MatchTeamSide
+            team={match.awayTeam}
+            slotLabel={match.awayTeamSlotLabel}
+            slotSourceMatch={match.awayTeamSlotSourceMatch}
+          />
         </div>
         <div className="hidden sm:block">
           <MatchTeamSide
             team={match.awayTeam}
             slotLabel={match.awayTeamSlotLabel}
+            slotSourceMatch={match.awayTeamSlotSourceMatch}
             align="right"
           />
         </div>
