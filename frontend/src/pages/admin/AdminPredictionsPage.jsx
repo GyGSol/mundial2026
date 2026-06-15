@@ -58,10 +58,11 @@ function formatMatchFilterDate(match) {
 
 function formatMatchOptionLabel(match) {
   const label = match.label ?? `${match.homeTeamId} vs ${match.awayTeamId}`;
-  const groupPart = match.group ? ` · G${match.group}` : '';
+  const num = match.externalId ? `#${match.externalId} ` : '';
+  const groupPart = match.group ? ` · Gr. ${match.group}` : '';
   const date = formatMatchFilterDate(match);
   const datePart = date ? ` · ${date}` : '';
-  return `${label}${groupPart}${datePart}`;
+  return `${num}${label}${groupPart}${datePart}`;
 }
 
 function compareMatchesBySchedule(a, b) {
