@@ -92,6 +92,52 @@ export function resolveOfficialKickoffAt(externalId) {
   return localWallClockToUtc(argentinaIsoToMdy(isoLocal), ARGENTINA_TIMEZONE);
 }
 
+/** Kickoff del fixture oficial para orden cronológico estable (ignora demoras operativas). */
+export function resolveScheduleKickoffAt(match) {
+  if (!match) return null;
+  const externalId = String(match.externalId ?? '');
+  if (externalId.startsWith('sim-')) {
+    return match.kickoffAt ? new Date(match.kickoffAt) : null;
+  }
+  const official = resolveOfficialKickoffAt(externalId);
+  if (official) return official;
+  if (match.kickoffAt) {
+    const stored = new Date(match.kickoffAt);
+    return Number.isNaN(stored.getTime()) ? null : stored;
+  }
+  return null;
+}
+
+/** Kickoff para mostrar: demora operativa → BD; si no, fixture oficial → BD. */
+export function resolveDisplayKickoffAt(match) {
+  if (!match) return null;
+  const externalId = String(match.externalId ?? '');
+  const stored = match.kickoffAt ? new Date(match.kickoffAt) : null;
+  const storedValid = stored && !Number.isNaN(stored.getTime()) ? stored : null;
+
+  if (externalId.startsWith('sim-')) return storedValid;
+
+  const official = resolveOfficialKickoffAt(externalId);
+  const phase = match.weatherOps?.phase;
+  if (phase && phase !== 'normal' && storedValid) return storedValid;
+
+  if (official && storedValid && Math.abs(storedValid.getTime() - official.getTime()) > 60_000) {
+    return storedValid;
+  }
+
+  return official ?? storedValid ?? null;
+}
+
+/** @deprecated alias — usar resolveScheduleKickoffAt */
+export function resolveEffectiveKickoffAt(match) {
+  return resolveScheduleKickoffAt(match);
+}
+
+export function effectiveKickoffMs(match) {
+  const kickoff = resolveScheduleKickoffAt(match);
+  return kickoff ? kickoff.getTime() : 0;
+}
+
 /**
  * Canonical kickoff for sync: official Argentina fixture, else stadium local_date, else API fields.
  */

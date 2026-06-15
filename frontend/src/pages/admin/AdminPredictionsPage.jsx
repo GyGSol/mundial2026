@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
@@ -42,9 +42,36 @@ const sourceLabels = {
   default: 'Default',
 };
 
+function formatMatchFilterDate(match) {
+  if (!match?.kickoffAt) return '';
+  const date = new Date(match.kickoffAt);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: ARGENTINA_TIMEZONE,
+  }).format(date);
+}
+
 function formatMatchOptionLabel(match) {
   const label = match.label ?? `${match.homeTeamId} vs ${match.awayTeamId}`;
-  return match.group ? `${label} (${match.group})` : label;
+  const groupPart = match.group ? ` · G${match.group}` : '';
+  const date = formatMatchFilterDate(match);
+  const datePart = date ? ` · ${date}` : '';
+  return `${label}${groupPart}${datePart}`;
+}
+
+function compareMatchesBySchedule(a, b) {
+  const kickA = a.kickoffAt ? new Date(a.kickoffAt).getTime() : 0;
+  const kickB = b.kickoffAt ? new Date(b.kickoffAt).getTime() : 0;
+  if (kickA !== kickB) return kickA - kickB;
+  const extA = a.externalId ?? '';
+  const extB = b.externalId ?? '';
+  if (extA !== extB) return extA.localeCompare(extB, undefined, { numeric: true });
+  return (a.id ?? '').localeCompare(b.id ?? '');
 }
 
 const emptyCreateForm = { userId: '', matchId: '', homeGoals: '0', awayGoals: '0' };
@@ -131,12 +158,21 @@ export default function AdminPredictionsPage() {
   }, [allUsers, predictions]);
 
   const matchesForFilter = useMemo(() => {
-    return matches.filter((m) => {
-      if (statusFilter && m.status !== statusFilter) return false;
-      if (groupFilter && m.group !== groupFilter) return false;
-      return true;
-    });
+    return matches
+      .filter((m) => {
+        if (statusFilter && m.status !== statusFilter) return false;
+        if (groupFilter && m.group !== groupFilter) return false;
+        return true;
+      })
+      .sort(compareMatchesBySchedule);
   }, [matches, statusFilter, groupFilter]);
+
+  useEffect(() => {
+    if (matchFilter === 'all') return;
+    if (!matchesForFilter.some((m) => m.id === matchFilter)) {
+      setMatchFilter('all');
+    }
+  }, [matchFilter, matchesForFilter]);
 
   const filteredPredictions = useMemo(() => {
     const q = search.trim().toLowerCase();

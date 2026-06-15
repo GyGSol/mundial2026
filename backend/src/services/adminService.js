@@ -25,6 +25,7 @@ import { revokeAllUserSessions } from './sessionService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { env } from '../config/env.js';
 import { isAdminConfigured } from './adminSetupService.js';
+import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import {
   WEATHER_OPS_PHASES,
   WEATHER_OPS_REASONS,
@@ -62,6 +63,7 @@ function serializeGroup(group) {
 }
 
 function serializeMatch(match) {
+  const kickoffAt = resolveDisplayKickoffAt(match) ?? match.kickoffAt;
   return {
     id: match._id.toString(),
     externalId: match.externalId,
@@ -72,11 +74,61 @@ function serializeMatch(match) {
     group: match.group,
     matchday: match.matchday,
     status: match.status,
-    kickoffAt: match.kickoffAt,
+    kickoffAt,
+    localDate: match.localDate ?? '',
+    kickoffTimezone: match.kickoffTimezone,
     type: match.type,
     weatherOps: serializeWeatherOpsForClient(match.weatherOps),
     lastSyncedAt: match.lastSyncedAt,
   };
+}
+
+function adminPredictionMatchSnapshot(match, homeLabel, awayLabel) {
+  if (!match) return null;
+  const kickoffAt = resolveDisplayKickoffAt(match) ?? match.kickoffAt ?? null;
+  return {
+    externalId: match.externalId,
+    homeTeamId: match.homeTeamId,
+    awayTeamId: match.awayTeamId,
+    status: match.status,
+    homeScore: match.homeScore,
+    awayScore: match.awayScore,
+    group: match.group,
+    kickoffAt,
+    localDate: match.localDate ?? '',
+    label: `${homeLabel} vs ${awayLabel}`,
+  };
+}
+
+function matchScheduleSortKey(match) {
+  if (!match) {
+    return { kickoff: 0, externalId: '', id: '' };
+  }
+  const kickoff = resolveScheduleKickoffAt(match);
+  return {
+    kickoff: kickoff ? kickoff.getTime() : 0,
+    externalId: match.externalId ?? '',
+    id: match._id?.toString?.() ?? match.id ?? '',
+  };
+}
+
+/** Stable tournament order: kickoff → externalId → id (never interleave by user). */
+export function compareMatchesBySchedule(matchA, matchB) {
+  const a = matchScheduleSortKey(matchA);
+  const b = matchScheduleSortKey(matchB);
+  if (a.kickoff !== b.kickoff) return a.kickoff - b.kickoff;
+  if (a.externalId !== b.externalId) {
+    return a.externalId.localeCompare(b.externalId, undefined, { numeric: true });
+  }
+  return a.id.localeCompare(b.id);
+}
+
+export function compareAdminPredictionsBySchedule(a, b) {
+  const matchCmp = compareMatchesBySchedule(a.match, b.match);
+  if (matchCmp !== 0) return matchCmp;
+  const userA = (a.userName || a.userEmail || '').toLowerCase();
+  const userB = (b.userName || b.userEmail || '').toLowerCase();
+  return userA.localeCompare(userB, 'es');
 }
 
 export async function getAdminStats() {
@@ -505,7 +557,8 @@ export async function listAdminMatches({ status, group } = {}) {
   if (status) filter.status = status;
   if (group) filter.group = group;
 
-  const matches = await Match.find(filter).sort({ kickoffAt: 1 }).limit(500).lean();
+  const matches = await Match.find(filter).limit(500).lean();
+  matches.sort(compareMatchesBySchedule);
 
   const teamIds = new Set();
   for (const m of matches) {
@@ -718,7 +771,10 @@ async function resolvePredictionMatchIds({ matchId, status, group } = {}) {
   }
   if (group) matchFilter.group = group;
 
-  const matching = await Match.find(matchFilter).select('_id').lean();
+  const matching = await Match.find(matchFilter)
+    .select('_id externalId kickoffAt localDate')
+    .lean();
+  matching.sort(compareMatchesBySchedule);
   return matching.map((m) => m._id);
 }
 
@@ -765,7 +821,7 @@ export async function listAdminPredictions({
     .populate('userId', 'name email')
     .populate(
       'matchId',
-      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt externalId'
+      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt localDate externalId'
     )
     .lean();
 
@@ -800,30 +856,11 @@ export async function listAdminPredictions({
       bonusPoint: p.bonusPoint ?? 0,
       predictionSource: p.predictionSource ?? 'user',
       updatedAt: p.updatedAt,
-      match: match
-        ? {
-            externalId: match.externalId,
-            homeTeamId: match.homeTeamId,
-            awayTeamId: match.awayTeamId,
-            status: match.status,
-            homeScore: match.homeScore,
-            awayScore: match.awayScore,
-            group: match.group,
-            kickoffAt: match.kickoffAt,
-            label: `${homeLabel} vs ${awayLabel}`,
-          }
-        : null,
+      match: adminPredictionMatchSnapshot(match, homeLabel, awayLabel),
     };
   });
 
-  rows.sort((a, b) => {
-    const kickA = a.match?.kickoffAt ? new Date(a.match.kickoffAt).getTime() : 0;
-    const kickB = b.match?.kickoffAt ? new Date(b.match.kickoffAt).getTime() : 0;
-    if (kickA !== kickB) return kickA - kickB;
-    const userA = (a.userName || a.userEmail || '').toLowerCase();
-    const userB = (b.userName || b.userEmail || '').toLowerCase();
-    return userA.localeCompare(userB, 'es');
-  });
+  rows.sort(compareAdminPredictionsBySchedule);
 
   return rows;
 }
@@ -833,7 +870,7 @@ async function serializeAdminPredictionRow(prediction) {
     .populate('userId', 'name email')
     .populate(
       'matchId',
-      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt externalId'
+      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt localDate externalId'
     )
     .lean();
 
@@ -865,19 +902,11 @@ async function serializeAdminPredictionRow(prediction) {
     bonusPoint: populated.bonusPoint ?? 0,
     predictionSource: populated.predictionSource ?? 'user',
     updatedAt: populated.updatedAt,
-    match: match
-      ? {
-          externalId: match.externalId,
-          homeTeamId: match.homeTeamId,
-          awayTeamId: match.awayTeamId,
-          status: match.status,
-          homeScore: match.homeScore,
-          awayScore: match.awayScore,
-          group: match.group,
-          kickoffAt: match.kickoffAt,
-          label: `${teamLabel(homeTeam, match.homeTeamId)} vs ${teamLabel(awayTeam, match.awayTeamId)}`,
-        }
-      : null,
+    match: adminPredictionMatchSnapshot(
+      match,
+      teamLabel(homeTeam, match?.homeTeamId),
+      teamLabel(awayTeam, match?.awayTeamId)
+    ),
   };
 }
 
