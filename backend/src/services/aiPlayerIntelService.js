@@ -431,7 +431,7 @@ ${JSON.stringify(statsContext, null, 2)}
 
 Pregunta: ${trimmed}
 
-Respondé en español, breve y concreto (máximo 3 párrafos). Usá las estadísticas provistas cuando respondas sobre forma, minutos o goles. Usá markdown ligero cuando ayude (negritas, listas). No uses HTML ni bloques de código.`;
+Respondé en español, breve y concreto (máximo 3 párrafos). Usá las estadísticas provistas cuando respondas sobre forma, minutos o goles. Usá markdown ligero cuando ayude (negritas, listas). No uses HTML ni bloques de código. No cites nombres técnicos de campos ni valores en inglés del sistema (healthStatus, unknown, etc.).`;
 
   const result = await callAiForText(prompt, { fetchImpl });
   return {

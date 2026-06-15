@@ -16,6 +16,10 @@ import {
   hasAiProvider,
   WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
 } from './aiPredictionService.js';
+import {
+  humanizePromptContext,
+  WORLD_CUP_USER_FACING_LANGUAGE_RULES,
+} from './aiPromptHumanizer.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
 import {
   getVenueWeatherForStadium,
@@ -312,8 +316,10 @@ function buildConsultationPrompt(topicType, context, thread, question) {
 
 ${topicInstructions(topicType)}
 
+${WORLD_CUP_USER_FACING_LANGUAGE_RULES}
+
 Contexto:
-${JSON.stringify(context, null, 2)}
+${JSON.stringify(humanizePromptContext(context), null, 2)}
 ${historyBlock}
 Pregunta del usuario: ${question}
 

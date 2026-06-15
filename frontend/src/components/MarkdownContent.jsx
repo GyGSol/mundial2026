@@ -28,7 +28,7 @@ const markdownComponents = {
   th: ({ children }) => (
     <th className="px-2 py-1.5 font-semibold text-foreground">{children}</th>
   ),
-  td: ({ children }) => <td className="px-2 py-1.5 align-top">{children}</td>,
+  td: ({ children }) => <td className="px-2 py-1.5 align-top text-foreground">{children}</td>,
   hr: () => <hr className="my-3 border-border" />,
   a: ({ href, children }) => (
     <a
@@ -40,12 +40,28 @@ const markdownComponents = {
       {children}
     </a>
   ),
-  code: ({ inline, children }) =>
-    inline ? (
-      <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">{children}</code>
-    ) : (
-      <code className="block overflow-x-auto rounded-md bg-muted p-2 font-mono text-xs">{children}</code>
-    ),
+  pre: ({ children }) => <>{children}</>,
+  code: ({ className, children, ...props }) => {
+    const text = String(children).replace(/\n$/, '');
+    const isBlock = Boolean(className) || text.includes('\n');
+    if (isBlock) {
+      return (
+        <pre className="mb-2 overflow-x-auto rounded-md bg-muted p-2 font-mono text-xs last:mb-0">
+          <code className={className} {...props}>
+            {text}
+          </code>
+        </pre>
+      );
+    }
+    return (
+      <code
+        className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
 };
 
 export default function MarkdownContent({ children, className }) {
