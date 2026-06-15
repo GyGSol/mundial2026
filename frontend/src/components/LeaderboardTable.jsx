@@ -70,7 +70,7 @@ function StatDeltaIndicator({ direction, amount }) {
   return null;
 }
 
-function StatValue({ value, delta, align = 'center' }) {
+function StatValue({ value, delta, align = 'center', valueClassName }) {
   const normalized = normalizeStatDelta(delta);
 
   return (
@@ -81,7 +81,7 @@ function StatValue({ value, delta, align = 'center' }) {
         align === 'right' && 'justify-end'
       )}
     >
-      <span>{value}</span>
+      <span className={valueClassName}>{value}</span>
       <StatDeltaIndicator direction={normalized?.direction} amount={normalized?.amount} />
     </span>
   );
@@ -112,7 +112,7 @@ export default function LeaderboardTable({
         <Table className="min-w-[520px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-8 px-1 sm:w-10">#</TableHead>
+              <TableHead className="w-11 px-1 sm:w-14">#</TableHead>
               <TableHead className="min-w-[5.5rem] px-1 sm:min-w-0 sm:px-2">Jugador</TableHead>
               {statColumns.map((col) => (
                 <TableHead key={col.key} className={statHeadClass} title={col.title}>
@@ -134,11 +134,15 @@ export default function LeaderboardTable({
                 <TableRow key={row.id}>
                   <TableCell
                     className={cn(
-                      'text-muted-foreground tabular-nums',
-                      prizedRank ? prizedRankCellClass : null
+                      'px-1 tabular-nums sm:px-2',
+                      prizedRank ? prizedRankCellClass : 'text-muted-foreground'
                     )}
                   >
-                    <StatValue value={row.rank} delta={rowDeltas.rank} />
+                    <StatValue
+                      value={row.rank}
+                      delta={rowDeltas.rank}
+                      valueClassName="text-base font-bold leading-none sm:text-lg"
+                    />
                   </TableCell>
                   <TableCell className="max-w-[5.5rem] px-1 font-medium sm:max-w-none sm:px-2">
                     <div className="flex min-w-0 items-center justify-between gap-2">
