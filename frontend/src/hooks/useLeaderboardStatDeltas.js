@@ -4,6 +4,7 @@ const TRACKED_KEYS = ['rank', 'pa', 'gl', 'gv', 'gt', 'pb', 'totalPoints'];
 const INVERT_DELTA_KEYS = new Set(['rank']);
 const INDICATOR_TTL_MS = 8000;
 const CATCHUP_INDICATOR_TTL_MS = 20000;
+const LIVE_POINTS_NEUTRAL_KEYS = ['totalPoints'];
 
 function snapshotRow(row) {
   return {
@@ -27,8 +28,8 @@ function leaderboardFingerprint(leaderboard) {
     .join('|');
 }
 
-export function directionForStatChange(key, previous, next) {
-  if (previous === next) return null;
+export function directionForStatChange(key, previous, next, { includeNeutral = false } = {}) {
+  if (previous === next) return includeNeutral ? 'neutral' : null;
   const rawDelta = next - previous;
   const delta = INVERT_DELTA_KEYS.has(key) ? -rawDelta : rawDelta;
   if (delta > 0) return 'up';
@@ -36,7 +37,11 @@ export function directionForStatChange(key, previous, next) {
   return null;
 }
 
-export function computeLeaderboardStatChanges(previousById, leaderboard) {
+export function computeLeaderboardStatChanges(
+  previousById,
+  leaderboard,
+  { neutralKeys = [] } = {}
+) {
   if (!previousById || !leaderboard?.length) return {};
 
   const changes = {};
@@ -49,7 +54,9 @@ export function computeLeaderboardStatChanges(previousById, leaderboard) {
     const rowChanges = {};
 
     for (const key of TRACKED_KEYS) {
-      const direction = directionForStatChange(key, previous[key], current[key]);
+      const direction = directionForStatChange(key, previous[key], current[key], {
+        includeNeutral: neutralKeys.includes(key),
+      });
       if (direction) rowChanges[key] = direction;
     }
 
@@ -139,7 +146,9 @@ export function useLeaderboardStatDeltas(
         leaderboardKickoffBaseline.map((row) => [row.id, snapshotRow(row)])
       );
       applyChanges(
-        computeLeaderboardStatChanges(baselineById, leaderboard),
+        computeLeaderboardStatChanges(baselineById, leaderboard, {
+          neutralKeys: LIVE_POINTS_NEUTRAL_KEYS,
+        }),
         CATCHUP_INDICATOR_TTL_MS
       );
     }

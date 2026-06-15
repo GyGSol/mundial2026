@@ -29,7 +29,7 @@ function isPrizedRank(rank, prizesWinnersCount) {
   return prizesWinnersCount > 0 && rank <= prizesWinnersCount;
 }
 
-function StatDeltaArrow({ direction }) {
+function StatDeltaIndicator({ direction }) {
   if (direction === 'up') {
     return (
       <ArrowUp
@@ -48,6 +48,17 @@ function StatDeltaArrow({ direction }) {
       />
     );
   }
+  if (direction === 'neutral') {
+    return (
+      <span
+        className="inline-flex size-3 shrink-0 items-center justify-center"
+        aria-hidden="true"
+        title="Sin puntos nuevos en este partido"
+      >
+        <span className="size-2 rounded-full bg-yellow-400" />
+      </span>
+    );
+  }
   return null;
 }
 
@@ -61,7 +72,7 @@ function StatValue({ value, direction, align = 'center' }) {
       )}
     >
       <span>{value}</span>
-      <StatDeltaArrow direction={direction} />
+      <StatDeltaIndicator direction={direction} />
     </span>
   );
 }
