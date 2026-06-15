@@ -65,14 +65,14 @@ function formatMatchOptionLabel(match) {
   return `${num}${label}${groupPart}${datePart}`;
 }
 
-function compareMatchesBySchedule(a, b) {
-  const kickA = a.kickoffAt ? new Date(a.kickoffAt).getTime() : 0;
-  const kickB = b.kickoffAt ? new Date(b.kickoffAt).getTime() : 0;
-  if (kickA !== kickB) return kickA - kickB;
-  const extA = a.externalId ?? '';
-  const extB = b.externalId ?? '';
-  if (extA !== extB) return extA.localeCompare(extB, undefined, { numeric: true });
-  return (a.id ?? '').localeCompare(b.id ?? '');
+function compareMatchesByFifaNumber(a, b) {
+  const extA = String(a.externalId ?? '');
+  const extB = String(b.externalId ?? '');
+  const aIsNum = /^\d+$/.test(extA);
+  const bIsNum = /^\d+$/.test(extB);
+  if (aIsNum && bIsNum) return Number(extA) - Number(extB);
+  if (aIsNum !== bIsNum) return aIsNum ? -1 : 1;
+  return extA.localeCompare(extB, undefined, { numeric: true });
 }
 
 const emptyCreateForm = { userId: '', matchId: '', homeGoals: '0', awayGoals: '0' };
@@ -166,8 +166,13 @@ export default function AdminPredictionsPage() {
         if (groupFilter && m.group !== groupFilter) return false;
         return true;
       })
-      .sort(compareMatchesBySchedule);
+      .sort(compareMatchesByFifaNumber);
   }, [matches, statusFilter, groupFilter]);
+
+  const matchesSortedByNumber = useMemo(
+    () => [...matches].filter((m) => m.externalId).sort(compareMatchesByFifaNumber),
+    [matches]
+  );
 
   useEffect(() => {
     if (matchFilter === 'all') return;
@@ -410,7 +415,7 @@ export default function AdminPredictionsPage() {
                 <SelectValue placeholder="Partido" />
               </SelectTrigger>
               <SelectContent>
-                {matches.map((m) => (
+                {matchesSortedByNumber.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {formatMatchOptionLabel(m)}
                   </SelectItem>

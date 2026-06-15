@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   compareAdminPredictionsBySchedule,
+  compareMatchesByFifaNumber,
   compareMatchesBySchedule,
   resolvePredictionMatchIds,
 } from '../src/services/adminService.js';
@@ -56,6 +57,19 @@ describe('admin prediction sort', () => {
     matches.sort(compareMatchesBySchedule);
 
     expect(matches.map((m) => m.externalId)).toEqual(['1', '2', '10']);
+  });
+
+  it('orders matches by FIFA number for admin selects', () => {
+    const matches = [
+      { externalId: '16', kickoffAt: '2026-06-15T19:00:00.000Z', id: 'm16' },
+      { externalId: '9', kickoffAt: '2026-06-14T23:00:00.000Z', id: 'm9' },
+      { externalId: '11', kickoffAt: '2026-06-14T20:00:00.000Z', id: 'm11' },
+      { externalId: '6', kickoffAt: '2026-06-14T04:00:00.000Z', id: 'm6' },
+    ];
+
+    matches.sort(compareMatchesByFifaNumber);
+
+    expect(matches.map((m) => m.externalId)).toEqual(['6', '9', '11', '16']);
   });
 
   it('uses official fixture kickoff when stored kickoffAt is wrong', () => {

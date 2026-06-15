@@ -112,6 +112,17 @@ function matchScheduleSortKey(match) {
   };
 }
 
+/** Tournament fixture order by FIFA match number (admin selects use #N). */
+export function compareMatchesByFifaNumber(matchA, matchB) {
+  const extA = String(matchA?.externalId ?? '');
+  const extB = String(matchB?.externalId ?? '');
+  const aIsNum = /^\d+$/.test(extA);
+  const bIsNum = /^\d+$/.test(extB);
+  if (aIsNum && bIsNum) return Number(extA) - Number(extB);
+  if (aIsNum !== bIsNum) return aIsNum ? -1 : 1;
+  return extA.localeCompare(extB, undefined, { numeric: true });
+}
+
 /** Stable tournament order: kickoff → externalId → id (never interleave by user). */
 export function compareMatchesBySchedule(matchA, matchB) {
   const a = matchScheduleSortKey(matchA);
@@ -558,7 +569,7 @@ export async function listAdminMatches({ status, group } = {}) {
   if (group) filter.group = group;
 
   const matches = await Match.find(filter).limit(500).lean();
-  matches.sort(compareMatchesBySchedule);
+  matches.sort(compareMatchesByFifaNumber);
 
   const teamIds = new Set();
   for (const m of matches) {
