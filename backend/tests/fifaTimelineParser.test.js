@@ -3,6 +3,8 @@ import {
   parseFifaMinute,
   parseFifaTimeline,
   resolveVarEventType,
+  fifaRawTimelineHasMatchEnd,
+  parsedTimelineHasMatchEnd,
 } from '../src/services/fifaTimelineParser.js';
 
 describe('fifaTimelineParser', () => {
@@ -202,6 +204,16 @@ describe('fifaTimelineParser', () => {
         minute: 52,
         description: 'Yellow card reassigned',
       });
+    });
+  });
+
+  describe('match end detection', () => {
+    it('detecta type 26 en timeline cruda o parseada', () => {
+      const raw = { Event: [{ Type: 8, Period: 5 }, { Type: 26, Period: 10 }] };
+      const parsed = parseFifaTimeline(raw, 'home-id', 'away-id');
+      expect(fifaRawTimelineHasMatchEnd(raw)).toBe(true);
+      expect(parsedTimelineHasMatchEnd(parsed)).toBe(true);
+      expect(fifaRawTimelineHasMatchEnd({ Event: [{ Type: 8 }] })).toBe(false);
     });
   });
 });

@@ -256,3 +256,13 @@ export function parseFifaTimeline(timelineJson, homeTeamId, awayTeamId) {
 
   return parsed.sort((a, b) => a.sortKey - b.sortKey);
 }
+
+/** FIFA type 26 = fin de partido (independiente de worldcup26). */
+export function fifaRawTimelineHasMatchEnd(timelineJson) {
+  const events = timelineJson?.Event ?? [];
+  return events.some((event) => Number(event?.Type) === 26);
+}
+
+export function parsedTimelineHasMatchEnd(timeline = []) {
+  return timeline.some((event) => event?.type === 'match_end');
+}

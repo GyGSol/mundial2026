@@ -7,7 +7,11 @@ import {
   fetchMatchTimeline,
   resolveFifaMatchEntry,
 } from './fifaApiClient.js';
-import { parseFifaTimeline } from './fifaTimelineParser.js';
+import {
+  parseFifaTimeline,
+  parsedTimelineHasMatchEnd,
+  fifaRawTimelineHasMatchEnd,
+} from './fifaTimelineParser.js';
 import { fetchFifaReportStats, FIFA_REPORT_STATS_VERSION } from './fifaReportPdfService.js';
 import {
   goalCountsFromTimeline,
@@ -138,19 +142,22 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
     }
   }
 
-  if (!matchesToSync.length) return { matches: 0, events: 0, reports: 0, scoringIds: [] };
+  if (!matchesToSync.length) {
+    return { matches: 0, events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [] };
+  }
 
   let calendar = [];
   try {
     calendar = await fetchAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar sync skipped:', err.message);
-    return { matches: 0, events: 0, reports: 0, scoringIds: [] };
+    return { matches: 0, events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [] };
   }
 
   let eventsSynced = 0;
   let reportsSynced = 0;
   const scoringIds = [];
+  const newlyFinishedIds = [];
 
   for (const match of matchesToSync) {
     const { homeTeam, awayTeam } = await loadMatchTeams(match);
@@ -245,14 +252,25 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
             scoringIds.push(match._id);
           }
 
+          const hasMatchEnd =
+            parsedTimelineHasMatchEnd(timeline) || fifaRawTimelineHasMatchEnd(timelineJson);
+          if (match.status === 'live' && hasMatchEnd) {
+            rawUpdate.status = 'finished';
+            rawUpdate['raw.time_elapsed'] = 'finished';
+            rawUpdate['raw.finished'] = 'TRUE';
+            newlyFinishedIds.push(match._id);
+            scoringIds.push(match._id);
+          }
+
           matchUpdated = true;
           eventsSynced += 1;
         }
       }
 
-      if (match.status === 'finished') {
+      const effectiveStatus = rawUpdate.status ?? match.status;
+      if (effectiveStatus === 'finished') {
         const reportUpdated = await applyFinishedReportUpdate(
-          match,
+          { ...match, status: 'finished' },
           homeTeam,
           awayTeam,
           fifaEntry,
@@ -277,5 +295,6 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
     events: eventsSynced,
     reports: reportsSynced,
     scoringIds,
+    newlyFinishedIds,
   };
 }

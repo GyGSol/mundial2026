@@ -349,6 +349,10 @@ export async function runSync({ includeMetadata = true } = {}) {
     const fifaResult = await syncFifaMatchEvents({ extraMatchIds: newlyFinishedIds });
     const assistResult = await assistLiveMatchEvents();
 
+    if (fifaResult.newlyFinishedIds?.length) {
+      await syncFifaReportsForMatchIds(fifaResult.newlyFinishedIds);
+    }
+
     for (const matchId of fifaResult.scoringIds ?? []) {
       await recalculateMatchScores(matchId);
     }
