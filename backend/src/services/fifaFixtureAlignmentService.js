@@ -1,6 +1,7 @@
 import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
 import { Prediction } from '../models/Prediction.js';
+import { hasUserPrediction } from './predictionLockService.js';
 import {
   extractTeamAbbreviation,
   fetchAllCalendarMatches,
@@ -110,7 +111,29 @@ async function remapPredictionsForTeamRotation({
       });
 
       if (existingOnDestination) {
-        await Prediction.deleteOne({ _id: prediction._id });
+        const sourceValuable = hasUserPrediction(prediction);
+        const destValuable = hasUserPrediction(existingOnDestination);
+
+        if (sourceValuable && !destValuable) {
+          await Prediction.updateOne(
+            { _id: existingOnDestination._id },
+            {
+              $set: {
+                homeGoals: prediction.homeGoals,
+                awayGoals: prediction.awayGoals,
+                userSubmitted: prediction.userSubmitted,
+                predictionSource: prediction.predictionSource ?? 'user',
+                aiModel: prediction.aiModel ?? null,
+                aiReasoning: prediction.aiReasoning ?? null,
+              },
+            }
+          );
+        }
+
+        // Solo descartar el origen si es 0-0 automático; nunca borrar predicciones reales.
+        if (!sourceValuable) {
+          await Prediction.deleteOne({ _id: prediction._id });
+        }
         continue;
       }
 

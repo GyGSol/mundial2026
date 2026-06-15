@@ -431,7 +431,11 @@ export default function AdminPredictionsPage() {
           </Table>
           {!loading && !filteredPredictions.length && !error ? (
             <p className="p-4 text-sm text-slate-500">
-              {hasActiveFilters ? 'Ninguna predicción coincide con los filtros.' : 'Sin predicciones cargadas.'}
+              {hasActiveFilters
+                ? matchFilter !== 'all' && statusFilter !== 'live' && statusFilter !== 'finished'
+                  ? 'Ninguna predicción coincide con los filtros. Si el partido aún no cerró (T-60), los usuarios sin carga aparecen recién al cierre o cuando envían su marcador.'
+                  : 'Ninguna predicción coincide con los filtros.'
+                : 'Sin predicciones cargadas.'}
             </p>
           ) : null}
         </div>
@@ -468,6 +472,9 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
         <p>{prediction.userName || '—'}</p>
         <p className="text-xs text-slate-500">
           {prediction.userEmail}
+          {!prediction.userSubmitted && prediction.homeGoals === 0 && prediction.awayGoals === 0 ? (
+            <span className="ml-1 text-amber-400">· Auto 0-0 (T-60)</span>
+          ) : null}
           {prediction.predictionSource && prediction.predictionSource !== 'user' ? (
             <span className="ml-1 text-violet-400">
               · {sourceLabels[prediction.predictionSource] ?? prediction.predictionSource}
