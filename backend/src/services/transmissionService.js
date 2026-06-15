@@ -4,6 +4,7 @@ import {
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
+import { compareMatchesBySchedule } from './matchSortService.js';
 
 export const TRANSMISSIONS_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
@@ -24,7 +25,7 @@ function sortMatchesForDay(matches) {
   return [...matches].sort((a, b) => {
     const statusDiff = (order[a.status] ?? 9) - (order[b.status] ?? 9);
     if (statusDiff !== 0) return statusDiff;
-    return new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime();
+    return compareMatchesBySchedule(a, b);
   });
 }
 

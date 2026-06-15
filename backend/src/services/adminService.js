@@ -25,7 +25,13 @@ import { revokeAllUserSessions } from './sessionService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { env } from '../config/env.js';
 import { isAdminConfigured } from './adminSetupService.js';
-import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTimeService.js';
+import { resolveDisplayKickoffAt } from './kickoffTimeService.js';
+import {
+  compareMatchesByFifaNumber,
+  compareMatchesBySchedule,
+} from './matchSortService.js';
+
+export { compareMatchesByFifaNumber, compareMatchesBySchedule } from './matchSortService.js';
 import {
   WEATHER_OPS_PHASES,
   WEATHER_OPS_REASONS,
@@ -98,40 +104,6 @@ function adminPredictionMatchSnapshot(match, homeLabel, awayLabel) {
     localDate: match.localDate ?? '',
     label: `${homeLabel} vs ${awayLabel}`,
   };
-}
-
-function matchScheduleSortKey(match) {
-  if (!match) {
-    return { kickoff: 0, externalId: '', id: '' };
-  }
-  const kickoff = resolveScheduleKickoffAt(match);
-  return {
-    kickoff: kickoff ? kickoff.getTime() : 0,
-    externalId: match.externalId ?? '',
-    id: match._id?.toString?.() ?? match.id ?? '',
-  };
-}
-
-/** Tournament fixture order by FIFA match number (admin selects use #N). */
-export function compareMatchesByFifaNumber(matchA, matchB) {
-  const extA = String(matchA?.externalId ?? '');
-  const extB = String(matchB?.externalId ?? '');
-  const aIsNum = /^\d+$/.test(extA);
-  const bIsNum = /^\d+$/.test(extB);
-  if (aIsNum && bIsNum) return Number(extA) - Number(extB);
-  if (aIsNum !== bIsNum) return aIsNum ? -1 : 1;
-  return extA.localeCompare(extB, undefined, { numeric: true });
-}
-
-/** Stable tournament order: kickoff → externalId → id (never interleave by user). */
-export function compareMatchesBySchedule(matchA, matchB) {
-  const a = matchScheduleSortKey(matchA);
-  const b = matchScheduleSortKey(matchB);
-  if (a.kickoff !== b.kickoff) return a.kickoff - b.kickoff;
-  if (a.externalId !== b.externalId) {
-    return a.externalId.localeCompare(b.externalId, undefined, { numeric: true });
-  }
-  return a.id.localeCompare(b.id);
 }
 
 export function compareAdminPredictionsBySchedule(a, b) {

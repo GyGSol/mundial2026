@@ -21,6 +21,7 @@ import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
 import {
   attachWeatherAndScheduleToEnrichedMatches,
 } from './matchWeatherEnrichmentService.js';
+import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 
 /**
@@ -110,6 +111,9 @@ export async function enrichMatches(matches, userId, options = {}) {
       awayPlayers: playersByTeamId[m.awayTeamId] ?? [],
     });
 
+    const displayKickoff = resolveDisplayKickoffAt(m) ?? m.kickoffAt;
+    const scheduleKickoff = resolveScheduleKickoffAt(m);
+
     const base = {
       id: m._id.toString(),
       externalId: m.externalId,
@@ -125,7 +129,8 @@ export async function enrichMatches(matches, userId, options = {}) {
       knockoutPhase: phaseFields.knockoutPhase,
       knockoutPhaseKey: phaseFields.knockoutPhaseKey,
       status: m.status,
-      kickoffAt: m.kickoffAt,
+      kickoffAt: displayKickoff,
+      scheduleKickoffAt: scheduleKickoff?.toISOString?.() ?? null,
       kickoffTimezone: m.kickoffTimezone || stadiumMap[m.stadiumId]?.timezone || null,
       lockAt: meta.lockAt,
       homeTeam: formatTeamForClient(teamMap[m.homeTeamId], fifaRankings),

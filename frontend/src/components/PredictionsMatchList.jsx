@@ -1,15 +1,11 @@
 import { ChevronDown } from 'lucide-react';
 import MatchCard from '@/components/MatchCard.jsx';
 import { groupMatchesByPhase } from '@/lib/matchPhases.js';
+import { sortMatchesBySchedule } from '@/lib/matchSort.js';
 import { cn } from '@/lib/utils';
 
 function sortByKickoff(matches) {
-  return [...matches].sort((a, b) => {
-    const ta = a.kickoffAt ? new Date(a.kickoffAt).getTime() : 0;
-    const tb = b.kickoffAt ? new Date(b.kickoffAt).getTime() : 0;
-    if (ta !== tb) return ta - tb;
-    return Number(a.externalId ?? 0) - Number(b.externalId ?? 0);
-  });
+  return sortMatchesBySchedule(matches);
 }
 
 function MatchItems({

@@ -7,6 +7,7 @@ import {
   enrichMatchesLight,
   prepareFifaShirtMapsForMatches,
 } from '../services/matchEnrichmentService.js';
+import { sortMatchesBySchedule } from '../services/matchSortService.js';
 
 const router = Router();
 
@@ -38,7 +39,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
       query = query.select('-raw');
     }
 
-    const matches = await query.lean();
+    const matches = sortMatchesBySchedule(await query.lean());
     await prepareFifaShirtMapsForMatches(matches);
 
     const enriched = full

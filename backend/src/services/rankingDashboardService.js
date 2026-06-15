@@ -7,6 +7,7 @@ import {
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
+import { compareMatchesBySchedule } from './matchSortService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 /** Tras el kickoff, seguimos enviando baseline para flechas de pts (en vivo y recién finalizado). */
@@ -39,11 +40,11 @@ export function mergePointsBaselineMatchIds(liveMatchIds, finishedMatches, now =
 
 function findNextUpcomingMatches(matches) {
   const upcoming = [...matches]
-    .filter((m) => m.status === 'upcoming' && m.kickoffAt)
-    .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime());
+    .filter((m) => m.status === 'upcoming' && (m.scheduleKickoffAt || m.kickoffAt))
+    .sort(compareMatchesBySchedule);
   if (!upcoming.length) return [];
-  const slot = kickoffKey(upcoming[0].kickoffAt);
-  return upcoming.filter((m) => kickoffKey(m.kickoffAt) === slot);
+  const slot = kickoffKey(upcoming[0].scheduleKickoffAt ?? upcoming[0].kickoffAt);
+  return upcoming.filter((m) => kickoffKey(m.scheduleKickoffAt ?? m.kickoffAt) === slot);
 }
 
 async function resolveGroup(groupId) {
@@ -70,7 +71,7 @@ export async function getRankingDashboard(groupId, userId) {
 
   const [lastSyncAt, liveRaw, finishedRaw, upcomingRaw] = await Promise.all([
     getLastSyncAt(),
-    Match.find({ status: 'live' }).lean(),
+    Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean(),
     Match.find({ status: 'finished', kickoffAt: { $gte: cutoff } })
       .sort({ kickoffAt: -1 })
       .lean(),

@@ -13,6 +13,7 @@ import { getGroupRowBorderStyle } from '@/lib/groupColors.js';
 import { QualificationLegend } from '@/components/worldcup/GroupColorUi.jsx';
 import ThirdPlaceStandingsSection from '@/components/worldcup/ThirdPlaceStandingsSection.jsx';
 import { getTeamFlag } from '@/lib/teamMeta';
+import { sortMatchesBySchedule } from '@/lib/matchSort.js';
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 
 const matchDateLabel = (match) =>
@@ -479,13 +480,7 @@ function getMatchMetaParts(match) {
 }
 
 function sortMatchesForPartidos(matches = []) {
-  return [...matches].sort((a, b) => {
-    const byKickoff = new Date(a.kickoffAt || 0) - new Date(b.kickoffAt || 0);
-    if (byKickoff !== 0) return byKickoff;
-    return String(a.externalId ?? '').localeCompare(String(b.externalId ?? ''), undefined, {
-      numeric: true,
-    });
-  });
+  return sortMatchesBySchedule(matches);
 }
 
 export function GroupMatchesSection({ matches }) {
