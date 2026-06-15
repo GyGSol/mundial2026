@@ -112,7 +112,7 @@ export default function LeaderboardTable({
         <Table className="min-w-[520px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-11 px-1 sm:w-14">#</TableHead>
+              <TableHead className="w-9 px-1 sm:w-11">#</TableHead>
               <TableHead className="min-w-[5.5rem] px-1 sm:min-w-0 sm:px-2">Jugador</TableHead>
               {statColumns.map((col) => (
                 <TableHead key={col.key} className={statHeadClass} title={col.title}>
@@ -129,6 +129,7 @@ export default function LeaderboardTable({
             {leaderboard.map((row) => {
               const prizedRank = showPrizedRanks && isPrizedRank(row.rank, prizesWinnersCount);
               const rowDeltas = statDeltas[row.id] ?? {};
+              const rankDelta = normalizeStatDelta(rowDeltas.rank);
 
               return (
                 <TableRow key={row.id}>
@@ -138,24 +139,26 @@ export default function LeaderboardTable({
                       prizedRank ? prizedRankCellClass : 'text-muted-foreground'
                     )}
                   >
-                    <StatValue
-                      value={row.rank}
-                      delta={rowDeltas.rank}
-                      valueClassName="text-base font-bold leading-none sm:text-lg"
-                    />
+                    <span className="text-base font-bold leading-none sm:text-lg">{row.rank}</span>
                   </TableCell>
                   <TableCell className="max-w-[5.5rem] px-1 font-medium sm:max-w-none sm:px-2">
                     <div className="flex min-w-0 items-center justify-between gap-2">
-                      <span className="truncate">
-                        {row.name}
-                        {row.isAiUser ? (
-                          <span
-                            className="ml-1.5 inline-flex rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300"
-                            title="Predicciones generadas por IA"
-                          >
-                            IA
-                          </span>
-                        ) : null}
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate">
+                          {row.name}
+                          {row.isAiUser ? (
+                            <span
+                              className="ml-1.5 inline-flex rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300"
+                              title="Predicciones generadas por IA"
+                            >
+                              IA
+                            </span>
+                          ) : null}
+                        </span>
+                        <StatDeltaIndicator
+                          direction={rankDelta?.direction}
+                          amount={rankDelta?.amount}
+                        />
                       </span>
                       {showGroupName && row.groupName ? (
                         <span className="text-xs font-normal text-muted-foreground">
