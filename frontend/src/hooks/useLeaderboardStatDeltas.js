@@ -28,13 +28,29 @@ function leaderboardFingerprint(leaderboard) {
     .join('|');
 }
 
-export function directionForStatChange(key, previous, next, { includeNeutral = false } = {}) {
-  if (previous === next) return includeNeutral ? 'neutral' : null;
+export function statDeltaForKey(key, previous, next, { includeNeutral = false } = {}) {
+  if (previous === next) {
+    return includeNeutral ? { direction: 'neutral' } : null;
+  }
   const rawDelta = next - previous;
   const delta = INVERT_DELTA_KEYS.has(key) ? -rawDelta : rawDelta;
-  if (delta > 0) return 'up';
-  if (delta < 0) return 'down';
+  if (delta > 0) {
+    return {
+      direction: 'up',
+      ...(key === 'rank' ? { amount: Math.abs(rawDelta) } : {}),
+    };
+  }
+  if (delta < 0) {
+    return {
+      direction: 'down',
+      ...(key === 'rank' ? { amount: Math.abs(rawDelta) } : {}),
+    };
+  }
   return null;
+}
+
+export function directionForStatChange(key, previous, next, options = {}) {
+  return statDeltaForKey(key, previous, next, options)?.direction ?? null;
 }
 
 export function computeLeaderboardStatChanges(
@@ -54,10 +70,10 @@ export function computeLeaderboardStatChanges(
     const rowChanges = {};
 
     for (const key of TRACKED_KEYS) {
-      const direction = directionForStatChange(key, previous[key], current[key], {
+      const change = statDeltaForKey(key, previous[key], current[key], {
         includeNeutral: neutralKeys.includes(key),
       });
-      if (direction) rowChanges[key] = direction;
+      if (change) rowChanges[key] = change;
     }
 
     if (Object.keys(rowChanges).length > 0) {

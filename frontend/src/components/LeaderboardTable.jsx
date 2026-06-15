@@ -29,23 +29,31 @@ function isPrizedRank(rank, prizesWinnersCount) {
   return prizesWinnersCount > 0 && rank <= prizesWinnersCount;
 }
 
-function StatDeltaIndicator({ direction }) {
+function normalizeStatDelta(delta) {
+  if (!delta) return null;
+  if (typeof delta === 'string') return { direction: delta };
+  return delta;
+}
+
+function StatDeltaIndicator({ direction, amount }) {
   if (direction === 'up') {
     return (
-      <ArrowUp
-        className="size-3 shrink-0 text-emerald-500"
-        strokeWidth={2.75}
-        aria-hidden="true"
-      />
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-emerald-500">
+        <ArrowUp className="size-3" strokeWidth={2.75} aria-hidden="true" />
+        {amount != null && amount > 0 ? (
+          <span className="text-[10px] font-semibold tabular-nums leading-none">{amount}</span>
+        ) : null}
+      </span>
     );
   }
   if (direction === 'down') {
     return (
-      <ArrowDown
-        className="size-3 shrink-0 text-red-500"
-        strokeWidth={2.75}
-        aria-hidden="true"
-      />
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-red-500">
+        <ArrowDown className="size-3" strokeWidth={2.75} aria-hidden="true" />
+        {amount != null && amount > 0 ? (
+          <span className="text-[10px] font-semibold tabular-nums leading-none">{amount}</span>
+        ) : null}
+      </span>
     );
   }
   if (direction === 'neutral') {
@@ -62,7 +70,9 @@ function StatDeltaIndicator({ direction }) {
   return null;
 }
 
-function StatValue({ value, direction, align = 'center' }) {
+function StatValue({ value, delta, align = 'center' }) {
+  const normalized = normalizeStatDelta(delta);
+
   return (
     <span
       className={cn(
@@ -72,7 +82,7 @@ function StatValue({ value, direction, align = 'center' }) {
       )}
     >
       <span>{value}</span>
-      <StatDeltaIndicator direction={direction} />
+      <StatDeltaIndicator direction={normalized?.direction} amount={normalized?.amount} />
     </span>
   );
 }
@@ -128,7 +138,7 @@ export default function LeaderboardTable({
                       prizedRank ? prizedRankCellClass : null
                     )}
                   >
-                    <StatValue value={row.rank} direction={rowDeltas.rank} />
+                    <StatValue value={row.rank} delta={rowDeltas.rank} />
                   </TableCell>
                   <TableCell className="max-w-[5.5rem] px-1 font-medium sm:max-w-none sm:px-2">
                     <div className="flex min-w-0 items-center justify-between gap-2">
@@ -153,19 +163,19 @@ export default function LeaderboardTable({
                   {statColumns.map((col) => (
                     <TableCell key={col.key} className={statCellClass}>
                       {col.trackDelta ? (
-                        <StatValue value={row[col.key] ?? 0} direction={rowDeltas[col.key]} />
+                        <StatValue value={row[col.key] ?? 0} delta={rowDeltas[col.key]} />
                       ) : (
                         (row[col.key] ?? 0)
                       )}
                     </TableCell>
                   ))}
                   <TableCell className={statCellClass}>
-                    <StatValue value={row.pb ?? 0} direction={rowDeltas.pb} />
+                    <StatValue value={row.pb ?? 0} delta={rowDeltas.pb} />
                   </TableCell>
                   <TableCell className="px-1 text-right text-xs font-semibold tabular-nums sm:px-2 sm:text-sm">
                     <StatValue
                       value={row.totalPoints}
-                      direction={rowDeltas.totalPoints}
+                      delta={rowDeltas.totalPoints}
                       align="right"
                     />
                   </TableCell>
