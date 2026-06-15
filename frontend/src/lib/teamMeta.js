@@ -1,5 +1,6 @@
 /** Copas del Mundo ganadas por código FIFA (hasta 2022). FRG + GER = Alemania. */
 import fifaRankingsData from '../data/fifaWorldRankings2026.json';
+import { lookupFifaRankInTable } from './fifaCodeAliases.js';
 export const WORLD_CUP_TITLES = {
   BRA: 5,
   GER: 4,
@@ -98,7 +99,7 @@ export function getFifaRankingForTeam(teamOrCode) {
   }
   const code = String(teamOrCode ?? '').toUpperCase();
   if (!code) return null;
-  const rank = fifaRankingsData.rankings?.[code];
+  const rank = lookupFifaRankInTable(code, fifaRankingsData.rankings ?? {});
   if (rank == null) return null;
   return { rank, asOf: fifaRankingsData.asOf ?? null };
 }

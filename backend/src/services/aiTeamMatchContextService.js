@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { lookupFifaRankInTable } from '../data/teamFifaAliases.js';
 import { getWorldCupHistory } from './worldCupHistoryService.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,8 +27,9 @@ export async function getFifaWorldRankings() {
 
 export function extractFifaRankingFromTeam(team, rankingsByCode = {}) {
   const code = String(team?.fifaCode ?? '').toUpperCase();
-  if (code && rankingsByCode[code] != null) {
-    return { rank: rankingsByCode[code], source: 'fifa_ranking_jun_2026' };
+  const seededRank = lookupFifaRankInTable(code, rankingsByCode);
+  if (seededRank != null) {
+    return { rank: seededRank, source: 'fifa_ranking_jun_2026' };
   }
 
   const raw = team?.raw;

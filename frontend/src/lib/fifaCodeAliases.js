@@ -1,18 +1,11 @@
 /**
  * Mapeo de códigos FIFA en seed/embed → códigos en worldcup26.ir / MongoDB.
- * Mantener en sync con frontend/src/lib/fifaCodeAliases.js
+ * Mantener en sync con backend/src/data/teamFifaAliases.js
  */
 export const FIFA_CODE_ALIASES = {
   SAU: 'KSA',
 };
 
-export function resolveFifaCode(code) {
-  if (!code) return '';
-  const upper = String(code).toUpperCase();
-  return FIFA_CODE_ALIASES[upper] || upper;
-}
-
-/** Códigos equivalentes para buscar ranking (p. ej. seed SAU vs Mongo KSA). */
 export function fifaCodesForRankingLookup(code) {
   if (!code) return [];
   const upper = String(code).toUpperCase();

@@ -1,4 +1,5 @@
 import fifaRankingsData from '../data/fifaWorldRankings2026.json' with { type: 'json' };
+import { lookupFifaRankInTable } from '../data/teamFifaAliases.js';
 
 const DEFAULT_FIFA_RANKINGS_BY_CODE = fifaRankingsData.rankings ?? {};
 
@@ -11,10 +12,9 @@ export function resolveFifaRank(row, rankingsByCode = DEFAULT_FIFA_RANKINGS_BY_C
     return Number(row.fifaRank);
   }
   const code = String(row?.fifaCode ?? '').toUpperCase();
-  if (code && rankingsByCode[code] != null) {
-    return rankingsByCode[code];
-  }
-  return null;
+  if (!code) return null;
+  const rank = lookupFifaRankInTable(code, rankingsByCode);
+  return rank ?? null;
 }
 
 export function totalPlayedInStandings(rows) {

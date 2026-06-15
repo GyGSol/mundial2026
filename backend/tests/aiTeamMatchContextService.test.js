@@ -50,6 +50,12 @@ describe('aiTeamMatchContextService', () => {
       ).toEqual({ rank: 1, source: 'fifa_ranking_jun_2026' });
     });
 
+    it('resuelve alias KSA → SAU en el seed de rankings', () => {
+      expect(
+        extractFifaRankingFromTeam({ fifaCode: 'KSA' }, { SAU: 61 })
+      ).toEqual({ rank: 61, source: 'fifa_ranking_jun_2026' });
+    });
+
     it('lee ranking desde team.raw si existe', () => {
       expect(
         extractFifaRankingFromTeam({ fifaCode: 'XYZ', raw: { fifa_rank: 22 } }, {})

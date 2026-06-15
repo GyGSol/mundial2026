@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fifaCodeToFlagIso, getTeamFlag } from '../../frontend/src/lib/teamMeta.js';
+import { fifaCodeToFlagIso, getFifaRankingForTeam, getTeamFlag } from '../../frontend/src/lib/teamMeta.js';
 
 describe('teamMeta flags', () => {
   it('mapea códigos FIFA que no coinciden con las dos primeras letras del ISO', () => {
@@ -19,5 +19,11 @@ describe('teamMeta flags', () => {
     expect(getTeamFlag({ fifaCode: 'URU' })).toBe('https://flagcdn.com/w80/uy.png');
     expect(getTeamFlag({ fifaCode: 'GER' })).toBe('https://flagcdn.com/w80/de.png');
     expect(getTeamFlag({ fifaCode: 'FRG' })).toBe('https://flagcdn.com/w80/de.png');
+  });
+
+  it('resuelve ranking FIFA con alias KSA ↔ SAU', () => {
+    expect(getFifaRankingForTeam('KSA')).toEqual({ rank: 61, asOf: '2026-06-11' });
+    expect(getFifaRankingForTeam({ fifaCode: 'KSA' })).toEqual({ rank: 61, asOf: '2026-06-11' });
+    expect(getFifaRankingForTeam('SAU')).toEqual({ rank: 61, asOf: '2026-06-11' });
   });
 });
