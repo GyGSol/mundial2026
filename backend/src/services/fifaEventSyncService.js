@@ -239,6 +239,12 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
             scoringIds.push(match._id);
           }
 
+          if (match.status === 'upcoming' && (scoreChanged || timeline.length > 0)) {
+            rawUpdate.status = 'live';
+            rawUpdate.weatherOps = { phase: 'normal' };
+            scoringIds.push(match._id);
+          }
+
           matchUpdated = true;
           eventsSynced += 1;
         }

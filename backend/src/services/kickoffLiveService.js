@@ -126,21 +126,30 @@ export async function promoteMatchesAtKickoff() {
 
   for (const match of due) {
     const fifaEntry = await loadFifaEntryForMatch(match, fifaCalendar, teamMap);
+    let clearedWeatherDelay = false;
 
     if (blocksKickoffPromotion(match.weatherOps)) {
       if (shouldClearWeatherDelay(match, fifaEntry, now.getTime())) {
         match.weatherOps = clearWeatherOpsToNormal();
+        clearedWeatherDelay = true;
       } else {
         delayedIds.push(match._id);
         continue;
       }
     }
 
+    const evidentlyStarted =
+      clearedWeatherDelay ||
+      matchEvidentlyStartedOnField(match) ||
+      matchEvidentlyStartedFromFifa(fifaEntry);
+
     const stadium = stadiumMap[match.stadiumId];
-    const nwsDelayed = await maybeApplyNwsPreKickoffDelay(match, stadium);
-    if (nwsDelayed || blocksKickoffPromotion(match.weatherOps)) {
-      delayedIds.push(match._id);
-      continue;
+    if (!evidentlyStarted) {
+      const nwsDelayed = await maybeApplyNwsPreKickoffDelay(match, stadium);
+      if (nwsDelayed || blocksKickoffPromotion(match.weatherOps)) {
+        delayedIds.push(match._id);
+        continue;
+      }
     }
 
     if (!matchNotStartedOnField(match)) {
