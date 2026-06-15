@@ -3,12 +3,64 @@ import { Stadium } from '../models/Stadium.js';
 import { recalculateMatchScores, recalculateAllLiveMatches } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { notifyMatchesLiveStarted } from './pushNotificationService.js';
-import { blocksKickoffPromotion } from './matchWeatherOpsRules.js';
+import { blocksKickoffPromotion, clearWeatherOpsToNormal, isPreKickoffDelayExpired } from './matchWeatherOpsRules.js';
 import {
   applyWeatherOpsSuggestion,
 } from './matchWeatherEnrichmentService.js';
 import { assessVenueWeatherRisk, shouldSuggestPreKickoffDelay } from './weatherRiskService.js';
 import { getVenueWeatherForStadium } from './weatherService.js';
+import {
+  fetchAllCalendarMatches,
+  resolveFifaMatchEntry,
+} from './fifaApiClient.js';
+import { Team } from '../models/Team.js';
+import { isPlausibleMatchGoalCount } from './matchLiveData.js';
+
+function matchEvidentlyStartedOnField(match) {
+  const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
+  const normalized = String(elapsed ?? '').toLowerCase();
+  if (!normalized || normalized === 'notstarted' || normalized === '0') return false;
+  return true;
+}
+
+function readFifaLiveScores(fifaEntry) {
+  const homeScore = Number(fifaEntry?.HomeTeamScore ?? fifaEntry?.Home?.Score);
+  const awayScore = Number(fifaEntry?.AwayTeamScore ?? fifaEntry?.Away?.Score);
+  if (
+    !Number.isFinite(homeScore) ||
+    !Number.isFinite(awayScore) ||
+    !isPlausibleMatchGoalCount(homeScore) ||
+    !isPlausibleMatchGoalCount(awayScore)
+  ) {
+    return null;
+  }
+  if (homeScore === 0 && awayScore === 0) return null;
+  return { homeScore, awayScore };
+}
+
+function matchEvidentlyStartedFromFifa(fifaEntry) {
+  if (!fifaEntry) return false;
+  const period = String(fifaEntry.Period ?? fifaEntry.MatchStatus ?? '').toLowerCase();
+  if (period && !['0', 'notstarted', 'pre_match', 'prematch'].includes(period)) {
+    return true;
+  }
+  return Boolean(readFifaLiveScores(fifaEntry));
+}
+
+async function loadFifaEntryForMatch(match, calendar, teamMap) {
+  const homeTeam = teamMap.get(match.homeTeamId);
+  const awayTeam = teamMap.get(match.awayTeamId);
+  if (!homeTeam || !awayTeam) return null;
+  return resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam);
+}
+
+function shouldClearWeatherDelay(match, fifaEntry, now = Date.now()) {
+  if (!blocksKickoffPromotion(match.weatherOps)) return false;
+  if (isPreKickoffDelayExpired(match.weatherOps, now)) return true;
+  if (matchEvidentlyStartedOnField(match)) return true;
+  if (matchEvidentlyStartedFromFifa(fifaEntry)) return true;
+  return false;
+}
 
 function matchNotStartedOnField(match) {
   const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
@@ -56,13 +108,32 @@ export async function promoteMatchesAtKickoff() {
   const stadiums = await Stadium.find({ externalId: { $in: stadiumIds } }).lean();
   const stadiumMap = Object.fromEntries(stadiums.map((s) => [s.externalId, s]));
 
+  const teamIds = [
+    ...new Set(due.flatMap((match) => [match.homeTeamId, match.awayTeamId]).filter(Boolean)),
+  ];
+  const teams = await Team.find({ externalId: { $in: teamIds } }).select('externalId fifaCode nameEn').lean();
+  const teamMap = new Map(teams.map((team) => [team.externalId, team]));
+
+  let fifaCalendar = [];
+  try {
+    fifaCalendar = await fetchAllCalendarMatches();
+  } catch (err) {
+    console.warn('FIFA calendar unavailable for kickoff promotion:', err.message);
+  }
+
   const promotedIds = [];
   const delayedIds = [];
 
   for (const match of due) {
+    const fifaEntry = await loadFifaEntryForMatch(match, fifaCalendar, teamMap);
+
     if (blocksKickoffPromotion(match.weatherOps)) {
-      delayedIds.push(match._id);
-      continue;
+      if (shouldClearWeatherDelay(match, fifaEntry, now.getTime())) {
+        match.weatherOps = clearWeatherOpsToNormal();
+      } else {
+        delayedIds.push(match._id);
+        continue;
+      }
     }
 
     const stadium = stadiumMap[match.stadiumId];
@@ -77,8 +148,14 @@ export async function promoteMatchesAtKickoff() {
     }
 
     match.status = 'live';
-    if (match.homeScore == null) match.homeScore = 0;
-    if (match.awayScore == null) match.awayScore = 0;
+    const fifaScores = readFifaLiveScores(fifaEntry);
+    if (fifaScores) {
+      match.homeScore = fifaScores.homeScore;
+      match.awayScore = fifaScores.awayScore;
+    } else {
+      if (match.homeScore == null) match.homeScore = 0;
+      if (match.awayScore == null) match.awayScore = 0;
+    }
     match.lastSyncedAt = new Date();
     await match.save();
     promotedIds.push(match._id);

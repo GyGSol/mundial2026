@@ -85,6 +85,18 @@ export function blocksKickoffPromotion(ops) {
   return phase === 'pre_kickoff_delay' || phase === 'postponed';
 }
 
+/** La ventana NOAA de 30 min ya venció; el partido puede arrancar. */
+export function isPreKickoffDelayExpired(ops, now = Date.now()) {
+  const normalized = normalizeWeatherOps(ops);
+  if (normalized.phase !== 'pre_kickoff_delay') return false;
+  if (!normalized.resumeEarliestAt) return false;
+  return normalized.resumeEarliestAt.getTime() <= now;
+}
+
+export function clearWeatherOpsToNormal() {
+  return { ...DEFAULT_WEATHER_OPS };
+}
+
 /** Partido en vivo pero con reloj detenido por clima (overlay sobre status=live). */
 export function isWeatherSuspendedLive(match) {
   return match?.status === 'live' && normalizeWeatherOps(match.weatherOps).phase === 'suspended';

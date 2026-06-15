@@ -112,12 +112,17 @@ export async function syncFifaReportsForMatchIds(matchIds = []) {
 
 export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
   const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [liveMatches, recentFinishedMatches] = await Promise.all([
+  const now = new Date();
+  const [liveMatches, recentFinishedMatches, kickoffPassedUpcoming] = await Promise.all([
     Match.find({ status: 'live' }).lean(),
     Match.find({ status: 'finished', kickoffAt: { $gte: recentCutoff } }).lean(),
+    Match.find({
+      status: 'upcoming',
+      kickoffAt: { $lte: now, $ne: null },
+    }).lean(),
   ]);
 
-  const matchesToSync = [...liveMatches];
+  const matchesToSync = [...liveMatches, ...kickoffPassedUpcoming];
   for (const finished of recentFinishedMatches) {
     if (!matchesToSync.some((m) => m._id.toString() === finished._id.toString())) {
       matchesToSync.push(finished);
