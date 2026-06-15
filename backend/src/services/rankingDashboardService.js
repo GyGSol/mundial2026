@@ -48,8 +48,7 @@ export async function getRankingDashboard(groupId, userId) {
 
   const cutoff = new Date(Date.now() - RECENT_FINISHED_MS);
 
-  const [leaderboard, lastSyncAt, liveRaw, finishedRaw, upcomingRaw] = await Promise.all([
-    getLeaderboard(groupId || null),
+  const [lastSyncAt, liveRaw, finishedRaw, upcomingRaw] = await Promise.all([
     getLastSyncAt(),
     Match.find({ status: 'live' }).lean(),
     Match.find({ status: 'finished', kickoffAt: { $gte: cutoff } })
@@ -60,10 +59,12 @@ export async function getRankingDashboard(groupId, userId) {
   ]);
 
   const liveMatchIds = liveRaw.map((match) => match._id.toString());
-  const leaderboardKickoffBaseline =
+  const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
+    getLeaderboard(groupId || null),
     liveMatchIds.length > 0
-      ? await getLeaderboard(groupId || null, 100, { liveKickoffBaselineMatchIds: liveMatchIds })
-      : null;
+      ? getLeaderboard(groupId || null, 100, { liveKickoffBaselineMatchIds: liveMatchIds })
+      : Promise.resolve(null),
+  ]);
 
   const matchesToEnrich = [...liveRaw, ...finishedRaw, ...upcomingRaw];
   await prepareFifaShirtMapsForMatches(matchesToEnrich);

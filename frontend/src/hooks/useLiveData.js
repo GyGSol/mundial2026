@@ -12,11 +12,13 @@ export function useLiveData(
   const [lastUpdated, setLastUpdated] = useState(null);
   const dataRef = useRef(data);
   const requestIdRef = useRef(0);
+  const inFlightRef = useRef(0);
   dataRef.current = data;
 
   const refresh = useCallback(async () => {
     if (!enabled) return;
     const requestId = ++requestIdRef.current;
+    inFlightRef.current += 1;
     try {
       setError(null);
       const result = await fetchFn();
@@ -27,7 +29,8 @@ export function useLiveData(
       if (requestId !== requestIdRef.current) return;
       setError(err.message);
     } finally {
-      if (requestId === requestIdRef.current) {
+      inFlightRef.current -= 1;
+      if (inFlightRef.current === 0) {
         setLoading(false);
       }
     }

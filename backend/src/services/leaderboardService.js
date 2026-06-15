@@ -62,40 +62,78 @@ async function getPredictionStatsByUserAggregated(userIds) {
 async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselineMatchIds) {
   if (!userIds.length || !liveKickoffBaselineMatchIds.length) return {};
 
-  const liveMatchIdSet = new Set(liveKickoffBaselineMatchIds.map(String));
+  const liveMatchObjectIds = liveKickoffBaselineMatchIds.map(
+    (id) => new mongoose.Types.ObjectId(id)
+  );
   const statsMap = Object.fromEntries(userIds.map((id) => [id.toString(), emptyStats()]));
 
-  const predictions = await Prediction.find({
-    userId: { $in: userIds },
-    pointsEarned: { $ne: null },
-  })
-    .select('userId matchId homeGoals awayGoals pointsEarned pointsBreakdown bonusPoint liveKickoffBreakdown liveKickoffPointsEarned')
-    .lean();
+  const [nonLiveRows, livePredictions] = await Promise.all([
+    Prediction.aggregate([
+      {
+        $match: {
+          userId: { $in: userIds },
+          pointsEarned: { $ne: null },
+          matchId: { $nin: liveMatchObjectIds },
+        },
+      },
+      {
+        $group: {
+          _id: '$userId',
+          pj: { $sum: 1 },
+          pa: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.winner', 0] }, 1, 0] } },
+          gl: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.homeGoals', 0] }, 1, 0] } },
+          gv: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.awayGoals', 0] }, 1, 0] } },
+          gt: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.totalGoals', 0] }, 1, 0] } },
+          pb: { $sum: { $ifNull: ['$bonusPoint', 0] } },
+          totalPoints: {
+            $sum: {
+              $add: [{ $ifNull: ['$pointsEarned', 0] }, { $ifNull: ['$bonusPoint', 0] }],
+            },
+          },
+        },
+      },
+    ]),
+    Prediction.find({
+      userId: { $in: userIds },
+      matchId: { $in: liveMatchObjectIds },
+      pointsEarned: { $ne: null },
+    })
+      .select(
+        'userId matchId homeGoals awayGoals pointsEarned pointsBreakdown bonusPoint liveKickoffBreakdown liveKickoffPointsEarned'
+      )
+      .lean(),
+  ]);
 
-  for (const prediction of predictions) {
+  for (const row of nonLiveRows) {
+    statsMap[row._id.toString()] = {
+      pj: row.pj ?? 0,
+      pa: row.pa ?? 0,
+      gl: row.gl ?? 0,
+      gv: row.gv ?? 0,
+      gt: row.gt ?? 0,
+      pb: row.pb ?? 0,
+      totalPoints: row.totalPoints ?? 0,
+    };
+  }
+
+  for (const prediction of livePredictions) {
     const userKey = prediction.userId.toString();
     const stats = statsMap[userKey];
     if (!stats) continue;
 
-    const isLiveMatch = liveMatchIdSet.has(prediction.matchId.toString());
     let breakdown;
     let pointsEarned;
 
-    if (isLiveMatch) {
-      if (prediction.liveKickoffBreakdown) {
-        breakdown = prediction.liveKickoffBreakdown;
-        pointsEarned = prediction.liveKickoffPointsEarned ?? prediction.pointsEarned ?? 0;
-      } else {
-        const kickoff = calculatePoints(
-          { home: prediction.homeGoals, away: prediction.awayGoals },
-          { home: 0, away: 0 }
-        );
-        breakdown = kickoff.breakdown;
-        pointsEarned = kickoff.total;
-      }
+    if (prediction.liveKickoffBreakdown) {
+      breakdown = prediction.liveKickoffBreakdown;
+      pointsEarned = prediction.liveKickoffPointsEarned ?? prediction.pointsEarned ?? 0;
     } else {
-      breakdown = prediction.pointsBreakdown;
-      pointsEarned = prediction.pointsEarned ?? 0;
+      const kickoff = calculatePoints(
+        { home: prediction.homeGoals, away: prediction.awayGoals },
+        { home: 0, away: 0 }
+      );
+      breakdown = kickoff.breakdown;
+      pointsEarned = kickoff.total;
     }
 
     accumulateStats(stats, breakdown, pointsEarned, prediction.bonusPoint ?? 0);
