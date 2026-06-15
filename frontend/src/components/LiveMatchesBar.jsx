@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
@@ -931,6 +931,27 @@ function MatchColumn({ title, children }) {
   );
 }
 
+function FinishedMatchesCollapsible({ matches = [] }) {
+  if (!matches.length) return null;
+
+  return (
+    <details className="group rounded-xl border border-border bg-muted/20">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+        <span>Partidos finalizados ({matches.length})</span>
+        <ChevronDown
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+      <div className="flex flex-col gap-4 border-t border-border px-2 pb-3 pt-3 sm:px-3">
+        {matches.map((match) => (
+          <FinishedMatchCard key={match.id} match={match} />
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export default function LiveMatchesBar({
   matches = [],
   finishedMatches = [],
@@ -951,24 +972,17 @@ export default function LiveMatchesBar({
           </MatchColumn>
         ) : null}
 
-        {hasNext || hasFinished ? (
+        {hasNext ? (
           <MatchColumn
-            title={
-              hasNext
-                ? nextMatches.length > 1
-                  ? 'Próximos partidos'
-                  : 'Próximo partido'
-                : 'Últimos resultados'
-            }
+            title={nextMatches.length > 1 ? 'Próximos partidos' : 'Próximo partido'}
           >
             {nextMatches.map((match) => (
               <NextMatchCard key={match.id} match={match} />
             ))}
-            {finishedMatches.map((match) => (
-              <FinishedMatchCard key={match.id} match={match} />
-            ))}
           </MatchColumn>
         ) : null}
+
+        {hasFinished ? <FinishedMatchesCollapsible matches={finishedMatches} /> : null}
       </div>
     );
   }
