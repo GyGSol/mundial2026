@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   completeTimelineEvents,
+  deduplicateTimelineGoals,
   enrichMatchLiveFields,
   formatTimeElapsed,
   latestClockFromTimeline,
@@ -446,6 +447,51 @@ describe('matchLiveData', () => {
         isPenalty: true,
         sortKey: 17,
       });
+    });
+
+    it('no duplica goles FIFA y worldcup26 con distinta ortografía en el mismo minuto', () => {
+      const timeline = completeTimelineEvents(
+        [
+          {
+            type: 'goal',
+            side: 'home',
+            minute: 32,
+            player: 'Ramin Rezaeian',
+            playerPosition: 'DFC',
+            playerShirtNumber: 23,
+            sortKey: 32,
+          },
+        ],
+        {
+          homeScorers: [{ name: 'Ramin Rzaiian', minute: 32 }],
+          homeScore: 1,
+          awayScore: 0,
+        }
+      );
+
+      const homeGoals = timeline.filter((event) => event.type === 'goal' && event.side === 'home');
+      expect(homeGoals).toHaveLength(1);
+      expect(homeGoals[0].player).toBe('Ramin Rezaeian');
+      expect(homeGoals[0].playerShirtNumber).toBe(23);
+    });
+
+    it('deduplicateTimelineGoals conserva el evento con más metadatos', () => {
+      const timeline = deduplicateTimelineGoals([
+        { type: 'goal', side: 'away', minute: 54, player: 'Ali Jast', sortKey: 54 },
+        {
+          type: 'goal',
+          side: 'away',
+          minute: 54,
+          player: 'Eli Just',
+          playerPosition: 'DC',
+          playerShirtNumber: 11,
+          sortKey: 54,
+        },
+      ]);
+
+      expect(timeline.filter((event) => event.type === 'goal')).toHaveLength(1);
+      expect(timeline[0].player).toBe('Eli Just');
+      expect(timeline[0].playerShirtNumber).toBe(11);
     });
   });
 

@@ -3,7 +3,7 @@
 /** @typedef {{ minute: number | null, playerOut: string, playerIn: string }} MatchSubstitution */
 
 import { buildFifaTimelineEntry } from './fifaTimelineParser.js';
-import { enrichNameFromRoster } from '../utils/playerNameMatch.js';
+import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js';
 import {
   applyShirtNumbersToTimeline,
   attachTimelinePlayerIds,
@@ -521,7 +521,85 @@ function toSortKey(minute) {
 }
 
 function normalizeGoalPlayer(name) {
-  return String(name ?? '').trim().toLowerCase();
+  return normalizeName(name);
+}
+
+function goalPlayerNamesMatch(a, b) {
+  const na = normalizeGoalPlayer(a);
+  const nb = normalizeGoalPlayer(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  if (na.includes(nb) || nb.includes(na)) return true;
+
+  const tokensA = na.split(/\s+/).filter(Boolean);
+  const tokensB = nb.split(/\s+/).filter(Boolean);
+  if (!tokensA.length || !tokensB.length) return false;
+
+  const lastA = tokensA[tokensA.length - 1];
+  const lastB = tokensB[tokensB.length - 1];
+  if (lastA.length >= 4 && lastB.length >= 4) {
+    if (lastA === lastB || lastA.startsWith(lastB) || lastB.startsWith(lastA)) {
+      const firstA = tokensA[0];
+      const firstB = tokensB[0];
+      if (!firstA || !firstB || firstA[0] === firstB[0]) return true;
+    }
+  }
+
+  return false;
+}
+
+function goalEventRichness(event) {
+  let score = 0;
+  if (event.playerShirtNumber != null) score += 8;
+  if (event.playerPosition) score += 4;
+  if (event.player) score += Math.min(String(event.player).length, 20);
+  return score;
+}
+
+/** Elimina goles duplicados (mismo lado+minuto) al fusionar FIFA y worldcup26. */
+export function deduplicateTimelineGoals(timeline = []) {
+  const goalIndexByKey = new Map();
+  const result = [];
+
+  for (const event of timeline) {
+    if (event.type !== 'goal') {
+      result.push(event);
+      continue;
+    }
+
+    const key = [
+      event.side ?? '',
+      event.minute ?? 'x',
+      event.extraMinute ?? 0,
+    ].join(':');
+
+    const existingIdx = goalIndexByKey.get(key);
+    if (existingIdx == null) {
+      goalIndexByKey.set(key, result.length);
+      result.push(normalizeGoalEvent({ ...event }));
+      continue;
+    }
+
+    const existing = result[existingIdx];
+    const samePlayer =
+      !event.player ||
+      !existing.player ||
+      goalPlayerNamesMatch(existing.player, event.player);
+
+    if (!samePlayer && event.minute != null && existing.minute != null) {
+      // Mismo minuto y lado pero nombres distintos: fuentes cruzadas (p. ej. scorers vs FIFA).
+      if (goalEventRichness(event) > goalEventRichness(existing)) {
+        result[existingIdx] = normalizeGoalEvent({ ...event });
+      }
+      continue;
+    }
+
+    if (goalEventRichness(event) > goalEventRichness(existing)) {
+      result[existingIdx] = normalizeGoalEvent({ ...event });
+    }
+  }
+
+  return result;
 }
 
 function timelineIncludesGoal(timeline, { side, minute, player }) {
@@ -529,13 +607,19 @@ function timelineIncludesGoal(timeline, { side, minute, player }) {
     if (event.type !== 'goal' || event.side !== side) return false;
 
     const sameMinute =
-      minute == null || event.minute == null || Number(event.minute) === Number(minute);
-    const samePlayer =
+      minute == null ||
+      event.minute == null ||
+      Number(event.minute) === Number(minute);
+
+    if (!sameMinute) return false;
+
+    if (minute != null && event.minute != null) return true;
+
+    return (
       !player ||
       !event.player ||
-      normalizeGoalPlayer(event.player) === normalizeGoalPlayer(player);
-
-    return sameMinute && samePlayer;
+      goalPlayerNamesMatch(event.player, player)
+    );
   });
 }
 
@@ -586,7 +670,9 @@ export function completeTimelineEvents(
     pushScorerGoal('away', scorer);
   }
 
-  return merged.sort((a, b) => {
+  const deduped = deduplicateTimelineGoals(merged);
+
+  return deduped.sort((a, b) => {
     const keyDiff = (a.sortKey ?? toSortKey(a.minute)) - (b.sortKey ?? toSortKey(b.minute));
     if (keyDiff !== 0) return keyDiff;
     return String(a.player ?? '').localeCompare(String(b.player ?? ''), 'es');
