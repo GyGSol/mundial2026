@@ -34,6 +34,11 @@ import { alignMatchesFromFifaCalendar } from './fifaFixtureAlignmentService.js';
 import { auditPredictionMatchLinks } from './predictionMatchLinkService.js';
 import { assistLiveMatchEvents } from './liveMatchEventAssistService.js';
 import {
+  collectWorldCup26SyncWarning,
+  runPostSyncMatchAudit,
+} from './matchIntegrityAuditService.js';
+import { resolveAndApplySourceDisputes } from './aiMatchSourceResolverService.js';
+import {
   mergePlausibleGoalCounts,
   readFifaAuthoritativeScores,
   sanitizeMatchGoalCount,
@@ -241,11 +246,13 @@ export function mergeSyncedMatch(existing, incoming) {
 }
 
 async function upsertMatches() {
+  // worldcup26 game.id ≠ FIFA MatchNumber (externalId). Ver normalizeGame y resolveExistingMatchForWorldCup26Sync.
   const data = await fetchGames();
   const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
   const scoringIds = [];
   const newlyFinishedIds = [];
   const clearedScoreIds = [];
+  const worldcup26Warnings = [];
   const stadiumTimezones = await buildStadiumTimezoneMap();
 
   for (const item of list) {
@@ -254,6 +261,16 @@ async function upsertMatches() {
       stadiumTimezone: stadiumTimezones[stadiumId] || undefined,
     });
     const existing = await resolveExistingMatchForWorldCup26Sync(doc);
+
+    const warning = collectWorldCup26SyncWarning({ rawGame: item, doc, existing });
+    if (warning) {
+      worldcup26Warnings.push(warning);
+    }
+
+    if (existing && !syncTeamsMatch(existing, doc)) {
+      continue;
+    }
+
     const merged = mergeSyncedMatch(existing, doc);
     const wasFinished = existing?.status === 'finished';
     const wasLive = existing?.status === 'live';
@@ -294,7 +311,7 @@ async function upsertMatches() {
     }
   }
 
-  return { count: list.length, scoringIds, newlyFinishedIds, clearedScoreIds };
+  return { count: list.length, scoringIds, newlyFinishedIds, clearedScoreIds, worldcup26Warnings };
 }
 
 function needsRescore(before, after) {
@@ -378,7 +395,8 @@ export async function runSync({ includeMetadata = true } = {}) {
       stadiumsCount = await upsertStadiums();
     }
 
-    const { count, scoringIds, newlyFinishedIds, clearedScoreIds } = await upsertMatches();
+    const { count, scoringIds, newlyFinishedIds, clearedScoreIds, worldcup26Warnings } =
+      await upsertMatches();
 
     let fixtureAlignment = {
       aligned: 0,
@@ -424,6 +442,48 @@ export async function runSync({ includeMetadata = true } = {}) {
       }
     } catch (err) {
       console.warn('FIFA fixture alignment skipped:', err.message);
+    }
+
+    try {
+      const auditReport = await runPostSyncMatchAudit({ worldcup26Warnings });
+      const disputeResults = await resolveAndApplySourceDisputes(auditReport.disputes);
+
+      const auditHasIssues =
+        auditReport.summary.kickoffMismatchCount > 0 ||
+        auditReport.summary.worldcup26CollisionCount > 0 ||
+        auditReport.summary.sourceDisputeCount > 0 ||
+        auditReport.summary.predictionLinkIssues;
+
+      if (auditHasIssues || disputeResults.length > 0) {
+        console.log(
+          'Match source audit:',
+          JSON.stringify({
+            summary: auditReport.summary,
+            disputesResolved: disputeResults.length,
+            applied: disputeResults.filter((r) => r.applied).length,
+          })
+        );
+        await SyncMeta.findOneAndUpdate(
+          { key: 'matchSourceDisputes' },
+          {
+            lastSyncAt: new Date(),
+            lastSyncError: auditHasIssues ? 'issues_detected' : null,
+            raw: {
+              summary: auditReport.summary,
+              worldcup26Warnings: auditReport.worldcup26Warnings,
+              disputes: auditReport.disputes.map((d) => ({
+                externalId: d.externalId,
+                type: d.type,
+                summary: d.summary,
+              })),
+              disputeResults,
+            },
+          },
+          { upsert: true }
+        );
+      }
+    } catch (err) {
+      console.warn('Match source audit skipped:', err.message);
     }
 
     try {

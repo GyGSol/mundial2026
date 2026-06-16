@@ -258,4 +258,59 @@ describe('mergeSyncedMatch', () => {
     expect(merged.homeScore).toBe(0);
     expect(merged.awayScore).toBe(0);
   });
+
+  describe('colisiones conocidas worldcup26 id vs FIFA externalId', () => {
+    const collisions = [
+      {
+        label: 'worldcup26 id 15 = BEL-EGY no contamina FIFA slot 15 = IRN-NZL',
+        existing: {
+          status: 'live',
+          homeTeamId: '27',
+          awayTeamId: '28',
+          homeScore: 0,
+          awayScore: 1,
+          externalId: '15',
+        },
+        incoming: {
+          status: 'finished',
+          homeTeamId: '25',
+          awayTeamId: '26',
+          homeScore: 1,
+          awayScore: 1,
+          externalId: '15',
+          raw: { finished: 'TRUE', time_elapsed: 'finished' },
+        },
+      },
+      {
+        label: 'worldcup26 id 13 = IRN-NZL no contamina FIFA slot 13 = KSA-URU',
+        existing: {
+          status: 'upcoming',
+          homeTeamId: '29',
+          awayTeamId: '30',
+          homeScore: 0,
+          awayScore: 0,
+          externalId: '13',
+        },
+        incoming: {
+          status: 'finished',
+          homeTeamId: '27',
+          awayTeamId: '28',
+          homeScore: 2,
+          awayScore: 0,
+          externalId: '13',
+          raw: { finished: 'TRUE', time_elapsed: 'finished' },
+        },
+      },
+    ];
+
+    for (const { label, existing, incoming } of collisions) {
+      it(label, () => {
+        expect(syncTeamsMatch(existing, incoming)).toBe(false);
+        const merged = mergeSyncedMatch(existing, incoming);
+        expect(merged.status).toBe(existing.status);
+        expect(merged.homeScore).toBe(existing.homeScore);
+        expect(merged.awayScore).toBe(existing.awayScore);
+      });
+    }
+  });
 });

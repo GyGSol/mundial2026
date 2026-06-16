@@ -145,6 +145,8 @@ export function parseKickoffAt(game, options = {}) {
 }
 
 export function normalizeGame(game, options = {}) {
+  // game.id de worldcup26.ir NO es el MatchNumber FIFA (externalId en esta app).
+  // El emparejamiento en syncService.upsertMatches es por homeTeamId/awayTeamId.
   const id = String(game.id ?? game._id ?? game.idGame);
   const kickoffAt = resolveKickoffAt(game, options);
   const stadiumTimezone = options.stadiumTimezone ?? null;
