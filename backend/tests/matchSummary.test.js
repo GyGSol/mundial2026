@@ -66,6 +66,19 @@ describe('buildMatchSummaryRows', () => {
     expect(byLabel.Tiros).toBeUndefined();
   });
 
+  it('muestra tiros en vivo desde la cronología cuando no hay reporte FIFA', () => {
+    const timelineWithShots = [
+      ...timeline,
+      { type: 'shot_attempt', side: 'home' },
+      { type: 'shot_attempt', side: 'home' },
+      { type: 'shot_attempt', side: 'away' },
+    ];
+    const rows = buildMatchSummaryRows({ timeline: timelineWithShots });
+    const byLabel = Object.fromEntries(rows.map((row) => [row.label, row]));
+
+    expect(byLabel.Tiros).toEqual({ label: 'Tiros', home: '2', away: '1' });
+  });
+
   it('muestra stats completas del reporte FIFA', () => {
     const rows = buildMatchSummaryRows({ timeline, reportStats: fullReport });
     const byLabel = Object.fromEntries(rows.map((row) => [row.label, row]));

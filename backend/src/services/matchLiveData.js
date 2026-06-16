@@ -2,7 +2,7 @@
 /** @typedef {{ minute: number | null, player: string, card: string }} MatchBooking */
 /** @typedef {{ minute: number | null, playerOut: string, playerIn: string }} MatchSubstitution */
 
-import { buildFifaTimelineEntry } from './fifaTimelineParser.js';
+import { buildFifaTimelineEntry, mergeShotAttemptsFromRawEvents } from './fifaTimelineParser.js';
 import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js';
 import {
   applyShirtNumbersToTimeline,
@@ -1036,6 +1036,12 @@ export function enrichMatchLiveFields(match, options = {}) {
 
     baseTimeline = attachTimelinePlayerIds(baseTimeline, rawEvents, homeTeamId, awayTeamId);
     baseTimeline = attachTimelinePitchCoords(baseTimeline, rawEvents, homeTeamId, awayTeamId);
+    baseTimeline = mergeShotAttemptsFromRawEvents(
+      baseTimeline,
+      rawEvents,
+      homeTeamId,
+      awayTeamId
+    );
     baseTimeline = applyShirtNumbersToTimeline(baseTimeline, {
       shirtByPlayerId: raw.fifaMeta?.shirtByPlayerId ?? {},
       shirtBySideName: raw.fifaMeta?.shirtBySideName ?? {},

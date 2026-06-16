@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   parseFifaMinute,
   parseFifaTimeline,
+  mergeShotAttemptsFromRawEvents,
   resolveVarEventType,
   fifaRawTimelineHasMatchEnd,
   parsedTimelineHasMatchEnd,
@@ -36,6 +37,14 @@ describe('fifaTimelineParser', () => {
           IdTeam: '43911',
           MatchMinute: "9'",
           EventDescription: [{ Locale: 'en-GB', Description: 'Julian QUINONES (Mexico) scores!!' }],
+        },
+        {
+          Type: 12,
+          IdTeam: '43911',
+          MatchMinute: "4'",
+          EventDescription: [
+            { Locale: 'en-GB', Description: 'Brian GUTIERREZ (Mexico) attempts an effort on goal.' },
+          ],
         },
         {
           Type: 2,
@@ -86,6 +95,7 @@ describe('fifaTimelineParser', () => {
 
       expect(timeline.map((event) => event.type)).toEqual([
         'foul',
+        'shot_attempt',
         'goal',
         'yellow_card',
         'red_card',
@@ -95,15 +105,48 @@ describe('fifaTimelineParser', () => {
         'red_card',
       ]);
 
-      expect(timeline[1]).toMatchObject({ minute: 9, type: 'goal', side: 'home', player: 'Julian QUINONES' });
-      expect(timeline[4]).toMatchObject({
+      expect(timeline[1]).toMatchObject({
+        minute: 4,
+        type: 'shot_attempt',
+        side: 'home',
+        player: 'Brian GUTIERREZ',
+      });
+      expect(timeline[2]).toMatchObject({ minute: 9, type: 'goal', side: 'home', player: 'Julian QUINONES' });
+      expect(timeline[5]).toMatchObject({
         minute: 56,
         type: 'substitution',
         side: 'away',
         playerIn: 'Thalente MBATHA',
         playerOut: 'Lyle FOSTER',
       });
-      expect(timeline[6].sortKey).toBeGreaterThan(timeline[5].sortKey);
+      expect(timeline[7].sortKey).toBeGreaterThan(timeline[6].sortKey);
+    });
+
+    it('mergeShotAttemptsFromRawEvents agrega tiros faltantes desde rawEvents', () => {
+      const rawEvents = [
+        {
+          Type: 12,
+          IdTeam: '43911',
+          MatchMinute: "4'",
+          EventDescription: [
+            { Locale: 'en-GB', Description: 'Brian GUTIERREZ (Mexico) attempts an effort on goal.' },
+          ],
+        },
+        {
+          Type: 12,
+          IdTeam: '43883',
+          MatchMinute: "37'",
+          EventDescription: [
+            { Locale: 'en-GB', Description: 'Lyle FOSTER (South Africa) attempts an effort on goal.' },
+          ],
+        },
+      ];
+      const base = [{ sortKey: 9, minute: 9, type: 'goal', side: 'home', player: 'QUINONES' }];
+      const merged = mergeShotAttemptsFromRawEvents(base, rawEvents, '43911', '43883');
+
+      expect(merged.map((event) => event.type)).toEqual(['shot_attempt', 'goal', 'shot_attempt']);
+      expect(merged[0]).toMatchObject({ type: 'shot_attempt', side: 'home', player: 'Brian GUTIERREZ' });
+      expect(merged[2]).toMatchObject({ type: 'shot_attempt', side: 'away', player: 'Lyle FOSTER' });
     });
 
     it('incluye pausas de hidratación y cambios de periodo', () => {

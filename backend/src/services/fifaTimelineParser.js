@@ -1,6 +1,6 @@
-/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'goal_disallowed' | 'yellow_card_reassigned' | 'var_decision' | 'hydration_break' | 'period_start' | 'period_end' | 'match_end'} TimelineEventType */
+/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'shot_attempt' | 'goal_disallowed' | 'yellow_card_reassigned' | 'var_decision' | 'hydration_break' | 'period_start' | 'period_end' | 'match_end'} TimelineEventType */
 
-export const FIFA_INCLUDED_EVENT_TYPES = new Set([0, 2, 3, 5, 7, 8, 18, 26, 71, 83]);
+export const FIFA_INCLUDED_EVENT_TYPES = new Set([0, 2, 3, 5, 7, 8, 12, 18, 26, 71, 83]);
 
 const INCLUDED_TYPES = FIFA_INCLUDED_EVENT_TYPES;
 
@@ -22,6 +22,7 @@ export const FIFA_EVENT_TYPE_MAP = {
   7: 'period_start',
   8: 'period_end',
   18: 'foul',
+  12: 'shot_attempt',
   26: 'match_end',
   71: 'var_decision',
   83: 'hydration_break',
@@ -85,7 +86,7 @@ function extractPlayerName(description, fallback = '') {
   if (!trimmed) return fallback;
 
   const patterns = [
-    /^(.+?)\s*\([^)]+\)\s+(?:scores!!|scores a goal|is booked|is sent off!|commits a foul\.)/i,
+    /^(.+?)\s*\([^)]+\)\s+(?:scores!!|scores a goal|is booked|is sent off!|commits a foul\.|attempts an effort on goal)/i,
     /^(.+?)\s+scores(?:!!| a goal| for\b)/i,
     /^(.+?)\s*\(in\)/i,
     /^(.+?)\s*\(out\)/i,
@@ -265,4 +266,31 @@ export function fifaRawTimelineHasMatchEnd(timelineJson) {
 
 export function parsedTimelineHasMatchEnd(timeline = []) {
   return timeline.some((event) => event?.type === 'match_end');
+}
+
+function shotAttemptIdentity(entry) {
+  return [entry.side, entry.minute, entry.extraMinute, entry.player].join('|');
+}
+
+/** Incorpora tiros (FIFA type 12) desde rawEvents si el timeline guardado aún no los tiene. */
+export function mergeShotAttemptsFromRawEvents(timeline = [], rawEvents = [], homeTeamId, awayTeamId) {
+  const merged = [...timeline];
+  const seen = new Set(
+    merged
+      .filter((event) => event.type === 'shot_attempt')
+      .map((event) => shotAttemptIdentity(event))
+  );
+
+  for (const rawEvent of rawEvents) {
+    if (rawEvent?.Type !== 12) continue;
+    const entry = buildFifaTimelineEntry(rawEvent, homeTeamId, awayTeamId);
+    if (!entry || entry.type !== 'shot_attempt') continue;
+
+    const key = shotAttemptIdentity(entry);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(entry);
+  }
+
+  return merged.sort((a, b) => (a.sortKey ?? 0) - (b.sortKey ?? 0));
 }

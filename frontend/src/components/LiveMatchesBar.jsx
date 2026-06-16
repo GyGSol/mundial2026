@@ -429,6 +429,11 @@ function formatTimelineEntry(event) {
           ? `Falta · ${formatTimelinePlayer(event)}`
           : 'Falta',
       };
+    case 'shot_attempt':
+      return {
+        side: event.side,
+        text: `${prefix}🎯 ${event.player ? `Tiro · ${formatTimelinePlayer(event)}` : 'Tiro'}`,
+      };
     default:
       return null;
   }

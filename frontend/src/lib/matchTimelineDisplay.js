@@ -5,6 +5,7 @@ export const TIMELINE_DISPLAY_TYPES = new Set([
   'red_card',
   'substitution',
   'foul',
+  'shot_attempt',
   'goal_disallowed',
   'yellow_card_reassigned',
   'var_decision',

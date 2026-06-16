@@ -60,6 +60,7 @@ export function buildMatchSummaryRows({ timeline = [], reportStats = null } = {}
   const awayReport = reportStats?.away ?? {};
 
   const fouls = countBySide(events, 'foul');
+  const shots = countBySide(events, 'shot_attempt');
   const yellows = countBySide(events, 'yellow_card');
   const reds = countBySide(events, 'red_card');
   const subs = countBySide(events, 'substitution');
@@ -73,11 +74,16 @@ export function buildMatchSummaryRows({ timeline = [], reportStats = null } = {}
     formatPct(readSide(awayReport, 'possession'))
   );
 
+  const homeShotsTotal =
+    readSide(homeReport, 'attemptsTotal') ?? (shots.home > 0 ? shots.home : null);
+  const awayShotsTotal =
+    readSide(awayReport, 'attemptsTotal') ?? (shots.away > 0 ? shots.away : null);
+
   pushRow(
     rows,
     'Tiros',
-    formatCount(readSide(homeReport, 'attemptsTotal')),
-    formatCount(readSide(awayReport, 'attemptsTotal'))
+    formatCount(homeShotsTotal),
+    formatCount(awayShotsTotal)
   );
 
   pushRow(

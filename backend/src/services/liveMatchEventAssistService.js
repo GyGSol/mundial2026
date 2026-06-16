@@ -33,6 +33,7 @@ const ALLOWED_EVENT_TYPES = new Set([
   'red_card',
   'substitution',
   'foul',
+  'shot_attempt',
   'goal_disallowed',
   'yellow_card_reassigned',
   'var_decision',
@@ -288,7 +289,7 @@ Respondé ÚNICAMENTE JSON válido:
   ]
 }
 
-Para sustituciones usá playerIn y playerOut. Para goles/tarjetas/faltas usá player.`;
+Para sustituciones usá playerIn y playerOut. Para goles/tarjetas/faltas/tiros usá player.`;
 }
 
 async function recoverMissingWithAi(missingItems, homeCode, awayCode, homePlayers, awayPlayers) {
