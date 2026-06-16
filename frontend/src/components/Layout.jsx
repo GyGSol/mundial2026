@@ -3,6 +3,7 @@ import { Link, Outlet } from 'react-router-dom';
 import EditPlayerDialog from './EditPlayerDialog.jsx';
 import GameMobileNav from './GameMobileNav.jsx';
 import MundialBrandLogo from './MundialBrandLogo.jsx';
+import FubolBalanceChip from './FubolBalanceChip.jsx';
 export default function Layout() {
   const [editPlayerOpen, setEditPlayerOpen] = useState(false);
 
@@ -17,6 +18,7 @@ export default function Layout() {
           >
             <MundialBrandLogo />
           </Link>
+          <FubolBalanceChip />
           <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
         </div>
       </header>

@@ -46,6 +46,8 @@ async function serializeUser(user) {
     name: user.name,
     email: user.email,
     totalPoints: user.totalPoints,
+    balanceFubols: user.balanceFubols ?? 0,
+    isAIAgent: Boolean(user.isAiUser),
     mustChangePassword: Boolean(user.mustChangePassword),
     competitionGroup: group,
     competitionGroups: groups,

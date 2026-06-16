@@ -14,6 +14,12 @@ import { runSync } from '../services/syncService.js';
 import { getMatchPredictionDiagnostics } from '../services/predictionMatchLinkService.js';
 import { runPlayerSync } from '../services/playerSyncService.js';
 import {
+  getEconomyOverview,
+  projectPrizeDistribution,
+  getOrCreatePrizePool,
+  findAiBankStatusForGroup,
+} from '../services/prizePoolService.js';
+import {
   addAdminGroupMember,
   approveAdminJoinRequest,
   createAdminGroup,
@@ -560,6 +566,37 @@ router.patch('/predictions/:id', adminMiddleware, async (req, res, next) => {
 router.delete('/predictions/:id', adminMiddleware, async (req, res, next) => {
   try {
     res.json(await deleteAdminPrediction(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/economy/overview', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await getEconomyOverview());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/economy/groups/:groupId', adminMiddleware, async (req, res, next) => {
+  try {
+    const groupId = req.params.groupId;
+    const [pool, projection, bankStatus] = await Promise.all([
+      getOrCreatePrizePool(groupId),
+      projectPrizeDistribution(groupId),
+      findAiBankStatusForGroup(groupId),
+    ]);
+    res.json({
+      groupId,
+      prizePool: {
+        totalFubols: pool.totalFubols,
+        distributionPercents: pool.distributionPercents,
+        status: pool.status,
+      },
+      projection,
+      bankStatus,
+    });
   } catch (err) {
     next(err);
   }

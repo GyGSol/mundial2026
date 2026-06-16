@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     totalPoints: { type: Number, default: 0 },
+    balanceFubols: { type: Number, default: 0, min: 0 },
     // Legacy field (single-group mode). Kept for backwards compatibility.
     competitionGroupId: {
       type: mongoose.Schema.Types.ObjectId,

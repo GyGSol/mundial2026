@@ -7,6 +7,7 @@ import {
   maybeActivateGroupForUser,
   reassignActiveGroupAfterLeave,
 } from './competitionGroupJoinHelpers.js';
+import { chargeGroupEntryFee } from './fubolService.js';
 
 function normalizePrizes({ winnersCount, prizes = [] }) {
   const count = Math.max(0, Math.min(Number(winnersCount || 0), 10));
@@ -267,6 +268,8 @@ export async function joinCompetitionGroup({ userId, groupId }) {
     throw error;
   }
 
+  await chargeGroupEntryFee({ userId, groupId: group._id });
+
   await UserGroupMembership.findOneAndUpdate(
     { userId, groupId: group._id },
     { $setOnInsert: { role: 'member' } },
@@ -421,6 +424,8 @@ export async function approveJoinRequest({
     error.status = 404;
     throw error;
   }
+
+  await chargeGroupEntryFee({ userId: targetUserId, groupId: group._id });
 
   await addMemberToGroup({ userId: targetUserId, group });
   return { approved: true, userId: String(targetUserId) };

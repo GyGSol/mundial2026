@@ -14,6 +14,7 @@ const navItems = [
   { to: '/admin/groups', label: 'Grupos' },
   { to: '/admin/predictions', label: 'Predicciones' },
   { to: '/admin/simulation', label: 'Simulación' },
+  { to: '/admin/economy', label: 'Economía' },
 ];
 
 export default function AdminLayout() {

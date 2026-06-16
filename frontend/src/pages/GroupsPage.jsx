@@ -6,6 +6,8 @@ import FormField from '../components/FormField.jsx';
 import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
 import GroupInvitePanel from '../components/GroupInvitePanel.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
+import FubolCoinIcon from '../components/FubolCoinIcon.jsx';
+import { GROUP_ENTRY_FEE } from '../lib/economyConstants.js';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
@@ -758,6 +760,13 @@ export default function GroupsPage() {
               <p className="text-sm text-muted-foreground">
                 Sin enlace, solicitá unirte por nombre: el administrador debe aprobar. Con enlace de
                 invitación entrás al instante. Tus pronósticos cuentan en el ranking una vez aprobado.
+              </p>
+              <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                Inscripción al aprobar o unirte: {GROUP_ENTRY_FEE}{' '}
+                <FubolCoinIcon size="sm" /> —{' '}
+                <Link to="/economy" className="text-primary underline">
+                  cargá Fubols
+                </Link>
               </p>
               {joinableGroups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">

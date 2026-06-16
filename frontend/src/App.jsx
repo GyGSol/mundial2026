@@ -23,6 +23,7 @@ const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage.jsx'));
 const AdminGroupsPage = lazy(() => import('./pages/admin/AdminGroupsPage.jsx'));
 const AdminPredictionsPage = lazy(() => import('./pages/admin/AdminPredictionsPage.jsx'));
 const AdminSimulationPage = lazy(() => import('./pages/admin/AdminSimulationPage.jsx'));
+const AdminEconomyPage = lazy(() => import('./pages/admin/AdminEconomyPage.jsx'));
 
 const PredictionsPage = lazy(() => import('./pages/PredictionsPage.jsx'));
 const AiPredictionsPage = lazy(() => import('./pages/AiPredictionsPage.jsx'));
@@ -39,6 +40,7 @@ const WelcomePage = lazy(() => import('./pages/WelcomePage.jsx'));
 const CreateGroupPage = lazy(() => import('./pages/CreateGroupPage.jsx'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage.jsx'));
 const InviteJoinPage = lazy(() => import('./pages/InviteJoinPage.jsx'));
+const EconomyPage = lazy(() => import('./pages/EconomyPage.jsx'));
 
 function RouteFallback() {
   return <LoadingSpinner variant="fullscreen" label="Cargando…" />;
@@ -66,6 +68,7 @@ export default function App() {
                         <Route path="groups" element={<AdminGroupsPage />} />
                         <Route path="predictions" element={<AdminPredictionsPage />} />
                         <Route path="simulation" element={<AdminSimulationPage />} />
+                        <Route path="economy" element={<AdminEconomyPage />} />
                       </Route>
                     </Route>
                   </Route>
@@ -95,6 +98,7 @@ export default function App() {
                       <Route path="transmissions" element={<TransmissionsPage />} />
                       <Route path="simulation" element={<SimulationPage />} />
                       <Route path="rules" element={<RulesPage />} />
+                      <Route path="economy" element={<EconomyPage />} />
                       <Route path="*" element={<Navigate to="/ranking" replace />} />
                     </Route>
                   </Route>

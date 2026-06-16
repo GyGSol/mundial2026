@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   BookOpen,
+  Coins,
   ClipboardList,
   Globe,
   LogOut,
@@ -26,7 +27,7 @@ const primaryTabs = [
   { to: '/groups', label: 'Grupos', icon: Users, end: false, showBadge: true },
 ];
 
-const morePaths = ['/simulation', '/rules', '/ai-predictions', '/transmissions'];
+const morePaths = ['/simulation', '/rules', '/ai-predictions', '/transmissions', '/economy'];
 
 function TabItem({ to, label, icon: Icon, end, badge }) {
   return (
@@ -108,6 +109,16 @@ export default function GameMobileNav({ onEditPlayer }) {
             ) : null}
 
             <nav className="game-mobile-more__links">
+              <NavLink
+                to="/economy"
+                className={({ isActive }) =>
+                  cn('game-mobile-more__link', isActive && 'game-mobile-more__link--active')
+                }
+                onClick={() => setMoreOpen(false)}
+              >
+                <Coins className="size-5 shrink-0" strokeWidth={1.75} />
+                Economía
+              </NavLink>
               <NavLink
                 to="/transmissions"
                 className={({ isActive }) =>

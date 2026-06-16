@@ -49,6 +49,7 @@ describe('competitionGroupService', () => {
         name: 'Test Leave',
         email: `leave-${Date.now()}@test.local`,
         passwordHash: 'hash',
+        balanceFubols: 100,
       });
       userId = user._id;
     });
@@ -94,6 +95,7 @@ describe('competitionGroupService', () => {
         name: 'Applicant',
         email: `applicant-${Date.now()}@test.local`,
         passwordHash: 'hash',
+        balanceFubols: 100,
       });
 
       const group = await createCompetitionGroup({

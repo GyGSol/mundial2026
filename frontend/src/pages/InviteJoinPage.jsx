@@ -101,7 +101,16 @@ export default function InviteJoinPage() {
             {preview?.memberCount === 1 ? '' : 'es'} en el grupo.
           </p>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-destructive">{error}</p>
+              {error.toLowerCase().includes('insuficiente') ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/economy">Cargar Fubols</Link>
+                </Button>
+              ) : null}
+            </div>
+          )}
 
           {joining || isAuthenticated ? (
             <p className="text-sm text-muted-foreground">Uniéndote al grupo...</p>

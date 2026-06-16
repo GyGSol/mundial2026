@@ -196,6 +196,8 @@ export const adminApi = {
   deleteStreamLink: (matchExternalId) =>
     adminRequest(`/stream-links/${encodeURIComponent(matchExternalId)}`, { method: 'DELETE' }),
   listTodayTransmissions: () => adminRequest('/transmissions/today'),
+  getEconomyOverview: () => adminRequest('/economy/overview'),
+  getEconomyGroup: (groupId) => adminRequest(`/economy/groups/${encodeURIComponent(groupId)}`),
 };
 
 export const adminSimulationApi = {
