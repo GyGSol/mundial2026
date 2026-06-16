@@ -90,6 +90,30 @@ export async function projectPrizeDistribution(groupId) {
   };
 }
 
+/** Adjunta premios proyectados (top 3) a filas del ranking. */
+export function attachProjectedFubolsToLeaderboard(leaderboard, projection) {
+  if (!projection?.distribution?.length || !Array.isArray(leaderboard)) {
+    return leaderboard;
+  }
+
+  const slotByUserId = new Map(
+    projection.distribution
+      .filter((slot) => slot.userId)
+      .map((slot) => [String(slot.userId), slot])
+  );
+
+  return leaderboard.map((row) => {
+    const slot = slotByUserId.get(String(row.id));
+    if (!slot) return row;
+    return {
+      ...row,
+      projectedFubols: slot.fubols,
+      fubolsRetainedByHouse: slot.retainedByHouse || 0,
+      prizePercent: slot.percent,
+    };
+  });
+}
+
 export async function findAiBankStatusForGroup(groupId) {
   const leaderboard = await getLeaderboard(groupId, 100);
   const aiEntry = leaderboard.find((row) => row.isAiUser);

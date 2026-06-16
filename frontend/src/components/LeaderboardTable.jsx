@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card.jsx';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
+import FubolCoinIcon from './FubolCoinIcon.jsx';
 
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },
@@ -76,12 +77,38 @@ function StatValue({ value, delta, align = 'center', valueClassName }) {
   );
 }
 
+function FubolPrizeCell({ row }) {
+  if ((row.fubolsRetainedByHouse ?? 0) > 0) {
+    return (
+      <span
+        className="inline-flex items-center justify-end gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400 sm:text-xs"
+        title="Premio retenido por La Casa (jugador IA)"
+      >
+        La Casa +{row.fubolsRetainedByHouse}
+        <FubolCoinIcon size="sm" />
+      </span>
+    );
+  }
+
+  if (row.projectedFubols != null) {
+    return (
+      <span className="inline-flex items-center justify-end gap-1 font-semibold tabular-nums">
+        {row.projectedFubols}
+        <FubolCoinIcon size="sm" />
+      </span>
+    );
+  }
+
+  return <span className="text-muted-foreground">—</span>;
+}
+
 export default function LeaderboardTable({
   leaderboard,
   leaderboardKickoffBaseline = null,
   hasLiveMatches = false,
   showGroupName = false,
   prizesWinnersCount = 0,
+  showFubolPrizes = false,
 }) {
   const statDeltas = useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline, {
     hasLiveMatches,
@@ -96,7 +123,7 @@ export default function LeaderboardTable({
   return (
     <Card>
       <CardContent className="overflow-x-auto p-0">
-        <Table className="min-w-[520px]">
+        <Table className="min-w-[580px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-9 px-1 sm:w-11">#</TableHead>
@@ -110,11 +137,26 @@ export default function LeaderboardTable({
                 PB
               </TableHead>
               <TableHead className="px-1 text-right text-[10px] sm:px-2 sm:text-xs">Pts</TableHead>
+              {showFubolPrizes ? (
+                <TableHead
+                  className="px-1 text-right text-[10px] sm:px-2 sm:text-xs"
+                  title="Premio proyectado en Fubols (50/30/20 del pozo del grupo)"
+                >
+                  <span className="inline-flex items-center justify-end gap-1">
+                    Premio
+                    <FubolCoinIcon size="sm" />
+                  </span>
+                </TableHead>
+              ) : null}
             </TableRow>
           </TableHeader>
           <TableBody>
             {leaderboard.map((row) => {
-              const prizedRank = showPrizedRanks && isPrizedRank(row.rank, prizesWinnersCount);
+              const hasFubolPrize =
+                showFubolPrizes &&
+                (row.projectedFubols != null || (row.fubolsRetainedByHouse ?? 0) > 0);
+              const prizedRank =
+                (showPrizedRanks && isPrizedRank(row.rank, prizesWinnersCount)) || hasFubolPrize;
               const rowDeltas = statDeltas[row.id] ?? {};
               const rankDelta = normalizeStatDelta(rowDeltas.rank);
 
@@ -174,6 +216,11 @@ export default function LeaderboardTable({
                   <TableCell className="px-1 text-right text-xs font-semibold tabular-nums sm:px-2 sm:text-sm">
                     {row.totalPoints}
                   </TableCell>
+                  {showFubolPrizes ? (
+                    <TableCell className="px-1 text-right sm:px-2">
+                      <FubolPrizeCell row={row} />
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               );
             })}

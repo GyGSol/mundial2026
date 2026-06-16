@@ -8,6 +8,10 @@ import {
 } from './matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
 import { compareMatchesBySchedule } from './matchSortService.js';
+import {
+  projectPrizeDistribution,
+  attachProjectedFubolsToLeaderboard,
+} from './prizePoolService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -91,10 +95,24 @@ export async function getRankingDashboard(groupId, userId) {
     attachStreamMetaToMatches(nextUpcomingMatches),
   ]);
 
+  let enrichedLeaderboard = leaderboard;
+  let prizePool = null;
+
+  if (groupId && groupId !== '__nogroup') {
+    const projection = await projectPrizeDistribution(groupId);
+    enrichedLeaderboard = attachProjectedFubolsToLeaderboard(leaderboard, projection);
+    prizePool = {
+      totalFubols: projection.totalFubols,
+      status: projection.status,
+      houseRetention: projection.houseRetention,
+    };
+  }
+
   return {
-    leaderboard,
+    leaderboard: enrichedLeaderboard,
     leaderboardKickoffBaseline,
     group: groupResult.group,
+    prizePool,
     lastSyncAt,
     liveMatches: liveWithStream,
     recentFinishedMatches,

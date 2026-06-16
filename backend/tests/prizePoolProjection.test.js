@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DEFAULT_PRIZE_SPLITS } from '../src/config/economy.js';
+import { attachProjectedFubolsToLeaderboard } from '../src/services/prizePoolService.js';
 
 describe('prize pool projection math', () => {
   it('distribuye 50/30/20 sobre el pozo', () => {
@@ -32,5 +33,27 @@ describe('prize pool projection math', () => {
     expect(distribution[0]).toEqual({ fubols: 0, retainedByHouse: 500 });
     expect(distribution[1]).toEqual({ fubols: 300, retainedByHouse: 0 });
     expect(houseRetention).toBe(500);
+  });
+
+  it('adjunta premios proyectados a filas del ranking', () => {
+    const leaderboard = [
+      { id: 'u1', name: 'A', rank: 1 },
+      { id: 'u2', name: 'B', rank: 2 },
+      { id: 'u3', name: 'C', rank: 3 },
+      { id: 'u4', name: 'D', rank: 4 },
+    ];
+    const projection = {
+      distribution: [
+        { userId: 'u1', fubols: 500, retainedByHouse: 0, percent: 50 },
+        { userId: 'u2', fubols: 300, retainedByHouse: 0, percent: 30 },
+        { userId: 'u3', fubols: 0, retainedByHouse: 200, percent: 20, isAiUser: true },
+      ],
+    };
+
+    const enriched = attachProjectedFubolsToLeaderboard(leaderboard, projection);
+    expect(enriched[0].projectedFubols).toBe(500);
+    expect(enriched[1].projectedFubols).toBe(300);
+    expect(enriched[2].fubolsRetainedByHouse).toBe(200);
+    expect(enriched[3].projectedFubols).toBeUndefined();
   });
 });

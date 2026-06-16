@@ -109,6 +109,8 @@ export default function LeaderboardPage() {
   const prizesWinnersCount = displayGroup?.prizesWinnersCount || 0;
   const groupPrizes = displayGroup?.prizes || [];
   const hasPrizes = !isNoGroupMode && prizesWinnersCount > 0;
+  const showFubolPrizes = dashboardMatchesGroup && !isNoGroupMode && Boolean(data?.prizePool);
+  const prizePoolTotal = data?.prizePool?.totalFubols ?? 0;
 
   const scrollToGroupStandings = useCallback(() => {
     document.getElementById(GROUP_POSITIONS_TABLE_ID)?.scrollIntoView({
@@ -160,6 +162,9 @@ export default function LeaderboardPage() {
             {isNoGroupMode
               ? 'Solo jugadores que no participan en ningún grupo de competencia'
               : `Tabla del grupo ${displayGroup?.name}`}
+            {showFubolPrizes
+              ? ` · Pozo ${prizePoolTotal} Fubols (50/30/20)`
+              : null}
             {dashboardMatchesGroup && lastUpdated
               ? ` · Actualizado ${formatLastUpdated(lastUpdated)}`
               : null}
@@ -231,6 +236,7 @@ export default function LeaderboardPage() {
             hasLiveMatches={hasLiveMatches}
             showGroupName={false}
             prizesWinnersCount={prizesWinnersCount}
+            showFubolPrizes={showFubolPrizes}
           />
         </section>
       ) : null}
