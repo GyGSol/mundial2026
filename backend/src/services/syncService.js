@@ -119,9 +119,50 @@ export function mergeSyncedRaw(existingRaw = {}, incomingRaw = {}) {
   return merged;
 }
 
+/** worldcup26 id ≠ FIFA MatchNumber; solo fusionar si el par local/visitante coincide. */
+export function syncTeamsMatch(existing, incoming) {
+  if (!existing || !incoming) return true;
+  return (
+    existing.homeTeamId === incoming.homeTeamId &&
+    existing.awayTeamId === incoming.awayTeamId
+  );
+}
+
+export function incomingIndicatesNotFinished(incoming) {
+  const raw = incoming.raw ?? {};
+  const finished = raw.finished ?? raw.Finished;
+  if (finished === 'FALSE' || finished === false) return true;
+  if (finished === 'TRUE' || finished === true || finished === 'true') return false;
+
+  const elapsed = raw.time_elapsed ?? raw.timeElapsed;
+  if (!elapsed || elapsed === 'notstarted' || elapsed === '0') return true;
+  if (String(elapsed).toLowerCase() === 'finished') return false;
+
+  return incoming.status === 'upcoming';
+}
+
+export async function resolveExistingMatchForWorldCup26Sync(doc) {
+  const byExternalId = await Match.findOne({ externalId: doc.externalId }).lean();
+  if (byExternalId && syncTeamsMatch(byExternalId, doc)) {
+    return byExternalId;
+  }
+
+  const byPair = await Match.findOne({
+    homeTeamId: doc.homeTeamId,
+    awayTeamId: doc.awayTeamId,
+  }).lean();
+  if (byPair) return byPair;
+
+  return byExternalId;
+}
+
 export function mergeSyncedMatch(existing, incoming) {
   const merged = { ...incoming };
   if (!existing) return merged;
+
+  if (!syncTeamsMatch(existing, incoming)) {
+    return { ...existing };
+  }
 
   merged.raw = mergeSyncedRaw(existing.raw ?? {}, incoming.raw ?? {});
 
@@ -132,6 +173,20 @@ export function mergeSyncedMatch(existing, incoming) {
 
   if (existing.status === 'finished' && kickoffInFuture) {
     merged.status = incoming.status === 'live' ? 'live' : 'upcoming';
+    const scores = sanitizeMatchScores(incoming.homeScore, incoming.awayScore);
+    merged.homeScore = scores.homeScore;
+    merged.awayScore = scores.awayScore;
+    return merged;
+  }
+
+  if (
+    existing.status === 'finished' &&
+    incoming.status === 'upcoming' &&
+    incomingIndicatesNotFinished(incoming)
+  ) {
+    merged.status = incoming.status;
+    merged.kickoffAt = existing.kickoffAt ?? merged.kickoffAt;
+    merged.kickoffTimezone = existing.kickoffTimezone ?? merged.kickoffTimezone;
     const scores = sanitizeMatchScores(incoming.homeScore, incoming.awayScore);
     merged.homeScore = scores.homeScore;
     merged.awayScore = scores.awayScore;
@@ -198,14 +253,27 @@ async function upsertMatches() {
     const doc = normalizeGame(item, {
       stadiumTimezone: stadiumTimezones[stadiumId] || undefined,
     });
-    const existing = await Match.findOne({ externalId: doc.externalId });
+    const existing = await resolveExistingMatchForWorldCup26Sync(doc);
     const merged = mergeSyncedMatch(existing, doc);
     const wasFinished = existing?.status === 'finished';
     const wasLive = existing?.status === 'live';
+    const updatePayload = {
+      ...merged,
+      lastSyncedAt: new Date(),
+    };
+    if (existing?.externalId) {
+      updatePayload.externalId = existing.externalId;
+    }
+    if (existing?.kickoffAt) {
+      updatePayload.kickoffAt = existing.kickoffAt;
+    }
+    if (existing?.kickoffTimezone) {
+      updatePayload.kickoffTimezone = existing.kickoffTimezone;
+    }
     const match = await Match.findOneAndUpdate(
-      { externalId: doc.externalId },
-      { $set: { ...merged, lastSyncedAt: new Date() } },
-      { upsert: true, new: true }
+      existing ? { _id: existing._id } : { externalId: doc.externalId },
+      { $set: updatePayload },
+      { upsert: !existing, new: true }
     );
 
     const becameLive = match.status === 'live' && existing?.status !== 'live';

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { mergeSyncedMatch } from '../src/services/syncService.js';
+import {
+  incomingIndicatesNotFinished,
+  mergeSyncedMatch,
+  syncTeamsMatch,
+} from '../src/services/syncService.js';
 
 describe('mergeSyncedMatch', () => {
   const kickoffPast = new Date(Date.now() - 60_000);
@@ -167,5 +171,91 @@ describe('mergeSyncedMatch', () => {
 
     expect(merged.raw.fifaMeta.idMatch).toBe('400021443');
     expect(merged.raw.fifaEvents.timeline).toHaveLength(1);
+  });
+
+  it('no aplica datos de worldcup26 si el par de equipos no coincide (id FIFA ≠ id worldcup26)', () => {
+    const existing = {
+      status: 'upcoming',
+      homeTeamId: '27',
+      awayTeamId: '28',
+      homeScore: 0,
+      awayScore: 0,
+      externalId: '15',
+      kickoffAt: new Date('2026-06-16T01:00:00.000Z'),
+    };
+    const incoming = {
+      status: 'finished',
+      homeTeamId: '25',
+      awayTeamId: '26',
+      homeScore: 1,
+      awayScore: 1,
+      externalId: '15',
+      raw: { finished: 'TRUE', time_elapsed: 'finished' },
+    };
+
+    expect(syncTeamsMatch(existing, incoming)).toBe(false);
+    const merged = mergeSyncedMatch(existing, incoming);
+    expect(merged.status).toBe('upcoming');
+    expect(merged.homeScore).toBe(0);
+    expect(merged.awayScore).toBe(0);
+  });
+
+  it('corrige finished erróneo cuando worldcup26 indica que el partido no empezó', () => {
+    const kickoffPast = new Date(Date.now() - 60_000);
+    const merged = mergeSyncedMatch(
+      {
+        status: 'finished',
+        homeTeamId: '27',
+        awayTeamId: '28',
+        homeScore: 1,
+        awayScore: 1,
+        kickoffAt: kickoffPast,
+        externalId: '15',
+      },
+      {
+        status: 'upcoming',
+        homeTeamId: '27',
+        awayTeamId: '28',
+        homeScore: 0,
+        awayScore: 0,
+        raw: { finished: 'FALSE', time_elapsed: 'notstarted' },
+      }
+    );
+
+    expect(incomingIndicatesNotFinished({
+      status: 'upcoming',
+      raw: { finished: 'FALSE', time_elapsed: 'notstarted' },
+    })).toBe(true);
+    expect(merged.status).toBe('upcoming');
+    expect(merged.homeScore).toBe(0);
+    expect(merged.awayScore).toBe(0);
+  });
+
+  it('enruta sync al partido correcto por par IRN-NZL aunque worldcup26 use otro id', () => {
+    const kickoffPast = new Date(Date.now() - 60_000);
+    const fifaSlot = {
+      status: 'finished',
+      homeTeamId: '27',
+      awayTeamId: '28',
+      homeScore: 1,
+      awayScore: 1,
+      externalId: '15',
+      kickoffAt: kickoffPast,
+    };
+    const worldcup26Payload = {
+      status: 'upcoming',
+      homeTeamId: '27',
+      awayTeamId: '28',
+      homeScore: 0,
+      awayScore: 0,
+      externalId: '13',
+      kickoffAt: kickoffPast,
+      raw: { finished: 'FALSE', time_elapsed: 'notstarted' },
+    };
+
+    const merged = mergeSyncedMatch(fifaSlot, worldcup26Payload);
+    expect(merged.status).toBe('upcoming');
+    expect(merged.homeScore).toBe(0);
+    expect(merged.awayScore).toBe(0);
   });
 });
