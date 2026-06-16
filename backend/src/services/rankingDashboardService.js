@@ -105,6 +105,7 @@ export async function getRankingDashboard(groupId, userId) {
       totalFubols: projection.totalFubols,
       status: projection.status,
       houseRetention: projection.houseRetention,
+      distribution: projection.distribution,
     };
   }
 

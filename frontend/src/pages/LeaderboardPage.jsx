@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import FubolCoinIcon from '../components/FubolCoinIcon.jsx';
 
 const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
 
@@ -108,9 +109,13 @@ export default function LeaderboardPage() {
   const isNoGroupMode = effectiveGroupId === '__nogroup';
   const prizesWinnersCount = displayGroup?.prizesWinnersCount || 0;
   const groupPrizes = displayGroup?.prizes || [];
-  const hasPrizes = !isNoGroupMode && prizesWinnersCount > 0;
   const showFubolPrizes = dashboardMatchesGroup && !isNoGroupMode && Boolean(data?.prizePool);
   const prizePoolTotal = data?.prizePool?.totalFubols ?? 0;
+  const fubolDistribution = data?.prizePool?.distribution ?? [];
+  const prizeLabelByPosition = Object.fromEntries(
+    groupPrizes.map((row) => [Number(row.position), row.prize?.trim() || ''])
+  );
+  const showPrizesCard = showFubolPrizes || (!isNoGroupMode && prizesWinnersCount > 0);
 
   const scrollToGroupStandings = useCallback(() => {
     document.getElementById(GROUP_POSITIONS_TABLE_ID)?.scrollIntoView({
@@ -162,9 +167,7 @@ export default function LeaderboardPage() {
             {isNoGroupMode
               ? 'Solo jugadores que no participan en ningún grupo de competencia'
               : `Tabla del grupo ${displayGroup?.name}`}
-            {showFubolPrizes
-              ? ` · Pozo ${prizePoolTotal} Fubols (50/30/20)`
-              : null}
+            {showFubolPrizes ? ` · Pozo ${prizePoolTotal} Fubols` : null}
             {dashboardMatchesGroup && lastUpdated
               ? ` · Actualizado ${formatLastUpdated(lastUpdated)}`
               : null}
@@ -208,22 +211,59 @@ export default function LeaderboardPage() {
       {rankingLoading && <LoadingSpinner label="Cargando ranking…" />}
       {error && <p className="text-destructive">{error}</p>}
 
-      {hasPrizes ? (
+      {showPrizesCard ? (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Premios del grupo</CardTitle>
+            {showFubolPrizes ? (
+              <p className="text-sm text-muted-foreground">
+                Reparto proyectado 50/30/20 del pozo ({prizePoolTotal} Fubols)
+              </p>
+            ) : null}
           </CardHeader>
           <CardContent>
-            <ul className="flex flex-col gap-1.5 text-sm">
-              {groupPrizes.map((row) => (
-                <li key={row.position} className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-medium tabular-nums">{row.position}°</span>
-                  <span className="text-muted-foreground">
-                    {row.prize?.trim() ? row.prize : 'Premio por definir'}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {showFubolPrizes ? (
+              <ul className="flex flex-col gap-2 text-sm">
+                {fubolDistribution.map((slot) => (
+                  <li
+                    key={slot.rank}
+                    className="flex flex-wrap items-center justify-between gap-3"
+                  >
+                    <span className="flex min-w-0 items-baseline gap-2">
+                      <span className="w-6 font-medium tabular-nums">{slot.rank}°</span>
+                      {prizeLabelByPosition[slot.rank] ? (
+                        <span>{prizeLabelByPosition[slot.rank]}</span>
+                      ) : null}
+                      {slot.name ? (
+                        <span className="truncate text-muted-foreground">{slot.name}</span>
+                      ) : null}
+                    </span>
+                    {(slot.retainedByHouse ?? 0) > 0 ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                        La Casa +{slot.retainedByHouse}
+                        <FubolCoinIcon size="sm" />
+                      </span>
+                    ) : (
+                      <span className="inline-flex shrink-0 items-center gap-1 font-semibold tabular-nums">
+                        {slot.fubols}
+                        <FubolCoinIcon size="sm" />
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className="flex flex-col gap-1.5 text-sm">
+                {groupPrizes.map((row) => (
+                  <li key={row.position} className="flex flex-wrap items-baseline gap-2">
+                    <span className="font-medium tabular-nums">{row.position}°</span>
+                    <span className="text-muted-foreground">
+                      {row.prize?.trim() ? row.prize : 'Premio por definir'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       ) : null}
@@ -236,7 +276,6 @@ export default function LeaderboardPage() {
             hasLiveMatches={hasLiveMatches}
             showGroupName={false}
             prizesWinnersCount={prizesWinnersCount}
-            showFubolPrizes={showFubolPrizes}
           />
         </section>
       ) : null}
