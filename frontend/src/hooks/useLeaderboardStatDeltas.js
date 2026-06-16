@@ -50,7 +50,7 @@ export function statDeltaForKey(key, previous, next, { upOnly = false } = {}) {
   return null;
 }
 
-/** Indicadores fijos vs baseline de kickoff: rank siempre; stats solo con partido en vivo (↑ verde). */
+/** Indicadores vs baseline sin partidos en vivo: rank siempre; PA/GL/GV/GT/PB solo con en vivo (↑ verde). */
 export function computeLeaderboardBaselineIndicators(
   leaderboard,
   leaderboardKickoffBaseline,

@@ -166,4 +166,154 @@ describe('leaderboard kickoff baseline', () => {
     expect(excludedRow.pa).toBe(0);
     expect(currentRow.totalPoints).toBeGreaterThan(excludedRow.totalPoints);
   });
+
+  it('partido finalizado no genera delta de stats si solo se excluyen en vivo', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST04' });
+    const user = await User.create({
+      name: 'Gisela caso',
+      email: 'gisela@example.com',
+      passwordHash: 'hash',
+      totalPoints: 4,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: user._id, groupId: group._id, role: 'member' });
+
+    const finished = await Match.create({
+      externalId: 'finished-pa',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 3,
+      awayScore: 1,
+      status: 'finished',
+      kickoffAt: new Date('2026-06-16T19:00:00.000Z'),
+    });
+    const live = await Match.create({
+      externalId: 'live-gl-only',
+      homeTeamId: '3',
+      awayTeamId: '4',
+      homeScore: 0,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-16T22:00:00.000Z'),
+    });
+
+    await Prediction.create({
+      userId: user._id,
+      matchId: finished._id,
+      homeGoals: 2,
+      awayGoals: 0,
+      pointsEarned: 3,
+      pointsBreakdown: { winner: 3, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: live._id,
+      homeGoals: 0,
+      awayGoals: 2,
+      pointsEarned: 1,
+      pointsBreakdown: { winner: 0, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+    });
+
+    const [current, baseline] = await Promise.all([
+      getLeaderboard(group._id.toString()),
+      getLeaderboard(group._id.toString(), 100, { excludeMatchIds: [live._id.toString()] }),
+    ]);
+
+    const currentRow = current.find((row) => row.id === user._id.toString());
+    const baselineRow = baseline.find((row) => row.id === user._id.toString());
+
+    expect(currentRow.pa).toBe(1);
+    expect(baselineRow.pa).toBe(1);
+    expect(currentRow.gl).toBe(1);
+    expect(baselineRow.gl).toBe(0);
+    expect(currentRow.gv).toBe(0);
+    expect(baselineRow.gv).toBe(0);
+  });
+
+  it('varios partidos en vivo excluidos acumulan delta de stats', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST05' });
+    const user = await User.create({
+      name: 'Multi live',
+      email: 'multi@example.com',
+      passwordHash: 'hash',
+      totalPoints: 10,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: user._id, groupId: group._id, role: 'member' });
+
+    const liveA = await Match.create({
+      externalId: 'live-a',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 0,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-16T19:00:00.000Z'),
+    });
+    const liveB = await Match.create({
+      externalId: 'live-b',
+      homeTeamId: '3',
+      awayTeamId: '4',
+      homeScore: 1,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-16T19:05:00.000Z'),
+    });
+    const liveC = await Match.create({
+      externalId: 'live-c',
+      homeTeamId: '5',
+      awayTeamId: '6',
+      homeScore: 0,
+      awayScore: 1,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-16T19:10:00.000Z'),
+    });
+
+    await Prediction.create({
+      userId: user._id,
+      matchId: liveA._id,
+      homeGoals: 0,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: liveB._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: liveC._id,
+      homeGoals: 0,
+      awayGoals: 2,
+      pointsEarned: 4,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+    });
+
+    const liveIds = [liveA, liveB, liveC].map((m) => m._id.toString());
+    const [current, baseline] = await Promise.all([
+      getLeaderboard(group._id.toString()),
+      getLeaderboard(group._id.toString(), 100, { excludeMatchIds: liveIds }),
+    ]);
+
+    const currentRow = current.find((row) => row.id === user._id.toString());
+    const baselineRow = baseline.find((row) => row.id === user._id.toString());
+
+    expect(currentRow.pa).toBe(3);
+    expect(baselineRow.pa).toBe(0);
+    expect(currentRow.gl).toBe(3);
+    expect(baselineRow.gl).toBe(0);
+    expect(currentRow.gv).toBe(2);
+    expect(baselineRow.gv).toBe(0);
+    expect(currentRow.gt).toBe(2);
+    expect(baselineRow.gt).toBe(0);
+  });
 });

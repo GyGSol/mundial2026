@@ -10,8 +10,6 @@ import { attachStreamMetaToMatches } from './streamMetaService.js';
 import { compareMatchesBySchedule } from './matchSortService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
-/** Tras el kickoff, seguimos enviando baseline para flechas de pts (en vivo y recién finalizado). */
-const BASELINE_MATCH_KICKOFF_WINDOW_MS = 4 * 60 * 60 * 1000;
 
 function kickoffKey(kickoffAt) {
   if (!kickoffAt) return '';
@@ -19,23 +17,9 @@ function kickoffKey(kickoffAt) {
   return Number.isNaN(ms) ? String(kickoffAt) : String(ms);
 }
 
-/** Partidos finalizados recientes cuyos pts aún deben mostrar flecha vs baseline 0-0. */
-export function finishedMatchIdsForPointsBaseline(finishedMatches, now = Date.now()) {
-  return finishedMatches
-    .filter((match) => {
-      const kickoffMs = new Date(match.kickoffAt).getTime();
-      return Number.isFinite(kickoffMs) && now - kickoffMs < BASELINE_MATCH_KICKOFF_WINDOW_MS;
-    })
-    .map((match) => match._id.toString());
-}
-
-export function mergePointsBaselineMatchIds(liveMatchIds, finishedMatches, now = Date.now()) {
-  return [
-    ...new Set([
-      ...liveMatchIds,
-      ...finishedMatchIdsForPointsBaseline(finishedMatches, now),
-    ]),
-  ];
+/** Partidos en vivo excluidos del baseline de flechas PA/GL/GV/GT (soporta varios simultáneos). */
+export function liveMatchIdsForStatIndicators(liveMatchIds) {
+  return [...new Set(liveMatchIds)];
 }
 
 function findNextUpcomingMatches(matches) {
@@ -79,7 +63,7 @@ export async function getRankingDashboard(groupId, userId) {
   ]);
 
   const liveMatchIds = liveRaw.map((match) => match._id.toString());
-  const indicatorBaselineMatchIds = mergePointsBaselineMatchIds(liveMatchIds, finishedRaw);
+  const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
     getLeaderboard(groupId || null),
     indicatorBaselineMatchIds.length > 0
