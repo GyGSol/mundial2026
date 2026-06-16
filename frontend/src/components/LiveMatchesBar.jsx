@@ -397,9 +397,10 @@ function formatTimelineEntry(event) {
     case 'goal': {
       const playerLabel = event.player ? formatTimelinePlayer(event) : 'Gol';
       const penaltySuffix = event.isPenalty ? ' (p)' : '';
+      const shotPrefix = event.includesShot ? '🎯 ' : '';
       return {
         side: event.side,
-        text: `${prefix}⚽ ${playerLabel}${penaltySuffix}`,
+        text: `${prefix}${shotPrefix}⚽ ${playerLabel}${penaltySuffix}`,
       };
     }
     case 'yellow_card':

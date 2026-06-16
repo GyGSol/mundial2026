@@ -20,8 +20,72 @@ export function isPlaceholderTimelineGoal(event) {
   return event?.type === 'goal' && event.minute == null && !event.player;
 }
 
+function normalizePlayerName(name) {
+  return String(name ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function playersLikelyMatch(shotPlayer, goalPlayer) {
+  const shot = normalizePlayerName(shotPlayer);
+  const goal = normalizePlayerName(goalPlayer);
+  if (!shot || !goal) return true;
+  if (shot === goal) return true;
+  if (shot.includes(goal) || goal.includes(shot)) return true;
+
+  const shotLast = shot.split(/\s+/).pop();
+  const goalLast = goal.split(/\s+/).pop();
+  return Boolean(shotLast && goalLast && shotLast === goalLast);
+}
+
+function sameTimelineTiming(a, b) {
+  return (
+    a?.side === b?.side &&
+    a?.minute === b?.minute &&
+    (a?.extraMinute ?? null) === (b?.extraMinute ?? null)
+  );
+}
+
+function shotPairsGoal(shot, goal) {
+  if (shot?.type !== 'shot_attempt' || goal?.type !== 'goal') return false;
+  if (!sameTimelineTiming(shot, goal)) return false;
+  return playersLikelyMatch(shot.player, goal.player);
+}
+
+/** Oculta tiros que ya figuran como gol en la misma jugada y marca el gol con includesShot. */
+export function annotateTimelineForDisplay(events = []) {
+  const list = events ?? [];
+  const goals = list.filter((event) => event.type === 'goal');
+  const absorbedShotIds = new Set();
+  const goalIncludesShot = new Set();
+
+  for (const goal of goals) {
+    const shot = list.find(
+      (event) =>
+        event.type === 'shot_attempt' &&
+        !absorbedShotIds.has(timelineEventIdentity(event)) &&
+        shotPairsGoal(event, goal)
+    );
+    if (!shot) continue;
+    absorbedShotIds.add(timelineEventIdentity(shot));
+    goalIncludesShot.add(timelineEventIdentity(goal));
+  }
+
+  return list
+    .filter(
+      (event) => event.type !== 'shot_attempt' || !absorbedShotIds.has(timelineEventIdentity(event))
+    )
+    .map((event) =>
+      event.type === 'goal' && goalIncludesShot.has(timelineEventIdentity(event))
+        ? { ...event, includesShot: true }
+        : event
+    );
+}
+
 export function filterTimelineForDisplay(events = []) {
-  return (events ?? []).filter(
+  return annotateTimelineForDisplay(events).filter(
     (event) => TIMELINE_DISPLAY_TYPES.has(event.type) && !isPlaceholderTimelineGoal(event)
   );
 }
