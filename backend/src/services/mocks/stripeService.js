@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { MOCK_CHECKOUT_USD, usdToFubols } from '../../config/economy.js';
-import { recordDeposit } from './fubolService.js';
+import { recordDeposit } from '../fubolService.js';
 
 /** In-memory mock checkout sessions (no Stripe API). */
 const pendingSessions = new Map();
