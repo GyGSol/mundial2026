@@ -363,6 +363,9 @@ export default function AiPredictionsPage() {
               {creditsRemaining > 0
                 ? ` · Te quedan ${creditsRemaining} incluida${creditsRemaining === 1 ? '' : 's'}`
                 : ''}
+              {user?.competitionGroup?.id
+                ? ' · Los packs suman al pozo de tu grupo'
+                : ''}
             </span>
             {needsFubols ? (
               <Button type="button" size="sm" onClick={() => setCheckoutOpen(true)}>

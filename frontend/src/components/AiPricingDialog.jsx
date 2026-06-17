@@ -66,6 +66,7 @@ export default function AiPricingDialog({
             <p className="mt-2 text-muted-foreground">
               Pagás {AI_CONSULTATION_FEE} Fubol y podés hacer hasta {AI_QUESTIONS_PER_FEE} preguntas.
               La cuarta pregunta vuelve a costar {AI_CONSULTATION_FEE} Fubol (otras {AI_QUESTIONS_PER_FEE}).
+              Si estás en un grupo de competencia, esos Fubols suman al pozo del torneo y actualizan los premios.
             </p>
           </div>
           {isConfirm && creditsRemaining > 0 ? (

@@ -438,6 +438,8 @@ export async function askConsultation(
       chargedPack: billing.chargedPack,
       balanceFubols: billing.balanceFubols,
       exempt: billing.reason === 'ai_exempt',
+      groupId: billing.groupId ?? null,
+      prizePoolTotal: billing.prizePoolTotal ?? null,
     },
     reply: {
       answer: result.text,

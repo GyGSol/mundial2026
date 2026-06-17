@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { FubolTransaction } from '../models/FubolTransaction.js';
 import { AppTreasury } from '../models/AppTreasury.js';
 import { PrizePool } from '../models/PrizePool.js';
+import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../config/economy.js';
 
 function economyError(message, status = 400) {
@@ -196,6 +197,16 @@ export async function debitUser({
   return runInTransaction(work);
 }
 
+async function resolveAiConsultationGroupId(userId, user, session = null) {
+  const candidate = user?.activeCompetitionGroupId || user?.competitionGroupId;
+  if (!candidate) return null;
+
+  const q = UserGroupMembership.findOne({ userId, groupId: candidate });
+  if (session) q.session(session);
+  const membership = await q.lean();
+  return membership ? candidate : null;
+}
+
 async function ensurePrizePool(groupId, session = null) {
   const oid =
     typeof groupId === 'string' ? new mongoose.Types.ObjectId(groupId) : groupId;
@@ -343,8 +354,10 @@ export function buildAiCreditsPayload(user) {
   };
 }
 
-export async function chargeAiConsultationFee({ userId }) {
-  const user = await User.findById(userId).select('isAiUser balanceFubols aiQuestionCredits').lean();
+export async function chargeAiConsultationFee({ userId, groupId: explicitGroupId = null }) {
+  const user = await User.findById(userId)
+    .select('isAiUser balanceFubols aiQuestionCredits activeCompetitionGroupId competitionGroupId')
+    .lean();
   if (!user) throw economyError('Usuario no encontrado', 404);
   if (user.isAiUser) {
     return {
@@ -354,37 +367,55 @@ export async function chargeAiConsultationFee({ userId }) {
       creditsRemaining: null,
       balanceFubols: user.balanceFubols || 0,
       fee: 0,
+      groupId: null,
+      prizePoolTotal: null,
       questionsPerPack: AI_QUESTIONS_PER_FEE,
       packCostFubols: AI_CONSULTATION_FEE,
     };
   }
 
   return runInTransaction(async (session) => {
-    const locked = await User.findById(userId).select('aiQuestionCredits balanceFubols').session(session);
+    const locked = await User.findById(userId)
+      .select('aiQuestionCredits balanceFubols activeCompetitionGroupId competitionGroupId')
+      .session(session);
     if (!locked) throw economyError('Usuario no encontrado', 404);
+
+    const groupId =
+      explicitGroupId ||
+      (await resolveAiConsultationGroupId(userId, locked, session));
 
     let credits = locked.aiQuestionCredits ?? 0;
     let chargedPack = false;
     let fee = 0;
     let balanceFubols = locked.balanceFubols ?? 0;
+    let prizePoolTotal = null;
 
     if (credits <= 0) {
       const debit = await debitUser({
         userId,
         amount: AI_CONSULTATION_FEE,
         type: 'ai_consultation',
+        groupId,
         metadata: {
           fee: AI_CONSULTATION_FEE,
           pack: true,
           questionsGranted: AI_QUESTIONS_PER_FEE,
+          destination: groupId ? 'prize_pool' : 'house',
         },
         session,
       });
       balanceFubols = debit.balanceFubols;
 
-      const treasury = await getTreasury(session);
-      treasury.houseBalanceFubols = (treasury.houseBalanceFubols || 0) + AI_CONSULTATION_FEE;
-      await treasury.save(session ? { session } : undefined);
+      if (groupId) {
+        const pool = await ensurePrizePool(groupId, session);
+        pool.totalFubols = (pool.totalFubols || 0) + AI_CONSULTATION_FEE;
+        await pool.save(session ? { session } : undefined);
+        prizePoolTotal = pool.totalFubols;
+      } else {
+        const treasury = await getTreasury(session);
+        treasury.houseBalanceFubols = (treasury.houseBalanceFubols || 0) + AI_CONSULTATION_FEE;
+        await treasury.save(session ? { session } : undefined);
+      }
 
       credits = AI_QUESTIONS_PER_FEE;
       chargedPack = true;
@@ -404,6 +435,8 @@ export async function chargeAiConsultationFee({ userId }) {
       fee,
       creditsRemaining,
       balanceFubols,
+      groupId: groupId ? String(groupId) : null,
+      prizePoolTotal,
       questionsPerPack: AI_QUESTIONS_PER_FEE,
       packCostFubols: AI_CONSULTATION_FEE,
     };

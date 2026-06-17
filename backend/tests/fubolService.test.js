@@ -6,6 +6,7 @@ import { PrizePool } from '../src/models/PrizePool.js';
 import { FubolTransaction } from '../src/models/FubolTransaction.js';
 import { AppTreasury } from '../src/models/AppTreasury.js';
 import { CompetitionGroup } from '../src/models/CompetitionGroup.js';
+import { UserGroupMembership } from '../src/models/UserGroupMembership.js';
 import {
   creditUser,
   debitUser,
@@ -182,15 +183,25 @@ describe('fubolService', () => {
   describe('ai consultation fee', () => {
     let userId;
     let aiUserId;
+    let groupId;
 
     beforeEach(async () => {
+      const group = await CompetitionGroup.create({
+        name: `AI Fee Group ${Date.now()}-${Math.random()}`,
+      });
+      groupId = group._id;
+
       const user = await User.create({
         name: 'AI Payer',
         email: `ai-payer-${Date.now()}@test.local`,
         passwordHash: 'hash',
         balanceFubols: AI_CONSULTATION_FEE,
+        activeCompetitionGroupId: groupId,
+        competitionGroupId: groupId,
       });
       userId = user._id;
+
+      await UserGroupMembership.create({ userId, groupId, role: 'member' });
 
       const ai = await User.create({
         name: 'IA Bank',
@@ -203,11 +214,14 @@ describe('fubolService', () => {
     });
 
     afterEach(async () => {
-      await FubolTransaction.deleteMany({ userId: { $in: [userId, aiUserId] } });
+      await PrizePool.deleteMany({ groupId });
+      await FubolTransaction.deleteMany({ userId: { $in: [userId, aiUserId] }, groupId });
+      await UserGroupMembership.deleteMany({ userId, groupId });
       await User.deleteMany({ _id: { $in: [userId, aiUserId] } });
+      await CompetitionGroup.deleteOne({ _id: groupId });
     });
 
-    it('cobra pack de consultas IA y descuenta créditos', async () => {
+    it('cobra pack de consultas IA y acumula pozo del grupo', async () => {
       const beforeTreasury = await AppTreasury.findOne({ singletonKey: 'main' }).lean();
       const houseBefore = beforeTreasury?.houseBalanceFubols ?? 0;
 
@@ -215,10 +229,15 @@ describe('fubolService', () => {
       expect(first.chargedPack).toBe(true);
       expect(first.fee).toBe(AI_CONSULTATION_FEE);
       expect(first.creditsRemaining).toBe(AI_QUESTIONS_PER_FEE - 1);
+      expect(first.groupId).toBe(String(groupId));
+      expect(first.prizePoolTotal).toBe(AI_CONSULTATION_FEE);
 
       const userAfterFirst = await User.findById(userId).lean();
       expect(userAfterFirst.balanceFubols).toBe(0);
       expect(userAfterFirst.aiQuestionCredits).toBe(AI_QUESTIONS_PER_FEE - 1);
+
+      const pool = await PrizePool.findOne({ groupId }).lean();
+      expect(pool.totalFubols).toBe(AI_CONSULTATION_FEE);
 
       const second = await chargeAiConsultationFee({ userId });
       expect(second.chargedPack).toBe(false);
@@ -227,6 +246,25 @@ describe('fubolService', () => {
       const third = await chargeAiConsultationFee({ userId });
       expect(third.chargedPack).toBe(false);
       expect(third.creditsRemaining).toBe(0);
+
+      const treasury = await AppTreasury.findOne({ singletonKey: 'main' }).lean();
+      expect(treasury.houseBalanceFubols).toBe(houseBefore);
+    });
+
+    it('sin grupo activo, el pack de IA va a La Casa', async () => {
+      await User.updateOne(
+        { _id: userId },
+        { $set: { activeCompetitionGroupId: null, competitionGroupId: null } }
+      );
+      await User.updateOne({ _id: userId }, { $set: { balanceFubols: AI_CONSULTATION_FEE, aiQuestionCredits: 0 } });
+
+      const beforeTreasury = await AppTreasury.findOne({ singletonKey: 'main' }).lean();
+      const houseBefore = beforeTreasury?.houseBalanceFubols ?? 0;
+
+      const result = await chargeAiConsultationFee({ userId });
+      expect(result.chargedPack).toBe(true);
+      expect(result.groupId).toBeNull();
+      expect(result.prizePoolTotal).toBeNull();
 
       const treasury = await AppTreasury.findOne({ singletonKey: 'main' }).lean();
       expect(treasury.houseBalanceFubols).toBe(houseBefore + AI_CONSULTATION_FEE);
