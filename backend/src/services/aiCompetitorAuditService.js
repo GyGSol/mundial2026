@@ -292,29 +292,36 @@ export async function upsertAiCompetitorPrediction(matchId, { homeGoals, awayGoa
     throw error;
   }
 
-  const prediction = await Prediction.findOneAndUpdate(
-    { userId: aiUser._id, matchId: match._id },
-    {
-      $set: {
-        homeGoals: home,
-        awayGoals: away,
-        userSubmitted: true,
-        predictionSource: 'admin',
-      },
-      $setOnInsert: {
-        pointsEarned: null,
-        bonusPoint: 0,
-        bonusReason: null,
-        pointsBreakdown: null,
-        goalDiffHome: null,
-        goalDiffAway: null,
-      },
-    },
-    { upsert: true, new: true }
-  );
+  const userId = new mongoose.Types.ObjectId(aiUser._id);
+  const matchObjectId = match._id;
+
+  let prediction = await Prediction.findOne({ userId, matchId: matchObjectId });
+  if (prediction) {
+    prediction.homeGoals = home;
+    prediction.awayGoals = away;
+    prediction.userSubmitted = true;
+    prediction.predictionSource = 'admin';
+    await prediction.save();
+  } else {
+    prediction = await Prediction.create({
+      userId,
+      matchId: matchObjectId,
+      homeGoals: home,
+      awayGoals: away,
+      userSubmitted: true,
+      predictionSource: 'admin',
+      pointsEarned: null,
+      bonusPoint: 0,
+      bonusReason: null,
+      pointsBreakdown: null,
+      goalDiffHome: null,
+      goalDiffAway: null,
+    });
+  }
 
   if (match.status === 'finished' || match.status === 'live') {
     await recalculateMatchScores(match._id);
+    prediction = await Prediction.findById(prediction._id);
   }
 
   notifyMatchesUpdated({
