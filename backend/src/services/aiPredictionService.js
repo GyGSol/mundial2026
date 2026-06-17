@@ -1257,11 +1257,11 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
       const kickoffLocal = match.kickoffAt
         ? new Date(match.kickoffAt).toISOString()
         : '?';
-      const lineupLabel = context.formacionConfirmada?.confirmada
+      const lineupNote = context.formacionConfirmada?.confirmada
         ? 'formación confirmada'
-        : 'sin titulares confirmados';
+        : 'sin formación confirmada';
       console.log(
-        `AI prediction: ${homeCode} ${score.homeGoals}-${score.awayGoals} ${awayCode} (match ${match.externalId}, ${score.source}, kickoff ${kickoffLocal}, ${lineupLabel})`
+        `AI prediction: ${homeCode} ${score.homeGoals}-${score.awayGoals} ${awayCode} (match ${match.externalId}, ${score.source}, kickoff ${kickoffLocal}, ${lineupNote})`
       );
       processed += 1;
     } catch (err) {
