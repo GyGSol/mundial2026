@@ -102,6 +102,19 @@ heroku run npm run mark-ai-user -w backend -a mundial2026-pred
 
 Variables opcionales: `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `CEREBRAS_API_KEY` (proveedor principal), `AI_CEREBRAS_MODEL` (default `gpt-oss-120b`), `GOOGLE_AI_API_KEY` / `GROQ_API_KEY` (fallback), `AI_GEMINI_MODEL`, `AI_GROQ_MODEL`.
 
+**Competidor IA (contexto enriquecido):** el bot usa un pipeline distinto al de consultas pagas de usuarios. Opcional para señales de mercado y xG:
+
+```bash
+heroku config:set \
+  ODDS_API_KEY="..." \
+  ODDS_API_SPORT=soccer_fifa_world_cup \
+  API_FOOTBALL_KEY="..." \
+  API_FOOTBALL_SEASON=2026 \
+  -a mundial2026-pred
+```
+
+Evaluar precisión rolling (Gdif, sesgo): `heroku run npm run ai:evaluate -w backend -a mundial2026-pred`
+
 ### Transmisión en vivo (Fubo Sports Network)
 
 Módulo separado de los broadcasters oficiales. Canales según [fubosportsnetwork.com](https://www.fubosportsnetwork.com/).

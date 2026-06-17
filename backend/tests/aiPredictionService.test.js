@@ -11,6 +11,8 @@ import {
   askMatchAiFollowUp,
   buildVenueContextForPrompt,
   WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
+  AI_COMPETITOR_SCORING_INSTRUCTIONS,
+  aiModelForScoreSource,
 } from '../src/services/aiPredictionService.js';
 import { env } from '../src/config/env.js';
 
@@ -317,7 +319,7 @@ describe('aiPredictionService', () => {
         country: 'USA',
       });
       expect(venue.kickoffLocal).toMatch(/2026/i);
-      expect(venue.analysisHints).toHaveLength(2);
+      expect(venue.analysisHints).toHaveLength(3);
     });
   });
 
@@ -325,6 +327,22 @@ describe('aiPredictionService', () => {
     it('aclara que local/visitante es solo fixture', () => {
       expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/SOLO la posición en el fixture/i);
       expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/temperatura/i);
+    });
+  });
+
+  describe('AI_COMPETITOR_SCORING_INSTRUCTIONS', () => {
+    it('prioriza PA y Gdif para el bot competidor', () => {
+      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/PA = 3 pts/i);
+      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/Gdif/i);
+      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/90 minutos/i);
+    });
+  });
+
+  describe('aiModelForScoreSource', () => {
+    it('mapea fuentes heurísticas externas', () => {
+      expect(aiModelForScoreSource('heuristic-xg')).toBe('heuristic-xg');
+      expect(aiModelForScoreSource('heuristic-odds')).toBe('heuristic-odds');
+      expect(aiModelForScoreSource('heuristic')).toBe('heuristic');
     });
   });
 

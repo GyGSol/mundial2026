@@ -31,6 +31,7 @@ const predictionSchema = new mongoose.Schema(
     predictionSource: { type: String, enum: ['user', 'ai', 'admin', 'default'], default: 'user' },
     aiModel: { type: String, default: null },
     aiReasoning: { type: String, default: null },
+    aiCalibrationApplied: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

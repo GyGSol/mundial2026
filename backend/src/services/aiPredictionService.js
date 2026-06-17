@@ -24,6 +24,27 @@ import {
   sanitizeAiUserFacingText,
   WORLD_CUP_USER_FACING_LANGUAGE_RULES,
 } from './aiPromptHumanizer.js';
+import { buildMatchHistoryContext } from './aiMatchHistoryContextService.js';
+import {
+  buildMatchStakesContext,
+  buildTablaYClasificacionContext,
+} from './aiMatchStakesContextService.js';
+import {
+  buildCrowdContextForCompetitor,
+  pickFocusGroupId,
+} from './aiCrowdPredictionContextService.js';
+import { buildPrizeRaceContext } from './aiPrizeRaceContextService.js';
+import {
+  applyCalibrationNudge,
+  buildCalibrationPromptBlock,
+  loadAiCalibrationStats,
+} from './aiPredictionCalibrationService.js';
+import {
+  fetchExternalMatchIntel,
+  formatExternalIntelForPrompt,
+  scoreFromExternalIntel,
+} from './externalMatchIntelService.js';
+import { refreshTeamPlayerIntel } from './aiPlayerIntelService.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -46,6 +67,17 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - Usá duelosPorPuesto (o positionMatchups): compará portería, defensa, mediocampo y delantera para ponderar el marcador.
 - Usá venue.matchWeather.kickoffForecast para ponderar ritmo, desgaste, errores técnicos y adaptación de cada selección al calor/humedad/viento/lluvia del kickoff.
 - Usá weatherOps y weatherRisk: si phase=pre_kickoff_delay o suspended, el partido está demorado por clima. En sedes USA aplica protocolo NOAA (8 mi / 30 min); en Canadá alertas MSC; en México protocolo local SMN con señal Open-Meteo. Si liveScheduleContext.integrityWarning existe, advertí desbalance en parejas de grupo simultáneas.`;
+
+/** Solo para predicción automática del competidor IA (maximizar puntos). */
+export const AI_COMPETITOR_SCORING_INSTRUCTIONS = `OBJETIVO — Maximizar puntos en el juego de predicciones (máx. 6 pts base por partido):
+1. Prioridad #1: acertar ganador o empate (PA = 3 pts). Definí primero el outcome más probable.
+2. Luego afiná goles local (GL), visitante (GV) y total (GT), 1 pt c/u.
+3. Minimizá error de marcador (Gdif): evitá resultados llamativos sin respaldo en datos.
+4. En eliminatorias: predicción = resultado a 90 minutos (sin penales). Empate es válido.
+5. Usá mercadoYxG como señal fuerte si existe; ajustá con lesiones, clima y stakes.
+6. Usá inteligenciaGrupo.consensoPartido como señal secundaria (no copies al grupo).
+7. Si carreraPremios.diferenciaAlCorte ≤ 6 pts y no estás en zona de premio: priorizá PA sobre marcador exacto.
+8. Nunca cites nombres de otros jugadores ni sus predicciones individuales; solo agregados del grupo.`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;
@@ -181,8 +213,37 @@ function avgGoalsPerMatch(row) {
   };
 }
 
-/** Fallback Poisson simplificado a partir de promedios de grupo. */
+/** Fallback: xG/odds → ranking/stats → Poisson por grupo. */
 export function computeHeuristicScore(context) {
+  const external = scoreFromExternalIntel(context.externalIntel ?? context.mercadoYxG);
+  if (external) {
+    let homeGoals = clampGoals(external.homeGoals) ?? 1;
+    let awayGoals = clampGoals(external.awayGoals) ?? 1;
+    if (homeGoals === 0 && awayGoals === 0) {
+      homeGoals = 1;
+      awayGoals = 1;
+    }
+    return { homeGoals, awayGoals, reasoning: external.reasoning, source: external.source };
+  }
+
+  const homeRank = context.homeTeam?.fifaRanking?.rank;
+  const awayRank = context.awayTeam?.fifaRanking?.rank;
+  if (homeRank != null && awayRank != null) {
+    const diff = awayRank - homeRank;
+    let homeGoals = diff > 8 ? 2 : diff > 0 ? 1 : diff < -8 ? 0 : 1;
+    let awayGoals = diff < -8 ? 2 : diff < 0 ? 1 : diff > 8 ? 0 : 1;
+    if (homeGoals === 0 && awayGoals === 0) {
+      homeGoals = 1;
+      awayGoals = 1;
+    }
+    return {
+      homeGoals: clampGoals(homeGoals) ?? 1,
+      awayGoals: clampGoals(awayGoals) ?? 1,
+      reasoning: 'Heurística por ranking FIFA',
+      source: 'heuristic',
+    };
+  }
+
   const homeRow = standingRowForTeam(context.groupStandings, context.homeTeam);
   const awayRow = standingRowForTeam(context.groupStandings, context.awayTeam);
 
@@ -292,6 +353,7 @@ export async function buildPromptContext(match, aiUserId) {
     awayTeam: awayForAnalysis,
     venue,
     teamsAnalysis,
+    enrichPerformance: false,
   });
 
   return {
@@ -322,6 +384,123 @@ export async function buildPromptContext(match, aiUserId) {
     squadAnalysis: enriched.squadAnalysis,
     positionMatchups: enriched.positionMatchups,
   };
+}
+
+export async function prepareCompetitorMatchPrefetch(match, homeTeam, awayTeam) {
+  const kickoffMs = match?.kickoffAt ? new Date(match.kickoffAt).getTime() : NaN;
+  const forceIntel = Number.isFinite(kickoffMs) && kickoffMs - Date.now() < 2 * 60 * 60 * 1000;
+
+  await Promise.all([
+    homeTeam?.fifaCode
+      ? refreshTeamPlayerIntel(homeTeam.fifaCode, { force: forceIntel }).catch(() => null)
+      : null,
+    awayTeam?.fifaCode
+      ? refreshTeamPlayerIntel(awayTeam.fifaCode, { force: forceIntel }).catch(() => null)
+      : null,
+    fetchExternalMatchIntel(match, { force: false }).catch(() => null),
+  ]);
+}
+
+export async function buildAiCompetitorPredictionContext(match, aiUserId) {
+  const base = await buildPromptContext(match, aiUserId);
+
+  const [homeTeam, awayTeam, allMatches, teams] = await Promise.all([
+    Team.findOne({ externalId: match.homeTeamId }).lean(),
+    Team.findOne({ externalId: match.awayTeamId }).lean(),
+    Match.find().sort({ kickoffAt: 1 }).lean(),
+    Team.find({ group: { $exists: true, $ne: '' } }).lean(),
+  ]);
+
+  await prepareCompetitorMatchPrefetch(match, homeTeam, awayTeam);
+
+  const teamById = Object.fromEntries(teams.map((t) => [t.externalId, t]));
+  const homeForAnalysis = {
+    externalId: match.homeTeamId,
+    nameEn: base.homeTeam?.name ?? match.homeTeamId,
+    fifaCode: base.homeTeam?.code ?? homeTeam?.fifaCode,
+    group: match.group ?? homeTeam?.group,
+  };
+  const awayForAnalysis = {
+    externalId: match.awayTeamId,
+    nameEn: base.awayTeam?.name ?? match.awayTeamId,
+    fifaCode: base.awayTeam?.code ?? awayTeam?.fifaCode,
+    group: match.group ?? awayTeam?.group,
+  };
+
+  const enriched = await buildEnrichedMatchContext({
+    homeTeam: homeForAnalysis,
+    awayTeam: awayForAnalysis,
+    venue: base.venue,
+    teamsAnalysis: { home: base.homeTeam, away: base.awayTeam },
+    enrichPerformance: true,
+  });
+
+  const userPredictedCtx = await buildUserPredictedMatchContext(aiUserId);
+  const focusGroupId = await pickFocusGroupId(aiUserId);
+
+  const [
+    historialReciente,
+    stakesContext,
+    inteligenciaGrupo,
+    prizeContext,
+    calibrationStats,
+    externalIntel,
+  ] = await Promise.all([
+    buildMatchHistoryContext(homeForAnalysis, awayForAnalysis, {
+      allMatches,
+      teamById,
+      match,
+    }),
+    buildMatchStakesContext(match, aiUserId, { userPredictedCtx }),
+    buildCrowdContextForCompetitor(match, aiUserId),
+    buildPrizeRaceContext(aiUserId, focusGroupId),
+    loadAiCalibrationStats(aiUserId),
+    fetchExternalMatchIntel(match),
+  ]);
+
+  const crowdStandings = inteligenciaGrupo.tablasConsenso?.[0]
+    ? [{ group: match.group, standings: inteligenciaGrupo.tablasConsenso[0].standings }]
+    : null;
+
+  const tablaYClasificacion = await buildTablaYClasificacionContext(
+    match,
+    aiUserId,
+    crowdStandings
+  );
+
+  return {
+    ...base,
+    nationContext: enriched.nationContext,
+    squadAnalysis: enriched.squadAnalysis,
+    positionMatchups: enriched.positionMatchups,
+    historialReciente,
+    stakesContext,
+    tablaYClasificacion,
+    inteligenciaGrupo,
+    carreraPremios: prizeContext.carreraPremios,
+    calibracionReciente: buildCalibrationPromptBlock(calibrationStats),
+    mercadoYxG: formatExternalIntelForPrompt(externalIntel),
+    externalIntel,
+    _calibrationStats: calibrationStats,
+  };
+}
+
+function buildAiCompetitorPredictionPrompt(context) {
+  return `Sos Predictive Modeling (IA), competidor oficial del Mundial 2026. Predecí el marcador que maximice puntos.
+
+${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
+
+${AI_COMPETITOR_SCORING_INSTRUCTIONS}
+
+${WORLD_CUP_USER_FACING_LANGUAGE_RULES}
+
+En el campo "reasoning", incluí sede/estadio y clima del kickoff, ranking FIFA, stakes de clasificación, señal de mercado/xG si hay, y por qué el marcador maximiza PA+GL/GV/GT. No cites predicciones individuales de otros usuarios.
+
+Respondé ÚNICAMENTE con JSON válido (sin markdown fuera del campo reasoning):
+{"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<explicación en español; markdown ligero permitido>"}
+
+Contexto del partido:
+${JSON.stringify(humanizePromptContext(context), null, 2)}`;
 }
 
 function buildAiPredictionPrompt(context) {
@@ -408,13 +587,14 @@ async function callOpenAiChatCompletions(
   return null;
 }
 
-async function callOpenAiProviderForScore(context, { apiKey, url, model, source, providerLabel }, options) {
+async function callOpenAiProviderForScore(context, { apiKey, url, model, source, providerLabel, promptBuilder }, options) {
+  const buildPrompt = promptBuilder ?? buildAiPredictionPrompt;
   const text = await callOpenAiChatCompletions(
     {
       apiKey,
       url,
       model,
-      messages: [{ role: 'user', content: buildAiPredictionPrompt(context) }],
+      messages: [{ role: 'user', content: buildPrompt(context) }],
       temperature: 0.4,
       responseFormat: { type: 'json_object' },
       providerLabel,
@@ -453,13 +633,14 @@ export async function callGroqForScore(context, options = {}) {
   );
 }
 
-async function callGeminiProviderForScore(context, { fetchImpl = fetch } = {}) {
+async function callGeminiProviderForScore(context, { fetchImpl = fetch, promptBuilder } = {}) {
   const apiKey = env.googleAiApiKey;
   if (!apiKey) return null;
 
+  const buildPrompt = promptBuilder ?? buildAiPredictionPrompt;
   const url = `${GEMINI_API_BASE}/${env.aiGeminiModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const body = {
-    contents: [{ parts: [{ text: buildAiPredictionPrompt(context) }] }],
+    contents: [{ parts: [{ text: buildPrompt(context) }] }],
     generationConfig: {
       responseMimeType: 'application/json',
       temperature: 0.4,
@@ -501,17 +682,25 @@ async function callGeminiProviderForScore(context, { fetchImpl = fetch } = {}) {
   return null;
 }
 
-export async function callAiForScore(context, { fetchImpl = fetch } = {}) {
-  const cerebrasScore = await callCerebrasForScore(context, { fetchImpl });
+export async function callAiForScore(context, { fetchImpl = fetch, promptBuilder } = {}) {
+  const providerOpts = { promptBuilder };
+  const cerebrasScore = await callCerebrasForScore(context, { fetchImpl, ...providerOpts });
   if (cerebrasScore) return cerebrasScore;
 
-  const geminiScore = await callGeminiProviderForScore(context, { fetchImpl });
+  const geminiScore = await callGeminiProviderForScore(context, { fetchImpl, promptBuilder });
   if (geminiScore) return geminiScore;
 
-  const groqScore = await callGroqForScore(context, { fetchImpl });
+  const groqScore = await callGroqForScore(context, { fetchImpl, ...providerOpts });
   if (groqScore) return groqScore;
 
   return computeHeuristicScore(context);
+}
+
+export async function callAiForCompetitorScore(context, options = {}) {
+  return callAiForScore(context, {
+    ...options,
+    promptBuilder: buildAiCompetitorPredictionPrompt,
+  });
 }
 
 /** @deprecated Usar callAiForScore */
@@ -521,6 +710,7 @@ export function aiModelForScoreSource(source) {
   if (source === 'cerebras') return env.aiCerebrasModel;
   if (source === 'gemini') return env.aiGeminiModel;
   if (source === 'groq') return env.aiGroqModel;
+  if (source === 'heuristic-xg' || source === 'heuristic-odds') return source;
   return 'heuristic';
 }
 
@@ -813,7 +1003,11 @@ export async function askMatchAiFollowUp(
   };
 }
 
-export async function submitAiPrediction(userId, matchId, { homeGoals, awayGoals, aiModel, aiReasoning }) {
+export async function submitAiPrediction(
+  userId,
+  matchId,
+  { homeGoals, awayGoals, aiModel, aiReasoning, aiCalibrationApplied }
+) {
   const match = await Match.findById(matchId);
   if (!match) {
     throw new Error('Match not found');
@@ -833,6 +1027,7 @@ export async function submitAiPrediction(userId, matchId, { homeGoals, awayGoals
       predictionSource: 'ai',
       aiModel: aiModel ?? env.aiCerebrasModel,
       aiReasoning: aiReasoning?.trim() || null,
+      ...(aiCalibrationApplied != null ? { aiCalibrationApplied } : {}),
     },
     { upsert: true, new: true }
   );
@@ -887,13 +1082,15 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
 
   for (const match of dueMatches) {
     try {
-      const context = await buildPromptContext(match, aiUser._id);
-      const score = await callAiForScore(context, { fetchImpl });
+      const context = await buildAiCompetitorPredictionContext(match, aiUser._id);
+      let score = await callAiForCompetitorScore(context, { fetchImpl });
+      score = applyCalibrationNudge(score, context._calibrationStats);
       await submitAiPrediction(aiUser._id, match._id, {
         homeGoals: score.homeGoals,
         awayGoals: score.awayGoals,
         aiModel: aiModelForScoreSource(score.source),
         aiReasoning: score.reasoning,
+        aiCalibrationApplied: Boolean(score.calibrationApplied),
       });
 
       const homeCode = context.homeTeam?.code ?? '?';

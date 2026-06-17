@@ -4,6 +4,10 @@ import {
   mergePlayerWithIntel,
 } from './aiPlayerIntelService.js';
 import {
+  buildCompactPerformanceContext,
+  hydrateRosterPerformanceSnapshots,
+} from './playerPerformanceContextService.js';
+import {
   getNationProfile,
   buildTalentPoolIndex,
   isWorldCupDebut,
@@ -61,8 +65,8 @@ function clubLeagueScore(leagueName) {
   return 1;
 }
 
-function serializePlayerForPrompt(player) {
-  return {
+function serializePlayerForPrompt(player, { includePerformance = false } = {}) {
+  const base = {
     name: player.fullName,
     position: player.position,
     club: player.currentClub || null,
@@ -78,6 +82,10 @@ function serializePlayerForPrompt(player) {
     isProbableStarter: Boolean(player._probableStarter),
     aiNote: player.aiSummary || player.notes || null,
   };
+  if (includePerformance) {
+    base.rendimiento = buildCompactPerformanceContext(player);
+  }
+  return base;
 }
 
 function starterPriority(player) {
@@ -136,7 +144,7 @@ function availabilityStats(players) {
   return { availabilityRate, injuredCount: injured, doubtfulCount: doubtful, suspendedCount: suspended };
 }
 
-export async function buildSquadSnapshot(teamExternalId, fifaCode) {
+export async function buildSquadSnapshot(teamExternalId, fifaCode, { enrichPerformance = false } = {}) {
   if (!teamExternalId) {
     return {
       probableStarters: [],
@@ -173,6 +181,11 @@ export async function buildSquadSnapshot(teamExternalId, fifaCode) {
   const intelStale = roster.length > 0 && intelFreshCount === 0;
 
   const probableStarters = pickProbableStarters(merged);
+
+  if (enrichPerformance && probableStarters.length) {
+    await hydrateRosterPerformanceSnapshots(probableStarters, { maxFetches: 11 });
+  }
+
   const starterIds = new Set(probableStarters.map((p) => p.fullName));
 
   const injuries = merged
@@ -203,7 +216,9 @@ export async function buildSquadSnapshot(teamExternalId, fifaCode) {
   const stats = availabilityStats(merged);
 
   return {
-    probableStarters: probableStarters.map(serializePlayerForPrompt),
+    probableStarters: probableStarters.map((p) =>
+      serializePlayerForPrompt(p, { includePerformance: enrichPerformance })
+    ),
     injuries,
     doubtful,
     suspended,
@@ -437,10 +452,11 @@ export async function buildEnrichedMatchContext({
   awayTeam,
   venue,
   teamsAnalysis,
+  enrichPerformance = false,
 }) {
   const [homeSquad, awaySquad] = await Promise.all([
-    buildSquadSnapshot(homeTeam?.externalId, homeTeam?.fifaCode),
-    buildSquadSnapshot(awayTeam?.externalId, awayTeam?.fifaCode),
+    buildSquadSnapshot(homeTeam?.externalId, homeTeam?.fifaCode, { enrichPerformance }),
+    buildSquadSnapshot(awayTeam?.externalId, awayTeam?.fifaCode, { enrichPerformance }),
   ]);
 
   const [homeNation, awayNation] = await Promise.all([

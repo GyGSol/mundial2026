@@ -20,6 +20,7 @@
     "simulate": "node src/scripts/runSimulation.js",
     "reset-db": "node src/scripts/resetDatabase.js",
     "mark-ai-user": "node src/scripts/markAiUser.js",
+    "ai:evaluate": "node src/scripts/evaluateAiPredictions.js",
     "backup:db": "node src/scripts/backupDatabase.js",
     "migrate:fubols-welcome": "node src/scripts/migrateWelcomeBonusFubols.js",
     "migrate:fubols-entry-fees": "node src/scripts/migrateBackfillEntryFees.js",
