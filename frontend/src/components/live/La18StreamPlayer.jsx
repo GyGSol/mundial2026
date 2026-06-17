@@ -3,7 +3,7 @@ import { ExternalLink, Maximize2, Minimize2, MonitorPlay, RefreshCw } from 'luci
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
-import { isCastBrowser } from '@/lib/googleCast.js';
+import { isCastBrowser, preloadCastContext } from '@/lib/googleCast.js';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import StreamAccessNoticeDialog from './StreamAccessNoticeDialog.jsx';
 import CastButton from './CastButton.jsx';
@@ -54,6 +54,10 @@ export default function La18StreamPlayer({
   const useDirectHls =
     hasHls && !directHlsFailed && !useFallback && (iosDevice ? !iframeFailed : iframeFailed);
   const showEmbedded = Boolean(iframeSrc) && !useFallback && !useDirectHls && !iframeFailed;
+
+  useEffect(() => {
+    preloadCastContext();
+  }, []);
 
   useEffect(() => {
     setIframeLoaded(false);
@@ -334,8 +338,8 @@ export default function La18StreamPlayer({
 
           {isCastBrowser() ? (
             <p className="col-span-2 text-center text-[11px] leading-snug text-muted-foreground sm:col-span-3">
-              Chrome lista los TVs en tu WiFi (Smart TV, Telecentro, Chromecast). El monitor por HDMI no
-              aparece: debe estar el deco encendido y en la misma red que la PC.
+              Si solo ves «Smart TV» y no Telecentro, usá «Guía deco» → Transmitir pestaña en Chrome (⋮).
+              La cuenta Google del TV no afecta la lista; importa la misma WiFi.
             </p>
           ) : null}
 

@@ -94,10 +94,15 @@ export async function initCastContext() {
     try {
       const castFramework = await loadCastSdk();
       const context = castFramework.CastContext.getInstance();
+      const receiverApplicationId =
+        getAppId() ||
+        window.chrome?.cast?.media?.DEFAULT_MEDIA_RECEIVER_APP_ID ||
+        DEFAULT_APP_ID;
       const options = {
-        receiverApplicationId: getAppId(),
+        receiverApplicationId,
         androidReceiverCompatible: true,
         resumeSavedSession: true,
+        language: 'es-AR',
       };
       const autoJoinPolicy = getAutoJoinPolicy();
       if (autoJoinPolicy != null) {
@@ -113,6 +118,12 @@ export async function initCastContext() {
   })();
 
   return initPromise;
+}
+
+/** Precarga el SDK al entrar a transmisión en vivo (mejora el descubrimiento de decos Android TV). */
+export function preloadCastContext() {
+  if (!isCastBrowser()) return;
+  void initCastContext().catch(() => {});
 }
 
 export function getCastContext() {

@@ -18,7 +18,7 @@ function mapCastError(error) {
     return '';
   }
   if (text.includes('timeout') || text.includes('TIMEOUT')) {
-    return 'No se encontraron dispositivos. Verificá que el TV esté en la misma red WiFi.';
+    return 'No se encontraron dispositivos. Misma WiFi que el deco. Si tenés Telecentro, usá «Guía deco» → Transmitir pestaña.';
   }
   if (text.includes('not available') || text.includes('UNAVAILABLE')) {
     return 'Transmitir no disponible. Usá Chrome o Edge y activá Google Cast.';

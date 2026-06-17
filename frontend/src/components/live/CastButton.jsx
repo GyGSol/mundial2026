@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Cast, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isCastBrowser } from '@/lib/googleCast.js';
 import { useGoogleCast } from '@/hooks/useGoogleCast.js';
+import CastTvHelpDialog from './CastTvHelpDialog.jsx';
 
 export default function CastButton({
   mediaUrl,
@@ -13,7 +15,9 @@ export default function CastButton({
   size = 'sm',
   variant = 'outline',
   showLabel = true,
+  showTvHelp = true,
 }) {
+  const [helpOpen, setHelpOpen] = useState(false);
   const castBrowser = isCastBrowser();
   const { connecting, connected, deviceName, error, toggleCast } = useGoogleCast({
     mediaUrl,
@@ -64,6 +68,18 @@ export default function CastButton({
         <p className="col-span-2 text-center text-[11px] text-destructive sm:col-span-1" role="status">
           {error}
         </p>
+      ) : null}
+      {showTvHelp && castBrowser ? (
+        <>
+          <button
+            type="button"
+            className="text-center text-[11px] text-primary underline-offset-2 hover:underline"
+            onClick={() => setHelpOpen(true)}
+          >
+            ¿No ves Telecentro o tu deco? Guía
+          </button>
+          <CastTvHelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+        </>
       ) : null}
     </div>
   );
