@@ -9,10 +9,7 @@ import { buildMatchTeamsAnalysis } from './aiTeamMatchContextService.js';
 import { buildEnrichedMatchContext } from './aiMatchEnrichedContextService.js';
 import { env } from '../config/env.js';
 import { isPredictionLocked } from './predictionLockService.js';
-import {
-  buildConfirmedLineupContext,
-  hasConfirmedLineupsForMatch,
-} from './aiLineupContextService.js';
+import { buildConfirmedLineupContext } from './aiLineupContextService.js';
 import {
   syncMatchLineupsFromFootballData,
   syncUpcomingKickoffLineups,
@@ -1228,14 +1225,6 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
     try {
       await syncMatchLineupsFromFootballData(match);
 
-      if (!(await hasConfirmedLineupsForMatch(match))) {
-        console.log(
-          `AI prediction skip match ${match.externalId}: formación no confirmada aún (esperando titulares oficiales)`
-        );
-        skipped += 1;
-        continue;
-      }
-
       const context = await buildAiCompetitorPredictionContext(match, aiUser._id);
       const rawScore = await callAiForCompetitorScore(context, { fetchImpl });
       const score = applyCalibrationNudge(rawScore, context._calibrationStats);
@@ -1268,8 +1257,11 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
       const kickoffLocal = match.kickoffAt
         ? new Date(match.kickoffAt).toISOString()
         : '?';
+      const lineupLabel = context.formacionConfirmada?.confirmada
+        ? 'formación confirmada'
+        : 'sin titulares confirmados';
       console.log(
-        `AI prediction: ${homeCode} ${score.homeGoals}-${score.awayGoals} ${awayCode} (match ${match.externalId}, ${score.source}, kickoff ${kickoffLocal}, formación confirmada)`
+        `AI prediction: ${homeCode} ${score.homeGoals}-${score.awayGoals} ${awayCode} (match ${match.externalId}, ${score.source}, kickoff ${kickoffLocal}, ${lineupLabel})`
       );
       processed += 1;
     } catch (err) {

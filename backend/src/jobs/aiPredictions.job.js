@@ -46,7 +46,7 @@ export function startAiPredictionsJob() {
   const intervalSec = env.aiPredictJobIntervalMs / 1000;
   const leadMin = env.aiPredictLeadMs / 60000;
   console.log(
-    `AI predictions job started (every ${intervalSec}s, T-${leadMin} min con formación confirmada)`
+    `AI predictions job started (every ${intervalSec}s, T-${leadMin} min antes del kickoff)`
   );
 }
 
