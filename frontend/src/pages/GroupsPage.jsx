@@ -7,7 +7,11 @@ import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
 import GroupInvitePanel from '../components/GroupInvitePanel.jsx';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import FubolCoinIcon from '../components/FubolCoinIcon.jsx';
-import { GROUP_ENTRY_FEE } from '../lib/economyConstants.js';
+import {
+  computePrizeDistributionPercents,
+  formatPrizeDistributionLabel,
+  GROUP_ENTRY_FEE,
+} from '../lib/economyConstants.js';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
@@ -44,6 +48,7 @@ export default function GroupsPage() {
   const [newPrizesWinnersCount, setNewPrizesWinnersCount] = useState(0);
   const [newPrizes, setNewPrizes] = useState([]);
   const [editing, setEditing] = useState({});
+  const [prizePoolByGroupId, setPrizePoolByGroupId] = useState({});
   const [joinGroupId, setJoinGroupId] = useState(undefined);
   const [joinLoading, setJoinLoading] = useState('');
   const [leaveLoading, setLeaveLoading] = useState('');
@@ -248,16 +253,24 @@ export default function GroupsPage() {
     if (!row?.name?.trim()) return;
     setError('');
     try {
-      await competitionGroupsApi.update(
+      const data = await competitionGroupsApi.update(
         groupId,
         row.name,
         row.description || '',
         row.prizesWinnersCount || 0,
         row.prizes || []
       );
+      if (data.prizePool) {
+        setPrizePoolByGroupId((prev) => ({ ...prev, [groupId]: data.prizePool }));
+      }
       await loadData();
       setEditing((prev) => ({ ...prev, [groupId]: null }));
-      setSuccessMessage('Datos del grupo guardados.');
+      const poolTotal = data.prizePool?.totalFubols ?? 0;
+      setSuccessMessage(
+        poolTotal > 0
+          ? `Datos del grupo guardados. Pozo ${poolTotal} Fubols repartido entre ${row.prizesWinnersCount} puesto(s).`
+          : 'Datos del grupo guardados. Reparto de premios actualizado.'
+      );
     } catch (err) {
       setError(err.message);
     }
@@ -541,6 +554,14 @@ export default function GroupsPage() {
                               ))}
                             </div>
                           )}
+                          {(rowEdit.prizesWinnersCount || 0) > 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              Reparto Fubols:{' '}
+                              {formatPrizeDistributionLabel(
+                                computePrizeDistributionPercents(rowEdit.prizesWinnersCount)
+                              )}
+                            </p>
+                          ) : null}
                         </div>
                       ) : (
                         <>
@@ -552,8 +573,39 @@ export default function GroupsPage() {
                             <p className="text-sm text-muted-foreground">{group.description}</p>
                           )}
                           {(group.prizesWinnersCount || 0) > 0 && (
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              Premian {group.prizesWinnersCount} puesto(s)
+                            <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                              <p>Premian {group.prizesWinnersCount} puesto(s)</p>
+                              <p>
+                                Reparto Fubols:{' '}
+                                {formatPrizeDistributionLabel(
+                                  computePrizeDistributionPercents(group.prizesWinnersCount)
+                                )}
+                              </p>
+                              {prizePoolByGroupId[group.id]?.distribution?.length > 0 ? (
+                                <ul className="space-y-0.5">
+                                  {prizePoolByGroupId[group.id].distribution.map((slot) => (
+                                    <li
+                                      key={slot.rank}
+                                      className="flex flex-wrap items-center justify-between gap-2"
+                                    >
+                                      <span>
+                                        {slot.rank}°
+                                        {(slot.retainedByHouse ?? 0) > 0
+                                          ? ' · La Casa'
+                                          : slot.name
+                                            ? ` · ${slot.name}`
+                                            : ''}
+                                      </span>
+                                      <span className="inline-flex items-center gap-1 font-medium tabular-nums">
+                                        {(slot.retainedByHouse ?? 0) > 0
+                                          ? `+${slot.retainedByHouse}`
+                                          : slot.fubols}
+                                        <FubolCoinIcon size="sm" />
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
                             </div>
                           )}
                         </>

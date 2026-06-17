@@ -99,14 +99,18 @@ export async function getRankingDashboard(groupId, userId) {
   let prizePool = null;
 
   if (groupId && groupId !== '__nogroup') {
+    const winnersCount = groupResult.group?.prizesWinnersCount ?? 0;
     const projection = await projectPrizeDistribution(groupId);
-    enrichedLeaderboard = attachProjectedFubolsToLeaderboard(leaderboard, projection);
-    prizePool = {
-      totalFubols: projection.totalFubols,
-      status: projection.status,
-      houseRetention: projection.houseRetention,
-      distribution: projection.distribution,
-    };
+    if (winnersCount > 0 && projection.distribution?.length) {
+      enrichedLeaderboard = attachProjectedFubolsToLeaderboard(leaderboard, projection);
+      prizePool = {
+        totalFubols: projection.totalFubols,
+        status: projection.status,
+        houseRetention: projection.houseRetention,
+        distributionPercents: projection.distributionPercents,
+        distribution: projection.distribution,
+      };
+    }
   }
 
   return {

@@ -1,6 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_PRIZE_SPLITS } from '../src/config/economy.js';
+import {
+  DEFAULT_PRIZE_SPLITS,
+  computePrizeDistributionPercents,
+} from '../src/config/economy.js';
 import { attachProjectedFubolsToLeaderboard } from '../src/services/prizePoolService.js';
+
+describe('computePrizeDistributionPercents', () => {
+  it('devuelve porcentajes según cantidad de premiados', () => {
+    expect(computePrizeDistributionPercents(0)).toEqual([]);
+    expect(computePrizeDistributionPercents(1)).toEqual([100]);
+    expect(computePrizeDistributionPercents(2)).toEqual([60, 40]);
+    expect(computePrizeDistributionPercents(3)).toEqual([...DEFAULT_PRIZE_SPLITS]);
+    expect(computePrizeDistributionPercents(4)).toEqual([25, 25, 25, 25]);
+    expect(computePrizeDistributionPercents(5)).toEqual([20, 20, 20, 20, 20]);
+  });
+
+  it('suma 100% para cualquier cantidad', () => {
+    for (let n = 1; n <= 10; n += 1) {
+      const percents = computePrizeDistributionPercents(n);
+      expect(percents.reduce((sum, p) => sum + p, 0)).toBe(100);
+    }
+  });
+});
 
 describe('prize pool projection math', () => {
   it('distribuye 50/30/20 sobre el pozo', () => {

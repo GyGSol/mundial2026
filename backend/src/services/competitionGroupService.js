@@ -8,6 +8,7 @@ import {
   reassignActiveGroupAfterLeave,
 } from './competitionGroupJoinHelpers.js';
 import { chargeGroupEntryFee } from './fubolService.js';
+import { syncPrizePoolDistribution } from './prizePoolService.js';
 
 function normalizePrizes({ winnersCount, prizes = [] }) {
   const count = Math.max(0, Math.min(Number(winnersCount || 0), 10));
@@ -194,6 +195,8 @@ export async function createCompetitionGroup({
       },
     });
   }
+
+  await syncPrizePoolDistribution(group._id, normalizedPrizes.winnersCount);
 
   return serializeGroup(group);
 }
@@ -614,6 +617,7 @@ export async function updateCompetitionGroup({
   group.prizesWinnersCount = normalizedPrizes.winnersCount;
   group.prizes = normalizedPrizes.prizes;
   await group.save();
+  await syncPrizePoolDistribution(group._id, normalizedPrizes.winnersCount);
   return getCompetitionGroupById(group._id);
 }
 

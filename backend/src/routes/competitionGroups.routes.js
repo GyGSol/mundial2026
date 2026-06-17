@@ -22,6 +22,7 @@ import {
   updateCompetitionGroup,
 } from '../services/competitionGroupService.js';
 import { getCompetitionGroupsPage } from '../services/competitionGroupsDashboardService.js';
+import { projectPrizeDistribution } from '../services/prizePoolService.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 const router = Router();
@@ -233,7 +234,11 @@ router.put('/:groupId', authMiddleware, async (req, res, next) => {
       prizesWinnersCount: req.body.prizesWinnersCount,
       prizes: req.body.prizes,
     });
-    res.json({ group });
+    const prizePool =
+      (group.prizesWinnersCount || 0) > 0
+        ? await projectPrizeDistribution(req.params.groupId)
+        : null;
+    res.json({ group, prizePool });
   } catch (err) {
     next(err);
   }

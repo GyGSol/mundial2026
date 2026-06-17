@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { PrizePool } from '../models/PrizePool.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
-import { DEFAULT_PRIZE_SPLITS } from '../config/economy.js';
+import { DEFAULT_PRIZE_SPLITS, computePrizeDistributionPercents } from '../config/economy.js';
 import { getLeaderboard } from './leaderboardService.js';
 import { getTreasury, getLiquidFubols } from './fubolService.js';
 import { env } from '../config/env.js';
@@ -31,12 +31,48 @@ export async function getOrCreatePrizePool(groupId, session = null) {
   return Array.isArray(created) ? created[0] : created;
 }
 
-export async function projectPrizeDistribution(groupId) {
+export async function syncPrizePoolDistribution(groupId, winnersCount) {
+  const percents = computePrizeDistributionPercents(winnersCount);
   const pool = await getOrCreatePrizePool(groupId);
-  const percents = pool.distributionPercents?.length
-    ? pool.distributionPercents
-    : [...DEFAULT_PRIZE_SPLITS];
+  pool.distributionPercents = [...percents];
+  await pool.save();
+  return pool;
+}
+
+export async function projectPrizeDistribution(groupId) {
+  const group = await CompetitionGroup.findById(groupId).select('prizesWinnersCount').lean();
+  const winnersCount = group?.prizesWinnersCount ?? 0;
+  const pool = await getOrCreatePrizePool(groupId);
+  const expectedPercents = computePrizeDistributionPercents(winnersCount);
+
+  if (winnersCount > 0) {
+    const needsSync =
+      pool.distributionPercents?.length !== expectedPercents.length ||
+      expectedPercents.some((p, i) => pool.distributionPercents[i] !== p);
+    if (needsSync) {
+      pool.distributionPercents = [...expectedPercents];
+      await pool.save();
+    }
+  }
+
+  const percents =
+    winnersCount > 0 && pool.distributionPercents?.length
+      ? pool.distributionPercents
+      : winnersCount > 0
+        ? expectedPercents
+        : [];
   const total = pool.totalFubols || 0;
+  if (percents.length === 0) {
+    return {
+      groupId: String(groupId),
+      totalFubols: total,
+      status: pool.status,
+      distributionPercents: [],
+      distribution: [],
+      houseRetention: 0,
+    };
+  }
+
   const leaderboard = await getLeaderboard(groupId, percents.length);
 
   let houseRetention = 0;
@@ -85,6 +121,7 @@ export async function projectPrizeDistribution(groupId) {
     groupId: String(groupId),
     totalFubols: total,
     status: pool.status,
+    distributionPercents: [...percents],
     distribution,
     houseRetention,
   };

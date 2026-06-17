@@ -13,3 +13,20 @@ export const MOCK_CHECKOUT_DELAY_MS = 2000;
 export function usdToFubols(usd) {
   return Math.round(Number(usd) * FUBOLS_PER_USD);
 }
+
+/** Porcentajes del pozo por puesto premiado (suman 100). */
+export function computePrizeDistributionPercents(winnersCount) {
+  const n = Math.max(0, Math.min(Math.floor(Number(winnersCount) || 0), 10));
+  if (n === 0) return [];
+  if (n === 1) return [100];
+  if (n === 2) return [60, 40];
+  if (n === 3) return [...DEFAULT_PRIZE_SPLITS];
+
+  const base = Math.floor(100 / n);
+  let remainder = 100 - base * n;
+  return Array.from({ length: n }, () => {
+    const extra = remainder > 0 ? 1 : 0;
+    if (remainder > 0) remainder -= 1;
+    return base + extra;
+  });
+}

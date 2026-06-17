@@ -18,6 +18,10 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import FubolCoinIcon from '../components/FubolCoinIcon.jsx';
+import {
+  computePrizeDistributionPercents,
+  formatPrizeDistributionLabel,
+} from '../lib/economyConstants.js';
 
 const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
 
@@ -109,9 +113,16 @@ export default function LeaderboardPage() {
   const isNoGroupMode = effectiveGroupId === '__nogroup';
   const prizesWinnersCount = displayGroup?.prizesWinnersCount || 0;
   const groupPrizes = displayGroup?.prizes || [];
-  const showFubolPrizes = dashboardMatchesGroup && !isNoGroupMode && Boolean(data?.prizePool);
   const prizePoolTotal = data?.prizePool?.totalFubols ?? 0;
   const fubolDistribution = data?.prizePool?.distribution ?? [];
+  const distributionPercents =
+    data?.prizePool?.distributionPercents ??
+    computePrizeDistributionPercents(prizesWinnersCount);
+  const showFubolPrizes =
+    dashboardMatchesGroup &&
+    !isNoGroupMode &&
+    prizesWinnersCount > 0 &&
+    fubolDistribution.length > 0;
   const prizeLabelByPosition = Object.fromEntries(
     groupPrizes.map((row) => [Number(row.position), row.prize?.trim() || ''])
   );
@@ -217,7 +228,8 @@ export default function LeaderboardPage() {
             <CardTitle className="text-base">Premios del grupo</CardTitle>
             {showFubolPrizes ? (
               <p className="text-sm text-muted-foreground">
-                Reparto proyectado 50/30/20 del pozo ({prizePoolTotal} Fubols)
+                Reparto proyectado del pozo ({prizePoolTotal} Fubols):{' '}
+                {formatPrizeDistributionLabel(distributionPercents)}
               </p>
             ) : null}
           </CardHeader>
