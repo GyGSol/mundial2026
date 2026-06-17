@@ -6,7 +6,7 @@ const sizeClass = {
   lg: 'h-12 w-12',
 };
 
-/** Logo Fubol: círculo naranja, pelota de trapo y F blanca (asset generado). */
+/** Logo Fubol: moneda dorada/azul con pelota de trapo (PNG transparente). */
 export default function FubolCoinIcon({ size = 'md', className, alt = 'Fubol' }) {
   return (
     <img
@@ -15,7 +15,7 @@ export default function FubolCoinIcon({ size = 'md', className, alt = 'Fubol' })
       width={64}
       height={64}
       className={cn(
-        'inline-block shrink-0 object-contain transition-transform duration-200 ease-out hover:scale-[1.28] motion-reduce:transition-none motion-reduce:hover:scale-100',
+        'inline-block shrink-0 rounded-full object-contain transition-transform duration-200 ease-out hover:scale-[1.28] motion-reduce:transition-none motion-reduce:hover:scale-100',
         sizeClass[size] || sizeClass.md,
         className
       )}
