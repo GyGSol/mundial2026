@@ -68,6 +68,13 @@ describe('worldCupApiClient normalization', () => {
     expect(mapGameStatus({ ...sampleGame, time_elapsed: '45' })).toBe('live');
   });
 
+  it('detecta partido finalizado por time_elapsed ft/fulltime', () => {
+    expect(mapGameStatus({ ...sampleGame, time_elapsed: 'ft', finished: 'FALSE' })).toBe('finished');
+    expect(mapGameStatus({ ...sampleGame, time_elapsed: 'fulltime', finished: 'FALSE' })).toBe(
+      'finished'
+    );
+  });
+
   it('ignora finished de worldcup26 si el kickoff canónico aún no llegó', () => {
     const usaParaguayKickoff = new Date('2026-06-13T01:00:00.000Z');
     const beforeKickoff = usaParaguayKickoff.getTime() - 60_000;

@@ -5,6 +5,7 @@ import {
   shouldFinalizeStaleLiveMatch,
   fifaEntryIndicatesFinished,
   matchFifaTimelineIndicatesFinished,
+  elapsedTokenIndicatesFinished,
   MATCH_STALE_AFTER_KICKOFF_MS,
 } from '../src/services/matchStatusRules.js';
 
@@ -46,6 +47,24 @@ describe('matchStatusRules', () => {
       raw: { finished: 'TRUE', time_elapsed: 'live' },
     };
     expect(shouldFinalizeStaleLiveMatch(match, kickoff.getTime() + 60_000)).toBe(true);
+  });
+
+  it('cierra live cuando time_elapsed es ft o fulltime', () => {
+    for (const token of ['ft', 'FT', 'fulltime', 'final']) {
+      const match = {
+        status: 'live',
+        kickoffAt: kickoff,
+        raw: { finished: 'FALSE', time_elapsed: token },
+      };
+      expect(shouldFinalizeStaleLiveMatch(match, kickoff.getTime() + 30 * 60 * 1000)).toBe(true);
+    }
+  });
+
+  it('elapsedTokenIndicatesFinished reconoce tokens de pitido final', () => {
+    expect(elapsedTokenIndicatesFinished('finished')).toBe(true);
+    expect(elapsedTokenIndicatesFinished('FT')).toBe(true);
+    expect(elapsedTokenIndicatesFinished('fulltime')).toBe(true);
+    expect(elapsedTokenIndicatesFinished('45')).toBe(false);
   });
 
   it('detecta partido finalizado en calendario FIFA', () => {

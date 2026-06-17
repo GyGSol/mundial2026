@@ -2,7 +2,11 @@ import { env } from '../config/env.js';
 import { resolveKickoffAt } from './kickoffTimeService.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import { sanitizeMatchScores } from './matchLiveData.js';
-import { isMatchKickoffStale, matchEvidentlyStarted } from './matchStatusRules.js';
+import {
+  elapsedTokenIndicatesFinished,
+  isMatchKickoffStale,
+  matchEvidentlyStarted,
+} from './matchStatusRules.js';
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -114,7 +118,7 @@ export function mapGameStatus(game) {
 
   const elapsed = game.time_elapsed ?? game.timeElapsed;
   if (elapsed && elapsed !== 'notstarted' && elapsed !== '0') {
-    if (String(elapsed).toLowerCase() === 'finished') {
+    if (elapsedTokenIndicatesFinished(elapsed)) {
       return 'finished';
     }
     return 'live';

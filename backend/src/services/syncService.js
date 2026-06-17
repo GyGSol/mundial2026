@@ -22,7 +22,11 @@ import {
   clearStaleUpcomingMatchScores,
 } from './matchScoringService.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
-import { isMatchKickoffStale, shouldFinalizeStaleLiveMatch } from './matchStatusRules.js';
+import {
+  elapsedTokenIndicatesFinished,
+  isMatchKickoffStale,
+  shouldFinalizeStaleLiveMatch,
+} from './matchStatusRules.js';
 import { env } from '../config/env.js';
 import {
   notifyLeaderboardUpdated,
@@ -152,7 +156,7 @@ export function incomingIndicatesNotFinished(incoming, { now = Date.now() } = {}
 
   const elapsed = raw.time_elapsed ?? raw.timeElapsed;
   if (!elapsed || elapsed === 'notstarted' || elapsed === '0') return true;
-  if (String(elapsed).toLowerCase() === 'finished') return false;
+  if (elapsedTokenIndicatesFinished(elapsed)) return false;
 
   return incoming.status === 'upcoming';
 }

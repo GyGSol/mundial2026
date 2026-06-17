@@ -14,6 +14,7 @@ import {
 } from './prizePoolService.js';
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
+import { finalizeStaleLiveMatches } from './kickoffLiveService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -68,7 +69,22 @@ export async function getRankingDashboard(groupId, userId) {
     Match.find({ status: 'upcoming' }).select('-raw').sort({ kickoffAt: 1 }).lean(),
   ]);
 
-  const liveMatchIds = liveRaw.map((match) => match._id.toString());
+  const matchesToEnrich = [...liveRaw, ...finishedRaw, ...upcomingRaw];
+  await prepareFifaShirtMapsForMatches(matchesToEnrich);
+  const enriched = await enrichMatchesLight(matchesToEnrich, userId);
+  const byId = new Map(enriched.map((m) => [m.id, m]));
+
+  const enrichedLive = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
+  const effectivelyFinishedLive = enrichedLive.filter((m) => m.timeElapsed === 'Final');
+  const liveMatches = enrichedLive.filter((m) => m.timeElapsed !== 'Final');
+
+  if (effectivelyFinishedLive.length) {
+    void finalizeStaleLiveMatches().catch((err) => {
+      console.warn('Ranking dashboard stale live finalize:', err.message);
+    });
+  }
+
+  const liveMatchIds = liveMatches.map((match) => match.id);
   const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
     getLeaderboard(groupId || null),
@@ -79,15 +95,10 @@ export async function getRankingDashboard(groupId, userId) {
       : Promise.resolve(null),
   ]);
 
-  const matchesToEnrich = [...liveRaw, ...finishedRaw, ...upcomingRaw];
-  await prepareFifaShirtMapsForMatches(matchesToEnrich);
-  const enriched = await enrichMatchesLight(matchesToEnrich, userId);
-  const byId = new Map(enriched.map((m) => [m.id, m]));
-
-  const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
-  const recentFinishedMatches = finishedRaw
-    .map((m) => byId.get(m._id.toString()))
-    .filter(Boolean);
+  const recentFinishedMatches = [
+    ...finishedRaw.map((m) => byId.get(m._id.toString())).filter(Boolean),
+    ...effectivelyFinishedLive,
+  ].sort((a, b) => compareMatchesBySchedule(b, a));
   const nextUpcomingMatches = findNextUpcomingMatches(
     upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
   );

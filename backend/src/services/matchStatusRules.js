@@ -20,6 +20,17 @@ export function readElapsedToken(matchOrGame) {
   return String(raw.time_elapsed ?? raw.timeElapsed ?? '').toLowerCase();
 }
 
+/** Alineado con formatTimeElapsed: tokens que indican pitido final. */
+export function elapsedTokenIndicatesFinished(elapsed) {
+  const normalized = String(elapsed ?? '').trim().toLowerCase();
+  return (
+    normalized === 'finished' ||
+    normalized === 'ft' ||
+    normalized === 'fulltime' ||
+    normalized === 'final'
+  );
+}
+
 export function matchEvidentlyStarted(matchOrGame) {
   const normalized = readElapsedToken(matchOrGame);
   if (!normalized || normalized === 'notstarted' || normalized === '0') return false;
@@ -47,7 +58,12 @@ export function shouldFinalizeStaleLiveMatch(match, now = Date.now()) {
   const finished = raw.finished ?? raw.Finished;
   const elapsed = readElapsedToken(match);
 
-  if (finished === 'TRUE' || finished === true || finished === 'true' || elapsed === 'finished') {
+  if (
+    finished === 'TRUE' ||
+    finished === true ||
+    finished === 'true' ||
+    elapsedTokenIndicatesFinished(elapsed)
+  ) {
     return true;
   }
 
