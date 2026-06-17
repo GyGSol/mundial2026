@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import StreamAccessNoticeDialog from './StreamAccessNoticeDialog.jsx';
+import CastButton from './CastButton.jsx';
 
 const LiveStreamPlayer = lazy(() => import('./LiveStreamPlayer.jsx'));
 
@@ -211,6 +212,7 @@ export default function La18StreamPlayer({
               className="h-full"
               onError={handleDirectHlsError}
               onStall={handleDirectHlsStall}
+              onMediaExpired={onReloadPrimary}
             />
           </Suspense>
         ) : null}
@@ -322,6 +324,15 @@ export default function La18StreamPlayer({
           >
             {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </Button>
+
+          {primary?.hlsUrl && !useDirectHls ? (
+            <CastButton
+              mediaUrl={primary.hlsUrl}
+              title={USER_STREAM_BRAND}
+              onMediaExpired={onReloadPrimary}
+              className="contents"
+            />
+          ) : null}
 
           {!showFallback ? (
             <Button type="button" size="sm" variant="outline" onClick={activateFallback} className="justify-center">
