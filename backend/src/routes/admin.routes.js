@@ -58,9 +58,11 @@ import {
 } from '../services/adminService.js';
 import {
   getAiCompetitorPredictionLogById,
+  getAiCompetitorOverview,
   listAiCompetitorPredictionLogs,
   updateAiCompetitorPredictionLogNotes,
 } from '../services/aiCompetitorAuditService.js';
+import { simulateAiCompetitorPrediction } from '../services/aiPredictionService.js';
 
 const router = Router();
 
@@ -575,6 +577,29 @@ router.patch('/predictions/:id', adminMiddleware, async (req, res, next) => {
 router.delete('/predictions/:id', adminMiddleware, async (req, res, next) => {
   try {
     res.json(await deleteAdminPrediction(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/ai-competitor/overview', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(
+      await getAiCompetitorOverview({
+        status: req.query.status,
+        group: req.query.group,
+        matchNumber: req.query.matchNumber,
+        predictionFilter: req.query.predictionFilter,
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/ai-competitor/simulate/:matchId', adminMiddleware, async (req, res, next) => {
+  try {
+    res.status(201).json(await simulateAiCompetitorPrediction(req.params.matchId));
   } catch (err) {
     next(err);
   }

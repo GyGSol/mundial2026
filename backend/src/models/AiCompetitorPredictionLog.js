@@ -14,6 +14,7 @@ const aiCompetitorPredictionLogSchema = new mongoose.Schema(
     rawResponse: { type: mongoose.Schema.Types.Mixed, default: null },
     finalResponse: { type: mongoose.Schema.Types.Mixed, default: null },
     adminNotes: { type: String, default: '' },
+    isSimulation: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

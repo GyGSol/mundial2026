@@ -39,7 +39,7 @@ import {
   buildCalibrationPromptBlock,
   loadAiCalibrationStats,
 } from './aiPredictionCalibrationService.js';
-import { saveAiCompetitorPredictionLog } from './aiCompetitorAuditService.js';
+import { saveAiCompetitorPredictionLog, getAiCompetitorPredictionLogById } from './aiCompetitorAuditService.js';
 import {
   fetchExternalMatchIntel,
   formatExternalIntelForPrompt,
@@ -1119,4 +1119,41 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
 
   skipped = dueMatches.length - processed - errors.length;
   return { processed, skipped, errors };
+}
+
+export async function simulateAiCompetitorPrediction(matchId, { fetchImpl = fetch } = {}) {
+  const aiUser = await getAiUser();
+  if (!aiUser) {
+    const error = new Error('Usuario IA no configurado');
+    error.status = 503;
+    throw error;
+  }
+
+  const match = await Match.findById(matchId).lean();
+  if (!match) {
+    const error = new Error('Partido no encontrado');
+    error.status = 404;
+    throw error;
+  }
+  if (match.status !== 'upcoming') {
+    const error = new Error('Solo se puede simular partidos próximos');
+    error.status = 400;
+    throw error;
+  }
+
+  const context = await buildAiCompetitorPredictionContext(match, aiUser._id);
+  const rawScore = await callAiForCompetitorScore(context, { fetchImpl });
+  const score = applyCalibrationNudge(rawScore, context._calibrationStats);
+
+  const log = await saveAiCompetitorPredictionLog({
+    userId: aiUser._id,
+    matchId: match._id,
+    predictionId: null,
+    context,
+    rawScore,
+    finalScore: score,
+    isSimulation: true,
+  });
+
+  return getAiCompetitorPredictionLogById(log._id.toString());
 }

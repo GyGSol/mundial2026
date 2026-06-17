@@ -189,6 +189,14 @@ export const adminApi = {
     const query = new URLSearchParams(params).toString();
     return adminRequest(`/ai-competitor/logs${query ? `?${query}` : ''}`);
   },
+  getAiCompetitorOverview: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return adminRequest(`/ai-competitor/overview${query ? `?${query}` : ''}`);
+  },
+  simulateAiCompetitorPrediction: (matchId) =>
+    adminRequest(`/ai-competitor/simulate/${encodeURIComponent(matchId)}`, {
+      method: 'POST',
+    }),
   getAiCompetitorLog: (id) => adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`),
   updateAiCompetitorLogNotes: (id, adminNotes) =>
     adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`, {

@@ -3,8 +3,12 @@ import { AiCompetitorPredictionLog } from '../models/AiCompetitorPredictionLog.j
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { Team } from '../models/Team.js';
+import { User } from '../models/User.js';
 import { humanizePromptContext } from './aiPromptHumanizer.js';
 import { env } from '../config/env.js';
+import { goalDiffScore } from './goalDiffStats.js';
+import { isPredictionLocked } from './predictionLockService.js';
+import { compareMatchesBySchedule } from './matchSortService.js';
 
 const MAX_CONTEXT_BYTES = 512_000;
 
@@ -43,12 +47,14 @@ export async function saveAiCompetitorPredictionLog({
   context,
   rawScore,
   finalScore,
+  isSimulation = false,
 }) {
   const promptContext = buildAuditPromptContext(context);
   const doc = await AiCompetitorPredictionLog.create({
     userId,
     matchId,
     predictionId: predictionId ?? null,
+    isSimulation: Boolean(isSimulation),
     homeGoals: finalScore.homeGoals,
     awayGoals: finalScore.awayGoals,
     aiModel: modelForSource(finalScore.source),
@@ -80,6 +86,179 @@ function teamLabel(team, fallbackId) {
   if (team?.nameEn) return team.nameEn;
   if (team?.fifaCode) return team.fifaCode;
   return fallbackId ?? '—';
+}
+
+async function resolveAiUser() {
+  const email = env.aiUserEmail;
+  if (!email) return null;
+  return User.findOne({ email, isAiUser: true }).lean();
+}
+
+function classifyPredictionState(match, prediction) {
+  if (prediction?.userSubmitted) return 'predicha';
+  if (match?.status === 'upcoming' && !isPredictionLocked(match)) return 'pendiente';
+  return 'faltante';
+}
+
+export async function getAiCompetitorOverview({
+  status,
+  group,
+  matchNumber,
+  predictionFilter,
+} = {}) {
+  const aiUser = await resolveAiUser();
+  if (!aiUser) {
+    const error = new Error('Usuario IA no configurado');
+    error.status = 503;
+    throw error;
+  }
+
+  const matchQuery = { kickoffAt: { $ne: null } };
+  if (status) matchQuery.status = status;
+  if (group) matchQuery.group = String(group).toUpperCase();
+  if (matchNumber) matchQuery.externalId = String(matchNumber);
+
+  const matches = await Match.find(matchQuery).lean();
+  matches.sort(compareMatchesBySchedule);
+
+  if (!matches.length) {
+    return {
+      stats: emptyOverviewStats(),
+      matches: [],
+    };
+  }
+
+  const matchIds = matches.map((m) => m._id);
+
+  const [predictions, logs, teams] = await Promise.all([
+    Prediction.find({ userId: aiUser._id, matchId: { $in: matchIds } }).lean(),
+    AiCompetitorPredictionLog.find({ userId: aiUser._id, matchId: { $in: matchIds } })
+      .sort({ createdAt: -1 })
+      .lean(),
+    Team.find({
+      externalId: {
+        $in: matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]).filter(Boolean),
+      },
+    }).lean(),
+  ]);
+
+  const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
+  const predByMatch = new Map(predictions.map((p) => [p.matchId.toString(), p]));
+
+  const latestLogByMatch = new Map();
+  const latestOfficialLogByMatch = new Map();
+  const latestSimulationLogByMatch = new Map();
+  for (const log of logs) {
+    const key = log.matchId.toString();
+    if (!latestLogByMatch.has(key)) latestLogByMatch.set(key, log);
+    if (!log.isSimulation && !latestOfficialLogByMatch.has(key)) {
+      latestOfficialLogByMatch.set(key, log);
+    }
+    if (log.isSimulation && !latestSimulationLogByMatch.has(key)) {
+      latestSimulationLogByMatch.set(key, log);
+    }
+  }
+
+  const allStates = { predicha: 0, faltante: 0, pendiente: 0 };
+  for (const match of matches) {
+    const state = classifyPredictionState(match, predByMatch.get(match._id.toString()) ?? null);
+    allStates[state] = (allStates[state] ?? 0) + 1;
+  }
+
+  const scored = predictions.filter((p) => p.pointsEarned != null);
+  let totalGd = 0;
+  let totalPts = 0;
+  let paHits = 0;
+  let glHits = 0;
+  let gvHits = 0;
+  let gtHits = 0;
+
+  for (const p of scored) {
+    totalPts += p.pointsEarned ?? 0;
+    totalGd += (p.goalDiffHome ?? 0) + (p.goalDiffAway ?? 0);
+    const b = p.pointsBreakdown ?? {};
+    if ((b.winner ?? 0) > 0) paHits += 1;
+    if ((b.homeGoals ?? 0) > 0) glHits += 1;
+    if ((b.awayGoals ?? 0) > 0) gvHits += 1;
+    if ((b.totalGoals ?? 0) > 0) gtHits += 1;
+  }
+
+  const n = scored.length;
+  const stats = {
+    partidosTotales: matches.length,
+    predichas: allStates.predicha ?? 0,
+    faltantes: allStates.faltante ?? 0,
+    pendientes: allStates.pendiente ?? 0,
+    partidosPuntuados: n,
+    puntosTotales: totalPts,
+    promedioPuntos: n ? Number((totalPts / n).toFixed(2)) : null,
+    gdifCombinado: n ? Number(goalDiffScore(totalGd, 0, n).toFixed(3)) : null,
+    aciertos: {
+      pa: paHits,
+      gl: glHits,
+      gv: gvHits,
+      gt: gtHits,
+    },
+    tasaAciertoPa: n ? Number(((paHits / n) * 100).toFixed(1)) : null,
+  };
+
+  const rows = [];
+  for (const match of matches) {
+    const key = match._id.toString();
+    const prediction = predByMatch.get(key) ?? null;
+    const state = classifyPredictionState(match, prediction);
+
+    if (predictionFilter && predictionFilter !== 'all' && state !== predictionFilter) {
+      continue;
+    }
+
+    const homeTeam = teamMap[match.homeTeamId];
+    const awayTeam = teamMap[match.awayTeamId];
+    const officialLog = latestOfficialLogByMatch.get(key) ?? null;
+    const simulationLog = latestSimulationLogByMatch.get(key) ?? null;
+    const displayLog = officialLog ?? latestLogByMatch.get(key) ?? null;
+
+    rows.push({
+      matchId: key,
+      match: matchSnapshot(match, homeTeam, awayTeam),
+      predictionState: state,
+      prediction: prediction
+        ? {
+            homeGoals: prediction.homeGoals,
+            awayGoals: prediction.awayGoals,
+            userSubmitted: Boolean(prediction.userSubmitted),
+            pointsEarned: prediction.pointsEarned,
+            goalDiffHome: prediction.goalDiffHome,
+            goalDiffAway: prediction.goalDiffAway,
+            pointsBreakdown: prediction.pointsBreakdown ?? null,
+            aiModel: prediction.aiModel ?? null,
+            aiCalibrationApplied: Boolean(prediction.aiCalibrationApplied),
+          }
+        : null,
+      latestLogId: displayLog?._id?.toString() ?? null,
+      latestOfficialLogId: officialLog?._id?.toString() ?? null,
+      latestSimulationLogId: simulationLog?._id?.toString() ?? null,
+      logCount: logs.filter((l) => l.matchId.toString() === key).length,
+      canSimulate: match.status === 'upcoming',
+    });
+  }
+
+  return { stats, matches: rows };
+}
+
+function emptyOverviewStats() {
+  return {
+    partidosTotales: 0,
+    predichas: 0,
+    faltantes: 0,
+    pendientes: 0,
+    partidosPuntuados: 0,
+    puntosTotales: 0,
+    promedioPuntos: null,
+    gdifCombinado: null,
+    aciertos: { pa: 0, gl: 0, gv: 0, gt: 0 },
+    tasaAciertoPa: null,
+  };
 }
 
 function matchSnapshot(match, homeTeam, awayTeam) {
@@ -172,6 +351,7 @@ export async function listAiCompetitorPredictionLogs({
       aiModel: log.aiModel,
       aiSource: log.aiSource,
       calibrationApplied: log.calibrationApplied,
+      isSimulation: Boolean(log.isSimulation),
       adminNotes: log.adminNotes ?? '',
       createdAt: log.createdAt,
       updatedAt: log.updatedAt,
@@ -223,6 +403,7 @@ export async function getAiCompetitorPredictionLogById(id) {
     aiModel: log.aiModel,
     aiSource: log.aiSource,
     calibrationApplied: log.calibrationApplied,
+    isSimulation: Boolean(log.isSimulation),
     adminNotes: log.adminNotes ?? '',
     promptContext: log.promptContext,
     rawResponse: log.rawResponse,

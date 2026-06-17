@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
+import AdminStatCard from '../../components/admin/AdminStatCard.jsx';
 import {
   adminBtnOutline,
   adminInput,
@@ -30,10 +31,24 @@ import {
   TableRow,
 } from '@/components/ui/table.jsx';
 
+const GROUP_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
 const statusLabels = {
   upcoming: 'Próximo',
   live: 'En vivo',
   finished: 'Finalizado',
+};
+
+const predictionStateLabels = {
+  predicha: 'Predicha',
+  faltante: 'Faltante',
+  pendiente: 'Pendiente',
+};
+
+const predictionStateVariant = {
+  predicha: 'default',
+  faltante: 'destructive',
+  pendiente: 'outline',
 };
 
 function FilterField({ label, children }) {
@@ -65,7 +80,7 @@ function JsonPanel({ title, value }) {
   );
 }
 
-function formatLogDate(iso) {
+function formatKickoff(iso) {
   if (!iso) return '—';
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
@@ -81,27 +96,33 @@ function formatLogDate(iso) {
 export default function AdminAiCompetitorPage() {
   const [matchNumber, setMatchNumber] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [selectedId, setSelectedId] = useState(null);
+  const [groupFilter, setGroupFilter] = useState('');
+  const [predictionFilter, setPredictionFilter] = useState('all');
+  const [selectedMatchId, setSelectedMatchId] = useState(null);
+  const [selectedLogId, setSelectedLogId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [notes, setNotes] = useState('');
   const [notesBusy, setNotesBusy] = useState(false);
+  const [simulateBusyId, setSimulateBusyId] = useState(null);
   const [message, setMessage] = useState('');
 
-  const filterDeps = [matchNumber, statusFilter];
+  const filterDeps = [matchNumber, statusFilter, groupFilter, predictionFilter];
 
-  const fetchLogs = useCallback(() => {
-    const params = { limit: 80 };
+  const fetchOverview = useCallback(() => {
+    const params = { predictionFilter };
     if (matchNumber.trim()) params.matchNumber = matchNumber.trim();
     if (statusFilter) params.status = statusFilter;
-    return adminApi.listAiCompetitorLogs(params);
+    if (groupFilter) params.group = groupFilter;
+    return adminApi.getAiCompetitorOverview(params);
   }, filterDeps);
 
-  const { data, loading, error, refresh } = useLiveData(fetchLogs, filterDeps);
-  const logs = data?.logs ?? [];
+  const { data, loading, error, refresh } = useLiveData(fetchOverview, filterDeps);
+  const stats = data?.stats ?? null;
+  const matches = data?.matches ?? [];
 
   useEffect(() => {
-    if (!selectedId) {
+    if (!selectedLogId) {
       setDetail(null);
       setNotes('');
       return;
@@ -112,7 +133,7 @@ export default function AdminAiCompetitorPage() {
     setMessage('');
 
     adminApi
-      .getAiCompetitorLog(selectedId)
+      .getAiCompetitorLog(selectedLogId)
       .then((payload) => {
         if (cancelled) return;
         setDetail(payload);
@@ -128,19 +149,19 @@ export default function AdminAiCompetitorPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedLogId]);
 
-  const selectedSummary = useMemo(
-    () => logs.find((log) => log.id === selectedId) ?? null,
-    [logs, selectedId]
-  );
+  function selectMatchRow(row) {
+    setSelectedMatchId(row.matchId);
+    setSelectedLogId(row.latestLogId);
+  }
 
   async function saveNotes() {
-    if (!selectedId) return;
+    if (!selectedLogId) return;
     setNotesBusy(true);
     setMessage('');
     try {
-      const result = await adminApi.updateAiCompetitorLogNotes(selectedId, notes);
+      const result = await adminApi.updateAiCompetitorLogNotes(selectedLogId, notes);
       setNotes(result.adminNotes ?? '');
       setMessage('Notas guardadas');
       await refresh();
@@ -151,11 +172,34 @@ export default function AdminAiCompetitorPage() {
     }
   }
 
+  async function simulateMatch(row, event) {
+    event?.stopPropagation();
+    if (!row.canSimulate) return;
+
+    setSimulateBusyId(row.matchId);
+    setMessage('');
+    try {
+      const result = await adminApi.simulateAiCompetitorPrediction(row.matchId);
+      setSelectedMatchId(row.matchId);
+      setSelectedLogId(result.id);
+      setDetail(result);
+      setNotes(result.adminNotes ?? '');
+      setMessage('Simulación completada (no reemplaza la predicción oficial)');
+      await refresh();
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setSimulateBusyId(null);
+    }
+  }
+
+  const selectedRow = matches.find((m) => m.matchId === selectedMatchId) ?? null;
+
   return (
     <div className={adminPage}>
       <AdminPageHeader
         title="Predictive Modeling (IA)"
-        description="Auditoría de predicciones automáticas: contexto enviado al modelo, respuesta cruda y resultado final. Usá las notas para registrar aprendizajes y ajustes futuros."
+        description="Partidos del torneo con estado de predicción del bot, estadísticas de error y simulación de prueba (la predicción oficial solo se guarda en el horario automático ~T-90)."
       >
         <Button variant="outline" size="sm" className={adminBtnOutline} onClick={refresh} disabled={loading}>
           Actualizar
@@ -163,7 +207,32 @@ export default function AdminAiCompetitorPage() {
       </AdminPageHeader>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-400">{message}</p> : null}
+      {message ? (
+        <p className={`text-sm ${message.includes('completada') || message.includes('guardadas') ? 'text-emerald-400' : 'text-amber-300'}`}>
+          {message}
+        </p>
+      ) : null}
+
+      {stats ? (
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AdminStatCard label="Puntuados" value={stats.partidosPuntuados} hint={`${stats.predichas} predichas · ${stats.faltantes} faltantes · ${stats.pendientes} pendientes`} />
+          <AdminStatCard
+            label="Promedio pts"
+            value={stats.promedioPuntos != null ? stats.promedioPuntos : '—'}
+            hint={`${stats.puntosTotales} pts totales`}
+          />
+          <AdminStatCard
+            label="Gdif combinado"
+            value={stats.gdifCombinado != null ? stats.gdifCombinado : '—'}
+            hint="Menor = mejor precisión de marcador"
+          />
+          <AdminStatCard
+            label="Acierto PA"
+            value={stats.tasaAciertoPa != null ? `${stats.tasaAciertoPa}%` : '—'}
+            hint={`PA ${stats.aciertos.pa} · GL ${stats.aciertos.gl} · GV ${stats.aciertos.gv} · GT ${stats.aciertos.gt}`}
+          />
+        </div>
+      ) : null}
 
       <AdminCard className="mb-4">
         <div className="flex flex-wrap gap-3">
@@ -188,75 +257,138 @@ export default function AdminAiCompetitorPage() {
               </SelectContent>
             </Select>
           </FilterField>
+          <FilterField label="Grupo">
+            <Select value={groupFilter || 'all'} onValueChange={(v) => setGroupFilter(v === 'all' ? '' : v)}>
+              <SelectTrigger className={adminInput}>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {GROUP_OPTIONS.map((g) => (
+                  <SelectItem key={g} value={g}>
+                    Gr. {g}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+          <FilterField label="Predicción IA">
+            <Select value={predictionFilter} onValueChange={setPredictionFilter}>
+              <SelectTrigger className={adminInput}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="predicha">Predichas</SelectItem>
+                <SelectItem value="faltante">Faltantes</SelectItem>
+                <SelectItem value="pendiente">Pendientes</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
         </div>
       </AdminCard>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <AdminCard>
-          <h2 className="mb-3 text-sm font-semibold text-slate-100">Predicciones registradas</h2>
-          {loading && !logs.length ? <p className={adminMuted}>Cargando…</p> : null}
-          {!loading && !logs.length ? (
-            <p className={adminMuted}>
-              Aún no hay logs. Se guardan automáticamente cuando el bot predice ~90 min antes del kickoff.
-            </p>
+          <h2 className="mb-3 text-sm font-semibold text-slate-100">Partidos</h2>
+          {loading && !matches.length ? <p className={adminMuted}>Cargando…</p> : null}
+          {!loading && !matches.length ? (
+            <p className={adminMuted}>No hay partidos con los filtros actuales.</p>
           ) : null}
 
-          {logs.length ? (
+          {matches.length ? (
             <div className={adminTableWrap}>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Partido</TableHead>
-                    <TableHead>Marcador</TableHead>
-                    <TableHead>Modelo</TableHead>
-                    <TableHead>Pts</TableHead>
                     <TableHead>Fecha</TableHead>
+                    <TableHead>Partido</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Predicción</TableHead>
+                    <TableHead>Pts / Gdif</TableHead>
+                    <TableHead className="text-right">Acción</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {logs.map((log) => {
-                    const active = log.id === selectedId;
+                  {matches.map((row) => {
+                    const active = row.matchId === selectedMatchId;
+                    const pred = row.prediction;
                     return (
                       <TableRow
-                        key={log.id}
+                        key={row.matchId}
                         className={active ? 'bg-slate-800/60' : 'cursor-pointer'}
-                        onClick={() => setSelectedId(log.id)}
+                        onClick={() => selectMatchRow(row)}
                       >
+                        <TableCell className="whitespace-nowrap text-xs text-slate-400">
+                          {formatKickoff(row.match?.kickoffAt)}
+                        </TableCell>
                         <TableCell>
-                          <div className="font-medium text-slate-100">{log.match?.label ?? '—'}</div>
-                          <div className="text-xs text-slate-400">
-                            {log.match?.externalId ? `#${log.match.externalId}` : ''}
-                            {log.match?.group ? ` · Gr. ${log.match.group}` : ''}
-                            {log.match?.status ? ` · ${statusLabels[log.match.status] ?? log.match.status}` : ''}
+                          <div className="font-medium text-slate-100">{row.match?.label ?? '—'}</div>
+                          <div className="text-xs text-slate-500">
+                            {row.match?.externalId ? `#${row.match.externalId}` : ''}
+                            {row.match?.group ? ` · Gr. ${row.match.group}` : ''}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {log.homeGoals}-{log.awayGoals}
-                          {log.calibrationApplied ? (
-                            <Badge className="ml-2" variant="outline">
-                              calibrado
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={predictionStateVariant[row.predictionState] ?? 'outline'}>
+                              {predictionStateLabels[row.predictionState] ?? row.predictionState}
                             </Badge>
-                          ) : null}
-                        </TableCell>
-                        <TableCell className="text-xs text-slate-300">
-                          <div>{log.aiModel ?? '—'}</div>
-                          <div className="text-slate-500">{log.aiSource ?? ''}</div>
+                            <span className="text-xs text-slate-500">
+                              {statusLabels[row.match?.status] ?? row.match?.status ?? ''}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {log.scoring?.pointsEarned != null ? (
+                          {pred?.userSubmitted ? (
                             <span>
-                              {log.scoring.pointsEarned}
-                              {log.scoring.goalDiffHome != null ? (
-                                <span className="block text-xs text-slate-400">
-                                  Gdif {log.scoring.goalDiffHome}+{log.scoring.goalDiffAway}
-                                </span>
+                              {pred.homeGoals}-{pred.awayGoals}
+                              {row.latestSimulationLogId && !row.latestOfficialLogId ? (
+                                <Badge className="ml-1" variant="outline">
+                                  sim
+                                </Badge>
                               ) : null}
                             </span>
+                          ) : row.latestSimulationLogId ? (
+                            <span className="text-slate-400">Solo simulación</span>
+                          ) : (
+                            <span className="text-slate-500">—</span>
+                          )}
+                          {row.match?.homeScore != null && row.match?.awayScore != null ? (
+                            <div className="text-xs text-slate-500">
+                              Real {row.match.homeScore}-{row.match.awayScore}
+                            </div>
+                          ) : null}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {pred?.pointsEarned != null ? (
+                            <>
+                              <div>{pred.pointsEarned} pts</div>
+                              {pred.goalDiffHome != null ? (
+                                <div className="text-xs text-slate-400">
+                                  Gdif {pred.goalDiffHome}+{pred.goalDiffAway}
+                                </div>
+                              ) : null}
+                            </>
                           ) : (
                             <span className="text-slate-500">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs text-slate-400">{formatLogDate(log.createdAt)}</TableCell>
+                        <TableCell className="text-right">
+                          {row.canSimulate ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={adminBtnOutline}
+                              disabled={simulateBusyId === row.matchId}
+                              onClick={(e) => simulateMatch(row, e)}
+                            >
+                              {simulateBusyId === row.matchId ? '…' : 'Simular'}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-slate-600">—</span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -268,18 +400,24 @@ export default function AdminAiCompetitorPage() {
 
         <AdminCard>
           <h2 className="mb-3 text-sm font-semibold text-slate-100">Detalle</h2>
-          {!selectedId ? (
-            <p className={adminMuted}>Seleccioná una fila para ver contexto y respuestas.</p>
+          {!selectedMatchId ? (
+            <p className={adminMuted}>Seleccioná un partido o ejecutá una simulación.</p>
           ) : detailLoading ? (
             <p className={adminMuted}>Cargando detalle…</p>
           ) : detail ? (
             <div className="space-y-4">
+              {detail.isSimulation ? (
+                <Badge variant="outline" className="border-amber-500/50 text-amber-300">
+                  Simulación de prueba — no es la predicción oficial
+                </Badge>
+              ) : null}
+
               <div className="rounded-lg border border-slate-700/60 bg-slate-900/40 p-3 text-sm">
                 <p className="font-medium text-slate-100">
-                  {detail.match?.label ?? selectedSummary?.match?.label ?? 'Partido'}
+                  {detail.match?.label ?? selectedRow?.match?.label ?? 'Partido'}
                 </p>
                 <p className="text-slate-400">
-                  Predicción final: {detail.homeGoals}-{detail.awayGoals}
+                  Marcador {detail.isSimulation ? 'simulado' : 'oficial'}: {detail.homeGoals}-{detail.awayGoals}
                   {detail.match?.homeScore != null && detail.match?.awayScore != null
                     ? ` · Resultado real: ${detail.match.homeScore}-${detail.match.awayScore}`
                     : ''}
@@ -291,25 +429,41 @@ export default function AdminAiCompetitorPage() {
 
               <JsonPanel title="Contexto enviado al modelo" value={detail.promptContext} />
               <JsonPanel title="Respuesta cruda (antes de calibración)" value={detail.rawResponse} />
-              <JsonPanel title="Respuesta final aplicada" value={detail.finalResponse} />
+              <JsonPanel title="Respuesta final" value={detail.finalResponse} />
 
-              <div>
-                <h3 className="mb-2 text-sm font-medium text-slate-200">Notas para aprendizaje</h3>
-                <textarea
-                  className={`${adminInput} min-h-[120px] w-full resize-y`}
-                  placeholder="Ej.: el consenso del grupo estaba sesgado; conviene ponderar más xG en este tipo de partido…"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-                <div className="mt-2 flex justify-end">
-                  <Button size="sm" className={adminBtnOutline} onClick={saveNotes} disabled={notesBusy}>
-                    {notesBusy ? 'Guardando…' : 'Guardar notas'}
-                  </Button>
+              {!detail.isSimulation ? (
+                <div>
+                  <h3 className="mb-2 text-sm font-medium text-slate-200">Notas para aprendizaje</h3>
+                  <textarea
+                    className={`${adminInput} min-h-[120px] w-full resize-y`}
+                    placeholder="Anotá qué funcionó, qué falló y qué ajustar en el prompt o datos…"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <Button size="sm" className={adminBtnOutline} onClick={saveNotes} disabled={notesBusy}>
+                      {notesBusy ? 'Guardando…' : 'Guardar notas'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
+          ) : selectedRow?.latestLogId ? (
+            <p className={adminMuted}>Cargando log…</p>
           ) : (
-            <p className="text-sm text-red-400">No se pudo cargar el detalle.</p>
+            <div className="space-y-3">
+              <p className={adminMuted}>Este partido aún no tiene log de auditoría.</p>
+              {selectedRow?.canSimulate ? (
+                <Button
+                  size="sm"
+                  className={adminBtnOutline}
+                  disabled={simulateBusyId === selectedRow.matchId}
+                  onClick={() => simulateMatch(selectedRow)}
+                >
+                  {simulateBusyId === selectedRow.matchId ? 'Simulando…' : 'Simular predicción'}
+                </Button>
+              ) : null}
+            </div>
           )}
         </AdminCard>
       </div>
