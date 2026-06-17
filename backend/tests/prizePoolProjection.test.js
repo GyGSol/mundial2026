@@ -9,10 +9,10 @@ describe('computePrizeDistributionPercents', () => {
   it('devuelve porcentajes según cantidad de premiados', () => {
     expect(computePrizeDistributionPercents(0)).toEqual([]);
     expect(computePrizeDistributionPercents(1)).toEqual([100]);
-    expect(computePrizeDistributionPercents(2)).toEqual([60, 40]);
+    expect(computePrizeDistributionPercents(2)).toEqual([67, 33]);
     expect(computePrizeDistributionPercents(3)).toEqual([...DEFAULT_PRIZE_SPLITS]);
-    expect(computePrizeDistributionPercents(4)).toEqual([25, 25, 25, 25]);
-    expect(computePrizeDistributionPercents(5)).toEqual([20, 20, 20, 20, 20]);
+    expect(computePrizeDistributionPercents(4)).toEqual([40, 30, 20, 10]);
+    expect(computePrizeDistributionPercents(5)).toEqual([33, 27, 20, 13, 7]);
   });
 
   it('suma 100% para cualquier cantidad', () => {
@@ -24,11 +24,11 @@ describe('computePrizeDistributionPercents', () => {
 });
 
 describe('prize pool projection math', () => {
-  it('distribuye 50/30/20 sobre el pozo', () => {
+  it('distribuye proporcional a posición sobre el pozo', () => {
     const total = 1000;
-    const percents = [...DEFAULT_PRIZE_SPLITS];
+    const percents = computePrizeDistributionPercents(5);
     const amounts = percents.map((p) => Math.floor((total * p) / 100));
-    expect(amounts).toEqual([500, 300, 200]);
+    expect(amounts).toEqual([330, 270, 200, 130, 70]);
   });
 
   it('retiene premio de IA en La Casa', () => {
@@ -52,7 +52,7 @@ describe('prize pool projection math', () => {
     });
 
     expect(distribution[0]).toEqual({ fubols: 0, retainedByHouse: 500 });
-    expect(distribution[1]).toEqual({ fubols: 300, retainedByHouse: 0 });
+    expect(distribution[1]).toEqual({ fubols: 330, retainedByHouse: 0 });
     expect(houseRetention).toBe(500);
   });
 
@@ -66,15 +66,15 @@ describe('prize pool projection math', () => {
     const projection = {
       distribution: [
         { userId: 'u1', fubols: 500, retainedByHouse: 0, percent: 50 },
-        { userId: 'u2', fubols: 300, retainedByHouse: 0, percent: 30 },
-        { userId: 'u3', fubols: 0, retainedByHouse: 200, percent: 20, isAiUser: true },
+        { userId: 'u2', fubols: 330, retainedByHouse: 0, percent: 33 },
+        { userId: 'u3', fubols: 0, retainedByHouse: 170, percent: 17, isAiUser: true },
       ],
     };
 
     const enriched = attachProjectedFubolsToLeaderboard(leaderboard, projection);
     expect(enriched[0].projectedFubols).toBe(500);
-    expect(enriched[1].projectedFubols).toBe(300);
-    expect(enriched[2].fubolsRetainedByHouse).toBe(200);
+    expect(enriched[1].projectedFubols).toBe(330);
+    expect(enriched[2].fubolsRetainedByHouse).toBe(170);
     expect(enriched[3].projectedFubols).toBeUndefined();
   });
 });

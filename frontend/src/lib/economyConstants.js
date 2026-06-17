@@ -3,7 +3,6 @@ export const MOCK_CHECKOUT_DELAY_MS = 2000;
 export const GROUP_ENTRY_FEE = 100;
 export const AI_CONSULTATION_FEE = 1;
 export const AI_QUESTIONS_PER_FEE = 3;
-export const DEFAULT_PRIZE_SPLITS = [50, 30, 20];
 
 export const TX_TYPE_LABELS = {
   deposit: 'Ingreso',
@@ -22,22 +21,29 @@ export function formatFubolAmount(amount) {
   return `${prefix}${n}`;
 }
 
-/** Porcentajes del pozo por puesto premiado (suman 100). */
+/** Porcentajes del pozo por puesto premiado (suman 100). Peso decreciente por posición. */
 export function computePrizeDistributionPercents(winnersCount) {
   const n = Math.max(0, Math.min(Math.floor(Number(winnersCount) || 0), 10));
   if (n === 0) return [];
   if (n === 1) return [100];
-  if (n === 2) return [60, 40];
-  if (n === 3) return [...DEFAULT_PRIZE_SPLITS];
 
-  const base = Math.floor(100 / n);
-  let remainder = 100 - base * n;
-  return Array.from({ length: n }, () => {
-    const extra = remainder > 0 ? 1 : 0;
-    if (remainder > 0) remainder -= 1;
-    return base + extra;
-  });
+  const totalWeight = (n * (n + 1)) / 2;
+  const exact = Array.from({ length: n }, (_, i) => (100 * (n - i)) / totalWeight);
+  const floors = exact.map((v) => Math.floor(v));
+  let remainder = 100 - floors.reduce((sum, p) => sum + p, 0);
+
+  const byFrac = exact
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+
+  const percents = [...floors];
+  for (let j = 0; j < remainder; j += 1) {
+    percents[byFrac[j].i] += 1;
+  }
+  return percents;
 }
+
+export const DEFAULT_PRIZE_SPLITS = computePrizeDistributionPercents(3);
 
 export function formatPrizeDistributionLabel(percents) {
   if (!percents?.length) return '';
