@@ -12,16 +12,19 @@ export function compareAvgGoalDiff(aDiff, aPj, bDiff, bPj) {
   return 0;
 }
 
+/** Error combinado (local+visitante) que mapea Gdif a 0.000 en el peor caso razonable. */
+export const GOAL_DIFF_MAX_AVG_ERROR = 4;
+
 /**
  * Precisión combinada local+visitante (0–1).
  * 1.000 = cero error en todos los goles; baja según (difGl+difGv)/PJ.
- * Escala: 1 error promedio por partido (entre ambos equipos) → 0.500.
+ * Escala: ~2 errores promedio por partido → ~0.500; 4 o más → 0.000.
  */
 export function goalDiffScore(difGl, difGv, pj) {
   const games = pj ?? 0;
   if (games <= 0) return 0;
   const avgErrorPerMatch = ((difGl ?? 0) + (difGv ?? 0)) / games;
-  return Math.max(0, 1 - avgErrorPerMatch / 2);
+  return Math.max(0, 1 - avgErrorPerMatch / GOAL_DIFF_MAX_AVG_ERROR);
 }
 
 /** Mayor Gdif = mejor posición. */

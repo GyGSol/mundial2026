@@ -18,8 +18,8 @@ describe('goalDiffStats', () => {
 
   it('goalDiffScore es 1.000 sin errores y baja con dif combinada', () => {
     expect(goalDiffScore(0, 0, 5)).toBe(1);
-    expect(goalDiffScore(1, 0, 1)).toBe(0.5);
-    expect(goalDiffScore(2, 2, 2)).toBe(0);
+    expect(goalDiffScore(2, 0, 1)).toBe(0.5);
+    expect(goalDiffScore(4, 4, 2)).toBe(0);
   });
 
   it('compareGoalDiffScore prioriza mayor Gdif', () => {

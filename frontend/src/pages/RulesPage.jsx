@@ -23,7 +23,7 @@ const tiebreakerRules = [
   'GL + GV (goles exactos local y visitante)',
   'GT (goles totales exactos)',
   'PB (puntos bonus; en empate, menos PB = mejor posición)',
-  'Gdif (precisión en goles; 1.000 = todos exactos; mayor es mejor)',
+  'Gdif (precisión en goles; 1.000 = todos exactos; ~2 de error promedio ≈ .500; mayor es mejor)',
   'En empate de Gdif: menor error local promedio, luego visitante',
 ];
 
