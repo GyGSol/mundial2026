@@ -470,7 +470,7 @@ export async function listAiCompetitorPredictionLogs({
   });
 }
 
-export async function getAiCompetitorPredictionLogById(id) {
+export async function getAiCompetitorPredictionLogById(id, { includePromptContext = true } = {}) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const error = new Error('Log no encontrado');
     error.status = 404;
@@ -507,7 +507,7 @@ export async function getAiCompetitorPredictionLogById(id) {
     calibrationApplied: log.calibrationApplied,
     isSimulation: Boolean(log.isSimulation),
     adminNotes: log.adminNotes ?? '',
-    promptContext: log.promptContext,
+    ...(includePromptContext ? { promptContext: log.promptContext } : {}),
     rawResponse: log.rawResponse,
     finalResponse: log.finalResponse,
     createdAt: log.createdAt,

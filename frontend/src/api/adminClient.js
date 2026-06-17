@@ -17,6 +17,17 @@ async function adminRequest(path, options = {}) {
     throw new Error(formatRequestError(err, null, {}));
   }
 
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '');
+    if (text.includes('Application Error') || res.status >= 500) {
+      throw new Error(
+        'La operación tardó demasiado o el servidor se reinició. Probá de nuevo en unos segundos.'
+      );
+    }
+    throw new Error(formatRequestError(null, res, {}));
+  }
+
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
