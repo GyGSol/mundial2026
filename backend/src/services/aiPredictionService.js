@@ -39,7 +39,7 @@ import {
   buildCalibrationPromptBlock,
   loadAiCalibrationStats,
 } from './aiPredictionCalibrationService.js';
-import { saveAiCompetitorPredictionLog, getAiCompetitorPredictionLogById } from './aiCompetitorAuditService.js';
+import { saveAiCompetitorPredictionLog } from './aiCompetitorAuditService.js';
 import {
   fetchExternalMatchIntel,
   formatExternalIntelForPrompt,
@@ -276,7 +276,7 @@ export async function getAiUser() {
   return User.findOne({ email, isAiUser: true });
 }
 
-export async function buildPromptContext(match, aiUserId) {
+export async function buildPromptContext(match, aiUserId, { adminOnDemand = false, fetchImpl = fetch } = {}) {
   const [homeTeam, awayTeam, teams, allMatches, groups, stadium] = await Promise.all([
     Team.findOne({ externalId: match.homeTeamId }).lean(),
     Team.findOne({ externalId: match.awayTeamId }).lean(),
@@ -342,20 +342,29 @@ export async function buildPromptContext(match, aiUserId) {
     teamById,
   });
 
-  const venue = await enrichVenueWithWeather(buildVenueContextForPrompt(match, stadium), match, stadium);
-  const weatherRaw = await getVenueWeatherForStadium(stadium, { kickoffAt: match.kickoffAt });
-  const weatherRisk = formatWeatherRiskForClient(
-    await assessVenueWeatherRisk(stadium, { weather: weatherRaw, kickoffAt: match.kickoffAt })
-  );
+  const venueBase = buildVenueContextForPrompt(match, stadium);
+  const venue = adminOnDemand
+    ? venueBase
+    : await enrichVenueWithWeather(venueBase, match, stadium, { fetchImpl });
+  const weatherRaw = adminOnDemand
+    ? null
+    : await getVenueWeatherForStadium(stadium, { kickoffAt: match.kickoffAt, fetchImpl });
+  const weatherRisk = adminOnDemand
+    ? formatWeatherRiskForClient(null)
+    : formatWeatherRiskForClient(
+        await assessVenueWeatherRisk(stadium, { weather: weatherRaw, kickoffAt: match.kickoffAt })
+      );
   const liveScheduleContext = buildLiveScheduleContext(match, allMatches);
 
-  const enriched = await buildEnrichedMatchContext({
-    homeTeam: homeForAnalysis,
-    awayTeam: awayForAnalysis,
-    venue,
-    teamsAnalysis,
-    enrichPerformance: false,
-  });
+  const enriched = adminOnDemand
+    ? null
+    : await buildEnrichedMatchContext({
+        homeTeam: homeForAnalysis,
+        awayTeam: awayForAnalysis,
+        venue,
+        teamsAnalysis,
+        enrichPerformance: false,
+      });
 
   return {
     matchExternalId: match.externalId,
@@ -381,9 +390,13 @@ export async function buildPromptContext(match, aiUserId) {
           goalsAgainst: row.goalsAgainst,
         }))
       : [],
-    nationContext: enriched.nationContext,
-    squadAnalysis: enriched.squadAnalysis,
-    positionMatchups: enriched.positionMatchups,
+    ...(enriched
+      ? {
+          nationContext: enriched.nationContext,
+          squadAnalysis: enriched.squadAnalysis,
+          positionMatchups: enriched.positionMatchups,
+        }
+      : {}),
   };
 }
 
@@ -417,6 +430,22 @@ export async function buildAiCompetitorPredictionContext(
   aiUserId,
   { adminOnDemand = false, fetchImpl = fetch } = {}
 ) {
+  if (adminOnDemand) {
+    const [base, calibrationStats] = await Promise.all([
+      buildPromptContext(match, aiUserId, { adminOnDemand: true, fetchImpl }),
+      loadAiCalibrationStats(aiUserId),
+    ]);
+    const externalIntel = match.raw?.externalIntel ?? null;
+    return {
+      ...base,
+      mercadoYxG: formatExternalIntelForPrompt(externalIntel),
+      externalIntel,
+      calibracionReciente: buildCalibrationPromptBlock(calibrationStats),
+      _calibrationStats: calibrationStats,
+      _lightContext: true,
+    };
+  }
+
   const base = await buildPromptContext(match, aiUserId);
 
   const [homeTeam, awayTeam, allMatches, teams] = await Promise.all([
@@ -724,9 +753,24 @@ async function callGeminiProviderForScore(
 
 export async function callAiForScore(
   context,
-  { fetchImpl = fetch, promptBuilder, maxAttempts = 3 } = {}
+  { fetchImpl = fetch, promptBuilder, maxAttempts = 3, singleProvider = false } = {}
 ) {
   const providerOpts = { promptBuilder, fetchImpl, maxAttempts };
+
+  if (singleProvider) {
+    if (env.cerebrasApiKey) {
+      const cerebrasScore = await callCerebrasForScore(context, providerOpts);
+      if (cerebrasScore) return cerebrasScore;
+    } else if (env.googleAiApiKey) {
+      const geminiScore = await callGeminiProviderForScore(context, providerOpts);
+      if (geminiScore) return geminiScore;
+    } else if (env.groqApiKey) {
+      const groqScore = await callGroqForScore(context, providerOpts);
+      if (groqScore) return groqScore;
+    }
+    return computeHeuristicScore(context);
+  }
+
   const cerebrasScore = await callCerebrasForScore(context, providerOpts);
   if (cerebrasScore) return cerebrasScore;
 
@@ -1168,8 +1212,41 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
   return { processed, skipped, errors };
 }
 
+function buildAdminCompetitorActionResponse(match, { predictionId = null, score, rawScore, isSimulation }) {
+  return {
+    id: null,
+    matchId: match._id.toString(),
+    predictionId,
+    homeGoals: score.homeGoals,
+    awayGoals: score.awayGoals,
+    isSimulation,
+    adminNotes: '',
+    rawResponse: rawScore
+      ? {
+          homeGoals: rawScore.homeGoals,
+          awayGoals: rawScore.awayGoals,
+          reasoning: rawScore.reasoning ?? null,
+          source: rawScore.source ?? null,
+        }
+      : null,
+    finalResponse: {
+      homeGoals: score.homeGoals,
+      awayGoals: score.awayGoals,
+      reasoning: score.reasoning ?? null,
+      source: score.source ?? null,
+      calibrationApplied: Boolean(score.calibrationApplied),
+    },
+    match: {
+      id: match._id.toString(),
+      externalId: match.externalId,
+      label: `${match.homeTeamId} vs ${match.awayTeamId}`,
+      status: match.status,
+    },
+  };
+}
+
 export async function simulateAiCompetitorPrediction(matchId, { fetchImpl } = {}) {
-  const timedFetch = fetchImpl ?? createFetchWithTimeout(12_000);
+  const timedFetch = fetchImpl ?? createFetchWithTimeout(10_000);
   const aiUser = await getAiUser();
   if (!aiUser) {
     const error = new Error('Usuario IA no configurado');
@@ -1196,10 +1273,11 @@ export async function simulateAiCompetitorPrediction(matchId, { fetchImpl } = {}
   const rawScore = await callAiForCompetitorScore(context, {
     fetchImpl: timedFetch,
     maxAttempts: 1,
+    singleProvider: true,
   });
   const score = applyCalibrationNudge(rawScore, context._calibrationStats);
 
-  const log = await saveAiCompetitorPredictionLog({
+  void saveAiCompetitorPredictionLog({
     userId: aiUser._id,
     matchId: match._id,
     predictionId: null,
@@ -1207,14 +1285,20 @@ export async function simulateAiCompetitorPrediction(matchId, { fetchImpl } = {}
     rawScore,
     finalScore: score,
     isSimulation: true,
+  }).catch((err) => {
+    console.warn(`AI simulation log failed (${match.externalId}):`, err.message);
   });
 
-  return getAiCompetitorPredictionLogById(log._id.toString(), { includePromptContext: false });
+  return buildAdminCompetitorActionResponse(match, {
+    score,
+    rawScore,
+    isSimulation: true,
+  });
 }
 
 /** Ejecuta el pipeline IA y persiste predicción oficial (admin: reemplaza 0-0 o correcciones manuales). */
 export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } = {}) {
-  const timedFetch = fetchImpl ?? createFetchWithTimeout(12_000);
+  const timedFetch = fetchImpl ?? createFetchWithTimeout(10_000);
   const aiUser = await getAiUser();
   if (!aiUser) {
     const error = new Error('Usuario IA no configurado');
@@ -1241,6 +1325,7 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
   const rawScore = await callAiForCompetitorScore(context, {
     fetchImpl: timedFetch,
     maxAttempts: 1,
+    singleProvider: true,
   });
   const score = applyCalibrationNudge(rawScore, context._calibrationStats);
 
@@ -1257,7 +1342,7 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     { bypassLock: true }
   );
 
-  const log = await saveAiCompetitorPredictionLog({
+  void saveAiCompetitorPredictionLog({
     userId: aiUser._id,
     matchId: match._id,
     predictionId: prediction._id,
@@ -1267,31 +1352,12 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     isSimulation: false,
   }).catch((err) => {
     console.warn(`AI audit log failed (${match.externalId}):`, err.message);
-    return null;
   });
 
-  if (log) {
-    return getAiCompetitorPredictionLogById(log._id.toString(), { includePromptContext: false });
-  }
-
-  return {
-    id: null,
-    matchId: match._id.toString(),
+  return buildAdminCompetitorActionResponse(match, {
     predictionId: prediction._id.toString(),
-    homeGoals: score.homeGoals,
-    awayGoals: score.awayGoals,
+    score,
+    rawScore,
     isSimulation: false,
-    finalResponse: {
-      homeGoals: score.homeGoals,
-      awayGoals: score.awayGoals,
-      reasoning: score.reasoning,
-      source: score.source,
-    },
-    match: {
-      id: match._id.toString(),
-      externalId: match.externalId,
-      label: `${match.homeTeamId} vs ${match.awayTeamId}`,
-      status: match.status,
-    },
-  };
+  });
 }

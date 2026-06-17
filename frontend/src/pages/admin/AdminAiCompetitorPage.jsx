@@ -250,7 +250,7 @@ export default function AdminAiCompetitorPage() {
       setSelectedLogId(result.id ?? row.latestOfficialLogId);
       setDetail(result);
       setNotes(result.adminNotes ?? '');
-      const src = result.finalResponse?.source ?? 'ia';
+      const src = result.finalResponse?.source ?? result.aiSource ?? 'ia';
       setMessage(
         `Predicción IA oficial: ${result.homeGoals}-${result.awayGoals} (${src})`
       );

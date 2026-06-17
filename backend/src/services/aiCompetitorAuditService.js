@@ -42,6 +42,24 @@ export function buildAuditPromptContext(context) {
   };
 }
 
+function slimContextForAuditLog(context) {
+  if (!context?._lightContext) return context;
+  return {
+    matchExternalId: context.matchExternalId,
+    phase: context.phase,
+    group: context.group,
+    kickoffAt: context.kickoffAt,
+    homeTeam: context.homeTeam,
+    awayTeam: context.awayTeam,
+    headToHead2026: context.headToHead2026,
+    venue: context.venue,
+    groupStandings: context.groupStandings,
+    mercadoYxG: context.mercadoYxG,
+    calibracionReciente: context.calibracionReciente,
+    _lightContext: true,
+  };
+}
+
 export async function saveAiCompetitorPredictionLog({
   userId,
   matchId,
@@ -51,7 +69,7 @@ export async function saveAiCompetitorPredictionLog({
   finalScore,
   isSimulation = false,
 }) {
-  const promptContext = buildAuditPromptContext(context);
+  const promptContext = buildAuditPromptContext(slimContextForAuditLog(context));
   const doc = await AiCompetitorPredictionLog.create({
     userId,
     matchId,
