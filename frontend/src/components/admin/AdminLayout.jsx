@@ -13,6 +13,7 @@ const navItems = [
   { to: '/admin/users', label: 'Usuarios' },
   { to: '/admin/groups', label: 'Grupos' },
   { to: '/admin/predictions', label: 'Predicciones' },
+  { to: '/admin/ai-competitor', label: 'IA competidor' },
   { to: '/admin/simulation', label: 'Simulación' },
   { to: '/admin/economy', label: 'Economía' },
 ];

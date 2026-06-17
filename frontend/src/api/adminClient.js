@@ -185,6 +185,16 @@ export const adminApi = {
       body: JSON.stringify(body),
     }),
   deletePrediction: (id) => adminRequest(`/predictions/${id}`, { method: 'DELETE' }),
+  listAiCompetitorLogs: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return adminRequest(`/ai-competitor/logs${query ? `?${query}` : ''}`);
+  },
+  getAiCompetitorLog: (id) => adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`),
+  updateAiCompetitorLogNotes: (id, adminNotes) =>
+    adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ adminNotes }),
+    }),
   listStreamLinks: () => adminRequest('/stream-links'),
   suggestStreamLinks: (matchId) =>
     adminRequest(`/stream-links/suggest?matchId=${encodeURIComponent(matchId)}`),

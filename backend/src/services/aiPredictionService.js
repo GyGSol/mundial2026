@@ -39,6 +39,7 @@ import {
   buildCalibrationPromptBlock,
   loadAiCalibrationStats,
 } from './aiPredictionCalibrationService.js';
+import { saveAiCompetitorPredictionLog } from './aiCompetitorAuditService.js';
 import {
   fetchExternalMatchIntel,
   formatExternalIntelForPrompt,
@@ -1083,14 +1084,25 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
   for (const match of dueMatches) {
     try {
       const context = await buildAiCompetitorPredictionContext(match, aiUser._id);
-      let score = await callAiForCompetitorScore(context, { fetchImpl });
-      score = applyCalibrationNudge(score, context._calibrationStats);
-      await submitAiPrediction(aiUser._id, match._id, {
+      const rawScore = await callAiForCompetitorScore(context, { fetchImpl });
+      const score = applyCalibrationNudge(rawScore, context._calibrationStats);
+      const prediction = await submitAiPrediction(aiUser._id, match._id, {
         homeGoals: score.homeGoals,
         awayGoals: score.awayGoals,
         aiModel: aiModelForScoreSource(score.source),
         aiReasoning: score.reasoning,
         aiCalibrationApplied: Boolean(score.calibrationApplied),
+      });
+
+      await saveAiCompetitorPredictionLog({
+        userId: aiUser._id,
+        matchId: match._id,
+        predictionId: prediction._id,
+        context,
+        rawScore,
+        finalScore: score,
+      }).catch((err) => {
+        console.warn(`AI audit log failed (${match.externalId}):`, err.message);
       });
 
       const homeCode = context.homeTeam?.code ?? '?';

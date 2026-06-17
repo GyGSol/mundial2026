@@ -22,6 +22,7 @@ const AdminStreamLinksPage = lazy(() => import('./pages/admin/AdminStreamLinksPa
 const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage.jsx'));
 const AdminGroupsPage = lazy(() => import('./pages/admin/AdminGroupsPage.jsx'));
 const AdminPredictionsPage = lazy(() => import('./pages/admin/AdminPredictionsPage.jsx'));
+const AdminAiCompetitorPage = lazy(() => import('./pages/admin/AdminAiCompetitorPage.jsx'));
 const AdminSimulationPage = lazy(() => import('./pages/admin/AdminSimulationPage.jsx'));
 const AdminEconomyPage = lazy(() => import('./pages/admin/AdminEconomyPage.jsx'));
 
@@ -67,6 +68,7 @@ export default function App() {
                         <Route path="users" element={<AdminUsersPage />} />
                         <Route path="groups" element={<AdminGroupsPage />} />
                         <Route path="predictions" element={<AdminPredictionsPage />} />
+                        <Route path="ai-competitor" element={<AdminAiCompetitorPage />} />
                         <Route path="simulation" element={<AdminSimulationPage />} />
                         <Route path="economy" element={<AdminEconomyPage />} />
                       </Route>

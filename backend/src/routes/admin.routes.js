@@ -56,6 +56,11 @@ import {
   upsertAdminStreamLink,
   deleteAdminStreamLink,
 } from '../services/adminService.js';
+import {
+  getAiCompetitorPredictionLogById,
+  listAiCompetitorPredictionLogs,
+  updateAiCompetitorPredictionLogNotes,
+} from '../services/aiCompetitorAuditService.js';
 
 const router = Router();
 
@@ -570,6 +575,39 @@ router.patch('/predictions/:id', adminMiddleware, async (req, res, next) => {
 router.delete('/predictions/:id', adminMiddleware, async (req, res, next) => {
   try {
     res.json(await deleteAdminPrediction(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/ai-competitor/logs', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json({
+      logs: await listAiCompetitorPredictionLogs({
+        matchId: req.query.matchId,
+        matchNumber: req.query.matchNumber,
+        status: req.query.status,
+        limit: req.query.limit,
+      }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/ai-competitor/logs/:id', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await getAiCompetitorPredictionLogById(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/ai-competitor/logs/:id', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(
+      await updateAiCompetitorPredictionLogNotes(req.params.id, req.body?.adminNotes)
+    );
   } catch (err) {
     next(err);
   }
