@@ -9,6 +9,8 @@ import { env } from '../config/env.js';
 import { goalDiffScore } from './goalDiffStats.js';
 import { isPredictionLocked } from './predictionLockService.js';
 import { compareMatchesBySchedule } from './matchSortService.js';
+import { recalculateMatchScores } from './syncService.js';
+import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 
 const MAX_CONTEXT_BYTES = 512_000;
 
@@ -125,6 +127,7 @@ export async function getAiCompetitorOverview({
     return {
       stats: emptyOverviewStats(),
       matches: [],
+      aiUserId: aiUser._id.toString(),
     };
   }
 
@@ -228,9 +231,11 @@ export async function getAiCompetitorOverview({
       predictionState: state,
       prediction: prediction
         ? {
+            id: prediction._id.toString(),
             homeGoals: prediction.homeGoals,
             awayGoals: prediction.awayGoals,
             userSubmitted: Boolean(prediction.userSubmitted),
+            predictionSource: prediction.predictionSource ?? null,
             pointsEarned: prediction.pointsEarned,
             goalDiffHome: prediction.goalDiffHome,
             goalDiffAway: prediction.goalDiffAway,
@@ -251,7 +256,86 @@ export async function getAiCompetitorOverview({
     });
   }
 
-  return { stats, matches: rows };
+  return {
+    stats,
+    matches: rows,
+    aiUserId: aiUser._id.toString(),
+  };
+}
+
+export async function upsertAiCompetitorPrediction(matchId, { homeGoals, awayGoals } = {}) {
+  const aiUser = await resolveAiUser();
+  if (!aiUser) {
+    const error = new Error('Usuario IA no configurado');
+    error.status = 503;
+    throw error;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(matchId)) {
+    const error = new Error('matchId inválido');
+    error.status = 400;
+    throw error;
+  }
+
+  const home = Math.floor(Number(homeGoals));
+  const away = Math.floor(Number(awayGoals));
+  if (!Number.isFinite(home) || !Number.isFinite(away) || home < 0 || away < 0) {
+    const error = new Error('homeGoals y awayGoals deben ser números >= 0');
+    error.status = 400;
+    throw error;
+  }
+
+  const match = await Match.findById(matchId);
+  if (!match) {
+    const error = new Error('Partido no encontrado');
+    error.status = 404;
+    throw error;
+  }
+
+  const prediction = await Prediction.findOneAndUpdate(
+    { userId: aiUser._id, matchId: match._id },
+    {
+      $set: {
+        homeGoals: home,
+        awayGoals: away,
+        userSubmitted: true,
+        predictionSource: 'admin',
+      },
+      $setOnInsert: {
+        pointsEarned: null,
+        bonusPoint: 0,
+        bonusReason: null,
+        pointsBreakdown: null,
+        goalDiffHome: null,
+        goalDiffAway: null,
+      },
+    },
+    { upsert: true, new: true }
+  );
+
+  if (match.status === 'finished' || match.status === 'live') {
+    await recalculateMatchScores(match._id);
+  }
+
+  notifyMatchesUpdated({
+    reason: 'admin_ai_competitor_prediction',
+    matchId: match._id.toString(),
+    userId: aiUser._id.toString(),
+  });
+  notifyLeaderboardUpdated({ reason: 'admin_ai_competitor_prediction' });
+
+  return {
+    predictionId: prediction._id.toString(),
+    matchId: match._id.toString(),
+    homeGoals: prediction.homeGoals,
+    awayGoals: prediction.awayGoals,
+    userSubmitted: true,
+    predictionSource: prediction.predictionSource,
+    pointsEarned: prediction.pointsEarned,
+    goalDiffHome: prediction.goalDiffHome,
+    goalDiffAway: prediction.goalDiffAway,
+    pointsBreakdown: prediction.pointsBreakdown ?? null,
+  };
 }
 
 function emptyOverviewStats() {

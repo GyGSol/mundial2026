@@ -105,6 +105,9 @@ export default function AdminAiCompetitorPage() {
   const [notes, setNotes] = useState('');
   const [notesBusy, setNotesBusy] = useState(false);
   const [simulateBusyId, setSimulateBusyId] = useState(null);
+  const [editHome, setEditHome] = useState('0');
+  const [editAway, setEditAway] = useState('0');
+  const [savePredBusy, setSavePredBusy] = useState(false);
   const [message, setMessage] = useState('');
 
   const filterDeps = [matchNumber, statusFilter, groupFilter, predictionFilter];
@@ -151,6 +154,19 @@ export default function AdminAiCompetitorPage() {
     };
   }, [selectedLogId]);
 
+  const selectedRow = matches.find((m) => m.matchId === selectedMatchId) ?? null;
+
+  useEffect(() => {
+    if (!selectedRow) {
+      setEditHome('0');
+      setEditAway('0');
+      return;
+    }
+    const p = selectedRow.prediction;
+    setEditHome(String(p?.homeGoals ?? 0));
+    setEditAway(String(p?.awayGoals ?? 0));
+  }, [selectedMatchId, selectedRow?.prediction?.homeGoals, selectedRow?.prediction?.awayGoals]);
+
   function selectMatchRow(row) {
     setSelectedMatchId(row.matchId);
     setSelectedLogId(row.latestLogId);
@@ -193,13 +209,31 @@ export default function AdminAiCompetitorPage() {
     }
   }
 
-  const selectedRow = matches.find((m) => m.matchId === selectedMatchId) ?? null;
+  async function saveAiPrediction(event) {
+    event?.preventDefault();
+    if (!selectedMatchId) return;
+
+    setSavePredBusy(true);
+    setMessage('');
+    try {
+      await adminApi.upsertAiCompetitorPrediction(selectedMatchId, {
+        homeGoals: Number(editHome),
+        awayGoals: Number(editAway),
+      });
+      setMessage('Predicción de IA guardada');
+      await refresh();
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setSavePredBusy(false);
+    }
+  }
 
   return (
     <div className={adminPage}>
       <AdminPageHeader
         title="Predictive Modeling (IA)"
-        description="Partidos del torneo con estado de predicción del bot, estadísticas de error y simulación de prueba (la predicción oficial solo se guarda en el horario automático ~T-90)."
+        description="Partidos del torneo con estado de predicción del bot, estadísticas de error, edición manual del marcador oficial y simulación de prueba (~T-90 automático)."
       >
         <Button variant="outline" size="sm" className={adminBtnOutline} onClick={refresh} disabled={loading}>
           Actualizar
@@ -208,7 +242,7 @@ export default function AdminAiCompetitorPage() {
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? (
-        <p className={`text-sm ${message.includes('completada') || message.includes('guardadas') ? 'text-emerald-400' : 'text-amber-300'}`}>
+        <p className={`text-sm ${message.includes('completada') || message.includes('guardadas') || message.includes('guardada') ? 'text-emerald-400' : 'text-amber-300'}`}>
           {message}
         </p>
       ) : null}
@@ -387,19 +421,30 @@ export default function AdminAiCompetitorPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          {row.canSimulate ? (
+                          <div className="flex justify-end gap-1">
                             <Button
                               size="sm"
                               variant="outline"
                               className={adminBtnOutline}
-                              disabled={simulateBusyId === row.matchId}
-                              onClick={(e) => simulateMatch(row, e)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                selectMatchRow(row);
+                              }}
                             >
-                              {simulateBusyId === row.matchId ? '…' : 'Simular'}
+                              Editar
                             </Button>
-                          ) : (
-                            <span className="text-xs text-slate-600">—</span>
-                          )}
+                            {row.canSimulate ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={adminBtnOutline}
+                                disabled={simulateBusyId === row.matchId}
+                                onClick={(e) => simulateMatch(row, e)}
+                              >
+                                {simulateBusyId === row.matchId ? '…' : 'Simular'}
+                              </Button>
+                            ) : null}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -426,6 +471,48 @@ export default function AdminAiCompetitorPage() {
                 Cerrar
               </Button>
             </div>
+
+            <div className="mb-4 rounded-lg border border-slate-700/60 bg-slate-900/40 p-3">
+              <h3 className="mb-2 text-sm font-medium text-slate-200">Predicción oficial del bot</h3>
+              <p className="mb-3 text-xs text-slate-500">
+                Corregí o agregá el marcador de Predictive Modeling. En partidos finalizados se recalculan los puntos.
+              </p>
+              <form className="flex flex-wrap items-end gap-3" onSubmit={saveAiPrediction}>
+                <FilterField label="Local">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={20}
+                    className={`w-20 ${adminInput}`}
+                    value={editHome}
+                    onChange={(e) => setEditHome(e.target.value)}
+                    required
+                  />
+                </FilterField>
+                <FilterField label="Visitante">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={20}
+                    className={`w-20 ${adminInput}`}
+                    value={editAway}
+                    onChange={(e) => setEditAway(e.target.value)}
+                    required
+                  />
+                </FilterField>
+                <Button type="submit" size="sm" className={adminBtnOutline} disabled={savePredBusy}>
+                  {savePredBusy
+                    ? 'Guardando…'
+                    : selectedRow?.prediction?.userSubmitted
+                      ? 'Actualizar'
+                      : 'Guardar predicción'}
+                </Button>
+              </form>
+              {selectedRow?.prediction?.predictionSource === 'admin' ? (
+                <p className="mt-2 text-xs text-amber-400/80">Origen: corregida manualmente por admin</p>
+              ) : null}
+            </div>
+
             {detailLoading ? (
               <p className={adminMuted}>Cargando detalle…</p>
             ) : detail ? (

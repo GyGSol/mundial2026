@@ -197,6 +197,11 @@ export const adminApi = {
     adminRequest(`/ai-competitor/simulate/${encodeURIComponent(matchId)}`, {
       method: 'POST',
     }),
+  upsertAiCompetitorPrediction: (matchId, body) =>
+    adminRequest(`/ai-competitor/prediction/${encodeURIComponent(matchId)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
   getAiCompetitorLog: (id) => adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`),
   updateAiCompetitorLogNotes: (id, adminNotes) =>
     adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`, {
