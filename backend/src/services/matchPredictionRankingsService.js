@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { Prediction } from '../models/Prediction.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import { compareRankingEntries } from './leaderboardService.js';
+import { calculateGoalDiff } from './scoringService.js';
 import { recalculateMatchScores } from './syncService.js';
 
 function breakdownHits(breakdown) {
@@ -15,7 +16,7 @@ function breakdownHits(breakdown) {
   };
 }
 
-export function rankMatchPredictions(predictions, userMap, { onlyScorers = true } = {}) {
+export function rankMatchPredictions(predictions, userMap, { onlyScorers = true, actual = null } = {}) {
   const rows = predictions
     .filter((prediction) => prediction.pointsEarned != null)
     .map((prediction) => {
@@ -23,6 +24,13 @@ export function rankMatchPredictions(predictions, userMap, { onlyScorers = true 
       const hits = breakdownHits(prediction.pointsBreakdown);
       const bonusPoint = prediction.bonusPoint ?? 0;
       const basePoints = prediction.pointsEarned ?? 0;
+      const predicted = { home: prediction.homeGoals, away: prediction.awayGoals };
+      const goalDiff =
+        prediction.goalDiffHome != null && prediction.goalDiffAway != null
+          ? { home: prediction.goalDiffHome, away: prediction.goalDiffAway }
+          : actual
+            ? calculateGoalDiff(predicted, actual)
+            : { home: 0, away: 0 };
       return {
         id: userId,
         name: userMap[userId] || 'Jugador',
@@ -30,8 +38,8 @@ export function rankMatchPredictions(predictions, userMap, { onlyScorers = true 
         basePoints,
         pb: bonusPoint,
         bonusReason: prediction.bonusReason ?? null,
-        difGl: prediction.goalDiffHome ?? 0,
-        difGv: prediction.goalDiffAway ?? 0,
+        difGl: goalDiff.home,
+        difGv: goalDiff.away,
         ...hits,
       };
     })
@@ -99,7 +107,9 @@ export async function buildMatchPredictionRankings(competitionGroupId, finishedM
   for (const match of finishedMatches) {
     const matchPredictions = predictionsByMatch.get(match._id.toString()) || [];
     if (!matchPredictions.length) continue;
-    rankingsByMatch[match.externalId] = rankMatchPredictions(matchPredictions, userMap);
+    rankingsByMatch[match.externalId] = rankMatchPredictions(matchPredictions, userMap, {
+      actual: { home: match.homeScore ?? 0, away: match.awayScore ?? 0 },
+    });
   }
 
   return { group, rankingsByMatch };

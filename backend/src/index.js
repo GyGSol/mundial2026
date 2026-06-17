@@ -7,7 +7,7 @@ import { startKickoffWatchJob } from './jobs/kickoffWatch.job.js';
 import { startPredictionLockReminderJob } from './jobs/predictionLockReminder.job.js';
 import { startAiPredictionsJob } from './jobs/aiPredictions.job.js';
 import { initWebSocket } from './services/websocketService.js';
-import { ensureLegacyUserSubmittedBackfillOnce } from './services/predictionMigrationService.js';
+import { ensureLegacyUserSubmittedBackfillOnce, ensurePredictionGoalDiffBackfillOnce } from './services/predictionMigrationService.js';
 
 const BOOT_DEFER_MS = 5_000;
 
@@ -38,6 +38,17 @@ async function main() {
       })
       .catch((err) => {
         console.error('Deferred backfill userSubmitted failed:', err);
+      });
+    ensurePredictionGoalDiffBackfillOnce()
+      .then((result) => {
+        if (!result.skipped && result.updated > 0) {
+          console.log(
+            `Backfill goalDiff: ${result.updated} predicciones en ${result.matches} partidos`
+          );
+        }
+      })
+      .catch((err) => {
+        console.error('Deferred backfill goalDiff failed:', err);
       });
   }, BOOT_DEFER_MS);
 }

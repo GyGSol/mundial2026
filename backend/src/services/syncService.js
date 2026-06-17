@@ -487,13 +487,20 @@ export async function runSync({ includeMetadata = true } = {}) {
     }
 
     try {
-      const { ensurePredictionSourceBackfillOnce } = await import('./predictionMigrationService.js');
+      const { ensurePredictionSourceBackfillOnce, backfillPredictionGoalDiffs } =
+        await import('./predictionMigrationService.js');
       const sourceBackfill = await ensurePredictionSourceBackfillOnce();
       if (sourceBackfill.updated > 0) {
         console.log(`Prediction source backfill: ${sourceBackfill.updated} actualizadas`);
       }
+      const goalDiffBackfill = await backfillPredictionGoalDiffs({ onlyMissing: true });
+      if (goalDiffBackfill.updated > 0) {
+        console.log(
+          `Goal diff backfill: ${goalDiffBackfill.updated} predicciones en ${goalDiffBackfill.matches} partidos`
+        );
+      }
     } catch (err) {
-      console.warn('Prediction source backfill skipped:', err.message);
+      console.warn('Prediction migration backfill skipped:', err.message);
     }
 
     for (const matchId of clearedScoreIds) {

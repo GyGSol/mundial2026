@@ -3,9 +3,11 @@ import { Prediction } from '../models/Prediction.js';
 import { SyncMeta } from '../models/SyncMeta.js';
 import { getLockAt } from './predictionLockService.js';
 import { recalculateMatchScores } from './syncService.js';
+import { calculateGoalDiff } from './scoringService.js';
 
 const LEGACY_BACKFILL_META_KEY = 'legacyUserSubmittedBackfill';
 const PREDICTION_SOURCE_BACKFILL_META_KEY = 'predictionSourceUserBackfill';
+const GOAL_DIFF_BACKFILL_META_KEY = 'predictionGoalDiffBackfill';
 
 const LEGACY_CREATED_BEFORE_LOCK_MS = 1000;
 
@@ -123,4 +125,102 @@ export async function ensurePredictionSourceBackfillOnce() {
   });
 
   return predictionSourceBackfillOncePromise;
+}
+
+/**
+ * Persiste goalDiffHome/goalDiffAway comparando predicciones puntuadas
+ * contra el resultado del partido (finalizado o en vivo).
+ */
+export async function backfillPredictionGoalDiffs({ onlyMissing = true } = {}) {
+  const filter = {
+    pointsEarned: { $ne: null },
+  };
+  if (onlyMissing) {
+    filter.$or = [{ goalDiffHome: null }, { goalDiffAway: null }];
+  }
+
+  const predictions = await Prediction.find(filter)
+    .select(
+      '_id matchId homeGoals awayGoals goalDiffHome goalDiffAway liveKickoffGoalDiffHome liveKickoffGoalDiffAway'
+    )
+    .lean();
+
+  if (!predictions.length) {
+    return { updated: 0, matches: 0, skipped: 0 };
+  }
+
+  const matchIds = [...new Set(predictions.map((prediction) => prediction.matchId.toString()))];
+  const matches = await Match.find({
+    _id: { $in: matchIds },
+    status: { $in: ['finished', 'live'] },
+  })
+    .select('homeScore awayScore liveScoringInitialized')
+    .lean();
+  const matchMap = new Map(matches.map((match) => [match._id.toString(), match]));
+
+  const bulkOps = [];
+  let skipped = 0;
+
+  for (const prediction of predictions) {
+    const match = matchMap.get(prediction.matchId.toString());
+    if (!match) {
+      skipped += 1;
+      continue;
+    }
+
+    const predicted = { home: prediction.homeGoals, away: prediction.awayGoals };
+    const actual = { home: match.homeScore ?? 0, away: match.awayScore ?? 0 };
+    const goalDiff = calculateGoalDiff(predicted, actual);
+
+    const update = {
+      goalDiffHome: goalDiff.home,
+      goalDiffAway: goalDiff.away,
+    };
+
+    if (match.liveScoringInitialized) {
+      const kickoffDiff = calculateGoalDiff(predicted, { home: 0, away: 0 });
+      update.liveKickoffGoalDiffHome = kickoffDiff.home;
+      update.liveKickoffGoalDiffAway = kickoffDiff.away;
+    }
+
+    bulkOps.push({
+      updateOne: {
+        filter: { _id: prediction._id },
+        update: { $set: update },
+      },
+    });
+  }
+
+  if (bulkOps.length) {
+    await Prediction.bulkWrite(bulkOps, { ordered: false });
+  }
+
+  return { updated: bulkOps.length, matches: matches.length, skipped };
+}
+
+let goalDiffBackfillOncePromise = null;
+
+/** Backfill de dif. goles al menos una vez por despliegue (SyncMeta). */
+export async function ensurePredictionGoalDiffBackfillOnce() {
+  if (goalDiffBackfillOncePromise) return goalDiffBackfillOncePromise;
+
+  goalDiffBackfillOncePromise = (async () => {
+    const existing = await SyncMeta.findOne({ key: GOAL_DIFF_BACKFILL_META_KEY }).lean();
+    if (existing?.lastSyncAt) {
+      return { skipped: true, updated: 0, matches: 0 };
+    }
+
+    const result = await backfillPredictionGoalDiffs({ onlyMissing: true });
+    await SyncMeta.findOneAndUpdate(
+      { key: GOAL_DIFF_BACKFILL_META_KEY },
+      { lastSyncAt: new Date() },
+      { upsert: true }
+    );
+    return { skipped: false, ...result };
+  })().catch((err) => {
+    goalDiffBackfillOncePromise = null;
+    throw err;
+  });
+
+  return goalDiffBackfillOncePromise;
 }
