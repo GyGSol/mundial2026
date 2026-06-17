@@ -301,7 +301,8 @@ export default function AdminAiCompetitorPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Fecha</TableHead>
+                    <TableHead>Fecha partido</TableHead>
+                    <TableHead>Ejec. oficial</TableHead>
                     <TableHead>Partido</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Predicción</TableHead>
@@ -321,6 +322,9 @@ export default function AdminAiCompetitorPage() {
                       >
                         <TableCell className="whitespace-nowrap text-xs text-slate-400">
                           {formatKickoff(row.match?.kickoffAt)}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs text-slate-400">
+                          {row.officialPredictedAt ? formatKickoff(row.officialPredictedAt) : '—'}
                         </TableCell>
                         <TableCell>
                           <div className="font-medium text-slate-100">{row.match?.label ?? '—'}</div>
@@ -434,6 +438,11 @@ export default function AdminAiCompetitorPage() {
                     ? ` · Resultado real: ${detail.match.homeScore}-${detail.match.awayScore}`
                     : ''}
                 </p>
+                {detail.createdAt ? (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {detail.isSimulation ? 'Simulada' : 'Ejecutada oficialmente'}: {formatKickoff(detail.createdAt)}
+                  </p>
+                ) : null}
                 {detail.finalResponse?.reasoning ? (
                   <p className="mt-2 whitespace-pre-wrap text-slate-300">{detail.finalResponse.reasoning}</p>
                 ) : null}
