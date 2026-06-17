@@ -7,10 +7,21 @@ import {
   TableRow,
 } from '@/components/ui/table.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover.jsx';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatGoalDiffScore } from '@/lib/goalDiffStats.js';
 import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
+
+const GDIFF_HELP =
+  'Precisión en goles: (GL/PJ × GV/PJ) / 2 escalado; 1.000 = local y visitante exactos en todos los partidos';
 
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },
@@ -20,8 +31,7 @@ const statColumns = [
   {
     key: 'gdif',
     label: 'Gdif',
-    title:
-      'Precisión en goles: (GL/PJ × GV/PJ) / 2 escalado; 1.000 = local y visitante exactos en todos los partidos',
+    helpPopup: true,
     format: 'gdif',
     trackDelta: false,
   },
@@ -38,6 +48,32 @@ const prizedRankCellClass =
 
 function isPrizedRank(rank, prizesWinnersCount) {
   return prizesWinnersCount > 0 && rank <= prizesWinnersCount;
+}
+
+function StatColumnHead({ col }) {
+  if (col.helpPopup) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center rounded-sm border-b border-dotted border-current/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Qué significa Gdif"
+          >
+            {col.label}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="center" className="w-72 text-sm">
+          <PopoverHeader>
+            <PopoverTitle>Gdif</PopoverTitle>
+            <PopoverDescription>{GDIFF_HELP}</PopoverDescription>
+          </PopoverHeader>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return col.label;
 }
 
 function normalizeStatDelta(delta) {
@@ -128,9 +164,9 @@ export default function LeaderboardTable({
                 <TableHead
                   key={col.key}
                   className={col.format === 'gdif' ? gdifCellClass : statHeadClass}
-                  title={col.title}
+                  title={col.helpPopup ? undefined : col.title}
                 >
-                  {col.label}
+                  <StatColumnHead col={col} />
                 </TableHead>
               ))}
               <TableHead className={statHeadClass} title="Puntos bonus (consuelo)">
