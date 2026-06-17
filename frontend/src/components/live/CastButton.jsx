@@ -1,6 +1,7 @@
 import { Cast, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
+import { isCastBrowser } from '@/lib/googleCast.js';
 import { useGoogleCast } from '@/hooks/useGoogleCast.js';
 
 export default function CastButton({
@@ -13,15 +14,13 @@ export default function CastButton({
   variant = 'outline',
   showLabel = true,
 }) {
-  const { browserSupported, canCast, connecting, connected, deviceName, error, toggleCast } =
-    useGoogleCast({
-      mediaUrl,
-      title,
-      enabled,
-      onMediaExpired,
-    });
-
-  if (!browserSupported) return null;
+  const castBrowser = isCastBrowser();
+  const { connecting, connected, deviceName, error, toggleCast } = useGoogleCast({
+    mediaUrl,
+    title,
+    enabled,
+    onMediaExpired,
+  });
 
   const label = connecting
     ? 'Conectando con el TV…'
@@ -31,9 +30,11 @@ export default function CastButton({
         : 'Transmitiendo al TV'
       : 'Transmitir a TV';
 
-  const disabledTitle = canCast
-    ? label
-    : 'Obteniendo señal directa para el TV. Si no se habilita, probá otra señal.';
+  const disabledTitle = castBrowser
+    ? mediaUrl?.trim()
+      ? label
+      : 'Obteniendo señal directa para el TV. Si no se habilita, probá otra señal.'
+    : 'Para ver en el TV usá Chrome o Edge en la misma WiFi que el televisor.';
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
@@ -43,10 +44,10 @@ export default function CastButton({
         variant={connected ? 'default' : variant}
         className="justify-center gap-1.5"
         onClick={toggleCast}
-        disabled={connecting || !browserSupported}
+        disabled={connecting}
         aria-label={label}
         aria-pressed={connected}
-        title={canCast ? label : disabledTitle}
+        title={disabledTitle}
       >
         {connecting ? (
           <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
@@ -60,7 +61,7 @@ export default function CastButton({
         )}
       </Button>
       {error ? (
-        <p className="text-center text-[11px] text-destructive" role="status">
+        <p className="col-span-2 text-center text-[11px] text-destructive sm:col-span-1" role="status">
           {error}
         </p>
       ) : null}

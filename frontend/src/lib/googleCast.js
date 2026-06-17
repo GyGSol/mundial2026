@@ -11,9 +11,9 @@ function getAppId() {
 }
 
 /**
- * Chromium browsers with Google Cast Web Sender support (not Safari/Firefox).
+ * Navegadores donde tiene sentido mostrar el botón Transmitir (Chromium).
  */
-export function isCastApiAvailable() {
+export function isCastBrowser() {
   if (typeof window === 'undefined') return false;
   if (window.cast?.framework) return true;
 
@@ -21,7 +21,12 @@ export function isCastApiAvailable() {
   if (/Firefox/i.test(ua)) return false;
   if (/Safari/i.test(ua) && !/Chrome|Chromium|Edg|OPR|CriOS/i.test(ua)) return false;
 
-  return /Chrome|Chromium|Edg|OPR|CriOS/i.test(ua);
+  return Boolean(window.chrome) || /Chrome|Chromium|Edg|OPR|CriOS/i.test(ua);
+}
+
+/** @deprecated use isCastBrowser */
+export function isCastApiAvailable() {
+  return isCastBrowser();
 }
 
 function loadCastSdk() {
@@ -35,12 +40,18 @@ function loadCastSdk() {
 
     const existing = document.querySelector(`script[src="${CAST_SDK_URL}"]`);
     if (existing) {
+      const startedAt = Date.now();
       const waitForFramework = () => {
         if (window.cast?.framework) {
           resolve(window.cast.framework);
-        } else {
-          window.setTimeout(waitForFramework, 50);
+          return;
         }
+        if (Date.now() - startedAt > 12000) {
+          reject(new Error('Tiempo de espera agotado al cargar Google Cast.'));
+          sdkPromise = null;
+          return;
+        }
+        window.setTimeout(waitForFramework, 50);
       };
       waitForFramework();
       return;
@@ -51,6 +62,7 @@ function loadCastSdk() {
       if (isAvailable && window.cast?.framework) {
         resolve(window.cast.framework);
       } else {
+        sdkPromise = null;
         reject(new Error('Cast API no disponible en este navegador.'));
       }
     };
@@ -58,7 +70,10 @@ function loadCastSdk() {
     const script = document.createElement('script');
     script.src = CAST_SDK_URL;
     script.async = true;
-    script.onerror = () => reject(new Error('No se pudo cargar el SDK de Google Cast.'));
+    script.onerror = () => {
+      sdkPromise = null;
+      reject(new Error('No se pudo cargar el SDK de Google Cast.'));
+    };
     document.head.appendChild(script);
   });
 
@@ -70,14 +85,19 @@ export async function initCastContext() {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
-    const castFramework = await loadCastSdk();
-    const context = castFramework.CastContext.getInstance();
-    context.setOptions({
-      receiverApplicationId: getAppId(),
-      autoJoinPolicy: castFramework.AutoJoinPolicy.ORIGIN_SCOPED,
-    });
-    castContext = context;
-    return context;
+    try {
+      const castFramework = await loadCastSdk();
+      const context = castFramework.CastContext.getInstance();
+      context.setOptions({
+        receiverApplicationId: getAppId(),
+        autoJoinPolicy: castFramework.AutoJoinPolicy.ORIGIN_SCOPED,
+      });
+      castContext = context;
+      return context;
+    } catch (error) {
+      initPromise = null;
+      throw error;
+    }
   })();
 
   return initPromise;

@@ -2,15 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getCastDeviceName,
   initCastContext,
-  isCastApiAvailable,
+  isCastBrowser,
   loadCastMedia,
   requestCastSession,
   stopCastSession,
   subscribeCastMediaIdle,
   subscribeCastSessionState,
 } from '@/lib/googleCast.js';
-
-const SESSION_STARTED = 'SESSION_STARTED';
 
 function mapCastError(error) {
   const code = error?.code ?? error?.message ?? '';
@@ -23,7 +21,7 @@ function mapCastError(error) {
     return 'No se encontraron dispositivos. Verificá que el TV esté en la misma red WiFi.';
   }
   if (text.includes('not available') || text.includes('UNAVAILABLE')) {
-    return 'Transmitir no disponible en este navegador.';
+    return 'Transmitir no disponible. Usá Chrome o Edge y activá Google Cast.';
   }
   if (text.includes('LOAD_FAILED') || text.includes('load')) {
     return 'La señal no se puede reproducir en el TV. Probá otra señal o reintentá.';
@@ -32,8 +30,17 @@ function mapCastError(error) {
   return error?.message || 'No se pudo conectar con el TV.';
 }
 
+function isSessionActive(state) {
+  if (!state) return false;
+  const castFramework = window.cast?.framework;
+  if (castFramework?.SessionState?.SESSION_STARTED != null) {
+    return state === castFramework.SessionState.SESSION_STARTED;
+  }
+  return state === 'SESSION_STARTED';
+}
+
 export function useGoogleCast({ mediaUrl, title, enabled = true, onMediaExpired } = {}) {
-  const [available, setAvailable] = useState(() => isCastApiAvailable());
+  const castBrowser = isCastBrowser();
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
   const [deviceName, setDeviceName] = useState('');
@@ -46,15 +53,10 @@ export function useGoogleCast({ mediaUrl, title, enabled = true, onMediaExpired 
   }, [onMediaExpired]);
 
   useEffect(() => {
-    if (!enabled || !isCastApiAvailable()) {
-      setAvailable(false);
-      return undefined;
-    }
-
-    setAvailable(true);
+    if (!enabled || !castBrowser) return undefined;
 
     const unsubscribe = subscribeCastSessionState(({ state, deviceName: name }) => {
-      const isConnected = state === SESSION_STARTED;
+      const isConnected = isSessionActive(state);
       setConnected(isConnected);
       setDeviceName(isConnected ? name : '');
       if (!isConnected) {
@@ -63,11 +65,11 @@ export function useGoogleCast({ mediaUrl, title, enabled = true, onMediaExpired 
     });
 
     initCastContext().catch(() => {
-      setAvailable(false);
+      // No ocultar el botón si el SDK tarda o falla al precargar.
     });
 
     return unsubscribe;
-  }, [enabled]);
+  }, [enabled, castBrowser]);
 
   useEffect(() => {
     if (!enabled || !connected) return undefined;
@@ -142,15 +144,22 @@ export function useGoogleCast({ mediaUrl, title, enabled = true, onMediaExpired 
 
   const toggleCastOrExplain = useCallback(async () => {
     if (!enabled) return;
+
+    if (!castBrowser) {
+      setError('Para ver en el TV usá Chrome o Edge en la misma WiFi que el televisor.');
+      return;
+    }
+
     if (!canCast) {
       setError('Todavía no hay señal para el TV. Probá otra señal o Reintentar.');
       return;
     }
+
     return toggleCast();
-  }, [enabled, canCast, toggleCast]);
+  }, [enabled, castBrowser, canCast, toggleCast]);
 
   return {
-    browserSupported: available,
+    castBrowser,
     canCast,
     connecting,
     connected,
