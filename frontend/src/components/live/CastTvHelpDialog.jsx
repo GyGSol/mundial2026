@@ -38,9 +38,9 @@ export default function CastTvHelpDialog({ open, onOpenChange }) {
               titleClassName="text-base"
               iconLabel="Transmitir al televisor"
             >
-              Deco Telecentro u otro TV
+              Deco Telecentro
             </DialogTitleWithIcon>
-            <CardDescription>Si no aparece en la lista de «Transmitir»</CardDescription>
+            <CardDescription>Qué significa lo que dice Chrome</CardDescription>
           </div>
           <Button type="button" size="icon" variant="ghost" onClick={handleClose} aria-label="Cerrar">
             <X className="size-4" />
@@ -49,49 +49,36 @@ export default function CastTvHelpDialog({ open, onOpenChange }) {
 
         <CardContent className="flex flex-col gap-4 pb-5 text-sm leading-relaxed text-muted-foreground">
           <p>
-            Tener la cuenta de Google en el <strong className="font-medium text-foreground">TV</strong>{' '}
-            no hace que el deco aparezca en la lista de esta web. Lo que importa es que la{' '}
-            <strong className="font-medium text-foreground">PC y el deco estén en la misma WiFi</strong>{' '}
-            y el deco esté encendido.
+            Si Chrome muestra{' '}
+            <strong className="font-medium text-foreground">
+              «Disponible para sitios de video específicos»
+            </strong>{' '}
+            en <strong className="font-medium text-foreground">Telecentro-3a</strong>, el deco{' '}
+            <strong className="font-medium text-foreground">no acepta</strong> esta web ni otras páginas
+            arbitrarias. Solo apps y sitios acordados (YouTube, Netflix, Disney+, etc.).
           </p>
           <p>
-            YouTube lista <strong className="font-medium text-foreground">Telecentro-3a</strong> porque
-            usa su propia app en el deco. Esta página usa el receptor estándar de Google; en algunos
-            equipos el deco solo aparece con{' '}
-            <strong className="font-medium text-foreground">Transmitir pestaña</strong> de Chrome.
+            Por eso YouTube sí te deja mandar el video al deco y{' '}
+            <strong className="font-medium text-foreground">Mundial 2026 no</strong>: no es un fallo de
+            la app ni de tu cuenta Google en el TV.
           </p>
 
           <div className="rounded-md border border-primary/30 bg-primary/5 p-3">
-            <p className="mb-2 font-medium text-foreground">Recomendado: Transmitir pestaña</p>
-            <ol className="list-decimal space-y-1.5 pl-5">
-              <li>Reproducí el partido acá en Chrome.</li>
-              <li>
-                Menú <strong className="font-medium text-foreground">⋮</strong> (arriba a la derecha) →{' '}
-                <strong className="font-medium text-foreground">Guardar y compartir</strong> →{' '}
-                <strong className="font-medium text-foreground">Transmitir…</strong>
-              </li>
-              <li>Elegí <strong className="font-medium text-foreground">Telecentro-3a</strong> (o tu deco).</li>
-              <li>
-                Elegí <strong className="font-medium text-foreground">Pestaña</strong>, no «Archivo» ni
-                «Pantalla».
-              </li>
-              <li>Confirmá que sea la pestaña con el partido.</li>
-            </ol>
+            <p className="mb-2 font-medium text-foreground">Si en la lista ves «Smart TV — Disponible»</p>
+            <p>
+              Ese equipo sí suele aceptar{' '}
+              <strong className="font-medium text-foreground">Transmitir pestaña</strong>: menú{' '}
+              <strong className="font-medium text-foreground">⋮</strong> → Guardar y compartir → Transmitir →
+              Smart TV → Pestaña con el partido abierto acá.
+            </p>
           </div>
 
           <div>
-            <p className="mb-2 font-medium text-foreground">Si tampoco aparece en el menú de Chrome</p>
+            <p className="mb-2 font-medium text-foreground">Otras opciones con deco Telecentro</p>
             <ul className="list-disc space-y-1.5 pl-5">
-              <li>PC y deco en la misma red (no datos del celular en el PC).</li>
-              <li>
-                En Chrome: configuración del sitio → permitir{' '}
-                <strong className="font-medium text-foreground">acceso a la red local</strong> si lo pide.
-              </li>
-              <li>Probá desde el celular con Chrome en la misma WiFi.</li>
-              <li>
-                «Smart TV» en la lista puede ser otro aparato; el deco suele llamarse{' '}
-                <strong className="font-medium text-foreground">Telecentro-…</strong>
-              </li>
+              <li>Cable HDMI de la PC o notebook al televisor.</li>
+              <li>Ver el partido por el canal oficial en el deco (TNT Sports, etc.).</li>
+              <li>Seguir en el celu o en la PC sin castear al deco.</li>
             </ul>
           </div>
 

@@ -338,8 +338,8 @@ export default function La18StreamPlayer({
 
           {isCastBrowser() ? (
             <p className="col-span-2 text-center text-[11px] leading-snug text-muted-foreground sm:col-span-3">
-              Si solo ves «Smart TV» y no Telecentro, usá «Guía deco» → Transmitir pestaña en Chrome (⋮).
-              La cuenta Google del TV no afecta la lista; importa la misma WiFi.
+              Deco Telecentro con «sitios de video específicos» no recibe esta web (sí YouTube). «Guía deco»
+              explica alternativas; «Smart TV — Disponible» sí admite Transmitir pestaña.
             </p>
           ) : null}
 
