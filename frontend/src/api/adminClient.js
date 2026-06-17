@@ -202,6 +202,10 @@ export const adminApi = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
+  runOfficialAiCompetitorPrediction: (matchId) =>
+    adminRequest(`/ai-competitor/run-official/${encodeURIComponent(matchId)}`, {
+      method: 'POST',
+    }),
   getAiCompetitorLog: (id) => adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`),
   updateAiCompetitorLogNotes: (id, adminNotes) =>
     adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`, {

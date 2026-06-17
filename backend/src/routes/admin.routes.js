@@ -63,7 +63,7 @@ import {
   updateAiCompetitorPredictionLogNotes,
   upsertAiCompetitorPrediction,
 } from '../services/aiCompetitorAuditService.js';
-import { simulateAiCompetitorPrediction } from '../services/aiPredictionService.js';
+import { simulateAiCompetitorPrediction, runOfficialAiCompetitorPrediction } from '../services/aiPredictionService.js';
 
 const router = Router();
 
@@ -601,6 +601,14 @@ router.get('/ai-competitor/overview', adminMiddleware, async (req, res, next) =>
 router.post('/ai-competitor/simulate/:matchId', adminMiddleware, async (req, res, next) => {
   try {
     res.status(201).json(await simulateAiCompetitorPrediction(req.params.matchId));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/ai-competitor/run-official/:matchId', adminMiddleware, async (req, res, next) => {
+  try {
+    res.status(201).json(await runOfficialAiCompetitorPrediction(req.params.matchId));
   } catch (err) {
     next(err);
   }

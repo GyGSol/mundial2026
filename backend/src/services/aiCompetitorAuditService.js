@@ -251,6 +251,9 @@ export async function getAiCompetitorOverview({
       simulationAt: simulationLog?.createdAt
         ? new Date(simulationLog.createdAt).toISOString()
         : null,
+      simulationPrediction: simulationLog
+        ? { homeGoals: simulationLog.homeGoals, awayGoals: simulationLog.awayGoals }
+        : null,
       logCount: logs.filter((l) => l.matchId.toString() === key).length,
       canSimulate: match.status === 'upcoming',
     });

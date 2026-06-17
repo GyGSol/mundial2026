@@ -93,6 +93,10 @@ function formatKickoff(iso) {
   }).format(new Date(iso));
 }
 
+function matchHasFinalScore(match) {
+  return match?.status === 'finished' || match?.status === 'live';
+}
+
 export default function AdminAiCompetitorPage() {
   const [matchNumber, setMatchNumber] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -105,6 +109,7 @@ export default function AdminAiCompetitorPage() {
   const [notes, setNotes] = useState('');
   const [notesBusy, setNotesBusy] = useState(false);
   const [simulateBusyId, setSimulateBusyId] = useState(null);
+  const [runOfficialBusyId, setRunOfficialBusyId] = useState(null);
   const [editHome, setEditHome] = useState('0');
   const [editAway, setEditAway] = useState('0');
   const [savePredBusy, setSavePredBusy] = useState(false);
@@ -171,6 +176,7 @@ export default function AdminAiCompetitorPage() {
     }
     if (
       selectedRow.predictionState === 'faltante' &&
+      matchHasFinalScore(selectedRow.match) &&
       selectedRow.match?.homeScore != null &&
       selectedRow.match?.awayScore != null
     ) {
@@ -222,6 +228,7 @@ export default function AdminAiCompetitorPage() {
 
   async function loadRealScore(row, event) {
     event?.stopPropagation();
+    if (!matchHasFinalScore(row.match)) return;
     if (row.match?.homeScore == null || row.match?.awayScore == null) return;
     await upsertAiPredictionForRow(
       row,
@@ -229,6 +236,30 @@ export default function AdminAiCompetitorPage() {
       row.match.awayScore,
       'Predicción cargada con el resultado real (podés editarla abajo)'
     );
+  }
+
+  async function runOfficialAi(row, event) {
+    event?.stopPropagation();
+    if (!row.canSimulate) return;
+
+    setRunOfficialBusyId(row.matchId);
+    setMessage('');
+    try {
+      const result = await adminApi.runOfficialAiCompetitorPrediction(row.matchId);
+      setSelectedMatchId(row.matchId);
+      setSelectedLogId(result.id ?? row.latestOfficialLogId);
+      setDetail(result);
+      setNotes(result.adminNotes ?? '');
+      const src = result.finalResponse?.source ?? 'ia';
+      setMessage(
+        `Predicción IA oficial: ${result.homeGoals}-${result.awayGoals} (${src})`
+      );
+      await refresh();
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setRunOfficialBusyId(null);
+    }
   }
 
   async function saveNotes() {
@@ -295,7 +326,7 @@ export default function AdminAiCompetitorPage() {
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? (
-        <p className={`text-sm ${message.includes('completada') || message.includes('guardadas') || message.includes('guardada') || message.includes('cargada') ? 'text-emerald-400' : 'text-amber-300'}`}>
+        <p className={`text-sm ${message.includes('completada') || message.includes('guardadas') || message.includes('guardada') || message.includes('cargada') || message.includes('oficial:') ? 'text-emerald-400' : 'text-amber-300'}`}>
           {message}
         </p>
       ) : null}
@@ -442,9 +473,14 @@ export default function AdminAiCompetitorPage() {
                           {pred?.userSubmitted ? (
                             <span>
                               {pred.homeGoals}-{pred.awayGoals}
-                              {row.latestSimulationLogId && !row.latestOfficialLogId ? (
+                              {pred.predictionSource === 'admin' ? (
                                 <Badge className="ml-1" variant="outline">
-                                  sim
+                                  admin
+                                </Badge>
+                              ) : null}
+                              {pred.predictionSource === 'ai' && pred.homeGoals === 0 && pred.awayGoals === 0 ? (
+                                <Badge className="ml-1" variant="destructive">
+                                  revisar
                                 </Badge>
                               ) : null}
                             </span>
@@ -453,7 +489,14 @@ export default function AdminAiCompetitorPage() {
                           ) : (
                             <span className="text-slate-500">—</span>
                           )}
-                          {row.match?.homeScore != null && row.match?.awayScore != null ? (
+                          {row.simulationPrediction ? (
+                            <div className="text-xs text-amber-400/90">
+                              Sim {row.simulationPrediction.homeGoals}-{row.simulationPrediction.awayGoals}
+                            </div>
+                          ) : null}
+                          {matchHasFinalScore(row.match) &&
+                          row.match?.homeScore != null &&
+                          row.match?.awayScore != null ? (
                             <div className="text-xs text-slate-500">
                               Real {row.match.homeScore}-{row.match.awayScore}
                             </div>
@@ -476,6 +519,7 @@ export default function AdminAiCompetitorPage() {
                         <TableCell className="text-right">
                           <div className="flex flex-wrap justify-end gap-1">
                             {row.predictionState === 'faltante' &&
+                            matchHasFinalScore(row.match) &&
                             row.match?.homeScore != null &&
                             row.match?.awayScore != null ? (
                               <Button
@@ -500,15 +544,26 @@ export default function AdminAiCompetitorPage() {
                               {row.predictionState === 'faltante' ? 'Cargar' : 'Editar'}
                             </Button>
                             {row.canSimulate ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className={adminBtnOutline}
-                                disabled={simulateBusyId === row.matchId}
-                                onClick={(e) => simulateMatch(row, e)}
-                              >
-                                {simulateBusyId === row.matchId ? '…' : 'Simular'}
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={adminBtnOutline}
+                                  disabled={runOfficialBusyId === row.matchId}
+                                  onClick={(e) => runOfficialAi(row, e)}
+                                >
+                                  {runOfficialBusyId === row.matchId ? '…' : 'IA oficial'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={adminBtnOutline}
+                                  disabled={simulateBusyId === row.matchId}
+                                  onClick={(e) => simulateMatch(row, e)}
+                                >
+                                  {simulateBusyId === row.matchId ? '…' : 'Simular'}
+                                </Button>
+                              </>
                             ) : null}
                           </div>
                         </TableCell>
@@ -551,6 +606,16 @@ export default function AdminAiCompetitorPage() {
                   Corregí o agregá el marcador de Predictive Modeling. En partidos finalizados se recalculan los puntos.
                 </p>
               )}
+              {selectedRow?.prediction?.userSubmitted &&
+              selectedRow?.prediction?.predictionSource === 'admin' &&
+              selectedRow?.prediction?.homeGoals === 0 &&
+              selectedRow?.prediction?.awayGoals === 0 &&
+              selectedRow?.match?.status === 'upcoming' ? (
+                <p className="mb-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                  Esta predicción 0-0 fue cargada manualmente (admin), no por la IA. Usá «Ejecutar predicción IA
+                  oficial» o «Simular» para ver qué haría el modelo.
+                </p>
+              ) : null}
               <form className="flex flex-wrap items-end gap-3" onSubmit={saveAiPrediction}>
                 <FilterField label="Local">
                   <Input
@@ -581,7 +646,9 @@ export default function AdminAiCompetitorPage() {
                       ? 'Actualizar'
                       : 'Guardar predicción'}
                 </Button>
-                {selectedRow?.match?.homeScore != null && selectedRow?.match?.awayScore != null ? (
+                {selectedRow?.match?.homeScore != null &&
+                selectedRow?.match?.awayScore != null &&
+                matchHasFinalScore(selectedRow.match) ? (
                   <Button
                     type="button"
                     size="sm"
@@ -591,6 +658,20 @@ export default function AdminAiCompetitorPage() {
                     onClick={() => loadRealScore(selectedRow)}
                   >
                     Usar resultado real ({selectedRow.match.homeScore}-{selectedRow.match.awayScore})
+                  </Button>
+                ) : null}
+                {selectedRow?.canSimulate ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="text-sky-300 hover:text-sky-200"
+                    disabled={runOfficialBusyId === selectedRow.matchId}
+                    onClick={() => runOfficialAi(selectedRow)}
+                  >
+                    {runOfficialBusyId === selectedRow.matchId
+                      ? 'Ejecutando IA…'
+                      : 'Ejecutar predicción IA oficial'}
                   </Button>
                 ) : null}
               </form>

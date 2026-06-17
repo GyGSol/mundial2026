@@ -1157,3 +1157,75 @@ export async function simulateAiCompetitorPrediction(matchId, { fetchImpl = fetc
 
   return getAiCompetitorPredictionLogById(log._id.toString());
 }
+
+/** Ejecuta el pipeline IA y persiste predicción oficial (admin: reemplaza 0-0 o correcciones manuales). */
+export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl = fetch } = {}) {
+  const aiUser = await getAiUser();
+  if (!aiUser) {
+    const error = new Error('Usuario IA no configurado');
+    error.status = 503;
+    throw error;
+  }
+
+  const match = await Match.findById(matchId).lean();
+  if (!match) {
+    const error = new Error('Partido no encontrado');
+    error.status = 404;
+    throw error;
+  }
+  if (match.status !== 'upcoming') {
+    const error = new Error('Solo se puede ejecutar IA en partidos próximos');
+    error.status = 400;
+    throw error;
+  }
+
+  const context = await buildAiCompetitorPredictionContext(match, aiUser._id);
+  const rawScore = await callAiForCompetitorScore(context, { fetchImpl });
+  const score = applyCalibrationNudge(rawScore, context._calibrationStats);
+
+  const prediction = await submitAiPrediction(aiUser._id, match._id, {
+    homeGoals: score.homeGoals,
+    awayGoals: score.awayGoals,
+    aiModel: aiModelForScoreSource(score.source),
+    aiReasoning: score.reasoning,
+    aiCalibrationApplied: Boolean(score.calibrationApplied),
+  });
+
+  const log = await saveAiCompetitorPredictionLog({
+    userId: aiUser._id,
+    matchId: match._id,
+    predictionId: prediction._id,
+    context,
+    rawScore,
+    finalScore: score,
+    isSimulation: false,
+  }).catch((err) => {
+    console.warn(`AI audit log failed (${match.externalId}):`, err.message);
+    return null;
+  });
+
+  if (log) {
+    return getAiCompetitorPredictionLogById(log._id.toString());
+  }
+
+  return {
+    id: null,
+    matchId: match._id.toString(),
+    predictionId: prediction._id.toString(),
+    homeGoals: score.homeGoals,
+    awayGoals: score.awayGoals,
+    isSimulation: false,
+    finalResponse: {
+      homeGoals: score.homeGoals,
+      awayGoals: score.awayGoals,
+      reasoning: score.reasoning,
+      source: score.source,
+    },
+    match: {
+      id: match._id.toString(),
+      externalId: match.externalId,
+      label: `${match.homeTeamId} vs ${match.awayTeamId}`,
+      status: match.status,
+    },
+  };
+}
