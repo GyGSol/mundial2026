@@ -341,8 +341,8 @@ export default function AdminAiCompetitorPage() {
           />
           <AdminStatCard
             label="Gdif combinado"
-            value={stats.gdifCombinado != null ? stats.gdifCombinado : '—'}
-            hint="Menor = mejor precisión de marcador"
+            value={stats.gdifCombinado != null ? stats.gdifCombinado.toFixed(3) : '—'}
+            hint="Objetivo IA: 0.000 · menor = mejor precisión"
           />
           <AdminStatCard
             label="Acierto PA"

@@ -120,6 +120,48 @@ function classifyPredictionState(match, prediction) {
   return 'faltante';
 }
 
+export function buildAiCompetitorStats(scoredPredictions, stateCounts, partidosTotales) {
+  let difGl = 0;
+  let difGv = 0;
+  let totalPts = 0;
+  let paHits = 0;
+  let glHits = 0;
+  let gvHits = 0;
+  let gtHits = 0;
+
+  for (const p of scoredPredictions) {
+    totalPts += p.pointsEarned ?? 0;
+    difGl += p.goalDiffHome ?? 0;
+    difGv += p.goalDiffAway ?? 0;
+    const b = p.pointsBreakdown ?? {};
+    if ((b.winner ?? 0) > 0) paHits += 1;
+    if ((b.homeGoals ?? 0) > 0) glHits += 1;
+    if ((b.awayGoals ?? 0) > 0) gvHits += 1;
+    if ((b.totalGoals ?? 0) > 0) gtHits += 1;
+  }
+
+  const n = scoredPredictions.length;
+
+  return {
+    partidosTotales,
+    predichas: stateCounts.predicha ?? 0,
+    faltantes: stateCounts.faltante ?? 0,
+    pendientes: stateCounts.pendiente ?? 0,
+    partidosPuntuados: n,
+    puntosTotales: totalPts,
+    promedioPuntos: n ? Number((totalPts / n).toFixed(2)) : null,
+    gdifCombinado: n ? Number(goalDiffScore(difGl, difGv, n).toFixed(3)) : null,
+    gdifObjetivo: 0,
+    aciertos: {
+      pa: paHits,
+      gl: glHits,
+      gv: gvHits,
+      gt: gtHits,
+    },
+    tasaAciertoPa: n ? Number(((paHits / n) * 100).toFixed(1)) : null,
+  };
+}
+
 export async function getAiCompetitorOverview({
   status,
   group,
@@ -133,17 +175,31 @@ export async function getAiCompetitorOverview({
     throw error;
   }
 
-  const matchQuery = { kickoffAt: { $ne: null } };
-  if (status) matchQuery.status = status;
-  if (group) matchQuery.group = String(group).toUpperCase();
-  if (matchNumber) matchQuery.externalId = String(matchNumber);
+  const [allMatches, allPredictions] = await Promise.all([
+    Match.find({ kickoffAt: { $ne: null } }).lean(),
+    Prediction.find({ userId: aiUser._id }).lean(),
+  ]);
+  allMatches.sort(compareMatchesBySchedule);
 
-  const matches = await Match.find(matchQuery).lean();
-  matches.sort(compareMatchesBySchedule);
+  const allPredByMatch = new Map(allPredictions.map((p) => [p.matchId.toString(), p]));
+  const globalStateCounts = { predicha: 0, faltante: 0, pendiente: 0 };
+  for (const match of allMatches) {
+    const state = classifyPredictionState(match, allPredByMatch.get(match._id.toString()) ?? null);
+    globalStateCounts[state] = (globalStateCounts[state] ?? 0) + 1;
+  }
+  const globalScored = allPredictions.filter((p) => p.pointsEarned != null);
+  const stats = buildAiCompetitorStats(globalScored, globalStateCounts, allMatches.length);
+
+  const matches = allMatches.filter((match) => {
+    if (status && match.status !== status) return false;
+    if (group && String(match.group ?? '').toUpperCase() !== String(group).toUpperCase()) return false;
+    if (matchNumber && String(match.externalId) !== String(matchNumber)) return false;
+    return true;
+  });
 
   if (!matches.length) {
     return {
-      stats: emptyOverviewStats(),
+      stats,
       matches: [],
       aiUserId: aiUser._id.toString(),
     };
@@ -165,7 +221,6 @@ export async function getAiCompetitorOverview({
 
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
   const predByMatch = new Map(predictions.map((p) => [p.matchId.toString(), p]));
-
   const latestLogByMatch = new Map();
   const latestOfficialLogByMatch = new Map();
   const latestSimulationLogByMatch = new Map();
@@ -179,49 +234,6 @@ export async function getAiCompetitorOverview({
       latestSimulationLogByMatch.set(key, log);
     }
   }
-
-  const allStates = { predicha: 0, faltante: 0, pendiente: 0 };
-  for (const match of matches) {
-    const state = classifyPredictionState(match, predByMatch.get(match._id.toString()) ?? null);
-    allStates[state] = (allStates[state] ?? 0) + 1;
-  }
-
-  const scored = predictions.filter((p) => p.pointsEarned != null);
-  let totalGd = 0;
-  let totalPts = 0;
-  let paHits = 0;
-  let glHits = 0;
-  let gvHits = 0;
-  let gtHits = 0;
-
-  for (const p of scored) {
-    totalPts += p.pointsEarned ?? 0;
-    totalGd += (p.goalDiffHome ?? 0) + (p.goalDiffAway ?? 0);
-    const b = p.pointsBreakdown ?? {};
-    if ((b.winner ?? 0) > 0) paHits += 1;
-    if ((b.homeGoals ?? 0) > 0) glHits += 1;
-    if ((b.awayGoals ?? 0) > 0) gvHits += 1;
-    if ((b.totalGoals ?? 0) > 0) gtHits += 1;
-  }
-
-  const n = scored.length;
-  const stats = {
-    partidosTotales: matches.length,
-    predichas: allStates.predicha ?? 0,
-    faltantes: allStates.faltante ?? 0,
-    pendientes: allStates.pendiente ?? 0,
-    partidosPuntuados: n,
-    puntosTotales: totalPts,
-    promedioPuntos: n ? Number((totalPts / n).toFixed(2)) : null,
-    gdifCombinado: n ? Number(goalDiffScore(totalGd, 0, n).toFixed(3)) : null,
-    aciertos: {
-      pa: paHits,
-      gl: glHits,
-      gv: gvHits,
-      gt: gtHits,
-    },
-    tasaAciertoPa: n ? Number(((paHits / n) * 100).toFixed(1)) : null,
-  };
 
   const rows = [];
   for (const match of matches) {
@@ -376,6 +388,7 @@ function emptyOverviewStats() {
     puntosTotales: 0,
     promedioPuntos: null,
     gdifCombinado: null,
+    gdifObjetivo: 0,
     aciertos: { pa: 0, gl: 0, gv: 0, gt: 0 },
     tasaAciertoPa: null,
   };
