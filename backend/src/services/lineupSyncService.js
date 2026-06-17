@@ -30,6 +30,89 @@ async function loadMatchTeams(match) {
   return { homeTeam, awayTeam };
 }
 
+async function applyStartersToTeams(teamExternalIds, starterIds) {
+  if (!starterIds.size || !teamExternalIds.length) return 0;
+
+  await Player.updateMany(
+    { teamExternalId: { $in: teamExternalIds } },
+    { $unset: { lineupStatus: '' } }
+  );
+
+  const result = await Player.updateMany(
+    { footballDataPersonId: { $in: [...starterIds] } },
+    { $set: { lineupStatus: 'starter' } }
+  );
+
+  return result.modifiedCount;
+}
+
+/** Sincroniza titulares y eventos FD para un partido. */
+export async function syncMatchLineupsFromFootballData(match, { applyStarters = true } = {}) {
+  if (!hasToken()) return { updated: 0, starterIds: 0, synced: false };
+
+  const { homeTeam, awayTeam } = await loadMatchTeams(match);
+  if (!homeTeam || !awayTeam) return { updated: 0, starterIds: 0, synced: false };
+
+  let fdMatchId = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
+  if (!fdMatchId) {
+    fdMatchId = await resolveFootballDataMatchId(match, homeTeam, awayTeam);
+  }
+  if (!fdMatchId) return { updated: 0, starterIds: 0, synced: false };
+
+  try {
+    const matchData = await fetchMatchDetails(fdMatchId);
+    const starterIds = extractStarterIds(matchData);
+    const teamExternalIds = [homeTeam.externalId, awayTeam.externalId].filter(Boolean);
+
+    let updated = 0;
+    if (applyStarters && starterIds.size && teamExternalIds.length) {
+      updated = await applyStartersToTeams(teamExternalIds, starterIds);
+      if (updated > 0) {
+        notifyPlayersUpdated({ matchId: match.externalId, starters: updated });
+      }
+    }
+
+    const fdEvents = splitFootballDataEvents(
+      matchData,
+      homeTeam.footballDataTeamId,
+      awayTeam.footballDataTeamId
+    );
+
+    const rawUpdate = { 'raw.footballDataMatchId': fdMatchId };
+    if (countStoredEvents(fdEvents) > 0 || !match.raw?.fdEvents) {
+      rawUpdate['raw.fdEvents'] = fdEvents;
+    }
+
+    await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
+
+    return { updated, starterIds: starterIds.size, synced: true };
+  } catch (err) {
+    console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
+    return { updated: 0, starterIds: 0, synced: false, error: err.message };
+  }
+}
+
+/** Partidos upcoming con kickoff próximo: intenta traer formación antes del bot IA (T-5). */
+export async function syncUpcomingKickoffLineups({ withinMs = 45 * 60 * 1000 } = {}) {
+  if (!hasToken()) return { updated: 0, matches: 0 };
+
+  const now = Date.now();
+  const matches = await Match.find({
+    status: 'upcoming',
+    kickoffAt: { $gte: new Date(now), $lte: new Date(now + withinMs) },
+  }).lean();
+
+  if (!matches.length) return { updated: 0, matches: 0 };
+
+  let updated = 0;
+  for (const match of matches) {
+    const result = await syncMatchLineupsFromFootballData(match);
+    updated += result.updated;
+  }
+
+  return { updated, matches: matches.length };
+}
+
 export async function syncLiveLineups() {
   if (!hasToken()) return { updated: 0, matches: 0, events: 0 };
 
@@ -52,52 +135,11 @@ export async function syncLiveLineups() {
   let eventsSynced = 0;
 
   for (const match of matchesToSync) {
-    const isLive = match.status === 'live';
-    const { homeTeam, awayTeam } = await loadMatchTeams(match);
-    if (!homeTeam || !awayTeam) continue;
-
-    let fdMatchId = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
-    if (!fdMatchId) {
-      fdMatchId = await resolveFootballDataMatchId(match, homeTeam, awayTeam);
-    }
-    if (!fdMatchId) continue;
-
-    try {
-      const matchData = await fetchMatchDetails(fdMatchId);
-      const starterIds = extractStarterIds(matchData);
-      const teamExternalIds = [homeTeam.externalId, awayTeam.externalId].filter(Boolean);
-
-      if (isLive && starterIds.size && teamExternalIds.length) {
-        await Player.updateMany(
-          { teamExternalId: { $in: teamExternalIds } },
-          { $unset: { lineupStatus: '' } }
-        );
-
-        const result = await Player.updateMany(
-          { footballDataPersonId: { $in: [...starterIds] } },
-          { $set: { lineupStatus: 'starter' } }
-        );
-
-        updated += result.modifiedCount;
-        notifyPlayersUpdated({ matchId: match.externalId, starters: result.modifiedCount });
-      }
-
-      const fdEvents = splitFootballDataEvents(
-        matchData,
-        homeTeam.footballDataTeamId,
-        awayTeam.footballDataTeamId
-      );
-
-      const rawUpdate = { 'raw.footballDataMatchId': fdMatchId };
-      if (countStoredEvents(fdEvents) > 0 || !match.raw?.fdEvents) {
-        rawUpdate['raw.fdEvents'] = fdEvents;
-      }
-
-      await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
-      eventsSynced += 1;
-    } catch (err) {
-      console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
-    }
+    const result = await syncMatchLineupsFromFootballData(match, {
+      applyStarters: match.status === 'live',
+    });
+    if (result.synced) eventsSynced += 1;
+    updated += result.updated;
   }
 
   return { updated, matches: matchesToSync.length, events: eventsSynced };

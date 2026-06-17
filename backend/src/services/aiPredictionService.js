@@ -9,6 +9,14 @@ import { buildMatchTeamsAnalysis } from './aiTeamMatchContextService.js';
 import { buildEnrichedMatchContext } from './aiMatchEnrichedContextService.js';
 import { env } from '../config/env.js';
 import { isPredictionLocked } from './predictionLockService.js';
+import {
+  buildConfirmedLineupContext,
+  hasConfirmedLineupsForMatch,
+} from './aiLineupContextService.js';
+import {
+  syncMatchLineupsFromFootballData,
+  syncUpcomingKickoffLineups,
+} from './lineupSyncService.js';
 import { computeGroupStandings } from './worldCupStatsService.js';
 import {
   buildUserPredictedMatchContext,
@@ -181,7 +189,7 @@ export async function enrichVenueWithWeather(venue, match, stadium, { fetchImpl 
   };
 }
 
-/** Partido en ventana T-90 ± window si kickoff cae en [now+lead-window, now+lead+window]. */
+/** Partido en ventana T-lead ± window (default T-5 min) si kickoff cae en [now+lead-window, now+lead+window]. */
 export function isInAiPredictionWindow(match, now = Date.now()) {
   if (!match?.kickoffAt || match.status !== 'upcoming') return false;
   const kickoffMs = new Date(match.kickoffAt).getTime();
@@ -548,11 +556,14 @@ export async function buildAiCompetitorPredictionContext(
     crowdStandings
   );
 
+  const formacionConfirmada = await buildConfirmedLineupContext(match);
+
   return {
     ...base,
     nationContext: enriched.nationContext,
     squadAnalysis: applyOracleAvailabilityFilter(enriched.squadAnalysis),
     positionMatchups: enriched.positionMatchups,
+    formacionConfirmada,
     historialReciente,
     stakesContext,
     tablaYClasificacion,
@@ -575,7 +586,7 @@ ${AI_COMPETITOR_SCORING_INSTRUCTIONS}
 
 ${WORLD_CUP_USER_FACING_LANGUAGE_RULES}
 
-En el campo "reasoning", priorizá evidencia del torneo 2026 (forma, goles, tabla, stakes). Citá sede/clima, y solo después ranking histórico o mercado/xG si aportan. Mencioná si ajustaste pesos por calibracionReciente. Explicá por qué el marcador maximiza PA+GL/GV/GT. No cites predicciones individuales de otros usuarios.
+En el campo "reasoning", priorizá evidencia del torneo 2026 (forma, goles, tabla, stakes). Si formacionConfirmada.confirmada es true, basá el análisis en esos titulares oficiales (no en probables). Citá sede/clima, y solo después ranking histórico o mercado/xG si aportan. Mencioná si ajustaste pesos por calibracionReciente. Explicá por qué el marcador maximiza PA+GL/GV/GT. No cites predicciones individuales de otros usuarios.
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown fuera del campo reasoning):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<explicación en español; markdown ligero permitido>"}
@@ -1162,10 +1173,7 @@ export async function findMatchesDueForAiPrediction(aiUserId, now = Date.now()) 
     kickoffAt: { $ne: null },
   }).lean();
 
-  const inWindow = upcoming.filter((match) => {
-    if (isPredictionLocked(match)) return false;
-    return isInAiPredictionWindow(match, now);
-  });
+  const inWindow = upcoming.filter((match) => isInAiPredictionWindow(match, now));
 
   if (!inWindow.length) return [];
 
@@ -1190,6 +1198,10 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
     return { processed: 0, skipped: 0, errors: ['AI user not found or not marked isAiUser'] };
   }
 
+  await syncUpcomingKickoffLineups({
+    withinMs: env.aiPredictLeadMs + env.aiPredictWindowMs + 15 * 60 * 1000,
+  });
+
   const dueMatches = await findMatchesDueForAiPrediction(aiUser._id, now);
   let processed = 0;
   let skipped = 0;
@@ -1197,16 +1209,31 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
 
   for (const match of dueMatches) {
     try {
+      await syncMatchLineupsFromFootballData(match);
+
+      if (!(await hasConfirmedLineupsForMatch(match))) {
+        console.log(
+          `AI prediction skip match ${match.externalId}: formación no confirmada aún (esperando titulares oficiales)`
+        );
+        skipped += 1;
+        continue;
+      }
+
       const context = await buildAiCompetitorPredictionContext(match, aiUser._id);
       const rawScore = await callAiForCompetitorScore(context, { fetchImpl });
       const score = applyCalibrationNudge(rawScore, context._calibrationStats);
-      const prediction = await submitAiPrediction(aiUser._id, match._id, {
-        homeGoals: score.homeGoals,
-        awayGoals: score.awayGoals,
-        aiModel: aiModelForScoreSource(score.source),
-        aiReasoning: score.reasoning,
-        aiCalibrationApplied: Boolean(score.calibrationApplied),
-      });
+      const prediction = await submitAiPrediction(
+        aiUser._id,
+        match._id,
+        {
+          homeGoals: score.homeGoals,
+          awayGoals: score.awayGoals,
+          aiModel: aiModelForScoreSource(score.source),
+          aiReasoning: score.reasoning,
+          aiCalibrationApplied: Boolean(score.calibrationApplied),
+        },
+        { bypassLock: true }
+      );
 
       await saveAiCompetitorPredictionLog({
         userId: aiUser._id,
@@ -1221,8 +1248,11 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
 
       const homeCode = context.homeTeam?.code ?? '?';
       const awayCode = context.awayTeam?.code ?? '?';
+      const kickoffLocal = match.kickoffAt
+        ? new Date(match.kickoffAt).toISOString()
+        : '?';
       console.log(
-        `AI prediction: ${homeCode} ${score.homeGoals}-${score.awayGoals} ${awayCode} (match ${match.externalId}, ${score.source})`
+        `AI prediction: ${homeCode} ${score.homeGoals}-${score.awayGoals} ${awayCode} (match ${match.externalId}, ${score.source}, kickoff ${kickoffLocal}, formación confirmada)`
       );
       processed += 1;
     } catch (err) {

@@ -31,9 +31,10 @@ export const env = {
   googleAiApiKey: process.env.GOOGLE_AI_API_KEY || '',
   groqApiKey: process.env.GROQ_API_KEY || '',
   aiDefaultProvider: (process.env.AI_DEFAULT_PROVIDER || 'cerebras').toLowerCase().trim(),
-  aiPredictLeadMs: Number(process.env.AI_PREDICT_LEAD_MS || 90 * 60 * 1000),
-  aiPredictWindowMs: Number(process.env.AI_PREDICT_WINDOW_MS || 5 * 60 * 1000),
-  aiPredictJobIntervalMs: Number(process.env.AI_PREDICT_JOB_INTERVAL_MS || 5 * 60 * 1000),
+  /** Bot IA: predice ~5 min antes del kickoff (con formación confirmada). */
+  aiPredictLeadMs: Number(process.env.AI_PREDICT_LEAD_MS || 5 * 60 * 1000),
+  aiPredictWindowMs: Number(process.env.AI_PREDICT_WINDOW_MS || 2 * 60 * 1000),
+  aiPredictJobIntervalMs: Number(process.env.AI_PREDICT_JOB_INTERVAL_MS || 60 * 1000),
   aiCerebrasModel: process.env.AI_CEREBRAS_MODEL || 'gpt-oss-120b',
   aiGeminiModel: process.env.AI_GEMINI_MODEL || 'gemini-2.5-flash',
   aiGroqModel: process.env.AI_GROQ_MODEL || 'llama-3.3-70b-versatile',

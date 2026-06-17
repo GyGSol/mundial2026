@@ -27,18 +27,18 @@ describe('aiPredictionService', () => {
   });
 
   describe('isInAiPredictionWindow', () => {
-    it('incluye partido ~90 min antes del kickoff (18:25 para kickoff 20:00)', () => {
-      vi.setSystemTime(new Date('2026-06-15T18:25:00.000Z'));
+    it('incluye partido ~5 min antes del kickoff (19:55 para kickoff 20:00)', () => {
+      vi.setSystemTime(new Date('2026-06-15T19:55:00.000Z'));
       expect(isInAiPredictionWindow(match)).toBe(true);
     });
 
-    it('excluye demasiado pronto (17:00)', () => {
-      vi.setSystemTime(new Date('2026-06-15T17:00:00.000Z'));
+    it('excluye demasiado pronto (19:45)', () => {
+      vi.setSystemTime(new Date('2026-06-15T19:45:00.000Z'));
       expect(isInAiPredictionWindow(match)).toBe(false);
     });
 
-    it('excluye demasiado tarde (19:30)', () => {
-      vi.setSystemTime(new Date('2026-06-15T19:30:00.000Z'));
+    it('excluye demasiado tarde (20:05)', () => {
+      vi.setSystemTime(new Date('2026-06-15T20:05:00.000Z'));
       expect(isInAiPredictionWindow(match)).toBe(false);
     });
 

@@ -43,8 +43,11 @@ export function startAiPredictionsJob() {
 
   tick();
   intervalId = setInterval(tick, env.aiPredictJobIntervalMs);
-  const minutes = env.aiPredictJobIntervalMs / 60000;
-  console.log(`AI predictions job started (every ${minutes} min, lead ${env.aiPredictLeadMs / 60000} min before kickoff)`);
+  const intervalSec = env.aiPredictJobIntervalMs / 1000;
+  const leadMin = env.aiPredictLeadMs / 60000;
+  console.log(
+    `AI predictions job started (every ${intervalSec}s, T-${leadMin} min con formación confirmada)`
+  );
 }
 
 export function stopAiPredictionsJob() {
