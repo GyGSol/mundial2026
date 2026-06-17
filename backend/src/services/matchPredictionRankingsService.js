@@ -40,6 +40,7 @@ export function rankMatchPredictions(predictions, userMap, { onlyScorers = true,
         bonusReason: prediction.bonusReason ?? null,
         difGl: goalDiff.home,
         difGv: goalDiff.away,
+        pj: 1,
         ...hits,
       };
     })

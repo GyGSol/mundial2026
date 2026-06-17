@@ -4,6 +4,7 @@ import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { calculatePoints, calculateGoalDiff } from './scoringService.js';
+import { compareAvgGoalDiff } from './goalDiffStats.js';
 
 function goalDiffHomeExpr(matchScoreField = '$matchDoc.homeScore') {
   return {
@@ -225,13 +226,10 @@ export function compareRankingEntries(a, b) {
   if (b.gt !== a.gt) return b.gt - a.gt;
   // PB al final: menos PB = mejor posición (consuelo no adelanta)
   if (a.pb !== b.pb) return a.pb - b.pb;
-  // Menor dif acumulada = predicción más cercana al resultado real
-  const difGlA = a.difGl ?? 0;
-  const difGlB = b.difGl ?? 0;
-  if (difGlA !== difGlB) return difGlA - difGlB;
-  const difGvA = a.difGv ?? 0;
-  const difGvB = b.difGv ?? 0;
-  if (difGvA !== difGvB) return difGvA - difGvB;
+  const difLocalCmp = compareAvgGoalDiff(a.difGl, a.pj, b.difGl, b.pj);
+  if (difLocalCmp !== 0) return difLocalCmp;
+  const difVisitCmp = compareAvgGoalDiff(a.difGv, a.pj, b.difGv, b.pj);
+  if (difVisitCmp !== 0) return difVisitCmp;
   return a.name.localeCompare(b.name, 'es');
 }
 

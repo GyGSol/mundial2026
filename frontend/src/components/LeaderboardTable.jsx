@@ -9,32 +9,37 @@ import {
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatAvgGoalDiff } from '@/lib/goalDiffStats.js';
 import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
 
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },
-  { key: 'pa', label: 'PA', title: 'Acierto resultado', trackDelta: true },
   {
-    key: 'gl',
-    label: 'GL',
+    key: 'avgDifGl',
+    label: 'ØL',
+    title: 'Promedio de error en goles local por partido (dif ÷ PJ; menor es mejor)',
+    format: 'avgDiff',
     difKey: 'difGl',
-    title: 'Goles local',
-    difTitle: 'Dif. goles local acumulada (menor es mejor)',
-    trackDelta: true,
+    trackDelta: false,
   },
   {
-    key: 'gv',
-    label: 'GV',
+    key: 'avgDifGv',
+    label: 'ØV',
+    title: 'Promedio de error en goles visitante por partido (dif ÷ PJ; menor es mejor)',
+    format: 'avgDiff',
     difKey: 'difGv',
-    title: 'Goles visitante',
-    difTitle: 'Dif. goles visitante acumulada (menor es mejor)',
-    trackDelta: true,
+    trackDelta: false,
   },
+  { key: 'pa', label: 'PA', title: 'Acierto resultado', trackDelta: true },
+  { key: 'gl', label: 'GL', title: 'Goles local', trackDelta: true },
+  { key: 'gv', label: 'GV', title: 'Goles visitante', trackDelta: true },
   { key: 'gt', label: 'GT', title: 'Goles totales', trackDelta: true },
 ];
 
 const statHeadClass = 'px-0.5 text-center text-[10px] sm:px-2 sm:text-xs';
 const statCellClass = 'px-0.5 text-center tabular-nums text-xs sm:px-2 sm:text-sm';
+const avgDiffCellClass =
+  'px-0.5 text-center tabular-nums text-[11px] text-muted-foreground sm:px-2 sm:text-xs';
 
 const prizedRankCellClass =
   'border-l-4 border-l-emerald-500 text-primary font-semibold';
@@ -73,7 +78,7 @@ function StatDeltaIndicator({ direction, amount, showDown = true }) {
   return null;
 }
 
-function StatValue({ value, delta, align = 'center', valueClassName, diff, diffTitle }) {
+function StatValue({ value, delta, align = 'center' }) {
   const normalized = normalizeStatDelta(delta);
 
   return (
@@ -84,20 +89,22 @@ function StatValue({ value, delta, align = 'center', valueClassName, diff, diffT
         align === 'right' && 'justify-end'
       )}
     >
-      <span className={cn('inline-flex items-baseline gap-0.5', valueClassName)}>
-        <span>{value}</span>
-        {diff != null ? (
-          <span
-            className="text-[10px] font-normal tabular-nums text-muted-foreground"
-            title={diffTitle}
-          >
-            ({diff})
-          </span>
-        ) : null}
-      </span>
+      <span>{value}</span>
       <StatDeltaIndicator direction={normalized?.direction} amount={normalized?.amount} />
     </span>
   );
+}
+
+function renderStatCell(row, col, { hasLiveMatches, rowDeltas }) {
+  if (col.format === 'avgDiff') {
+    return formatAvgGoalDiff(row[col.difKey], row.pj);
+  }
+
+  const value = row[col.key] ?? 0;
+  if (col.trackDelta && hasLiveMatches) {
+    return <StatValue value={value} delta={rowDeltas[col.key]} />;
+  }
+  return value;
 }
 
 export default function LeaderboardTable({
@@ -120,19 +127,18 @@ export default function LeaderboardTable({
   return (
     <Card>
       <CardContent className="overflow-x-auto p-0">
-        <Table className="min-w-[520px]">
+        <Table className="min-w-[560px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-9 px-1 sm:w-11">#</TableHead>
               <TableHead className="min-w-[5.5rem] px-1 sm:min-w-0 sm:px-2">Jugador</TableHead>
               {statColumns.map((col) => (
-                <TableHead key={col.key} className={statHeadClass} title={col.title}>
-                  <span className="inline-flex items-center justify-center gap-0.5 leading-tight">
-                    <span>{col.label}</span>
-                    {col.difKey ? (
-                      <span className="text-[9px] font-normal text-muted-foreground">dif</span>
-                    ) : null}
-                  </span>
+                <TableHead
+                  key={col.key}
+                  className={col.format === 'avgDiff' ? avgDiffCellClass : statHeadClass}
+                  title={col.title}
+                >
+                  {col.label}
                 </TableHead>
               ))}
               <TableHead className={statHeadClass} title="Puntos bonus (consuelo)">
@@ -185,23 +191,11 @@ export default function LeaderboardTable({
                     </div>
                   </TableCell>
                   {statColumns.map((col) => (
-                    <TableCell key={col.key} className={statCellClass}>
-                      {col.trackDelta && hasLiveMatches ? (
-                        <StatValue
-                          value={row[col.key] ?? 0}
-                          diff={col.difKey ? (row[col.difKey] ?? 0) : null}
-                          diffTitle={col.difTitle}
-                          delta={rowDeltas[col.key]}
-                        />
-                      ) : col.difKey ? (
-                        <StatValue
-                          value={row[col.key] ?? 0}
-                          diff={row[col.difKey] ?? 0}
-                          diffTitle={col.difTitle}
-                        />
-                      ) : (
-                        (row[col.key] ?? 0)
-                      )}
+                    <TableCell
+                      key={col.key}
+                      className={col.format === 'avgDiff' ? avgDiffCellClass : statCellClass}
+                    >
+                      {renderStatCell(row, col, { hasLiveMatches, rowDeltas })}
                     </TableCell>
                   ))}
                   <TableCell className={statCellClass}>

@@ -38,13 +38,22 @@ describe('leaderboardService tiebreakers', () => {
     expect(rows[0].name).toBe('A');
   });
 
-  it('en empate de PB desempata por dif goles local y luego visitante', () => {
+  it('en empate de PB desempata por promedio dif local y luego visitante', () => {
     const rows = [
-      { name: 'B', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, difGl: 3, difGv: 1 },
-      { name: 'A', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, difGl: 1, difGv: 2 },
-      { name: 'C', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, difGl: 1, difGv: 0 },
+      { name: 'B', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 3, difGl: 3, difGv: 3 },
+      { name: 'A', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 2, difGl: 1, difGv: 4 },
+      { name: 'C', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 1, difGl: 1, difGv: 0 },
     ].sort(compareLeaderboardEntries);
 
-    expect(rows.map((row) => row.name)).toEqual(['C', 'A', 'B']);
+    expect(rows.map((row) => row.name)).toEqual(['A', 'C', 'B']);
+  });
+
+  it('promedio dif local gana aunque el total acumulado sea mayor', () => {
+    const rows = [
+      { name: 'MuchosPartidos', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 10, difGl: 5, difGv: 0 },
+      { name: 'PocosPartidos', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 2, difGl: 2, difGv: 0 },
+    ].sort(compareLeaderboardEntries);
+
+    expect(rows[0].name).toBe('MuchosPartidos');
   });
 });
