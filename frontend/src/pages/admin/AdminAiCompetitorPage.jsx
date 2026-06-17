@@ -6,9 +6,9 @@ import MarkdownContent from '../../components/MarkdownContent.jsx';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStatCard from '../../components/admin/AdminStatCard.jsx';
-import OracleErrorCurveChart from '../../components/admin/OracleErrorCurveChart.jsx';
 import AdminOracleLearningPanel from '../../components/admin/AdminOracleLearningPanel.jsx';
 import AdminOracleReviewChat from '../../components/admin/AdminOracleReviewChat.jsx';
+import AdminAiAnalyticsSection from '../../components/admin/analytics/AdminAiAnalyticsSection.jsx';
 import {
   adminBtnOutline,
   adminInput,
@@ -37,6 +37,12 @@ import {
 } from '@/components/ui/table.jsx';
 
 const GROUP_OPTIONS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
+const PAGE_TABS = [
+  { id: 'resumen', label: 'Resumen' },
+  { id: 'graficos', label: 'Gráficos' },
+  { id: 'partidos', label: 'Partidos' },
+];
 
 const statusLabels = {
   upcoming: 'Próximo',
@@ -209,6 +215,7 @@ function MatchAiInsightRow({
 }
 
 export default function AdminAiCompetitorPage() {
+  const [activeTab, setActiveTab] = useState('resumen');
   const [matchNumber, setMatchNumber] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
@@ -241,6 +248,20 @@ export default function AdminAiCompetitorPage() {
   }, filterDeps);
 
   const { data, loading, error, refresh } = useLiveData(fetchOverview, filterDeps);
+
+  const fetchAnalytics = useCallback(() => adminApi.getAiAnalytics({ year: 2026 }), []);
+  const {
+    data: analyticsData,
+    loading: analyticsLoading,
+    error: analyticsError,
+    refresh: refreshAnalytics,
+  } = useLiveData(fetchAnalytics, []);
+
+  const refreshAll = useCallback(() => {
+    refresh();
+    refreshAnalytics();
+  }, [refresh, refreshAnalytics]);
+
   const stats = data?.stats ?? null;
   const matches = data?.matches ?? [];
 
@@ -289,14 +310,14 @@ export default function AdminAiCompetitorPage() {
         ...prev,
         [matchId]: { loading: false, data, error: null },
       }));
-      if (forceRefresh) refresh();
+      if (forceRefresh) refreshAll();
     } catch (err) {
       setReviewsByMatchId((prev) => ({
         ...prev,
         [matchId]: { loading: false, error: err.message },
       }));
     }
-  }, [refresh]);
+  }, [refreshAll]);
 
   function toggleMatchInsight(row, event) {
     event?.stopPropagation();
@@ -366,7 +387,7 @@ export default function AdminAiCompetitorPage() {
       setEditHome(String(homeGoals));
       setEditAway(String(awayGoals));
       setMessage(successMessage);
-      await refresh();
+      await refreshAll();
       requestAnimationFrame(() => {
         detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
@@ -406,7 +427,7 @@ export default function AdminAiCompetitorPage() {
       setMessage(
         `Predicción IA oficial: ${result.homeGoals}-${result.awayGoals} (${src})`
       );
-      await refresh();
+      await refreshAll();
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -426,7 +447,7 @@ export default function AdminAiCompetitorPage() {
       setNotes(result.adminNotes ?? '');
       setCorrectedReasoning(result.correctedReasoning ?? '');
       setMessage('Feedback de aprendizaje guardado');
-      await refresh();
+      await refreshAll();
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -448,7 +469,7 @@ export default function AdminAiCompetitorPage() {
       setNotes(result.adminNotes ?? '');
       setCorrectedReasoning(result.correctedReasoning ?? '');
       setMessage('Simulación completada (no reemplaza la predicción oficial)');
-      await refresh();
+      await refreshAll();
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -474,12 +495,29 @@ export default function AdminAiCompetitorPage() {
     <div className={adminPage}>
       <AdminPageHeader
         title="Predictive Modeling (IA)"
-        description="Partidos del torneo, curva de error Oracle, laboratorio de entrenamiento, revisión interactiva del modelo y control del aprendizaje del bot."
+        description="Partidos del torneo, gráficos analíticos, laboratorio de entrenamiento, revisión interactiva del modelo y control del aprendizaje del bot."
       >
-        <Button variant="outline" size="sm" className={adminBtnOutline} onClick={refresh} disabled={loading}>
+        <Button variant="outline" size="sm" className={adminBtnOutline} onClick={refreshAll} disabled={loading || analyticsLoading}>
           Actualizar
         </Button>
       </AdminPageHeader>
+
+      <div className="flex flex-wrap gap-2 border-b border-slate-700/60 pb-1">
+        {PAGE_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+              activeTab === tab.id
+                ? 'bg-slate-700/80 font-medium text-slate-100'
+                : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? (
@@ -488,33 +526,45 @@ export default function AdminAiCompetitorPage() {
         </p>
       ) : null}
 
-      {stats ? (
-        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <AdminStatCard label="Puntuados" value={stats.partidosPuntuados} hint={`${stats.predichas} predichas · ${stats.faltantes} faltantes · ${stats.pendientes} pendientes`} />
-          <AdminStatCard
-            label="Promedio pts"
-            value={stats.promedioPuntos != null ? stats.promedioPuntos : '—'}
-            hint={`${stats.puntosTotales} pts totales`}
-          />
-          <AdminStatCard
-            label="Gdif combinado"
-            value={stats.gdifCombinado != null ? stats.gdifCombinado.toFixed(3) : '—'}
-            hint="Objetivo IA: 0.000 · menor = mejor precisión"
-          />
-          <AdminStatCard
-            label="Acierto PA"
-            value={stats.tasaAciertoPa != null ? `${stats.tasaAciertoPa}%` : '—'}
-            hint={`PA ${stats.aciertos.pa} · GL ${stats.aciertos.gl} · GV ${stats.aciertos.gv} · GT ${stats.aciertos.gt}`}
-          />
-        </div>
+      {activeTab === 'resumen' ? (
+        <>
+          {stats ? (
+            <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <AdminStatCard label="Puntuados" value={stats.partidosPuntuados} hint={`${stats.predichas} predichas · ${stats.faltantes} faltantes · ${stats.pendientes} pendientes`} />
+              <AdminStatCard
+                label="Promedio pts"
+                value={stats.promedioPuntos != null ? stats.promedioPuntos : '—'}
+                hint={`${stats.puntosTotales} pts totales`}
+              />
+              <AdminStatCard
+                label="Gdif combinado"
+                value={stats.gdifCombinado != null ? stats.gdifCombinado.toFixed(3) : '—'}
+                hint="Objetivo IA: 0.000 · menor = mejor precisión"
+              />
+              <AdminStatCard
+                label="Acierto PA"
+                value={stats.tasaAciertoPa != null ? `${stats.tasaAciertoPa}%` : '—'}
+                hint={`PA ${stats.aciertos.pa} · GL ${stats.aciertos.gl} · GV ${stats.aciertos.gv} · GT ${stats.aciertos.gt}`}
+              />
+            </div>
+          ) : null}
+
+          <div className="mb-4">
+            <AdminOracleLearningPanel onRefreshOverview={refreshAll} />
+          </div>
+        </>
       ) : null}
 
-      <OracleErrorCurveChart />
+      {activeTab === 'graficos' ? (
+        <AdminAiAnalyticsSection
+          data={analyticsData}
+          loading={analyticsLoading}
+          error={analyticsError}
+        />
+      ) : null}
 
-      <div className="mb-4">
-        <AdminOracleLearningPanel onRefreshOverview={refresh} />
-      </div>
-
+      {activeTab === 'partidos' ? (
+        <>
       <AdminCard className="mb-4">
         <div className="flex flex-wrap gap-3">
           <FilterField label="Nº partido FIFA">
@@ -948,6 +998,8 @@ export default function AdminAiCompetitorPage() {
           </div>
         ) : null}
       </div>
+        </>
+      ) : null}
     </div>
   );
 }

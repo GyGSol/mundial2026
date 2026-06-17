@@ -208,6 +208,10 @@ export const adminApi = {
     const query = new URLSearchParams(params).toString();
     return adminRequest(`/ai-competitor/error-curve${query ? `?${query}` : ''}`);
   },
+  getAiAnalytics: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return adminRequest(`/ai-competitor/analytics${query ? `?${query}` : ''}`);
+  },
   getAdminLearningOverview: () => adminRequest('/ai-competitor/learning'),
   exportTrainingBuffer: () =>
     adminRequest('/ai-competitor/training-buffer/export', { method: 'POST' }),

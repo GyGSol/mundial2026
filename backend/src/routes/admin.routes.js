@@ -76,6 +76,7 @@ import {
 } from '../services/aiPostMatchLearningService.js';
 import { simulateAiCompetitorPrediction, runOfficialAiCompetitorPrediction } from '../services/aiPredictionService.js';
 import { getOracleErrorCurve } from '../services/oracleErrorTrackingService.js';
+import { getAiCompetitorAnalytics } from '../services/aiCompetitorAnalyticsService.js';
 
 const router = Router();
 
@@ -614,6 +615,15 @@ router.get('/ai-competitor/error-curve', adminMiddleware, async (req, res, next)
   try {
     const year = req.query.year ? Number(req.query.year) : 2026;
     res.json(await getOracleErrorCurve({ tournamentYear: year }));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/ai-competitor/analytics', adminMiddleware, async (req, res, next) => {
+  try {
+    const year = req.query.year ? Number(req.query.year) : 2026;
+    res.json(await getAiCompetitorAnalytics({ tournamentYear: year }));
   } catch (err) {
     next(err);
   }
