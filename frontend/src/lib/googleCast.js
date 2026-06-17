@@ -7,7 +7,13 @@ let castContext = null;
 let initPromise = null;
 
 function getAppId() {
-  return import.meta.env.VITE_CAST_APP_ID?.trim() || DEFAULT_APP_ID;
+  const fromEnv = import.meta.env.VITE_CAST_APP_ID?.trim();
+  if (fromEnv) return fromEnv;
+  return window.chrome?.cast?.media?.DEFAULT_MEDIA_RECEIVER_APP_ID || DEFAULT_APP_ID;
+}
+
+function getAutoJoinPolicy() {
+  return window.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? null;
 }
 
 /**
@@ -88,10 +94,14 @@ export async function initCastContext() {
     try {
       const castFramework = await loadCastSdk();
       const context = castFramework.CastContext.getInstance();
-      context.setOptions({
+      const options = {
         receiverApplicationId: getAppId(),
-        autoJoinPolicy: castFramework.AutoJoinPolicy.ORIGIN_SCOPED,
-      });
+      };
+      const autoJoinPolicy = getAutoJoinPolicy();
+      if (autoJoinPolicy != null) {
+        options.autoJoinPolicy = autoJoinPolicy;
+      }
+      context.setOptions(options);
       castContext = context;
       return context;
     } catch (error) {
@@ -267,7 +277,11 @@ export function subscribeCastMediaIdle(listener) {
 
       const onSessionChange = (event) => {
         sessionCleanup?.();
-        if (event.sessionState === castFramework.SessionState.SESSION_STARTED) {
+        const sessionStarted =
+          castFramework.SessionState?.SESSION_STARTED ??
+          window.chrome?.cast?.SessionState?.SESSION_STARTED ??
+          'SESSION_STARTED';
+        if (event.sessionState === sessionStarted) {
           sessionCleanup = attachToSession(context.getCurrentSession());
         }
       };

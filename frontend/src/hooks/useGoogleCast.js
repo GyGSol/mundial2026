@@ -33,10 +33,11 @@ function mapCastError(error) {
 function isSessionActive(state) {
   if (!state) return false;
   const castFramework = window.cast?.framework;
-  if (castFramework?.SessionState?.SESSION_STARTED != null) {
-    return state === castFramework.SessionState.SESSION_STARTED;
-  }
-  return state === 'SESSION_STARTED';
+  const sessionStarted =
+    castFramework?.SessionState?.SESSION_STARTED ??
+    window.chrome?.cast?.SessionState?.SESSION_STARTED ??
+    'SESSION_STARTED';
+  return state === sessionStarted;
 }
 
 export function useGoogleCast({ mediaUrl, title, enabled = true, onMediaExpired } = {}) {
