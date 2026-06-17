@@ -32,6 +32,12 @@ const predictionSchema = new mongoose.Schema(
     aiModel: { type: String, default: null },
     aiReasoning: { type: String, default: null },
     aiCalibrationApplied: { type: Boolean, default: false },
+    aiPostMatchReview: {
+      analysis: { type: String, default: null },
+      generatedAt: { type: Date, default: null },
+      aiSource: { type: String, default: null },
+      resultScoreKey: { type: String, default: null },
+    },
   },
   { timestamps: true }
 );

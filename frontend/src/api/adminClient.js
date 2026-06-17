@@ -218,6 +218,12 @@ export const adminApi = {
       method: 'POST',
     }),
   getAiCompetitorLog: (id) => adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`),
+  getAiPostMatchReview: (matchId, { refresh = false } = {}) => {
+    const query = refresh ? '?refresh=1' : '';
+    return adminRequest(
+      `/ai-competitor/matches/${encodeURIComponent(matchId)}/post-match-review${query}`
+    );
+  },
   updateAiCompetitorLogNotes: (id, adminNotes) =>
     adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`, {
       method: 'PATCH',

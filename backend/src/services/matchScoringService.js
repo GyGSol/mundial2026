@@ -5,6 +5,7 @@ import { recalculateConsolationBonuses } from './consolationBonusService.js';
 import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { ensurePredictionsForMatch } from './predictionLockService.js';
 import { notifyLeaderboardUpdated } from './websocketService.js';
+import { queueAiPostMatchReview } from './aiPostMatchLearningService.js';
 
 async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickoffSnapshot = false } = {}) {
   const predictions = await Prediction.find({ matchId: match._id });
@@ -72,6 +73,12 @@ export async function recalculateMatchScores(matchId) {
 
   const result = await applyScoresForMatch(match, actualHome, actualAway);
 
+  if (match.status === 'finished') {
+    void queueAiPostMatchReview(match._id).catch((err) => {
+      console.warn(`AI post-match review failed (${match.externalId}):`, err.message);
+    });
+  }
+
   if (result.users > 0 || needsLiveBaseline) {
     notifyLeaderboardUpdated({
       reason: match.status === 'live' ? 'live_scores_updated' : 'scores_recalculated',
@@ -117,6 +124,7 @@ export async function clearMatchScores(matchId) {
         liveKickoffBreakdown: '',
         liveKickoffGoalDiffHome: '',
         liveKickoffGoalDiffAway: '',
+        aiPostMatchReview: '',
       },
     }
   );

@@ -4,7 +4,8 @@ import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { Team } from '../models/Team.js';
 import { User } from '../models/User.js';
-import { humanizePromptContext } from './aiPromptHumanizer.js';
+import { humanizePromptContext, briefAiReasoning } from './aiPromptHumanizer.js';
+import { formatPostMatchReviewRowMeta } from './aiPostMatchLearningService.js';
 import { env } from '../config/env.js';
 import { goalDiffScore } from './goalDiffStats.js';
 import { isPredictionLocked } from './predictionLockService.js';
@@ -118,22 +119,6 @@ function classifyPredictionState(match, prediction) {
   if (prediction?.userSubmitted) return 'predicha';
   if (match?.status === 'upcoming' && !isPredictionLocked(match)) return 'pendiente';
   return 'faltante';
-}
-
-export function briefAiReasoning(text, maxLen = 300) {
-  const raw = String(text ?? '').trim();
-  if (!raw) return null;
-  const plain = raw
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/^[-*]\s+/gm, '')
-    .replace(/\n+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!plain) return null;
-  if (plain.length <= maxLen) return plain;
-  const cut = plain.slice(0, maxLen);
-  const lastSpace = cut.lastIndexOf(' ');
-  return `${lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut}…`;
 }
 
 export function buildAiCompetitorStats(scoredPredictions, stateCounts, partidosTotales) {
@@ -294,6 +279,7 @@ export async function getAiCompetitorOverview({
       predictionReasoning: briefAiReasoning(
         prediction?.aiReasoning ?? officialLog?.finalResponse?.reasoning ?? null
       ),
+      postMatchReview: formatPostMatchReviewRowMeta(match, prediction),
       latestLogId: displayLog?._id?.toString() ?? null,
       latestOfficialLogId: officialLog?._id?.toString() ?? null,
       latestSimulationLogId: simulationLog?._id?.toString() ?? null,

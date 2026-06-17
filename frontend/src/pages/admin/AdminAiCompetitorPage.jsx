@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, Fragment } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import MarkdownContent from '../../components/MarkdownContent.jsx';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStatCard from '../../components/admin/AdminStatCard.jsx';
@@ -97,6 +99,112 @@ function matchHasFinalScore(match) {
   return match?.status === 'finished' || match?.status === 'live';
 }
 
+function matchHasCollapsibleInsight(row) {
+  return Boolean(row.postMatchReview?.available || row.predictionReasoning);
+}
+
+function MatchAiInsightRow({
+  row,
+  expanded,
+  onToggle,
+  reviewState,
+  onRefreshReview,
+}) {
+  const isPostMatch = Boolean(row.postMatchReview?.available);
+  if (!matchHasCollapsibleInsight(row)) return null;
+
+  const title = isPostMatch ? 'Análisis de error y aprendizaje (IA)' : 'Razonamiento de la predicción';
+  const review = reviewState?.data ?? null;
+
+  return (
+    <TableRow className="hover:bg-transparent" onClick={(event) => event.stopPropagation()}>
+      <TableCell colSpan={7} className="border-t-0 pt-0 pb-3">
+        <button
+          type="button"
+          className="flex w-full items-start gap-2 text-left text-xs text-slate-300"
+          onClick={onToggle}
+        >
+          {expanded ? (
+            <ChevronDown className="mt-0.5 size-4 shrink-0 text-slate-500" />
+          ) : (
+            <ChevronRight className="mt-0.5 size-4 shrink-0 text-slate-500" />
+          )}
+          <span className="flex flex-1 flex-wrap items-center gap-2">
+            <span className="font-medium text-slate-200">{title}</span>
+            {isPostMatch && !row.postMatchReview?.generated ? (
+              <Badge variant="outline" className="text-[10px]">
+                generar al abrir
+              </Badge>
+            ) : null}
+            {row.postMatchReview?.stale ? (
+              <Badge variant="destructive" className="text-[10px]">
+                resultado actualizado
+              </Badge>
+            ) : null}
+          </span>
+        </button>
+
+        {!expanded && (row.postMatchReview?.preview || row.predictionReasoning) ? (
+          <p className="mt-1 ml-6 line-clamp-2 text-xs leading-relaxed text-slate-500">
+            {row.postMatchReview?.preview ?? row.predictionReasoning}
+          </p>
+        ) : null}
+
+        {expanded ? (
+          <div className="mt-2 ml-6 space-y-3 border-l-2 border-amber-500/40 pl-3">
+            {row.predictionReasoning ? (
+              <div>
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Predicción previa
+                </p>
+                <p className="text-xs leading-relaxed text-slate-400">{row.predictionReasoning}</p>
+              </div>
+            ) : null}
+
+            {isPostMatch ? (
+              <div>
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Auditoría post-partido
+                </p>
+                {reviewState?.loading ? (
+                  <p className={adminMuted}>La IA está analizando el error…</p>
+                ) : null}
+                {reviewState?.error ? (
+                  <p className="text-xs text-red-400">{reviewState.error}</p>
+                ) : null}
+                {review?.analysis ? (
+                  <MarkdownContent className="text-sm text-slate-300">{review.analysis}</MarkdownContent>
+                ) : null}
+                {!reviewState?.loading && !review?.analysis && !reviewState?.error ? (
+                  <p className={adminMuted}>Sin análisis todavía.</p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={adminBtnOutline}
+                    disabled={reviewState?.loading}
+                    onClick={onRefreshReview}
+                  >
+                    {reviewState?.loading ? '…' : 'Regenerar análisis'}
+                  </Button>
+                  {review?.generatedAt ? (
+                    <span className="self-center text-[11px] text-slate-500">
+                      {formatKickoff(review.generatedAt)}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ) : row.predictionReasoning ? null : (
+              <p className={adminMuted}>Sin razonamiento guardado.</p>
+            )}
+          </div>
+        ) : null}
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function AdminAiCompetitorPage() {
   const [matchNumber, setMatchNumber] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -114,6 +222,8 @@ export default function AdminAiCompetitorPage() {
   const [editAway, setEditAway] = useState('0');
   const [savePredBusy, setSavePredBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [expandedInsightIds, setExpandedInsightIds] = useState(() => new Set());
+  const [reviewsByMatchId, setReviewsByMatchId] = useState({});
   const detailRef = useRef(null);
 
   const filterDeps = [matchNumber, statusFilter, groupFilter, predictionFilter];
@@ -161,6 +271,41 @@ export default function AdminAiCompetitorPage() {
   }, [selectedLogId]);
 
   const selectedRow = matches.find((m) => m.matchId === selectedMatchId) ?? null;
+
+  const loadPostMatchReview = useCallback(async (matchId, { forceRefresh = false } = {}) => {
+    setReviewsByMatchId((prev) => ({
+      ...prev,
+      [matchId]: { ...prev[matchId], loading: true, error: null },
+    }));
+    try {
+      const data = await adminApi.getAiPostMatchReview(matchId, { refresh: forceRefresh });
+      setReviewsByMatchId((prev) => ({
+        ...prev,
+        [matchId]: { loading: false, data, error: null },
+      }));
+      if (forceRefresh) refresh();
+    } catch (err) {
+      setReviewsByMatchId((prev) => ({
+        ...prev,
+        [matchId]: { loading: false, error: err.message },
+      }));
+    }
+  }, [refresh]);
+
+  function toggleMatchInsight(row, event) {
+    event?.stopPropagation();
+    const { matchId } = row;
+    const willExpand = !expandedInsightIds.has(matchId);
+    setExpandedInsightIds((prev) => {
+      const next = new Set(prev);
+      if (willExpand) next.add(matchId);
+      else next.delete(matchId);
+      return next;
+    });
+    if (willExpand && row.postMatchReview?.available && !reviewsByMatchId[matchId]?.data) {
+      void loadPostMatchReview(matchId);
+    }
+  }
 
   useEffect(() => {
     if (!selectedRow) {
@@ -568,16 +713,13 @@ export default function AdminAiCompetitorPage() {
                           </div>
                         </TableCell>
                       </TableRow>
-                      {row.predictionReasoning ? (
-                        <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={7} className="border-t-0 pt-0 pb-3">
-                            <p className="border-l-2 border-amber-500/40 pl-3 text-xs leading-relaxed text-slate-400">
-                              <span className="font-medium text-slate-500">Razonamiento IA: </span>
-                              {row.predictionReasoning}
-                            </p>
-                          </TableCell>
-                        </TableRow>
-                      ) : null}
+                      <MatchAiInsightRow
+                        row={row}
+                        expanded={expandedInsightIds.has(row.matchId)}
+                        onToggle={(event) => toggleMatchInsight(row, event)}
+                        reviewState={reviewsByMatchId[row.matchId]}
+                        onRefreshReview={() => loadPostMatchReview(row.matchId, { forceRefresh: true })}
+                      />
                       </Fragment>
                     );
                   })}

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildAuditPromptContext, buildAiCompetitorStats, briefAiReasoning } from '../src/services/aiCompetitorAuditService.js';
+import { buildAuditPromptContext, buildAiCompetitorStats } from '../src/services/aiCompetitorAuditService.js';
+import { briefAiReasoning } from '../src/services/aiPromptHumanizer.js';
 import { goalDiffScore } from '../src/services/goalDiffStats.js';
 
 describe('aiCompetitorAuditService', () => {

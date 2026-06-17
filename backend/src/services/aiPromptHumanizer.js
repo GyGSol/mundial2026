@@ -223,3 +223,20 @@ export function sanitizeAiUserFacingText(text) {
 
   return result.trim();
 }
+
+/** Resumen corto para listados admin (quita markdown pesado). */
+export function briefAiReasoning(text, maxLen = 300) {
+  const raw = String(text ?? '').trim();
+  if (!raw) return null;
+  const plain = raw
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/^[-*#]+\s+/gm, '')
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!plain) return null;
+  if (plain.length <= maxLen) return plain;
+  const cut = plain.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut}…`;
+}

@@ -63,6 +63,10 @@ import {
   updateAiCompetitorPredictionLogNotes,
   upsertAiCompetitorPrediction,
 } from '../services/aiCompetitorAuditService.js';
+import {
+  formatPostMatchReviewRowMeta,
+  getOrGenerateAiPostMatchReview,
+} from '../services/aiPostMatchLearningService.js';
 import { simulateAiCompetitorPrediction, runOfficialAiCompetitorPrediction } from '../services/aiPredictionService.js';
 
 const router = Router();
@@ -593,6 +597,15 @@ router.get('/ai-competitor/overview', adminMiddleware, async (req, res, next) =>
         predictionFilter: req.query.predictionFilter,
       })
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/ai-competitor/matches/:matchId/post-match-review', adminMiddleware, async (req, res, next) => {
+  try {
+    const refresh = req.query.refresh === '1' || req.query.refresh === 'true';
+    res.json(await getOrGenerateAiPostMatchReview(req.params.matchId, { refresh }));
   } catch (err) {
     next(err);
   }
