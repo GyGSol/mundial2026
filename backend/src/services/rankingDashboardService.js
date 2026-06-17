@@ -13,6 +13,7 @@ import {
   attachProjectedFubolsToLeaderboard,
 } from './prizePoolService.js';
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
+import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -101,6 +102,8 @@ export async function getRankingDashboard(groupId, userId) {
 
   if (groupId && groupId !== '__nogroup') {
     await ensureAiCompetitorInGroup(groupId);
+    await syncMemberEntryFees(groupId);
+    const entryStats = await getGroupEntryFeeStats(groupId);
     const winnersCount = groupResult.group?.prizesWinnersCount ?? 0;
     const projection = await projectPrizeDistribution(groupId);
     if (winnersCount > 0 && projection.distribution?.length) {
@@ -111,6 +114,11 @@ export async function getRankingDashboard(groupId, userId) {
         houseRetention: projection.houseRetention,
         distributionPercents: projection.distributionPercents,
         distribution: projection.distribution,
+        memberCount: entryStats.memberCount,
+        paidEntryCount: entryStats.paidEntryCount,
+        pendingEntryCount: entryStats.pendingEntryCount,
+        expectedEntryFubols: entryStats.expectedEntryFubols,
+        entryFeeFubols: entryStats.entryFeeFubols,
       };
     }
   }

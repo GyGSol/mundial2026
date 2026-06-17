@@ -299,6 +299,53 @@ export async function chargeGroupEntryFee({ userId, groupId }) {
   });
 }
 
+/** Intenta cobrar inscripciones pendientes cuando el jugador ya tiene saldo. */
+export async function syncMemberEntryFees(groupId) {
+  const memberships = await UserGroupMembership.find({ groupId }).select('userId').lean();
+  let charged = 0;
+  let pending = 0;
+
+  for (const { userId } of memberships) {
+    try {
+      const result = await chargeGroupEntryFee({ userId, groupId });
+      if (result.charged) charged += 1;
+      else if (result.reason === 'already_paid') continue;
+      else pending += 1;
+    } catch (err) {
+      if (err.status === 402) {
+        pending += 1;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  return { charged, pending };
+}
+
+export async function getGroupEntryFeeStats(groupId) {
+  const oid =
+    typeof groupId === 'string' ? new mongoose.Types.ObjectId(groupId) : groupId;
+
+  const [memberCount, paidUserIds, pool] = await Promise.all([
+    UserGroupMembership.countDocuments({ groupId: oid }),
+    FubolTransaction.distinct('userId', { groupId: oid, type: 'entry_fee' }),
+    PrizePool.findOne({ groupId: oid }).select('totalFubols').lean(),
+  ]);
+
+  const paidEntryCount = paidUserIds.length;
+  const pendingEntryCount = Math.max(0, memberCount - paidEntryCount);
+
+  return {
+    memberCount,
+    paidEntryCount,
+    pendingEntryCount,
+    entryFeeFubols: GROUP_ENTRY_FEE,
+    expectedEntryFubols: memberCount * GROUP_ENTRY_FEE,
+    poolTotalFubols: pool?.totalFubols ?? 0,
+  };
+}
+
 export async function recordDeposit({ userId, fubols, usd, sessionId }) {
   const idempotencyKey = sessionId ? `deposit:${sessionId}` : null;
   return creditUser({

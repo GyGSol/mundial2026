@@ -114,6 +114,10 @@ export default function LeaderboardPage() {
   const prizesWinnersCount = displayGroup?.prizesWinnersCount || 0;
   const groupPrizes = displayGroup?.prizes || [];
   const prizePoolTotal = data?.prizePool?.totalFubols ?? 0;
+  const pendingEntryCount = data?.prizePool?.pendingEntryCount ?? 0;
+  const paidEntryCount = data?.prizePool?.paidEntryCount ?? 0;
+  const memberCount = data?.prizePool?.memberCount ?? 0;
+  const entryFeeFubols = data?.prizePool?.entryFeeFubols ?? 100;
   const fubolDistribution = data?.prizePool?.distribution ?? [];
   const distributionPercents =
     data?.prizePool?.distributionPercents ??
@@ -179,6 +183,9 @@ export default function LeaderboardPage() {
               ? 'Solo jugadores que no participan en ningún grupo de competencia'
               : `Tabla del grupo ${displayGroup?.name}`}
             {showFubolPrizes ? ` · Pozo ${prizePoolTotal} Fubols` : null}
+            {showFubolPrizes && pendingEntryCount > 0
+              ? ` · Inscripciones ${paidEntryCount}/${memberCount}`
+              : null}
             {dashboardMatchesGroup && lastUpdated
               ? ` · Actualizado ${formatLastUpdated(lastUpdated)}`
               : null}
@@ -228,7 +235,13 @@ export default function LeaderboardPage() {
             <CardTitle className="text-base">Premios del grupo</CardTitle>
             {showFubolPrizes ? (
               <p className="text-sm text-muted-foreground">
-                Reparto proyectado del pozo ({prizePoolTotal} Fubols):{' '}
+                Reparto proyectado del pozo ({prizePoolTotal} Fubols
+                {pendingEntryCount > 0
+                  ? ` · ${paidEntryCount}/${memberCount} inscripciones (hasta ${memberCount * entryFeeFubols} cuando todos paguen)`
+                  : memberCount > 0
+                    ? ` · ${memberCount} × ${entryFeeFubols}`
+                    : ''}
+                ):{' '}
                 {formatPrizeDistributionLabel(distributionPercents)}
               </p>
             ) : null}
