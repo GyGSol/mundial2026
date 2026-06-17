@@ -11,15 +11,17 @@ export default function CastButton({
   className,
   size = 'sm',
   variant = 'outline',
+  showLabel = true,
 }) {
-  const { available, connecting, connected, deviceName, error, toggleCast } = useGoogleCast({
-    mediaUrl,
-    title,
-    enabled,
-    onMediaExpired,
-  });
+  const { browserSupported, canCast, connecting, connected, deviceName, error, toggleCast } =
+    useGoogleCast({
+      mediaUrl,
+      title,
+      enabled,
+      onMediaExpired,
+    });
 
-  if (!available) return null;
+  if (!browserSupported) return null;
 
   const label = connecting
     ? 'Conectando con el TV…'
@@ -29,25 +31,33 @@ export default function CastButton({
         : 'Transmitiendo al TV'
       : 'Transmitir a TV';
 
+  const disabledTitle = canCast
+    ? label
+    : 'Obteniendo señal directa para el TV. Si no se habilita, probá otra señal.';
+
   return (
     <div className={cn('flex flex-col gap-1', className)}>
       <Button
         type="button"
         size={size}
         variant={connected ? 'default' : variant}
-        className="justify-center"
+        className="justify-center gap-1.5"
         onClick={toggleCast}
-        disabled={connecting || !mediaUrl}
+        disabled={connecting || !browserSupported}
         aria-label={label}
         aria-pressed={connected}
-        title={label}
+        title={canCast ? label : disabledTitle}
       >
         {connecting ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden />
+          <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
         ) : (
-          <Cast className={cn('size-4', connected && 'fill-current')} aria-hidden />
+          <Cast className={cn('size-4 shrink-0', connected && 'fill-current')} aria-hidden />
         )}
-        <span className="sr-only">{label}</span>
+        {showLabel ? (
+          <span className="truncate">{connected ? 'En el TV' : 'Transmitir'}</span>
+        ) : (
+          <span className="sr-only">{label}</span>
+        )}
       </Button>
       {error ? (
         <p className="text-center text-[11px] text-destructive" role="status">

@@ -138,13 +138,25 @@ export function useGoogleCast({ mediaUrl, title, enabled = true, onMediaExpired 
     }
   }, [enabled, mediaUrl, connected, loadMedia]);
 
+  const canCast = Boolean(mediaUrl?.trim());
+
+  const toggleCastOrExplain = useCallback(async () => {
+    if (!enabled) return;
+    if (!canCast) {
+      setError('Todavía no hay señal para el TV. Probá otra señal o Reintentar.');
+      return;
+    }
+    return toggleCast();
+  }, [enabled, canCast, toggleCast]);
+
   return {
-    available: available && Boolean(mediaUrl?.trim()),
+    browserSupported: available,
+    canCast,
     connecting,
     connected,
     deviceName,
     error,
-    toggleCast,
+    toggleCast: toggleCastOrExplain,
     clearError: () => setError(''),
   };
 }

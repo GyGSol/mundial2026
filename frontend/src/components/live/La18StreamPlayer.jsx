@@ -3,6 +3,7 @@ import { ExternalLink, Maximize2, Minimize2, MonitorPlay, RefreshCw } from 'luci
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
+import { isCastApiAvailable } from '@/lib/googleCast.js';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import StreamAccessNoticeDialog from './StreamAccessNoticeDialog.jsx';
 import CastButton from './CastButton.jsx';
@@ -325,12 +326,11 @@ export default function La18StreamPlayer({
             {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </Button>
 
-          {primary?.hlsUrl && !useDirectHls ? (
+          {isCastApiAvailable() ? (
             <CastButton
-              mediaUrl={primary.hlsUrl}
+              mediaUrl={primary?.hlsUrl}
               title={USER_STREAM_BRAND}
               onMediaExpired={onReloadPrimary}
-              className="contents"
             />
           ) : null}
 
