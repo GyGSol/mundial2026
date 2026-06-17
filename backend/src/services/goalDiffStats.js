@@ -24,8 +24,8 @@ export function goalDiffVisitAvg(difGv, pj) {
 }
 
 /**
- * Gdif = (GLdif × GVdif) / 2, con GLdif/GVdif = error promedio por lado.
- * Escala 0–1: 1.000 = cero error local y visitante; baja con el producto.
+ * Error combinado (GLdif × GVdif) / 2 escalado 0–1.
+ * .000 = sin error; 1.000 = peor caso (~2 goles de error promedio por lado).
  */
 export function goalDiffScore(difGl, difGv, pj) {
   const games = pj ?? 0;
@@ -33,13 +33,13 @@ export function goalDiffScore(difGl, difGv, pj) {
   const glDif = goalDiffLocalAvg(difGl, games);
   const gvDif = goalDiffVisitAvg(difGv, games);
   const combined = (glDif * gvDif) / 2;
-  return Math.max(0, 1 - combined / 2);
+  return Math.min(1, combined / 2);
 }
 
-/** Mayor Gdif = mejor posición. */
+/** Menor error = mejor posición. */
 export function compareGoalDiffScore(aDifGl, aDifGv, aPj, bDifGl, bDifGv, bPj) {
-  const aScore = goalDiffScore(aDifGl, aDifGv, aPj);
-  const bScore = goalDiffScore(bDifGl, bDifGv, bPj);
-  if (bScore !== aScore) return bScore - aScore;
+  const aErr = goalDiffScore(aDifGl, aDifGv, aPj);
+  const bErr = goalDiffScore(bDifGl, bDifGv, bPj);
+  if (aErr !== bErr) return aErr - bErr;
   return 0;
 }

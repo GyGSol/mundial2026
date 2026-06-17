@@ -21,7 +21,7 @@ import { formatGoalDiffScore } from '@/lib/goalDiffStats.js';
 import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
 
 const GDIFF_HELP =
-  'GLdif = error promedio local (predicción vs resultado) ÷ PJ; GVdif = idem visitante. Gdif = (GLdif × GVdif) / 2 escalado; 1.000 = cero error en ambos lados.';
+  'Error en goles: GLdif y GVdif = diferencia promedio predicción vs resultado (÷ PJ). Gdif = (GLdif × GVdif) / 2 escalado. .000 = sin error; 1.000 = peor caso; menor es mejor.';
 
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },

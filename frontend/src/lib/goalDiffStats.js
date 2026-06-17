@@ -4,17 +4,17 @@ function avgGoalDiffPerMatch(totalDiff, pj) {
   return (totalDiff ?? 0) / games;
 }
 
-/** Gdif = (GLdif × GVdif) / 2; GLdif/GVdif = error promedio local/visitante. */
+/** Error combinado; .000 = perfecto, 1.000 = peor caso. */
 export function goalDiffScore(difGl, difGv, pj) {
   const games = pj ?? 0;
   if (games <= 0) return null;
   const glDif = avgGoalDiffPerMatch(difGl, games);
   const gvDif = avgGoalDiffPerMatch(difGv, games);
   const combined = (glDif * gvDif) / 2;
-  return Math.max(0, 1 - combined / 2);
+  return Math.min(1, combined / 2);
 }
 
-/** 1.000 = cero error en ambos lados; .801, etc. */
+/** .000 = sin error; .199, 1.000 = máximo. */
 export function formatGoalDiffScore(difGl, difGv, pj) {
   const score = goalDiffScore(difGl, difGv, pj);
   if (score == null) return '—';
