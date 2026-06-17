@@ -127,7 +127,7 @@ export default function LeaderboardTable({
               <TableHead className="min-w-[5.5rem] px-1 sm:min-w-0 sm:px-2">Jugador</TableHead>
               {statColumns.map((col) => (
                 <TableHead key={col.key} className={statHeadClass} title={col.title}>
-                  <span className="inline-flex flex-col items-center leading-tight">
+                  <span className="inline-flex items-center justify-center gap-0.5 leading-tight">
                     <span>{col.label}</span>
                     {col.difKey ? (
                       <span className="text-[9px] font-normal text-muted-foreground">dif</span>
