@@ -3,8 +3,11 @@ import { Prediction } from '../models/Prediction.js';
 import { AiCompetitorPredictionLog } from '../models/AiCompetitorPredictionLog.js';
 import { callAiForText, getAiUser, hasAiProvider } from './aiPredictionService.js';
 import {
+  buildCalibrationHintFromReview,
   buildCalibrationPromptBlock,
+  compareAiVsHumansOnMatch,
   loadAiCalibrationStats,
+  loadHumanConsensusForMatch,
 } from './aiPredictionCalibrationService.js';
 import { goalDiffScore } from './goalDiffStats.js';
 import { sanitizeAiUserFacingText, briefAiReasoning } from './aiPromptHumanizer.js';
@@ -24,11 +27,25 @@ function formatBreakdown(breakdown) {
   return parts.length ? parts.join(', ') : 'ninguno';
 }
 
+function formatHumanConsensus(humanConsensus, vsHumans) {
+  if (!humanConsensus?.muestras) {
+    return 'Sin predicciones humanas enviadas para este partido.';
+  }
+  const med = humanConsensus.mediana;
+  return `Muestras: ${humanConsensus.muestras}
+Mediana humana: ${med?.local ?? '—'}-${med?.visitante ?? '—'}
+Resultado más frecuente: ${humanConsensus.resultadoFrecuente} (${humanConsensus.porcentajeResultadoFrecuente ?? 0}%)
+Dispersión (σ): local ${humanConsensus.dispersion?.local ?? 0}, visitante ${humanConsensus.dispersion?.visitante ?? 0}
+Bot vs mediana humana: ${vsHumans?.aiScore?.home ?? '?'}-${vsHumans?.aiScore?.away ?? '?'} vs ${med?.local ?? '?'}-${med?.visitante ?? '?'}`;
+}
+
 export function buildPostMatchReviewPrompt({
   match,
   prediction,
   promptContext,
   calibrationStats,
+  humanConsensus,
+  vsHumans,
 }) {
   const actualHome = match.homeScore ?? 0;
   const actualAway = match.awayScore ?? 0;
@@ -64,6 +81,9 @@ ${JSON.stringify(promptContext ?? {}, null, 2)}
 ## Calibración rolling del bot (antes de este partido)
 ${JSON.stringify(buildCalibrationPromptBlock(calibrationStats) ?? { nota: 'Sin historial' }, null, 2)}
 
+## Predicciones de otros jugadores (referencia)
+${formatHumanConsensus(humanConsensus, vsHumans)}
+
 ## Instrucciones de salida
 Escribí en español rioplatense un informe detallado en markdown para el panel de control admin. Estructura obligatoria:
 
@@ -82,9 +102,11 @@ Analizá ranking, xG/mercado, clima, stakes de grupo, forma reciente u otros dat
 3–5 bullets accionables para el modelo en partidos similares (no genéricos). Priorizá ajustes sobre señales del torneo 2026 (forma, goles reales) frente a ranking/xG si el error vino de sobreponderar lo segundo. Incluí si conviene empates, menos goles, más goles del local/visitante, etc.
 
 ### Ajuste sugerido de calibración
-Una frase concreta sobre sesgo local/visitante detectado en ESTE partido y cómo encaja con la calibración rolling.
+Una frase concreta sobre sesgo local/visitante detectado en ESTE partido (usa números si podés, ej. "+0.5 goles local") y cómo encaja con la calibración rolling y el consenso humano.
 
-No inventes datos que no estén en el contexto. No cites predicciones de humanos. Máximo ~500 palabras.`;
+Compará brevemente si el bot estuvo más alejado del resultado que la mediana humana.
+
+No inventes datos que no estén en el contexto. Máximo ~500 palabras.`;
 }
 
 export function formatPostMatchReviewRowMeta(match, prediction) {
@@ -151,7 +173,7 @@ export async function getOrGenerateAiPostMatchReview(matchId, { refresh = false 
     return serializeReview(prediction, match);
   }
 
-  const [officialLog, calibrationStats] = await Promise.all([
+  const [officialLog, calibrationStats, humanConsensus] = await Promise.all([
     AiCompetitorPredictionLog.findOne({
       userId: aiUser._id,
       matchId: match._id,
@@ -160,13 +182,18 @@ export async function getOrGenerateAiPostMatchReview(matchId, { refresh = false 
       .sort({ createdAt: -1 })
       .lean(),
     loadAiCalibrationStats(aiUser._id),
+    loadHumanConsensusForMatch(match._id, { excludeUserId: aiUser._id }),
   ]);
+
+  const vsHumans = await compareAiVsHumansOnMatch(match._id, aiUser._id);
 
   const prompt = buildPostMatchReviewPrompt({
     match,
     prediction: prediction.toObject(),
     promptContext: officialLog?.promptContext ?? null,
     calibrationStats,
+    humanConsensus,
+    vsHumans,
   });
 
   const { text, source } = await callAiForText(prompt);
@@ -177,11 +204,25 @@ export async function getOrGenerateAiPostMatchReview(matchId, { refresh = false 
     throw error;
   }
 
+  const calibrationHint = buildCalibrationHintFromReview(
+    prediction.toObject(),
+    match,
+    analysis
+  );
+
   prediction.aiPostMatchReview = {
     analysis,
     generatedAt: new Date(),
     aiSource: source ?? null,
     resultScoreKey: scoreKey,
+    calibrationHint,
+    humanConsensusAtReview: humanConsensus
+      ? {
+          muestras: humanConsensus.muestras,
+          mediana: humanConsensus.mediana,
+          resultadoFrecuente: humanConsensus.resultadoFrecuente,
+        }
+      : null,
   };
   await prediction.save();
 
@@ -212,6 +253,8 @@ function serializeReview(prediction, match) {
     goalDiffAway: prediction.goalDiffAway,
     pointsBreakdown: prediction.pointsBreakdown ?? null,
     originalReasoning: prediction.aiReasoning ?? null,
+    calibrationHint: review.calibrationHint ?? null,
+    humanConsensusAtReview: review.humanConsensusAtReview ?? null,
   };
 }
 

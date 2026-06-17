@@ -37,6 +37,22 @@ const predictionSchema = new mongoose.Schema(
       generatedAt: { type: Date, default: null },
       aiSource: { type: String, default: null },
       resultScoreKey: { type: String, default: null },
+      calibrationHint: {
+        biasHome: { type: Number, default: null },
+        biasAway: { type: Number, default: null },
+        observedBiasHome: { type: Number, default: null },
+        observedBiasAway: { type: Number, default: null },
+        summary: { type: String, default: null },
+        generatedAt: { type: Date, default: null },
+      },
+      humanConsensusAtReview: {
+        muestras: { type: Number, default: null },
+        mediana: {
+          local: { type: Number, default: null },
+          visitante: { type: Number, default: null },
+        },
+        resultadoFrecuente: { type: String, default: null },
+      },
     },
   },
   { timestamps: true }

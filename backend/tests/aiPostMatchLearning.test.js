@@ -51,15 +51,25 @@ describe('aiPostMatchLearningService', () => {
     expect(meta.generated).toBe(false);
   });
 
-  it('buildPostMatchReviewPrompt incluye predicción, resultado y razonamiento', () => {
+  it('buildPostMatchReviewPrompt incluye predicción, resultado, humanos y razonamiento', () => {
     const prompt = buildPostMatchReviewPrompt({
       match,
       prediction,
       promptContext: { equipoLocal: 'Portugal' },
       calibrationStats: { partidosAnalizados: 5, errorCombinado: 0.12 },
+      humanConsensus: {
+        muestras: 12,
+        mediana: { local: 1, visitante: 0 },
+        resultadoFrecuente: 'victoria local',
+        porcentajeResultadoFrecuente: 58,
+        dispersion: { local: 0.4, visitante: 0.3 },
+      },
+      vsHumans: { aiScore: { home: 1, away: 0 } },
     });
     expect(prompt).toContain('1-0');
     expect(prompt).toContain('Portugal favorito');
     expect(prompt).toContain('Lecciones para bajar Gdif');
+    expect(prompt).toContain('Predicciones de otros jugadores');
+    expect(prompt).toContain('Mediana humana');
   });
 });
