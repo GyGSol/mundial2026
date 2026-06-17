@@ -109,7 +109,7 @@ function matchHasFinalScore(match) {
 }
 
 function matchHasCollapsibleInsight(row) {
-  return Boolean(row.postMatchReview?.available || row.predictionReasoning);
+  return Boolean(row.postMatchReview?.available || row.predictionReasoning || row.predictionReasoningFull);
 }
 
 function MatchAiInsightRow({
@@ -124,6 +124,8 @@ function MatchAiInsightRow({
 
   const title = isPostMatch ? 'Análisis de error y aprendizaje (IA)' : 'Razonamiento de la predicción';
   const review = reviewState?.data ?? null;
+  const fullReasoning = row.predictionReasoningFull ?? row.prediction?.aiReasoning ?? row.predictionReasoning;
+  const previewText = row.postMatchReview?.preview ?? row.predictionReasoning ?? fullReasoning;
 
   return (
     <TableRow className="hover:bg-transparent" onClick={(event) => event.stopPropagation()}>
@@ -153,20 +155,22 @@ function MatchAiInsightRow({
           </span>
         </button>
 
-        {!expanded && (row.postMatchReview?.preview || row.predictionReasoning) ? (
+        {!expanded && previewText ? (
           <p className="mt-1 ml-6 line-clamp-2 text-xs leading-relaxed text-slate-500">
-            {row.postMatchReview?.preview ?? row.predictionReasoning}
+            {previewText}
           </p>
         ) : null}
 
         {expanded ? (
           <div className="mt-2 ml-6 space-y-3 border-l-2 border-amber-500/40 pl-3">
-            {row.predictionReasoning ? (
+            {fullReasoning ? (
               <div>
                 <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
                   Predicción previa
                 </p>
-                <p className="text-xs leading-relaxed text-slate-400">{row.predictionReasoning}</p>
+                <MarkdownContent className="text-xs leading-relaxed text-slate-300">
+                  {fullReasoning}
+                </MarkdownContent>
               </div>
             ) : null}
 
@@ -204,7 +208,7 @@ function MatchAiInsightRow({
                   ) : null}
                 </div>
               </div>
-            ) : row.predictionReasoning ? null : (
+            ) : fullReasoning ? null : (
               <p className={adminMuted}>Sin razonamiento guardado.</p>
             )}
           </div>
@@ -931,7 +935,9 @@ export default function AdminAiCompetitorPage() {
                   </p>
                 ) : null}
                 {detail.finalResponse?.reasoning ? (
-                  <p className="mt-2 whitespace-pre-wrap text-slate-300">{detail.finalResponse.reasoning}</p>
+                  <MarkdownContent className="mt-2 text-sm text-slate-300">
+                    {detail.finalResponse.reasoning}
+                  </MarkdownContent>
                 ) : null}
               </div>
 

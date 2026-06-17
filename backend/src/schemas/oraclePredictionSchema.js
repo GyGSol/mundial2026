@@ -9,6 +9,7 @@ export const ORACLE_PREDICTION_JSON_SCHEMA = {
       minimum: 0,
       maximum: 1,
     },
+    reasoning: { type: 'string' },
     key_variable_impact: { type: 'string' },
     error_reduction_factor: {
       type: 'number',
@@ -20,6 +21,7 @@ export const ORACLE_PREDICTION_JSON_SCHEMA = {
     'home_goals',
     'away_goals',
     'confidence_interval',
+    'reasoning',
     'key_variable_impact',
     'error_reduction_factor',
   ],

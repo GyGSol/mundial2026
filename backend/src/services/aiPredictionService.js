@@ -254,7 +254,7 @@ function avgGoalsPerMatch(row) {
   };
 }
 
-/** Fallback: xG/odds → ranking/stats → Poisson por grupo. */
+/** Fallback: xG/odds → stats de grupo (torneo 2026) → ranking FIFA (último recurso). */
 export function computeHeuristicScore(context) {
   const external = scoreFromExternalIntel(context.externalIntel ?? context.mercadoYxG);
   if (external) {
@@ -265,6 +265,34 @@ export function computeHeuristicScore(context) {
       awayGoals = 1;
     }
     return { homeGoals, awayGoals, reasoning: external.reasoning, source: external.source };
+  }
+
+  const homeRow = standingRowForTeam(context.groupStandings, context.homeTeam);
+  const awayRow = standingRowForTeam(context.groupStandings, context.awayTeam);
+  const hasTournamentForm =
+    Number(homeRow?.played ?? 0) > 0 || Number(awayRow?.played ?? 0) > 0;
+
+  if (hasTournamentForm) {
+    const homeAvg = avgGoalsPerMatch(homeRow);
+    const awayAvg = avgGoalsPerMatch(awayRow);
+
+    const homeExpected = homeAvg.for * 0.55 + awayAvg.against * 0.45;
+    const awayExpected = awayAvg.for * 0.55 + homeAvg.against * 0.45;
+
+    let homeGoals = clampGoals(Math.round(homeExpected)) ?? 1;
+    let awayGoals = clampGoals(Math.round(awayExpected)) ?? 1;
+
+    if (homeGoals === 0 && awayGoals === 0) {
+      homeGoals = 1;
+      awayGoals = 1;
+    }
+
+    return {
+      homeGoals,
+      awayGoals,
+      reasoning: 'Heurística por forma y goles en el grupo del Mundial 2026',
+      source: 'heuristic',
+    };
   }
 
   const homeRank = context.homeTeam?.fifaRanking?.rank;
@@ -280,13 +308,11 @@ export function computeHeuristicScore(context) {
     return {
       homeGoals: clampGoals(homeGoals) ?? 1,
       awayGoals: clampGoals(awayGoals) ?? 1,
-      reasoning: 'Heurística por ranking FIFA',
+      reasoning:
+        'Heurística de respaldo: sin partidos jugados en el torneo ni señales de mercado; desempate por posición FIFA',
       source: 'heuristic',
     };
   }
-
-  const homeRow = standingRowForTeam(context.groupStandings, context.homeTeam);
-  const awayRow = standingRowForTeam(context.groupStandings, context.awayTeam);
 
   const homeAvg = avgGoalsPerMatch(homeRow);
   const awayAvg = avgGoalsPerMatch(awayRow);

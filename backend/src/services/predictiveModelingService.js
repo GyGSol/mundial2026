@@ -19,6 +19,15 @@ import {
 const SOURCE = 'cerebras-oracle';
 const liveAdjustmentCache = new Map();
 
+/** Instrucciones exclusivas del esquema Oracle (razonamiento largo + jerarquía de señales). */
+export const ORACLE_REASONING_INSTRUCTIONS = `RAZONAMIENTO ORACLE (campos reasoning y key_variable_impact):
+- "reasoning": explicación COMPLETA en español (mínimo 3 oraciones o 3 viñetas). Markdown ligero permitido (**negritas**, listas).
+- Citá al menos DOS señales del torneo 2026 cuando existan: forma/goles en esta Copa, tabla del grupo, H2H en mundial2026, plantilla/lesiones, clima de la sede al kickoff, mercado/xG o consenso como apoyo.
+- El ranking FIFA NO puede ser el factor principal ni la única justificación. Usalo solo como desempate fino o si ningún equipo jugó aún en el torneo.
+- Si mencionás ranking FIFA, explicá por qué la evidencia del Mundial 2026 no alcanza o cómo el torneo confirma/contradice ese dato.
+- "key_variable_impact": UNA frase con el factor más determinante que NO sea solo "ranking FIFA". Priorizá: forma en 2026, goles a favor/en contra en el torneo, necesidad de puntos, bajas clave, clima/sede, H2H del mundial.
+- El marcador debe seguir la jerarquía de guiaPrioridadContexto: mundial2026 > plantilla > señales externas > referencia pre-torneo.`;
+
 let cerebrasClient = null;
 
 function getCerebrasClient() {
@@ -44,11 +53,14 @@ ${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
 ${AI_COMPETITOR_SCORING_INSTRUCTIONS}
 
 ${WORLD_CUP_USER_FACING_LANGUAGE_RULES}
+
+${ORACLE_REASONING_INSTRUCTIONS}
 ${liveBlock}
 Respondé con el esquema JSON estricto:
 - home_goals / away_goals: enteros 0-10
 - confidence_interval: 0-1 (certeza del marcador)
-- key_variable_impact: variable más determinante en una frase
+- reasoning: explicación completa en español (3-6 oraciones o lista; ver reglas arriba)
+- key_variable_impact: factor más determinante en una frase (no solo ranking FIFA)
 - error_reduction_factor: 0-1 estimación de reducción de error vs baseline
 
 Contexto del partido:
@@ -73,17 +85,25 @@ export function parseOracleStructuredResponse(raw) {
   const confidence = Number(parsed.confidence_interval);
   const errorReduction = Number(parsed.error_reduction_factor);
 
+  const keyImpact = String(parsed.key_variable_impact ?? '').trim();
+  const reasoningRaw = String(parsed.reasoning ?? '').trim();
+  const reasoning = sanitizeAiUserFacingText(
+    reasoningRaw || keyImpact
+  );
+  const keyVariable = sanitizeAiUserFacingText(keyImpact || reasoningRaw);
+
   return {
     homeGoals,
     awayGoals,
-    reasoning: sanitizeAiUserFacingText(String(parsed.key_variable_impact ?? '').trim()),
+    reasoning,
     source: SOURCE,
     oracle: {
       predicted_score: [homeGoals, awayGoals],
       confidence_interval: Number.isFinite(confidence)
         ? Math.min(1, Math.max(0, confidence))
         : null,
-      key_variable_impact: String(parsed.key_variable_impact ?? '').trim(),
+      reasoning,
+      key_variable_impact: keyVariable,
       error_reduction_factor: Number.isFinite(errorReduction)
         ? Math.min(1, Math.max(0, errorReduction))
         : null,

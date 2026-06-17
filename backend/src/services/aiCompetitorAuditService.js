@@ -285,6 +285,10 @@ export async function getAiCompetitorOverview({
       predictionReasoning: briefAiReasoning(
         prediction?.aiReasoning ?? officialLog?.finalResponse?.reasoning ?? null
       ),
+      predictionReasoningFull:
+        prediction?.aiReasoning?.trim() ||
+        officialLog?.finalResponse?.reasoning?.trim() ||
+        null,
       postMatchReview: formatPostMatchReviewRowMeta(match, prediction),
       latestLogId: displayLog?._id?.toString() ?? null,
       latestOfficialLogId: officialLog?._id?.toString() ?? null,

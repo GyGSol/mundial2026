@@ -118,6 +118,7 @@ describe('aiPredictionService', () => {
       expect(score.awayGoals).toBeGreaterThanOrEqual(0);
       expect(score.awayGoals).toBeLessThanOrEqual(10);
       expect(score.source).toBe('heuristic');
+      expect(score.reasoning).toContain('Mundial 2026');
     });
   });
 
