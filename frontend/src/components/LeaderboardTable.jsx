@@ -18,7 +18,7 @@ const statColumns = [
     key: 'gdif',
     label: 'Gdif',
     title:
-      'Precisión en goles local+visitante (1.000 = todos exactos; combina dif local y visitante ÷ PJ)',
+      'Precisión en goles: (GL/PJ × GV/PJ) / 2 escalado; 1.000 = local y visitante exactos en todos los partidos',
     format: 'gdif',
     trackDelta: false,
   },
@@ -89,7 +89,7 @@ function StatValue({ value, delta, align = 'center' }) {
 
 function renderStatCell(row, col, { hasLiveMatches, rowDeltas }) {
   if (col.format === 'gdif') {
-    return formatGoalDiffScore(row.difGl, row.difGv, row.pj);
+    return formatGoalDiffScore(row.gl, row.gv, row.pj);
   }
 
   const value = row[col.key] ?? 0;

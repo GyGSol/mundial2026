@@ -12,25 +12,37 @@ export function compareAvgGoalDiff(aDiff, aPj, bDiff, bPj) {
   return 0;
 }
 
-/** Error combinado (local+visitante) que mapea Gdif a 0.000 en el peor caso razonable. */
-export const GOAL_DIFF_MAX_AVG_ERROR = 4;
-
-/**
- * Precisión combinada local+visitante (0–1).
- * 1.000 = cero error en todos los goles; baja según (difGl+difGv)/PJ.
- * Escala: ~2 errores promedio por partido → ~0.500; 4 o más → 0.000.
- */
-export function goalDiffScore(difGl, difGv, pj) {
+/** Tasa de acierto por lado: GL/PJ o GV/PJ. */
+export function goalHitRate(hits, pj) {
   const games = pj ?? 0;
   if (games <= 0) return 0;
-  const avgErrorPerMatch = ((difGl ?? 0) + (difGv ?? 0)) / games;
-  return Math.max(0, 1 - avgErrorPerMatch / GOAL_DIFF_MAX_AVG_ERROR);
+  return (hits ?? 0) / games;
+}
+
+/** Mayor tasa = mejor posición. */
+export function compareHitRate(aHits, aPj, bHits, bPj) {
+  const aRate = goalHitRate(aHits, aPj);
+  const bRate = goalHitRate(bHits, bPj);
+  if (bRate !== aRate) return bRate - aRate;
+  return 0;
+}
+
+/**
+ * Gdif = (GL/PJ × GV/PJ) / 2, escalado ×2 → 1.000 si acertaste local y visitante en todos los partidos.
+ */
+export function goalDiffScore(gl, gv, pj) {
+  const games = pj ?? 0;
+  if (games <= 0) return 0;
+  const localRate = goalHitRate(gl, games);
+  const visitRate = goalHitRate(gv, games);
+  const raw = (localRate * visitRate) / 2;
+  return Math.min(1, raw * 2);
 }
 
 /** Mayor Gdif = mejor posición. */
-export function compareGoalDiffScore(aDifGl, aDifGv, aPj, bDifGl, bDifGv, bPj) {
-  const aScore = goalDiffScore(aDifGl, aDifGv, aPj);
-  const bScore = goalDiffScore(bDifGl, bDifGv, bPj);
+export function compareGoalDiffScore(aGl, aGv, aPj, bGl, bGv, bPj) {
+  const aScore = goalDiffScore(aGl, aGv, aPj);
+  const bScore = goalDiffScore(bGl, bGv, bPj);
   if (bScore !== aScore) return bScore - aScore;
   return 0;
 }
