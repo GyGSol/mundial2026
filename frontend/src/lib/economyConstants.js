@@ -1,7 +1,7 @@
 /** Mirrors backend economy config for UI-only constants */
 export const MOCK_CHECKOUT_DELAY_MS = 2000;
 export const GROUP_ENTRY_FEE = 100;
-export const AI_CONSULTATION_FEE = 10;
+export const AI_CONSULTATION_FEE = 1;
 
 export const TX_TYPE_LABELS = {
   deposit: 'Ingreso',
