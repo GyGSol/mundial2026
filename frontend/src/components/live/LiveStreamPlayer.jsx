@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
-import CastButton from './CastButton.jsx';
 
 const ReactPlayer = lazy(() => import('react-player/lazy'));
 
@@ -31,7 +30,6 @@ export default function LiveStreamPlayer({
   className,
   onError,
   onStall,
-  onMediaExpired,
 }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
@@ -214,13 +212,6 @@ export default function LiveStreamPlayer({
         />
 
         <div className="ml-auto flex items-center gap-2">
-          {type === 'file' && url?.includes('.m3u8') ? (
-            <CastButton
-              mediaUrl={url}
-              title={channelName || 'Transmisión en vivo'}
-              onMediaExpired={onMediaExpired ?? retry}
-            />
-          ) : null}
           {pipSupported ? (
             <Button type="button" size="sm" variant="outline" onClick={enterPictureInPicture} aria-label="Picture in Picture">
               <PictureInPicture2 className="size-4" />

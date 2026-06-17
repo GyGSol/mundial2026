@@ -33,12 +33,6 @@ export function createApp() {
   const app = express();
 
   app.use(helmet({ contentSecurityPolicy: false }));
-  app.use((req, res, next) => {
-    if (!req.path.startsWith('/api')) {
-      res.setHeader('Permissions-Policy', 'local-network-access=(self)');
-    }
-    next();
-  });
   app.use(compression());
   app.use(requestTimingMiddleware);
   app.use(

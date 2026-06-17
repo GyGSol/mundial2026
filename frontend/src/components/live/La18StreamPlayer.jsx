@@ -3,10 +3,8 @@ import { ExternalLink, Maximize2, Minimize2, MonitorPlay, RefreshCw } from 'luci
 import { Button } from '@/components/ui/button.jsx';
 import { cn } from '@/lib/utils';
 import { isIosDevice } from '@/lib/device';
-import { isCastBrowser, preloadCastContext } from '@/lib/googleCast.js';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 import StreamAccessNoticeDialog from './StreamAccessNoticeDialog.jsx';
-import CastButton from './CastButton.jsx';
 
 const LiveStreamPlayer = lazy(() => import('./LiveStreamPlayer.jsx'));
 
@@ -54,10 +52,6 @@ export default function La18StreamPlayer({
   const useDirectHls =
     hasHls && !directHlsFailed && !useFallback && (iosDevice ? !iframeFailed : iframeFailed);
   const showEmbedded = Boolean(iframeSrc) && !useFallback && !useDirectHls && !iframeFailed;
-
-  useEffect(() => {
-    preloadCastContext();
-  }, []);
 
   useEffect(() => {
     setIframeLoaded(false);
@@ -217,7 +211,6 @@ export default function La18StreamPlayer({
               className="h-full"
               onError={handleDirectHlsError}
               onStall={handleDirectHlsStall}
-              onMediaExpired={onReloadPrimary}
             />
           </Suspense>
         ) : null}
@@ -329,25 +322,6 @@ export default function La18StreamPlayer({
           >
             {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </Button>
-
-          <CastButton
-            mediaUrl={primary?.hlsUrl}
-            title={USER_STREAM_BRAND}
-            onMediaExpired={onReloadPrimary}
-          />
-
-          {isCastBrowser() ? (
-            <p className="col-span-2 text-center text-[11px] leading-snug text-muted-foreground sm:col-span-3">
-              Deco Telecentro con «sitios de video específicos» no recibe esta web (sí YouTube). «Guía deco»
-              explica alternativas; «Smart TV — Disponible» sí admite Transmitir pestaña.
-            </p>
-          ) : null}
-
-          {!isCastBrowser() ? (
-            <p className="col-span-2 text-center text-[11px] text-muted-foreground sm:col-span-1">
-              Ver en TV: Chrome o Edge + misma WiFi
-            </p>
-          ) : null}
 
           {!showFallback ? (
             <Button type="button" size="sm" variant="outline" onClick={activateFallback} className="justify-center">
