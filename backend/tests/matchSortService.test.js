@@ -2,12 +2,27 @@ import { describe, it, expect } from 'vitest';
 import {
   compareMatchesByFifaNumber,
   compareMatchesBySchedule,
+  compareMatchesByScheduleDesc,
   sortMatchesBySchedule,
+  sortMatchesByScheduleDesc,
 } from '../src/services/matchSortService.js';
 import { resolveOfficialKickoffAt } from '../src/services/kickoffTimeService.js';
 
 describe('matchSortService', () => {
   const kickoff = '2026-06-15T18:00:00.000Z';
+
+  it('orders matches by schedule kickoff descending (último terminado primero)', () => {
+    const matches = [
+      { externalId: '1', kickoffAt: '2026-06-11T18:00:00.000Z', id: 'a' },
+      { externalId: '3', kickoffAt: '2026-06-12T18:00:00.000Z', id: 'c' },
+      { externalId: '2', kickoffAt: '2026-06-11T23:00:00.000Z', id: 'b' },
+    ];
+
+    const sorted = sortMatchesByScheduleDesc(matches);
+
+    expect(sorted.map((m) => m.externalId)).toEqual(['3', '2', '1']);
+    expect(compareMatchesByScheduleDesc(sorted[0], sorted[1])).toBeLessThan(0);
+  });
 
   it('orders matches by schedule kickoff then externalId', () => {
     const matches = [

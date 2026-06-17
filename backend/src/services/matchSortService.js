@@ -34,6 +34,14 @@ export function compareMatchesBySchedule(matchA, matchB) {
   return a.id.localeCompare(b.id);
 }
 
+export function compareMatchesByScheduleDesc(matchA, matchB) {
+  return compareMatchesBySchedule(matchB, matchA);
+}
+
 export function sortMatchesBySchedule(matches = []) {
   return [...matches].sort(compareMatchesBySchedule);
+}
+
+export function sortMatchesByScheduleDesc(matches = []) {
+  return [...matches].sort(compareMatchesByScheduleDesc);
 }

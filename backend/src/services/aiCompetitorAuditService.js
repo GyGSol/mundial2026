@@ -9,7 +9,7 @@ import { formatPostMatchReviewRowMeta } from './aiPostMatchLearningService.js';
 import { env } from '../config/env.js';
 import { goalDiffScore } from './goalDiffStats.js';
 import { isPredictionLocked } from './predictionLockService.js';
-import { compareMatchesBySchedule } from './matchSortService.js';
+import { compareMatchesBySchedule, sortMatchesByScheduleDesc } from './matchSortService.js';
 import { recalculateMatchScores } from './syncService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { getAiUser } from './aiUserService.js';
@@ -193,12 +193,16 @@ export async function getAiCompetitorOverview({
   const globalScored = allPredictions.filter((p) => p.pointsEarned != null);
   const stats = buildAiCompetitorStats(globalScored, globalStateCounts, allMatches.length);
 
-  const matches = allMatches.filter((match) => {
+  let matches = allMatches.filter((match) => {
     if (status && match.status !== status) return false;
     if (group && String(match.group ?? '').toUpperCase() !== String(group).toUpperCase()) return false;
     if (matchNumber && String(match.externalId) !== String(matchNumber)) return false;
     return true;
   });
+
+  if (status === 'finished') {
+    matches = sortMatchesByScheduleDesc(matches);
+  }
 
   if (!matches.length) {
     return {
