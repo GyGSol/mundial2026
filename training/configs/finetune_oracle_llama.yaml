@@ -1,0 +1,27 @@
+trainer:
+  init:
+    device: "CSX"
+    model_dir: "./training/model_dir"
+  loop:
+    num_steps: 1000
+    eval_steps: 100
+    eval_frequency: 100
+  checkpoint:
+    steps: 200
+  fit:
+    train_dataloader:
+      data_processor: GptHDF5MapDataProcessor
+      data_dir: "./training/data/hdf5/train"
+      batch_size: 64
+      micro_batch_size: 16
+      shuffle: false
+      num_workers: 4
+    val_dataloader:
+      data_processor: GptHDF5MapDataProcessor
+      data_dir: "./training/data/hdf5/valid"
+      batch_size: 64
+      micro_batch_size: 16
+      shuffle: false
+      num_workers: 4
+  callbacks:
+    - MSELoss: {}

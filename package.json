@@ -20,6 +20,8 @@
     "reset-db": "npm run reset-db -w backend",
     "prepare-package": "node scripts/prepare-package.js",
     "package-zip": "node scripts/prepare-package.js",
+    "oracle:export": "npm run oracle:export -w backend",
+    "oracle:preprocess": "python3 training/preprocess_oracle_data.py",
     "start": "node backend/src/index.js",
     "heroku-postbuild": "npm install --include=dev && npm run build"
   },

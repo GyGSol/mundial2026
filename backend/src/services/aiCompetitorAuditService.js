@@ -88,6 +88,7 @@ export async function saveAiCompetitorPredictionLog({
           awayGoals: rawScore.awayGoals,
           reasoning: rawScore.reasoning ?? null,
           source: rawScore.source ?? null,
+          oracle: rawScore.oracle ?? null,
         }
       : null,
     finalResponse: {
@@ -96,6 +97,7 @@ export async function saveAiCompetitorPredictionLog({
       reasoning: finalScore.reasoning ?? null,
       source: finalScore.source ?? null,
       calibrationApplied: Boolean(finalScore.calibrationApplied),
+      oracle: finalScore.oracle ?? rawScore?.oracle ?? null,
     },
   });
 

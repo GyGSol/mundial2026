@@ -1,0 +1,4 @@
+# Dependencias para preprocesamiento HDF5 en Cerebras Model Studio (CS-3).
+# Instalar en el entorno de entrenamiento, no en Heroku.
+h5py>=3.10.0
+pyyaml>=6.0

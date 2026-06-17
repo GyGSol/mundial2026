@@ -46,7 +46,8 @@ import {
   formatExternalIntelForPrompt,
   scoreFromExternalIntel,
 } from './externalMatchIntelService.js';
-import { refreshTeamPlayerIntel } from './aiPlayerIntelService.js';
+import { refreshTeamPlayerIntel, applyOracleAvailabilityFilter } from './aiPlayerIntelService.js';
+import { buildMicroEventsContextBlock } from './matchMicroEventService.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -550,7 +551,7 @@ export async function buildAiCompetitorPredictionContext(
   return {
     ...base,
     nationContext: enriched.nationContext,
-    squadAnalysis: enriched.squadAnalysis,
+    squadAnalysis: applyOracleAvailabilityFilter(enriched.squadAnalysis),
     positionMatchups: enriched.positionMatchups,
     historialReciente,
     stakesContext,
@@ -560,6 +561,7 @@ export async function buildAiCompetitorPredictionContext(
     calibracionReciente: buildCalibrationPromptBlock(calibrationStats),
     mercadoYxG: formatExternalIntelForPrompt(externalIntel),
     externalIntel,
+    microEventos: await buildMicroEventsContextBlock(match._id),
     _calibrationStats: calibrationStats,
   };
 }
@@ -704,17 +706,18 @@ async function callOpenAiProviderForScore(context, { apiKey, url, model, source,
 }
 
 export async function callCerebrasForScore(context, options = {}) {
-  return callOpenAiProviderForScore(
-    context,
-    {
-      apiKey: env.cerebrasApiKey,
-      url: CEREBRAS_API_URL,
-      model: env.aiCerebrasModel,
-      source: 'cerebras',
-      providerLabel: 'Cerebras',
-    },
-    options
-  );
+  const { predictScore: oraclePredictScore } = await import('./predictiveModelingService.js');
+  const oracleResult = await oraclePredictScore(context, options);
+  if (oracleResult) {
+    return {
+      homeGoals: oracleResult.homeGoals,
+      awayGoals: oracleResult.awayGoals,
+      reasoning: oracleResult.reasoning,
+      source: oracleResult.source ?? 'cerebras',
+      oracle: oracleResult.oracle ?? null,
+    };
+  }
+  return null;
 }
 
 export async function callGroqForScore(context, options = {}) {

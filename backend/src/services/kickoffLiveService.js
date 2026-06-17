@@ -15,6 +15,7 @@ import {
 } from './fifaApiClient.js';
 import { Team } from '../models/Team.js';
 import { isPlausibleMatchGoalCount } from './matchLiveData.js';
+import { syncMicroEventsFromMatch } from './matchMicroEventService.js';
 
 function matchEvidentlyStartedOnField(match) {
   const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
@@ -211,6 +212,20 @@ export async function promoteMatchesAtKickoff() {
 export async function syncLiveMatchScoring() {
   const promoted = await promoteMatchesAtKickoff();
   const { matches, users } = await recalculateAllLiveMatches();
+
+  if (matches > 0) {
+    const liveMatches = await Match.find({ status: 'live' }).select('_id homeScore awayScore raw').lean();
+    const { predictLiveAdjustment } = await import('./predictiveModelingService.js');
+    for (const liveMatch of liveMatches) {
+      void predictLiveAdjustment(liveMatch._id, {
+        homeScore: liveMatch.homeScore,
+        awayScore: liveMatch.awayScore,
+      }).catch((err) => {
+        console.warn(`Oracle live adjust (${liveMatch._id}):`, err.message);
+      });
+      void syncMicroEventsFromMatch(liveMatch).catch(() => null);
+    }
+  }
 
   if (matches > 0 && users > 0) {
     notifyMatchesUpdated({ reason: 'live_scoring_sync', liveMatches: matches });

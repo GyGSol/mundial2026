@@ -1,0 +1,14 @@
+setup:
+  data:
+    source: "./training/data/raw/oracle_valid.jsonl"
+    type: "local"
+  mode: "finetuning"
+  output_dir: "./training/data/hdf5/valid"
+  processes: 0
+processing:
+  read_hook: "oracle_mse_read_hook"
+  read_hook_kwargs: {}
+dataset:
+  chunk_size: 1024
+  shuffle: false
+  shuffle_seed: 1337

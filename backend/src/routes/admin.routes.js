@@ -21,7 +21,6 @@ import {
 } from '../services/prizePoolService.js';
 import {
   addAdminGroupMember,
-  approveAdminJoinRequest,
   createAdminGroup,
   createAdminPrediction,
   createAdminUser,
@@ -68,6 +67,7 @@ import {
   getOrGenerateAiPostMatchReview,
 } from '../services/aiPostMatchLearningService.js';
 import { simulateAiCompetitorPrediction, runOfficialAiCompetitorPrediction } from '../services/aiPredictionService.js';
+import { getOracleErrorCurve } from '../services/oracleErrorTrackingService.js';
 
 const router = Router();
 
@@ -597,6 +597,15 @@ router.get('/ai-competitor/overview', adminMiddleware, async (req, res, next) =>
         predictionFilter: req.query.predictionFilter,
       })
     );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/ai-competitor/error-curve', adminMiddleware, async (req, res, next) => {
+  try {
+    const year = req.query.year ? Number(req.query.year) : 2026;
+    res.json(await getOracleErrorCurve({ tournamentYear: year }));
   } catch (err) {
     next(err);
   }

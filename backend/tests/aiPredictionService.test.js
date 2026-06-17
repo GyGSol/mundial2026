@@ -15,6 +15,7 @@ import {
   AI_COMPETITOR_SCORING_INSTRUCTIONS,
   aiModelForScoreSource,
 } from '../src/services/aiPredictionService.js';
+import * as predictiveModelingService from '../src/services/predictiveModelingService.js';
 import { env } from '../src/config/env.js';
 
 const kickoff = new Date('2026-06-15T20:00:00.000Z');
@@ -129,36 +130,50 @@ describe('aiPredictionService', () => {
 
     it('usa Cerebras como proveedor principal', async () => {
       const previousCerebrasKey = env.cerebrasApiKey;
-      const previousGeminiKey = env.googleAiApiKey;
       env.cerebrasApiKey = 'cerebras-test-key';
-      env.googleAiApiKey = 'test-key';
 
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          choices: [
-            {
-              message: {
-                content: '{"homeGoals":3,"awayGoals":1,"reasoning":"Cerebras favorito local"}',
-              },
-            },
-          ],
-        }),
-      });
-
-      const result = await callAiForScore(context, { fetchImpl: mockFetch });
-
-      expect(result).toEqual({
+      const predictSpy = vi.spyOn(predictiveModelingService, 'predictScore').mockResolvedValue({
         homeGoals: 3,
         awayGoals: 1,
         reasoning: 'Cerebras favorito local',
-        source: 'cerebras',
+        source: 'cerebras-oracle',
+        oracle: {
+          predicted_score: [3, 1],
+          confidence_interval: 0.8,
+          key_variable_impact: 'Cerebras favorito local',
+          error_reduction_factor: 0.2,
+        },
       });
-      expect(mockFetch).toHaveBeenCalledOnce();
-      expect(String(mockFetch.mock.calls[0][0])).toContain('cerebras.ai');
+
+      const result = await callAiForScore(context);
+
+      expect(result).toMatchObject({
+        homeGoals: 3,
+        awayGoals: 1,
+        reasoning: 'Cerebras favorito local',
+        source: 'cerebras-oracle',
+      });
+      expect(predictSpy).toHaveBeenCalledOnce();
+
+      predictSpy.mockRestore();
+      env.cerebrasApiKey = previousCerebrasKey;
+    });
+
+    it('sin API key Oracle cae a heurística vía cadena de proveedores', async () => {
+      const previousCerebrasKey = env.cerebrasApiKey;
+      const previousGeminiKey = env.googleAiApiKey;
+      const previousGroqKey = env.groqApiKey;
+      env.cerebrasApiKey = '';
+      env.googleAiApiKey = '';
+      env.groqApiKey = '';
+
+      const result = await callAiForScore(context);
+      expect(result.source).toBe('heuristic');
+      expect(result.homeGoals).toBeGreaterThanOrEqual(0);
 
       env.cerebrasApiKey = previousCerebrasKey;
       env.googleAiApiKey = previousGeminiKey;
+      env.groqApiKey = previousGroqKey;
     });
 
     it('parsea respuesta Gemini mockeada', async () => {

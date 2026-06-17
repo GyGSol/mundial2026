@@ -6,6 +6,7 @@ import MarkdownContent from '../../components/MarkdownContent.jsx';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStatCard from '../../components/admin/AdminStatCard.jsx';
+import OracleErrorCurveChart from '../../components/admin/OracleErrorCurveChart.jsx';
 import {
   adminBtnOutline,
   adminInput,
@@ -496,6 +497,8 @@ export default function AdminAiCompetitorPage() {
           />
         </div>
       ) : null}
+
+      <OracleErrorCurveChart />
 
       <AdminCard className="mb-4">
         <div className="flex flex-wrap gap-3">

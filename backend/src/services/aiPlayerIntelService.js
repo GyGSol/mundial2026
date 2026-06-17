@@ -217,6 +217,36 @@ export function mergePlayerWithIntel(player, intel) {
   };
 }
 
+/** Excluye lesionados/duda del XI probable para inferencia Oracle. */
+export function applyOracleAvailabilityFilter(squadAnalysis) {
+  if (!squadAnalysis) return squadAnalysis;
+
+  const filterSide = (side) => {
+    if (!side || typeof side !== 'object') return side;
+    const starters = side.probableStarters ?? side.starters ?? [];
+    const unavailable = starters.filter((p) =>
+      ['injured', 'doubt'].includes(p.healthStatus)
+    );
+    const availableStarters = starters.filter(
+      (p) => !['injured', 'doubt'].includes(p.healthStatus)
+    );
+    return {
+      ...side,
+      probableStarters: availableStarters,
+      oracleExcludedPlayers: unavailable.map((p) => ({
+        name: p.fullName ?? p.name,
+        healthStatus: p.healthStatus,
+        injuryInfo: p.injuryInfo ?? null,
+      })),
+    };
+  };
+
+  return {
+    home: filterSide(squadAnalysis.home),
+    away: filterSide(squadAnalysis.away),
+  };
+}
+
 function intelPriorityRank(player) {
   if (player.healthStatus === 'injured') return 0;
   if (player.healthStatus === 'doubt') return 1;

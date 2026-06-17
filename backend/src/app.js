@@ -23,6 +23,7 @@ import streamRoutes from './routes/stream.routes.js';
 import pushRoutes from './routes/push.routes.js';
 import transmissionsRoutes from './routes/transmissions.routes.js';
 import economyRoutes from './routes/economy.routes.js';
+import oracleRoutes from './routes/oracle.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,6 +59,7 @@ export function createApp() {
   app.use('/api/push', pushRoutes);
   app.use('/api/transmissions', transmissionsRoutes);
   app.use('/api/economy', economyRoutes);
+  app.use('/api/oracle', oracleRoutes);
 
   if (existsSync(publicDir)) {
     app.use(express.static(publicDir));

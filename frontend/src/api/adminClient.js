@@ -204,6 +204,10 @@ export const adminApi = {
     const query = new URLSearchParams(params).toString();
     return adminRequest(`/ai-competitor/overview${query ? `?${query}` : ''}`);
   },
+  getOracleErrorCurve: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return adminRequest(`/ai-competitor/error-curve${query ? `?${query}` : ''}`);
+  },
   simulateAiCompetitorPrediction: (matchId) =>
     adminRequest(`/ai-competitor/simulate/${encodeURIComponent(matchId)}`, {
       method: 'POST',

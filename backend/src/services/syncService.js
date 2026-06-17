@@ -38,6 +38,7 @@ import {
   runPostSyncMatchAudit,
 } from './matchIntegrityAuditService.js';
 import { resolveAndApplySourceDisputes } from './aiMatchSourceResolverService.js';
+import { syncMicroEventsFromMatch } from './matchMicroEventService.js';
 import {
   mergePlausibleGoalCounts,
   readFifaAuthoritativeScores,
@@ -298,6 +299,10 @@ async function upsertMatches() {
       { $set: updatePayload },
       { upsert: !existing, new: true }
     );
+
+    void syncMicroEventsFromMatch(match).catch((err) => {
+      console.warn(`Micro-events sync failed (${match.externalId}):`, err.message);
+    });
 
     const becameLive = match.status === 'live' && existing?.status !== 'live';
     const scoreChanged = needsRescore(existing, match);
