@@ -7,6 +7,8 @@ import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import AdminStatCard from '../../components/admin/AdminStatCard.jsx';
 import OracleErrorCurveChart from '../../components/admin/OracleErrorCurveChart.jsx';
+import AdminOracleLearningPanel from '../../components/admin/AdminOracleLearningPanel.jsx';
+import AdminOracleReviewChat from '../../components/admin/AdminOracleReviewChat.jsx';
 import {
   adminBtnOutline,
   adminInput,
@@ -216,6 +218,7 @@ export default function AdminAiCompetitorPage() {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [notes, setNotes] = useState('');
+  const [correctedReasoning, setCorrectedReasoning] = useState('');
   const [notesBusy, setNotesBusy] = useState(false);
   const [simulateBusyId, setSimulateBusyId] = useState(null);
   const [runOfficialBusyId, setRunOfficialBusyId] = useState(null);
@@ -245,6 +248,7 @@ export default function AdminAiCompetitorPage() {
     if (!selectedLogId) {
       setDetail(null);
       setNotes('');
+      setCorrectedReasoning('');
       return;
     }
 
@@ -258,6 +262,7 @@ export default function AdminAiCompetitorPage() {
         if (cancelled) return;
         setDetail(payload);
         setNotes(payload.adminNotes ?? '');
+        setCorrectedReasoning(payload.correctedReasoning ?? '');
       })
       .catch((err) => {
         if (!cancelled) setMessage(err.message);
@@ -396,6 +401,7 @@ export default function AdminAiCompetitorPage() {
       setSelectedLogId(result.id ?? row.latestOfficialLogId);
       setDetail(result);
       setNotes(result.adminNotes ?? '');
+      setCorrectedReasoning(result.correctedReasoning ?? '');
       const src = result.finalResponse?.source ?? result.aiSource ?? 'ia';
       setMessage(
         `Predicción IA oficial: ${result.homeGoals}-${result.awayGoals} (${src})`
@@ -408,14 +414,18 @@ export default function AdminAiCompetitorPage() {
     }
   }
 
-  async function saveNotes() {
+  async function saveLearningFeedback() {
     if (!selectedLogId) return;
     setNotesBusy(true);
     setMessage('');
     try {
-      const result = await adminApi.updateAiCompetitorLogNotes(selectedLogId, notes);
+      const result = await adminApi.updateAiCompetitorLogNotes(selectedLogId, {
+        adminNotes: notes,
+        correctedReasoning,
+      });
       setNotes(result.adminNotes ?? '');
-      setMessage('Notas guardadas');
+      setCorrectedReasoning(result.correctedReasoning ?? '');
+      setMessage('Feedback de aprendizaje guardado');
       await refresh();
     } catch (err) {
       setMessage(err.message);
@@ -436,6 +446,7 @@ export default function AdminAiCompetitorPage() {
       setSelectedLogId(result.id);
       setDetail(result);
       setNotes(result.adminNotes ?? '');
+      setCorrectedReasoning(result.correctedReasoning ?? '');
       setMessage('Simulación completada (no reemplaza la predicción oficial)');
       await refresh();
     } catch (err) {
@@ -463,7 +474,7 @@ export default function AdminAiCompetitorPage() {
     <div className={adminPage}>
       <AdminPageHeader
         title="Predictive Modeling (IA)"
-        description="Partidos del torneo con estado de predicción del bot, estadísticas de error, edición manual del marcador oficial y simulación de prueba (~T-90 automático)."
+        description="Partidos del torneo, curva de error Oracle, laboratorio de entrenamiento, revisión interactiva del modelo y control del aprendizaje del bot."
       >
         <Button variant="outline" size="sm" className={adminBtnOutline} onClick={refresh} disabled={loading}>
           Actualizar
@@ -499,6 +510,10 @@ export default function AdminAiCompetitorPage() {
       ) : null}
 
       <OracleErrorCurveChart />
+
+      <div className="mb-4">
+        <AdminOracleLearningPanel onRefreshOverview={refresh} />
+      </div>
 
       <AdminCard className="mb-4">
         <div className="flex flex-wrap gap-3">
@@ -875,19 +890,40 @@ export default function AdminAiCompetitorPage() {
               <JsonPanel title="Respuesta final" value={detail.finalResponse} />
 
               {!detail.isSimulation ? (
-                <div>
-                  <h3 className="mb-2 text-sm font-medium text-slate-200">Notas para aprendizaje</h3>
-                  <textarea
-                    className={`${adminInput} min-h-[120px] w-full resize-y`}
-                    placeholder="Anotá qué funcionó, qué falló y qué ajustar en el prompt o datos…"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                  <div className="mt-2 flex justify-end">
-                    <Button size="sm" className={adminBtnOutline} onClick={saveNotes} disabled={notesBusy}>
-                      {notesBusy ? 'Guardando…' : 'Guardar notas'}
+                <div className="space-y-4 rounded-lg border border-slate-700/60 bg-slate-900/30 p-3">
+                  <h3 className="text-sm font-medium text-slate-200">Control de aprendizaje</h3>
+                  <div>
+                    <label className="mb-1 block text-xs text-slate-400">
+                      Razonamiento corregido (anti-alucinación)
+                    </label>
+                    <textarea
+                      className={`${adminInput} min-h-[100px] w-full resize-y`}
+                      placeholder="Escribí cómo debería haber razonado el modelo. Esto se incluye en el export de entrenamiento."
+                      value={correctedReasoning}
+                      onChange={(e) => setCorrectedReasoning(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-slate-400">Notas internas de aprendizaje</label>
+                    <textarea
+                      className={`${adminInput} min-h-[100px] w-full resize-y`}
+                      placeholder="Qué funcionó, qué falló, qué ajustar en prompt o datos…"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      className={adminBtnOutline}
+                      onClick={saveLearningFeedback}
+                      disabled={notesBusy}
+                    >
+                      {notesBusy ? 'Guardando…' : 'Guardar feedback'}
                     </Button>
                   </div>
+
+                  <AdminOracleReviewChat logId={selectedLogId} disabled={detail.isSimulation} />
                 </div>
               ) : null}
               </div>

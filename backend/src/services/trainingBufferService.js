@@ -125,3 +125,137 @@ export async function markTrainingBufferExported(ids = []) {
   );
   return { updated: result.modifiedCount ?? 0 };
 }
+
+function buildExportPromptFromRow(row) {
+  const ctx = row.promptContext;
+  const home = ctx?.match?.homeTeamId ?? ctx?.homeTeam?.code ?? '?';
+  const away = ctx?.match?.awayTeamId ?? ctx?.awayTeam?.code ?? '?';
+  const group = ctx?.match?.group ?? ctx?.group ?? '';
+  return (
+    `Mundial 2026${group ? ` grupo ${group}` : ''}\n` +
+    `Local: ${home}\nVisitante: ${away}\n` +
+    `Predicción previa Oracle: ${row.predictedScore.home}-${row.predictedScore.away}\n` +
+    `Resultado real: ${row.actualScore.home}-${row.actualScore.away}\n` +
+    `Corrige el patrón para minimizar MSE en futuros partidos similares.`
+  );
+}
+
+export function serializeTrainingBufferRow(row, { adminFeedback = null } = {}) {
+  return {
+    prompt: buildExportPromptFromRow(row),
+    completion: `${row.actualScore.home}-${row.actualScore.away}`,
+    mseError: row.mseError,
+    sample_weight: 1 + row.mseError,
+    metadata: {
+      source: 'trainingBuffer',
+      tournament: 2026,
+      phase: 'mundial2026',
+      mse_error: row.mseError,
+      matchId: String(row.matchId),
+      goal_timings: (row.microEvents ?? [])
+        .filter((e) => e.type === 'goal')
+        .map((e) => ({ minute: e.minute, player: e.playerName })),
+      adminFeedback: adminFeedback ?? null,
+    },
+  };
+}
+
+export async function getTrainingBufferSummary() {
+  const [total, unexported, agg] = await Promise.all([
+    TrainingBuffer.countDocuments(),
+    TrainingBuffer.countDocuments({ exportedAt: null }),
+    TrainingBuffer.aggregate([
+      {
+        $group: {
+          _id: null,
+          avgMse: { $avg: '$mseError' },
+          maxMse: { $max: '$mseError' },
+          lastCreatedAt: { $max: '$createdAt' },
+          lastExportedAt: { $max: '$exportedAt' },
+        },
+      },
+    ]),
+  ]);
+
+  const stats = agg[0] ?? {};
+  return {
+    total,
+    unexported,
+    avgMse: stats.avgMse != null ? Number(stats.avgMse.toFixed(4)) : null,
+    maxMse: stats.maxMse ?? null,
+    lastCreatedAt: stats.lastCreatedAt ?? null,
+    lastExportedAt: stats.lastExportedAt ?? null,
+    alwaysRecord: env.trainingBufferAlwaysRecord,
+    exportCron: env.trainingBufferExportCron,
+  };
+}
+
+export async function listTrainingBufferRows({ limit = 25, onlyUnexported = false } = {}) {
+  const filter = onlyUnexported ? { exportedAt: null } : {};
+  const rows = await TrainingBuffer.find(filter)
+    .sort({ createdAt: -1 })
+    .limit(Math.min(limit, 200))
+    .lean();
+
+  return rows.map((row) => ({
+    id: row._id.toString(),
+    matchId: row.matchId?.toString?.() ?? String(row.matchId),
+    predictedScore: row.predictedScore,
+    actualScore: row.actualScore,
+    mseError: row.mseError,
+    goalDiffCombined: row.goalDiffCombined,
+    weekBucket: row.weekBucket,
+    exportedAt: row.exportedAt,
+    createdAt: row.createdAt,
+    oracleMeta: row.oracleMeta ?? null,
+  }));
+}
+
+/** Exporta filas no exportadas; devuelve JSONL para descarga admin (Heroku-safe). */
+export async function exportTrainingBufferRecords({ limit = 2000, writeFile = false, outDir = null } = {}) {
+  const rows = await listUnexportedTrainingBuffer({ limit });
+  if (!rows.length) {
+    return { exported: 0, filename: null, jsonl: '', records: [] };
+  }
+
+  const matchIds = [...new Set(rows.map((r) => r.matchId))];
+  const logs = await AiCompetitorPredictionLog.find({
+    matchId: { $in: matchIds },
+    isSimulation: { $ne: true },
+  })
+    .sort({ createdAt: -1 })
+    .select('matchId adminNotes correctedReasoning')
+    .lean();
+
+  const feedbackByMatch = new Map();
+  for (const log of logs) {
+    const key = String(log.matchId);
+    if (feedbackByMatch.has(key)) continue;
+    const notes = [log.correctedReasoning, log.adminNotes].filter(Boolean).join('\n\n').trim();
+    if (notes) feedbackByMatch.set(key, notes);
+  }
+
+  const records = rows.map((row) =>
+    serializeTrainingBufferRow(row, {
+      adminFeedback: feedbackByMatch.get(String(row.matchId)) ?? null,
+    })
+  );
+  const jsonl = records.map((r) => JSON.stringify(r)).join('\n');
+  const bucket = rows[0]?.weekBucket ?? 'export';
+  const filename = `buffer-${bucket}.jsonl`;
+
+  if (writeFile && outDir) {
+    const fs = await import('node:fs');
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.appendFileSync(`${outDir}/${filename}`, `${jsonl}\n`, 'utf8');
+  }
+
+  await markTrainingBufferExported(rows.map((r) => r._id));
+
+  return {
+    exported: rows.length,
+    filename,
+    jsonl,
+    records,
+  };
+}

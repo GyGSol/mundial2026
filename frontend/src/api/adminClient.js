@@ -208,6 +208,20 @@ export const adminApi = {
     const query = new URLSearchParams(params).toString();
     return adminRequest(`/ai-competitor/error-curve${query ? `?${query}` : ''}`);
   },
+  getAdminLearningOverview: () => adminRequest('/ai-competitor/learning'),
+  exportTrainingBuffer: () =>
+    adminRequest('/ai-competitor/training-buffer/export', { method: 'POST' }),
+  getAdminOracleReview: (logId) =>
+    adminRequest(`/ai-competitor/logs/${encodeURIComponent(logId)}/oracle-review`),
+  askAdminOracleReview: (logId, question) =>
+    adminRequest(`/ai-competitor/logs/${encodeURIComponent(logId)}/oracle-review/ask`, {
+      method: 'POST',
+      body: JSON.stringify({ question }),
+    }),
+  clearAdminOracleReview: (logId) =>
+    adminRequest(`/ai-competitor/logs/${encodeURIComponent(logId)}/oracle-review/clear`, {
+      method: 'POST',
+    }),
   simulateAiCompetitorPrediction: (matchId) =>
     adminRequest(`/ai-competitor/simulate/${encodeURIComponent(matchId)}`, {
       method: 'POST',
@@ -228,10 +242,10 @@ export const adminApi = {
       `/ai-competitor/matches/${encodeURIComponent(matchId)}/post-match-review${query}`
     );
   },
-  updateAiCompetitorLogNotes: (id, adminNotes) =>
+  updateAiCompetitorLogNotes: (id, { adminNotes, correctedReasoning } = {}) =>
     adminRequest(`/ai-competitor/logs/${encodeURIComponent(id)}`, {
       method: 'PATCH',
-      body: JSON.stringify({ adminNotes }),
+      body: JSON.stringify({ adminNotes, correctedReasoning }),
     }),
   listStreamLinks: () => adminRequest('/stream-links'),
   suggestStreamLinks: (matchId) =>

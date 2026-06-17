@@ -60,8 +60,16 @@ import {
   getAiCompetitorOverview,
   listAiCompetitorPredictionLogs,
   updateAiCompetitorPredictionLogNotes,
+  updateAiCompetitorLogFeedback,
   upsertAiCompetitorPrediction,
 } from '../services/aiCompetitorAuditService.js';
+import {
+  askAdminOracleReview,
+  clearAdminOracleReview,
+  exportTrainingBufferForAdmin,
+  getAdminLearningOverview,
+  getAdminOracleReviewThread,
+} from '../services/adminOracleLearningService.js';
 import {
   formatPostMatchReviewRowMeta,
   getOrGenerateAiPostMatchReview,
@@ -611,6 +619,47 @@ router.get('/ai-competitor/error-curve', adminMiddleware, async (req, res, next)
   }
 });
 
+router.get('/ai-competitor/learning', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await getAdminLearningOverview());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/ai-competitor/training-buffer/export', adminMiddleware, async (req, res, next) => {
+  try {
+    const writeFile = req.body?.writeFile === true || req.query.writeFile === '1';
+    res.json(await exportTrainingBufferForAdmin({ writeFile }));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/ai-competitor/logs/:id/oracle-review', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await getAdminOracleReviewThread(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/ai-competitor/logs/:id/oracle-review/ask', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await askAdminOracleReview(req.params.id, req.body?.question));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/ai-competitor/logs/:id/oracle-review/clear', adminMiddleware, async (req, res, next) => {
+  try {
+    res.json(await clearAdminOracleReview(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/ai-competitor/matches/:matchId/post-match-review', adminMiddleware, async (req, res, next) => {
   try {
     const refresh = req.query.refresh === '1' || req.query.refresh === 'true';
@@ -675,7 +724,10 @@ router.get('/ai-competitor/logs/:id', adminMiddleware, async (req, res, next) =>
 router.patch('/ai-competitor/logs/:id', adminMiddleware, async (req, res, next) => {
   try {
     res.json(
-      await updateAiCompetitorPredictionLogNotes(req.params.id, req.body?.adminNotes)
+      await updateAiCompetitorLogFeedback(req.params.id, {
+        adminNotes: req.body?.adminNotes,
+        correctedReasoning: req.body?.correctedReasoning,
+      })
     );
   } catch (err) {
     next(err);

@@ -546,6 +546,7 @@ export async function getAiCompetitorPredictionLogById(id, { includePromptContex
     calibrationApplied: log.calibrationApplied,
     isSimulation: Boolean(log.isSimulation),
     adminNotes: log.adminNotes ?? '',
+    correctedReasoning: log.correctedReasoning ?? '',
     ...(includePromptContext ? { promptContext: log.promptContext } : {}),
     rawResponse: log.rawResponse,
     finalResponse: log.finalResponse,
@@ -568,16 +569,36 @@ export async function getAiCompetitorPredictionLogById(id, { includePromptContex
 }
 
 export async function updateAiCompetitorPredictionLogNotes(id, adminNotes) {
+  return updateAiCompetitorLogFeedback(id, { adminNotes });
+}
+
+export async function updateAiCompetitorLogFeedback(
+  id,
+  { adminNotes, correctedReasoning } = {}
+) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const error = new Error('Log no encontrado');
     error.status = 404;
     throw error;
   }
 
-  const notes = String(adminNotes ?? '').trim().slice(0, 4000);
+  const patch = {};
+  if (adminNotes !== undefined) {
+    patch.adminNotes = String(adminNotes ?? '').trim().slice(0, 4000);
+  }
+  if (correctedReasoning !== undefined) {
+    patch.correctedReasoning = String(correctedReasoning ?? '').trim().slice(0, 4000);
+  }
+
+  if (!Object.keys(patch).length) {
+    const error = new Error('Sin cambios');
+    error.status = 400;
+    throw error;
+  }
+
   const log = await AiCompetitorPredictionLog.findByIdAndUpdate(
     id,
-    { $set: { adminNotes: notes } },
+    { $set: patch },
     { new: true }
   ).lean();
 
@@ -587,5 +608,9 @@ export async function updateAiCompetitorPredictionLogNotes(id, adminNotes) {
     throw error;
   }
 
-  return { id: log._id.toString(), adminNotes: log.adminNotes ?? '' };
+  return {
+    id: log._id.toString(),
+    adminNotes: log.adminNotes ?? '',
+    correctedReasoning: log.correctedReasoning ?? '',
+  };
 }
