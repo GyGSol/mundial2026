@@ -263,17 +263,10 @@ export default function LeaderboardPage() {
                         <span className="truncate text-muted-foreground">{slot.name}</span>
                       ) : null}
                     </span>
-                    {(slot.retainedByHouse ?? 0) > 0 ? (
-                      <span className="inline-flex shrink-0 items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
-                        La Casa +{slot.retainedByHouse}
-                        <FubolCoinIcon size="sm" />
-                      </span>
-                    ) : (
-                      <span className="inline-flex shrink-0 items-center gap-1 font-semibold tabular-nums">
-                        {slot.fubols}
-                        <FubolCoinIcon size="sm" />
-                      </span>
-                    )}
+                    <span className="inline-flex shrink-0 items-center gap-1 font-semibold tabular-nums">
+                      {slot.fubols}
+                      <FubolCoinIcon size="sm" />
+                    </span>
                   </li>
                 ))}
               </ul>

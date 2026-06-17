@@ -590,16 +590,10 @@ export default function GroupsPage() {
                                     >
                                       <span>
                                         {slot.rank}°
-                                        {(slot.retainedByHouse ?? 0) > 0
-                                          ? ' · La Casa'
-                                          : slot.name
-                                            ? ` · ${slot.name}`
-                                            : ''}
+                                        {slot.name ? ` · ${slot.name}` : ''}
                                       </span>
                                       <span className="inline-flex items-center gap-1 font-medium tabular-nums">
-                                        {(slot.retainedByHouse ?? 0) > 0
-                                          ? `+${slot.retainedByHouse}`
-                                          : slot.fubols}
+                                        {slot.fubols}
                                         <FubolCoinIcon size="sm" />
                                       </span>
                                     </li>

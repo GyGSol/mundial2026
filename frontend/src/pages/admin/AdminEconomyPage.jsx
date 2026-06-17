@@ -3,7 +3,6 @@ import { adminApi } from '../../api/adminClient.js';
 import FubolCoinIcon from '../../components/FubolCoinIcon.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
-import { Badge } from '@/components/ui/badge.jsx';
 
 export default function AdminEconomyPage() {
   const [data, setData] = useState(null);
@@ -83,24 +82,15 @@ export default function AdminEconomyPage() {
                       <span>
                         {slot.rank}º — {slot.name || '—'} ({slot.percent}%)
                       </span>
-                      <span className="inline-flex items-center gap-2">
-                        {slot.isAiUser ? (
-                          <Badge variant="outline" className="border-amber-500/50 text-amber-200">
-                            La Casa +{slot.retainedByHouse}
-                          </Badge>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 font-medium">
-                            {slot.fubols}
-                            <FubolCoinIcon size="sm" />
-                          </span>
-                        )}
+                      <span className="inline-flex items-center gap-1 font-medium">
+                        {slot.fubols}
+                        <FubolCoinIcon size="sm" />
                       </span>
                     </div>
                   ))}
                   {group.bankStatus?.aiRank ? (
                     <p className="text-xs text-amber-200/90">
-                      IA en puesto {group.bankStatus.aiRank} — custodia proyectada{' '}
-                      {group.bankStatus.custodiedFubols} Fubols
+                      IA en puesto {group.bankStatus.aiRank} del ranking (excluida del reparto de premios)
                     </p>
                   ) : null}
                 </CardContent>

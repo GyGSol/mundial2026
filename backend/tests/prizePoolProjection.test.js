@@ -31,7 +31,7 @@ describe('prize pool projection math', () => {
     expect(amounts).toEqual([330, 270, 200, 130, 70]);
   });
 
-  it('retiene premio de IA en La Casa', () => {
+  it('excluye IA del reparto y asigna premios a humanos', () => {
     const total = 1000;
     const percents = [...DEFAULT_PRIZE_SPLITS];
     const leaderboard = [
@@ -39,21 +39,21 @@ describe('prize pool projection math', () => {
       { id: 'u2', name: 'B', isAiUser: false, rank: 2 },
       { id: 'u3', name: 'C', isAiUser: false, rank: 3 },
     ];
+    const humanWinners = leaderboard.filter((entry) => !entry.isAiUser).slice(0, percents.length);
 
-    let houseRetention = 0;
     const distribution = percents.map((percent, index) => {
       const fubols = Math.floor((total * percent) / 100);
-      const entry = leaderboard[index];
-      if (entry?.isAiUser) {
-        houseRetention += fubols;
-        return { fubols: 0, retainedByHouse: fubols };
-      }
-      return { fubols, retainedByHouse: 0 };
+      const entry = humanWinners[index];
+      return {
+        userId: entry?.id ?? null,
+        fubols: entry ? fubols : 0,
+        retainedByHouse: 0,
+      };
     });
 
-    expect(distribution[0]).toEqual({ fubols: 0, retainedByHouse: 500 });
-    expect(distribution[1]).toEqual({ fubols: 330, retainedByHouse: 0 });
-    expect(houseRetention).toBe(500);
+    expect(distribution[0]).toEqual({ userId: 'u2', fubols: 500, retainedByHouse: 0 });
+    expect(distribution[1]).toEqual({ userId: 'u3', fubols: 330, retainedByHouse: 0 });
+    expect(distribution[2]).toEqual({ userId: null, fubols: 0, retainedByHouse: 0 });
   });
 
   it('adjunta premios proyectados a filas del ranking', () => {
@@ -67,14 +67,14 @@ describe('prize pool projection math', () => {
       distribution: [
         { userId: 'u1', fubols: 500, retainedByHouse: 0, percent: 50 },
         { userId: 'u2', fubols: 330, retainedByHouse: 0, percent: 33 },
-        { userId: 'u3', fubols: 0, retainedByHouse: 170, percent: 17, isAiUser: true },
+        { userId: 'u3', fubols: 170, retainedByHouse: 0, percent: 17 },
       ],
     };
 
     const enriched = attachProjectedFubolsToLeaderboard(leaderboard, projection);
     expect(enriched[0].projectedFubols).toBe(500);
     expect(enriched[1].projectedFubols).toBe(330);
-    expect(enriched[2].fubolsRetainedByHouse).toBe(170);
+    expect(enriched[2].projectedFubols).toBe(170);
     expect(enriched[3].projectedFubols).toBeUndefined();
   });
 });

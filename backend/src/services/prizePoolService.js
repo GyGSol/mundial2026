@@ -73,26 +73,13 @@ export async function projectPrizeDistribution(groupId) {
     };
   }
 
-  const leaderboard = await getLeaderboard(groupId, percents.length);
+  const leaderboard = await getLeaderboard(groupId, Math.max(percents.length + 10, 50));
+  const humanWinners = leaderboard.filter((entry) => !entry.isAiUser).slice(0, percents.length);
 
-  let houseRetention = 0;
   const distribution = percents.map((percent, index) => {
     const rank = index + 1;
     const fubols = Math.floor((total * percent) / 100);
-    const entry = leaderboard[index];
-
-    if (entry?.isAiUser) {
-      houseRetention += fubols;
-      return {
-        rank,
-        userId: entry.id,
-        name: entry.name,
-        percent,
-        fubols: 0,
-        retainedByHouse: fubols,
-        isAiUser: true,
-      };
-    }
+    const entry = humanWinners[index];
 
     if (entry) {
       return {
@@ -103,6 +90,7 @@ export async function projectPrizeDistribution(groupId) {
         fubols,
         retainedByHouse: 0,
         isAiUser: false,
+        leaderboardRank: entry.rank,
       };
     }
 
@@ -123,7 +111,7 @@ export async function projectPrizeDistribution(groupId) {
     status: pool.status,
     distributionPercents: [...percents],
     distribution,
-    houseRetention,
+    houseRetention: 0,
   };
 }
 
@@ -145,7 +133,6 @@ export function attachProjectedFubolsToLeaderboard(leaderboard, projection) {
     return {
       ...row,
       projectedFubols: slot.fubols,
-      fubolsRetainedByHouse: slot.retainedByHouse || 0,
       prizePercent: slot.percent,
     };
   });
@@ -158,14 +145,10 @@ export async function findAiBankStatusForGroup(groupId) {
     return { aiRank: null, aiName: null, custodiedFubols: 0 };
   }
 
-  const projection = await projectPrizeDistribution(groupId);
-  const aiSlot = projection.distribution.find((slot) => slot.isAiUser);
-  const custodiedFubols = aiSlot?.retainedByHouse ?? 0;
-
   return {
     aiRank: aiEntry.rank,
     aiName: aiEntry.name,
-    custodiedFubols,
+    custodiedFubols: 0,
   };
 }
 
@@ -216,7 +199,7 @@ export async function getEconomyOverview() {
       custodiedFubols: globalCustodied,
       message:
         globalAiRank != null
-          ? `Estado de la Banca: La IA ocupa el puesto ${globalAiRank}. Fondos en custodia: ${globalCustodied} Fubols.`
+          ? `Estado de la Banca: La IA ocupa el puesto ${globalAiRank} en el ranking (no recibe premios del pozo).`
           : 'Estado de la Banca: La IA no figura en puestos premiados proyectados.',
     },
     groups: groupSummaries,
