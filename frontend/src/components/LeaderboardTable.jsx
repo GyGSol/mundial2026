@@ -14,8 +14,22 @@ import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },
   { key: 'pa', label: 'PA', title: 'Acierto resultado', trackDelta: true },
-  { key: 'gl', label: 'GL', title: 'Goles local', trackDelta: true },
-  { key: 'gv', label: 'GV', title: 'Goles visitante', trackDelta: true },
+  {
+    key: 'gl',
+    label: 'GL',
+    difKey: 'difGl',
+    title: 'Goles local',
+    difTitle: 'Dif. goles local acumulada (menor es mejor)',
+    trackDelta: true,
+  },
+  {
+    key: 'gv',
+    label: 'GV',
+    difKey: 'difGv',
+    title: 'Goles visitante',
+    difTitle: 'Dif. goles visitante acumulada (menor es mejor)',
+    trackDelta: true,
+  },
   { key: 'gt', label: 'GT', title: 'Goles totales', trackDelta: true },
 ];
 
@@ -59,7 +73,7 @@ function StatDeltaIndicator({ direction, amount, showDown = true }) {
   return null;
 }
 
-function StatValue({ value, delta, align = 'center', valueClassName }) {
+function StatValue({ value, delta, align = 'center', valueClassName, diff, diffTitle }) {
   const normalized = normalizeStatDelta(delta);
 
   return (
@@ -70,7 +84,17 @@ function StatValue({ value, delta, align = 'center', valueClassName }) {
         align === 'right' && 'justify-end'
       )}
     >
-      <span className={valueClassName}>{value}</span>
+      <span className={cn('inline-flex items-baseline gap-0.5', valueClassName)}>
+        <span>{value}</span>
+        {diff != null ? (
+          <span
+            className="text-[10px] font-normal tabular-nums text-muted-foreground"
+            title={diffTitle}
+          >
+            ({diff})
+          </span>
+        ) : null}
+      </span>
       <StatDeltaIndicator direction={normalized?.direction} amount={normalized?.amount} />
     </span>
   );
@@ -103,7 +127,12 @@ export default function LeaderboardTable({
               <TableHead className="min-w-[5.5rem] px-1 sm:min-w-0 sm:px-2">Jugador</TableHead>
               {statColumns.map((col) => (
                 <TableHead key={col.key} className={statHeadClass} title={col.title}>
-                  {col.label}
+                  <span className="inline-flex flex-col items-center leading-tight">
+                    <span>{col.label}</span>
+                    {col.difKey ? (
+                      <span className="text-[9px] font-normal text-muted-foreground">dif</span>
+                    ) : null}
+                  </span>
                 </TableHead>
               ))}
               <TableHead className={statHeadClass} title="Puntos bonus (consuelo)">
@@ -158,7 +187,18 @@ export default function LeaderboardTable({
                   {statColumns.map((col) => (
                     <TableCell key={col.key} className={statCellClass}>
                       {col.trackDelta && hasLiveMatches ? (
-                        <StatValue value={row[col.key] ?? 0} delta={rowDeltas[col.key]} />
+                        <StatValue
+                          value={row[col.key] ?? 0}
+                          diff={col.difKey ? (row[col.difKey] ?? 0) : null}
+                          diffTitle={col.difTitle}
+                          delta={rowDeltas[col.key]}
+                        />
+                      ) : col.difKey ? (
+                        <StatValue
+                          value={row[col.key] ?? 0}
+                          diff={row[col.difKey] ?? 0}
+                          diffTitle={col.difTitle}
+                        />
                       ) : (
                         (row[col.key] ?? 0)
                       )}

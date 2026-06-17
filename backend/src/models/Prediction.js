@@ -16,6 +16,8 @@ const predictionSchema = new mongoose.Schema(
       awayGoals: Number,
       totalGoals: Number,
     },
+    goalDiffHome: { type: Number, default: null },
+    goalDiffAway: { type: Number, default: null },
     /** Snapshot al arranque en vivo (0-0) para deltas de ranking en vivo. */
     liveKickoffPointsEarned: { type: Number, default: null },
     liveKickoffBreakdown: {
@@ -24,6 +26,8 @@ const predictionSchema = new mongoose.Schema(
       awayGoals: Number,
       totalGoals: Number,
     },
+    liveKickoffGoalDiffHome: { type: Number, default: null },
+    liveKickoffGoalDiffAway: { type: Number, default: null },
     predictionSource: { type: String, enum: ['user', 'ai', 'admin', 'default'], default: 'user' },
     aiModel: { type: String, default: null },
     aiReasoning: { type: String, default: null },

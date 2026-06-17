@@ -42,3 +42,11 @@ export function calculatePoints(prediction, actual) {
 
   return { total, breakdown };
 }
+
+/** Diferencia absoluta entre predicción y resultado real por equipo. */
+export function calculateGoalDiff(prediction, actual) {
+  return {
+    home: Math.abs((prediction.home ?? 0) - (actual.home ?? 0)),
+    away: Math.abs((prediction.away ?? 0) - (actual.away ?? 0)),
+  };
+}

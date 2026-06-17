@@ -23,6 +23,7 @@ const tiebreakerRules = [
   'GL + GV (goles exactos local y visitante)',
   'GT (goles totales exactos)',
   'PB (puntos bonus; en empate, menos PB = mejor posición)',
+  'Dif. goles local y visitante (menor dif acumulada = mejor posición)',
 ];
 
 export default function RulesPage() {

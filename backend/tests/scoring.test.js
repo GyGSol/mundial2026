@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculatePoints } from '../src/services/scoringService.js';
+import { calculatePoints, calculateGoalDiff } from '../src/services/scoringService.js';
 
 describe('calculatePoints', () => {
   it('predicción 2-2 vs resultado 4-0: solo bonus volumen (+1)', () => {
@@ -57,5 +57,19 @@ describe('calculatePoints', () => {
     expect(result.breakdown.winner).toBe(0);
     expect(result.breakdown.totalGoals).toBe(1);
     expect(result.total).toBe(1);
+  });
+});
+
+describe('calculateGoalDiff', () => {
+  it('predicción 1-0 vs resultado 2-0: dif local 1, dif visitante 0', () => {
+    const diff = calculateGoalDiff({ home: 1, away: 0 }, { home: 2, away: 0 });
+    expect(diff.home).toBe(1);
+    expect(diff.away).toBe(0);
+  });
+
+  it('usa valor absoluto cuando se predice por encima del resultado', () => {
+    const diff = calculateGoalDiff({ home: 3, away: 2 }, { home: 1, away: 0 });
+    expect(diff.home).toBe(2);
+    expect(diff.away).toBe(2);
   });
 });

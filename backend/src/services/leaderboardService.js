@@ -3,19 +3,50 @@ import { User } from '../models/User.js';
 import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
-import { calculatePoints } from './scoringService.js';
+import { calculatePoints, calculateGoalDiff } from './scoringService.js';
 
-function emptyStats() {
-  return { pj: 0, pa: 0, gl: 0, gv: 0, gt: 0, pb: 0, totalPoints: 0 };
+function goalDiffHomeExpr(matchScoreField = '$matchDoc.homeScore') {
+  return {
+    $cond: [
+      { $ne: ['$goalDiffHome', null] },
+      '$goalDiffHome',
+      { $abs: { $subtract: [{ $ifNull: [matchScoreField, 0] }, '$homeGoals'] } },
+    ],
+  };
 }
 
-function accumulateStats(stats, breakdown, pointsEarned, bonusPoint = 0) {
+function goalDiffAwayExpr(matchScoreField = '$matchDoc.awayScore') {
+  return {
+    $cond: [
+      { $ne: ['$goalDiffAway', null] },
+      '$goalDiffAway',
+      { $abs: { $subtract: [{ $ifNull: [matchScoreField, 0] }, '$awayGoals'] } },
+    ],
+  };
+}
+
+const PREDICTION_MATCH_LOOKUP = {
+  $lookup: {
+    from: 'matches',
+    localField: 'matchId',
+    foreignField: '_id',
+    as: 'matchDoc',
+  },
+};
+
+function emptyStats() {
+  return { pj: 0, pa: 0, gl: 0, gv: 0, gt: 0, pb: 0, difGl: 0, difGv: 0, totalPoints: 0 };
+}
+
+function accumulateStats(stats, breakdown, pointsEarned, bonusPoint = 0, goalDiff = null) {
   stats.pj += 1;
   if ((breakdown?.winner ?? 0) > 0) stats.pa += 1;
   if ((breakdown?.homeGoals ?? 0) > 0) stats.gl += 1;
   if ((breakdown?.awayGoals ?? 0) > 0) stats.gv += 1;
   if ((breakdown?.totalGoals ?? 0) > 0) stats.gt += 1;
   stats.pb += bonusPoint ?? 0;
+  stats.difGl += goalDiff?.home ?? 0;
+  stats.difGv += goalDiff?.away ?? 0;
   stats.totalPoints += (pointsEarned ?? 0) + (bonusPoint ?? 0);
 }
 
@@ -34,6 +65,8 @@ async function getPredictionStatsByUserAggregated(userIds, { excludeMatchIds = [
 
   const rows = await Prediction.aggregate([
     { $match: matchStage },
+    PREDICTION_MATCH_LOOKUP,
+    { $unwind: { path: '$matchDoc', preserveNullAndEmptyArrays: true } },
     {
       $group: {
         _id: '$userId',
@@ -43,6 +76,8 @@ async function getPredictionStatsByUserAggregated(userIds, { excludeMatchIds = [
         gv: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.awayGoals', 0] }, 1, 0] } },
         gt: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.totalGoals', 0] }, 1, 0] } },
         pb: { $sum: { $ifNull: ['$bonusPoint', 0] } },
+        difGl: { $sum: goalDiffHomeExpr() },
+        difGv: { $sum: goalDiffAwayExpr() },
         totalPoints: {
           $sum: {
             $add: [{ $ifNull: ['$pointsEarned', 0] }, { $ifNull: ['$bonusPoint', 0] }],
@@ -62,6 +97,8 @@ async function getPredictionStatsByUserAggregated(userIds, { excludeMatchIds = [
         gv: row.gv ?? 0,
         gt: row.gt ?? 0,
         pb: row.pb ?? 0,
+        difGl: row.difGl ?? 0,
+        difGv: row.difGv ?? 0,
         totalPoints: row.totalPoints ?? 0,
       },
     ])
@@ -86,6 +123,8 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
           matchId: { $nin: liveMatchObjectIds },
         },
       },
+      PREDICTION_MATCH_LOOKUP,
+      { $unwind: { path: '$matchDoc', preserveNullAndEmptyArrays: true } },
       {
         $group: {
           _id: '$userId',
@@ -95,6 +134,8 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
           gv: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.awayGoals', 0] }, 1, 0] } },
           gt: { $sum: { $cond: [{ $gt: ['$pointsBreakdown.totalGoals', 0] }, 1, 0] } },
           pb: { $sum: { $ifNull: ['$bonusPoint', 0] } },
+          difGl: { $sum: goalDiffHomeExpr() },
+          difGv: { $sum: goalDiffAwayExpr() },
           totalPoints: {
             $sum: {
               $add: [{ $ifNull: ['$pointsEarned', 0] }, { $ifNull: ['$bonusPoint', 0] }],
@@ -109,7 +150,7 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
       pointsEarned: { $ne: null },
     })
       .select(
-        'userId matchId homeGoals awayGoals pointsEarned pointsBreakdown bonusPoint liveKickoffBreakdown liveKickoffPointsEarned'
+        'userId matchId homeGoals awayGoals pointsEarned pointsBreakdown bonusPoint goalDiffHome goalDiffAway liveKickoffBreakdown liveKickoffPointsEarned liveKickoffGoalDiffHome liveKickoffGoalDiffAway'
       )
       .lean(),
   ]);
@@ -122,6 +163,8 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
       gv: row.gv ?? 0,
       gt: row.gt ?? 0,
       pb: row.pb ?? 0,
+      difGl: row.difGl ?? 0,
+      difGv: row.difGv ?? 0,
       totalPoints: row.totalPoints ?? 0,
     };
   }
@@ -133,10 +176,15 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
 
     let breakdown;
     let pointsEarned;
+    let goalDiff;
 
     if (prediction.liveKickoffBreakdown) {
       breakdown = prediction.liveKickoffBreakdown;
       pointsEarned = prediction.liveKickoffPointsEarned ?? prediction.pointsEarned ?? 0;
+      goalDiff = {
+        home: prediction.liveKickoffGoalDiffHome ?? prediction.homeGoals ?? 0,
+        away: prediction.liveKickoffGoalDiffAway ?? prediction.awayGoals ?? 0,
+      };
     } else {
       const kickoff = calculatePoints(
         { home: prediction.homeGoals, away: prediction.awayGoals },
@@ -144,9 +192,13 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
       );
       breakdown = kickoff.breakdown;
       pointsEarned = kickoff.total;
+      goalDiff = calculateGoalDiff(
+        { home: prediction.homeGoals, away: prediction.awayGoals },
+        { home: 0, away: 0 }
+      );
     }
 
-    accumulateStats(stats, breakdown, pointsEarned, prediction.bonusPoint ?? 0);
+    accumulateStats(stats, breakdown, pointsEarned, prediction.bonusPoint ?? 0, goalDiff);
   }
 
   return statsMap;
@@ -173,6 +225,13 @@ export function compareRankingEntries(a, b) {
   if (b.gt !== a.gt) return b.gt - a.gt;
   // PB al final: menos PB = mejor posición (consuelo no adelanta)
   if (a.pb !== b.pb) return a.pb - b.pb;
+  // Menor dif acumulada = predicción más cercana al resultado real
+  const difGlA = a.difGl ?? 0;
+  const difGlB = b.difGl ?? 0;
+  if (difGlA !== difGlB) return difGlA - difGlB;
+  const difGvA = a.difGv ?? 0;
+  const difGvB = b.difGv ?? 0;
+  if (difGvA !== difGvB) return difGvA - difGvB;
   return a.name.localeCompare(b.name, 'es');
 }
 
@@ -228,6 +287,8 @@ export async function getLeaderboard(competitionGroupId, limit = 100, options = 
       gv: stats.gv ?? 0,
       gt: stats.gt ?? 0,
       pb: stats.pb ?? 0,
+      difGl: stats.difGl ?? 0,
+      difGv: stats.difGv ?? 0,
     };
   });
 

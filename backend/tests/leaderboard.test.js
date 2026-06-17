@@ -31,10 +31,20 @@ describe('leaderboardService tiebreakers', () => {
 
   it('en empate de GT desempata por PB (menos PB = mejor posición)', () => {
     const rows = [
-      { name: 'B', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 2 },
-      { name: 'A', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0 },
+      { name: 'B', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 2, difGl: 0, difGv: 0 },
+      { name: 'A', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, difGl: 0, difGv: 0 },
     ].sort(compareLeaderboardEntries);
 
     expect(rows[0].name).toBe('A');
+  });
+
+  it('en empate de PB desempata por dif goles local y luego visitante', () => {
+    const rows = [
+      { name: 'B', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, difGl: 3, difGv: 1 },
+      { name: 'A', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, difGl: 1, difGv: 2 },
+      { name: 'C', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, difGl: 1, difGv: 0 },
+    ].sort(compareLeaderboardEntries);
+
+    expect(rows.map((row) => row.name)).toEqual(['C', 'A', 'B']);
   });
 });

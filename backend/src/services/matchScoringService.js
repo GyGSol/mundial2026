@@ -1,6 +1,6 @@
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
-import { calculatePoints } from './scoringService.js';
+import { calculatePoints, calculateGoalDiff } from './scoringService.js';
 import { recalculateConsolationBonuses } from './consolationBonusService.js';
 import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { ensurePredictionsForMatch } from './predictionLockService.js';
@@ -11,16 +11,20 @@ async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickof
   const affectedUsers = new Set();
 
   for (const prediction of predictions) {
-    const { total, breakdown } = calculatePoints(
-      { home: prediction.homeGoals, away: prediction.awayGoals },
-      { home: scoreHome, away: scoreAway }
-    );
+    const predicted = { home: prediction.homeGoals, away: prediction.awayGoals };
+    const actual = { home: scoreHome, away: scoreAway };
+    const { total, breakdown } = calculatePoints(predicted, actual);
+    const goalDiff = calculateGoalDiff(predicted, actual);
 
     prediction.pointsEarned = total;
     prediction.pointsBreakdown = breakdown;
+    prediction.goalDiffHome = goalDiff.home;
+    prediction.goalDiffAway = goalDiff.away;
     if (saveLiveKickoffSnapshot) {
       prediction.liveKickoffPointsEarned = total;
       prediction.liveKickoffBreakdown = { ...breakdown };
+      prediction.liveKickoffGoalDiffHome = goalDiff.home;
+      prediction.liveKickoffGoalDiffAway = goalDiff.away;
     }
     prediction.bonusPoint = 0;
     prediction.bonusReason = null;
@@ -107,8 +111,12 @@ export async function clearMatchScores(matchId) {
       },
       $unset: {
         pointsBreakdown: '',
+        goalDiffHome: '',
+        goalDiffAway: '',
         liveKickoffPointsEarned: '',
         liveKickoffBreakdown: '',
+        liveKickoffGoalDiffHome: '',
+        liveKickoffGoalDiffAway: '',
       },
     }
   );
