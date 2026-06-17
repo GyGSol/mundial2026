@@ -802,14 +802,25 @@ async function callAiProviderForScore(provider, context, providerOpts) {
 
 export async function callAiForScore(
   context,
-  { fetchImpl = fetch, promptBuilder, maxAttempts = 3, singleProvider = false } = {}
+  { fetchImpl = fetch, promptBuilder, maxAttempts = 3, singleProvider = false, skipNilNilOracle = false } = {}
 ) {
   const providerOpts = { promptBuilder, fetchImpl, maxAttempts };
   const order = getAiProviderOrder({ singleProvider });
 
   for (const provider of order) {
     const score = await callAiProviderForScore(provider, context, providerOpts);
-    if (score) return score;
+    if (!score) continue;
+    if (
+      skipNilNilOracle &&
+      score.source === 'cerebras-oracle' &&
+      score.homeGoals === 0 &&
+      score.awayGoals === 0 &&
+      order.length > 1
+    ) {
+      console.warn('Oracle devolvió 0-0; probando siguiente proveedor IA');
+      continue;
+    }
+    return score;
   }
 
   return computeHeuristicScore(context);
@@ -819,6 +830,7 @@ export async function callAiForCompetitorScore(context, options = {}) {
   return callAiForScore(context, {
     ...options,
     promptBuilder: buildAiCompetitorPredictionPrompt,
+    skipNilNilOracle: true,
   });
 }
 
@@ -826,7 +838,7 @@ export async function callAiForCompetitorScore(context, options = {}) {
 export const callGeminiForScore = callAiForScore;
 
 export function aiModelForScoreSource(source) {
-  if (source === 'cerebras') return env.aiCerebrasModel;
+  if (source === 'cerebras' || source === 'cerebras-oracle') return env.aiCerebrasModel;
   if (source === 'gemini') return env.aiGeminiModel;
   if (source === 'groq') return env.aiGroqModel;
   if (source === 'heuristic-xg' || source === 'heuristic-odds') return source;
