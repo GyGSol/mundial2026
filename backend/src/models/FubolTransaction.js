@@ -6,6 +6,8 @@ const FUBOL_TX_TYPES = [
   'prize_payout',
   'withdrawal',
   'welcome_bonus',
+  'ai_play_bonus',
+  'ai_consultation',
   'house_retention',
 ];
 

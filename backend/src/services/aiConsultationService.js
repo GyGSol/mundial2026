@@ -20,7 +20,6 @@ import {
   humanizePromptContext,
   WORLD_CUP_USER_FACING_LANGUAGE_RULES,
 } from './aiPromptHumanizer.js';
-import { formatStadiumForClient } from './stadiumPayload.js';
 import {
   getVenueWeatherForStadium,
   formatWeatherForPrompt,
@@ -31,9 +30,15 @@ import { assessVenueWeatherRisk, formatWeatherRiskForClient } from './weatherRis
 import { buildLiveScheduleContext } from './liveScheduleOverlapService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 import { getLockAt, isPredictionOpen } from './predictionLockService.js';
+import { formatStadiumForClient } from './stadiumPayload.js';
+import { chargeAiConsultationFee } from './fubolService.js';
 
 const AI_HISTORY_FOR_PROMPT = 20;
 const AI_MESSAGES_STORED_MAX = 80;
+
+async function ensureAiConsultationPaid(userId) {
+  return chargeAiConsultationFee({ userId });
+}
 
 export const AI_TOPIC_TYPES = ['match', 'group', 'round_of_16'];
 
@@ -349,6 +354,8 @@ async function appendExchange(thread, question, answer) {
 export async function generateMatchInsight(userId, matchId, { fetchImpl = fetch } = {}) {
   if (!hasAiProvider()) throw new Error('IA no configurada');
 
+  await ensureAiConsultationPaid(userId);
+
   const match = await Match.findById(matchId).lean();
   if (!match) throw new Error('Partido no encontrado');
 
@@ -409,6 +416,9 @@ export async function askConsultation(
   const thread = await getOrCreateThread(userId, topicType, key);
   const context = await buildTopicContext(userId, topicType, key);
   const prompt = buildConsultationPrompt(topicType, context, thread, trimmedQuestion);
+
+  await ensureAiConsultationPaid(userId);
+
   const result = await callAiForText(prompt, { fetchImpl });
 
   await appendExchange(thread, trimmedQuestion, {

@@ -1,6 +1,7 @@
 /** Mirrors backend economy config for UI-only constants */
 export const MOCK_CHECKOUT_DELAY_MS = 2000;
 export const GROUP_ENTRY_FEE = 100;
+export const AI_CONSULTATION_FEE = 10;
 
 export const TX_TYPE_LABELS = {
   deposit: 'Ingreso',
@@ -8,6 +9,8 @@ export const TX_TYPE_LABELS = {
   prize_payout: 'Premio',
   withdrawal: 'Retiro',
   welcome_bonus: 'Bono de bienvenida',
+  ai_play_bonus: 'Bono para consultas IA',
+  ai_consultation: 'Consulta IA',
   house_retention: 'La Casa',
 };
 

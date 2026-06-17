@@ -3,7 +3,7 @@ import { User } from '../models/User.js';
 import { FubolTransaction } from '../models/FubolTransaction.js';
 import { AppTreasury } from '../models/AppTreasury.js';
 import { PrizePool } from '../models/PrizePool.js';
-import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS } from '../config/economy.js';
+import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE } from '../config/economy.js';
 
 function economyError(message, status = 400) {
   const error = new Error(message);
@@ -311,6 +311,45 @@ export async function grantWelcomeBonus(userId) {
     idempotencyKey: `welcome:${userId}`,
     metadata: { reason: 'early_participant_bonus' },
     skipTreasuryDeposit: true,
+  });
+}
+
+export async function grantAiPlayBonus(userId) {
+  return creditUser({
+    userId,
+    amount: AI_PLAY_BONUS_FUBOLS,
+    type: 'ai_play_bonus',
+    idempotencyKey: `ai_play_bonus:${userId}`,
+    metadata: { reason: 'ai_consultations' },
+    skipTreasuryDeposit: true,
+  });
+}
+
+export async function chargeAiConsultationFee({ userId }) {
+  const user = await User.findById(userId).select('isAiUser balanceFubols').lean();
+  if (!user) throw economyError('Usuario no encontrado', 404);
+  if (user.isAiUser) {
+    return { charged: false, reason: 'ai_exempt', balanceFubols: user.balanceFubols || 0 };
+  }
+
+  return runInTransaction(async (session) => {
+    const debit = await debitUser({
+      userId,
+      amount: AI_CONSULTATION_FEE,
+      type: 'ai_consultation',
+      metadata: { fee: AI_CONSULTATION_FEE },
+      session,
+    });
+
+    const treasury = await getTreasury(session);
+    treasury.houseBalanceFubols = (treasury.houseBalanceFubols || 0) + AI_CONSULTATION_FEE;
+    await treasury.save(session ? { session } : undefined);
+
+    return {
+      charged: true,
+      balanceFubols: debit.balanceFubols,
+      fee: AI_CONSULTATION_FEE,
+    };
   });
 }
 

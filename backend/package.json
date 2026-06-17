@@ -21,7 +21,8 @@
     "mark-ai-user": "node src/scripts/markAiUser.js",
     "backup:db": "node src/scripts/backupDatabase.js",
     "migrate:fubols-welcome": "node src/scripts/migrateWelcomeBonusFubols.js",
-    "migrate:fubols-entry-fees": "node src/scripts/migrateBackfillEntryFees.js"
+    "migrate:fubols-entry-fees": "node src/scripts/migrateBackfillEntryFees.js",
+    "migrate:fubols-ai-bonus": "node src/scripts/migrateAiPlayBonusFubols.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

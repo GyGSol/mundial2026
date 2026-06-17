@@ -4,8 +4,12 @@ import { Sparkles } from 'lucide-react';
 import { aiConsultationsApi, matchesApi } from '../api/client.js';
 import AiConsultationChat, { InsightScore } from '../components/AiConsultationChat.jsx';
 import ClearConversationDialog from '../components/ClearConversationDialog.jsx';
+import FubolCoinIcon from '../components/FubolCoinIcon.jsx';
 import MatchVenueWeather from '../components/MatchVenueWeather.jsx';
+import StripeCheckoutModal from '../components/StripeCheckoutModal.jsx';
 import { GROUP_LETTERS } from '../lib/groupColors.js';
+import { AI_CONSULTATION_FEE } from '../lib/economyConstants.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
@@ -68,6 +72,7 @@ function resolveTopicFromParams(searchParams) {
 }
 
 export default function AiPredictionsPage() {
+  const { user, refreshUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initial = resolveTopicFromParams(searchParams);
   const [topicType, setTopicType] = useState(initial.topicType);
@@ -83,6 +88,13 @@ export default function AiPredictionsPage() {
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [error, setError] = useState('');
   const [question, setQuestion] = useState('');
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
+  const balanceFubols = user?.balanceFubols ?? 0;
+  const aiExempt = Boolean(user?.isAIAgent);
+  const needsFubols = !aiExempt && balanceFubols < AI_CONSULTATION_FEE;
+  const insufficientBalanceError =
+    Boolean(error) && error.toLowerCase().includes('saldo insuficiente');
 
   const syncUrl = useCallback(
     (nextType, nextKey) => {
@@ -203,6 +215,7 @@ export default function AiPredictionsPage() {
       const data = await aiConsultationsApi.generateInsight(topicKey);
       setThread(data.thread);
       setMatchVenue(data.matchVenue ?? null);
+      await refreshUser();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -231,6 +244,7 @@ export default function AiPredictionsPage() {
       });
       setThread(data.thread);
       setMatchVenue(data.matchVenue ?? null);
+      await refreshUser();
     } catch (err) {
       setError(err.message);
       setQuestion(trimmed);
@@ -312,6 +326,34 @@ export default function AiPredictionsPage() {
         </p>
         {!aiAvailable ? (
           <p className="text-sm text-amber-200">La IA no está disponible en este momento.</p>
+        ) : null}
+        {aiAvailable && !aiExempt ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <FubolCoinIcon size="sm" />
+              {balanceFubols} Fubols
+            </span>
+            <span className="text-muted-foreground">
+              Cada consulta o predicción cuesta {AI_CONSULTATION_FEE} Fubols.
+            </span>
+            {needsFubols ? (
+              <Button type="button" size="sm" onClick={() => setCheckoutOpen(true)}>
+                Cargar Fubols
+              </Button>
+            ) : (
+              <Button type="button" size="sm" variant="outline" asChild>
+                <Link to="/economy">Ver economía</Link>
+              </Button>
+            )}
+          </div>
+        ) : null}
+        {insufficientBalanceError ? (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+            <span>Necesitás al menos {AI_CONSULTATION_FEE} Fubols para consultar la IA.</span>
+            <Button type="button" size="sm" variant="secondary" onClick={() => setCheckoutOpen(true)}>
+              Comprar Fubols (simulado)
+            </Button>
+          </div>
         ) : null}
       </div>
 
@@ -454,6 +496,12 @@ export default function AiPredictionsPage() {
         hasSavedPrediction={Boolean(thread?.initialInsight)}
         onConfirm={handleConfirmClearConversation}
         confirming={clearingConversation}
+      />
+
+      <StripeCheckoutModal
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        onSuccess={() => refreshUser()}
       />
     </div>
   );

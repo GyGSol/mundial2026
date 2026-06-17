@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { AI_CONSULTATION_FEE } from '../config/economy.js';
 import { hasAiProvider } from '../services/aiPredictionService.js';
 import {
   askConsultation,
@@ -52,6 +53,13 @@ router.post('/insight', async (req, res, next) => {
     const result = await generateMatchInsight(req.user._id, matchId);
     res.json(result);
   } catch (err) {
+    if (err.status === 402) {
+      return res.status(402).json({
+        error: err.message,
+        code: 'insufficient_fubols',
+        requiredFubols: AI_CONSULTATION_FEE,
+      });
+    }
     if (err.message === 'Partido no encontrado') {
       return res.status(404).json({ error: err.message });
     }
@@ -76,6 +84,13 @@ router.post('/ask', async (req, res, next) => {
     });
     res.json(result);
   } catch (err) {
+    if (err.status === 402) {
+      return res.status(402).json({
+        error: err.message,
+        code: 'insufficient_fubols',
+        requiredFubols: AI_CONSULTATION_FEE,
+      });
+    }
     const clientErrors = [
       'Tema de consulta inválido',
       'Escribí una pregunta',

@@ -2,6 +2,8 @@
 export const FUBOLS_PER_USD = 10;
 export const GROUP_ENTRY_FEE = 100;
 export const WELCOME_BONUS_FUBOLS = 100;
+export const AI_PLAY_BONUS_FUBOLS = 10;
+export const AI_CONSULTATION_FEE = 10;
 export const DEFAULT_PRIZE_SPLITS = [50, 30, 20];
 export const MOCK_CHECKOUT_USD = 10;
 export const MOCK_CHECKOUT_FUBOLS = MOCK_CHECKOUT_USD * FUBOLS_PER_USD;
