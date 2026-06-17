@@ -1370,8 +1370,8 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     error.status = 404;
     throw error;
   }
-  if (match.status !== 'upcoming') {
-    const error = new Error('Solo se puede ejecutar IA en partidos próximos');
+  if (!['upcoming', 'live'].includes(match.status)) {
+    const error = new Error('Solo se puede ejecutar IA en partidos próximos o en vivo');
     error.status = 400;
     throw error;
   }
