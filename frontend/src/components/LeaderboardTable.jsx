@@ -9,25 +9,17 @@ import {
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatAvgGoalDiff } from '@/lib/goalDiffStats.js';
+import { formatGoalDiffScore } from '@/lib/goalDiffStats.js';
 import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
 
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },
   {
-    key: 'avgDifGl',
-    label: 'ØL',
-    title: 'Promedio de error en goles local por partido (dif ÷ PJ; menor es mejor)',
-    format: 'avgDiff',
-    difKey: 'difGl',
-    trackDelta: false,
-  },
-  {
-    key: 'avgDifGv',
-    label: 'ØV',
-    title: 'Promedio de error en goles visitante por partido (dif ÷ PJ; menor es mejor)',
-    format: 'avgDiff',
-    difKey: 'difGv',
+    key: 'gdif',
+    label: 'Gdif',
+    title:
+      'Precisión en goles local+visitante (1.000 = todos exactos; combina dif local y visitante ÷ PJ)',
+    format: 'gdif',
     trackDelta: false,
   },
   { key: 'pa', label: 'PA', title: 'Acierto resultado', trackDelta: true },
@@ -38,8 +30,8 @@ const statColumns = [
 
 const statHeadClass = 'px-0.5 text-center text-[10px] sm:px-2 sm:text-xs';
 const statCellClass = 'px-0.5 text-center tabular-nums text-xs sm:px-2 sm:text-sm';
-const avgDiffCellClass =
-  'px-0.5 text-center tabular-nums text-[11px] text-muted-foreground sm:px-2 sm:text-xs';
+const gdifCellClass =
+  'px-0.5 text-center tabular-nums text-[11px] sm:px-2 sm:text-xs';
 
 const prizedRankCellClass =
   'border-l-4 border-l-emerald-500 text-primary font-semibold';
@@ -96,8 +88,8 @@ function StatValue({ value, delta, align = 'center' }) {
 }
 
 function renderStatCell(row, col, { hasLiveMatches, rowDeltas }) {
-  if (col.format === 'avgDiff') {
-    return formatAvgGoalDiff(row[col.difKey], row.pj);
+  if (col.format === 'gdif') {
+    return formatGoalDiffScore(row.difGl, row.difGv, row.pj);
   }
 
   const value = row[col.key] ?? 0;
@@ -135,7 +127,7 @@ export default function LeaderboardTable({
               {statColumns.map((col) => (
                 <TableHead
                   key={col.key}
-                  className={col.format === 'avgDiff' ? avgDiffCellClass : statHeadClass}
+                  className={col.format === 'gdif' ? gdifCellClass : statHeadClass}
                   title={col.title}
                 >
                   {col.label}
@@ -193,7 +185,7 @@ export default function LeaderboardTable({
                   {statColumns.map((col) => (
                     <TableCell
                       key={col.key}
-                      className={col.format === 'avgDiff' ? avgDiffCellClass : statCellClass}
+                      className={col.format === 'gdif' ? gdifCellClass : statCellClass}
                     >
                       {renderStatCell(row, col, { hasLiveMatches, rowDeltas })}
                     </TableCell>

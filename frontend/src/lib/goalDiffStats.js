@@ -1,13 +1,14 @@
-export function avgGoalDiffPerMatch(totalDiff, pj) {
+export function goalDiffScore(difGl, difGv, pj) {
   const games = pj ?? 0;
   if (games <= 0) return null;
-  return (totalDiff ?? 0) / games;
+  const avgErrorPerMatch = ((difGl ?? 0) + (difGv ?? 0)) / games;
+  return Math.max(0, 1 - avgErrorPerMatch / 2);
 }
 
-/** Muestra promedio con 3 decimales: .654 o 1.234 */
-export function formatAvgGoalDiff(totalDiff, pj) {
-  const avg = avgGoalDiffPerMatch(totalDiff, pj);
-  if (avg == null) return '—';
-  const fixed = avg.toFixed(3);
+/** 1.000 = todos los goles exactos; .750, etc. */
+export function formatGoalDiffScore(difGl, difGv, pj) {
+  const score = goalDiffScore(difGl, difGv, pj);
+  if (score == null) return '—';
+  const fixed = score.toFixed(3);
   return fixed.startsWith('0.') ? fixed.slice(1) : fixed;
 }
