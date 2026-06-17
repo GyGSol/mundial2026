@@ -8,6 +8,7 @@ import {
   reassignActiveGroupAfterLeave,
 } from './competitionGroupJoinHelpers.js';
 import { chargeGroupEntryFee } from './fubolService.js';
+import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { syncPrizePoolDistribution } from './prizePoolService.js';
 
 function normalizePrizes({ winnersCount, prizes = [] }) {
@@ -194,9 +195,12 @@ export async function createCompetitionGroup({
         competitionGroupId: group._id,
       },
     });
+
+    await chargeGroupEntryFee({ userId: createdBy, groupId: group._id });
   }
 
   await syncPrizePoolDistribution(group._id, normalizedPrizes.winnersCount);
+  await ensureAiCompetitorInGroup(group._id);
 
   return serializeGroup(group);
 }

@@ -12,6 +12,7 @@ import {
   projectPrizeDistribution,
   attachProjectedFubolsToLeaderboard,
 } from './prizePoolService.js';
+import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -99,6 +100,7 @@ export async function getRankingDashboard(groupId, userId) {
   let prizePool = null;
 
   if (groupId && groupId !== '__nogroup') {
+    await ensureAiCompetitorInGroup(groupId);
     const winnersCount = groupResult.group?.prizesWinnersCount ?? 0;
     const projection = await projectPrizeDistribution(groupId);
     if (winnersCount > 0 && projection.distribution?.length) {

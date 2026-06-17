@@ -207,6 +207,30 @@ async function resolveAiConsultationGroupId(userId, user, session = null) {
   return membership ? candidate : null;
 }
 
+async function fundAiUserForEntryIfNeeded(userId, session = null) {
+  const user = await User.findById(userId).select('isAiUser balanceFubols').session(session).lean();
+  if (!user?.isAiUser) return;
+
+  const shortfall = GROUP_ENTRY_FEE - (user.balanceFubols || 0);
+  if (shortfall <= 0) return;
+
+  const treasury = await getTreasury(session);
+  const houseAvailable = treasury.houseBalanceFubols || 0;
+  if (houseAvailable >= shortfall) {
+    treasury.houseBalanceFubols = houseAvailable - shortfall;
+    await treasury.save(session ? { session } : undefined);
+  }
+
+  await creditUser({
+    userId,
+    amount: shortfall,
+    type: 'ai_entry_float',
+    metadata: { reason: 'group_entry_prefund', fee: GROUP_ENTRY_FEE },
+    skipTreasuryDeposit: true,
+    session,
+  });
+}
+
 async function ensurePrizePool(groupId, session = null) {
   const oid =
     typeof groupId === 'string' ? new mongoose.Types.ObjectId(groupId) : groupId;
@@ -234,10 +258,6 @@ export async function chargeGroupEntryFee({ userId, groupId }) {
   const user = await User.findById(userId).select('isAiUser balanceFubols').lean();
   if (!user) throw economyError('Usuario no encontrado', 404);
 
-  if (user.isAiUser) {
-    return { charged: false, reason: 'ai_exempt', balanceFubols: user.balanceFubols || 0 };
-  }
-
   const idempotencyKey = `entry:${userId}:${groupId}`;
 
   return runInTransaction(async (session) => {
@@ -250,6 +270,10 @@ export async function chargeGroupEntryFee({ userId, groupId }) {
         balanceFubols: fresh?.balanceFubols ?? 0,
         transaction: existing,
       };
+    }
+
+    if (user.isAiUser) {
+      await fundAiUserForEntryIfNeeded(userId, session);
     }
 
     const debit = await debitUser({

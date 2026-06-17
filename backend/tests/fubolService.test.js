@@ -173,10 +173,12 @@ describe('fubolService', () => {
       expect(pool.totalFubols).toBe(GROUP_ENTRY_FEE);
     });
 
-    it('exenta usuario IA', async () => {
+    it('cobra inscripción IA y acumula pozo', async () => {
       const result = await chargeGroupEntryFee({ userId: aiUserId, groupId });
-      expect(result.charged).toBe(false);
-      expect(result.reason).toBe('ai_exempt');
+      expect(result.charged).toBe(true);
+
+      const pool = await PrizePool.findOne({ groupId }).lean();
+      expect(pool.totalFubols).toBe(GROUP_ENTRY_FEE);
     });
   });
 

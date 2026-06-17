@@ -35,9 +35,7 @@ async function main() {
     }
 
     if (user.isAiUser) {
-      skippedAi += 1;
-      console.log(`IA exenta: ${label}`);
-      continue;
+      console.log(`IA (cobrar si falta): ${label}`);
     }
 
     if (dryRun) {
@@ -63,7 +61,7 @@ async function main() {
         console.log(`Ya pagó: ${label}`);
       } else if (result.reason === 'ai_exempt') {
         skippedAi += 1;
-        console.log(`IA exenta: ${label}`);
+        console.log(`IA omitida (legacy): ${label}`);
       } else {
         console.log(`Omitido (${result.reason}): ${label}`);
       }

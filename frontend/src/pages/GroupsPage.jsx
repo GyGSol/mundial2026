@@ -813,11 +813,11 @@ export default function GroupsPage() {
                 Sin enlace, solicitá unirte por nombre: el administrador debe aprobar. Con enlace de
                 invitación entrás al instante. Tus pronósticos cuentan en el ranking una vez aprobado.
               </p>
-              <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                Inscripción al aprobar o unirte: {GROUP_ENTRY_FEE}{' '}
-                <FubolCoinIcon size="sm" /> —{' '}
+              <p className="inline-flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                Inscripción al crear, aprobar o unirte: {GROUP_ENTRY_FEE}{' '}
+                <FubolCoinIcon size="sm" /> por jugador (incluye Predictive Modeling IA).{' '}
                 <Link to="/economy" className="text-primary underline">
-                  cargá Fubols
+                  Cargá Fubols
                 </Link>
               </p>
               {joinableGroups.length === 0 ? (

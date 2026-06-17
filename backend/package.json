@@ -23,6 +23,7 @@
     "backup:db": "node src/scripts/backupDatabase.js",
     "migrate:fubols-welcome": "node src/scripts/migrateWelcomeBonusFubols.js",
     "migrate:fubols-entry-fees": "node src/scripts/migrateBackfillEntryFees.js",
+    "migrate:ensure-ai-groups": "node src/scripts/migrateEnsureAiInGroups.js",
     "migrate:fubols-ai-bonus": "node src/scripts/migrateAiPlayBonusFubols.js"
   },
   "dependencies": {

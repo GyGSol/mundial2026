@@ -12,6 +12,7 @@ export const TX_TYPE_LABELS = {
   welcome_bonus: 'Bono de bienvenida',
   ai_play_bonus: 'Bono para consultas IA',
   ai_consultation: 'Consulta IA',
+  ai_entry_float: 'Fondo IA (inscripción)',
   house_retention: 'La Casa',
 };
 

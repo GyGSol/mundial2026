@@ -8,6 +8,7 @@ const FUBOL_TX_TYPES = [
   'welcome_bonus',
   'ai_play_bonus',
   'ai_consultation',
+  'ai_entry_float',
   'house_retention',
 ];
 

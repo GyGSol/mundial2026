@@ -90,6 +90,7 @@ describe('competitionGroupService', () => {
         name: 'Owner',
         email: `owner-${Date.now()}@test.local`,
         passwordHash: 'hash',
+        balanceFubols: 100,
       });
       const applicant = await User.create({
         name: 'Applicant',
