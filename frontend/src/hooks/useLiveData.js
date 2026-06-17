@@ -28,6 +28,7 @@ export function useLiveData(
       setError(null);
       const result = await fetchFn();
       if (requestId !== requestIdRef.current) return;
+      if (result === undefined) return;
       setData(result);
       setLastUpdated(new Date());
     } catch (err) {

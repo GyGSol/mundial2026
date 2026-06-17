@@ -12,9 +12,13 @@ async function adminRequest(path, options = {}) {
 
   let res;
   try {
-    res = await fetch(`${ADMIN_API_BASE}${path}`, { ...options, headers });
+    res = await fetch(`${ADMIN_API_BASE}${path}`, { ...options, headers, cache: 'no-store' });
   } catch (err) {
     throw new Error(formatRequestError(err, null, {}));
+  }
+
+  if (res.status === 304) {
+    return undefined;
   }
 
   const contentType = res.headers.get('content-type') || '';
@@ -47,9 +51,13 @@ async function simulationRequest(path, options = {}) {
 
   let res;
   try {
-    res = await fetch(`/api/simulation${path}`, { ...options, headers });
+    res = await fetch(`/api/simulation${path}`, { ...options, headers, cache: 'no-store' });
   } catch (err) {
     throw new Error(formatRequestError(err, null, {}));
+  }
+
+  if (res.status === 304) {
+    return undefined;
   }
 
   const data = await res.json().catch(() => ({}));

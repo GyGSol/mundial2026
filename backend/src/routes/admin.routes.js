@@ -80,6 +80,11 @@ import { getAiCompetitorAnalytics } from '../services/aiCompetitorAnalyticsServi
 
 const router = Router();
 
+router.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
