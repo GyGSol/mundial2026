@@ -7,11 +7,13 @@ self.addEventListener('push', (event) => {
   }
 
   const title = payload.title || 'Mundial 2026';
+  const kind = payload.notificationKind || 'live';
+  const tag = payload.matchId ? `match-${kind}-${payload.matchId}` : 'mundial2026';
   const options = {
     body: payload.body || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag: payload.matchId ? `match-live-${payload.matchId}` : 'mundial2026',
+    tag,
     renotify: false,
     data: {
       url: payload.url || '/predictions',

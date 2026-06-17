@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { env } from '../src/config/env.js';
-import { getVapidPublicKey, notifyMatchesLiveStarted, notifyPredictionLockClosing } from '../src/services/pushNotificationService.js';
+import { getVapidPublicKey, notifyMatchesLiveStarted, notifyPredictionLockClosing, pickLatestPushSubscription } from '../src/services/pushNotificationService.js';
 
 describe('pushNotificationService', () => {
   const originalPushEnabled = env.pushNotificationsEnabled;
@@ -16,6 +16,15 @@ describe('pushNotificationService', () => {
   it('getVapidPublicKey devuelve la clave configurada', () => {
     env.vapidPublicKey = 'test-public-key';
     expect(getVapidPublicKey()).toBe('test-public-key');
+  });
+
+  it('pickLatestPushSubscription elige la suscripción con updatedAt más reciente', () => {
+    const picked = pickLatestPushSubscription([
+      { endpoint: 'a', updatedAt: new Date('2026-06-01T10:00:00Z') },
+      { endpoint: 'b', updatedAt: new Date('2026-06-15T10:00:00Z') },
+      { endpoint: 'c', updatedAt: new Date('2026-06-10T10:00:00Z') },
+    ]);
+    expect(picked?.endpoint).toBe('b');
   });
 
   it('notifyMatchesLiveStarted se omite si push está deshabilitado', async () => {

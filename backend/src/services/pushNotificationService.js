@@ -69,6 +69,28 @@ async function buildMatchLabel(match) {
   return `${home} vs ${away}`;
 }
 
+/** Una sola suscripción por usuario (la más reciente) para no apilar notificaciones. */
+export function pickLatestPushSubscription(subscriptions = []) {
+  if (!subscriptions.length) return null;
+  return subscriptions.reduce((latest, subscription) => {
+    if (!latest) return subscription;
+    const latestAt = latest.updatedAt ? new Date(latest.updatedAt).getTime() : 0;
+    const subAt = subscription.updatedAt ? new Date(subscription.updatedAt).getTime() : 0;
+    return subAt >= latestAt ? subscription : latest;
+  });
+}
+
+async function sendPushToUsers(users, payload) {
+  let sent = 0;
+  for (const user of users) {
+    const subscription = pickLatestPushSubscription(user.pushSubscriptions ?? []);
+    if (!subscription) continue;
+    const result = await sendToSubscription(subscription, payload);
+    if (result.ok) sent += 1;
+  }
+  return sent;
+}
+
 async function sendToSubscription(subscription, payload) {
   try {
     await webpush.sendNotification(
@@ -105,16 +127,10 @@ export async function notifyPredictionLockClosing(match, users = []) {
     body: `${matchLabel} — te quedan 15 min para cargar tu marcador`,
     url: `/predictions?match=${match.externalId}`,
     matchId: match.externalId,
+    notificationKind: 'lock',
   };
 
-  let sent = 0;
-  for (const user of users) {
-    for (const subscription of user.pushSubscriptions ?? []) {
-      const result = await sendToSubscription(subscription, payload);
-      if (result.ok) sent += 1;
-    }
-  }
-
+  const sent = await sendPushToUsers(users, payload);
   return { sent, skipped: false };
 }
 
@@ -149,14 +165,10 @@ export async function notifyMatchesLiveStarted(matches = []) {
       body: `${matchLabel} empezó — Ver en vivo`,
       url: `/predictions?match=${match.externalId}`,
       matchId: match.externalId,
+      notificationKind: 'live',
     };
 
-    for (const user of users) {
-      for (const subscription of user.pushSubscriptions ?? []) {
-        const result = await sendToSubscription(subscription, payload);
-        if (result.ok) sent += 1;
-      }
-    }
+    sent += await sendPushToUsers(users, payload);
   }
 
   return { sent, skipped: false };
