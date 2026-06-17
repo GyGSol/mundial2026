@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, Fragment } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
@@ -433,8 +433,8 @@ export default function AdminAiCompetitorPage() {
                     const active = row.matchId === selectedMatchId;
                     const pred = row.prediction;
                     return (
+                      <Fragment key={row.matchId}>
                       <TableRow
-                        key={row.matchId}
                         className={active ? 'bg-slate-800/60' : 'cursor-pointer'}
                         onClick={() => selectMatchRow(row)}
                       >
@@ -568,6 +568,17 @@ export default function AdminAiCompetitorPage() {
                           </div>
                         </TableCell>
                       </TableRow>
+                      {row.predictionReasoning ? (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={7} className="border-t-0 pt-0 pb-3">
+                            <p className="border-l-2 border-amber-500/40 pl-3 text-xs leading-relaxed text-slate-400">
+                              <span className="font-medium text-slate-500">Razonamiento IA: </span>
+                              {row.predictionReasoning}
+                            </p>
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                      </Fragment>
                     );
                   })}
                 </TableBody>

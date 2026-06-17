@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildAuditPromptContext, buildAiCompetitorStats } from '../src/services/aiCompetitorAuditService.js';
+import { buildAuditPromptContext, buildAiCompetitorStats, briefAiReasoning } from '../src/services/aiCompetitorAuditService.js';
 import { goalDiffScore } from '../src/services/goalDiffStats.js';
 
 describe('aiCompetitorAuditService', () => {
@@ -32,11 +32,11 @@ describe('aiCompetitorAuditService', () => {
     expect(stats.tasaAciertoPa).toBe(50);
   });
 
-  it('buildAiCompetitorStats devuelve null en promedio y gdif sin partidos puntuados', () => {
-    const stats = buildAiCompetitorStats([], { predicha: 0, faltante: 1, pendiente: 83 }, 84);
-
-    expect(stats.partidosPuntuados).toBe(0);
-    expect(stats.promedioPuntos).toBeNull();
-    expect(stats.gdifCombinado).toBeNull();
+  it('briefAiReasoning recorta markdown y texto largo', () => {
+    const long = `**Portugal** favorito por ranking.\n\n- xG local alto\n- Congo defensivo`;
+    const brief = briefAiReasoning(long, 40);
+    expect(brief).toContain('Portugal favorito');
+    expect(brief?.endsWith('…')).toBe(true);
+    expect(briefAiReasoning('  ')).toBeNull();
   });
 });

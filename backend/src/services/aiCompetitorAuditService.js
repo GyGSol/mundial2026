@@ -120,6 +120,22 @@ function classifyPredictionState(match, prediction) {
   return 'faltante';
 }
 
+export function briefAiReasoning(text, maxLen = 300) {
+  const raw = String(text ?? '').trim();
+  if (!raw) return null;
+  const plain = raw
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/^[-*]\s+/gm, '')
+    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!plain) return null;
+  if (plain.length <= maxLen) return plain;
+  const cut = plain.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut}…`;
+}
+
 export function buildAiCompetitorStats(scoredPredictions, stateCounts, partidosTotales) {
   let difGl = 0;
   let difGv = 0;
@@ -272,8 +288,12 @@ export async function getAiCompetitorOverview({
             pointsBreakdown: prediction.pointsBreakdown ?? null,
             aiModel: prediction.aiModel ?? null,
             aiCalibrationApplied: Boolean(prediction.aiCalibrationApplied),
+            aiReasoning: prediction.aiReasoning ?? null,
           }
         : null,
+      predictionReasoning: briefAiReasoning(
+        prediction?.aiReasoning ?? officialLog?.finalResponse?.reasoning ?? null
+      ),
       latestLogId: displayLog?._id?.toString() ?? null,
       latestOfficialLogId: officialLog?._id?.toString() ?? null,
       latestSimulationLogId: simulationLog?._id?.toString() ?? null,
