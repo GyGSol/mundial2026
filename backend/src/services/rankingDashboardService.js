@@ -84,6 +84,10 @@ export async function getRankingDashboard(groupId, userId) {
     });
   }
 
+  if (groupId && groupId !== '__nogroup') {
+    await ensureAiCompetitorInGroup(groupId);
+  }
+
   const liveMatchIds = liveMatches.map((match) => match.id);
   const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
@@ -112,7 +116,6 @@ export async function getRankingDashboard(groupId, userId) {
   let prizePool = null;
 
   if (groupId && groupId !== '__nogroup') {
-    await ensureAiCompetitorInGroup(groupId);
     await syncMemberEntryFees(groupId);
     const entryStats = await getGroupEntryFeeStats(groupId);
     const winnersCount = groupResult.group?.prizesWinnersCount ?? 0;

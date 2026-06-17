@@ -499,7 +499,17 @@ export async function updateAdminGroupMemberRole({ groupId, userId, role }) {
   await membership.save();
 
   if (role === 'owner') {
-    await CompetitionGroup.findByIdAndUpdate(groupId, { createdBy: userId });
+    await Promise.all([
+      CompetitionGroup.findByIdAndUpdate(groupId, { createdBy: userId }),
+      UserGroupMembership.updateMany(
+        {
+          groupId: new mongoose.Types.ObjectId(groupId),
+          userId: { $ne: new mongoose.Types.ObjectId(userId) },
+          role: 'owner',
+        },
+        { $set: { role: 'member' } }
+      ),
+    ]);
   }
 
   return {

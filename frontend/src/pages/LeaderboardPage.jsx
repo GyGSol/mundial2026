@@ -106,8 +106,9 @@ export default function LeaderboardPage() {
     ? data?.leaderboardKickoffBaseline
     : null;
   const hasLiveMatches = dashboardMatchesGroup && (data?.liveMatches?.length ?? 0) > 0;
-  const rankingLoading = canLoadRanking && (loading || !dashboardMatchesGroup);
-  const rankingReady = !canLoadRanking || (!loading && dashboardMatchesGroup);
+  const rankingLoading = canLoadRanking && loading;
+  const rankingReady = canLoadRanking ? dashboardMatchesGroup : true;
+  const rankingLoadFailed = canLoadRanking && !loading && Boolean(error) && !dashboardMatchesGroup;
 
   const displayGroup = dashboardMatchesGroup ? data?.group || selectedGroup : selectedGroup;
   const isNoGroupMode = effectiveGroupId === '__nogroup';
@@ -226,8 +227,20 @@ export default function LeaderboardPage() {
         </p>
       )}
 
-      {rankingLoading && <LoadingSpinner label="Cargando ranking…" />}
-      {error && <p className="text-destructive">{error}</p>}
+      {rankingLoading ? <LoadingSpinner label="Cargando ranking…" /> : null}
+      {rankingLoadFailed ? (
+        <p className="text-destructive">
+          {error}{' '}
+          <button
+            type="button"
+            className="underline"
+            onClick={() => window.location.reload()}
+          >
+            Reintentar
+          </button>
+        </p>
+      ) : null}
+      {error && dashboardMatchesGroup ? <p className="text-destructive">{error}</p> : null}
 
       {showPrizesCard ? (
         <Card>
@@ -286,7 +299,7 @@ export default function LeaderboardPage() {
         </Card>
       ) : null}
 
-      {canLoadRanking ? (
+      {rankingReady ? (
         <section id={GROUP_POSITIONS_TABLE_ID} className="scroll-mt-24">
           <LeaderboardTable
             leaderboard={dashboardLeaderboard}
