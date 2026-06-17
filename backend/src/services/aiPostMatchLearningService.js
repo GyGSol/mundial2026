@@ -79,7 +79,7 @@ Un párrafo: qué acertó, qué falló y cuánto costó en puntos/Gdif.
 Analizá ranking, xG/mercado, clima, stakes de grupo, forma reciente u otros datos del contexto. Decí cuáles empujaron a un marcador incorrecto o correcto.
 
 ### Lecciones para bajar Gdif
-3–5 bullets accionables para el modelo en partidos similares (no genéricos). Incluí si conviene empates, menos goles, más goles del local/visitante, etc.
+3–5 bullets accionables para el modelo en partidos similares (no genéricos). Priorizá ajustes sobre señales del torneo 2026 (forma, goles reales) frente a ranking/xG si el error vino de sobreponderar lo segundo. Incluí si conviene empates, menos goles, más goles del local/visitante, etc.
 
 ### Ajuste sugerido de calibración
 Una frase concreta sobre sesgo local/visitante detectado en ESTE partido y cómo encaja con la calibración rolling.

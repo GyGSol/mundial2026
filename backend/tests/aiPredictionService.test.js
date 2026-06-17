@@ -357,10 +357,11 @@ describe('aiPredictionService', () => {
   });
 
   describe('AI_COMPETITOR_SCORING_INSTRUCTIONS', () => {
-    it('prioriza PA y Gdif para el bot competidor', () => {
+    it('prioriza PA, Gdif y contexto del torneo 2026', () => {
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/PA = 3 pts/i);
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/Gdif/i);
-      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/90 minutos/i);
+      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/mundial2026/i);
+      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/calibracionReciente/i);
     });
   });
 

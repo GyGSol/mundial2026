@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   humanizePromptContext,
+  humanizeCompetitorPromptContext,
   sanitizeAiUserFacingText,
 } from '../src/services/aiPromptHumanizer.js';
 
@@ -77,6 +78,30 @@ describe('aiPromptHumanizer', () => {
       local: [{ nombre: 'Pedri', estadoFísico: 'Disponible' }],
       visitante: [{ nombre: 'Rocha', estadoFísico: 'Duda' }],
     });
+  });
+
+  it('humanizeCompetitorPromptContext prioriza mundial2026 y calibración', () => {
+    const ordered = humanizeCompetitorPromptContext({
+      homeTeam: { name: 'Portugal', tournament2026: { form: 'WW' } },
+      awayTeam: { name: 'Congo' },
+      groupStandings: [{ rank: 1, team: 'Portugal' }],
+      historialReciente: { local: { torneo2026: { partidosJugados: 2 } } },
+      calibracionReciente: { errorCombinado: 0.15, nota: 'Sesgo local' },
+      mercadoYxG: { xgEsperado: { homeExpected: 1.8 } },
+      fifaRankingsAsOf: '2026-06-01',
+    });
+
+    const keys = Object.keys(ordered);
+    expect(keys[0]).toBe('guiaPrioridadContexto');
+    expect(keys[1]).toBe('partido');
+    expect(keys[2]).toBe('mundial2026');
+    expect(ordered.guiaPrioridadContexto.calibracionReciente).toMatchObject({
+      errorCombinado: 0.15,
+    });
+    expect(ordered.mundial2026.equipoLocal).toBeTruthy();
+    expect(ordered.mundial2026.tablaGrupo).toHaveLength(1);
+    expect(ordered.senalesExternasYGrupo.mercadoYxG).toBeTruthy();
+    expect(ordered.contextoPreTorneoYReferencia.rankingFifaAl).toBe('2026-06-01');
   });
 
   it('sanitizeAiUserFacingText quita backticks y traduce campos técnicos', () => {

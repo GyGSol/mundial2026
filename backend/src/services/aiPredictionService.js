@@ -21,6 +21,7 @@ import { buildLiveScheduleContext } from './liveScheduleOverlapService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 import {
   humanizePromptContext,
+  humanizeCompetitorPromptContext,
   sanitizeAiUserFacingText,
   WORLD_CUP_USER_FACING_LANGUAGE_RULES,
 } from './aiPromptHumanizer.js';
@@ -98,7 +99,16 @@ export const AI_COMPETITOR_SCORING_INSTRUCTIONS = `OBJETIVO — Maximizar puntos
 2. Luego afiná goles local (GL), visitante (GV) y total (GT), 1 pt c/u.
 3. Minimizá error de marcador (Gdif): evitá resultados llamativos sin respaldo en datos.
 4. En eliminatorias: predicción = resultado a 90 minutos (sin penales). Empate es válido.
-5. Usá mercadoYxG como señal fuerte si existe; ajustá con lesiones, clima y stakes.
+
+PRIORIDAD DE CONTEXTO (lee guiaPrioridadContexto primero):
+- Ponderá PRIMERO mundial2026: forma, goles, tabla, stakes y H2H de ESTA Copa. Si un equipo ya jugó en el torneo, eso pesa más que ranking FIFA o historial lejano.
+- Usá guiaPrioridadContexto.calibracionReciente para ADAPTAR pesos: si hay sesgo de goles o error combinado alto, confiá más en tendencias del torneo y menos en señales externas o marcadores altos.
+- plantillaYDisponibilidad (lesiones, titulares) modula el marcador cuando cambia el XI real.
+- senalesExternasYGrupo (mercado/xG, consenso) son apoyo; no copies al grupo ni dejes que xG pise un patrón claro del torneo salvo que la calibración indique sesgo contrario.
+- contextoPreTorneoYReferencia (ranking FIFA, Wikipedia, país) solo si hay pocos partidos jugados en 2026 o para desempates finos.
+
+SEÑALES ADICIONALES:
+5. Usá mercadoYxG como señal fuerte solo si no contradice el rendimiento en mundial2026.
 6. Usá inteligenciaGrupo.consensoPartido como señal secundaria (no copies al grupo).
 7. Si carreraPremios.diferenciaAlCorte ≤ 6 pts y no estás en zona de premio: priorizá PA sobre marcador exacto.
 8. Nunca cites nombres de otros jugadores ni sus predicciones individuales; solo agregados del grupo.`;
@@ -563,13 +573,13 @@ ${AI_COMPETITOR_SCORING_INSTRUCTIONS}
 
 ${WORLD_CUP_USER_FACING_LANGUAGE_RULES}
 
-En el campo "reasoning", incluí sede/estadio y clima del kickoff, ranking FIFA, stakes de clasificación, señal de mercado/xG si hay, y por qué el marcador maximiza PA+GL/GV/GT. No cites predicciones individuales de otros usuarios.
+En el campo "reasoning", priorizá evidencia del torneo 2026 (forma, goles, tabla, stakes). Citá sede/clima, y solo después ranking histórico o mercado/xG si aportan. Mencioná si ajustaste pesos por calibracionReciente. Explicá por qué el marcador maximiza PA+GL/GV/GT. No cites predicciones individuales de otros usuarios.
 
 Respondé ÚNICAMENTE con JSON válido (sin markdown fuera del campo reasoning):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<explicación en español; markdown ligero permitido>"}
 
-Contexto del partido:
-${JSON.stringify(humanizePromptContext(context), null, 2)}`;
+Contexto del partido (ordenado por prioridad; leé guiaPrioridadContexto primero):
+${JSON.stringify(humanizeCompetitorPromptContext(context), null, 2)}`;
 }
 
 function buildAiPredictionPrompt(context) {

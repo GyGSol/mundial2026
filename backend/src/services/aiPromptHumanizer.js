@@ -156,6 +156,107 @@ export function humanizePromptContext(context) {
   };
 }
 
+const COMPETITOR_CONTEXT_PRIORITY_GUIDE = {
+  ordenPorDefecto: [
+    '1) Rendimiento en Mundial 2026 (forma, goles, tabla, stakes, H2H de esta Copa)',
+    '2) Aprendizaje reciente (calibracionReciente) para corregir sesgos de Gdif',
+    '3) Plantilla y disponibilidad (lesiones, titulares, duelos por puesto)',
+    '4) Mercado/xG y consenso del grupo (señales de apoyo)',
+    '5) Ranking FIFA e historial pre-torneo (solo si hay pocos PJ en 2026)',
+  ],
+  decisionAdaptativa:
+    'Ajustá el peso de cada bloque según calibracionReciente: si el error combinado es alto o hay sesgo de goles local/visitante, priorizá mundial2026 y plantilla; reducí confianza en xG/mercado o historial lejano hasta corregir el sesgo.',
+};
+
+/**
+ * Contexto del competidor IA con torneo 2026 primero; calibración guía pesos adaptativos.
+ */
+export function humanizeCompetitorPromptContext(context) {
+  const humanized = humanizePromptContext(context);
+  const {
+    matchExternalId,
+    phase,
+    group,
+    matchday,
+    kickoffAt,
+    fifaRankingsAsOf,
+    venue,
+    weatherOps,
+    weatherRisk,
+    liveScheduleContext,
+    groupStandings,
+    headToHead2026,
+    historialReciente,
+    stakesContext,
+    tablaYClasificacion,
+    inteligenciaGrupo,
+    carreraPremios,
+    calibracionReciente,
+    mercadoYxG,
+    equipoLocal,
+    equipoVisitante,
+    análisisPlantilla,
+    contextoSelecciones,
+    duelosPorPuesto,
+    ...leftover
+  } = humanized;
+
+  const preTorneoLeftover = { ...leftover };
+  for (const key of [
+    'nationContext',
+    'squadAnalysis',
+    'positionMatchups',
+    'homeTeam',
+    'awayTeam',
+    '_calibrationStats',
+    '_lightContext',
+    'externalIntel',
+  ]) {
+    delete preTorneoLeftover[key];
+  }
+
+  return {
+    guiaPrioridadContexto: {
+      ...COMPETITOR_CONTEXT_PRIORITY_GUIDE,
+      calibracionReciente: calibracionReciente ?? null,
+    },
+    partido: {
+      matchExternalId,
+      phase,
+      group,
+      matchday,
+      kickoffAt,
+      venue,
+      weatherOps,
+      weatherRisk,
+      liveScheduleContext,
+    },
+    mundial2026: {
+      equipoLocal,
+      equipoVisitante,
+      historialDetallado: historialReciente ?? null,
+      tablaGrupo: groupStandings ?? [],
+      enfrentamientoDirecto2026: headToHead2026 ?? null,
+      stakesClasificacion: stakesContext ?? null,
+      tablaYClasificacion: tablaYClasificacion ?? null,
+    },
+    plantillaYDisponibilidad: {
+      análisisPlantilla,
+      duelosPorPuesto,
+    },
+    senalesExternasYGrupo: {
+      mercadoYxG: mercadoYxG ?? null,
+      inteligenciaGrupo: inteligenciaGrupo ?? null,
+      carreraPremios: carreraPremios ?? null,
+    },
+    contextoPreTorneoYReferencia: {
+      rankingFifaAl: fifaRankingsAsOf ?? null,
+      contextoSelecciones,
+      ...preTorneoLeftover,
+    },
+  };
+}
+
 const TECHNICAL_TERM_LABELS = {
   squadanalysis: 'análisis de plantilla',
   'squadanalysis.home': 'plantilla local',
