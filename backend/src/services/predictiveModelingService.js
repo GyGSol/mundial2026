@@ -6,12 +6,15 @@ import { ORACLE_RESPONSE_FORMAT } from '../schemas/oraclePredictionSchema.js';
 import {
   AI_COMPETITOR_SCORING_INSTRUCTIONS,
   WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
-  WORLD_CUP_USER_FACING_LANGUAGE_RULES,
   clampGoals,
   getAiUser,
   parseGeminiJsonResponse,
 } from './aiPredictionService.js';
-import { humanizeCompetitorPromptContext, sanitizeAiUserFacingText } from './aiPromptHumanizer.js';
+import {
+  humanizeCompetitorPromptContext,
+  sanitizeAiUserFacingText,
+  WORLD_CUP_USER_FACING_LANGUAGE_RULES,
+} from './aiPromptHumanizer.js';
 
 const SOURCE = 'cerebras-oracle';
 const liveAdjustmentCache = new Map();
