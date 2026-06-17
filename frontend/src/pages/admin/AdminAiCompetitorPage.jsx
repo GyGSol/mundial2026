@@ -301,10 +301,10 @@ export default function AdminAiCompetitorPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Fecha partido</TableHead>
-                    <TableHead>Ejec. oficial</TableHead>
+                    <TableHead>Fecha</TableHead>
                     <TableHead>Partido</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead>Predicho</TableHead>
                     <TableHead>Predicción</TableHead>
                     <TableHead>Pts / Gdif</TableHead>
                     <TableHead className="text-right">Acción</TableHead>
@@ -323,9 +323,6 @@ export default function AdminAiCompetitorPage() {
                         <TableCell className="whitespace-nowrap text-xs text-slate-400">
                           {formatKickoff(row.match?.kickoffAt)}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap text-xs text-slate-400">
-                          {row.officialPredictedAt ? formatKickoff(row.officialPredictedAt) : '—'}
-                        </TableCell>
                         <TableCell>
                           <div className="font-medium text-slate-100">{row.match?.label ?? '—'}</div>
                           <div className="text-xs text-slate-500">
@@ -342,6 +339,17 @@ export default function AdminAiCompetitorPage() {
                               {statusLabels[row.match?.status] ?? row.match?.status ?? ''}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs text-slate-400">
+                          {row.predictedAt ? (
+                            formatKickoff(row.predictedAt)
+                          ) : row.simulationAt ? (
+                            <span className="text-amber-400/80" title="Solo simulación">
+                              {formatKickoff(row.simulationAt)} (sim)
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {pred?.userSubmitted ? (
@@ -438,9 +446,13 @@ export default function AdminAiCompetitorPage() {
                     ? ` · Resultado real: ${detail.match.homeScore}-${detail.match.awayScore}`
                     : ''}
                 </p>
-                {detail.createdAt ? (
+                {selectedRow?.predictedAt && !detail.isSimulation ? (
                   <p className="mt-1 text-xs text-slate-500">
-                    {detail.isSimulation ? 'Simulada' : 'Ejecutada oficialmente'}: {formatKickoff(detail.createdAt)}
+                    Predicción oficial: {formatKickoff(selectedRow.predictedAt)}
+                  </p>
+                ) : detail.isSimulation && selectedRow?.simulationAt ? (
+                  <p className="mt-1 text-xs text-amber-400/80">
+                    Simulación: {formatKickoff(selectedRow.simulationAt)}
                   </p>
                 ) : null}
                 {detail.finalResponse?.reasoning ? (

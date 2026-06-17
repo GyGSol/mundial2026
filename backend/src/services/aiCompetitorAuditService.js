@@ -217,9 +217,10 @@ export async function getAiCompetitorOverview({
     const officialLog = latestOfficialLogByMatch.get(key) ?? null;
     const simulationLog = latestSimulationLogByMatch.get(key) ?? null;
     const displayLog = officialLog ?? latestLogByMatch.get(key) ?? null;
-    const officialPredictedAt =
+    const predictedAt =
       officialLog?.createdAt ??
-      (prediction?.userSubmitted ? prediction.updatedAt ?? prediction.createdAt : null);
+      (prediction?.userSubmitted ? prediction.updatedAt ?? prediction.createdAt : null) ??
+      null;
 
     rows.push({
       matchId: key,
@@ -241,7 +242,10 @@ export async function getAiCompetitorOverview({
       latestLogId: displayLog?._id?.toString() ?? null,
       latestOfficialLogId: officialLog?._id?.toString() ?? null,
       latestSimulationLogId: simulationLog?._id?.toString() ?? null,
-      officialPredictedAt: officialPredictedAt ? new Date(officialPredictedAt).toISOString() : null,
+      predictedAt: predictedAt ? new Date(predictedAt).toISOString() : null,
+      simulationAt: simulationLog?.createdAt
+        ? new Date(simulationLog.createdAt).toISOString()
+        : null,
       logCount: logs.filter((l) => l.matchId.toString() === key).length,
       canSimulate: match.status === 'upcoming',
     });
