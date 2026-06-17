@@ -1,8 +1,7 @@
 import { connectDb } from '../config/db.js';
 import { env } from '../config/env.js';
 import { User } from '../models/User.js';
-
-const AI_DISPLAY_NAME = 'Predictive Modeling (IA)';
+import { AI_USER_DISPLAY_NAME } from '../constants/aiUser.js';
 
 async function main() {
   await connectDb();
@@ -13,20 +12,23 @@ async function main() {
     process.exit(1);
   }
 
-  const user = await User.findOne({ email });
+  let user = await User.findOne({ isAiUser: true });
+  if (!user) {
+    user = await User.findOne({ email });
+  }
   if (!user) {
     console.error(`Usuario no encontrado: ${email}`);
     process.exit(1);
   }
 
-  const updates = { isAiUser: true };
-  if (!user.name?.includes('(IA)')) {
-    updates.name = AI_DISPLAY_NAME;
+  const updates = { isAiUser: true, name: AI_USER_DISPLAY_NAME };
+  if (user.email !== email) {
+    updates.email = email;
   }
 
   await User.updateOne({ _id: user._id }, { $set: updates });
 
-  console.log(`Usuario IA marcado: ${email} (${user._id})`);
+  console.log(`Usuario IA marcado: ${updates.email ?? user.email} (${user._id})`);
   process.exit(0);
 }
 

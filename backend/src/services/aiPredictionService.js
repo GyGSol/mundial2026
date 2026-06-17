@@ -49,6 +49,7 @@ import {
   loadAiCalibrationStats,
 } from './aiPredictionCalibrationService.js';
 import { saveAiCompetitorPredictionLog } from './aiCompetitorAuditService.js';
+import { getAiUser } from './aiUserService.js';
 import {
   fetchExternalMatchIntel,
   formatExternalIntelForPrompt,
@@ -310,12 +311,6 @@ export function computeHeuristicScore(context) {
     reasoning: 'Heurística por promedios de grupo',
     source: 'heuristic',
   };
-}
-
-export async function getAiUser() {
-  const email = env.aiUserEmail;
-  if (!email) return null;
-  return User.findOne({ email, isAiUser: true });
 }
 
 export async function buildPromptContext(match, aiUserId, { adminOnDemand = false, fetchImpl = fetch } = {}) {
@@ -1414,3 +1409,5 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     isSimulation: false,
   });
 }
+
+export { getAiUser } from './aiUserService.js';

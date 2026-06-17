@@ -12,6 +12,7 @@ import { isPredictionLocked } from './predictionLockService.js';
 import { compareMatchesBySchedule } from './matchSortService.js';
 import { recalculateMatchScores } from './syncService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
+import { getAiUser } from './aiUserService.js';
 
 const MAX_CONTEXT_BYTES = 512_000;
 
@@ -112,9 +113,8 @@ function teamLabel(team, fallbackId) {
 }
 
 async function resolveAiUser() {
-  const email = env.aiUserEmail;
-  if (!email) return null;
-  return User.findOne({ email, isAiUser: true }).lean();
+  const user = await getAiUser();
+  return user?.toObject ? user.toObject() : user;
 }
 
 function classifyPredictionState(match, prediction) {

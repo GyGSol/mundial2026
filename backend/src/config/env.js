@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { AI_USER_DEFAULT_EMAIL } from '../constants/aiUser.js';
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ export const env = {
   fifaReportAssetPrefix: process.env.FIFA_REPORT_ASSET_PREFIX || 'ce281',
   fifaReportIdBase: Number(process.env.FIFA_REPORT_ID_BASE || 12451),
   aiPredictionsEnabled: process.env.AI_PREDICTIONS_ENABLED !== 'false',
-  aiUserEmail: (process.env.AI_USER_EMAIL || 'predictivemodeling@gmail.com').toLowerCase().trim(),
+  aiUserEmail: (process.env.AI_USER_EMAIL || AI_USER_DEFAULT_EMAIL).toLowerCase().trim(),
   cerebrasApiKey: process.env.CEREBRAS_API_KEY || '',
   googleAiApiKey: process.env.GOOGLE_AI_API_KEY || '',
   groqApiKey: process.env.GROQ_API_KEY || '',
