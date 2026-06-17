@@ -1162,6 +1162,14 @@ export async function submitAiPrediction(
   return prediction;
 }
 
+/** Predicción IA “oficial” (LLM real), no admin ni heurística de respaldo. */
+export function isOfficialAiCompetitorPrediction(prediction) {
+  if (!prediction?.userSubmitted || prediction.predictionSource !== 'ai') return false;
+  const model = String(prediction.aiModel ?? '');
+  if (!model || model === 'heuristic' || model.startsWith('heuristic-')) return false;
+  return true;
+}
+
 export async function findMatchesDueForAiPrediction(aiUserId, now = Date.now()) {
   const upcoming = await Match.find({
     status: 'upcoming',
@@ -1177,10 +1185,12 @@ export async function findMatchesDueForAiPrediction(aiUserId, now = Date.now()) 
     userId: aiUserId,
     matchId: { $in: matchIds },
     userSubmitted: true,
-  }).select('matchId');
+  }).select('matchId predictionSource aiModel');
 
-  const submittedIds = new Set(existing.map((p) => p.matchId.toString()));
-  return inWindow.filter((m) => !submittedIds.has(m._id.toString()));
+  const officialIds = new Set(
+    existing.filter(isOfficialAiCompetitorPrediction).map((p) => p.matchId.toString())
+  );
+  return inWindow.filter((m) => !officialIds.has(m._id.toString()));
 }
 
 export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch } = {}) {
@@ -1372,8 +1382,8 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
   });
   const rawScore = await callAiForCompetitorScore(context, {
     fetchImpl: timedFetch,
-    maxAttempts: 1,
-    singleProvider: true,
+    maxAttempts: 2,
+    singleProvider: false,
   });
   const score = applyCalibrationNudge(rawScore, context._calibrationStats);
 

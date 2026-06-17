@@ -46,7 +46,7 @@ ${AI_COMPETITOR_SCORING_INSTRUCTIONS}
 ${WORLD_CUP_USER_FACING_LANGUAGE_RULES}
 ${liveBlock}
 Respondé con el esquema JSON estricto:
-- predicted_score: [goles_local, goles_visitante] enteros 0-10
+- home_goals / away_goals: enteros 0-10
 - confidence_interval: 0-1 (certeza del marcador)
 - key_variable_impact: variable más determinante en una frase
 - error_reduction_factor: 0-1 estimación de reducción de error vs baseline
@@ -59,11 +59,15 @@ export function parseOracleStructuredResponse(raw) {
   const parsed = typeof raw === 'string' ? parseGeminiJsonResponse(raw) : raw;
   if (!parsed || typeof parsed !== 'object') return null;
 
-  const score = parsed.predicted_score;
-  if (!Array.isArray(score) || score.length < 2) return null;
+  let homeRaw = parsed.home_goals ?? parsed.homeGoals;
+  let awayRaw = parsed.away_goals ?? parsed.awayGoals;
+  if (homeRaw == null && awayRaw == null && Array.isArray(parsed.predicted_score)) {
+    homeRaw = parsed.predicted_score[0];
+    awayRaw = parsed.predicted_score[1];
+  }
 
-  const homeGoals = clampGoals(score[0]);
-  const awayGoals = clampGoals(score[1]);
+  const homeGoals = clampGoals(homeRaw);
+  const awayGoals = clampGoals(awayRaw);
   if (homeGoals === null || awayGoals === null) return null;
 
   const confidence = Number(parsed.confidence_interval);

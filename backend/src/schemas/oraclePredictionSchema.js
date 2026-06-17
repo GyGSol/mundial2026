@@ -2,12 +2,8 @@
 export const ORACLE_PREDICTION_JSON_SCHEMA = {
   type: 'object',
   properties: {
-    predicted_score: {
-      type: 'array',
-      items: { type: 'integer', minimum: 0, maximum: 10 },
-      minItems: 2,
-      maxItems: 2,
-    },
+    home_goals: { type: 'integer', minimum: 0, maximum: 10 },
+    away_goals: { type: 'integer', minimum: 0, maximum: 10 },
     confidence_interval: {
       type: 'number',
       minimum: 0,
@@ -21,7 +17,8 @@ export const ORACLE_PREDICTION_JSON_SCHEMA = {
     },
   },
   required: [
-    'predicted_score',
+    'home_goals',
+    'away_goals',
     'confidence_interval',
     'key_variable_impact',
     'error_reduction_factor',
