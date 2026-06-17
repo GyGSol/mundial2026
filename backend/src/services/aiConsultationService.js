@@ -33,6 +33,13 @@ import { getLockAt, isPredictionOpen } from './predictionLockService.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
 import { chargeAiConsultationFee } from './fubolService.js';
 
+const AI_HISTORY_FOR_PROMPT = 20;
+const AI_MESSAGES_STORED_MAX = 80;
+
+async function ensureAiConsultationPaid(userId) {
+  return chargeAiConsultationFee({ userId });
+}
+
 export const AI_TOPIC_TYPES = ['match', 'group', 'round_of_16'];
 
 export function normalizeTopicKey(topicType, topicKey) {
