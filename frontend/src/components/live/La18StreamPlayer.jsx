@@ -332,6 +332,13 @@ export default function La18StreamPlayer({
             onMediaExpired={onReloadPrimary}
           />
 
+          {isCastBrowser() ? (
+            <p className="col-span-2 text-center text-[11px] leading-snug text-muted-foreground sm:col-span-3">
+              Chrome lista los TVs en tu WiFi (Smart TV, Telecentro, Chromecast). El monitor por HDMI no
+              aparece: debe estar el deco encendido y en la misma red que la PC.
+            </p>
+          ) : null}
+
           {!isCastBrowser() ? (
             <p className="col-span-2 text-center text-[11px] text-muted-foreground sm:col-span-1">
               Ver en TV: Chrome o Edge + misma WiFi

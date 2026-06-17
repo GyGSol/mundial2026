@@ -96,6 +96,8 @@ export async function initCastContext() {
       const context = castFramework.CastContext.getInstance();
       const options = {
         receiverApplicationId: getAppId(),
+        androidReceiverCompatible: true,
+        resumeSavedSession: true,
       };
       const autoJoinPolicy = getAutoJoinPolicy();
       if (autoJoinPolicy != null) {
