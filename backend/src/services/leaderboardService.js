@@ -4,7 +4,7 @@ import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { calculatePoints, calculateGoalDiff } from './scoringService.js';
-import { compareGoalDiffScore, compareHitRate } from './goalDiffStats.js';
+import { compareAvgGoalDiff, compareGoalDiffScore } from './goalDiffStats.js';
 
 function goalDiffHomeExpr(matchScoreField = '$matchDoc.homeScore') {
   return {
@@ -226,12 +226,12 @@ export function compareRankingEntries(a, b) {
   if (b.gt !== a.gt) return b.gt - a.gt;
   // PB al final: menos PB = mejor posición (consuelo no adelanta)
   if (a.pb !== b.pb) return a.pb - b.pb;
-  const gdifCmp = compareGoalDiffScore(a.gl, a.gv, a.pj, b.gl, b.gv, b.pj);
+  const gdifCmp = compareGoalDiffScore(a.difGl, a.difGv, a.pj, b.difGl, b.difGv, b.pj);
   if (gdifCmp !== 0) return gdifCmp;
-  const glRateCmp = compareHitRate(a.gl, a.pj, b.gl, b.pj);
-  if (glRateCmp !== 0) return glRateCmp;
-  const gvRateCmp = compareHitRate(a.gv, a.pj, b.gv, b.pj);
-  if (gvRateCmp !== 0) return gvRateCmp;
+  const difLocalCmp = compareAvgGoalDiff(a.difGl, a.pj, b.difGl, b.pj);
+  if (difLocalCmp !== 0) return difLocalCmp;
+  const difVisitCmp = compareAvgGoalDiff(a.difGv, a.pj, b.difGv, b.pj);
+  if (difVisitCmp !== 0) return difVisitCmp;
   return a.name.localeCompare(b.name, 'es');
 }
 

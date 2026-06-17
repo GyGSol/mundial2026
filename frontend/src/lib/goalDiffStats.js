@@ -1,22 +1,22 @@
-function goalHitRate(hits, pj) {
+function avgGoalDiffPerMatch(totalDiff, pj) {
   const games = pj ?? 0;
   if (games <= 0) return 0;
-  return (hits ?? 0) / games;
+  return (totalDiff ?? 0) / games;
 }
 
-/** Gdif = (GL/PJ × GV/PJ) / 2, escalado ×2 → 1.000 = todos los goles exactos. */
-export function goalDiffScore(gl, gv, pj) {
+/** Gdif = (GLdif × GVdif) / 2; GLdif/GVdif = error promedio local/visitante. */
+export function goalDiffScore(difGl, difGv, pj) {
   const games = pj ?? 0;
   if (games <= 0) return null;
-  const localRate = goalHitRate(gl, games);
-  const visitRate = goalHitRate(gv, games);
-  const raw = (localRate * visitRate) / 2;
-  return Math.min(1, raw * 2);
+  const glDif = avgGoalDiffPerMatch(difGl, games);
+  const gvDif = avgGoalDiffPerMatch(difGv, games);
+  const combined = (glDif * gvDif) / 2;
+  return Math.max(0, 1 - combined / 2);
 }
 
-/** 1.000 = todos los goles exactos; .110, etc. */
-export function formatGoalDiffScore(gl, gv, pj) {
-  const score = goalDiffScore(gl, gv, pj);
+/** 1.000 = cero error en ambos lados; .801, etc. */
+export function formatGoalDiffScore(difGl, difGv, pj) {
+  const score = goalDiffScore(difGl, difGv, pj);
   if (score == null) return '—';
   const fixed = score.toFixed(3);
   return fixed.startsWith('0.') ? fixed.slice(1) : fixed;

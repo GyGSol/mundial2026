@@ -5,6 +5,7 @@ export function avgGoalDiffPerMatch(totalDiff, pj) {
   return (totalDiff ?? 0) / games;
 }
 
+/** Menor promedio = mejor posición (desempate). */
 export function compareAvgGoalDiff(aDiff, aPj, bDiff, bPj) {
   const aAvg = avgGoalDiffPerMatch(aDiff, aPj);
   const bAvg = avgGoalDiffPerMatch(bDiff, bPj);
@@ -12,37 +13,33 @@ export function compareAvgGoalDiff(aDiff, aPj, bDiff, bPj) {
   return 0;
 }
 
-/** Tasa de acierto por lado: GL/PJ o GV/PJ. */
-export function goalHitRate(hits, pj) {
-  const games = pj ?? 0;
-  if (games <= 0) return 0;
-  return (hits ?? 0) / games;
+/** Error promedio local por partido (predicción vs resultado). */
+export function goalDiffLocalAvg(difGl, pj) {
+  return avgGoalDiffPerMatch(difGl, pj);
 }
 
-/** Mayor tasa = mejor posición. */
-export function compareHitRate(aHits, aPj, bHits, bPj) {
-  const aRate = goalHitRate(aHits, aPj);
-  const bRate = goalHitRate(bHits, bPj);
-  if (bRate !== aRate) return bRate - aRate;
-  return 0;
+/** Error promedio visitante por partido. */
+export function goalDiffVisitAvg(difGv, pj) {
+  return avgGoalDiffPerMatch(difGv, pj);
 }
 
 /**
- * Gdif = (GL/PJ × GV/PJ) / 2, escalado ×2 → 1.000 si acertaste local y visitante en todos los partidos.
+ * Gdif = (GLdif × GVdif) / 2, con GLdif/GVdif = error promedio por lado.
+ * Escala 0–1: 1.000 = cero error local y visitante; baja con el producto.
  */
-export function goalDiffScore(gl, gv, pj) {
+export function goalDiffScore(difGl, difGv, pj) {
   const games = pj ?? 0;
   if (games <= 0) return 0;
-  const localRate = goalHitRate(gl, games);
-  const visitRate = goalHitRate(gv, games);
-  const raw = (localRate * visitRate) / 2;
-  return Math.min(1, raw * 2);
+  const glDif = goalDiffLocalAvg(difGl, games);
+  const gvDif = goalDiffVisitAvg(difGv, games);
+  const combined = (glDif * gvDif) / 2;
+  return Math.max(0, 1 - combined / 2);
 }
 
 /** Mayor Gdif = mejor posición. */
-export function compareGoalDiffScore(aGl, aGv, aPj, bGl, bGv, bPj) {
-  const aScore = goalDiffScore(aGl, aGv, aPj);
-  const bScore = goalDiffScore(bGl, bGv, bPj);
+export function compareGoalDiffScore(aDifGl, aDifGv, aPj, bDifGl, bDifGv, bPj) {
+  const aScore = goalDiffScore(aDifGl, aDifGv, aPj);
+  const bScore = goalDiffScore(bDifGl, bDifGv, bPj);
   if (bScore !== aScore) return bScore - aScore;
   return 0;
 }

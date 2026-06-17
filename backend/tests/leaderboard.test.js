@@ -38,22 +38,22 @@ describe('leaderboardService tiebreakers', () => {
     expect(rows[0].name).toBe('A');
   });
 
-  it('en empate de PB desempata por Gdif y luego GL/PJ y GV/PJ', () => {
+  it('en empate de PB desempata por Gdif y luego dif local/visitante', () => {
     const rows = [
-      { name: 'B', totalPoints: 4, pa: 1, gl: 1, gv: 3, gt: 1, pb: 0, pj: 4 },
-      { name: 'A', totalPoints: 4, pa: 1, gl: 3, gv: 1, gt: 1, pb: 0, pj: 4 },
-      { name: 'C', totalPoints: 4, pa: 1, gl: 2, gv: 2, gt: 1, pb: 0, pj: 2 },
+      { name: 'B', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 2, difGl: 2, difGv: 0 },
+      { name: 'A', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 2, difGl: 0, difGv: 2 },
+      { name: 'C', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 1, difGl: 0, difGv: 0 },
     ].sort(compareLeaderboardEntries);
 
     expect(rows.map((row) => row.name)).toEqual(['C', 'A', 'B']);
   });
 
-  it('Gdif premia más aciertos exactos por partido (mismo GL+GV)', () => {
+  it('Gdif premia menor error combinado local×visitante', () => {
     const rows = [
-      { name: 'MuchosPartidos', totalPoints: 4, pa: 1, gl: 2, gv: 2, gt: 1, pb: 0, pj: 10 },
-      { name: 'PocosPartidos', totalPoints: 4, pa: 1, gl: 2, gv: 2, gt: 1, pb: 0, pj: 2 },
+      { name: 'PeorVisitante', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 20, difGl: 25, difGv: 15 },
+      { name: 'MejorVisitante', totalPoints: 4, pa: 1, gl: 0, gv: 0, gt: 1, pb: 0, pj: 20, difGl: 29, difGv: 11 },
     ].sort(compareLeaderboardEntries);
 
-    expect(rows[0].name).toBe('PocosPartidos');
+    expect(rows[0].name).toBe('MejorVisitante');
   });
 });

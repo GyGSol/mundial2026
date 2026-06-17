@@ -23,8 +23,8 @@ const tiebreakerRules = [
   'GL + GV (goles exactos local y visitante)',
   'GT (goles totales exactos)',
   'PB (puntos bonus; en empate, menos PB = mejor posición)',
-  'Gdif: (GL/PJ × GV/PJ) / 2 (×2 para escala 0–1); 1.000 = goles local y visitante exactos en todos los partidos',
-  'En empate de Gdif: mayor GL/PJ, luego mayor GV/PJ',
+  'Gdif: (GLdif × GVdif) / 2 — error promedio local × visitante; 1.000 = predicción exacta en ambos lados',
+  'En empate de Gdif: menor error local promedio, luego visitante',
 ];
 
 export default function RulesPage() {

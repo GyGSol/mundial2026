@@ -21,7 +21,7 @@ import { formatGoalDiffScore } from '@/lib/goalDiffStats.js';
 import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
 
 const GDIFF_HELP =
-  'Precisión en goles: (GL/PJ × GV/PJ) / 2 escalado; 1.000 = local y visitante exactos en todos los partidos';
+  'GLdif = error promedio local (predicción vs resultado) ÷ PJ; GVdif = idem visitante. Gdif = (GLdif × GVdif) / 2 escalado; 1.000 = cero error en ambos lados.';
 
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },
@@ -125,7 +125,7 @@ function StatValue({ value, delta, align = 'center' }) {
 
 function renderStatCell(row, col, { hasLiveMatches, rowDeltas }) {
   if (col.format === 'gdif') {
-    return formatGoalDiffScore(row.gl, row.gv, row.pj);
+    return formatGoalDiffScore(row.difGl, row.difGv, row.pj);
   }
 
   const value = row[col.key] ?? 0;
