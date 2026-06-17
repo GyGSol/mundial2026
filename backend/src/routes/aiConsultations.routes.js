@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { AI_CONSULTATION_FEE } from '../config/economy.js';
+import { AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../config/economy.js';
+import { User } from '../models/User.js';
+import { buildAiCreditsPayload } from '../services/fubolService.js';
 import { hasAiProvider } from '../services/aiPredictionService.js';
 import {
   askConsultation,
@@ -13,12 +15,20 @@ import {
 
 const router = Router();
 
+async function loadAiCredits(userId) {
+  const user = await User.findById(userId).select('isAiUser aiQuestionCredits balanceFubols').lean();
+  return buildAiCreditsPayload(user);
+}
+
 router.use(authMiddleware);
 
 router.get('/', async (req, res, next) => {
   try {
-    const threads = await listConsultationThreads(req.user._id);
-    res.json({ threads, aiAvailable: hasAiProvider() });
+    const [threads, aiCredits] = await Promise.all([
+      listConsultationThreads(req.user._id),
+      loadAiCredits(req.user._id),
+    ]);
+    res.json({ threads, aiAvailable: hasAiProvider(), aiCredits });
   } catch (err) {
     next(err);
   }
@@ -32,8 +42,11 @@ router.get('/thread', async (req, res, next) => {
       return res.status(400).json({ error: 'Tema de consulta inválido' });
     }
 
-    const result = await getConsultationThread(req.user._id, topicType, topicKey);
-    res.json({ ...result, aiAvailable: hasAiProvider() });
+    const [result, aiCredits] = await Promise.all([
+      getConsultationThread(req.user._id, topicType, topicKey),
+      loadAiCredits(req.user._id),
+    ]);
+    res.json({ ...result, aiAvailable: hasAiProvider(), aiCredits });
   } catch (err) {
     next(err);
   }
@@ -58,6 +71,7 @@ router.post('/insight', async (req, res, next) => {
         error: err.message,
         code: 'insufficient_fubols',
         requiredFubols: AI_CONSULTATION_FEE,
+        questionsPerPack: AI_QUESTIONS_PER_FEE,
       });
     }
     if (err.message === 'Partido no encontrado') {
@@ -89,6 +103,7 @@ router.post('/ask', async (req, res, next) => {
         error: err.message,
         code: 'insufficient_fubols',
         requiredFubols: AI_CONSULTATION_FEE,
+        questionsPerPack: AI_QUESTIONS_PER_FEE,
       });
     }
     const clientErrors = [

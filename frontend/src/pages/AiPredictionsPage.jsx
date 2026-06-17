@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import { aiConsultationsApi, matchesApi } from '../api/client.js';
-import AiConsultationChat, { InsightScore } from '../components/AiConsultationChat.jsx';
+import AiConsultationChat from '../components/AiConsultationChat.jsx';
+import AiPricingDialog from '../components/AiPricingDialog.jsx';
 import ClearConversationDialog from '../components/ClearConversationDialog.jsx';
 import FubolCoinIcon from '../components/FubolCoinIcon.jsx';
 import MatchVenueWeather from '../components/MatchVenueWeather.jsx';
 import StripeCheckoutModal from '../components/StripeCheckoutModal.jsx';
 import { GROUP_LETTERS } from '../lib/groupColors.js';
-import { AI_CONSULTATION_FEE } from '../lib/economyConstants.js';
+import { AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../lib/economyConstants.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button.jsx';
@@ -21,6 +22,8 @@ import {
   SelectValue,
 } from '@/components/ui/select.jsx';
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat.js';
+
+const AI_PRICING_SESSION_KEY = 'mundial-ai-pricing-seen';
 
 const TOPICS = [
   { id: 'match', label: 'Partido' },
@@ -82,17 +85,22 @@ export default function AiPredictionsPage() {
   const [threads, setThreads] = useState([]);
   const [matches, setMatches] = useState([]);
   const [aiAvailable, setAiAvailable] = useState(true);
+  const [aiCredits, setAiCredits] = useState(null);
   const [loading, setLoading] = useState(false);
   const [asking, setAsking] = useState(false);
   const [clearingConversation, setClearingConversation] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [welcomePricingOpen, setWelcomePricingOpen] = useState(false);
+  const [askConfirmOpen, setAskConfirmOpen] = useState(false);
+  const [pendingQuestion, setPendingQuestion] = useState('');
   const [error, setError] = useState('');
   const [question, setQuestion] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const balanceFubols = user?.balanceFubols ?? 0;
   const aiExempt = Boolean(user?.isAIAgent);
-  const needsFubols = !aiExempt && balanceFubols < AI_CONSULTATION_FEE;
+  const creditsRemaining = aiCredits?.remaining ?? user?.aiQuestionCredits ?? 0;
+  const needsFubols = !aiExempt && creditsRemaining <= 0 && balanceFubols < AI_CONSULTATION_FEE;
   const insufficientBalanceError =
     Boolean(error) && error.toLowerCase().includes('saldo insuficiente');
 
@@ -108,6 +116,17 @@ export default function AiPredictionsPage() {
   );
 
   useEffect(() => {
+    if (!aiAvailable || aiExempt) return;
+    if (sessionStorage.getItem(AI_PRICING_SESSION_KEY)) return;
+    setWelcomePricingOpen(true);
+  }, [aiAvailable, aiExempt]);
+
+  const handleWelcomePricingClose = (open) => {
+    setWelcomePricingOpen(open);
+    if (!open) sessionStorage.setItem(AI_PRICING_SESSION_KEY, '1');
+  };
+
+  useEffect(() => {
     matchesApi
       .list({ status: 'upcoming' })
       .then((data) => setMatches(data.matches ?? []))
@@ -120,6 +139,7 @@ export default function AiPredictionsPage() {
       .then((data) => {
         setThreads(data.threads ?? []);
         setAiAvailable(data.aiAvailable !== false);
+        if (data.aiCredits) setAiCredits(data.aiCredits);
       })
       .catch(() => {});
   }, [thread?.updatedAt]);
@@ -138,6 +158,7 @@ export default function AiPredictionsPage() {
       setThread(data.thread);
       setMatchVenue(data.matchVenue ?? null);
       setAiAvailable(data.aiAvailable !== false);
+      if (data.aiCredits) setAiCredits(data.aiCredits);
     } catch (err) {
       setError(err.message);
       setThread(null);
@@ -207,27 +228,6 @@ export default function AiPredictionsPage() {
     syncUrl(topicType, nextKey);
   };
 
-  const handleGenerateInsight = async () => {
-    if (!topicKey || asking) return;
-    setAsking(true);
-    setError('');
-    try {
-      const data = await aiConsultationsApi.generateInsight(topicKey);
-      setThread(data.thread);
-      setMatchVenue(data.matchVenue ?? null);
-      await refreshUser();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setAsking(false);
-    }
-  };
-
-  const handleAsk = async (e) => {
-    e.preventDefault();
-    await submitQuestion(question.trim());
-  };
-
   const submitQuestion = async (trimmed) => {
     const resolvedKey = topicType === 'round_of_16' ? 'round_of_16' : topicKey;
     if (!trimmed || !resolvedKey || asking) return;
@@ -235,6 +235,8 @@ export default function AiPredictionsPage() {
     setAsking(true);
     setError('');
     setQuestion('');
+    setAskConfirmOpen(false);
+    setPendingQuestion('');
 
     try {
       const data = await aiConsultationsApi.ask({
@@ -244,6 +246,7 @@ export default function AiPredictionsPage() {
       });
       setThread(data.thread);
       setMatchVenue(data.matchVenue ?? null);
+      if (data.aiCredits) setAiCredits(data.aiCredits);
       await refreshUser();
     } catch (err) {
       setError(err.message);
@@ -253,13 +256,42 @@ export default function AiPredictionsPage() {
     }
   };
 
-  const handleQuickPrompt = async (prompt) => {
-    if (asking) return;
-    if (topicType === 'match' && prompt === 'Predecir marcador') {
-      await handleGenerateInsight();
+  const requestQuestion = (trimmed) => {
+    if (!trimmed || asking) return;
+
+    if (aiExempt) {
+      void submitQuestion(trimmed);
       return;
     }
-    await submitQuestion(prompt);
+
+    if (creditsRemaining > 0) {
+      void submitQuestion(trimmed);
+      return;
+    }
+
+    if (balanceFubols < AI_CONSULTATION_FEE) {
+      setError('Saldo insuficiente de Fubols para consultar la IA.');
+      setCheckoutOpen(true);
+      return;
+    }
+
+    setPendingQuestion(trimmed);
+    setAskConfirmOpen(true);
+  };
+
+  const handleAsk = async (e) => {
+    e.preventDefault();
+    requestQuestion(question.trim());
+  };
+
+  const handleQuickPrompt = async (prompt) => {
+    if (asking) return;
+    requestQuestion(prompt);
+  };
+
+  const handleConfirmAsk = () => {
+    if (!pendingQuestion.trim()) return;
+    void submitQuestion(pendingQuestion.trim());
   };
 
   const handleOpenClearDialog = () => {
@@ -289,13 +321,7 @@ export default function AiPredictionsPage() {
     }
   };
 
-  const quickPrompts = useMemo(() => {
-    const base = QUICK_PROMPTS[topicType] ?? [];
-    if (topicType === 'match') {
-      return ['Predecir marcador', ...base];
-    }
-    return base;
-  }, [topicType]);
+  const quickPrompts = useMemo(() => QUICK_PROMPTS[topicType] ?? [], [topicType]);
 
   const threadTitle = useMemo(() => {
     if (thread?.title) return thread.title;
@@ -317,12 +343,11 @@ export default function AiPredictionsPage() {
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="size-5 text-violet-300" aria-hidden />
-          <h1 className="text-xl font-semibold tracking-tight">Predicciones IA</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Consultas IA</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Consultá partidos, grupos o quién clasifica a los 16avos. En el Mundial, local y visitante
-          son solo la posición en el fixture: la IA analiza sede, estadio y condiciones del partido.
-          Tus preguntas y respuestas quedan guardadas para que recuerde el contexto.
+          Hacé preguntas sobre partidos, grupos o clasificación. La IA no completa tu predicción de
+          marcador: eso lo cargás vos en Predicciones.
         </p>
         {!aiAvailable ? (
           <p className="text-sm text-amber-200">La IA no está disponible en este momento.</p>
@@ -334,7 +359,10 @@ export default function AiPredictionsPage() {
               {balanceFubols} Fubols
             </span>
             <span className="text-muted-foreground">
-              Cada consulta o predicción cuesta {AI_CONSULTATION_FEE} Fubols.
+              {AI_CONSULTATION_FEE} Fubol = {AI_QUESTIONS_PER_FEE} preguntas
+              {creditsRemaining > 0
+                ? ` · Te quedan ${creditsRemaining} incluida${creditsRemaining === 1 ? '' : 's'}`
+                : ''}
             </span>
             {needsFubols ? (
               <Button type="button" size="sm" onClick={() => setCheckoutOpen(true)}>
@@ -349,7 +377,9 @@ export default function AiPredictionsPage() {
         ) : null}
         {insufficientBalanceError ? (
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-            <span>Necesitás al menos {AI_CONSULTATION_FEE} Fubols para consultar la IA.</span>
+            <span>
+              Necesitás al menos {AI_CONSULTATION_FEE} Fubol para {AI_QUESTIONS_PER_FEE} preguntas.
+            </span>
             <Button type="button" size="sm" variant="secondary" onClick={() => setCheckoutOpen(true)}>
               Comprar Fubols (simulado)
             </Button>
@@ -459,12 +489,6 @@ export default function AiPredictionsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {topicType === 'match' && thread?.initialInsight ? (
-              <InsightScore
-                homeGoals={thread.initialInsight.homeGoals}
-                awayGoals={thread.initialInsight.awayGoals}
-              />
-            ) : null}
             {topicType === 'match' && matchVenue ? (
               <MatchVenueWeather matchVenue={matchVenue} />
             ) : null}
@@ -476,24 +500,38 @@ export default function AiPredictionsPage() {
               question={question}
               onQuestionChange={setQuestion}
               onAsk={handleAsk}
-              onGenerateInsight={handleGenerateInsight}
-              showInsightAction={topicType === 'match'}
+              showInsightAction={false}
               quickPrompts={quickPrompts}
               onQuickPrompt={handleQuickPrompt}
               onClearConversation={handleOpenClearDialog}
               clearingConversation={clearingConversation}
-              hideInsightScore={topicType === 'match' && Boolean(thread?.initialInsight)}
+              hideInsightScore
             />
           </CardContent>
         </Card>
       </div>
+
+      <AiPricingDialog
+        open={welcomePricingOpen}
+        onOpenChange={handleWelcomePricingClose}
+        mode="welcome"
+      />
+
+      <AiPricingDialog
+        open={askConfirmOpen}
+        onOpenChange={setAskConfirmOpen}
+        mode="confirm"
+        creditsRemaining={creditsRemaining}
+        onConfirm={handleConfirmAsk}
+        confirming={asking}
+      />
 
       <ClearConversationDialog
         open={clearDialogOpen}
         onOpenChange={setClearDialogOpen}
         topicTitle={threadTitle}
         messageCount={thread?.messages?.length ?? 0}
-        hasSavedPrediction={Boolean(thread?.initialInsight)}
+        hasSavedPrediction={false}
         onConfirm={handleConfirmClearConversation}
         confirming={clearingConversation}
       />

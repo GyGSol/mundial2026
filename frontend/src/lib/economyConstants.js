@@ -2,6 +2,7 @@
 export const MOCK_CHECKOUT_DELAY_MS = 2000;
 export const GROUP_ENTRY_FEE = 100;
 export const AI_CONSULTATION_FEE = 1;
+export const AI_QUESTIONS_PER_FEE = 3;
 
 export const TX_TYPE_LABELS = {
   deposit: 'Ingreso',

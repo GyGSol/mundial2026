@@ -3,7 +3,7 @@ import { User } from '../models/User.js';
 import { FubolTransaction } from '../models/FubolTransaction.js';
 import { AppTreasury } from '../models/AppTreasury.js';
 import { PrizePool } from '../models/PrizePool.js';
-import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE } from '../config/economy.js';
+import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../config/economy.js';
 
 function economyError(message, status = 400) {
   const error = new Error(message);
@@ -325,30 +325,87 @@ export async function grantAiPlayBonus(userId) {
   });
 }
 
+export function buildAiCreditsPayload(user) {
+  if (!user) return null;
+  if (user.isAiUser) {
+    return {
+      exempt: true,
+      remaining: null,
+      questionsPerPack: AI_QUESTIONS_PER_FEE,
+      packCostFubols: AI_CONSULTATION_FEE,
+    };
+  }
+  return {
+    exempt: false,
+    remaining: user.aiQuestionCredits ?? 0,
+    questionsPerPack: AI_QUESTIONS_PER_FEE,
+    packCostFubols: AI_CONSULTATION_FEE,
+  };
+}
+
 export async function chargeAiConsultationFee({ userId }) {
-  const user = await User.findById(userId).select('isAiUser balanceFubols').lean();
+  const user = await User.findById(userId).select('isAiUser balanceFubols aiQuestionCredits').lean();
   if (!user) throw economyError('Usuario no encontrado', 404);
   if (user.isAiUser) {
-    return { charged: false, reason: 'ai_exempt', balanceFubols: user.balanceFubols || 0 };
+    return {
+      charged: false,
+      chargedPack: false,
+      reason: 'ai_exempt',
+      creditsRemaining: null,
+      balanceFubols: user.balanceFubols || 0,
+      fee: 0,
+      questionsPerPack: AI_QUESTIONS_PER_FEE,
+      packCostFubols: AI_CONSULTATION_FEE,
+    };
   }
 
   return runInTransaction(async (session) => {
-    const debit = await debitUser({
-      userId,
-      amount: AI_CONSULTATION_FEE,
-      type: 'ai_consultation',
-      metadata: { fee: AI_CONSULTATION_FEE },
-      session,
-    });
+    const locked = await User.findById(userId).select('aiQuestionCredits balanceFubols').session(session);
+    if (!locked) throw economyError('Usuario no encontrado', 404);
 
-    const treasury = await getTreasury(session);
-    treasury.houseBalanceFubols = (treasury.houseBalanceFubols || 0) + AI_CONSULTATION_FEE;
-    await treasury.save(session ? { session } : undefined);
+    let credits = locked.aiQuestionCredits ?? 0;
+    let chargedPack = false;
+    let fee = 0;
+    let balanceFubols = locked.balanceFubols ?? 0;
+
+    if (credits <= 0) {
+      const debit = await debitUser({
+        userId,
+        amount: AI_CONSULTATION_FEE,
+        type: 'ai_consultation',
+        metadata: {
+          fee: AI_CONSULTATION_FEE,
+          pack: true,
+          questionsGranted: AI_QUESTIONS_PER_FEE,
+        },
+        session,
+      });
+      balanceFubols = debit.balanceFubols;
+
+      const treasury = await getTreasury(session);
+      treasury.houseBalanceFubols = (treasury.houseBalanceFubols || 0) + AI_CONSULTATION_FEE;
+      await treasury.save(session ? { session } : undefined);
+
+      credits = AI_QUESTIONS_PER_FEE;
+      chargedPack = true;
+      fee = AI_CONSULTATION_FEE;
+    }
+
+    const creditsRemaining = credits - 1;
+    await User.findByIdAndUpdate(
+      userId,
+      { $set: { aiQuestionCredits: creditsRemaining } },
+      { session }
+    );
 
     return {
-      charged: true,
-      balanceFubols: debit.balanceFubols,
-      fee: AI_CONSULTATION_FEE,
+      charged: chargedPack,
+      chargedPack,
+      fee,
+      creditsRemaining,
+      balanceFubols,
+      questionsPerPack: AI_QUESTIONS_PER_FEE,
+      packCostFubols: AI_CONSULTATION_FEE,
     };
   });
 }

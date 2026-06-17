@@ -127,7 +127,7 @@ export default function AiConsultationChat({
             </div>
           ) : null}
 
-          {insight ? (
+          {insight && !hideInsightScore ? (
             <div className="flex flex-col gap-3">
               {!hideInsightScore ? (
                 <InsightScore homeGoals={insight.homeGoals} awayGoals={insight.awayGoals} />

@@ -12,12 +12,12 @@ import {
   chargeGroupEntryFee,
   computeMaxWithdrawal,
   grantWelcomeBonus,
-  grantAiPlayBonus,
   chargeAiConsultationFee,
+  grantAiPlayBonus,
   getLiquidFubols,
   getTotalUserBalances,
 } from '../src/services/fubolService.js';
-import { GROUP_ENTRY_FEE, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE } from '../src/config/economy.js';
+import { GROUP_ENTRY_FEE, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../src/config/economy.js';
 
 describe('fubolService', () => {
   beforeAll(async () => {
@@ -189,23 +189,33 @@ describe('fubolService', () => {
       await User.deleteMany({ _id: { $in: [userId, aiUserId] } });
     });
 
-    it('cobra consulta IA y acumula en La Casa', async () => {
+    it('cobra pack de consultas IA y descuenta créditos', async () => {
       const beforeTreasury = await AppTreasury.findOne({ singletonKey: 'main' }).lean();
       const houseBefore = beforeTreasury?.houseBalanceFubols ?? 0;
 
-      const result = await chargeAiConsultationFee({ userId });
-      expect(result.charged).toBe(true);
-      expect(result.fee).toBe(AI_CONSULTATION_FEE);
+      const first = await chargeAiConsultationFee({ userId });
+      expect(first.chargedPack).toBe(true);
+      expect(first.fee).toBe(AI_CONSULTATION_FEE);
+      expect(first.creditsRemaining).toBe(AI_QUESTIONS_PER_FEE - 1);
 
-      const user = await User.findById(userId).lean();
-      expect(user.balanceFubols).toBe(0);
+      const userAfterFirst = await User.findById(userId).lean();
+      expect(userAfterFirst.balanceFubols).toBe(0);
+      expect(userAfterFirst.aiQuestionCredits).toBe(AI_QUESTIONS_PER_FEE - 1);
+
+      const second = await chargeAiConsultationFee({ userId });
+      expect(second.chargedPack).toBe(false);
+      expect(second.creditsRemaining).toBe(AI_QUESTIONS_PER_FEE - 2);
+
+      const third = await chargeAiConsultationFee({ userId });
+      expect(third.chargedPack).toBe(false);
+      expect(third.creditsRemaining).toBe(0);
 
       const treasury = await AppTreasury.findOne({ singletonKey: 'main' }).lean();
       expect(treasury.houseBalanceFubols).toBe(houseBefore + AI_CONSULTATION_FEE);
     });
 
-    it('rechaza consulta IA sin saldo', async () => {
-      await User.updateOne({ _id: userId }, { $set: { balanceFubols: 0 } });
+    it('rechaza consulta IA sin saldo para nuevo pack', async () => {
+      await User.updateOne({ _id: userId }, { $set: { balanceFubols: 0, aiQuestionCredits: 0 } });
       await expect(chargeAiConsultationFee({ userId })).rejects.toMatchObject({ status: 402 });
     });
 

@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     totalPoints: { type: Number, default: 0 },
     balanceFubols: { type: Number, default: 0, min: 0 },
+    /** Preguntas IA restantes del pack actual (0–2). Al llegar a 0, la próxima pregunta cobra 1 Fubol por 3 más. */
+    aiQuestionCredits: { type: Number, default: 0, min: 0, max: 3 },
     // Legacy field (single-group mode). Kept for backwards compatibility.
     competitionGroupId: {
       type: mongoose.Schema.Types.ObjectId,
