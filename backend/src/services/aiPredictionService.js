@@ -853,7 +853,7 @@ export async function callAiForCompetitorScore(context, options = {}) {
   return callAiForScore(context, {
     ...options,
     promptBuilder: buildAiCompetitorPredictionPrompt,
-    skipNilNilOracle: true,
+    skipNilNilOracle: options.skipNilNilOracle ?? true,
   });
 }
 
@@ -1386,7 +1386,7 @@ export async function simulateAiCompetitorPrediction(matchId, { fetchImpl } = {}
 
 /** Ejecuta el pipeline IA y persiste predicción oficial (admin: reemplaza 0-0 o correcciones manuales). */
 export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } = {}) {
-  const timedFetch = fetchImpl ?? createFetchWithTimeout(10_000);
+  const timedFetch = fetchImpl ?? createFetchWithTimeout(30_000);
   const aiUser = await getAiUser();
   if (!aiUser) {
     const error = new Error('Usuario IA no configurado');
@@ -1414,6 +1414,7 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     fetchImpl: timedFetch,
     maxAttempts: 2,
     singleProvider: false,
+    skipNilNilOracle: false,
   });
   const score = applyCalibrationNudge(rawScore, context._calibrationStats);
 
@@ -1430,7 +1431,7 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     { bypassLock: true }
   );
 
-  void saveAiCompetitorPredictionLog({
+  await saveAiCompetitorPredictionLog({
     userId: aiUser._id,
     matchId: match._id,
     predictionId: prediction._id,
