@@ -104,6 +104,24 @@ describe('fubolService', () => {
       const user = await User.findById(userId).lean();
       expect(user.balanceFubols).toBe(100);
     });
+
+    it('permite varias transacciones sin idempotencyKey', async () => {
+      await creditUser({
+        userId,
+        amount: 10,
+        type: 'deposit',
+        skipTreasuryDeposit: true,
+      });
+      await creditUser({
+        userId,
+        amount: 10,
+        type: 'deposit',
+        skipTreasuryDeposit: true,
+      });
+      const txs = await FubolTransaction.find({ userId, type: 'deposit' }).lean();
+      expect(txs.length).toBeGreaterThanOrEqual(2);
+      expect(txs.every((t) => t.idempotencyKey == null)).toBe(true);
+    });
   });
 
   describe('group entry fee', () => {

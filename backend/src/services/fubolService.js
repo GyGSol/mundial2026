@@ -123,8 +123,8 @@ export async function creditUser({
       balanceAfter: user.balanceFubols,
       groupId: groupId || null,
       metadata,
-      idempotencyKey: idempotencyKey || undefined,
     };
+    if (idempotencyKey) txPayload.idempotencyKey = idempotencyKey;
     const txDocs = await FubolTransaction.create([txPayload], session ? { session } : undefined);
     const transaction = Array.isArray(txDocs) ? txDocs[0] : txDocs;
 
@@ -184,8 +184,8 @@ export async function debitUser({
       balanceAfter: user.balanceFubols,
       groupId: groupId || null,
       metadata,
-      idempotencyKey: idempotencyKey || undefined,
     };
+    if (idempotencyKey) txPayload.idempotencyKey = idempotencyKey;
     const txDocs = await FubolTransaction.create([txPayload], session ? { session } : undefined);
     const transaction = Array.isArray(txDocs) ? txDocs[0] : txDocs;
 

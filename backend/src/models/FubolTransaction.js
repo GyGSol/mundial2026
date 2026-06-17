@@ -29,13 +29,21 @@ const fubolTransactionSchema = new mongoose.Schema(
       index: true,
     },
     metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
-    idempotencyKey: { type: String, default: null },
+    idempotencyKey: { type: String },
   },
   { timestamps: true }
 );
 
 fubolTransactionSchema.index({ userId: 1, createdAt: -1 });
-fubolTransactionSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
+fubolTransactionSchema.index(
+  { idempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      idempotencyKey: { $exists: true, $type: 'string' },
+    },
+  }
+);
 
 export const FubolTransaction = mongoose.model('FubolTransaction', fubolTransactionSchema);
 export { FUBOL_TX_TYPES };
