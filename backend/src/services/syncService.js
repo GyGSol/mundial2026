@@ -22,6 +22,7 @@ import {
   clearStaleUpcomingMatchScores,
 } from './matchScoringService.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
+import { isMatchKickoffStale, shouldFinalizeStaleLiveMatch } from './matchStatusRules.js';
 import { env } from '../config/env.js';
 import {
   notifyLeaderboardUpdated,
@@ -134,8 +135,17 @@ export function syncTeamsMatch(existing, incoming) {
   );
 }
 
-export function incomingIndicatesNotFinished(incoming) {
+export function incomingIndicatesNotFinished(incoming, { now = Date.now() } = {}) {
   const raw = incoming.raw ?? {};
+  const kickoffAt = incoming.kickoffAt;
+  if (
+    incoming.status === 'live' &&
+    kickoffAt &&
+    isMatchKickoffStale(kickoffAt, now)
+  ) {
+    return false;
+  }
+
   const finished = raw.finished ?? raw.Finished;
   if (finished === 'FALSE' || finished === false) return true;
   if (finished === 'TRUE' || finished === true || finished === 'true') return false;
@@ -219,6 +229,19 @@ export function mergeSyncedMatch(existing, incoming) {
       merged.homeScore = fifaScores.homeScore;
       merged.awayScore = fifaScores.awayScore;
     }
+    return merged;
+  }
+
+  if (
+    existing.status === 'live' &&
+    shouldFinalizeStaleLiveMatch({ ...existing, kickoffAt, raw: merged.raw })
+  ) {
+    merged.status = 'finished';
+    merged.raw = {
+      ...merged.raw,
+      time_elapsed: 'finished',
+      finished: 'TRUE',
+    };
     return merged;
   }
 

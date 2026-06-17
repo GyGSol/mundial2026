@@ -2,6 +2,7 @@ import { env } from '../config/env.js';
 import { resolveKickoffAt } from './kickoffTimeService.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import { sanitizeMatchScores } from './matchLiveData.js';
+import { isMatchKickoffStale, matchEvidentlyStarted } from './matchStatusRules.js';
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -136,7 +137,14 @@ export function resolveGameStatus(game, kickoffAt, { now = Date.now() } = {}) {
     return 'upcoming';
   }
 
-  return mapGameStatus(game);
+  const status = mapGameStatus(game);
+  if (status === 'live' && Number.isFinite(kickoffMs)) {
+    if (isMatchKickoffStale(kickoffAt, now) && matchEvidentlyStarted(game)) {
+      return 'finished';
+    }
+  }
+
+  return status;
 }
 
 /** @deprecated Use resolveKickoffAt from kickoffTimeService.js */

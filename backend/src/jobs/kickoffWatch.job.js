@@ -12,6 +12,9 @@ async function tick() {
     if (result.promoted > 0) {
       console.log(`Kickoff watch: ${result.promoted} partido(s) pasaron a en vivo`);
     }
+    if (result.finalized > 0) {
+      console.log(`Kickoff watch: ${result.finalized} partido(s) pasaron a finalizado`);
+    }
     if (result.liveMatches > 0 && result.users > 0) {
       console.log(
         `Live scoring: ${result.liveMatches} partido(s), ${result.users} usuarios actualizados`

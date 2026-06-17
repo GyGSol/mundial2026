@@ -16,6 +16,10 @@ import {
 import { Team } from '../models/Team.js';
 import { isPlausibleMatchGoalCount } from './matchLiveData.js';
 import { syncMicroEventsFromMatch } from './matchMicroEventService.js';
+import {
+  fifaEntryIndicatesFinished,
+  shouldFinalizeStaleLiveMatch,
+} from './matchStatusRules.js';
 
 function matchEvidentlyStartedOnField(match) {
   const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
@@ -208,8 +212,73 @@ export async function promoteMatchesAtKickoff() {
   return promotedIds;
 }
 
+/** Cierra partidos que quedaron en `live` cuando worldcup26/FIFA no actualizaron el estado. */
+export async function finalizeStaleLiveMatches(now = Date.now()) {
+  const liveMatches = await Match.find({ status: 'live' }).lean();
+  if (!liveMatches.length) return [];
+
+  let fifaCalendar = [];
+  try {
+    fifaCalendar = await fetchAllCalendarMatches();
+  } catch (err) {
+    console.warn('FIFA calendar unavailable for stale live finalize:', err.message);
+  }
+
+  const teamIds = [
+    ...new Set(liveMatches.flatMap((match) => [match.homeTeamId, match.awayTeamId]).filter(Boolean)),
+  ];
+  const teams = await Team.find({ externalId: { $in: teamIds } })
+    .select('externalId fifaCode nameEn')
+    .lean();
+  const teamMap = new Map(teams.map((team) => [team.externalId, team]));
+
+  const finalizedIds = [];
+
+  for (const match of liveMatches) {
+    let shouldFinalize = shouldFinalizeStaleLiveMatch(match, now);
+
+    if (!shouldFinalize && fifaCalendar.length) {
+      const fifaEntry = await loadFifaEntryForMatch(match, fifaCalendar, teamMap);
+      if (fifaEntryIndicatesFinished(fifaEntry)) {
+        shouldFinalize = true;
+      }
+    }
+
+    if (!shouldFinalize) continue;
+
+    const updated = await Match.findOneAndUpdate(
+      { _id: match._id, status: 'live' },
+      {
+        $set: {
+          status: 'finished',
+          lastSyncedAt: new Date(),
+          'raw.time_elapsed': 'finished',
+          'raw.finished': 'TRUE',
+        },
+      },
+      { new: true }
+    );
+    if (!updated) continue;
+
+    finalizedIds.push(updated._id);
+    await recalculateMatchScores(updated._id);
+  }
+
+  if (finalizedIds.length) {
+    notifyMatchesUpdated({
+      reason: 'stale_live_finalized',
+      matchIds: finalizedIds.map((id) => id.toString()),
+    });
+    notifyLeaderboardUpdated({ reason: 'stale_live_finalized' });
+    console.log(`Stale live finalize: ${finalizedIds.length} partido(s) pasaron a finalizado`);
+  }
+
+  return finalizedIds;
+}
+
 /** Mantiene puntos y ranking al día mientras hay partidos en vivo. */
 export async function syncLiveMatchScoring() {
+  const finalized = await finalizeStaleLiveMatches();
   const promoted = await promoteMatchesAtKickoff();
   const { matches, users } = await recalculateAllLiveMatches();
 
@@ -231,5 +300,5 @@ export async function syncLiveMatchScoring() {
     notifyMatchesUpdated({ reason: 'live_scoring_sync', liveMatches: matches });
   }
 
-  return { promoted: promoted.length, liveMatches: matches, users };
+  return { finalized: finalized.length, promoted: promoted.length, liveMatches: matches, users };
 }
