@@ -11,6 +11,8 @@ self.addEventListener('push', (event) => {
     body: payload.body || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
+    tag: payload.matchId ? `match-live-${payload.matchId}` : 'mundial2026',
+    renotify: false,
     data: {
       url: payload.url || '/predictions',
     },

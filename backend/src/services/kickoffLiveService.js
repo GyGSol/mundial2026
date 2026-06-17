@@ -156,19 +156,26 @@ export async function promoteMatchesAtKickoff() {
       // API ya indica juego en curso — promover
     }
 
-    match.status = 'live';
     const fifaScores = readFifaLiveScores(fifaEntry);
-    if (fifaScores) {
-      match.homeScore = fifaScores.homeScore;
-      match.awayScore = fifaScores.awayScore;
-    } else {
-      if (match.homeScore == null) match.homeScore = 0;
-      if (match.awayScore == null) match.awayScore = 0;
+    const promotionUpdate = {
+      status: 'live',
+      lastSyncedAt: new Date(),
+      homeScore: fifaScores?.homeScore ?? (match.homeScore == null ? 0 : match.homeScore),
+      awayScore: fifaScores?.awayScore ?? (match.awayScore == null ? 0 : match.awayScore),
+    };
+    if (clearedWeatherDelay) {
+      promotionUpdate.weatherOps = clearWeatherOpsToNormal();
     }
-    match.lastSyncedAt = new Date();
-    await match.save();
-    promotedIds.push(match._id);
-    await recalculateMatchScores(match._id);
+
+    const claimed = await Match.findOneAndUpdate(
+      { _id: match._id, status: 'upcoming' },
+      { $set: promotionUpdate },
+      { new: true }
+    );
+    if (!claimed) continue;
+
+    promotedIds.push(claimed._id);
+    await recalculateMatchScores(claimed._id);
   }
 
   if (promotedIds.length || delayedIds.length) {
@@ -179,12 +186,22 @@ export async function promoteMatchesAtKickoff() {
   }
   if (promotedIds.length) {
     notifyLeaderboardUpdated({ reason: 'kickoff_live' });
-    const promotedMatches = due.filter((m) =>
-      promotedIds.some((id) => String(id) === String(m._id))
-    );
-    notifyMatchesLiveStarted(promotedMatches).catch((err) => {
-      console.error('[push] notifyMatchesLiveStarted failed:', err.message);
-    });
+
+    const matchesToNotify = [];
+    for (const matchId of promotedIds) {
+      const claimedForPush = await Match.findOneAndUpdate(
+        { _id: matchId, liveStartedPushSentAt: { $exists: false } },
+        { liveStartedPushSentAt: new Date() },
+        { new: true }
+      );
+      if (claimedForPush) matchesToNotify.push(claimedForPush);
+    }
+
+    if (matchesToNotify.length) {
+      notifyMatchesLiveStarted(matchesToNotify).catch((err) => {
+        console.error('[push] notifyMatchesLiveStarted failed:', err.message);
+      });
+    }
   }
 
   return promotedIds;

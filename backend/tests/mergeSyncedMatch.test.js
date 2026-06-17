@@ -8,6 +8,22 @@ import {
 describe('mergeSyncedMatch', () => {
   const kickoffPast = new Date(Date.now() - 60_000);
 
+  it('no degrada live a upcoming aunque worldcup26 siga en notstarted', () => {
+    const merged = mergeSyncedMatch(
+      { status: 'live', homeScore: 1, awayScore: 0, kickoffAt: kickoffPast },
+      {
+        status: 'upcoming',
+        homeScore: 0,
+        awayScore: 0,
+        kickoffAt: kickoffPast,
+        raw: { finished: 'FALSE', time_elapsed: 'notstarted' },
+      }
+    );
+    expect(merged.status).toBe('live');
+    expect(merged.homeScore).toBe(1);
+    expect(merged.awayScore).toBe(0);
+  });
+
   it('no degrada live a upcoming si el kickoff ya pasó', () => {
     const merged = mergeSyncedMatch(
       { status: 'live', homeScore: 1, awayScore: 0, kickoffAt: kickoffPast },

@@ -7,6 +7,7 @@ import { promoteMatchesAtKickoff } from '../src/services/kickoffLiveService.js';
 vi.mock('../src/models/Match.js', () => ({
   Match: {
     find: vi.fn(),
+    findOneAndUpdate: vi.fn(),
   },
 }));
 
@@ -53,6 +54,27 @@ vi.mock('../src/services/weatherRiskService.js', () => ({
 describe('kickoffLiveService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Match.findOneAndUpdate.mockImplementation(async (filter, update) => {
+      if (filter.status === 'upcoming') {
+        return {
+          _id: filter._id,
+          externalId: '16',
+          homeTeamId: '10',
+          awayTeamId: '11',
+          ...update.$set,
+        };
+      }
+      if (filter.liveStartedPushSentAt?.$exists === false) {
+        return {
+          _id: filter._id,
+          externalId: '16',
+          homeTeamId: '10',
+          awayTeamId: '11',
+          liveStartedPushSentAt: update.liveStartedPushSentAt,
+        };
+      }
+      return null;
+    });
     Team.find.mockReturnValue({
       select: vi.fn().mockReturnValue({
         lean: vi.fn().mockResolvedValue([]),
@@ -61,7 +83,6 @@ describe('kickoffLiveService', () => {
   });
 
   it('promueve partidos con pre_kickoff_delay vencido', async () => {
-    const save = vi.fn().mockResolvedValue(undefined);
     const dueMatch = {
       _id: 'id3',
       externalId: '16',
@@ -77,7 +98,6 @@ describe('kickoffLiveService', () => {
         resumeEarliestAt: new Date(Date.now() - 30 * 60 * 1000),
       },
       raw: { time_elapsed: 'notstarted' },
-      save,
     };
     Match.find.mockResolvedValue([dueMatch]);
     Team.find.mockReturnValue({
@@ -94,13 +114,14 @@ describe('kickoffLiveService', () => {
 
     const promoted = await promoteMatchesAtKickoff();
     expect(promoted).toHaveLength(1);
-    expect(dueMatch.status).toBe('live');
-    expect(dueMatch.weatherOps.phase).toBe('normal');
-    expect(save).toHaveBeenCalled();
+    expect(Match.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: 'id3', status: 'upcoming' },
+      expect.objectContaining({ $set: expect.objectContaining({ status: 'live' }) }),
+      { new: true }
+    );
   });
 
   it('no promueve partidos con pre_kickoff_delay activo', async () => {
-    const save = vi.fn().mockResolvedValue(undefined);
     const dueMatch = {
       _id: 'id1',
       stadiumId: '5',
@@ -110,7 +131,6 @@ describe('kickoffLiveService', () => {
         phase: 'pre_kickoff_delay',
         resumeEarliestAt: new Date(Date.now() + 30 * 60 * 1000),
       },
-      save,
     };
     Match.find.mockResolvedValue([dueMatch]);
     Team.find.mockReturnValue({
@@ -127,11 +147,10 @@ describe('kickoffLiveService', () => {
 
     const promoted = await promoteMatchesAtKickoff();
     expect(promoted).toEqual([]);
-    expect(save).not.toHaveBeenCalled();
+    expect(Match.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it('promueve partidos upcoming sin bloqueo climático', async () => {
-    const save = vi.fn().mockResolvedValue(undefined);
     const dueMatch = {
       _id: 'id2',
       stadiumId: '5',
@@ -141,7 +160,6 @@ describe('kickoffLiveService', () => {
       awayScore: null,
       weatherOps: { phase: 'normal' },
       raw: { time_elapsed: 'notstarted' },
-      save,
     };
     Match.find.mockResolvedValue([dueMatch]);
     Team.find.mockReturnValue({
@@ -158,7 +176,6 @@ describe('kickoffLiveService', () => {
 
     const promoted = await promoteMatchesAtKickoff();
     expect(promoted).toHaveLength(1);
-    expect(dueMatch.status).toBe('live');
-    expect(save).toHaveBeenCalled();
+    expect(Match.findOneAndUpdate).toHaveBeenCalled();
   });
 });

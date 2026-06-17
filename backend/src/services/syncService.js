@@ -242,6 +242,12 @@ export function mergeSyncedMatch(existing, incoming) {
   merged.homeScore = sanitizeMatchGoalCount(merged.homeScore, 0);
   merged.awayScore = sanitizeMatchGoalCount(merged.awayScore, 0);
 
+  if (existing?.status === 'live' && merged.status === 'upcoming') {
+    merged.status = 'live';
+    merged.homeScore = mergePlausibleGoalCounts(existing.homeScore, incoming.homeScore);
+    merged.awayScore = mergePlausibleGoalCounts(existing.awayScore, incoming.awayScore);
+  }
+
   return merged;
 }
 

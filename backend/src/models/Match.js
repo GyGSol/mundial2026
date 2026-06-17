@@ -18,6 +18,8 @@ const matchSchema = new mongoose.Schema(
     kickoffAt: Date,
     /** Push enviado ~15 min antes del cierre de predicciones (lockAt). */
     predictionLockReminderSentAt: Date,
+    /** Push "Partido en vivo" enviado una sola vez al pasar a live. */
+    liveStartedPushSentAt: Date,
     /** IANA zone used to derive kickoffAt from localDate (stadium local time). */
     kickoffTimezone: String,
     /** Overlay operacional de clima (suspensión NOAA, demora pre-kickoff). Ver matchWeatherOpsRules.js */
