@@ -288,7 +288,7 @@ export default function AdminAiCompetitorPage() {
         </div>
       </AdminCard>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+      <div className="flex flex-col gap-4">
         <AdminCard>
           <h2 className="mb-3 text-sm font-semibold text-slate-100">Partidos</h2>
           {loading && !matches.length ? <p className={adminMuted}>Cargando…</p> : null}
@@ -398,14 +398,26 @@ export default function AdminAiCompetitorPage() {
           ) : null}
         </AdminCard>
 
-        <AdminCard>
-          <h2 className="mb-3 text-sm font-semibold text-slate-100">Detalle</h2>
-          {!selectedMatchId ? (
-            <p className={adminMuted}>Seleccioná un partido o ejecutá una simulación.</p>
-          ) : detailLoading ? (
-            <p className={adminMuted}>Cargando detalle…</p>
-          ) : detail ? (
-            <div className="space-y-4">
+        {selectedMatchId ? (
+          <AdminCard>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-slate-100">Detalle</h2>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-slate-400 hover:text-slate-200"
+                onClick={() => {
+                  setSelectedMatchId(null);
+                  setSelectedLogId(null);
+                }}
+              >
+                Cerrar
+              </Button>
+            </div>
+            {detailLoading ? (
+              <p className={adminMuted}>Cargando detalle…</p>
+            ) : detail ? (
+              <div className="space-y-4">
               {detail.isSimulation ? (
                 <Badge variant="outline" className="border-amber-500/50 text-amber-300">
                   Simulación de prueba — no es la predicción oficial
@@ -447,25 +459,26 @@ export default function AdminAiCompetitorPage() {
                   </div>
                 </div>
               ) : null}
-            </div>
-          ) : selectedRow?.latestLogId ? (
-            <p className={adminMuted}>Cargando log…</p>
-          ) : (
-            <div className="space-y-3">
-              <p className={adminMuted}>Este partido aún no tiene log de auditoría.</p>
-              {selectedRow?.canSimulate ? (
-                <Button
-                  size="sm"
-                  className={adminBtnOutline}
-                  disabled={simulateBusyId === selectedRow.matchId}
-                  onClick={() => simulateMatch(selectedRow)}
-                >
-                  {simulateBusyId === selectedRow.matchId ? 'Simulando…' : 'Simular predicción'}
-                </Button>
-              ) : null}
-            </div>
-          )}
-        </AdminCard>
+              </div>
+            ) : selectedRow?.latestLogId ? (
+              <p className={adminMuted}>Cargando log…</p>
+            ) : (
+              <div className="space-y-3">
+                <p className={adminMuted}>Este partido aún no tiene log de auditoría.</p>
+                {selectedRow?.canSimulate ? (
+                  <Button
+                    size="sm"
+                    className={adminBtnOutline}
+                    disabled={simulateBusyId === selectedRow.matchId}
+                    onClick={() => simulateMatch(selectedRow)}
+                  >
+                    {simulateBusyId === selectedRow.matchId ? 'Simulando…' : 'Simular predicción'}
+                  </Button>
+                ) : null}
+              </div>
+            )}
+          </AdminCard>
+        ) : null}
       </div>
     </div>
   );
