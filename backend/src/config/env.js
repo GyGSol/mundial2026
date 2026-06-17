@@ -30,6 +30,7 @@ export const env = {
   cerebrasApiKey: process.env.CEREBRAS_API_KEY || '',
   googleAiApiKey: process.env.GOOGLE_AI_API_KEY || '',
   groqApiKey: process.env.GROQ_API_KEY || '',
+  aiDefaultProvider: (process.env.AI_DEFAULT_PROVIDER || 'cerebras').toLowerCase().trim(),
   aiPredictLeadMs: Number(process.env.AI_PREDICT_LEAD_MS || 90 * 60 * 1000),
   aiPredictWindowMs: Number(process.env.AI_PREDICT_WINDOW_MS || 5 * 60 * 1000),
   aiPredictJobIntervalMs: Number(process.env.AI_PREDICT_JOB_INTERVAL_MS || 5 * 60 * 1000),

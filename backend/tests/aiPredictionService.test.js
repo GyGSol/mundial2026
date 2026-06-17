@@ -7,6 +7,7 @@ import {
   callAiForScore,
   callGeminiForScore,
   callAiForText,
+  getAiProviderOrder,
   hasAiProvider,
   askMatchAiFollowUp,
   buildVenueContextForPrompt,
@@ -247,6 +248,31 @@ describe('aiPredictionService', () => {
 
     it('callGeminiForScore es alias de callAiForScore', () => {
       expect(callGeminiForScore).toBe(callAiForScore);
+    });
+  });
+
+  describe('getAiProviderOrder', () => {
+    it('pone cerebras primero por defecto y soporta singleProvider', () => {
+      const prevDefault = env.aiDefaultProvider;
+      const prevCerebras = env.cerebrasApiKey;
+      const prevGemini = env.googleAiApiKey;
+      const prevGroq = env.groqApiKey;
+
+      env.aiDefaultProvider = 'cerebras';
+      env.cerebrasApiKey = 'cerebras';
+      env.googleAiApiKey = 'gemini';
+      env.groqApiKey = 'groq';
+
+      expect(getAiProviderOrder()).toEqual(['cerebras', 'gemini', 'groq']);
+      expect(getAiProviderOrder({ singleProvider: true })).toEqual(['cerebras']);
+
+      env.cerebrasApiKey = '';
+      expect(getAiProviderOrder({ singleProvider: true })).toEqual(['gemini']);
+
+      env.aiDefaultProvider = prevDefault;
+      env.cerebrasApiKey = prevCerebras;
+      env.googleAiApiKey = prevGemini;
+      env.groqApiKey = prevGroq;
     });
   });
 

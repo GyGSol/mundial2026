@@ -51,6 +51,29 @@ const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const AI_PROVIDER_IDS = ['cerebras', 'gemini', 'groq'];
+
+function isAiProviderConfigured(provider) {
+  if (provider === 'cerebras') return Boolean(env.cerebrasApiKey);
+  if (provider === 'gemini') return Boolean(env.googleAiApiKey);
+  if (provider === 'groq') return Boolean(env.groqApiKey);
+  return false;
+}
+
+/** Orden de proveedores IA: predeterminado primero, luego fallbacks configurados. */
+export function getAiProviderOrder({ singleProvider = false } = {}) {
+  const preferred = AI_PROVIDER_IDS.includes(env.aiDefaultProvider)
+    ? env.aiDefaultProvider
+    : 'cerebras';
+  const available = AI_PROVIDER_IDS.filter(isAiProviderConfigured);
+  if (!available.length) return [];
+
+  if (singleProvider) {
+    return available.includes(preferred) ? [preferred] : [available[0]];
+  }
+
+  return [preferred, ...available.filter((provider) => provider !== preferred)];
+}
 /** Máximo de caracteres en preguntas del usuario (no aplica a respuestas de la IA). */
 export const AI_QUESTION_MAX_LEN = 146;
 
@@ -751,34 +774,24 @@ async function callGeminiProviderForScore(
   return null;
 }
 
+async function callAiProviderForScore(provider, context, providerOpts) {
+  if (provider === 'cerebras') return callCerebrasForScore(context, providerOpts);
+  if (provider === 'gemini') return callGeminiProviderForScore(context, providerOpts);
+  if (provider === 'groq') return callGroqForScore(context, providerOpts);
+  return null;
+}
+
 export async function callAiForScore(
   context,
   { fetchImpl = fetch, promptBuilder, maxAttempts = 3, singleProvider = false } = {}
 ) {
   const providerOpts = { promptBuilder, fetchImpl, maxAttempts };
+  const order = getAiProviderOrder({ singleProvider });
 
-  if (singleProvider) {
-    if (env.cerebrasApiKey) {
-      const cerebrasScore = await callCerebrasForScore(context, providerOpts);
-      if (cerebrasScore) return cerebrasScore;
-    } else if (env.googleAiApiKey) {
-      const geminiScore = await callGeminiProviderForScore(context, providerOpts);
-      if (geminiScore) return geminiScore;
-    } else if (env.groqApiKey) {
-      const groqScore = await callGroqForScore(context, providerOpts);
-      if (groqScore) return groqScore;
-    }
-    return computeHeuristicScore(context);
+  for (const provider of order) {
+    const score = await callAiProviderForScore(provider, context, providerOpts);
+    if (score) return score;
   }
-
-  const cerebrasScore = await callCerebrasForScore(context, providerOpts);
-  if (cerebrasScore) return cerebrasScore;
-
-  const geminiScore = await callGeminiProviderForScore(context, providerOpts);
-  if (geminiScore) return geminiScore;
-
-  const groqScore = await callGroqForScore(context, providerOpts);
-  if (groqScore) return groqScore;
 
   return computeHeuristicScore(context);
 }
@@ -925,48 +938,50 @@ async function callGeminiForText(prompt, { fetchImpl = fetch } = {}) {
   return { text, source: 'gemini' };
 }
 
+async function callOpenAiProviderForJson(provider, jsonPrompt, { fetchImpl = fetch } = {}) {
+  if (provider === 'cerebras') {
+    return callOpenAiChatCompletions(
+      {
+        apiKey: env.cerebrasApiKey,
+        url: CEREBRAS_API_URL,
+        model: env.aiCerebrasModel,
+        messages: [{ role: 'user', content: jsonPrompt }],
+        temperature: 0.3,
+        responseFormat: { type: 'json_object' },
+        providerLabel: 'Cerebras',
+      },
+      { fetchImpl }
+    );
+  }
+  if (provider === 'groq') {
+    return callOpenAiChatCompletions(
+      {
+        apiKey: env.groqApiKey,
+        url: GROQ_API_URL,
+        model: env.aiGroqModel,
+        messages: [{ role: 'user', content: jsonPrompt }],
+        temperature: 0.3,
+        responseFormat: { type: 'json_object' },
+        providerLabel: 'Groq',
+      },
+      { fetchImpl }
+    );
+  }
+  return null;
+}
+
 export async function callAiForJson(prompt, { fetchImpl = fetch } = {}) {
   const jsonPrompt = `${prompt}\n\nRespondé ÚNICAMENTE con JSON válido (sin markdown).`;
+  const order = getAiProviderOrder();
 
-  if (env.cerebrasApiKey) {
+  for (const provider of order) {
+    if (provider === 'gemini') continue;
     try {
-      const text = await callOpenAiChatCompletions(
-        {
-          apiKey: env.cerebrasApiKey,
-          url: CEREBRAS_API_URL,
-          model: env.aiCerebrasModel,
-          messages: [{ role: 'user', content: jsonPrompt }],
-          temperature: 0.3,
-          responseFormat: { type: 'json_object' },
-          providerLabel: 'Cerebras',
-        },
-        { fetchImpl }
-      );
+      const text = await callOpenAiProviderForJson(provider, jsonPrompt, { fetchImpl });
       const parsed = parseGeminiJsonResponse(text);
-      if (parsed) return { data: parsed, source: 'cerebras' };
+      if (parsed) return { data: parsed, source: provider };
     } catch (err) {
-      console.warn('AI JSON Cerebras failed, trying fallbacks:', err.message);
-    }
-  }
-
-  if (env.groqApiKey) {
-    try {
-      const text = await callOpenAiChatCompletions(
-        {
-          apiKey: env.groqApiKey,
-          url: GROQ_API_URL,
-          model: env.aiGroqModel,
-          messages: [{ role: 'user', content: jsonPrompt }],
-          temperature: 0.3,
-          responseFormat: { type: 'json_object' },
-          providerLabel: 'Groq',
-        },
-        { fetchImpl }
-      );
-      const parsed = parseGeminiJsonResponse(text);
-      if (parsed) return { data: parsed, source: 'groq' };
-    } catch (err) {
-      console.warn('AI JSON Groq failed, trying Gemini:', err.message);
+      console.warn(`AI JSON ${provider} failed, trying fallbacks:`, err.message);
     }
   }
 
@@ -983,33 +998,28 @@ function finalizeAiTextResponse(result) {
   return { ...result, text: sanitizeAiUserFacingText(result.text) };
 }
 
+async function callAiProviderForText(provider, prompt, { fetchImpl = fetch } = {}) {
+  if (provider === 'cerebras') return callCerebrasForText(prompt, { fetchImpl });
+  if (provider === 'gemini') return callGeminiForText(prompt, { fetchImpl });
+  if (provider === 'groq') return callGroqForText(prompt, { fetchImpl });
+  return null;
+}
+
 export async function callAiForText(prompt, { fetchImpl = fetch } = {}) {
-  if (env.cerebrasApiKey) {
+  const order = getAiProviderOrder();
+  let lastError = null;
+
+  for (const provider of order) {
     try {
-      const cerebras = await callCerebrasForText(prompt, { fetchImpl });
-      if (cerebras) return finalizeAiTextResponse(cerebras);
+      const result = await callAiProviderForText(provider, prompt, { fetchImpl });
+      if (result) return finalizeAiTextResponse(result);
     } catch (err) {
-      console.warn('AI follow-up Cerebras failed, trying fallbacks:', err.message);
+      lastError = err;
+      console.warn(`AI text ${provider} failed, trying fallbacks:`, err.message);
     }
   }
 
-  if (env.googleAiApiKey) {
-    try {
-      const gemini = await callGeminiForText(prompt, { fetchImpl });
-      if (gemini) return finalizeAiTextResponse(gemini);
-    } catch (err) {
-      console.warn('AI follow-up Gemini failed, trying Groq:', err.message);
-      if (env.groqApiKey) {
-        return finalizeAiTextResponse(await callGroqForText(prompt, { fetchImpl }));
-      }
-      throw err;
-    }
-  }
-
-  if (env.groqApiKey) {
-    return finalizeAiTextResponse(await callGroqForText(prompt, { fetchImpl }));
-  }
-
+  if (lastError) throw lastError;
   throw new Error('IA no configurada');
 }
 
