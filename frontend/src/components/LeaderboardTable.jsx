@@ -14,6 +14,9 @@ import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
 
 const statColumns = [
   { key: 'pj', label: 'PJ', title: 'Partidos jugados (finalizados y en vivo)', trackDelta: false },
+  { key: 'pa', label: 'PA', title: 'Acierto resultado', trackDelta: true },
+  { key: 'gl', label: 'GL', title: 'Goles local', trackDelta: true },
+  { key: 'gv', label: 'GV', title: 'Goles visitante', trackDelta: true },
   {
     key: 'gdif',
     label: 'Gdif',
@@ -22,9 +25,6 @@ const statColumns = [
     format: 'gdif',
     trackDelta: false,
   },
-  { key: 'pa', label: 'PA', title: 'Acierto resultado', trackDelta: true },
-  { key: 'gl', label: 'GL', title: 'Goles local', trackDelta: true },
-  { key: 'gv', label: 'GV', title: 'Goles visitante', trackDelta: true },
   { key: 'gt', label: 'GT', title: 'Goles totales', trackDelta: true },
 ];
 
