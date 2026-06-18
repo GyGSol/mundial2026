@@ -214,7 +214,7 @@ export function augmentAiReasoningWithVenueWeather(venue, reasoning) {
   return `${prefix}\n\n${text}`;
 }
 
-/** Partido en ventana T-lead ± window (default T-90 min) si kickoff cae en [now+lead-window, now+lead+window]. */
+/** Partido en ventana T-lead ± window (default T-5 min) si kickoff cae en [now+lead-window, now+lead+window]. */
 export function isInAiPredictionWindow(match, now = Date.now()) {
   if (!match?.kickoffAt || match.status !== 'upcoming') return false;
   const kickoffMs = new Date(match.kickoffAt).getTime();

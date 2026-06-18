@@ -79,7 +79,7 @@ curl https://mundial2026-pred-34de76763ecc.herokuapp.com/api/players/meta
 
 ### Usuario IA (predicciones Gemini)
 
-El bot `predictivemodeling@gmail.com` predice automáticamente ~90 min antes de cada kickoff (ventana de cierre: 1 h antes).
+El bot `predictivemodeling@mundial2026.bot` predice automáticamente ~5 min antes de cada kickoff (ventana de cierre humanos: 1 h antes).
 
 1. Crear API key gratis en [Google AI Studio](https://aistudio.google.com/apikey).
 2. Config vars en Heroku:
@@ -88,7 +88,7 @@ El bot `predictivemodeling@gmail.com` predice automáticamente ~90 min antes de 
 heroku config:set \
   GOOGLE_AI_API_KEY="tu_api_key" \
   AI_PREDICTIONS_ENABLED=true \
-  AI_USER_EMAIL="predictivemodeling@gmail.com" \
+  AI_USER_EMAIL="predictivemodeling@mundial2026.bot" \
   -a mundial2026-pred
 ```
 
@@ -98,9 +98,9 @@ heroku config:set \
 heroku run npm run mark-ai-user -w backend -a mundial2026-pred
 ```
 
-4. Verificar en logs (`AI prediction: ...`) ~90 min antes de un partido upcoming.
+4. Verificar en logs (`AI prediction: ...`) ~5 min antes de un partido upcoming.
 
-Variables opcionales: `AI_DEFAULT_PROVIDER` (default `cerebras`), `AI_PREDICT_LEAD_MS` (default 5400000 = 90 min), `AI_PREDICT_WINDOW_MS` (±5 min), `CEREBRAS_API_KEY`, `AI_CEREBRAS_MODEL` (default `gpt-oss-120b`), `GOOGLE_AI_API_KEY` / `GROQ_API_KEY` (fallback), `AI_GEMINI_MODEL`, `AI_GROQ_MODEL`.
+Variables opcionales: `AI_DEFAULT_PROVIDER` (default `cerebras`), `AI_PREDICT_LEAD_MS` (default 300000 = 5 min), `AI_PREDICT_WINDOW_MS` (default 120000 = ±2 min), `CEREBRAS_API_KEY`, `AI_CEREBRAS_MODEL` (default `gpt-oss-120b`), `GOOGLE_AI_API_KEY` / `GROQ_API_KEY` (fallback), `AI_GEMINI_MODEL`, `AI_GROQ_MODEL`.
 
 **Competidor IA (contexto enriquecido):** el bot usa un pipeline distinto al de consultas pagas de usuarios. Opcional para señales de mercado y xG:
 
