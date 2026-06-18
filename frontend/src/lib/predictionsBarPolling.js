@@ -24,13 +24,14 @@ export function predictionsListExcludeIds({
     if (match?.id) ids.add(match.id);
   }
 
+  for (const match of recentFinishedMatches) {
+    if (match?.id) ids.add(match.id);
+  }
+
+  // Respaldo si el listado principal no trae finishedAt pero el partido sigue en gracia.
   if (hasLive) {
     for (const match of allMatches) {
       if (isRecentlyFinishedMatch(match)) ids.add(match.id);
-    }
-  } else {
-    for (const match of recentFinishedMatches) {
-      if (match?.id) ids.add(match.id);
     }
   }
 

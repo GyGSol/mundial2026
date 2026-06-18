@@ -29,7 +29,7 @@ describe('predictionsBarPolling', () => {
     expect(ids.has('old-fin')).toBe(false);
   });
 
-  it('sin live oculta solo lo de la barra recién finalizada', () => {
+  it('sin live oculta en vivo y recién finalizados de la barra', () => {
     const ids = predictionsListExcludeIds({
       liveMatches: [],
       recentFinishedMatches: recent,
@@ -37,5 +37,15 @@ describe('predictionsBarPolling', () => {
     });
     expect(ids.has('fin-1')).toBe(true);
     expect(ids.has('live-1')).toBe(false);
+  });
+
+  it('con live usa recentFinishedMatches del API aunque venga vacío en barra', () => {
+    const ids = predictionsListExcludeIds({
+      liveMatches: live,
+      recentFinishedMatches: recent,
+      allMatches: live.map((m) => ({ ...m, status: 'live' })),
+    });
+    expect(ids.has('live-1')).toBe(true);
+    expect(ids.has('fin-1')).toBe(true);
   });
 });
