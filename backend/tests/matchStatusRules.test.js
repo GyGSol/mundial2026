@@ -49,6 +49,42 @@ describe('matchStatusRules', () => {
     expect(shouldFinalizeStaleLiveMatch(match, kickoff.getTime() + 60_000)).toBe(true);
   });
 
+  it('no cierra live con finished=TRUE si timeline muestra minuto temprano', () => {
+    const match = {
+      status: 'live',
+      kickoffAt: kickoff,
+      raw: {
+        finished: 'TRUE',
+        time_elapsed: 'final',
+        fifaEvents: {
+          timeline: [
+            { type: 'kickoff', minute: 0, sortKey: 0 },
+            { type: 'goal', minute: 4, side: 'home', sortKey: 4 },
+          ],
+        },
+      },
+    };
+    expect(shouldFinalizeStaleLiveMatch(match, kickoff.getTime() + 10 * 60 * 1000)).toBe(false);
+  });
+
+  it('no cierra live con time_elapsed=final si timeline muestra minuto temprano', () => {
+    const match = {
+      status: 'live',
+      kickoffAt: kickoff,
+      raw: {
+        finished: 'FALSE',
+        time_elapsed: 'final',
+        fifaEvents: {
+          timeline: [
+            { type: 'kickoff', minute: 0, sortKey: 0 },
+            { type: 'substitution', minute: 4, sortKey: 4 },
+          ],
+        },
+      },
+    };
+    expect(shouldFinalizeStaleLiveMatch(match, kickoff.getTime() + 10 * 60 * 1000)).toBe(false);
+  });
+
   it('cierra live cuando time_elapsed es ft o fulltime', () => {
     for (const token of ['ft', 'FT', 'fulltime', 'final']) {
       const match = {

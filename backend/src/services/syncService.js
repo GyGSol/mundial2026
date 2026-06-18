@@ -25,8 +25,11 @@ import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import {
   elapsedTokenIndicatesFinished,
   isMatchKickoffStale,
+  matchEvidenceShowsInProgress,
+  readElapsedToken,
   shouldFinalizeStaleLiveMatch,
 } from './matchStatusRules.js';
+import { latestClockFromTimeline } from './matchLiveData.js';
 import { env } from '../config/env.js';
 import {
   notifyLeaderboardUpdated,
@@ -213,6 +216,33 @@ export function mergeSyncedMatch(existing, incoming) {
     return merged;
   }
 
+  if (
+    existing.status === 'finished' &&
+    kickoffPassed &&
+    !isMatchKickoffStale(kickoffAt) &&
+    matchEvidenceShowsInProgress(merged)
+  ) {
+    merged.status = 'live';
+    const timeline = merged.raw?.fifaEvents?.timeline;
+    const clock =
+      Array.isArray(timeline) && timeline.length ? latestClockFromTimeline(timeline) : null;
+    const badElapsed = elapsedTokenIndicatesFinished(readElapsedToken(merged));
+    const badFinished =
+      merged.raw?.finished === 'TRUE' ||
+      merged.raw?.finished === true ||
+      merged.raw?.finished === 'true';
+    if (badElapsed || badFinished) {
+      merged.raw = {
+        ...merged.raw,
+        finished: 'FALSE',
+        ...(badElapsed
+          ? { time_elapsed: clock ? String(clock).replace(/'+$/, '') : 'live' }
+          : {}),
+      };
+    }
+    return merged;
+  }
+
   if (existing.status === 'finished') {
     merged.status = 'finished';
     const fifaScores = readFifaAuthoritativeScores(merged.raw ?? {});
@@ -332,6 +362,7 @@ async function upsertMatches() {
     });
 
     const becameLive = match.status === 'live' && existing?.status !== 'live';
+    const reopenedToLive = match.status === 'live' && wasFinished;
     const scoreChanged = needsRescore(existing, match);
 
     if (match.status === 'finished' && !wasFinished) {
@@ -342,7 +373,10 @@ async function upsertMatches() {
       clearedScoreIds.push(match._id);
     }
 
-    if (match.status === 'finished' && (!wasFinished || scoreChanged)) {
+    if (reopenedToLive) {
+      clearedScoreIds.push(match._id);
+      scoringIds.push(match._id);
+    } else if (match.status === 'finished' && (!wasFinished || scoreChanged)) {
       scoringIds.push(match._id);
     } else if (match.status === 'live' && (becameLive || scoreChanged)) {
       scoringIds.push(match._id);

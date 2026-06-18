@@ -14,8 +14,6 @@ import {
 } from './prizePoolService.js';
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
-import { finalizeStaleLiveMatches } from './kickoffLiveService.js';
-import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 const UPCOMING_MATCH_LIMIT = 30;
@@ -50,6 +48,16 @@ function dedupeMatchesById(matches) {
     result.push(match);
   }
   return result;
+}
+
+/** Partidos en vivo y recién finalizados para el dashboard (status en MongoDB es la fuente de verdad). */
+export function partitionRankingDashboardMatches(enrichedLive, enrichedFinished) {
+  return {
+    liveMatches: enrichedLive,
+    recentFinishedMatches: dedupeMatchesById(enrichedFinished).sort((a, b) =>
+      compareMatchesBySchedule(b, a)
+    ),
+  };
 }
 
 async function resolveGroup(groupId) {
@@ -93,17 +101,11 @@ export async function getRankingDashboard(groupId, userId) {
   const byId = new Map(enriched.map((m) => [m.id, m]));
 
   const enrichedLive = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
-  const effectivelyFinishedLive = enrichedLive.filter((m) => m.timeElapsed === 'Final');
-  const liveMatches = enrichedLive.filter((m) => m.timeElapsed !== 'Final');
-
-  if (effectivelyFinishedLive.length) {
-    try {
-      await finalizeStaleLiveMatches();
-      invalidateMatchRelatedCaches(groupId);
-    } catch (err) {
-      console.warn('Ranking dashboard stale live finalize:', err.message);
-    }
-  }
+  const enrichedFinished = finishedRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
+  const { liveMatches, recentFinishedMatches } = partitionRankingDashboardMatches(
+    enrichedLive,
+    enrichedFinished
+  );
 
   if (groupId && groupId !== '__nogroup') {
     await ensureAiCompetitorInGroup(groupId);
@@ -124,10 +126,6 @@ export async function getRankingDashboard(groupId, userId) {
       : Promise.resolve(null),
   ]);
 
-  const recentFinishedMatches = dedupeMatchesById([
-    ...finishedRaw.map((m) => byId.get(m._id.toString())).filter(Boolean),
-    ...effectivelyFinishedLive,
-  ]).sort((a, b) => compareMatchesBySchedule(b, a));
   const nextUpcomingMatches = findNextUpcomingMatches(
     upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
   );

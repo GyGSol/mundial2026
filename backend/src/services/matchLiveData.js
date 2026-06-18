@@ -507,7 +507,12 @@ export function resolveLiveTimeElapsed(raw, timeline = []) {
 
   if (!fromTimeline) return fromApi;
   if (!fromApi) return fromTimeline;
-  if (fromApi === 'Entretiempo' || fromApi === 'Final') return fromApi;
+  if (fromApi === 'Entretiempo') return fromApi;
+  if (fromApi === 'Final') {
+    const timelineKey = parseElapsedClockToSortKey(fromTimeline);
+    if (timelineKey >= 0 && timelineKey < 85) return fromTimeline;
+    return fromApi;
+  }
 
   return parseElapsedClockToSortKey(fromTimeline) >= parseElapsedClockToSortKey(fromApi)
     ? fromTimeline

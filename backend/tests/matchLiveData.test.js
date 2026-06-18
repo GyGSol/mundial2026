@@ -68,6 +68,12 @@ describe('matchLiveData', () => {
         'Entretiempo'
       );
     });
+
+    it('no devuelve Final en live si timeline muestra minuto temprano', () => {
+      expect(
+        resolveLiveTimeElapsed({ time_elapsed: 'finished' }, [{ minute: 4, sortKey: 4 }])
+      ).toBe("4'");
+    });
   });
 
   describe('parseElapsedClockToSortKey', () => {
