@@ -95,10 +95,9 @@ export default function LeaderboardPage() {
 
   const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId], {
     enabled: canLoadRanking,
-    pollIntervalMs: 15000,
+    pollIntervalMs: 15_000,
     pollWhen: shouldPollLeaderboardLive,
-    memoryCacheKey: canLoadRanking ? `ranking-dashboard:${effectiveGroupId}` : '',
-    memoryCacheTtlMs: 15_000,
+    // Sin caché en memoria: evita tabla sin flechas tras arrancar un partido en vivo.
   });
 
   const dashboardMatchesGroup =
@@ -318,6 +317,11 @@ export default function LeaderboardPage() {
 
       {rankingReady ? (
         <section id={GROUP_POSITIONS_TABLE_ID} className="scroll-mt-24">
+          {hasLiveMatches ? (
+            <p className="mb-2 text-xs text-muted-foreground">
+              Partido en vivo: las flechas marcan cambios desde el arranque (goles y posiciones).
+            </p>
+          ) : null}
           <LeaderboardTable
             leaderboard={dashboardLeaderboard}
             leaderboardKickoffBaseline={dashboardKickoffBaseline}

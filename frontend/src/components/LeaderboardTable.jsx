@@ -85,8 +85,8 @@ function normalizeStatDelta(delta) {
 function StatDeltaIndicator({ direction, amount, showDown = true }) {
   if (direction === 'up') {
     return (
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-emerald-500">
-        <ArrowUp className="size-3" strokeWidth={2.75} aria-hidden="true" />
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-emerald-400">
+        <ArrowUp className="size-3.5" strokeWidth={2.75} aria-hidden="true" />
         {amount != null && amount > 0 ? (
           <span className="text-[10px] font-semibold tabular-nums leading-none">{amount}</span>
         ) : null}
@@ -95,8 +95,8 @@ function StatDeltaIndicator({ direction, amount, showDown = true }) {
   }
   if (direction === 'down' && showDown) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-red-500">
-        <ArrowDown className="size-3" strokeWidth={2.75} aria-hidden="true" />
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-red-400">
+        <ArrowDown className="size-3.5" strokeWidth={2.75} aria-hidden="true" />
         {amount != null && amount > 0 ? (
           <span className="text-[10px] font-semibold tabular-nums leading-none">{amount}</span>
         ) : null}
