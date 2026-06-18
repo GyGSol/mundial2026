@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
   CardTitle,
 } from '@/components/ui/card.jsx';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
@@ -108,82 +106,101 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
   return (
     <dialog
       ref={dialogRef}
-      className="max-h-[90vh] w-[min(100%,42rem)] overflow-y-auto rounded-lg border border-border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/40"
+      className="fixed left-1/2 top-1/2 m-0 max-h-[92dvh] w-[min(calc(100vw-1rem),42rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-border bg-card p-0 text-card-foreground shadow-xl backdrop:bg-black/50 open:flex open:flex-col"
       onClose={handleClose}
       onCancel={handleClose}
       aria-labelledby="player-detail-title"
     >
-      <Card className="border-0 shadow-none">
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
+      <div className="border-b border-neutral-200 bg-white text-neutral-900">
+        <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-6 sm:p-6">
+          <div className="mx-auto flex shrink-0 flex-col items-center sm:mx-0">
             {loading ? (
-              <Skeleton className="size-16 shrink-0 rounded-full" />
+              <Skeleton className="aspect-[3/4] h-52 w-44 rounded-2xl sm:h-60 sm:w-52" />
             ) : (
-              <PlayerAvatar
-                name={player?.fullName}
-                photoUrl={player?.photoUrl}
-                size="lg"
-              />
+              <div className="flex aspect-[3/4] h-52 w-44 items-end justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 sm:h-60 sm:w-52">
+                <PlayerAvatar
+                  name={player?.fullName}
+                  photoUrl={player?.photoUrl}
+                  size="hero"
+                  variant="portrait"
+                />
+              </div>
             )}
-            <div className="flex min-w-0 flex-col gap-2">
-              <CardTitle id="player-detail-title" className="flex items-center gap-2 text-xl">
-                {loading ? <Skeleton className="h-7 w-48" /> : player?.fullName}
-                {!loading && player ? (
-                  <Badge className="gap-1 border-violet-500/40 bg-violet-500/10 text-violet-200">
-                    <Sparkles className="size-3" aria-hidden />
-                    IA
-                  </Badge>
-                ) : null}
-              </CardTitle>
-              <CardDescription>
-              {loading ? (
-                <Skeleton className="h-4 w-64" />
-              ) : (
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  {flag ? (
-                    <img src={flag} alt="" className="size-5 rounded-sm object-cover" />
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 text-center sm:text-left">
+                <CardTitle
+                  id="player-detail-title"
+                  className="flex flex-wrap items-center justify-center gap-2 text-xl text-neutral-900 sm:justify-start sm:text-2xl"
+                >
+                  {loading ? <Skeleton className="h-8 w-48 bg-neutral-200" /> : player?.fullName}
+                  {!loading && player ? (
+                    <Badge className="gap-1 border-violet-500/30 bg-violet-100 text-violet-700">
+                      <Sparkles className="size-3" aria-hidden />
+                      IA
+                    </Badge>
                   ) : null}
-                  {player?.teamName} · {player?.positionLabel}
-                  {player?.currentClub ? (
-                    <>
-                      {' · '}
-                      <ClubCell
-                        club={player.currentClub}
-                        clubCrestUrl={player.clubCrestUrl}
-                        leagueEmblemUrl={player.leagueEmblemUrl}
-                        leagueName={player.leagueName}
-                      />
-                    </>
-                  ) : null}
-                  {player?.age ? ` · ${player.age} años` : ''}
-                </span>
-              )}
-            </CardDescription>
+                </CardTitle>
+                {loading ? (
+                  <Skeleton className="mx-auto mt-2 h-4 w-64 bg-neutral-200 sm:mx-0" />
+                ) : (
+                  <p className="mt-2 text-sm text-neutral-600">
+                    <span className="inline-flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                      {flag ? (
+                        <img src={flag} alt="" className="size-5 rounded-sm object-cover" />
+                      ) : null}
+                      {player?.teamName} · {player?.positionLabel}
+                      {player?.currentClub ? (
+                        <>
+                          {' · '}
+                          <ClubCell
+                            club={player.currentClub}
+                            clubCrestUrl={player.clubCrestUrl}
+                            leagueEmblemUrl={player.leagueEmblemUrl}
+                            leagueName={player.leagueName}
+                          />
+                        </>
+                      ) : null}
+                      {player?.age ? ` · ${player.age} años` : ''}
+                    </span>
+                  </p>
+                )}
+              </div>
+              <div className="flex w-full shrink-0 gap-2 sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={refreshing || loading}
+                  onClick={handleRefreshIntel}
+                  className="flex-1 gap-1.5 border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 sm:flex-none"
+                >
+                  {refreshing ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <RefreshCw className="size-4" aria-hidden />
+                  )}
+                  Actualizar IA
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClose}
+                  className="flex-1 border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 sm:flex-none"
+                >
+                  Cerrar
+                </Button>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={refreshing || loading}
-              onClick={handleRefreshIntel}
-              className="gap-1.5"
-            >
-              {refreshing ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <RefreshCw className="size-4" aria-hidden />
-              )}
-              IA
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={handleClose}>
-              Cerrar
-            </Button>
-          </div>
-        </CardHeader>
+        </div>
+      </div>
 
-        <CardContent className="flex flex-col gap-4">
+      <Card className="border-0 shadow-none">
+        <CardContent className="flex flex-col gap-4 p-4 sm:p-6">
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           {loading ? (
