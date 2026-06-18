@@ -16,8 +16,8 @@ import { fetchFifaReportStats, FIFA_REPORT_STATS_VERSION } from './fifaReportPdf
 import {
   goalCountsFromTimeline,
   isPlausibleMatchGoalCount,
+  mergeFifaApiScoreWithTimeline,
   mergePlausibleGoalCounts,
-  sanitizeMatchGoalCount,
 } from './matchLiveData.js';
 import {
   applyShirtNumbersToTimeline,
@@ -203,6 +203,20 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
             isPlausibleMatchGoalCount(fifaHomeScore) &&
             isPlausibleMatchGoalCount(fifaAwayScore);
 
+          const timelineGoals = goalCountsFromTimeline(timeline);
+          const mergedScores = mergeFifaApiScoreWithTimeline(
+            fifaHomeScore,
+            fifaAwayScore,
+            timeline,
+            hasFifaScore
+          );
+          const resolvedHomeScore = hasFifaScore
+            ? mergedScores.homeScore
+            : mergePlausibleGoalCounts(match.homeScore, mergedScores.homeScore);
+          const resolvedAwayScore = hasFifaScore
+            ? mergedScores.awayScore
+            : mergePlausibleGoalCounts(match.awayScore, mergedScores.awayScore);
+
           rawUpdate['raw.fifaMeta'] = {
             idMatch: String(fifaEntry.IdMatch),
             idStage: String(fifaEntry.IdStage),
@@ -213,7 +227,9 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
             ...(Object.keys(shirtByPlayerId).length > 0
               ? { shirtMapSyncedAt: new Date().toISOString() }
               : {}),
-            ...(hasFifaScore ? { homeScore: fifaHomeScore, awayScore: fifaAwayScore } : {}),
+            ...(hasFifaScore || timelineGoals.home + timelineGoals.away > 0
+              ? { homeScore: mergedScores.homeScore, awayScore: mergedScores.awayScore }
+              : {}),
             syncedAt: new Date().toISOString(),
           };
           rawUpdate['raw.fifaEvents'] = {
@@ -224,20 +240,6 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
             assistHash: null,
             assistedAt: null,
           };
-
-          const timelineGoals = goalCountsFromTimeline(timeline);
-          const resolvedHomeScore = sanitizeMatchGoalCount(
-            hasFifaScore
-              ? fifaHomeScore
-              : mergePlausibleGoalCounts(match.homeScore, timelineGoals.home),
-            timelineGoals.home
-          );
-          const resolvedAwayScore = sanitizeMatchGoalCount(
-            hasFifaScore
-              ? fifaAwayScore
-              : mergePlausibleGoalCounts(match.awayScore, timelineGoals.away),
-            timelineGoals.away
-          );
           const scoreChanged =
             resolvedHomeScore !== Number(match.homeScore ?? 0) ||
             resolvedAwayScore !== Number(match.awayScore ?? 0);

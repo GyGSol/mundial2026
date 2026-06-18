@@ -371,6 +371,27 @@ describe('matchLiveData', () => {
       ).toEqual({ homeScore: 2, awayScore: 1 });
     });
 
+    it('sube marcador cuando fifaMeta va retrasado respecto a la cronología', () => {
+      const timeline = [
+        { type: 'goal', side: 'home', minute: 74 },
+        { type: 'goal', side: 'home', minute: 84 },
+        { type: 'goal', side: 'home', minute: 90 },
+      ];
+      expect(
+        resolveEffectiveLiveScores(
+          { homeScore: 0, awayScore: 0 },
+          timeline,
+          {
+            fifaMeta: {
+              homeScore: 0,
+              awayScore: 0,
+              syncedAt: '2026-06-18T20:40:00.000Z',
+            },
+          }
+        )
+      ).toEqual({ homeScore: 3, awayScore: 0 });
+    });
+
     it('ignora marcadores corruptos (año persa 1405) y usa la cronología', () => {
       expect(
         resolveEffectiveLiveScores(

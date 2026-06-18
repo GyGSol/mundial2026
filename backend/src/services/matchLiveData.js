@@ -940,14 +940,37 @@ export function readFifaAuthoritativeScores(raw = {}) {
  * @param {Record<string, unknown>} raw
  */
 export function resolveEffectiveLiveScores(match, timeline = [], raw = {}) {
+  const { home: timelineHome, away: timelineAway } = goalCountsFromTimeline(timeline);
   const fifaScores = readFifaAuthoritativeScores(raw);
-  if (fifaScores) return fifaScores;
 
-  const { home, away } = goalCountsFromTimeline(timeline);
+  if (fifaScores) {
+    // fifaMeta refleja goles anulados; si la cronología tiene más goles, el Score FIFA va retrasado.
+    const homeScore =
+      timelineHome > fifaScores.homeScore
+        ? mergePlausibleGoalCounts(fifaScores.homeScore, timelineHome, match.homeScore)
+        : fifaScores.homeScore;
+    const awayScore =
+      timelineAway > fifaScores.awayScore
+        ? mergePlausibleGoalCounts(fifaScores.awayScore, timelineAway, match.awayScore)
+        : fifaScores.awayScore;
+    return { homeScore, awayScore };
+  }
 
   return {
-    homeScore: mergePlausibleGoalCounts(match.homeScore, home),
-    awayScore: mergePlausibleGoalCounts(match.awayScore, away),
+    homeScore: mergePlausibleGoalCounts(match.homeScore, timelineHome),
+    awayScore: mergePlausibleGoalCounts(match.awayScore, timelineAway),
+  };
+}
+
+/** Combina Score FIFA API con goles en cronología (API puede ir retrasada en vivo). */
+export function mergeFifaApiScoreWithTimeline(fifaHome, fifaAway, timeline = [], hasFifaScore = true) {
+  const { home, away } = goalCountsFromTimeline(timeline);
+  if (!hasFifaScore) {
+    return { homeScore: home, awayScore: away };
+  }
+  return {
+    homeScore: mergePlausibleGoalCounts(fifaHome, home),
+    awayScore: mergePlausibleGoalCounts(fifaAway, away),
   };
 }
 
