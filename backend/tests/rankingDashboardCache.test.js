@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   clearRankingDashboardCache,
+  dashboardCacheTtlMs,
   getCachedRankingDashboard,
   invalidateRankingDashboardCache,
 } from '../src/services/rankingDashboardCache.js';
@@ -43,5 +44,27 @@ describe('rankingDashboardCache', () => {
     await getCachedRankingDashboard('group-1', 'user-1');
 
     expect(getRankingDashboard).toHaveBeenCalledTimes(2);
+  });
+
+  it('usa TTL corto con partidos en vivo o recién finalizados', () => {
+    const now = Date.now();
+    expect(
+      dashboardCacheTtlMs({
+        liveMatches: [{ id: '1' }],
+        recentFinishedMatches: [],
+      })
+    ).toBe(5_000);
+    expect(
+      dashboardCacheTtlMs({
+        liveMatches: [],
+        recentFinishedMatches: [{ id: '1', kickoffAt: new Date(now - 60_000).toISOString() }],
+      })
+    ).toBe(5_000);
+    expect(
+      dashboardCacheTtlMs({
+        liveMatches: [],
+        recentFinishedMatches: [{ id: '1', kickoffAt: new Date(now - 8 * 60 * 60 * 1000).toISOString() }],
+      })
+    ).toBe(15_000);
   });
 });

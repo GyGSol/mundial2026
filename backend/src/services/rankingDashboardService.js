@@ -15,6 +15,7 @@ import {
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
 import { finalizeStaleLiveMatches } from './kickoffLiveService.js';
+import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 const UPCOMING_MATCH_LIMIT = 30;
@@ -37,6 +38,18 @@ function findNextUpcomingMatches(matches) {
   if (!upcoming.length) return [];
   const slot = kickoffKey(upcoming[0].scheduleKickoffAt ?? upcoming[0].kickoffAt);
   return upcoming.filter((m) => kickoffKey(m.scheduleKickoffAt ?? m.kickoffAt) === slot);
+}
+
+function dedupeMatchesById(matches) {
+  const seen = new Set();
+  const result = [];
+  for (const match of matches) {
+    const id = match?.id;
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    result.push(match);
+  }
+  return result;
 }
 
 async function resolveGroup(groupId) {
@@ -84,9 +97,12 @@ export async function getRankingDashboard(groupId, userId) {
   const liveMatches = enrichedLive.filter((m) => m.timeElapsed !== 'Final');
 
   if (effectivelyFinishedLive.length) {
-    void finalizeStaleLiveMatches().catch((err) => {
+    try {
+      await finalizeStaleLiveMatches();
+      invalidateMatchRelatedCaches(groupId);
+    } catch (err) {
       console.warn('Ranking dashboard stale live finalize:', err.message);
-    });
+    }
   }
 
   if (groupId && groupId !== '__nogroup') {
@@ -108,10 +124,10 @@ export async function getRankingDashboard(groupId, userId) {
       : Promise.resolve(null),
   ]);
 
-  const recentFinishedMatches = [
+  const recentFinishedMatches = dedupeMatchesById([
     ...finishedRaw.map((m) => byId.get(m._id.toString())).filter(Boolean),
     ...effectivelyFinishedLive,
-  ].sort((a, b) => compareMatchesBySchedule(b, a));
+  ]).sort((a, b) => compareMatchesBySchedule(b, a));
   const nextUpcomingMatches = findNextUpcomingMatches(
     upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
   );

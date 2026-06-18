@@ -27,9 +27,11 @@ export function createInMemoryCache({ defaultTtlMs = 30_000 } = {}) {
       const promise = Promise.resolve()
         .then(compute)
         .then((value) => {
+          const resolvedTtl =
+            typeof ttlMs === 'function' ? ttlMs(value) : ttlMs;
           cacheByKey.set(key, {
             value,
-            expiresAt: Date.now() + ttlMs,
+            expiresAt: Date.now() + resolvedTtl,
           });
           return value;
         })

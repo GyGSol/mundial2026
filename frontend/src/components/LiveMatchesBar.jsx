@@ -937,6 +937,25 @@ function MatchColumn({ title, children }) {
   );
 }
 
+const RECENT_FINISHED_HIGHLIGHT_MS = 4 * 60 * 60 * 1000;
+
+function splitFinishedMatches(finishedMatches, now = Date.now()) {
+  const cutoff = now - RECENT_FINISHED_HIGHLIGHT_MS;
+  const recent = [];
+  const older = [];
+
+  for (const match of finishedMatches) {
+    const kickoffMs = new Date(match.kickoffAt || 0).getTime();
+    if (Number.isFinite(kickoffMs) && kickoffMs >= cutoff) {
+      recent.push(match);
+    } else {
+      older.push(match);
+    }
+  }
+
+  return { recent, older };
+}
+
 function FinishedMatchesCollapsible({ matches = [] }) {
   if (!matches.length) return null;
 
@@ -964,16 +983,32 @@ export default function LiveMatchesBar({
   nextMatches = [],
 }) {
   const hasLive = matches.length > 0;
-  const hasFinished = finishedMatches.length > 0;
+  const { recent: recentFinished, older: olderFinished } = splitFinishedMatches(
+    finishedMatches
+  );
+  const hasRecentFinished = recentFinished.length > 0;
+  const hasOlderFinished = olderFinished.length > 0;
   const hasNext = nextMatches.length > 0;
 
-  if (hasLive || hasFinished || hasNext) {
+  if (hasLive || hasRecentFinished || hasOlderFinished || hasNext) {
     return (
       <div className="mx-auto flex w-full flex-col gap-6">
         {hasLive ? (
           <MatchColumn title="Partidos en curso">
             {matches.map((match) => (
               <LiveMatchCard key={match.id} match={match} />
+            ))}
+          </MatchColumn>
+        ) : null}
+
+        {hasRecentFinished ? (
+          <MatchColumn
+            title={
+              recentFinished.length > 1 ? 'Partidos recién finalizados' : 'Partido recién finalizado'
+            }
+          >
+            {recentFinished.map((match) => (
+              <FinishedMatchCard key={match.id} match={match} />
             ))}
           </MatchColumn>
         ) : null}
@@ -988,7 +1023,7 @@ export default function LiveMatchesBar({
           </MatchColumn>
         ) : null}
 
-        {hasFinished ? <FinishedMatchesCollapsible matches={finishedMatches} /> : null}
+        {hasOlderFinished ? <FinishedMatchesCollapsible matches={olderFinished} /> : null}
       </div>
     );
   }
