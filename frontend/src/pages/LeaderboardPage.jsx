@@ -98,7 +98,7 @@ export default function LeaderboardPage() {
     pollIntervalMs: 15000,
     pollWhen: shouldPollLeaderboardLive,
     memoryCacheKey: canLoadRanking ? `ranking-dashboard:${effectiveGroupId}` : '',
-    memoryCacheTtlMs: 60_000,
+    memoryCacheTtlMs: 15_000,
   });
 
   const dashboardMatchesGroup =
@@ -107,7 +107,10 @@ export default function LeaderboardPage() {
   const dashboardKickoffBaseline = dashboardMatchesGroup
     ? data?.leaderboardKickoffBaseline
     : null;
-  const hasLiveMatches = dashboardMatchesGroup && (data?.liveMatches?.length ?? 0) > 0;
+  const hasLiveMatches = dashboardMatchesGroup && (
+    (data?.liveMatches?.length ?? 0) > 0 ||
+    (data?.leaderboardKickoffBaseline?.length ?? 0) > 0
+  );
   const rankingReady = canLoadRanking ? dashboardMatchesGroup : true;
   const rankingLoadFailed = canLoadRanking && !loading && Boolean(error) && !dashboardMatchesGroup;
   const pageReady = !canLoadRanking || dashboardMatchesGroup;

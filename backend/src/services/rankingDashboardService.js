@@ -1,5 +1,5 @@
 import { Match } from '../models/Match.js';
-import { getCachedLeaderboard } from './leaderboardCache.js';
+import { getLeaderboard } from './leaderboardService.js';
 import { getLastSyncAt } from './syncService.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import {
@@ -80,16 +80,14 @@ export async function getRankingDashboard(groupId, userId) {
 
   const liveMatchIds = liveMatches.map((match) => match.id);
   const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
-  const hasLiveMatches = liveMatches.length > 0;
+  // Par actual sin sub-caché: el dashboard ya cachea 5s/15s; liveKickoffBaselineMatchIds
+  // deja PJ igual y puntúa el partido en vivo como 0-0 (no excludeMatchIds, que baja PJ).
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
-    getCachedLeaderboard(groupId || null, 100, {}, { hasLiveMatches }),
+    getLeaderboard(groupId || null, 100),
     indicatorBaselineMatchIds.length > 0
-      ? getCachedLeaderboard(
-          groupId || null,
-          100,
-          { excludeMatchIds: indicatorBaselineMatchIds },
-          { hasLiveMatches }
-        )
+      ? getLeaderboard(groupId || null, 100, {
+          liveKickoffBaselineMatchIds: indicatorBaselineMatchIds,
+        })
       : Promise.resolve(null),
   ]);
 
