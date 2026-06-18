@@ -968,16 +968,13 @@ export default function LiveMatchesBar({
   const hasRecentFinished = recentFinishedMatches.length > 0;
   const hasFeatured = hasLive || hasRecentFinished;
   const hasNext = nextMatches.length > 0;
-  const featuredTitle =
-    hasLive && hasRecentFinished
-      ? 'Partidos en curso y recién finalizados'
-      : hasLive
-        ? matches.length > 1
-          ? 'Partidos en curso'
-          : 'Partido en curso'
-        : recentFinishedMatches.length > 1
-          ? 'Partidos recién finalizados'
-          : 'Partido recién finalizado';
+  const featuredTitle = hasLive
+    ? matches.length > 1
+      ? 'Partidos en curso'
+      : 'Partido en curso'
+    : recentFinishedMatches.length > 1
+      ? 'Partidos recién finalizados'
+      : 'Partido recién finalizado';
 
   if (hasFeatured || hasNext) {
     return (
