@@ -31,7 +31,7 @@ function summarizeTeamStakes(row, groupLetter) {
     puntos: row.points ?? 0,
     pj: row.played ?? 0,
     dg: row.goalDiff ?? 0,
-    notas,
+    notas: notes,
   };
 }
 
