@@ -98,6 +98,81 @@ export function formatTimelinePlayer(event, role = 'player') {
   });
 }
 
+/** @param {Record<string, unknown>} event @param {'player' | 'in' | 'out'} role */
+export function extractTimelinePlayerFields(event, role = 'player') {
+  const suffix = role === 'player' ? '' : role === 'in' ? 'In' : 'Out';
+  const nameKey = role === 'player' ? 'player' : `player${suffix}`;
+  const positionKey = role === 'player' ? 'playerPosition' : `player${suffix}Position`;
+  const shirtKey = role === 'player' ? 'playerShirtNumber' : `player${suffix}ShirtNumber`;
+  const xKey = role === 'player' ? 'positionX' : `player${suffix}PositionX`;
+  const yKey = role === 'player' ? 'positionY' : `player${suffix}PositionY`;
+  const goalsKey =
+    role === 'player'
+      ? 'playerTournamentGoals'
+      : role === 'in'
+        ? 'playerInTournamentGoals'
+        : 'playerOutTournamentGoals';
+
+  const name = String(event?.[nameKey] ?? '').trim();
+  if (!name) return null;
+
+  const shirtRaw = event?.[shirtKey];
+  const shirtNumber =
+    shirtRaw != null && Number.isFinite(Number(shirtRaw)) ? Number(shirtRaw) : null;
+
+  const position = inferTacticalPosition({
+    position: event?.[positionKey],
+    positionX: event?.[xKey],
+    positionY: event?.[yKey],
+  });
+
+  const goalsRaw = event?.[goalsKey];
+  const tournamentGoals =
+    goalsRaw != null && Number.isFinite(Number(goalsRaw)) && Number(goalsRaw) > 0
+      ? Number(goalsRaw)
+      : null;
+
+  return { shirtNumber, position, name, tournamentGoals };
+}
+
+/** @param {string} type */
+export function getTimelineActionLabel(type) {
+  switch (type) {
+    case 'goal':
+      return 'Gol';
+    case 'yellow_card':
+      return 'Tarjeta amarilla';
+    case 'red_card':
+      return 'Tarjeta roja';
+    case 'substitution':
+      return 'Cambio';
+    case 'foul':
+      return 'Falta';
+    case 'shot_attempt':
+      return 'Tiro al arco';
+    default:
+      return null;
+  }
+}
+
+/** @param {string} type */
+export function getTimelineActionIcon(type) {
+  switch (type) {
+    case 'goal':
+      return '⚽';
+    case 'yellow_card':
+      return '🟨';
+    case 'red_card':
+      return '🟥';
+    case 'foul':
+      return null;
+    case 'shot_attempt':
+      return '🎯';
+    default:
+      return null;
+  }
+}
+
 /** @param {{ name?: string, position?: string | null, shirtNumber?: number | null, positionX?: number | null, positionY?: number | null }} entry */
 export function formatSummaryPlayer(entry) {
   return formatPlayerEventLabel({

@@ -1016,6 +1016,111 @@ export function attachTimelinePitchCoords(timeline, rawEvents, homeTeamId, awayT
   });
 }
 
+function timelineChronologicalSortKey(event) {
+  if (event?.sortKey != null) {
+    const key = Number(event.sortKey);
+    if (Number.isFinite(key)) return key;
+  }
+  if (event?.minute == null || !Number.isFinite(Number(event.minute))) {
+    return Number.POSITIVE_INFINITY;
+  }
+  const minute = Number(event.minute);
+  const extra = Number(event.extraMinute ?? 0);
+  return minute + extra / 100;
+}
+
+/** @param {Record<string, unknown>} event @param {'player' | 'in' | 'out'} role */
+export function playerGoalCountKey(event, role = 'player') {
+  const idKey = role === 'player' ? 'idPlayer' : role === 'in' ? 'idPlayerIn' : 'idPlayerOut';
+  const nameKey = role === 'player' ? 'player' : role === 'in' ? 'playerIn' : 'playerOut';
+  const id = event?.[idKey];
+  if (id != null && String(id).trim()) return `id:${String(id)}`;
+  const name = event?.[nameKey];
+  if (name) return `name:${normalizeName(name)}`;
+  return null;
+}
+
+/**
+ * Cuenta goles por jugador en partidos finalizados (excluye el partido actual).
+ * @param {Array<{ externalId?: string, raw?: Record<string, unknown> | null }>} finishedMatches
+ * @param {string | null | undefined} excludeExternalId
+ */
+export function buildPriorTournamentGoalCounts(finishedMatches = [], excludeExternalId = null) {
+  const counts = new Map();
+
+  for (const match of finishedMatches) {
+    if (excludeExternalId && match.externalId === excludeExternalId) continue;
+    const timeline = readMatchTimeline(match.raw ?? {});
+    for (const event of timeline) {
+      if (event.type !== 'goal' || !event.player) continue;
+      const key = playerGoalCountKey(event, 'player');
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+
+  return counts;
+}
+
+/**
+ * Adjunta goles acumulados del torneo a cada evento con jugador.
+ * @param {Array<Record<string, unknown>>} timeline
+ * @param {Map<string, number>} priorCounts
+ */
+export function attachTimelineTournamentGoals(timeline = [], priorCounts = new Map()) {
+  if (!timeline.length) return timeline;
+
+  const running = new Map(priorCounts);
+  const chronological = [...timeline].sort(
+    (a, b) => timelineChronologicalSortKey(a) - timelineChronologicalSortKey(b)
+  );
+  const enrichedByIdentity = new Map();
+
+  for (const event of chronological) {
+    const next = { ...event };
+
+    const attachRole = (role, fieldName) => {
+      const key = playerGoalCountKey(event, role);
+      if (!key) return;
+      const prior = running.get(key) ?? 0;
+      const isScorerGoal = event.type === 'goal' && role === 'player';
+      const total = isScorerGoal ? prior + 1 : prior;
+      if (total > 0) next[fieldName] = total;
+      if (isScorerGoal) running.set(key, total);
+    };
+
+    if (next.player) attachRole('player', 'playerTournamentGoals');
+    if (next.playerIn) attachRole('in', 'playerInTournamentGoals');
+    if (next.playerOut) attachRole('out', 'playerOutTournamentGoals');
+
+    enrichedByIdentity.set(
+      [
+        event.type,
+        event.side,
+        event.minute,
+        event.extraMinute ?? '',
+        event.player ?? '',
+        event.playerIn ?? '',
+        event.playerOut ?? '',
+      ].join(':'),
+      next
+    );
+  }
+
+  return timeline.map((event) => {
+    const identity = [
+      event.type,
+      event.side,
+      event.minute,
+      event.extraMinute ?? '',
+      event.player ?? '',
+      event.playerIn ?? '',
+      event.playerOut ?? '',
+    ].join(':');
+    return enrichedByIdentity.get(identity) ?? event;
+  });
+}
+
 /** @param {Array<Record<string, unknown>>} timeline */
 export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlayers = []) {
   return timeline.map((event) => {
@@ -1048,13 +1153,13 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
 
 /**
  * @param {{ status?: string, homeScore?: number | null, awayScore?: number | null, raw?: Record<string, unknown> | null }} match
- * @param {{ homePlayers?: Array<{ fullName: string, position?: string, shirtNumber?: number }>, awayPlayers?: Array<{ fullName: string, position?: string, shirtNumber?: number }> }} [options]
+ * @param {{ homePlayers?: Array<{ fullName: string, position?: string, shirtNumber?: number }>, awayPlayers?: Array<{ fullName: string, position?: string, shirtNumber?: number }>, priorTournamentGoalCounts?: Map<string, number> }} [options]
  */
 export function enrichMatchLiveFields(match, options = {}) {
   const raw = match.raw ?? {};
   const showResults = match.status === 'live' || match.status === 'finished';
   const events = readStoredMatchEvents(raw);
-  const { homePlayers = [], awayPlayers = [] } = options;
+  const { homePlayers = [], awayPlayers = [], priorTournamentGoalCounts } = options;
   let baseTimeline = showResults ? readMatchTimeline(raw) : [];
 
   if (showResults && baseTimeline.length > 0) {
@@ -1085,7 +1190,7 @@ export function enrichMatchLiveFields(match, options = {}) {
     ? resolveEffectiveLiveScores(match, baseTimeline, raw)
     : { homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 };
 
-  const matchTimeline = showResults
+  let matchTimeline = showResults
     ? completeTimelineEvents(baseTimeline, {
         homeScorers: pickNonEmptyList(parsedHomeScorers, baseTimelineScorers.home),
         awayScorers: pickNonEmptyList(parsedAwayScorers, baseTimelineScorers.away),
@@ -1093,6 +1198,10 @@ export function enrichMatchLiveFields(match, options = {}) {
         awayScore: effectiveScores.awayScore,
       })
     : [];
+
+  if (showResults && matchTimeline.length > 0 && priorTournamentGoalCounts) {
+    matchTimeline = attachTimelineTournamentGoals(matchTimeline, priorTournamentGoalCounts);
+  }
   const timelineScorers = scorersFromTimeline(matchTimeline);
   const timelineBookings = bookingsFromTimeline(matchTimeline);
   const timelineSubstitutions = substitutionsFromTimeline(matchTimeline);

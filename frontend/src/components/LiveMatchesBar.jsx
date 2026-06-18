@@ -26,8 +26,10 @@ import {
   getMatchSummaryNotice,
 } from '@/lib/matchSummary';
 import {
+  extractTimelinePlayerFields,
   formatSummaryPlayer,
-  formatTimelinePlayer,
+  getTimelineActionIcon,
+  getTimelineActionLabel,
 } from '@/lib/playerPositionLabel.js';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -107,52 +109,90 @@ function formatBookingLine(booking) {
 const SUBSTITUTION_OUT_ICON = '⬇️';
 const SUBSTITUTION_IN_ICON = '⬆️';
 
-function SubstitutionTimelineRow({ minutePrefix, playerOut, playerIn, align = 'center' }) {
+function TimelinePlayerRow({ player, align = 'left' }) {
+  if (!player) return null;
+  const { shirtNumber, position, name, tournamentGoals } = player;
+  const textAlign =
+    align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
+
   return (
-    <span
+    <div
       className={cn(
-        'inline-flex flex-wrap items-center gap-x-1 gap-y-0.5',
-        align === 'right' && 'justify-end',
-        align === 'left' && 'justify-start',
-        align === 'center' && 'justify-center'
+        'match-live-action-player grid w-full min-w-0 grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5',
+        textAlign
       )}
     >
-      {minutePrefix ? <span>{minutePrefix}</span> : null}
-      <ArrowDown className="match-live-icon size-3 shrink-0 text-red-500" strokeWidth={2.75} aria-hidden="true" />
-      <span>{playerOut}</span>
-      <ArrowUp className="match-live-icon size-3 shrink-0 text-emerald-500" strokeWidth={2.75} aria-hidden="true" />
-      <span>{playerIn}</span>
-    </span>
+      <span className="tabular-nums font-medium text-foreground">
+        {shirtNumber != null ? shirtNumber : '—'}
+      </span>
+      <span className="text-muted-foreground">{position ?? '—'}</span>
+      <span className="min-w-0 truncate font-medium text-foreground">{name}</span>
+      {tournamentGoals != null ? (
+        <span
+          className="inline-flex items-center gap-0.5 tabular-nums text-emerald-700"
+          title="Goles en el torneo"
+        >
+          <span aria-hidden="true">⚽</span>
+          <span>{tournamentGoals}</span>
+        </span>
+      ) : (
+        <span aria-hidden="true" />
+      )}
+    </div>
   );
 }
 
-function FoulTimelineRow({ minutePrefix, label }) {
+function TimelineActionCard({ entry, align = 'center' }) {
+  const hasPlayers = (entry.players?.length ?? 0) > 0;
+  const headerAlign =
+    align === 'home' ? 'text-left' : align === 'away' ? 'text-right' : 'text-center';
+  const bodyAlign = align === 'home' ? 'left' : align === 'away' ? 'right' : 'center';
+
   return (
-    <span className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
-      {minutePrefix ? <span>{minutePrefix}</span> : null}
-      <BrokenLegIcon />
-      <span>{label}</span>
-    </span>
+    <div
+      className={cn(
+        'match-live-action-card w-full max-w-full',
+        align === 'away' && 'ml-auto',
+        headerAlign
+      )}
+    >
+      <div className="match-live-action-header flex items-center justify-between gap-2">
+        <span className="tabular-nums font-semibold text-foreground">{entry.minute || '—'}</span>
+        <span className="inline-flex items-center gap-1 font-medium text-foreground">
+          {entry.iconNode ?? (entry.icon ? <span aria-hidden="true">{entry.icon}</span> : null)}
+          <span>{entry.actionLabel}</span>
+          {entry.actionSuffix ? (
+            <span className="text-muted-foreground">{entry.actionSuffix}</span>
+          ) : null}
+        </span>
+      </div>
+      {hasPlayers ? (
+        <div className="match-live-action-body flex flex-col gap-1">
+          {entry.players.map((player) => (
+            <div
+              key={`${player.role}-${player.name}`}
+              className={cn(
+                'flex items-center gap-1',
+                player.role === 'out' && 'text-red-700',
+                player.role === 'in' && 'text-emerald-700'
+              )}
+            >
+              {player.role === 'out' ? (
+                <ArrowDown className="match-live-icon size-3 shrink-0" strokeWidth={2.75} aria-hidden="true" />
+              ) : null}
+              {player.role === 'in' ? (
+                <ArrowUp className="match-live-icon size-3 shrink-0" strokeWidth={2.75} aria-hidden="true" />
+              ) : null}
+              {entry.kind === 'foul' && player.role === 'player' ? (
+                <BrokenLegIcon />
+              ) : null}
+              <TimelinePlayerRow player={player} align={bodyAlign} />
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
-}
-
-function TimelineEntryContent({ entry }) {
-  if (entry.kind === 'substitution') {
-    return (
-      <SubstitutionTimelineRow
-        minutePrefix={entry.minutePrefix}
-        playerOut={entry.playerOut}
-        playerIn={entry.playerIn}
-        align="center"
-      />
-    );
-  }
-
-  if (entry.kind === 'foul') {
-    return <FoulTimelineRow minutePrefix={entry.minutePrefix} label={entry.label} />;
-  }
-
-  return entry.text;
 }
 
 function formatSubstitutionLine(substitution) {
@@ -384,58 +424,73 @@ function neutralTimelineIcon(type) {
 
 function formatTimelineEntry(event) {
   const minute = formatTimelineMinute(event);
-  const prefix = minute ? `${minute} ` : '';
   const neutralLabel = formatNeutralTimelineLabel(event);
 
   if (neutralLabel) {
     return {
       side: 'neutral',
-      text: `${prefix}${neutralTimelineIcon(event.type)} ${neutralLabel}`.trim(),
+      minute,
+      actionLabel: neutralLabel,
+      icon: neutralTimelineIcon(event.type),
+      players: [],
     };
   }
 
+  const actionLabel = getTimelineActionLabel(event.type);
+  if (!actionLabel) return null;
+
+  const base = {
+    side: event.side,
+    minute,
+    actionLabel,
+    icon: getTimelineActionIcon(event.type),
+    actionSuffix: null,
+    kind: event.type,
+    players: [],
+  };
+
   switch (event.type) {
     case 'goal': {
-      const playerLabel = event.player ? formatTimelinePlayer(event) : 'Gol';
-      const penaltySuffix = event.isPenalty ? ' (p)' : '';
-      const shotPrefix = event.includesShot ? '🎯 ' : '';
+      const player = extractTimelinePlayerFields(event, 'player');
       return {
-        side: event.side,
-        text: `${prefix}${shotPrefix}⚽ ${playerLabel}${penaltySuffix}`,
+        ...base,
+        icon: event.includesShot ? '🎯⚽' : '⚽',
+        actionSuffix: event.isPenalty ? '(p)' : null,
+        players: player ? [{ ...player, role: 'player' }] : [],
       };
     }
     case 'yellow_card':
+    case 'red_card': {
+      const player = extractTimelinePlayerFields(event, 'player');
       return {
-        side: event.side,
-        text: `${prefix}🟨 ${formatTimelinePlayer(event)}`,
+        ...base,
+        players: player ? [{ ...player, role: 'player' }] : [],
       };
-    case 'red_card':
+    }
+    case 'substitution': {
+      const playerOut = extractTimelinePlayerFields(event, 'out');
+      const playerIn = extractTimelinePlayerFields(event, 'in');
+      const players = [];
+      if (playerOut) players.push({ ...playerOut, role: 'out' });
+      if (playerIn) players.push({ ...playerIn, role: 'in' });
+      return { ...base, players };
+    }
+    case 'foul': {
+      const player = extractTimelinePlayerFields(event, 'player');
       return {
-        side: event.side,
-        text: `${prefix}🟥 ${formatTimelinePlayer(event)}`,
-      };
-    case 'substitution':
-      return {
-        side: event.side,
-        kind: 'substitution',
-        minutePrefix: prefix,
-        playerOut: formatTimelinePlayer(event, 'out'),
-        playerIn: formatTimelinePlayer(event, 'in'),
-      };
-    case 'foul':
-      return {
-        side: event.side,
+        ...base,
+        icon: null,
         kind: 'foul',
-        minutePrefix: prefix,
-        label: event.player
-          ? `Falta · ${formatTimelinePlayer(event)}`
-          : 'Falta',
+        players: player ? [{ ...player, role: 'player' }] : [],
       };
-    case 'shot_attempt':
+    }
+    case 'shot_attempt': {
+      const player = extractTimelinePlayerFields(event, 'player');
       return {
-        side: event.side,
-        text: `${prefix}🎯 ${event.player ? `Tiro · ${formatTimelinePlayer(event)}` : 'Tiro'}`,
+        ...base,
+        players: player ? [{ ...player, role: 'player' }] : [],
       };
+    }
     default:
       return null;
   }
@@ -495,26 +550,28 @@ function MatchTimeline({ events = [] }) {
       ref={scrollRef}
       className="match-live-timeline max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className="flex flex-col gap-0.5 match-live-text text-[10px] leading-snug text-muted-foreground">
+      <div className="flex flex-col gap-1 match-live-text text-[10px] leading-snug text-muted-foreground">
         {displayEntries.map((entry) => (
           <div key={entry.key} className={MATCH_SIDE_GRID_CLASS}>
-            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0')}>
+            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0 items-stretch')}>
               {entry.side === 'home' ? (
-                <span className="match-live-entry max-w-[9rem] break-words sm:max-w-[11rem]">
-                  <TimelineEntryContent entry={entry} />
-                </span>
+                <div className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
+                  <TimelineActionCard entry={entry} align="home" />
+                </div>
               ) : null}
             </div>
-            <div className={MATCH_CENTER_CELL_CLASS}>
+            <div className={cn(MATCH_CENTER_CELL_CLASS, 'items-stretch')}>
               {entry.side === 'neutral' ? (
-                <span className="match-live-center-entry max-w-[7rem] break-words">{entry.text}</span>
+                <div className="match-live-center-entry w-full max-w-[7rem]">
+                  <TimelineActionCard entry={entry} align="center" />
+                </div>
               ) : null}
             </div>
-            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0')}>
+            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0 items-stretch')}>
               {entry.side === 'away' ? (
-                <span className="match-live-entry max-w-[9rem] break-words sm:max-w-[11rem]">
-                  <TimelineEntryContent entry={entry} />
-                </span>
+                <div className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
+                  <TimelineActionCard entry={entry} align="away" />
+                </div>
               ) : null}
             </div>
           </div>

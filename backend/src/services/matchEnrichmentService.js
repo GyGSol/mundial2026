@@ -1,5 +1,6 @@
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
+import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
 import { Prediction } from '../models/Prediction.js';
 import {
@@ -12,7 +13,7 @@ import {
 } from './predictedMatchContextService.js';
 import { getCachedUserPredictedMatchContext } from './userPredictedMatchContextCache.js';
 import { enrichMatchPhaseFields } from './matchPhaseUtils.js';
-import { enrichMatchLiveFields } from './matchLiveData.js';
+import { enrichMatchLiveFields, buildPriorTournamentGoalCounts } from './matchLiveData.js';
 import { RECENTLY_FINISHED_GRACE_MS } from './matchDisplayVisibilityService.js';
 import { ensureFifaShirtMaps } from './fifaShirtMapService.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
@@ -102,14 +103,29 @@ export async function enrichMatches(matches, userId, options = {}) {
     resolvedKnockoutByExternalId = ctx.resolvedKnockoutByExternalId;
   }
 
+  const needsTournamentGoals = matches.some(
+    (m) => m.status === 'live' || m.status === 'finished'
+  );
+  let finishedMatchesForGoals = [];
+  if (needsTournamentGoals) {
+    finishedMatchesForGoals = await Match.find({ status: 'finished' })
+      .select('externalId raw')
+      .lean();
+  }
+
   const enrichedBase = matches.map((m) => {
     const prediction = predictionMap[m._id.toString()] || null;
     const meta = enrichMatchPredictionMeta(m, prediction);
 
     const phaseFields = enrichMatchPhaseFields(m);
+    const priorTournamentGoalCounts =
+      m.status === 'live' || m.status === 'finished'
+        ? buildPriorTournamentGoalCounts(finishedMatchesForGoals, m.externalId)
+        : undefined;
     const liveFields = enrichMatchLiveFields(m, {
       homePlayers: playersByTeamId[m.homeTeamId] ?? [],
       awayPlayers: playersByTeamId[m.awayTeamId] ?? [],
+      priorTournamentGoalCounts,
     });
 
     const displayKickoff = resolveDisplayKickoffAt(m) ?? m.kickoffAt;

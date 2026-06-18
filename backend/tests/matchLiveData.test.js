@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
+  attachTimelineTournamentGoals,
+  buildPriorTournamentGoalCounts,
   completeTimelineEvents,
   deduplicateTimelineGoals,
   enrichMatchLiveFields,
   formatTimeElapsed,
   latestClockFromTimeline,
   parseElapsedClockToSortKey,
+  playerGoalCountKey,
   resolveLiveTimeElapsed,
   goalCountsFromTimeline,
   isPlausibleMatchGoalCount,
@@ -619,6 +622,90 @@ describe('matchLiveData', () => {
           fifaMeta: { homeScore: 1405, awayScore: 1, syncedAt: '2026-06-13T20:00:00.000Z' },
         })
       ).toBeNull();
+    });
+  });
+
+  describe('tournament goal counts on timeline', () => {
+    it('playerGoalCountKey prioriza idPlayer sobre nombre', () => {
+      expect(
+        playerGoalCountKey({ idPlayer: '123', player: 'Jonathan DAVID' }, 'player')
+      ).toBe('id:123');
+      expect(playerGoalCountKey({ player: 'Jonathan DAVID' }, 'player')).toBe(
+        'name:jonathan david'
+      );
+    });
+
+    it('buildPriorTournamentGoalCounts excluye el partido actual', () => {
+      const finished = [
+        {
+          externalId: 'prev-match',
+          raw: {
+            fifaEvents: {
+              timeline: [
+                { type: 'goal', side: 'home', minute: 12, player: 'Jonathan DAVID', sortKey: 12 },
+                { type: 'goal', side: 'home', minute: 55, player: 'Jonathan DAVID', sortKey: 55 },
+              ],
+            },
+          },
+        },
+        {
+          externalId: 'current-match',
+          raw: {
+            fifaEvents: {
+              timeline: [
+                { type: 'goal', side: 'home', minute: 10, player: 'Jonathan DAVID', sortKey: 10 },
+              ],
+            },
+          },
+        },
+      ];
+
+      const prior = buildPriorTournamentGoalCounts(finished, 'current-match');
+      expect(prior.get('name:jonathan david')).toBe(2);
+    });
+
+    it('attachTimelineTournamentGoals acumula goles previos y del partido en curso', () => {
+      const prior = new Map([['name:jonathan david', 2]]);
+      const timeline = [
+        { type: 'goal', side: 'home', minute: 29, player: 'Jonathan DAVID', sortKey: 29 },
+        { type: 'foul', side: 'home', minute: 38, player: 'Jonathan DAVID', sortKey: 38 },
+        { type: 'shot_attempt', side: 'home', minute: 35, player: 'Ali AHMED', sortKey: 35 },
+      ];
+
+      const enriched = attachTimelineTournamentGoals(timeline, prior);
+      const goal = enriched.find((event) => event.type === 'goal');
+      const foul = enriched.find((event) => event.type === 'foul');
+      const shot = enriched.find((event) => event.type === 'shot_attempt');
+
+      expect(goal.playerTournamentGoals).toBe(3);
+      expect(foul.playerTournamentGoals).toBe(3);
+      expect(shot.playerTournamentGoals).toBeUndefined();
+    });
+
+    it('enrichMatchLiveFields adjunta goles del torneo cuando recibe prior counts', () => {
+      const prior = new Map([['name:jonathan david', 2]]);
+      const enriched = enrichMatchLiveFields(
+        {
+          status: 'live',
+          externalId: 'live-match',
+          homeScore: 1,
+          awayScore: 0,
+          raw: {
+            fifaEvents: {
+              timeline: [
+                { type: 'goal', side: 'home', minute: 29, player: 'Jonathan DAVID', sortKey: 29 },
+                { type: 'foul', side: 'home', minute: 38, player: 'Jonathan DAVID', sortKey: 38 },
+              ],
+            },
+          },
+        },
+        { priorTournamentGoalCounts: prior }
+      );
+
+      const goal = enriched.matchTimeline.find((event) => event.type === 'goal');
+      const foul = enriched.matchTimeline.find((event) => event.type === 'foul');
+      expect(goal.playerTournamentGoals).toBe(3);
+      expect(foul.playerTournamentGoals).toBe(3);
     });
   });
 

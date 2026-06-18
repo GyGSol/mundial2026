@@ -932,6 +932,35 @@ body:has(.game-shell) {
   .match-live-ui .match-live-score-cell {
     min-height: var(--match-flag);
   }
+
+  .match-live-ui .match-live-action-card {
+    max-width: var(--match-entry-max);
+  }
+}
+
+.match-live-action-card {
+  overflow: hidden;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+  background: color-mix(in oklch, var(--card) 80%, transparent);
+}
+
+.match-live-action-header {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
+  background: color-mix(in oklch, var(--muted) 35%, transparent);
+  font-size: inherit;
+  line-height: 1.25;
+}
+
+.match-live-action-body {
+  padding: 0.375rem 0.5rem;
+  font-size: inherit;
+  line-height: 1.35;
+}
+
+.match-live-action-player {
+  font-size: 0.95em;
 }
 
 /* ── Landing y login del juego: fondo foto + tratamiento moderno ── */
