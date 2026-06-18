@@ -239,9 +239,6 @@ export const compareLeaderboardEntries = compareRankingEntries;
 
 export async function getLeaderboard(competitionGroupId, limit = 100, options = {}) {
   const { liveKickoffBaselineMatchIds = [], excludeMatchIds = [] } = options;
-  const useKickoffBaseline = liveKickoffBaselineMatchIds.length > 0;
-  const useExcludedStats = excludeMatchIds.length > 0;
-  const useStatsTotalPoints = useKickoffBaseline || useExcludedStats;
   let filter = {};
   if (competitionGroupId === '__nogroup') {
     const memberUserIds = await UserGroupMembership.distinct('userId');
@@ -278,9 +275,7 @@ export async function getLeaderboard(competitionGroupId, limit = 100, options = 
       name: user.name,
       isAiUser: Boolean(user.isAiUser),
       groupName: groupNameById[(user.activeCompetitionGroupId || user.competitionGroupId)?.toString()] || null,
-      totalPoints: useStatsTotalPoints
-        ? (stats.totalPoints ?? user.totalPoints)
-        : user.totalPoints,
+      totalPoints: stats.totalPoints ?? 0,
       pj: stats.pj ?? 0,
       pa: stats.pa ?? 0,
       gl: stats.gl ?? 0,

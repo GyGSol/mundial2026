@@ -50,7 +50,7 @@ export function statDeltaForKey(key, previous, next, { upOnly = false } = {}) {
   return null;
 }
 
-/** Indicadores vs baseline sin partidos en vivo: rank siempre; PA/GL/GV/GT/PB solo con en vivo (↑ verde). */
+/** Indicadores vs baseline sin partidos en vivo: rank siempre; PA/GL/GV/GT/PB solo con en vivo (↑↓). */
 export function computeLeaderboardBaselineIndicators(
   leaderboard,
   leaderboardKickoffBaseline,
@@ -75,7 +75,7 @@ export function computeLeaderboardBaselineIndicators(
 
     if (hasLiveMatches) {
       for (const key of LIVE_STAT_KEYS) {
-        const change = statDeltaForKey(key, baseline[key], current[key], { upOnly: true });
+        const change = statDeltaForKey(key, baseline[key], current[key]);
         if (change) rowIndicators[key] = change;
       }
     }

@@ -319,7 +319,8 @@ export default function LeaderboardPage() {
         <section id={GROUP_POSITIONS_TABLE_ID} className="scroll-mt-24">
           {hasLiveMatches ? (
             <p className="mb-2 text-xs text-muted-foreground">
-              Partido en vivo: las flechas marcan cambios desde el arranque (goles y posiciones).
+              Partido en vivo: las flechas marcan cambios desde el 0-0 inicial (PA = acierto
+              ganador/empate; GL/GV = goles exactos).
             </p>
           ) : null}
           <LeaderboardTable

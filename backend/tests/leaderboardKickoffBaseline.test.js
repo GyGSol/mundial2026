@@ -316,4 +316,48 @@ describe('leaderboard kickoff baseline', () => {
     expect(currentRow.gt).toBe(2);
     expect(baselineRow.gt).toBe(0);
   });
+
+  it('ranking actual usa puntos agregados de predicciones, no user.totalPoints desactualizado', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST06' });
+    const user = await User.create({
+      name: 'Pts stale',
+      email: 'stale@example.com',
+      passwordHash: 'hash',
+      totalPoints: 99,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: user._id, groupId: group._id, role: 'member' });
+
+    const finished = await Match.create({
+      externalId: 'finished-only',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 1,
+      awayScore: 0,
+      status: 'finished',
+      kickoffAt: new Date('2026-06-10T19:00:00.000Z'),
+    });
+
+    await Prediction.create({
+      userId: user._id,
+      matchId: finished._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+
+    const [current, baseline] = await Promise.all([
+      getLeaderboard(group._id.toString()),
+      getLeaderboard(group._id.toString(), 100, { liveKickoffBaselineMatchIds: [finished._id.toString()] }),
+    ]);
+
+    const currentRow = current.find((row) => row.id === user._id.toString());
+    const baselineRow = baseline.find((row) => row.id === user._id.toString());
+
+    expect(currentRow.totalPoints).toBe(6);
+    expect(currentRow.totalPoints).not.toBe(99);
+    expect(baselineRow.totalPoints).toBeLessThan(currentRow.totalPoints);
+    expect(currentRow.rank).toBe(baselineRow.rank);
+  });
 });

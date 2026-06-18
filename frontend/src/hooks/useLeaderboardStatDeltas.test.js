@@ -1,0 +1,27 @@
+import { describe, it, expect } from 'vitest';
+import { computeLeaderboardBaselineIndicators } from './useLeaderboardStatDeltas.js';
+
+describe('computeLeaderboardBaselineIndicators', () => {
+  const leaderboard = [
+    { id: 'a', rank: 2, pa: 13, gl: 5, gv: 6, gt: 4, pb: 0 },
+    { id: 'b', rank: 6, pa: 9, gl: 7, gv: 9, gt: 3, pb: 0 },
+  ];
+  const baseline = [
+    { id: 'a', rank: 4, pa: 12, gl: 5, gv: 5, gt: 3, pb: 0 },
+    { id: 'b', rank: 2, pa: 10, gl: 7, gv: 10, gt: 3, pb: 0 },
+  ];
+
+  it('marca subidas y bajadas de rank y stats en vivo', () => {
+    const indicators = computeLeaderboardBaselineIndicators(leaderboard, baseline, {
+      hasLiveMatches: true,
+    });
+
+    expect(indicators.a.rank).toEqual({ direction: 'up', amount: 2 });
+    expect(indicators.a.pa).toEqual({ direction: 'up' });
+    expect(indicators.a.gv).toEqual({ direction: 'up' });
+
+    expect(indicators.b.rank).toEqual({ direction: 'down', amount: 4 });
+    expect(indicators.b.pa).toEqual({ direction: 'down' });
+    expect(indicators.b.gv).toEqual({ direction: 'down' });
+  });
+});
