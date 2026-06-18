@@ -127,6 +127,38 @@ describe('mergeSyncedMatch', () => {
     expect(merged.raw.time_elapsed).not.toBe('finished');
   });
 
+  it('rechaza live→finished si timeline muestra partido en curso', () => {
+    const kickoffRecent = new Date(Date.now() - 10 * 60 * 1000);
+    const merged = mergeSyncedMatch(
+      {
+        status: 'live',
+        homeScore: 0,
+        awayScore: 1,
+        kickoffAt: kickoffRecent,
+        raw: {
+          finished: 'FALSE',
+          time_elapsed: '34',
+          fifaEvents: {
+            timeline: [
+              { type: 'kickoff', minute: 0, sortKey: 0 },
+              { type: 'goal', minute: 4, side: 'away', sortKey: 4 },
+            ],
+          },
+        },
+      },
+      {
+        status: 'finished',
+        homeScore: 0,
+        awayScore: 1,
+        kickoffAt: kickoffRecent,
+        raw: { finished: 'TRUE', time_elapsed: 'finished' },
+      }
+    );
+
+    expect(merged.status).toBe('live');
+    expect(merged.raw.finished).toBe('FALSE');
+  });
+
   it('live→finished usa marcador FIFA si worldcup26 quedó en 2-2 tras gol anulado', () => {
     const merged = mergeSyncedMatch(
       {

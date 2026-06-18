@@ -20,6 +20,7 @@ import { syncMicroEventsFromMatch } from './matchMicroEventService.js';
 import {
   elapsedTokenIndicatesFinished,
   fifaEntryIndicatesFinished,
+  isMatchClearlyInProgress,
   isMatchKickoffStale,
   matchEvidenceShowsInProgress,
   readElapsedToken,
@@ -302,7 +303,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
 
     if (!shouldFinalize && fifaCalendar.length) {
       const fifaEntry = await loadFifaEntryForMatch(match, fifaCalendar, teamMap);
-      if (fifaEntryIndicatesFinished(fifaEntry)) {
+      if (fifaEntryIndicatesFinished(fifaEntry) && !isMatchClearlyInProgress(match)) {
         shouldFinalize = true;
       }
     }

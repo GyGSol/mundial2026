@@ -75,6 +75,48 @@ describe('worldCupApiClient normalization', () => {
     );
   });
 
+  it('no fuerza finished tras kickoff stale si el partido sigue en curso', () => {
+    const kickoff = new Date('2026-06-17T20:00:00.000Z');
+    const now = kickoff.getTime() + 130 * 60 * 1000;
+
+    expect(
+      resolveGameStatus(
+        {
+          finished: 'FALSE',
+          time_elapsed: '67',
+          home_score: '0',
+          away_score: '1',
+        },
+        kickoff,
+        { now }
+      )
+    ).toBe('live');
+  });
+
+  it('reabre finished prematuro de worldcup26 con timeline en curso', () => {
+    const kickoff = new Date('2026-06-17T20:00:00.000Z');
+    const now = kickoff.getTime() + 10 * 60 * 1000;
+
+    expect(
+      resolveGameStatus(
+        {
+          finished: 'TRUE',
+          time_elapsed: 'final',
+          home_score: '0',
+          away_score: '1',
+          fifaEvents: {
+            timeline: [
+              { type: 'kickoff', minute: 0, sortKey: 0 },
+              { type: 'goal', minute: 4, side: 'away', sortKey: 4 },
+            ],
+          },
+        },
+        kickoff,
+        { now }
+      )
+    ).toBe('live');
+  });
+
   it('ignora finished de worldcup26 si el kickoff canónico aún no llegó', () => {
     const usaParaguayKickoff = new Date('2026-06-13T01:00:00.000Z');
     const beforeKickoff = usaParaguayKickoff.getTime() - 60_000;

@@ -5,7 +5,8 @@ import { sanitizeMatchScores } from './matchLiveData.js';
 import {
   elapsedTokenIndicatesFinished,
   isMatchKickoffStale,
-  matchEvidentlyStarted,
+  matchEvidenceShowsInProgress,
+  shouldFinalizeStaleLiveMatch,
 } from './matchStatusRules.js';
 
 let cachedToken = null;
@@ -142,8 +143,24 @@ export function resolveGameStatus(game, kickoffAt, { now = Date.now() } = {}) {
   }
 
   const status = mapGameStatus(game);
+  const pseudoMatch = {
+    status,
+    kickoffAt,
+    homeScore: Number(game.home_score ?? game.homeScore ?? 0) || 0,
+    awayScore: Number(game.away_score ?? game.awayScore ?? 0) || 0,
+    raw: game,
+  };
+
+  if (
+    status === 'finished' &&
+    !isMatchKickoffStale(kickoffAt, now) &&
+    matchEvidenceShowsInProgress(pseudoMatch)
+  ) {
+    return 'live';
+  }
+
   if (status === 'live' && Number.isFinite(kickoffMs)) {
-    if (isMatchKickoffStale(kickoffAt, now) && matchEvidentlyStarted(game)) {
+    if (shouldFinalizeStaleLiveMatch({ ...pseudoMatch, status: 'live' }, now)) {
       return 'finished';
     }
   }

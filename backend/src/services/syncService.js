@@ -25,6 +25,7 @@ import { resolveStadiumTimezone } from './stadiumTimezones.js';
 import {
   elapsedTokenIndicatesFinished,
   isMatchKickoffStale,
+  isMatchClearlyInProgress,
   matchEvidenceShowsInProgress,
   readElapsedToken,
   shouldFinalizeStaleLiveMatch,
@@ -257,6 +258,29 @@ export function mergeSyncedMatch(existing, incoming) {
   }
 
   if (existing.status === 'live' && incoming.status === 'finished') {
+    const liveState = { ...existing, kickoffAt, raw: merged.raw };
+    if (isMatchClearlyInProgress(liveState) || matchEvidenceShowsInProgress(liveState)) {
+      merged.status = 'live';
+      const timeline = merged.raw?.fifaEvents?.timeline;
+      const clock =
+        Array.isArray(timeline) && timeline.length ? latestClockFromTimeline(timeline) : null;
+      const badElapsed = elapsedTokenIndicatesFinished(readElapsedToken(merged));
+      const badFinished =
+        merged.raw?.finished === 'TRUE' ||
+        merged.raw?.finished === true ||
+        merged.raw?.finished === 'true';
+      if (badElapsed || badFinished) {
+        merged.raw = {
+          ...merged.raw,
+          finished: 'FALSE',
+          ...(badElapsed
+            ? { time_elapsed: clock ? String(clock).replace(/'+$/, '') : 'live' }
+            : {}),
+        };
+      }
+      return merged;
+    }
+
     merged.status = 'finished';
     const fifaScores = readFifaAuthoritativeScores(merged.raw ?? {});
     if (fifaScores) {
