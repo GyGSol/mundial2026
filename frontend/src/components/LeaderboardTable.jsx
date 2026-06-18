@@ -118,7 +118,11 @@ function StatValue({ value, delta, align = 'center' }) {
       )}
     >
       <span>{value}</span>
-      <StatDeltaIndicator direction={normalized?.direction} amount={normalized?.amount} />
+      <StatDeltaIndicator
+        direction={normalized?.direction}
+        amount={normalized?.amount}
+        showDown={false}
+      />
     </span>
   );
 }

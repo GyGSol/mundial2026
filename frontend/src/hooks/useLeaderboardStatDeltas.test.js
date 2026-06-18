@@ -11,7 +11,7 @@ describe('computeLeaderboardBaselineIndicators', () => {
     { id: 'b', rank: 2, pa: 10, gl: 7, gv: 10, gt: 3, pb: 0 },
   ];
 
-  it('marca subidas y bajadas de rank y stats en vivo', () => {
+  it('marca rank ↑↓ y solo subidas verdes en stats en vivo', () => {
     const indicators = computeLeaderboardBaselineIndicators(leaderboard, baseline, {
       hasLiveMatches: true,
     });
@@ -21,7 +21,7 @@ describe('computeLeaderboardBaselineIndicators', () => {
     expect(indicators.a.gv).toEqual({ direction: 'up' });
 
     expect(indicators.b.rank).toEqual({ direction: 'down', amount: 4 });
-    expect(indicators.b.pa).toEqual({ direction: 'down' });
-    expect(indicators.b.gv).toEqual({ direction: 'down' });
+    expect(indicators.b.pa).toBeUndefined();
+    expect(indicators.b.gv).toBeUndefined();
   });
 });
