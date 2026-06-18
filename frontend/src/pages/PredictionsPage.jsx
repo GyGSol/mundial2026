@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import PushOptInBanner from '@/components/PushOptInBanner.jsx';
-import { shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
+import { matchBarFeaturedIds, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
 
 const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
 
@@ -130,9 +130,10 @@ export default function PredictionsPage() {
   const matches = data?.matches ?? [];
   const barLiveMatches = data?.liveMatches ?? [];
   const barRecentFinishedMatches = data?.recentFinishedMatches ?? [];
-  const barFeaturedIds = new Set(
-    [...barLiveMatches, ...barRecentFinishedMatches].map((match) => match.id).filter(Boolean)
-  );
+  const barFeaturedIds = matchBarFeaturedIds({
+    liveMatches: barLiveMatches,
+    recentFinishedMatches: barRecentFinishedMatches,
+  });
   const standingsGroups = standingsData?.groups ?? [];
   const updatedAt = activeView === 'standings' ? standingsLastUpdated : lastUpdated;
 

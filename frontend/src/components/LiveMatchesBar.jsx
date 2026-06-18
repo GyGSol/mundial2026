@@ -966,40 +966,44 @@ export default function LiveMatchesBar({
 }) {
   const hasLive = matches.length > 0;
   const hasRecentFinished = recentFinishedMatches.length > 0;
-  const hasFeatured = hasLive || hasRecentFinished;
+  const showRecentFinishedBar = hasRecentFinished && !hasLive;
   const hasNext = nextMatches.length > 0;
-  const featuredTitle = hasLive
-    ? matches.length > 1
-      ? 'Partidos en curso'
-      : 'Partido en curso'
-    : recentFinishedMatches.length > 1
-      ? 'Partidos recién finalizados'
-      : 'Partido recién finalizado';
 
-  if (hasFeatured || hasNext) {
-    return (
-      <div className="mx-auto flex w-full flex-col gap-6">
-        {hasFeatured ? (
-          <MatchColumn title={featuredTitle}>
-            <FeaturedMatchesGrid
-              liveMatches={matches}
-              recentFinishedMatches={recentFinishedMatches}
-            />
-          </MatchColumn>
-        ) : null}
-
-        {hasNext ? (
-          <MatchColumn
-            title={nextMatches.length > 1 ? 'Próximos partidos' : 'Próximo partido'}
-          >
-            {nextMatches.map((match) => (
-              <NextMatchCard key={match.id} match={match} />
-            ))}
-          </MatchColumn>
-        ) : null}
-      </div>
-    );
+  if (!hasLive && !showRecentFinishedBar && !hasNext) {
+    return <EmptyMatchesState />;
   }
 
-  return <EmptyMatchesState />;
+  return (
+    <div className="mx-auto flex w-full flex-col gap-6">
+      {hasLive ? (
+        <MatchColumn
+          title={matches.length > 1 ? 'Partidos en curso' : 'Partido en curso'}
+        >
+          <FeaturedMatchesGrid liveMatches={matches} recentFinishedMatches={[]} />
+        </MatchColumn>
+      ) : null}
+
+      {showRecentFinishedBar ? (
+        <MatchColumn
+          title={
+            recentFinishedMatches.length > 1
+              ? 'Partidos recién finalizados'
+              : 'Partido recién finalizado'
+          }
+        >
+          <FeaturedMatchesGrid liveMatches={[]} recentFinishedMatches={recentFinishedMatches} />
+        </MatchColumn>
+      ) : null}
+
+      {hasNext ? (
+        <MatchColumn
+          title={nextMatches.length > 1 ? 'Próximos partidos' : 'Próximo partido'}
+        >
+          {nextMatches.map((match) => (
+            <NextMatchCard key={match.id} match={match} />
+          ))}
+        </MatchColumn>
+      ) : null}
+    </div>
+  );
 }
