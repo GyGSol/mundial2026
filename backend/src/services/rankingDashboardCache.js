@@ -3,7 +3,8 @@ import { createInMemoryCache } from './inMemoryCache.js';
 
 const DEFAULT_TTL_MS = 15_000;
 const LIVE_TTL_MS = 2_500;
-const RECENT_FINISHED_TTL_MS = 10_000;
+/** Mismo TTL que en vivo: el marcador puede cambiar hasta el reporte FIFA final. */
+const RECENT_FINISHED_TTL_MS = LIVE_TTL_MS;
 
 const cache = createInMemoryCache({ defaultTtlMs: DEFAULT_TTL_MS });
 

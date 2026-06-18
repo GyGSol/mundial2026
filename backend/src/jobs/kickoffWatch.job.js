@@ -1,6 +1,7 @@
 import { Match } from '../models/Match.js';
 import { syncLiveMatchScoring } from '../services/kickoffLiveService.js';
 import { env } from '../config/env.js';
+import { findRecentlyFinishedMatchesQuery } from '../services/matchDisplayVisibilityService.js';
 
 const LIVE_INTERVAL_MS = 5_000;
 
@@ -35,7 +36,11 @@ async function tick() {
 
 async function scheduleNext() {
   const hasLive = Boolean(await Match.exists({ status: 'live' }));
-  const delayMs = hasLive ? LIVE_INTERVAL_MS : env.kickoffWatchIntervalMs;
+  const hasRecentFinished = Boolean(
+    await Match.exists(findRecentlyFinishedMatchesQuery())
+  );
+  const delayMs =
+    hasLive || hasRecentFinished ? LIVE_INTERVAL_MS : env.kickoffWatchIntervalMs;
   timeoutId = setTimeout(async () => {
     await tick();
     scheduleNext();

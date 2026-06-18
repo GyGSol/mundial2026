@@ -59,12 +59,12 @@ describe('rankingDashboardCache', () => {
     ).toBe(15_000);
   });
 
-  it('usa TTL medio con partidos recién finalizados sin live', () => {
+  it('usa TTL corto con partidos recién finalizados sin live', () => {
     expect(
       dashboardCacheTtlMs({
         liveMatches: [],
         recentFinishedMatches: [{ id: '1' }],
       })
-    ).toBe(10_000);
+    ).toBe(2_500);
   });
 });

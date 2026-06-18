@@ -7,7 +7,7 @@ import { sortMatchesBySchedule } from './matchSortService.js';
 import {
   findLiveMatchesQueryWithGroup,
   findRecentlyFinishedMatchesQueryWithGroup,
-  filterEligibleRecentFinishedMatches,
+  pickFeaturedRecentFinishedMatches,
 } from './matchDisplayVisibilityService.js';
 
 const BAR_MATCH_PROJECTION =
@@ -41,12 +41,9 @@ export async function listPredictionsMatches({ status, group }, userId) {
   const barById = new Map(enrichedBar.map((m) => [m.id, m]));
 
   const liveMatches = liveRaw.map((m) => barById.get(m._id.toString())).filter(Boolean);
-  const recentFinishedEligible = filterEligibleRecentFinishedMatches(recentFinishedRaw)
+  const recentFinishedMatches = pickFeaturedRecentFinishedMatches(recentFinishedRaw)
     .map((m) => barById.get(m._id.toString()))
     .filter(Boolean);
-  // Siempre devolver recién finalizados para ocultarlos del listado duplicado en predicciones
-  // (la UI destacada los filtra cuando hay partido en vivo).
-  const recentFinishedMatches = recentFinishedEligible;
 
   return {
     matches: enriched,

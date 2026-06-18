@@ -14,7 +14,10 @@ import {
 } from './prizePoolService.js';
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
-import { findRecentlyFinishedMatchesQuery, filterEligibleRecentFinishedMatches } from './matchDisplayVisibilityService.js';
+import {
+  findRecentlyFinishedMatchesQuery,
+  pickFeaturedRecentFinishedMatches,
+} from './matchDisplayVisibilityService.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
 
@@ -77,7 +80,7 @@ export async function getRankingDashboard(groupId, userId) {
   const byId = new Map(enriched.map((m) => [m.id, m]));
 
   const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
-  const recentFinishedMatches = filterEligibleRecentFinishedMatches(recentFinishedRaw)
+  const recentFinishedMatches = pickFeaturedRecentFinishedMatches(recentFinishedRaw)
     .map((m) => byId.get(m._id.toString()))
     .filter(Boolean);
 

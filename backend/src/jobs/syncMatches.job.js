@@ -2,6 +2,7 @@ import { runSync } from '../services/syncService.js';
 import { applyDefaultPredictionsForLockedMatches } from '../services/predictionLockService.js';
 import { Match } from '../models/Match.js';
 import { env } from '../config/env.js';
+import { findRecentlyFinishedMatchesQuery } from '../services/matchDisplayVisibilityService.js';
 
 let timeoutId = null;
 let running = false;
@@ -12,7 +13,10 @@ const METADATA_SYNC_EVERY_TICKS = 60;
 
 async function resolveSyncDelayMs() {
   const liveCount = await Match.countDocuments({ status: 'live' });
-  return liveCount > 0 ? env.syncIntervalLiveMs : env.syncIntervalMs;
+  if (liveCount > 0) return env.syncIntervalLiveMs;
+  const recentFinishedCount = await Match.countDocuments(findRecentlyFinishedMatchesQuery());
+  if (recentFinishedCount > 0) return env.syncIntervalLiveMs;
+  return env.syncIntervalMs;
 }
 
 async function tick() {

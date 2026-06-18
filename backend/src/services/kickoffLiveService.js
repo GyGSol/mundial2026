@@ -15,7 +15,7 @@ import {
   resolveFifaMatchEntry,
 } from './fifaApiClient.js';
 import { Team } from '../models/Team.js';
-import { isPlausibleMatchGoalCount, latestClockFromTimeline } from './matchLiveData.js';
+import { isPlausibleMatchGoalCount, latestClockFromTimeline, mergePlausibleGoalCounts, goalCountsFromTimeline } from './matchLiveData.js';
 import { syncMicroEventsFromMatch } from './matchMicroEventService.js';
 import {
   elapsedTokenIndicatesFinished,
@@ -29,7 +29,7 @@ import {
   resolveKickoffMs,
   wallClockAllowsMatchFinished,
 } from './matchStatusRules.js';
-import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
+import { applyStatusTransitionFields, findRecentlyFinishedMatchesQuery } from './matchDisplayVisibilityService.js';
 
 function matchEvidentlyStartedOnField(match) {
   const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
@@ -354,10 +354,13 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
   const finalizedIds = [];
 
   for (const match of liveMatches) {
+    const fifaEntry = fifaCalendar.length
+      ? await loadFifaEntryForMatch(match, fifaCalendar, teamMap)
+      : null;
+
     let shouldFinalize = shouldFinalizeStaleLiveMatch(match, now);
 
-    if (!shouldFinalize && fifaCalendar.length) {
-      const fifaEntry = await loadFifaEntryForMatch(match, fifaCalendar, teamMap);
+    if (!shouldFinalize && fifaEntry) {
       if (fifaEntryIndicatesFinished(fifaEntry) && !isMatchClearlyInProgress(match)) {
         shouldFinalize = true;
       }
@@ -371,6 +374,20 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
       'raw.time_elapsed': 'finished',
       'raw.finished': 'TRUE',
     };
+
+    const fifaScores = readFifaLiveScores(fifaEntry);
+    if (fifaScores) {
+      finalizeUpdate.homeScore = mergePlausibleGoalCounts(match.homeScore, fifaScores.homeScore);
+      finalizeUpdate.awayScore = mergePlausibleGoalCounts(match.awayScore, fifaScores.awayScore);
+      finalizeUpdate['raw.fifaMeta.homeScore'] = finalizeUpdate.homeScore;
+      finalizeUpdate['raw.fifaMeta.awayScore'] = finalizeUpdate.awayScore;
+      finalizeUpdate['raw.fifaMeta.syncedAt'] = new Date().toISOString();
+    } else {
+      const { home, away } = goalCountsFromTimeline(match.raw?.fifaEvents?.timeline ?? []);
+      finalizeUpdate.homeScore = mergePlausibleGoalCounts(match.homeScore, home);
+      finalizeUpdate.awayScore = mergePlausibleGoalCounts(match.awayScore, away);
+    }
+
     applyStatusTransitionFields(finalizeUpdate, {
       previousStatus: 'live',
       nextStatus: 'finished',
@@ -397,15 +414,45 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
     });
     notifyLeaderboardUpdated({ reason: 'stale_live_finalized' });
     console.log(`Stale live finalize: ${finalizedIds.length} partido(s) pasaron a finalizado`);
+    try {
+      const { syncFifaMatchEvents } = await import('./fifaEventSyncService.js');
+      await syncFifaMatchEvents({ extraMatchIds: finalizedIds });
+    } catch (err) {
+      console.warn('FIFA refresh after stale finalize skipped:', err.message);
+    }
   }
 
   return finalizedIds;
+}
+
+/** Refresca timeline y marcador FIFA de partidos recién finalizados (p. ej. 4-1 tras cerrar en 3-0). */
+export async function refreshRecentlyFinishedFifaEvents(now = Date.now()) {
+  const recent = await Match.find(findRecentlyFinishedMatchesQuery(now)).select('_id').lean();
+  if (!recent.length) return { events: 0, scoring: 0 };
+
+  const { syncFifaMatchEvents } = await import('./fifaEventSyncService.js');
+  const result = await syncFifaMatchEvents({ extraMatchIds: recent.map((m) => m._id) });
+
+  let scoring = 0;
+  for (const matchId of result.scoringIds ?? []) {
+    await recalculateMatchScores(matchId);
+    scoring += 1;
+  }
+
+  if ((result.events ?? 0) > 0 || scoring > 0) {
+    invalidateMatchRelatedCaches();
+    notifyMatchesUpdated({ reason: 'recent_finished_fifa_refresh' });
+    notifyLeaderboardUpdated({ reason: 'recent_finished_fifa_refresh' });
+  }
+
+  return { events: result.events ?? 0, scoring };
 }
 
 /** Mantiene puntos y ranking al día mientras hay partidos en vivo. */
 export async function syncLiveMatchScoring() {
   const reopened = await reopenPrematurelyFinishedMatches();
   const finalized = await finalizeStaleLiveMatches();
+  const fifaRefresh = await refreshRecentlyFinishedFifaEvents();
   const promoted = await promoteMatchesAtKickoff();
   const { matches, users } = await recalculateAllLiveMatches();
 
@@ -430,6 +477,7 @@ export async function syncLiveMatchScoring() {
   return {
     reopened: reopened.length,
     finalized: finalized.length,
+    fifaRefresh,
     promoted: promoted.length,
     liveMatches: matches,
     users,

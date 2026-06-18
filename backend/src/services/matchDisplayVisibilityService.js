@@ -3,6 +3,9 @@ import { wallClockAllowsMatchFinished } from './matchStatusRules.js';
 /** Ventana en la que un partido finalizado sigue visible en ranking/predicciones. */
 export const RECENTLY_FINISHED_GRACE_MS = 30 * 60 * 1000;
 
+/** Máximo de partidos en la barra destacada "recién finalizados" (el más reciente). */
+export const RECENT_FINISHED_FEATURED_MAX = 1;
+
 /**
  * Aplica side-effects de transición de status en un payload de persistencia ($set).
  * @param {Record<string, unknown>} update
@@ -52,4 +55,11 @@ export function isEligibleRecentFinishedMatch(match, now = Date.now()) {
 
 export function filterEligibleRecentFinishedMatches(matches, now = Date.now()) {
   return matches.filter((match) => isEligibleRecentFinishedMatch(match, now));
+}
+
+/** Solo el/los más recientes para la barra destacada (evita apilar varios finalizados en gracia). */
+export function pickFeaturedRecentFinishedMatches(matches, now = Date.now()) {
+  return filterEligibleRecentFinishedMatches(matches, now)
+    .sort((a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime())
+    .slice(0, RECENT_FINISHED_FEATURED_MAX);
 }

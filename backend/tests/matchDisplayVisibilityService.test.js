@@ -6,6 +6,7 @@ import {
   findRecentlyFinishedMatchesQueryWithGroup,
   findLiveMatchesQueryWithGroup,
   isEligibleRecentFinishedMatch,
+  pickFeaturedRecentFinishedMatches,
 } from '../src/services/matchDisplayVisibilityService.js';
 
 describe('matchDisplayVisibilityService', () => {
@@ -94,5 +95,24 @@ describe('matchDisplayVisibilityService', () => {
         now
       )
     ).toBe(true);
+  });
+
+  it('pickFeaturedRecentFinishedMatches devuelve solo el más reciente', () => {
+    const now = new Date('2026-06-18T21:10:00.000Z').getTime();
+    const kickoff = new Date('2026-06-18T15:00:00.000Z');
+    const base = {
+      status: 'finished',
+      kickoffAt: kickoff,
+      raw: { fifaEvents: { timeline: [{ type: 'match_end', minute: 90, sortKey: 90 }] } },
+    };
+    const picked = pickFeaturedRecentFinishedMatches(
+      [
+        { ...base, id: '25', finishedAt: new Date('2026-06-18T20:58:00.000Z') },
+        { ...base, id: '26', finishedAt: new Date('2026-06-18T21:01:00.000Z') },
+      ],
+      now
+    );
+    expect(picked).toHaveLength(1);
+    expect(picked[0].id).toBe('26');
   });
 });
