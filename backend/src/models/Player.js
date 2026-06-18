@@ -60,6 +60,8 @@ const playerSchema = new mongoose.Schema(
     footballDataClubId: { type: Number, sparse: true },
     leagueName: { type: String, default: '' },
     leagueEmblemUrl: { type: String, default: '' },
+    /** Ruta relativa en imagenes-jugadores/, ej. argentina/arg-lionel-messi.png */
+    photoKey: { type: String, default: '' },
     age: { type: Number },
     shirtNumber: { type: Number },
     nationality: { type: String, default: '' },

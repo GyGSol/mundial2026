@@ -6,6 +6,7 @@ import {
 } from './footballDataApiClient.js';
 import { enrichClubFields } from './clubMetaService.js';
 import { buildCompactPerformanceContext } from './playerPerformanceContextService.js';
+import { resolvePlayerPhotoUrl } from './playerPhotoService.js';
 
 const POSITION_LABELS = {
   GK: 'Portero',
@@ -39,6 +40,8 @@ function serializePlayer(player, teamMap) {
     clubCrestUrl: club.clubCrestUrl,
     leagueName: club.leagueName,
     leagueEmblemUrl: club.leagueEmblemUrl,
+    photoKey: player.photoKey || '',
+    photoUrl: resolvePlayerPhotoUrl(player.photoKey),
     age: player.age ?? null,
     shirtNumber: player.shirtNumber ?? null,
     healthStatus: player.healthStatus,

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, RefreshCw, SendHorizontal, Sparkles } from 'lucide-react';
-import { PopupPlayerIcon } from '@/components/icons/popup/index.js';
 import { playersApi } from '../api/client.js';
 import { getTeamFlag } from '../lib/teamMeta.js';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -15,6 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { cn } from '@/lib/utils';
 import { ClubCell } from './ClubDisplay.jsx';
+import PlayerAvatar from './PlayerAvatar.jsx';
 import MarkdownContent from './MarkdownContent.jsx';
 import PlayerSeasonStatsPanel from './PlayerSeasonStatsPanel.jsx';
 
@@ -115,8 +115,16 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
     >
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-2.5">
-            <PopupPlayerIcon className="mt-0.5" title="Ficha del crack" />
+          <div className="flex min-w-0 items-start gap-3">
+            {loading ? (
+              <Skeleton className="size-16 shrink-0 rounded-full" />
+            ) : (
+              <PlayerAvatar
+                name={player?.fullName}
+                photoUrl={player?.photoUrl}
+                size="lg"
+              />
+            )}
             <div className="flex min-w-0 flex-col gap-2">
               <CardTitle id="player-detail-title" className="flex items-center gap-2 text-xl">
                 {loading ? <Skeleton className="h-7 w-48" /> : player?.fullName}

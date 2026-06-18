@@ -30,7 +30,8 @@
     "migrate:fubols-entry-fees": "node src/scripts/migrateBackfillEntryFees.js",
     "migrate:ensure-ai-groups": "node src/scripts/migrateEnsureAiInGroups.js",
     "migrate:fubols-ai-bonus": "node src/scripts/migrateAiPlayBonusFubols.js",
-    "sync:streams": "node src/scripts/syncStreamMappings.js"
+    "sync:streams": "node src/scripts/syncStreamMappings.js",
+    "sync:player-photos": "node src/scripts/runPlayerPhotoSync.js"
   },
   "dependencies": {
     "@cerebras/cerebras_cloud_sdk": "^1.64.1",

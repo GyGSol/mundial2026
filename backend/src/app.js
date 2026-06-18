@@ -25,6 +25,7 @@ import transmissionsRoutes from './routes/transmissions.routes.js';
 import economyRoutes from './routes/economy.routes.js';
 import oracleRoutes from './routes/oracle.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
+import { PLAYER_PHOTOS_DIR } from './services/playerPhotoService.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(__dirname, '../public');
@@ -60,6 +61,16 @@ export function createApp() {
   app.use('/api/transmissions', transmissionsRoutes);
   app.use('/api/economy', economyRoutes);
   app.use('/api/oracle', oracleRoutes);
+
+  if (existsSync(PLAYER_PHOTOS_DIR)) {
+    app.use(
+      '/player-photos',
+      express.static(PLAYER_PHOTOS_DIR, {
+        maxAge: '7d',
+        index: false,
+      })
+    );
+  }
 
   if (existsSync(publicDir)) {
     app.use(express.static(publicDir));

@@ -78,4 +78,8 @@ export const env = {
   smtpPass: (process.env.SMTP_PASS || '').replace(/\s+/g, ''),
   smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || '',
   appPublicName: process.env.APP_PUBLIC_NAME || 'Mundial 2026',
+  /** Base para caricaturas en producción (Heroku no incluye imagenes-jugadores en el slug). */
+  playerPhotosGithubBase:
+    process.env.PLAYER_PHOTOS_GITHUB_BASE ||
+    'https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores',
 };
