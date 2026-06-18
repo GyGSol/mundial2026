@@ -152,7 +152,6 @@ function TimelineActionCard({ entry, align = 'center' }) {
     <div
       className={cn(
         'match-live-action-card w-full max-w-full',
-        align === 'away' && 'ml-auto',
         headerAlign
       )}
     >
@@ -543,6 +542,19 @@ function MatchTimeline({ events = [] }) {
     [displayEvents]
   );
 
+  const homeEntries = useMemo(
+    () => displayEntries.filter((entry) => entry.side === 'home'),
+    [displayEntries]
+  );
+  const neutralEntries = useMemo(
+    () => displayEntries.filter((entry) => entry.side === 'neutral'),
+    [displayEntries]
+  );
+  const awayEntries = useMemo(
+    () => displayEntries.filter((entry) => entry.side === 'away'),
+    [displayEntries]
+  );
+
   if (!displayEntries.length) return null;
 
   return (
@@ -550,32 +562,28 @@ function MatchTimeline({ events = [] }) {
       ref={scrollRef}
       className="match-live-timeline max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className="flex flex-col gap-1 match-live-text text-[10px] leading-snug text-muted-foreground">
-        {displayEntries.map((entry) => (
-          <div key={entry.key} className={MATCH_SIDE_GRID_CLASS}>
-            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0 items-stretch')}>
-              {entry.side === 'home' ? (
-                <div className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
-                  <TimelineActionCard entry={entry} align="home" />
-                </div>
-              ) : null}
+      <div className={cn(MATCH_SIDE_GRID_CLASS, 'match-live-text text-[10px] leading-snug text-muted-foreground')}>
+        <div className="match-live-timeline-col match-live-timeline-col-home flex min-w-0 flex-col gap-1.5 px-1">
+          {homeEntries.map((entry) => (
+            <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
+              <TimelineActionCard entry={entry} align="home" />
             </div>
-            <div className={cn(MATCH_CENTER_CELL_CLASS, 'items-stretch')}>
-              {entry.side === 'neutral' ? (
-                <div className="match-live-center-entry w-full max-w-[7rem]">
-                  <TimelineActionCard entry={entry} align="center" />
-                </div>
-              ) : null}
+          ))}
+        </div>
+        <div className="match-live-timeline-col match-live-timeline-col-center flex min-w-[3.25rem] flex-col items-center gap-1.5 px-1">
+          {neutralEntries.map((entry) => (
+            <div key={entry.key} className="match-live-center-entry w-full max-w-[7rem]">
+              <TimelineActionCard entry={entry} align="center" />
             </div>
-            <div className={cn(MATCH_SIDE_CELL_CLASS, 'min-w-0 items-stretch')}>
-              {entry.side === 'away' ? (
-                <div className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
-                  <TimelineActionCard entry={entry} align="away" />
-                </div>
-              ) : null}
+          ))}
+        </div>
+        <div className="match-live-timeline-col match-live-timeline-col-away flex min-w-0 flex-col items-end gap-1.5 px-1">
+          {awayEntries.map((entry) => (
+            <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
+              <TimelineActionCard entry={entry} align="away" />
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

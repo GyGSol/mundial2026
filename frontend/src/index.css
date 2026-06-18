@@ -963,6 +963,22 @@ body:has(.game-shell) {
   font-size: 0.95em;
 }
 
+.match-live-timeline-col {
+  align-content: flex-start;
+}
+
+.match-live-timeline-col-home {
+  align-items: flex-start;
+}
+
+.match-live-timeline-col-center {
+  align-items: center;
+}
+
+.match-live-timeline-col-away {
+  align-items: flex-end;
+}
+
 /* ── Landing y login del juego: fondo foto + tratamiento moderno ── */
 body:has(.game-hero-shell) {
   --admin-bg: #0a0f1a;
