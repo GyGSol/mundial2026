@@ -560,9 +560,19 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
   const [homeGoals, setHomeGoals] = useState(String(prediction.homeGoals ?? 0));
   const [awayGoals, setAwayGoals] = useState(String(prediction.awayGoals ?? 0));
   const [pointsEarned, setPointsEarned] = useState(
-    prediction.pointsEarned === null ? '' : String(prediction.pointsEarned)
+    prediction.pointsEarned === null || prediction.pointsEarned === undefined
+      ? ''
+      : String(prediction.pointsEarned)
   );
-  const [bonusPoint, setBonusPoint] = useState(String(prediction.bonusPoint ?? 0));
+  const [bonusPoint, setBonusPoint] = useState(
+    prediction.pointsEarned == null ? '' : String(prediction.bonusPoint ?? 0)
+  );
+  const isUnscored = prediction.pointsEarned == null;
+  const isAutoDefault =
+    !prediction.userSubmitted &&
+    prediction.homeGoals === 0 &&
+    prediction.awayGoals === 0 &&
+    !prediction.isAiUser;
 
   return (
     <TableRow className="border-slate-800">
@@ -584,7 +594,7 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
         <p>{prediction.userName || '—'}</p>
         <p className="text-xs text-slate-500">
           {prediction.userEmail}
-          {!prediction.userSubmitted && prediction.homeGoals === 0 && prediction.awayGoals === 0 ? (
+          {isAutoDefault ? (
             <span className="ml-1 text-amber-400">· Auto 0-0 (T-60)</span>
           ) : null}
           {prediction.predictionSource && prediction.predictionSource !== 'user' ? (
@@ -610,21 +620,25 @@ function PredictionRow({ prediction, busy, onSave, onDelete }) {
         </div>
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
-          <Input
-            className={`h-8 w-14 tabular-nums ${adminInput}`}
-            placeholder="Pts"
-            value={pointsEarned}
-            onChange={(e) => setPointsEarned(e.target.value)}
-          />
-          <span className="text-slate-500">+</span>
-          <Input
-            className={`h-8 w-12 tabular-nums ${adminInput}`}
-            placeholder="B"
-            value={bonusPoint}
-            onChange={(e) => setBonusPoint(e.target.value)}
-          />
-        </div>
+        {isUnscored ? (
+          <span className="text-xs text-slate-500">Sin puntaje</span>
+        ) : (
+          <div className="flex items-center gap-1">
+            <Input
+              className={`h-8 w-14 tabular-nums ${adminInput}`}
+              placeholder="Pts"
+              value={pointsEarned}
+              onChange={(e) => setPointsEarned(e.target.value)}
+            />
+            <span className="text-slate-500">+</span>
+            <Input
+              className={`h-8 w-12 tabular-nums ${adminInput}`}
+              placeholder="B"
+              value={bonusPoint}
+              onChange={(e) => setBonusPoint(e.target.value)}
+            />
+          </div>
+        )}
       </TableCell>
       <TableCell className="text-right">
         <div className="flex flex-wrap justify-end gap-1">

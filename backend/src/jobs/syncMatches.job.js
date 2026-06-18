@@ -27,9 +27,12 @@ async function tick() {
 
   try {
     await runSync({ includeMetadata });
-    const created = await applyDefaultPredictionsForLockedMatches();
+    const { created, purgedAiDefaults } = await applyDefaultPredictionsForLockedMatches();
     if (created > 0) {
       console.log(`Default 0-0 predictions applied: ${created}`);
+    }
+    if (purgedAiDefaults > 0) {
+      console.log(`AI default 0-0 purged on locked upcoming: ${purgedAiDefaults}`);
     }
   } catch (err) {
     console.error('Sync tick error:', err.message);

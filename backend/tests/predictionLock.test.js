@@ -14,17 +14,23 @@ vi.mock('../src/models/Match.js', () => ({
 }));
 
 vi.mock('../src/models/Prediction.js', () => ({
-  Prediction: { bulkWrite: vi.fn() },
+  Prediction: { bulkWrite: vi.fn(), deleteMany: vi.fn() },
+}));
+
+vi.mock('../src/models/User.js', () => ({
+  User: { findById: vi.fn() },
 }));
 
 import { Match } from '../src/models/Match.js';
 import { Prediction } from '../src/models/Prediction.js';
+import { User } from '../src/models/User.js';
 
 const kickoff = new Date('2026-06-15T16:00:00Z');
 
 describe('predictionLockService', () => {
   afterEach(() => {
     vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it('bloquea 1 hora antes del kickoff', () => {
@@ -75,6 +81,11 @@ describe('predictionLockService', () => {
 
   it('ensureDefaultPredictionsForUser usa bulkWrite para partidos cerrados', async () => {
     vi.setSystemTime(new Date('2026-06-15T17:30:00Z'));
+    User.findById.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue({ isAiUser: false }),
+      }),
+    });
     const lockedMatch = {
       _id: 'match-1',
       status: 'upcoming',
@@ -90,5 +101,19 @@ describe('predictionLockService', () => {
     expect(Prediction.bulkWrite).toHaveBeenCalledTimes(1);
     expect(Prediction.bulkWrite.mock.calls[0][0]).toHaveLength(1);
     expect(Prediction.bulkWrite.mock.calls[0][1]).toEqual({ ordered: false });
+  });
+
+  it('ensureDefaultPredictionsForUser no aplica 0-0 al bot IA', async () => {
+    vi.setSystemTime(new Date('2026-06-15T17:30:00Z'));
+    User.findById.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue({ isAiUser: true }),
+      }),
+    });
+
+    await ensureDefaultPredictionsForUser('ai-user');
+
+    expect(Match.find).not.toHaveBeenCalled();
+    expect(Prediction.bulkWrite).not.toHaveBeenCalled();
   });
 });

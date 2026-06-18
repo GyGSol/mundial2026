@@ -832,7 +832,7 @@ export async function listAdminPredictions({
   }
 
   const predictions = await Prediction.find(filter)
-    .populate('userId', 'name email')
+    .populate('userId', 'name email isAiUser')
     .populate(
       'matchId',
       'homeTeamId awayTeamId status homeScore awayScore group kickoffAt localDate externalId'
@@ -862,6 +862,7 @@ export async function listAdminPredictions({
       userId: p.userId?._id?.toString(),
       userName: p.userId?.name,
       userEmail: p.userId?.email,
+      isAiUser: Boolean(p.userId?.isAiUser),
       matchId: match?._id?.toString(),
       homeGoals: p.homeGoals,
       awayGoals: p.awayGoals,

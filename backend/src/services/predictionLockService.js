@@ -56,7 +56,14 @@ export function enrichMatchPredictionMeta(match, prediction) {
   };
 }
 
+async function isAiCompetitorUserId(userId) {
+  const user = await User.findById(userId).select('isAiUser').lean();
+  return Boolean(user?.isAiUser);
+}
+
 export async function ensureDefaultPredictionsForUser(userId) {
+  if (await isAiCompetitorUserId(userId)) return;
+
   const matches = await Match.find({ status: 'upcoming', kickoffAt: { $ne: null } }).lean();
   const lockedMatches = matches.filter(isPredictionLocked);
   if (!lockedMatches.length) return;
@@ -84,9 +91,9 @@ export async function ensureDefaultPredictionsForUser(userId) {
   );
 }
 
-/** Crea 0-0 para todos los usuarios que aún no tienen predicción en este partido. */
+/** Crea 0-0 para humanos que aún no tienen predicción (p. ej. al puntuar live/finished). */
 export async function ensurePredictionsForMatch(matchId) {
-  const users = await User.find().select('_id');
+  const users = await User.find({ isAiUser: { $ne: true } }).select('_id');
   let created = 0;
 
   for (const user of users) {
@@ -111,12 +118,34 @@ export async function ensurePredictionsForMatch(matchId) {
   return created;
 }
 
+/** Quita 0-0 automáticos del bot IA en partidos upcoming cerrados (no aplica a humanos). */
+export async function purgeAiDefaultPredictionsOnLockedUpcoming() {
+  const aiUser = await User.findOne({ isAiUser: true }).select('_id').lean();
+  if (!aiUser) return 0;
+
+  const matches = await Match.find({ status: 'upcoming', kickoffAt: { $ne: null } }).lean();
+  const lockedMatchIds = matches.filter(isPredictionLocked).map((m) => m._id);
+  if (!lockedMatchIds.length) return 0;
+
+  const { deletedCount } = await Prediction.deleteMany({
+    userId: aiUser._id,
+    matchId: { $in: lockedMatchIds },
+    userSubmitted: false,
+    predictionSource: 'default',
+    pointsEarned: null,
+  });
+
+  return deletedCount ?? 0;
+}
+
 export async function applyDefaultPredictionsForLockedMatches() {
   const matches = await Match.find({ status: 'upcoming', kickoffAt: { $ne: null } });
   const lockedMatches = matches.filter(isPredictionLocked);
-  if (!lockedMatches.length) return 0;
+  if (!lockedMatches.length) {
+    return { created: 0, purgedAiDefaults: await purgeAiDefaultPredictionsOnLockedUpcoming() };
+  }
 
-  const users = await User.find().select('_id');
+  const users = await User.find({ isAiUser: { $ne: true } }).select('_id');
   let created = 0;
 
   for (const match of lockedMatches) {
@@ -140,5 +169,6 @@ export async function applyDefaultPredictionsForLockedMatches() {
     }
   }
 
-  return created;
+  const purgedAiDefaults = await purgeAiDefaultPredictionsOnLockedUpcoming();
+  return { created, purgedAiDefaults };
 }
