@@ -15,6 +15,7 @@
     "sync:streams": "npm run sync:streams -w backend",
     "sync:players": "npm run sync:players -w backend",
     "sync:player-photos": "npm run sync:player-photos -w backend",
+    "sync:player-wiki": "npm run sync:player-wiki -w backend",
     "sync:history": "node scripts/sync-wikipedia-history.mjs",
     "sync:wiki-nations": "node scripts/sync-wikipedia-nation-records.mjs",
     "build:players-seed": "npm run build:players-seed -w backend",

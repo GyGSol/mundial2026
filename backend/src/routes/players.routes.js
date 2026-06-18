@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { getPlayerSyncMeta } from '../services/playerSyncService.js';
+import { getPlayerWikiSyncMeta } from '../services/playerWikiService.js';
 import {
   askPlayerIntelFollowUp,
   getPlayerByIdWithIntel,
@@ -30,11 +31,12 @@ router.get('/', async (req, res, next) => {
 
 router.get('/meta', async (_req, res, next) => {
   try {
-    const meta = await getPlayerSyncMeta();
+    const [meta, wikiMeta] = await Promise.all([getPlayerSyncMeta(), getPlayerWikiSyncMeta()]);
     res.json({
       ...meta,
       intelSource: 'ai',
       aiAvailable: hasAiProvider(),
+      wikiSync: wikiMeta ?? null,
     });
   } catch (err) {
     next(err);

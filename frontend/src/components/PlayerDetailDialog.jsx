@@ -252,6 +252,82 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
                 <PlayerSeasonStatsPanel stats={player.stats} />
               </div>
 
+              {player.wikiContext ? (
+                <div className="flex flex-col gap-3 border-t border-border pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-medium">Historial (Wikipedia)</h3>
+                    {player.wikiContext.url ? (
+                      <a
+                        href={player.wikiContext.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Ver en Wikipedia
+                      </a>
+                    ) : null}
+                  </div>
+
+                  {player.wikiContext.resumen ? (
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {player.wikiContext.resumen}
+                    </p>
+                  ) : null}
+
+                  <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                    <div className="rounded-md border border-border px-3 py-2">
+                      <p className="text-xs text-muted-foreground">PJ selección</p>
+                      <p className="font-semibold tabular-nums">
+                        {player.wikiContext.seleccion?.caps ?? '—'}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border px-3 py-2">
+                      <p className="text-xs text-muted-foreground">Goles selección</p>
+                      <p className="font-semibold tabular-nums">
+                        {player.wikiContext.seleccion?.goles ?? '—'}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border px-3 py-2 sm:col-span-1 col-span-2">
+                      <p className="text-xs text-muted-foreground">Mundiales</p>
+                      <p className="font-medium">
+                        {(player.wikiContext.mundiales ?? [])
+                          .map((row) => row.anio)
+                          .join(', ') || '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(player.wikiContext.convocatorias ?? []).length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs font-medium text-muted-foreground">Convocatorias / torneos</p>
+                      <ul className="list-inside list-disc text-sm text-muted-foreground">
+                        {player.wikiContext.convocatorias.slice(0, 6).map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  {(player.wikiContext.partidosRecientesSeleccion ?? []).length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Partidos recientes con la selección
+                      </p>
+                      <ul className="space-y-1 text-sm text-muted-foreground">
+                        {player.wikiContext.partidosRecientesSeleccion.slice(0, 5).map((match) => (
+                          <li key={`${match.fecha}-${match.rival}`}>
+                            {match.fecha ? `${match.fecha} · ` : ''}
+                            vs {match.rival}
+                            {match.marcador ? ` (${match.marcador})` : ''}
+                            {match.goles ? ` · ${match.goles} gol(es)` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
               {player.injuryInfo ? (
                 <p
                   className={cn(

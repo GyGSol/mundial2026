@@ -16,6 +16,12 @@ import {
   reloadRosterPlayersWithPerformance,
   refreshPlayerPerformanceSnapshot,
 } from './playerPerformanceContextService.js';
+import {
+  buildCompactWikiContextForAi,
+  ensurePlayerWikiContext,
+  getWikiContextMapForExternalIds,
+  getPlayerWikiContextByExternalId,
+} from './playerWikiService.js';
 
 const INTEL_TTL_MS = 12 * 60 * 60 * 1000;
 const HEALTH_STATUSES = new Set(['available', 'injured', 'doubt']);
@@ -95,22 +101,23 @@ async function upsertIntelForPlayer(player, aiEntry, meta) {
   );
 }
 
-function buildTeamIntelPrompt(team, rosterPlayers) {
+function buildTeamIntelPrompt(team, rosterPlayers, wikiMap = new Map()) {
   const squad = rosterPlayers.map((p) => ({
     fullName: p.fullName,
     position: p.position,
     club: p.currentClub,
     age: p.age,
     stats2026: buildCompactPerformanceContext(p),
+    wikipedia: buildCompactWikiContextForAi(wikiMap.get(p.externalId)),
   }));
 
   return `Sos un periodista deportivo especializado en el Mundial FIFA 2026.
 Analizá el estado actual de la selección ${team.nameEn} (${team.fifaCode}) para el torneo.
 
-Plantel de referencia con estadísticas reales del año en curso (Football-Data / base local):
+Plantel de referencia con estadísticas reales del año en curso (Football-Data / base local) y contexto histórico de Wikipedia cuando exista:
 ${JSON.stringify(squad, null, 2)}
 
-Usá stats2026 y ultimosPartidos como base factual: goles, tarjetas, partidos jugados (club y selección), minutos acumulados y kmPromedioPartido (estimado). Complementá lesiones y suspensiones con tu conocimiento actual.
+Usá stats2026 y ultimosPartidos como base factual: goles, tarjetas, partidos jugados (club y selección), minutos acumulados y kmPromedioPartido (estimado). Usá wikipedia (mundiales, convocatorias, partidos con la selección) como contexto histórico complementario. Complementá lesiones y suspensiones con tu conocimiento actual.
 
 Devolvé JSON con esta forma:
 {
@@ -138,8 +145,9 @@ Reglas:
 - Respondé en español en los textos.`;
 }
 
-function buildPlayerDetailPrompt(player, team) {
+function buildPlayerDetailPrompt(player, team, wikiDoc = null) {
   const stats = buildCompactPerformanceContext(player);
+  const wiki = buildCompactWikiContextForAi(wikiDoc);
 
   return `Sos un analista del Mundial FIFA 2026.
 Dame un informe actualizado del jugador ${player.fullName} (${team?.fifaCode ?? player.fifaCode}, ${player.position}).
@@ -149,6 +157,9 @@ Edad: ${player.age ?? 'desconocida'}
 
 Estadísticas del año en curso (base factual):
 ${JSON.stringify(stats, null, 2)}
+
+Contexto histórico Wikipedia (selección, mundiales, convocatorias, partidos recientes):
+${wiki ? JSON.stringify(wiki, null, 2) : 'No disponible'}
 
 Devolvé JSON:
 {
@@ -163,8 +174,27 @@ Devolvé JSON:
   "aiSummary": "párrafo con estado físico, tarjetas, rol, forma reciente (PJ/minutos/goles) y riesgos para el mundial"
 }
 
-Usá las estadísticas provistas para goles, tarjetas, PJ club/selección y minutos. kmPromedioPartido es orientativo.
+Usá las estadísticas provistas para goles, tarjetas, PJ club/selección y minutos. Incorporá el contexto Wikipedia cuando exista (mundiales previos, convocatorias, historial con la selección). kmPromedioPartido es orientativo.
 Sin markdown. Textos en español.`;
+}
+
+async function hydrateRosterWikiSnapshots(rosterPlayers, { force = false, maxFetches = 8, fetchImpl = fetch } = {}) {
+  const wikiMap = await getWikiContextMapForExternalIds(rosterPlayers.map((p) => p.externalId));
+  let fetched = 0;
+
+  for (const player of rosterPlayers) {
+    if (fetched >= maxFetches) break;
+    const existing = wikiMap.get(player.externalId);
+    if (existing && !force) continue;
+
+    const doc = await ensurePlayerWikiContext(player, { force, fetchImpl });
+    if (doc) {
+      wikiMap.set(player.externalId, doc);
+      fetched += 1;
+    }
+  }
+
+  return { wikiMap, fetched };
 }
 
 async function resolveTeam(teamCode) {
@@ -335,12 +365,27 @@ export async function listPlayersWithIntel(options = {}) {
   };
 }
 
+export function mergePlayerWithWiki(player, wikiDoc) {
+  const wiki = buildCompactWikiContextForAi(wikiDoc);
+  if (!wiki) return player;
+
+  return {
+    ...player,
+    wikiContext: wiki,
+    wikiFetchedAt: wikiDoc?.fetchedAt ?? null,
+  };
+}
+
 export async function getPlayerByIdWithIntel(id) {
   const player = await getPlayerById(id, { skipExternalMatches: true });
   if (!player) return null;
 
-  const intel = await AiPlayerIntel.findOne({ playerExternalId: player.externalId }).lean();
-  return mergePlayerWithIntel(player, intel);
+  const [intel, wikiDoc] = await Promise.all([
+    AiPlayerIntel.findOne({ playerExternalId: player.externalId }).lean(),
+    getPlayerWikiContextByExternalId(player.externalId),
+  ]);
+
+  return mergePlayerWithWiki(mergePlayerWithIntel(player, intel), wikiDoc);
 }
 
 export async function refreshTeamPlayerIntel(teamCode, { force = false, fetchImpl = fetch } = {}) {
@@ -379,9 +424,16 @@ export async function refreshTeamPlayerIntel(teamCode, { force = false, fetchImp
   });
   rosterPlayers = await reloadRosterPlayersWithPerformance(rosterPlayers);
 
-  const { data, source } = await callAiForJson(buildTeamIntelPrompt(team, rosterPlayers), {
+  const wikiHydration = await hydrateRosterWikiSnapshots(rosterPlayers, {
+    force,
+    maxFetches: force ? rosterPlayers.length : 12,
     fetchImpl,
   });
+
+  const { data, source } = await callAiForJson(
+    buildTeamIntelPrompt(team, rosterPlayers, wikiHydration.wikiMap),
+    { fetchImpl }
+  );
   const entries = Array.isArray(data?.players) ? data.players : [];
   const meta = { source, model: aiModelForScoreSource(source) };
 
@@ -404,6 +456,7 @@ export async function refreshTeamPlayerIntel(teamCode, { force = false, fetchImp
     model: meta.model,
     teamNotes: String(data?.teamNotes ?? '').trim(),
     performanceFetched: performanceHydration.fetched,
+    wikiFetched: wikiHydration.fetched,
   };
 }
 
@@ -419,10 +472,12 @@ export async function refreshPlayerIntel(playerId, { fetchImpl = fetch } = {}) {
 
   await refreshPlayerPerformanceSnapshot(player);
   const freshPlayer = (await Player.findById(playerId).lean()) ?? player;
+  const wikiDoc = await ensurePlayerWikiContext(freshPlayer, { fetchImpl });
 
-  const { data, source } = await callAiForJson(buildPlayerDetailPrompt(freshPlayer, team), {
-    fetchImpl,
-  });
+  const { data, source } = await callAiForJson(
+    buildPlayerDetailPrompt(freshPlayer, team, wikiDoc),
+    { fetchImpl }
+  );
   const aiEntry = normalizeAiPlayerEntry({ ...data, fullName: player.fullName });
   if (!aiEntry) throw new Error('La IA devolvió datos inválidos');
 
@@ -431,10 +486,8 @@ export async function refreshPlayerIntel(playerId, { fetchImpl = fetch } = {}) {
     model: aiModelForScoreSource(source),
   });
 
-  return mergePlayerWithIntel(
-    await getPlayerById(playerId, { skipExternalMatches: true }),
-    intel
-  );
+  const base = await getPlayerById(playerId, { skipExternalMatches: true });
+  return mergePlayerWithWiki(mergePlayerWithIntel(base, intel), wikiDoc);
 }
 
 export async function askPlayerIntelFollowUp(playerId, question, { fetchImpl = fetch } = {}) {
@@ -449,6 +502,8 @@ export async function askPlayerIntelFollowUp(playerId, question, { fetchImpl = f
 
   const dbPlayer = await Player.findById(playerId).lean();
   const statsContext = buildCompactPerformanceContext(dbPlayer ?? player);
+  const wikiDoc = await ensurePlayerWikiContext(dbPlayer ?? player, { fetchImpl });
+  const wikiContext = buildCompactWikiContextForAi(wikiDoc);
 
   const prompt = `Sos un analista del Mundial FIFA 2026.
 Jugador: ${player.fullName} (${player.fifaCode})
@@ -458,6 +513,9 @@ Resumen: ${player.aiSummary || 'sin resumen'}
 
 Estadísticas ${statsContext.temporada} (club/selección, minutos, goles, últimos partidos):
 ${JSON.stringify(statsContext, null, 2)}
+
+Contexto Wikipedia (historial selección, mundiales, convocatorias):
+${wikiContext ? JSON.stringify(wikiContext, null, 2) : 'No disponible'}
 
 Pregunta: ${trimmed}
 
