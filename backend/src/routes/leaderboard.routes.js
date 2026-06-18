@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { getLeaderboard } from '../services/leaderboardService.js';
 import { getLastSyncAt } from '../services/syncService.js';
 import { getCompetitionGroupById } from '../services/competitionGroupService.js';
-import { getRankingDashboard } from '../services/rankingDashboardService.js';
+import { getCachedRankingDashboard } from '../services/rankingDashboardCache.js';
 import { optionalAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -14,7 +14,7 @@ router.get('/dashboard', optionalAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'groupId es obligatorio' });
     }
 
-    const payload = await getRankingDashboard(groupId, req.user?._id);
+    const payload = await getCachedRankingDashboard(groupId, req.user?._id);
     if (payload.notFound) {
       return res.status(404).json({ error: 'Grupo no encontrado' });
     }

@@ -2,6 +2,7 @@ import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
 import { recalculateMatchScores, recalculateAllLiveMatches } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
+import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { notifyMatchesLiveStarted } from './pushNotificationService.js';
 import { blocksKickoffPromotion, clearWeatherOpsToNormal, isPreKickoffDelayExpired } from './matchWeatherOpsRules.js';
 import {
@@ -191,6 +192,7 @@ export async function promoteMatchesAtKickoff() {
   }
   if (promotedIds.length) {
     notifyLeaderboardUpdated({ reason: 'kickoff_live' });
+    invalidateMatchRelatedCaches();
 
     const matchesToNotify = [];
     for (const matchId of promotedIds) {
@@ -270,6 +272,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
       matchIds: finalizedIds.map((id) => id.toString()),
     });
     notifyLeaderboardUpdated({ reason: 'stale_live_finalized' });
+    invalidateMatchRelatedCaches();
     console.log(`Stale live finalize: ${finalizedIds.length} partido(s) pasaron a finalizado`);
   }
 

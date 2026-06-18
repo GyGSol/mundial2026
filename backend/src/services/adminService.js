@@ -633,6 +633,8 @@ export async function updateAdminMatch(
   }
 
   notifyMatchesUpdated({ reason: 'admin_match_update', matchId: match._id.toString() });
+  const { invalidateMatchRelatedCaches } = await import('./matchRelatedCaches.js');
+  invalidateMatchRelatedCaches();
   return serializeMatch(match);
 }
 
@@ -706,6 +708,8 @@ export async function updateAdminMatchWeatherOps(matchId, weatherOps) {
   }
 
   notifyMatchesUpdated({ reason: 'admin_weather_ops', matchId: match._id.toString() });
+  const { invalidateMatchRelatedCaches } = await import('./matchRelatedCaches.js');
+  invalidateMatchRelatedCaches();
   return serializeMatch(match);
 }
 

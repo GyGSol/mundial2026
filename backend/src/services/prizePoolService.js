@@ -39,7 +39,7 @@ export async function syncPrizePoolDistribution(groupId, winnersCount) {
   return pool;
 }
 
-export async function projectPrizeDistribution(groupId) {
+export async function projectPrizeDistribution(groupId, { leaderboard: precalculatedLeaderboard } = {}) {
   const group = await CompetitionGroup.findById(groupId).select('prizesWinnersCount').lean();
   const winnersCount = group?.prizesWinnersCount ?? 0;
   const pool = await getOrCreatePrizePool(groupId);
@@ -73,7 +73,9 @@ export async function projectPrizeDistribution(groupId) {
     };
   }
 
-  const leaderboard = await getLeaderboard(groupId, Math.max(percents.length + 10, 50));
+  const leaderboard =
+    precalculatedLeaderboard ??
+    (await getLeaderboard(groupId, Math.max(percents.length + 10, 50)));
   const humanWinners = leaderboard.filter((entry) => !entry.isAiUser).slice(0, percents.length);
 
   const distribution = percents.map((percent, index) => {

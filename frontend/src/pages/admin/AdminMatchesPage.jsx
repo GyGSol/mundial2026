@@ -38,9 +38,14 @@ export default function AdminMatchesPage() {
     return adminApi.listMatches(params);
   }, [statusFilter]);
 
-  const { data, loading, error, refresh } = useLiveData(fetchMatches, [statusFilter]);
+  const { data, loading, error, refresh } = useLiveData(fetchMatches, [statusFilter], {
+    memoryCacheKey: `admin-matches:${statusFilter || 'all'}`,
+    memoryCacheTtlMs: 30_000,
+    realtimeDebounceMs: 750,
+  });
 
   const matches = data?.matches ?? [];
+  const pageReady = !loading && data !== null;
 
   async function saveMatch(match, patch) {
     setBusyId(match.id);
@@ -107,8 +112,10 @@ export default function AdminMatchesPage() {
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {message ? <p className="text-sm text-amber-300">{message}</p> : null}
-      {loading && !matches.length ? <p className={adminMuted}>Cargando…</p> : null}
 
+      {!pageReady ? (
+        <p className={adminMuted}>Cargando partidos…</p>
+      ) : (
       <AdminCard accent flush contentClassName="p-0">
         <div className={adminTableWrap}>
         <Table>
@@ -135,6 +142,7 @@ export default function AdminMatchesPage() {
         </Table>
         </div>
       </AdminCard>
+      )}
     </div>
   );
 }
@@ -153,6 +161,9 @@ function MatchRow({ match, busy, onSave, onRecalculate }) {
     <TableRow className="border-slate-800">
       <TableCell className="text-sm">
         {match.homeTeamId} vs {match.awayTeamId}
+        {match.label ? (
+          <p className="text-xs text-slate-400">{match.label}</p>
+        ) : null}
         <p className="text-xs text-slate-500">{match.externalId}</p>
         {match.kickoffAt ? (
           <p className="text-xs text-slate-400">

@@ -435,8 +435,9 @@ router.delete('/groups/:id', adminMiddleware, async (req, res, next) => {
 
 router.get('/matches', adminMiddleware, async (req, res, next) => {
   try {
+    const { getCachedAdminMatches } = await import('../services/adminMatchesCache.js');
     res.json({
-      matches: await listAdminMatches({
+      matches: await getCachedAdminMatches({
         status: req.query.status,
         group: req.query.group,
       }),
@@ -498,7 +499,8 @@ router.get('/stream-links', adminMiddleware, async (req, res, next) => {
 
 router.get('/transmissions/today', adminMiddleware, async (req, res, next) => {
   try {
-    res.json(await listAdminTodayTransmissions());
+    const { getCachedAdminTodayTransmissions } = await import('../services/adminMatchesCache.js');
+    res.json(await getCachedAdminTodayTransmissions(() => listAdminTodayTransmissions()));
   } catch (err) {
     next(err);
   }

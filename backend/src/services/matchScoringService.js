@@ -5,6 +5,7 @@ import { recalculateConsolationBonuses } from './consolationBonusService.js';
 import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { ensurePredictionsForMatch } from './predictionLockService.js';
 import { notifyLeaderboardUpdated } from './websocketService.js';
+import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { queueAiPostMatchReview } from './aiPostMatchLearningService.js';
 import { recordValidationError } from './trainingBufferService.js';
 
@@ -66,6 +67,7 @@ export async function recalculateMatchScores(matchId) {
       reason: 'live_baseline',
       matchId: matchId.toString(),
     });
+    invalidateMatchRelatedCaches();
 
     if (actualHome === 0 && actualAway === 0) {
       return { ...baselineResult, liveBaseline: true };
@@ -88,6 +90,7 @@ export async function recalculateMatchScores(matchId) {
       reason: match.status === 'live' ? 'live_scores_updated' : 'scores_recalculated',
       matchId: matchId.toString(),
     });
+    invalidateMatchRelatedCaches();
   }
 
   return { ...result, liveBaseline: needsLiveBaseline };
@@ -147,6 +150,7 @@ export async function clearMatchScores(matchId) {
     reason: 'scores_cleared',
     matchId: matchId.toString(),
   });
+  invalidateMatchRelatedCaches();
 
   return { predictions: predictions.length, users: affectedUsers.size };
 }

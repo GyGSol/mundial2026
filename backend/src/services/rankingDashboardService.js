@@ -1,5 +1,5 @@
 import { Match } from '../models/Match.js';
-import { getLeaderboard } from './leaderboardService.js';
+import { getCachedLeaderboard } from './leaderboardCache.js';
 import { getLastSyncAt } from './syncService.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import {
@@ -17,6 +17,7 @@ import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
 import { finalizeStaleLiveMatches } from './kickoffLiveService.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
+const UPCOMING_MATCH_LIMIT = 30;
 
 function kickoffKey(kickoffAt) {
   if (!kickoffAt) return '';
@@ -66,7 +67,11 @@ export async function getRankingDashboard(groupId, userId) {
     Match.find({ status: 'finished', kickoffAt: { $gte: cutoff } })
       .sort({ kickoffAt: -1 })
       .lean(),
-    Match.find({ status: 'upcoming' }).select('-raw').sort({ kickoffAt: 1 }).lean(),
+    Match.find({ status: 'upcoming' })
+      .select('-raw')
+      .sort({ kickoffAt: 1 })
+      .limit(UPCOMING_MATCH_LIMIT)
+      .lean(),
   ]);
 
   const matchesToEnrich = [...liveRaw, ...finishedRaw, ...upcomingRaw];
@@ -90,12 +95,16 @@ export async function getRankingDashboard(groupId, userId) {
 
   const liveMatchIds = liveMatches.map((match) => match.id);
   const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
+  const hasLiveMatches = liveMatches.length > 0;
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
-    getLeaderboard(groupId || null),
+    getCachedLeaderboard(groupId || null, 100, {}, { hasLiveMatches }),
     indicatorBaselineMatchIds.length > 0
-      ? getLeaderboard(groupId || null, 100, {
-          excludeMatchIds: indicatorBaselineMatchIds,
-        })
+      ? getCachedLeaderboard(
+          groupId || null,
+          100,
+          { excludeMatchIds: indicatorBaselineMatchIds },
+          { hasLiveMatches }
+        )
       : Promise.resolve(null),
   ]);
 
@@ -119,7 +128,7 @@ export async function getRankingDashboard(groupId, userId) {
     await syncMemberEntryFees(groupId);
     const entryStats = await getGroupEntryFeeStats(groupId);
     const winnersCount = groupResult.group?.prizesWinnersCount ?? 0;
-    const projection = await projectPrizeDistribution(groupId);
+    const projection = await projectPrizeDistribution(groupId, { leaderboard });
     if (winnersCount > 0 && projection.distribution?.length) {
       enrichedLeaderboard = attachProjectedFubolsToLeaderboard(leaderboard, projection);
       prizePool = {

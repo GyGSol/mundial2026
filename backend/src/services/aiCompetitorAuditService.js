@@ -231,8 +231,10 @@ export async function getAiCompetitorOverview({
   const latestLogByMatch = new Map();
   const latestOfficialLogByMatch = new Map();
   const latestSimulationLogByMatch = new Map();
+  const logCountByMatch = new Map();
   for (const log of logs) {
     const key = log.matchId.toString();
+    logCountByMatch.set(key, (logCountByMatch.get(key) ?? 0) + 1);
     if (!latestLogByMatch.has(key)) latestLogByMatch.set(key, log);
     if (!log.isSimulation && !latestOfficialLogByMatch.has(key)) {
       latestOfficialLogByMatch.set(key, log);
@@ -300,7 +302,7 @@ export async function getAiCompetitorOverview({
       simulationPrediction: simulationLog
         ? { homeGoals: simulationLog.homeGoals, awayGoals: simulationLog.awayGoals }
         : null,
-      logCount: logs.filter((l) => l.matchId.toString() === key).length,
+      logCount: logCountByMatch.get(key) ?? 0,
       canSimulate: match.status === 'upcoming',
     });
   }

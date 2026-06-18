@@ -97,6 +97,8 @@ export default function LeaderboardPage() {
     enabled: canLoadRanking,
     pollIntervalMs: 15000,
     pollWhen: shouldPollLeaderboardLive,
+    memoryCacheKey: canLoadRanking ? `ranking-dashboard:${effectiveGroupId}` : '',
+    memoryCacheTtlMs: 60_000,
   });
 
   const dashboardMatchesGroup =
@@ -106,9 +108,9 @@ export default function LeaderboardPage() {
     ? data?.leaderboardKickoffBaseline
     : null;
   const hasLiveMatches = dashboardMatchesGroup && (data?.liveMatches?.length ?? 0) > 0;
-  const rankingLoading = canLoadRanking && loading;
   const rankingReady = canLoadRanking ? dashboardMatchesGroup : true;
   const rankingLoadFailed = canLoadRanking && !loading && Boolean(error) && !dashboardMatchesGroup;
+  const pageReady = !canLoadRanking || dashboardMatchesGroup;
 
   const displayGroup = dashboardMatchesGroup ? data?.group || selectedGroup : selectedGroup;
   const isNoGroupMode = effectiveGroupId === '__nogroup';
@@ -131,7 +133,8 @@ export default function LeaderboardPage() {
   const prizeLabelByPosition = Object.fromEntries(
     groupPrizes.map((row) => [Number(row.position), row.prize?.trim() || ''])
   );
-  const showPrizesCard = showFubolPrizes || (!isNoGroupMode && prizesWinnersCount > 0);
+  const showPrizesCard =
+    pageReady && (showFubolPrizes || (!isNoGroupMode && prizesWinnersCount > 0));
 
   const scrollToGroupStandings = useCallback(() => {
     document.getElementById(GROUP_POSITIONS_TABLE_ID)?.scrollIntoView({
@@ -147,6 +150,31 @@ export default function LeaderboardPage() {
         title="No se pudo cargar la aplicación"
         onRetry={() => window.location.reload()}
       />
+    );
+  }
+
+  if (canLoadRanking && !pageReady && !rankingLoadFailed) {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
+        <LoadingSpinner label="Cargando ranking…" />
+      </div>
+    );
+  }
+
+  if (rankingLoadFailed) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-destructive">
+          {error}{' '}
+          <button
+            type="button"
+            className="underline"
+            onClick={() => window.location.reload()}
+          >
+            Reintentar
+          </button>
+        </p>
+      </div>
     );
   }
 
@@ -217,7 +245,7 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {rankingReady && rankingGroupOptions.length === 0 && (
+      {rankingReady && rankingGroupOptions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Todavía no participás en ningún grupo.{' '}
           <Link to="/groups" className="text-foreground underline">
@@ -225,21 +253,8 @@ export default function LeaderboardPage() {
           </Link>{' '}
           para ver su ranking.
         </p>
-      )}
-
-      {rankingLoading ? <LoadingSpinner label="Cargando ranking…" /> : null}
-      {rankingLoadFailed ? (
-        <p className="text-destructive">
-          {error}{' '}
-          <button
-            type="button"
-            className="underline"
-            onClick={() => window.location.reload()}
-          >
-            Reintentar
-          </button>
-        </p>
       ) : null}
+
       {error && dashboardMatchesGroup ? <p className="text-destructive">{error}</p> : null}
 
       {showPrizesCard ? (

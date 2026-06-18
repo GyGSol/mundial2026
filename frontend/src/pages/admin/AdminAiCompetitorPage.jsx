@@ -251,7 +251,13 @@ export default function AdminAiCompetitorPage() {
     return adminApi.getAiCompetitorOverview(params);
   }, filterDeps);
 
-  const { data, loading, error, refresh } = useLiveData(fetchOverview, filterDeps);
+  const { data, loading, error, refresh } = useLiveData(fetchOverview, filterDeps, {
+    memoryCacheKey: `ai-overview:${filterDeps.join(':')}`,
+    memoryCacheTtlMs: 30_000,
+    realtimeDebounceMs: 750,
+  });
+
+  const overviewReady = !loading && data !== null;
 
   const fetchAnalytics = useCallback(() => adminApi.getAiAnalytics({ year: 2026 }), []);
   const {
@@ -626,12 +632,12 @@ export default function AdminAiCompetitorPage() {
       <div className="flex flex-col gap-4">
         <AdminCard>
           <h2 className="mb-3 text-sm font-semibold text-slate-100">Partidos</h2>
-          {loading && !matches.length ? <p className={adminMuted}>Cargando…</p> : null}
-          {!loading && !matches.length ? (
+          {!overviewReady ? <p className={adminMuted}>Cargando partidos…</p> : null}
+          {overviewReady && !matches.length ? (
             <p className={adminMuted}>No hay partidos con los filtros actuales.</p>
           ) : null}
 
-          {matches.length ? (
+          {overviewReady && matches.length ? (
             <div className={adminTableWrap}>
               <Table>
                 <TableHeader>
