@@ -1,6 +1,6 @@
 import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
-import { recalculateMatchScores, recalculateAllLiveMatches } from './matchScoringService.js';
+import { recalculateMatchScores, recalculateAllLiveMatches, clearMatchScores } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { notifyMatchesLiveStarted } from './pushNotificationService.js';
@@ -15,10 +15,14 @@ import {
   resolveFifaMatchEntry,
 } from './fifaApiClient.js';
 import { Team } from '../models/Team.js';
-import { isPlausibleMatchGoalCount } from './matchLiveData.js';
+import { isPlausibleMatchGoalCount, latestClockFromTimeline } from './matchLiveData.js';
 import { syncMicroEventsFromMatch } from './matchMicroEventService.js';
 import {
+  elapsedTokenIndicatesFinished,
   fifaEntryIndicatesFinished,
+  isMatchKickoffStale,
+  matchEvidenceShowsInProgress,
+  readElapsedToken,
   shouldFinalizeStaleLiveMatch,
 } from './matchStatusRules.js';
 
@@ -214,6 +218,63 @@ export async function promoteMatchesAtKickoff() {
   return promotedIds;
 }
 
+/** Reabre partidos marcados `finished` con evidencia de juego en curso (cierre prematuro). */
+export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
+  const recentKickoffCutoff = new Date(now - 120 * 60 * 1000);
+  const candidates = await Match.find({
+    status: 'finished',
+    kickoffAt: { $gte: recentKickoffCutoff, $lte: new Date(now) },
+  }).lean();
+
+  const reopenedIds = [];
+
+  for (const match of candidates) {
+    if (isMatchKickoffStale(match.kickoffAt, now)) continue;
+    if (!matchEvidenceShowsInProgress(match)) continue;
+
+    const timeline = match.raw?.fifaEvents?.timeline;
+    const clock =
+      Array.isArray(timeline) && timeline.length ? latestClockFromTimeline(timeline) : null;
+    const badElapsed = elapsedTokenIndicatesFinished(readElapsedToken(match));
+    const badFinished =
+      match.raw?.finished === 'TRUE' ||
+      match.raw?.finished === true ||
+      match.raw?.finished === 'true';
+
+    const update = {
+      status: 'live',
+      lastSyncedAt: new Date(),
+    };
+    if (badFinished) update['raw.finished'] = 'FALSE';
+    if (badElapsed) {
+      update['raw.time_elapsed'] = clock ? String(clock).replace(/'+$/, '') : 'live';
+    }
+
+    const updated = await Match.findOneAndUpdate(
+      { _id: match._id, status: 'finished' },
+      { $set: update },
+      { new: true }
+    );
+    if (!updated) continue;
+
+    reopenedIds.push(updated._id);
+    await clearMatchScores(updated._id);
+    await recalculateMatchScores(updated._id);
+  }
+
+  if (reopenedIds.length) {
+    notifyMatchesUpdated({
+      reason: 'premature_finish_reopened',
+      matchIds: reopenedIds.map((id) => id.toString()),
+    });
+    notifyLeaderboardUpdated({ reason: 'premature_finish_reopened' });
+    invalidateMatchRelatedCaches();
+    console.log(`Premature finish reopen: ${reopenedIds.length} partido(s) volvieron a live`);
+  }
+
+  return reopenedIds;
+}
+
 /** Cierra partidos que quedaron en `live` cuando worldcup26/FIFA no actualizaron el estado. */
 export async function finalizeStaleLiveMatches(now = Date.now()) {
   const liveMatches = await Match.find({ status: 'live' }).lean();
@@ -281,6 +342,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
 
 /** Mantiene puntos y ranking al día mientras hay partidos en vivo. */
 export async function syncLiveMatchScoring() {
+  const reopened = await reopenPrematurelyFinishedMatches();
   const finalized = await finalizeStaleLiveMatches();
   const promoted = await promoteMatchesAtKickoff();
   const { matches, users } = await recalculateAllLiveMatches();
@@ -303,5 +365,11 @@ export async function syncLiveMatchScoring() {
     notifyMatchesUpdated({ reason: 'live_scoring_sync', liveMatches: matches });
   }
 
-  return { finalized: finalized.length, promoted: promoted.length, liveMatches: matches, users };
+  return {
+    reopened: reopened.length,
+    finalized: finalized.length,
+    promoted: promoted.length,
+    liveMatches: matches,
+    users,
+  };
 }

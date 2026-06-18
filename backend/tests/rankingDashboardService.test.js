@@ -29,5 +29,43 @@ describe('rankingDashboardService', () => {
       expect(recentFinishedMatches[0].id).toBe('fin-1');
       expect(recentFinishedMatches.some((m) => m.id === 'live-1')).toBe(false);
     });
+
+    it('reclasifica finished prematuro con timeline temprana a liveMatches', () => {
+      const kickoffRecent = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+      const finishedRaw = [
+        {
+          _id: 'uzb-col',
+          status: 'finished',
+          kickoffAt: kickoffRecent,
+          raw: {
+            finished: 'FALSE',
+            time_elapsed: 'live',
+            fifaEvents: {
+              timeline: [{ type: 'foul', minute: 14, sortKey: 14 }],
+            },
+          },
+        },
+      ];
+      const finished = [
+        {
+          id: 'uzb-col',
+          status: 'finished',
+          timeElapsed: 'Final',
+          kickoffAt: kickoffRecent,
+          matchTimeline: [{ type: 'foul', minute: 14, sortKey: 14 }],
+        },
+      ];
+
+      const { liveMatches, recentFinishedMatches } = partitionRankingDashboardMatches(
+        [],
+        finished,
+        finishedRaw
+      );
+
+      expect(liveMatches).toHaveLength(1);
+      expect(liveMatches[0].status).toBe('live');
+      expect(liveMatches[0].timeElapsed).toBe("14'");
+      expect(recentFinishedMatches).toHaveLength(0);
+    });
   });
 });

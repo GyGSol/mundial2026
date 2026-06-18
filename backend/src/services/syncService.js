@@ -609,6 +609,13 @@ export async function runSync({ includeMetadata = true } = {}) {
       await recalculateMatchScores(matchId);
     }
 
+    try {
+      const { reopenPrematurelyFinishedMatches } = await import('./kickoffLiveService.js');
+      await reopenPrematurelyFinishedMatches();
+    } catch (err) {
+      console.warn('Premature finish reopen skipped:', err.message);
+    }
+
     notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
     notifyMatchesUpdated({
       matchesCount: count,

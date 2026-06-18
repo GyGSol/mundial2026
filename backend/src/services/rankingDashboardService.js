@@ -14,6 +14,11 @@ import {
 } from './prizePoolService.js';
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
+import {
+  isMatchKickoffStale,
+  matchEvidenceShowsInProgress,
+} from './matchStatusRules.js';
+import { resolveLiveTimeElapsed } from './matchLiveData.js';
 
 const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 const UPCOMING_MATCH_LIMIT = 30;
@@ -51,10 +56,33 @@ function dedupeMatchesById(matches) {
 }
 
 /** Partidos en vivo y recién finalizados para el dashboard (status en MongoDB es la fuente de verdad). */
-export function partitionRankingDashboardMatches(enrichedLive, enrichedFinished) {
+export function partitionRankingDashboardMatches(enrichedLive, enrichedFinished, finishedRaw = []) {
+  const rawById = new Map(finishedRaw.map((m) => [m._id.toString(), m]));
+  const misplacedLive = [];
+  const actualFinished = [];
+
+  for (const match of enrichedFinished) {
+    const source = rawById.get(match.id) ?? match;
+    const kickoffAt = source.kickoffAt ?? match.kickoffAt;
+    if (!isMatchKickoffStale(kickoffAt) && matchEvidenceShowsInProgress(source)) {
+      misplacedLive.push({
+        ...match,
+        status: 'live',
+        timeElapsed:
+          match.matchTimeline?.length
+            ? resolveLiveTimeElapsed(source.raw ?? {}, match.matchTimeline)
+            : match.timeElapsed === 'Final'
+              ? null
+              : match.timeElapsed,
+      });
+    } else {
+      actualFinished.push(match);
+    }
+  }
+
   return {
-    liveMatches: enrichedLive,
-    recentFinishedMatches: dedupeMatchesById(enrichedFinished).sort((a, b) =>
+    liveMatches: [...enrichedLive, ...misplacedLive],
+    recentFinishedMatches: dedupeMatchesById(actualFinished).sort((a, b) =>
       compareMatchesBySchedule(b, a)
     ),
   };
@@ -104,7 +132,8 @@ export async function getRankingDashboard(groupId, userId) {
   const enrichedFinished = finishedRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
   const { liveMatches, recentFinishedMatches } = partitionRankingDashboardMatches(
     enrichedLive,
-    enrichedFinished
+    enrichedFinished,
+    finishedRaw
   );
 
   if (groupId && groupId !== '__nogroup') {
