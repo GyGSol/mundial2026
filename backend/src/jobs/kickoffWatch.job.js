@@ -1,7 +1,10 @@
+import { Match } from '../models/Match.js';
 import { syncLiveMatchScoring } from '../services/kickoffLiveService.js';
 import { env } from '../config/env.js';
 
-let intervalId = null;
+const LIVE_INTERVAL_MS = 5_000;
+
+let timeoutId = null;
 let running = false;
 
 async function tick() {
@@ -11,6 +14,9 @@ async function tick() {
     const result = await syncLiveMatchScoring();
     if (result.promoted > 0) {
       console.log(`Kickoff watch: ${result.promoted} partido(s) pasaron a en vivo`);
+    }
+    if (result.reopened > 0) {
+      console.log(`Kickoff watch: ${result.reopened} partido(s) reabiertos desde finished`);
     }
     if (result.finalized > 0) {
       console.log(`Kickoff watch: ${result.finalized} partido(s) pasaron a finalizado`);
@@ -27,13 +33,23 @@ async function tick() {
   }
 }
 
+async function scheduleNext() {
+  const hasLive = Boolean(await Match.exists({ status: 'live' }));
+  const delayMs = hasLive ? LIVE_INTERVAL_MS : env.kickoffWatchIntervalMs;
+  timeoutId = setTimeout(async () => {
+    await tick();
+    scheduleNext();
+  }, delayMs);
+}
+
 export function startKickoffWatchJob() {
-  tick();
-  intervalId = setInterval(tick, env.kickoffWatchIntervalMs);
-  const seconds = env.kickoffWatchIntervalMs / 1000;
-  console.log(`Kickoff watch started (every ${seconds}s)`);
+  void tick().then(() => scheduleNext());
+  const idleSeconds = env.kickoffWatchIntervalMs / 1000;
+  const liveSeconds = LIVE_INTERVAL_MS / 1000;
+  console.log(`Kickoff watch started (adaptive ${liveSeconds}s live / ${idleSeconds}s idle)`);
 }
 
 export function stopKickoffWatchJob() {
-  if (intervalId) clearInterval(intervalId);
+  if (timeoutId) clearTimeout(timeoutId);
+  timeoutId = null;
 }

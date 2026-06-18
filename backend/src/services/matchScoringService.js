@@ -63,11 +63,11 @@ export async function recalculateMatchScores(matchId) {
     match.liveScoringInitialized = true;
     await match.save();
 
+    invalidateMatchRelatedCaches();
     notifyLeaderboardUpdated({
       reason: 'live_baseline',
       matchId: matchId.toString(),
     });
-    invalidateMatchRelatedCaches();
 
     if (actualHome === 0 && actualAway === 0) {
       return { ...baselineResult, liveBaseline: true };
@@ -86,11 +86,11 @@ export async function recalculateMatchScores(matchId) {
   }
 
   if (result.users > 0 || needsLiveBaseline) {
+    invalidateMatchRelatedCaches();
     notifyLeaderboardUpdated({
       reason: match.status === 'live' ? 'live_scores_updated' : 'scores_recalculated',
       matchId: matchId.toString(),
     });
-    invalidateMatchRelatedCaches();
   }
 
   return { ...result, liveBaseline: needsLiveBaseline };
@@ -146,11 +146,11 @@ export async function clearMatchScores(matchId) {
     await recalculateUserTotalPoints(userId);
   }
 
+  invalidateMatchRelatedCaches();
   notifyLeaderboardUpdated({
     reason: 'scores_cleared',
     matchId: matchId.toString(),
   });
-  invalidateMatchRelatedCaches();
 
   return { predictions: predictions.length, users: affectedUsers.size };
 }

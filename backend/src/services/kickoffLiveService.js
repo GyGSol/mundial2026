@@ -175,6 +175,7 @@ export async function promoteMatchesAtKickoff() {
     const promotionUpdate = {
       status: 'live',
       lastSyncedAt: new Date(),
+      liveStartedPushSentAt: match.liveStartedPushSentAt ?? new Date(),
       homeScore: fifaScores?.homeScore ?? (match.homeScore == null ? 0 : match.homeScore),
       awayScore: fifaScores?.awayScore ?? (match.awayScore == null ? 0 : match.awayScore),
     };
@@ -200,8 +201,8 @@ export async function promoteMatchesAtKickoff() {
     });
   }
   if (promotedIds.length) {
-    notifyLeaderboardUpdated({ reason: 'kickoff_live' });
     invalidateMatchRelatedCaches();
+    notifyLeaderboardUpdated({ reason: 'kickoff_live' });
 
     const matchesToNotify = [];
     for (const matchId of promotedIds) {
@@ -231,14 +232,36 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
     kickoffAt: { $gte: recentKickoffCutoff },
   }).lean();
 
+  if (!candidates.length) return [];
+
+  let fifaCalendar = [];
+  try {
+    fifaCalendar = await fetchAllCalendarMatches();
+  } catch (err) {
+    console.warn('FIFA calendar unavailable for premature finish reopen:', err.message);
+  }
+
+  const teamIds = [
+    ...new Set(candidates.flatMap((match) => [match.homeTeamId, match.awayTeamId]).filter(Boolean)),
+  ];
+  const teams = await Team.find({ externalId: { $in: teamIds } })
+    .select('externalId fifaCode nameEn')
+    .lean();
+  const teamMap = new Map(teams.map((team) => [team.externalId, team]));
+
   const reopenedIds = [];
 
   for (const match of candidates) {
     if (isMatchKickoffStale(match.kickoffAt, now)) continue;
 
+    const fifaEntry = fifaCalendar.length
+      ? await loadFifaEntryForMatch(match, fifaCalendar, teamMap)
+      : null;
+    const fifaContradictsFinish = Boolean(fifaEntry && !fifaEntryIndicatesFinished(fifaEntry));
+
     const implausibleFinish = matchFinishedImplausibleByWallClock(match, now);
     const inProgress = !implausibleFinish && matchEvidenceShowsInProgress(match);
-    if (!implausibleFinish && !inProgress) continue;
+    if (!implausibleFinish && !inProgress && !fifaContradictsFinish) continue;
 
     const timeline = match.raw?.fifaEvents?.timeline;
     const clock =
@@ -248,6 +271,7 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
       match.raw?.finished === 'TRUE' ||
       match.raw?.finished === true ||
       match.raw?.finished === 'true';
+    const stripMatchEnd = implausibleFinish || fifaContradictsFinish;
 
     const kickoffMs = resolveKickoffMs(match);
     const nextStatus =
@@ -261,10 +285,10 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
       previousStatus: 'finished',
       nextStatus,
     });
-    if (badFinished || implausibleFinish) update['raw.finished'] = 'FALSE';
-    if (badElapsed || implausibleFinish) {
+    if (badFinished || stripMatchEnd) update['raw.finished'] = 'FALSE';
+    if (badElapsed || stripMatchEnd) {
       const timelineForClock =
-        implausibleFinish && Array.isArray(timeline)
+        stripMatchEnd && Array.isArray(timeline)
           ? timeline.filter((event) => event?.type !== 'match_end')
           : timeline;
       const correctedClock =
@@ -275,8 +299,11 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
         ? String(correctedClock).replace(/'+$/, '')
         : 'live';
     }
-    if (implausibleFinish && Array.isArray(timeline)) {
+    if (stripMatchEnd && Array.isArray(timeline)) {
       update['raw.fifaEvents.timeline'] = timeline.filter((event) => event?.type !== 'match_end');
+    }
+    if (nextStatus === 'live' && !match.liveStartedPushSentAt) {
+      update.liveStartedPushSentAt = new Date();
     }
 
     const updated = await Match.findOneAndUpdate(
@@ -292,12 +319,12 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
   }
 
   if (reopenedIds.length) {
+    invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'premature_finish_reopened',
       matchIds: reopenedIds.map((id) => id.toString()),
     });
     notifyLeaderboardUpdated({ reason: 'premature_finish_reopened' });
-    invalidateMatchRelatedCaches();
     console.log(`Premature finish reopen: ${reopenedIds.length} partido(s) volvieron a live`);
   }
 
@@ -363,12 +390,12 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
   }
 
   if (finalizedIds.length) {
+    invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'stale_live_finalized',
       matchIds: finalizedIds.map((id) => id.toString()),
     });
     notifyLeaderboardUpdated({ reason: 'stale_live_finalized' });
-    invalidateMatchRelatedCaches();
     console.log(`Stale live finalize: ${finalizedIds.length} partido(s) pasaron a finalizado`);
   }
 

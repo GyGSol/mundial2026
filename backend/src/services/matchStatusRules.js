@@ -1,5 +1,6 @@
 import { parsedTimelineHasMatchEnd } from './fifaTimelineParser.js';
 import { parseElapsedClockToSortKey } from './matchLiveData.js';
+import { resolveDisplayKickoffAt } from './kickoffTimeService.js';
 
 /** Tiempo máximo desde kickoff para cerrar un partido que quedó en `live` (90' + descanso + margen). */
 export const MATCH_STALE_AFTER_KICKOFF_MS = 120 * 60 * 1000;
@@ -80,10 +81,25 @@ export function maxTimelineMinute(match) {
   return key > Number.NEGATIVE_INFINITY ? key : null;
 }
 
-export function resolveKickoffMs(match) {
-  const kickoff = match?.kickoffAt ?? match?.scheduleKickoffAt;
-  const ms = kickoff ? new Date(kickoff).getTime() : NaN;
+function readTimestampMs(value) {
+  if (!value) return null;
+  const ms = new Date(value).getTime();
   return Number.isFinite(ms) ? ms : null;
+}
+
+/** Inicio real del juego para validar pitido final (no el horario programado si hubo demora). */
+export function resolveKickoffMs(match) {
+  const liveStarted = readTimestampMs(match?.liveStartedPushSentAt);
+  if (liveStarted != null) return liveStarted;
+
+  const delayedKickoff = readTimestampMs(match?.weatherOps?.delayedKickoffAt);
+  if (delayedKickoff != null) return delayedKickoff;
+
+  const displayKickoff = resolveDisplayKickoffAt(match);
+  if (displayKickoff) return displayKickoff.getTime();
+
+  const stored = match?.kickoffAt ?? match?.scheduleKickoffAt;
+  return readTimestampMs(stored);
 }
 
 /** Tiempo de reloj mínimo para que un minuto de juego sea creíble (incluye descanso ~15'). */
@@ -101,7 +117,7 @@ export function minWallClockMsForTimelineMinute(timelineMinute) {
  */
 export function wallClockAllowsMatchFinished(match, now = Date.now()) {
   const kickoffMs = resolveKickoffMs(match);
-  if (kickoffMs == null) return true;
+  if (kickoffMs == null) return false;
   if (kickoffMs > now) return false;
 
   const elapsedMs = now - kickoffMs;

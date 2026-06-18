@@ -139,4 +139,29 @@ describe('matchStatusRules', () => {
     expect(shouldFinalizeStaleLiveMatch(match, now)).toBe(false);
     expect(wallClockAllowsMatchFinished({ ...match, status: 'finished' }, now)).toBe(false);
   });
+
+  it('prioriza liveStartedPushSentAt sobre kickoff programado temprano', () => {
+    const officialKickoff = new Date('2026-06-18T16:00:00.000Z');
+    const liveStarted = new Date('2026-06-18T19:00:00.000Z');
+    const match = {
+      status: 'finished',
+      externalId: '25',
+      kickoffAt: officialKickoff,
+      liveStartedPushSentAt: liveStarted,
+      raw: {
+        fifaEvents: { timeline: [{ type: 'match_end', minute: 98, sortKey: 98 }] },
+      },
+    };
+    const now = liveStarted.getTime() + 75 * 60 * 1000;
+    expect(wallClockAllowsMatchFinished(match, now)).toBe(false);
+  });
+
+  it('sin ancla de kickoff no permite finalizar', () => {
+    expect(
+      wallClockAllowsMatchFinished({
+        status: 'finished',
+        raw: { fifaEvents: { timeline: [{ type: 'match_end', minute: 90, sortKey: 90 }] } },
+      })
+    ).toBe(false);
+  });
 });

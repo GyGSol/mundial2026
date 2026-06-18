@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { shouldPollLeaderboardLive } from '../src/lib/leaderboardPolling.js';
+import {
+  leaderboardPollIntervalMs,
+  LEADERBOARD_ACTIVE_POLL_MS,
+  LEADERBOARD_IDLE_POLL_MS,
+  LEADERBOARD_LIVE_POLL_MS,
+  shouldPollLeaderboardLive,
+} from './leaderboardPolling.js';
 
 describe('shouldPollLeaderboardLive', () => {
   it('poll con partidos en vivo', () => {
@@ -26,5 +32,21 @@ describe('shouldPollLeaderboardLive', () => {
 
   it('no poll sin actividad', () => {
     expect(shouldPollLeaderboardLive({})).toBe(false);
+  });
+});
+
+describe('leaderboardPollIntervalMs', () => {
+  it('5s con partidos en vivo', () => {
+    expect(leaderboardPollIntervalMs({ liveMatches: [{ id: '1' }] })).toBe(LEADERBOARD_LIVE_POLL_MS);
+  });
+
+  it('10s con recién finalizados sin live', () => {
+    expect(
+      leaderboardPollIntervalMs({ liveMatches: [], recentFinishedMatches: [{ id: '1' }] })
+    ).toBe(LEADERBOARD_ACTIVE_POLL_MS);
+  });
+
+  it('15s en reposo', () => {
+    expect(leaderboardPollIntervalMs({})).toBe(LEADERBOARD_IDLE_POLL_MS);
   });
 });

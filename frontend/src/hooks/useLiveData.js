@@ -28,6 +28,7 @@ export function useLiveData(
   {
     enabled = true,
     pollIntervalMs = 0,
+    getPollIntervalMs,
     pollWhen,
     memoryCacheKey,
     memoryCacheTtlMs = 60_000,
@@ -128,16 +129,31 @@ export function useLiveData(
   );
 
   useEffect(() => {
-    if (!enabled || !pollIntervalMs) return undefined;
+    if (!enabled || (!pollIntervalMs && !getPollIntervalMs)) return undefined;
 
-    const id = window.setInterval(() => {
-      if (!pollWhen || pollWhen(dataRef.current)) {
-        refresh();
-      }
-    }, pollIntervalMs);
+    let timeoutId;
 
-    return () => window.clearInterval(id);
-  }, [refresh, enabled, pollIntervalMs, pollWhen]);
+    const schedule = () => {
+      const interval =
+        typeof getPollIntervalMs === 'function'
+          ? getPollIntervalMs(dataRef.current)
+          : pollIntervalMs;
+      if (!interval) return;
+
+      timeoutId = window.setTimeout(() => {
+        if (!pollWhen || pollWhen(dataRef.current)) {
+          refresh();
+        }
+        schedule();
+      }, interval);
+    };
+
+    schedule();
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [refresh, enabled, pollIntervalMs, getPollIntervalMs, pollWhen]);
 
   return { data, loading, error, lastUpdated, refresh };
 }

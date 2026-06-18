@@ -6,7 +6,7 @@ import { isSevereError } from '../lib/apiError.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
+import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
 import {
   Select,
   SelectContent,
@@ -95,7 +95,7 @@ export default function LeaderboardPage() {
 
   const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId], {
     enabled: canLoadRanking,
-    pollIntervalMs: 15_000,
+    getPollIntervalMs: leaderboardPollIntervalMs,
     pollWhen: shouldPollLeaderboardLive,
     // Sin caché en memoria: evita tabla sin flechas tras arrancar un partido en vivo.
   });

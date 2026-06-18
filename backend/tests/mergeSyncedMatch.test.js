@@ -161,11 +161,13 @@ describe('mergeSyncedMatch', () => {
   });
 
   it('live→finished usa marcador FIFA si worldcup26 quedó en 2-2 tras gol anulado', () => {
+    const kickoffLongPast = new Date(Date.now() - 3 * 60 * 60 * 1000);
     const merged = mergeSyncedMatch(
       {
         status: 'live',
         homeScore: 2,
         awayScore: 2,
+        kickoffAt: kickoffLongPast,
         raw: {
           fifaMeta: {
             homeScore: 2,
@@ -174,7 +176,7 @@ describe('mergeSyncedMatch', () => {
           },
         },
       },
-      { status: 'finished', homeScore: 2, awayScore: 2 }
+      { status: 'finished', homeScore: 2, awayScore: 2, kickoffAt: kickoffLongPast }
     );
 
     expect(merged.status).toBe('finished');
