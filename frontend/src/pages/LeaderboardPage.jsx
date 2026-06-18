@@ -320,7 +320,7 @@ export default function LeaderboardPage() {
           {hasLiveMatches ? (
             <p className="mb-2 text-xs text-muted-foreground">
               Partido en vivo: las flechas marcan cambios desde el 0-0 inicial (PA = acierto
-              ganador/empate; GL/GV = goles exactos).
+              ganador/empate; GL/GV/GT = goles exactos ganados con el marcador en vivo).
             </p>
           ) : null}
           <LeaderboardTable

@@ -51,6 +51,20 @@ function accumulateStats(stats, breakdown, pointsEarned, bonusPoint = 0, goalDif
   stats.totalPoints += (pointsEarned ?? 0) + (bonusPoint ?? 0);
 }
 
+/** En baseline de flechas: al kickoff 0-0 solo cuenta PA; GL/GV/GT se marcan al cambiar el marcador. */
+function breakdownForLiveKickoffIndicators(breakdown) {
+  return {
+    winner: breakdown?.winner ?? 0,
+    homeGoals: 0,
+    awayGoals: 0,
+    totalGoals: 0,
+  };
+}
+
+function pointsEarnedForLiveKickoffIndicators(breakdown) {
+  return breakdown?.winner ?? 0;
+}
+
 async function getPredictionStatsByUserAggregated(userIds, { excludeMatchIds = [] } = {}) {
   if (!userIds.length) return {};
 
@@ -175,13 +189,11 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
     const stats = statsMap[userKey];
     if (!stats) continue;
 
-    let breakdown;
-    let pointsEarned;
+    let fullBreakdown;
     let goalDiff;
 
     if (prediction.liveKickoffBreakdown) {
-      breakdown = prediction.liveKickoffBreakdown;
-      pointsEarned = prediction.liveKickoffPointsEarned ?? prediction.pointsEarned ?? 0;
+      fullBreakdown = prediction.liveKickoffBreakdown;
       goalDiff = {
         home: prediction.liveKickoffGoalDiffHome ?? prediction.homeGoals ?? 0,
         away: prediction.liveKickoffGoalDiffAway ?? prediction.awayGoals ?? 0,
@@ -191,13 +203,15 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
         { home: prediction.homeGoals, away: prediction.awayGoals },
         { home: 0, away: 0 }
       );
-      breakdown = kickoff.breakdown;
-      pointsEarned = kickoff.total;
+      fullBreakdown = kickoff.breakdown;
       goalDiff = calculateGoalDiff(
         { home: prediction.homeGoals, away: prediction.awayGoals },
         { home: 0, away: 0 }
       );
     }
+
+    const breakdown = breakdownForLiveKickoffIndicators(fullBreakdown);
+    const pointsEarned = pointsEarnedForLiveKickoffIndicators(fullBreakdown);
 
     accumulateStats(stats, breakdown, pointsEarned, prediction.bonusPoint ?? 0, goalDiff);
   }
