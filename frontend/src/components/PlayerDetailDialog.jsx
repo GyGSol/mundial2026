@@ -106,12 +106,16 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
   return (
     <dialog
       ref={dialogRef}
-      className="fixed left-1/2 top-1/2 m-0 max-h-[92dvh] w-[min(calc(100vw-1rem),42rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-border bg-card p-0 text-card-foreground shadow-xl backdrop:bg-black/50 open:flex open:flex-col"
+      className={cn(
+        'fixed m-0 flex flex-col overflow-hidden rounded-xl border border-border bg-card p-0 text-card-foreground shadow-xl backdrop:bg-black/50 open:flex',
+        'inset-x-2 top-[max(0.5rem,env(safe-area-inset-top))] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] w-auto max-h-none',
+        'sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[min(calc(100vw-2rem),42rem)] sm:max-h-[min(90dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2'
+      )}
       onClose={handleClose}
       onCancel={handleClose}
       aria-labelledby="player-detail-title"
     >
-      <div className="border-b border-border p-4 sm:p-6">
+      <div className="shrink-0 border-b border-border p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
           <div className="mx-auto flex shrink-0 flex-col items-center sm:mx-0">
             {loading ? (
@@ -199,8 +203,9 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
         </div>
       </div>
 
-      <Card className="border-0 shadow-none">
-        <CardContent className="flex flex-col gap-4 p-4 sm:p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <Card className="border-0 shadow-none">
+          <CardContent className="flex flex-col gap-4 p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-6 sm:pb-6">
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
           {loading ? (
@@ -331,7 +336,8 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
             </>
           ) : null}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </dialog>
   );
 }
