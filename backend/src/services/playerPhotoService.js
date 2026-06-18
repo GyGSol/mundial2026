@@ -126,20 +126,25 @@ export async function runPlayerPhotoSync({ photosDir = PLAYER_PHOTOS_DIR } = {})
     if (result.modifiedCount > 0) updated += 1;
   }
 
-  const cleared = await Player.updateMany(
-    {
-      fifaCode: { $in: [...Object.values(TEAM_FOLDER_TO_FIFA)] },
-      externalId: { $nin: [...matchedKeys] },
-      photoKey: { $ne: '' },
-    },
-    { $set: { photoKey: '' } }
-  );
+  const cleared =
+    photoFiles.length > 0
+      ? (
+          await Player.updateMany(
+            {
+              fifaCode: { $in: [...Object.values(TEAM_FOLDER_TO_FIFA)] },
+              externalId: { $nin: [...matchedKeys] },
+              photoKey: { $ne: '' },
+            },
+            { $set: { photoKey: '' } }
+          )
+        ).modifiedCount
+      : 0;
 
   return {
     files: photoFiles.length,
     matched,
     updated,
-    cleared: cleared.modifiedCount,
+    cleared: cleared,
     unmatchedFiles,
     playersWithPhoto: matched,
   };
