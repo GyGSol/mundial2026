@@ -20,7 +20,7 @@ import {
   isOfficialKnockoutMatch,
 } from './predictedMatchContextService.js';
 import { notifyMatchesUpdated } from './websocketService.js';
-import { getVenueWeatherForStadium, formatWeatherForPrompt, buildMatchWeatherPredictionContext } from './weatherService.js';
+import { getVenueWeatherForStadium, formatWeatherForPrompt, buildMatchWeatherPredictionContext, buildVenueWeatherContextForPrediction } from './weatherService.js';
 import { assessVenueWeatherRisk, formatWeatherRiskForClient } from './weatherRiskService.js';
 import { buildLiveScheduleContext } from './liveScheduleOverlapService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
@@ -165,18 +165,32 @@ export function buildVenueContextForPrompt(match, stadium) {
   };
 }
 
-export async function enrichVenueWithWeather(venue, match, stadium, { fetchImpl = fetch } = {}) {
+export async function enrichVenueWithWeather(
+  venue,
+  match,
+  stadium,
+  { fetchImpl = fetch, weatherRaw: weatherRawIn = null } = {}
+) {
   if (!venue) return venue;
-  const weatherRaw = await getVenueWeatherForStadium(stadium, {
-    kickoffAt: match?.kickoffAt,
-    fetchImpl,
-  });
+  const weatherRaw =
+    weatherRawIn ??
+    (await getVenueWeatherForStadium(stadium, {
+      kickoffAt: match?.kickoffAt,
+      fetchImpl,
+      fresh: match?.status === 'live',
+    }));
   const matchWeather = buildMatchWeatherPredictionContext(weatherRaw);
+  const sedeYClima = buildVenueWeatherContextForPrediction(venue, weatherRaw, {
+    matchStatus: match?.status,
+  });
   const analysisHints =
     matchWeather.status === 'ok'
       ? [
-          'Clima del partido: usar venue.matchWeather.kickoffForecast (mismo dato que el panel Sede y clima).',
-          'Evaluar aclimatación de cada selección respecto a temperatura, humedad, viento y lluvia del kickoff.',
+          sedeYClima.instruccion,
+          'Clima en tiempo real (mismo dato que panel Predicciones): usá sedeYClima / venue.sedeYClima.',
+          match?.status === 'live'
+            ? 'En vivo: priorizá sedeYClima.climaActualEnSede.'
+            : 'Próximo: priorizá sedeYClima.pronosticoAlKickoff; podés citar también clima actual.',
         ]
       : venue.analysisHints;
 
@@ -185,7 +199,19 @@ export async function enrichVenueWithWeather(venue, match, stadium, { fetchImpl 
     analysisHints,
     weather: formatWeatherForPrompt(weatherRaw),
     matchWeather,
+    sedeYClima,
   };
+}
+
+/** Asegura línea Estadio+Clima al inicio del razonamiento si la IA no la citó. */
+export function augmentAiReasoningWithVenueWeather(venue, reasoning) {
+  const text = String(reasoning ?? '').trim();
+  const prefix = venue?.sedeYClima?.resumenLinea?.trim();
+  if (!prefix || !text) return text || prefix || null;
+  const hasEstadio = /estadio\s*:/i.test(text);
+  const hasClimaMetric = /clima\s*:|humedad\s+\d+%|°C/i.test(text);
+  if (hasEstadio && hasClimaMetric) return text;
+  return `${prefix}\n\n${text}`;
 }
 
 /** Partido en ventana T-lead ± window (default T-5 min) si kickoff cae en [now+lead-window, now+lead+window]. */
@@ -407,8 +433,12 @@ export async function buildPromptContext(match, aiUserId, { adminOnDemand = fals
   const weatherRaw = await getVenueWeatherForStadium(stadium, {
     kickoffAt: match.kickoffAt,
     fetchImpl,
+    fresh: match.status === 'live',
   });
-  const venue = await enrichVenueWithWeather(venueBase, match, stadium, { fetchImpl });
+  const venue = await enrichVenueWithWeather(venueBase, match, stadium, {
+    fetchImpl,
+    weatherRaw,
+  });
   const weatherRisk = formatWeatherRiskForClient(
     await assessVenueWeatherRisk(stadium, { weather: weatherRaw, kickoffAt: match.kickoffAt })
   );
@@ -1237,6 +1267,7 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
       const context = await buildAiCompetitorPredictionContext(match, aiUser._id);
       const rawScore = await callAiForCompetitorScore(context, { fetchImpl });
       const score = applyCalibrationNudge(rawScore, context._calibrationStats);
+      const aiReasoning = augmentAiReasoningWithVenueWeather(context.venue, score.reasoning);
       const prediction = await submitAiPrediction(
         aiUser._id,
         match._id,
@@ -1244,7 +1275,7 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
           homeGoals: score.homeGoals,
           awayGoals: score.awayGoals,
           aiModel: aiModelForScoreSource(score.source),
-          aiReasoning: score.reasoning,
+          aiReasoning,
           aiCalibrationApplied: Boolean(score.calibrationApplied),
         },
         { bypassLock: true }
@@ -1400,6 +1431,7 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     skipNilNilOracle: false,
   });
   const score = applyCalibrationNudge(rawScore, context._calibrationStats);
+  const aiReasoning = augmentAiReasoningWithVenueWeather(context.venue, score.reasoning);
 
   const prediction = await submitAiPrediction(
     aiUser._id,
@@ -1408,7 +1440,7 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
       homeGoals: score.homeGoals,
       awayGoals: score.awayGoals,
       aiModel: aiModelForScoreSource(score.source),
-      aiReasoning: score.reasoning,
+      aiReasoning,
       aiCalibrationApplied: Boolean(score.calibrationApplied),
     },
     { bypassLock: true }

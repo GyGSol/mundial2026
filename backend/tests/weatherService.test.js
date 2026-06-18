@@ -7,6 +7,8 @@ import {
   getVenueWeatherForStadium,
   formatWeatherForPrompt,
   buildMatchWeatherPredictionContext,
+  formatWeatherSnapshotLine,
+  buildVenueWeatherContextForPrediction,
 } from '../src/services/weatherService.js';
 
 describe('stadiumCoordinates', () => {
@@ -67,5 +69,82 @@ describe('weatherService', () => {
     expect(calledUrl).toContain('start_date=2026-06-15');
     expect(calledUrl).not.toContain('forecast_days');
     expect(mockFetch).toHaveBeenCalledOnce();
+  });
+
+  it('formatea línea de clima para razonamiento IA', () => {
+    const line = formatWeatherSnapshotLine({
+      description: 'Lluvia moderada',
+      temperatureC: 14.6,
+      humidityPct: 98,
+      windKmh: 14,
+      precipitationPct: 35,
+    });
+    expect(line).toContain('lluvia moderada');
+    expect(line).toContain('14.6°C');
+    expect(line).toContain('humedad 98%');
+    expect(line).toContain('viento 14 km/h');
+    expect(line).toContain('35% lluvia');
+  });
+
+  it('arma bloque sedeYClima con prioridad kickoff para próximo partido', () => {
+    const weather = {
+      available: true,
+      locationLine: 'Toronto, Ontario',
+      current: {
+        description: 'Llovizna ligera',
+        temperatureC: 20,
+        humidityPct: 66,
+        windKmh: 4,
+      },
+      kickoffForecast: {
+        atLocal: 'jue 19 jun, 19:00',
+        description: 'Lluvia moderada',
+        temperatureC: 14.6,
+        humidityPct: 98,
+        windKmh: 14,
+        precipitationPct: 35,
+      },
+    };
+    const venue = {
+      stadium: { name: 'BMO Field', city: 'Toronto', country: 'Canadá' },
+      kickoffLocal: '19:00h local',
+    };
+    const block = buildVenueWeatherContextForPrediction(venue, weather, {
+      matchStatus: 'upcoming',
+    });
+    expect(block.disponible).toBe(true);
+    expect(block.prioridadClima).toBe('kickoff');
+    expect(block.resumenLinea).toMatch(/^Estadio: BMO Field/);
+    expect(block.resumenLinea).toContain('Clima:');
+    expect(block.resumenLinea).toContain('lluvia moderada');
+    expect(block.climaActualEnSede?.linea).toContain('llovizna ligera');
+    expect(block.pronosticoAlKickoff?.linea).toContain('14.6°C');
+  });
+
+  it('prioriza clima actual en partido en vivo', () => {
+    const weather = {
+      available: true,
+      locationLine: 'Ciudad de México',
+      current: {
+        description: 'Llovizna ligera',
+        temperatureC: 20,
+        humidityPct: 66,
+        windKmh: 4,
+      },
+      kickoffForecast: {
+        description: 'Nublado',
+        temperatureC: 16,
+        humidityPct: 88,
+        windKmh: 3,
+      },
+    };
+    const venue = {
+      stadium: { name: 'Estadio Azteca', city: 'Ciudad de México' },
+    };
+    const block = buildVenueWeatherContextForPrediction(venue, weather, {
+      matchStatus: 'live',
+    });
+    expect(block.prioridadClima).toBe('actual_en_sede');
+    expect(block.resumenLinea).toContain('llovizna ligera');
   });
 });

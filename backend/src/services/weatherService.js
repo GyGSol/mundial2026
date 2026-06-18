@@ -173,7 +173,7 @@ async function fetchOpenMeteo({ latitude, longitude, timezone, kickoffAt }, { fe
 
 export async function getVenueWeatherForStadium(
   stadium,
-  { kickoffAt = null, fetchImpl = fetch } = {}
+  { kickoffAt = null, fetchImpl = fetch, fresh = false } = {}
 ) {
   const coordinates = resolveStadiumCoordinates(stadium);
   if (!coordinates) {
@@ -186,8 +186,10 @@ export async function getVenueWeatherForStadium(
 
   const timezone = stadium?.timezone || resolveStadiumTimezone(stadium) || 'UTC';
   const key = cacheKey(coordinates.latitude, coordinates.longitude, kickoffAt, timezone);
-  const cached = readCache(key);
-  if (cached) return cached;
+  if (!fresh) {
+    const cached = readCache(key);
+    if (cached) return cached;
+  }
 
   try {
     const data = await fetchOpenMeteo(
@@ -306,7 +308,7 @@ export function buildMatchWeatherPredictionContext(weather) {
     source: 'sede-y-clima-open-meteo',
     authoritativeForPrediction: true,
     instruction:
-      'OBLIGATORIO: usá venue.matchWeather.kickoffForecast como clima real del partido. No sustituyas por estimaciones genéricas de junio-julio, clima típico de la ciudad ni morale.venueClimate heurístico.',
+      'OBLIGATORIO: usá sedeYClima (clima actual + pronóstico al kickoff, Open-Meteo). En vivo priorizá currentAtVenue; próximo partido priorizá kickoffForecast. No sustituyas por clima típico de la ciudad ni morale.venueClimate heurístico.',
     locationLine: weather.locationLine,
     region: weather.region,
     country: weather.country,
@@ -344,5 +346,99 @@ export function formatWeatherForPrompt(weather) {
     current: weather.current,
     kickoffForecast: weather.kickoffForecast,
     fetchedAt: weather.fetchedAt,
+  };
+}
+
+/** Línea legible tipo panel Predicciones: "lluvia moderada, 14°C, humedad 98%, viento 14 km/h". */
+export function formatWeatherSnapshotLine(snapshot) {
+  if (!snapshot || snapshot.available === false) return null;
+  const parts = [];
+  if (snapshot.description) parts.push(String(snapshot.description).toLowerCase());
+  if (snapshot.temperatureC != null && Number.isFinite(Number(snapshot.temperatureC))) {
+    const temp = Number(snapshot.temperatureC);
+    parts.push(`${Number.isInteger(temp) ? temp : temp.toFixed(1)}°C`);
+  }
+  if (snapshot.humidityPct != null && Number.isFinite(Number(snapshot.humidityPct))) {
+    parts.push(`humedad ${Math.round(Number(snapshot.humidityPct))}%`);
+  }
+  if (snapshot.windKmh != null && Number.isFinite(Number(snapshot.windKmh))) {
+    parts.push(`viento ${Math.round(Number(snapshot.windKmh))} km/h`);
+  }
+  if (snapshot.precipitationPct != null && Number.isFinite(Number(snapshot.precipitationPct))) {
+    parts.push(`${Math.round(Number(snapshot.precipitationPct))}% lluvia`);
+  }
+  return parts.length ? parts.join(', ') : null;
+}
+
+function formatKickoffLocalLabel(venue, weather) {
+  return (
+    venue?.kickoffLocal ??
+    weather?.kickoffForecast?.atLocal ??
+    null
+  );
+}
+
+/**
+ * Bloque sede+clima para contexto IA (mismo criterio que panel Predicciones).
+ * En vivo prioriza clima actual; próximo partido prioriza pronóstico al kickoff.
+ */
+export function buildVenueWeatherContextForPrediction(venue, weather, { matchStatus } = {}) {
+  const stadium = venue?.stadium ?? null;
+  const locationParts = [
+    stadium?.name ?? stadium?.nameEn ?? null,
+    weather?.locationLine ??
+      [stadium?.city, stadium?.country].filter(Boolean).join(', ') ??
+      null,
+  ].filter(Boolean);
+  const kickoffLabel = formatKickoffLocalLabel(venue, weather);
+  const estadioLine =
+    locationParts.length > 0
+      ? `${locationParts.join(', ')}${kickoffLabel ? ` (${kickoffLabel})` : ''}`
+      : kickoffLabel
+        ? `(${kickoffLabel})`
+        : null;
+
+  const currentLine = weather?.current ? formatWeatherSnapshotLine(weather.current) : null;
+  const kickoffLine = weather?.kickoffForecast
+    ? formatWeatherSnapshotLine(weather.kickoffForecast)
+    : null;
+
+  const live = matchStatus === 'live';
+  const prioridadClima = live && currentLine ? 'actual_en_sede' : 'kickoff';
+  const climaPrincipal =
+    prioridadClima === 'actual_en_sede' ? currentLine : kickoffLine ?? currentLine;
+
+  let resumenLinea = null;
+  if (estadioLine && climaPrincipal) {
+    resumenLinea = `Estadio: ${estadioLine}. Clima: ${climaPrincipal}.`;
+  } else if (estadioLine) {
+    resumenLinea = `Estadio: ${estadioLine}.`;
+  } else if (climaPrincipal) {
+    resumenLinea = `Clima: ${climaPrincipal}.`;
+  }
+
+  const instruccion =
+    weather?.available === false
+      ? 'Sin datos de clima en sede: no inventes temperatura, humedad ni lluvia.'
+      : live
+        ? 'Partido en vivo: citá el clima actual en la sede (Open-Meteo) como condición real del encuentro.'
+        : 'Partido próximo: citá el pronóstico al kickoff como clima del partido; podés mencionar también el clima actual en la sede.';
+
+  return {
+    disponible: Boolean(weather?.available),
+    estadio: estadioLine,
+    climaActualEnSede: currentLine
+      ? { linea: currentLine, datos: weather.current }
+      : null,
+    pronosticoAlKickoff: kickoffLine
+      ? {
+          linea: kickoffLine,
+          horaLocal: weather.kickoffForecast?.atLocal ?? null,
+          datos: weather.kickoffForecast,
+        }
+      : null,
+    resumenLinea,
+    prioridadClima,
+    instruccion,
   };
 }

@@ -22,6 +22,8 @@ const liveAdjustmentCache = new Map();
 /** Instrucciones exclusivas del esquema Oracle (razonamiento largo + jerarquía de señales). */
 export const ORACLE_REASONING_INSTRUCTIONS = `RAZONAMIENTO ORACLE (campos reasoning y key_variable_impact):
 - "reasoning": explicación COMPLETA en español (mínimo 3 oraciones o 3 viñetas). Markdown ligero permitido (**negritas**, listas).
+- Si sedeYClima.resumenLinea está disponible: incluila al inicio del reasoning (Estadio + Clima en tiempo real, mismo formato que panel Predicciones).
+- En partido en vivo citá sedeYClima.climaActualEnSede; si es próximo, sedeYClima.pronosticoAlKickoff (y opcionalmente clima actual). No inventes clima si sedeYClima.disponible=false.
 - Si mundial2026.lecturaTorneo2026 indica primer partido o PJ=0: decilo explícitamente. PROHIBIDO afirmar que "llegan sin anotar en fase de grupos" o que "empataron sin goles" si aún no jugaron en 2026.
 - Con primer partido del grupo, citá al menos DOS señales de: historialReciente.preTorneo, clasificacionYMundiales, enfrentamientosDirectosHistoricos, worldCupHistory/wikiRecords, plantilla o clima de sede.
 - Si ya hay PJ>0 en 2026, citá forma/goles/tabla/H2H del torneo actual.

@@ -162,8 +162,9 @@ const COMPETITOR_CONTEXT_PRIORITY_GUIDE = {
     '2) Si es primer partido en el grupo 2026: historial pre-torneo, clasificación, mundiales previos y H2H históricos',
     '3) Aprendizaje reciente (calibracionReciente) para corregir sesgos de Gdif',
     '4) Plantilla y disponibilidad (lesiones, titulares, duelos por puesto)',
-    '5) Mercado/xG y consenso del grupo (señales de apoyo)',
-    '6) Ranking FIFA (solo desempate fino)',
+    '5) Clima en tiempo real de la sede (sedeYClima: actual + pronóstico al kickoff, Open-Meteo)',
+    '6) Mercado/xG y consenso del grupo (señales de apoyo)',
+    '7) Ranking FIFA (solo desempate fino)',
   ],
   decisionAdaptativa:
     'Ajustá el peso de cada bloque según calibracionReciente: si el error combinado es alto o hay sesgo de goles local/visitante, priorizá mundial2026 y plantilla; reducí confianza en xG/mercado o historial lejano hasta corregir el sesgo.',
@@ -250,6 +251,7 @@ export function humanizeCompetitorPromptContext(context) {
       ...COMPETITOR_CONTEXT_PRIORITY_GUIDE,
       calibracionReciente: calibracionReciente ?? null,
     },
+    sedeYClima: venue?.sedeYClima ?? venue?.matchWeather?.sedeYClima ?? null,
     partido: {
       matchExternalId,
       phase,
