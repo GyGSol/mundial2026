@@ -44,8 +44,8 @@ export async function listPredictionsMatches({ status, group }, userId) {
   const recentFinishedEligible = filterEligibleRecentFinishedMatches(recentFinishedRaw)
     .map((m) => barById.get(m._id.toString()))
     .filter(Boolean);
-  // Siempre devolver recién finalizados para que el cliente pueda ocultarlos del listado
-  // aunque haya partido en vivo (la barra los filtra en PredictionsPage).
+  // Siempre devolver recién finalizados para ocultarlos del listado duplicado en predicciones
+  // (la UI destacada los filtra cuando hay partido en vivo).
   const recentFinishedMatches = recentFinishedEligible;
 
   return {

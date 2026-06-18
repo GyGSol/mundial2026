@@ -1,6 +1,6 @@
 import { POST_FINISH_GRACE_MS, isRecentlyFinishedMatch } from './recentFinishedMatches.js';
 
-/** IDs de partidos mostrados en la barra destacada (evitar duplicados en listados). */
+/** IDs de partidos destacados en predicciones (evitar duplicados en el listado). */
 export function matchBarFeaturedIds({ liveMatches = [], recentFinishedMatches = [] } = {}) {
   const hasLive = (liveMatches?.length ?? 0) > 0;
   const barMatches = hasLive ? liveMatches : [...liveMatches, ...recentFinishedMatches];
@@ -8,8 +8,8 @@ export function matchBarFeaturedIds({ liveMatches = [], recentFinishedMatches = 
 }
 
 /**
- * Ocultar del listado de predicciones:
- * - en vivo (van en la barra)
+ * Ocultar del listado de predicciones los partidos ya mostrados arriba (destacados):
+ * - en vivo
  * - recién finalizados en gracia de 30 min (si hay live, no se muestran en ningún lado)
  */
 export function predictionsListExcludeIds({
@@ -38,7 +38,7 @@ export function predictionsListExcludeIds({
   return ids;
 }
 
-/** ¿Sigue activo el poll de predicciones por partidos en barra? */
+/** ¿Sigue activo el poll de predicciones por partidos en vivo o recién finalizados? */
 export function shouldPollPredictionsBar(payload) {
   return (
     (payload?.liveMatches?.length ?? 0) > 0 ||

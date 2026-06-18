@@ -34,7 +34,6 @@ import { Button } from '@/components/ui/button.jsx';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
-import MatchPredictionScores from '@/components/MatchPredictionScores.jsx';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 
@@ -652,11 +651,13 @@ function ResultMatchCard({ match, variant = 'live' }) {
           homeSubstitutions={match.homeSubstitutions}
           awaySubstitutions={match.awaySubstitutions}
           center={
-            <span className="match-live-score text-lg font-semibold text-muted-foreground">vs</span>
+            <div className="match-live-score flex items-center gap-1 text-xl font-bold tabular-nums">
+              <span>{match.homeScore}</span>
+              <span className="text-muted-foreground">-</span>
+              <span>{match.awayScore}</span>
+            </div>
           }
         />
-
-        <MatchPredictionScores match={match} showPoints={variant === 'finished'} />
 
         <span className="match-live-text-meta text-[11px] text-muted-foreground">
           Grupo {match.group} · {matchDateLabel(match)}
@@ -727,11 +728,13 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             homeSubstitutions={match.homeSubstitutions}
             awaySubstitutions={match.awaySubstitutions}
             center={
-              <span className="match-live-score text-lg font-semibold text-muted-foreground">vs</span>
+              <div className="match-live-score flex items-center gap-1 text-xl font-bold tabular-nums">
+                <span>{match.homeScore}</span>
+                <span className="text-muted-foreground">-</span>
+                <span>{match.awayScore}</span>
+              </div>
             }
           />
-
-          <MatchPredictionScores match={match} showPoints={variant === 'finished'} />
 
           <MatchTimeline events={match.matchTimeline} />
         </div>

@@ -21,8 +21,7 @@ import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import PushOptInBanner from '@/components/PushOptInBanner.jsx';
 import { predictionsListExcludeIds, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
-
-const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
+import PredictionsFeaturedMatches from '../components/PredictionsFeaturedMatches.jsx';
 
 const PredictedGroupStandingsSection = lazy(
   () => import('../components/PredictedGroupStandingsSection.jsx')
@@ -135,7 +134,8 @@ export default function PredictionsPage() {
     recentFinishedMatches: barRecentFinishedMatches,
     allMatches: matches,
   });
-  const barRecentForDisplay = barLiveMatches.length > 0 ? [] : barRecentFinishedMatches;
+  const featuredRecentFinished =
+    barLiveMatches.length > 0 ? [] : barRecentFinishedMatches;
   const standingsGroups = standingsData?.groups ?? [];
   const updatedAt = activeView === 'standings' ? standingsLastUpdated : lastUpdated;
 
@@ -282,13 +282,16 @@ export default function PredictionsPage() {
             </p>
           ) : null}
 
-          {!loading && (barLiveMatches.length > 0 || barRecentForDisplay.length > 0) ? (
-            <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
-              <LiveMatchesBar
-                matches={barLiveMatches}
-                recentFinishedMatches={barRecentForDisplay}
-              />
-            </Suspense>
+          {!loading && (barLiveMatches.length > 0 || featuredRecentFinished.length > 0) ? (
+            <PredictionsFeaturedMatches
+              liveMatches={barLiveMatches}
+              recentFinishedMatches={featuredRecentFinished}
+              focusMatchId={focusMatchId}
+              onSave={handleSave}
+              savingId={savingId}
+              isScheduled={isScheduled}
+              onScheduled={markScheduled}
+            />
           ) : null}
 
           <PredictionsMatchList
