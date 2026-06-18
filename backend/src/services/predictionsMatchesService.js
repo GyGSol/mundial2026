@@ -4,17 +4,47 @@ import {
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
 import { sortMatchesBySchedule } from './matchSortService.js';
+import {
+  findLiveMatchesQueryWithGroup,
+  findRecentlyFinishedMatchesQueryWithGroup,
+} from './matchDisplayVisibilityService.js';
 
 export async function listPredictionsMatches({ status, group }, userId) {
   const filter = {};
   if (status) filter.status = status;
   if (group) filter.group = group;
 
-  const matches = sortMatchesBySchedule(
-    await Match.find(filter).select('-raw').lean()
-  );
-  await prepareFifaShirtMapsForMatches(matches);
-  const enriched = await enrichMatchesForPredictions(matches, userId);
+  const barGroup = group || undefined;
 
-  return { matches: enriched, total: enriched.length };
+  const [matches, liveRaw, recentFinishedRaw] = await Promise.all([
+    sortMatchesBySchedule(
+      await Match.find(filter).select('-raw').lean()
+    ),
+    Match.find(findLiveMatchesQueryWithGroup(barGroup))
+      .select('-raw')
+      .sort({ kickoffAt: 1, externalId: 1 })
+      .lean(),
+    Match.find(findRecentlyFinishedMatchesQueryWithGroup(barGroup))
+      .select('-raw')
+      .sort({ finishedAt: -1, kickoffAt: -1 })
+      .lean(),
+  ]);
+
+  const barMatches = [...liveRaw, ...recentFinishedRaw];
+  await prepareFifaShirtMapsForMatches([...matches, ...barMatches]);
+  const enriched = await enrichMatchesForPredictions(matches, userId);
+  const enrichedBar = await enrichMatchesForPredictions(barMatches, userId);
+  const barById = new Map(enrichedBar.map((m) => [m.id, m]));
+
+  const liveMatches = liveRaw.map((m) => barById.get(m._id.toString())).filter(Boolean);
+  const recentFinishedMatches = recentFinishedRaw
+    .map((m) => barById.get(m._id.toString()))
+    .filter(Boolean);
+
+  return {
+    matches: enriched,
+    total: enriched.length,
+    liveMatches,
+    recentFinishedMatches,
+  };
 }

@@ -129,6 +129,7 @@ export async function enrichMatches(matches, userId, options = {}) {
       knockoutPhase: phaseFields.knockoutPhase,
       knockoutPhaseKey: phaseFields.knockoutPhaseKey,
       status: m.status,
+      finishedAt: m.finishedAt?.toISOString?.() ?? null,
       kickoffAt: displayKickoff,
       scheduleKickoffAt: scheduleKickoff?.toISOString?.() ?? null,
       kickoffTimezone: m.kickoffTimezone || stadiumMap[m.stadiumId]?.timezone || null,

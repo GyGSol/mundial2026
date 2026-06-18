@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
+import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 
 const matchDateLabel = (match) =>
   formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
@@ -762,6 +763,31 @@ function LiveMatchCard({ match }) {
   return <TimelineMatchCard match={match} variant="live" />;
 }
 
+function FinishedMatchCard({ match }) {
+  return <TimelineMatchCard match={match} variant="finished" />;
+}
+
+function FeaturedMatchCard({ match }) {
+  if (match.status === 'finished') {
+    return <FinishedMatchCard match={match} />;
+  }
+  return <LiveMatchCard match={match} />;
+}
+
+function FeaturedMatchesGrid({ liveMatches, recentFinishedMatches }) {
+  const featured = [...liveMatches, ...recentFinishedMatches];
+  if (!featured.length) return null;
+  return (
+    <div className={cn('grid w-full gap-4', matchBarGridClass(featured.length))}>
+      {featured.map((match) => (
+        <div key={match.id} className="min-w-0">
+          <FeaturedMatchCard match={match} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function PredictionClosedDialog({ match, open, onOpenChange }) {
   const dialogRef = useRef(null);
   const homeName = match.homeTeam?.nameEn || 'Local';
@@ -935,19 +961,33 @@ function MatchColumn({ title, children }) {
 
 export default function LiveMatchesBar({
   matches = [],
+  recentFinishedMatches = [],
   nextMatches = [],
 }) {
   const hasLive = matches.length > 0;
+  const hasRecentFinished = recentFinishedMatches.length > 0;
+  const hasFeatured = hasLive || hasRecentFinished;
   const hasNext = nextMatches.length > 0;
+  const featuredTitle =
+    hasLive && hasRecentFinished
+      ? 'Partidos en curso y recién finalizados'
+      : hasLive
+        ? matches.length > 1
+          ? 'Partidos en curso'
+          : 'Partido en curso'
+        : recentFinishedMatches.length > 1
+          ? 'Partidos recién finalizados'
+          : 'Partido recién finalizado';
 
-  if (hasLive || hasNext) {
+  if (hasFeatured || hasNext) {
     return (
       <div className="mx-auto flex w-full flex-col gap-6">
-        {hasLive ? (
-          <MatchColumn title="Partidos en curso">
-            {matches.map((match) => (
-              <LiveMatchCard key={match.id} match={match} />
-            ))}
+        {hasFeatured ? (
+          <MatchColumn title={featuredTitle}>
+            <FeaturedMatchesGrid
+              liveMatches={matches}
+              recentFinishedMatches={recentFinishedMatches}
+            />
           </MatchColumn>
         ) : null}
 

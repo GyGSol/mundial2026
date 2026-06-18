@@ -14,6 +14,7 @@ import {
 } from './prizePoolService.js';
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
+import { findRecentlyFinishedMatchesQuery } from './matchDisplayVisibilityService.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
 
@@ -57,7 +58,7 @@ export async function getRankingDashboard(groupId, userId) {
     return { notFound: true };
   }
 
-  const [lastSyncAt, liveRaw, upcomingRaw] = await Promise.all([
+  const [lastSyncAt, liveRaw, upcomingRaw, recentFinishedRaw] = await Promise.all([
     getLastSyncAt(),
     Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean(),
     Match.find({ status: 'upcoming' })
@@ -65,14 +66,20 @@ export async function getRankingDashboard(groupId, userId) {
       .sort({ kickoffAt: 1 })
       .limit(UPCOMING_MATCH_LIMIT)
       .lean(),
+    Match.find(findRecentlyFinishedMatchesQuery())
+      .sort({ finishedAt: -1, kickoffAt: -1 })
+      .lean(),
   ]);
 
-  const matchesToEnrich = [...liveRaw, ...upcomingRaw];
+  const matchesToEnrich = [...liveRaw, ...upcomingRaw, ...recentFinishedRaw];
   await prepareFifaShirtMapsForMatches(matchesToEnrich);
   const enriched = await enrichMatchesLight(matchesToEnrich, userId);
   const byId = new Map(enriched.map((m) => [m.id, m]));
 
   const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
+  const recentFinishedMatches = recentFinishedRaw
+    .map((m) => byId.get(m._id.toString()))
+    .filter(Boolean);
 
   if (groupId && groupId !== '__nogroup') {
     await ensureAiCompetitorInGroup(groupId);
@@ -95,9 +102,10 @@ export async function getRankingDashboard(groupId, userId) {
     upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
   );
 
-  const [liveWithStream, nextWithStream] = await Promise.all([
+  const [liveWithStream, nextWithStream, recentFinishedWithStream] = await Promise.all([
     attachStreamMetaToMatches(liveMatches),
     attachStreamMetaToMatches(nextUpcomingMatches),
+    attachStreamMetaToMatches(recentFinishedMatches),
   ]);
 
   let enrichedLeaderboard = leaderboard;
@@ -132,6 +140,7 @@ export async function getRankingDashboard(groupId, userId) {
     prizePool,
     lastSyncAt,
     liveMatches: liveWithStream,
+    recentFinishedMatches: recentFinishedWithStream,
     nextUpcomingMatches: nextWithStream,
   };
 }

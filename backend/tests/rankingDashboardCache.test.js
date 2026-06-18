@@ -58,4 +58,13 @@ describe('rankingDashboardCache', () => {
       })
     ).toBe(15_000);
   });
+
+  it('usa TTL corto con partidos recién finalizados', () => {
+    expect(
+      dashboardCacheTtlMs({
+        liveMatches: [],
+        recentFinishedMatches: [{ id: '1' }],
+      })
+    ).toBe(5_000);
+  });
 });

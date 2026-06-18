@@ -39,6 +39,7 @@ import {
   normalizeWeatherOps,
   serializeWeatherOpsForClient,
 } from './matchWeatherOpsRules.js';
+import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 
 const MIN_USER_PASSWORD_LENGTH = 8;
 
@@ -585,6 +586,8 @@ export async function updateAdminMatch(
     throw error;
   }
 
+  const previousStatus = match.status;
+
   if (homeScore !== undefined) match.homeScore = Number(homeScore);
   if (awayScore !== undefined) match.awayScore = Number(awayScore);
   if (status !== undefined) {
@@ -622,6 +625,15 @@ export async function updateAdminMatch(
   }
   if (weatherOps !== undefined) {
     await applyWeatherOpsToMatch(match, weatherOps);
+  }
+
+  const transitionPatch = {};
+  applyStatusTransitionFields(transitionPatch, {
+    previousStatus,
+    nextStatus: match.status,
+  });
+  if (Object.prototype.hasOwnProperty.call(transitionPatch, 'finishedAt')) {
+    match.finishedAt = transitionPatch.finishedAt;
   }
 
   await match.save();
@@ -700,7 +712,16 @@ export async function updateAdminMatchWeatherOps(matchId, weatherOps) {
     error.status = 404;
     throw error;
   }
+  const previousStatus = match.status;
   await applyWeatherOpsToMatch(match, weatherOps ?? { phase: 'normal' });
+  const transitionPatch = {};
+  applyStatusTransitionFields(transitionPatch, {
+    previousStatus,
+    nextStatus: match.status,
+  });
+  if (Object.prototype.hasOwnProperty.call(transitionPatch, 'finishedAt')) {
+    match.finishedAt = transitionPatch.finishedAt;
+  }
   await match.save();
 
   if (match.status === 'finished' || match.status === 'live') {

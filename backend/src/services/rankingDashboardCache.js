@@ -13,6 +13,7 @@ function dashboardCacheKey(groupId, userId) {
 
 export function dashboardCacheTtlMs(payload) {
   if ((payload?.liveMatches?.length ?? 0) > 0) return LIVE_TTL_MS;
+  if ((payload?.recentFinishedMatches?.length ?? 0) > 0) return LIVE_TTL_MS;
   return DEFAULT_TTL_MS;
 }
 

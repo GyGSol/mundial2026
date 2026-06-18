@@ -30,6 +30,7 @@ import {
   readElapsedToken,
   shouldFinalizeStaleLiveMatch,
 } from './matchStatusRules.js';
+import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 import { latestClockFromTimeline } from './matchLiveData.js';
 import { env } from '../config/env.js';
 import {
@@ -366,6 +367,10 @@ async function upsertMatches() {
       ...merged,
       lastSyncedAt: new Date(),
     };
+    applyStatusTransitionFields(updatePayload, {
+      previousStatus: existing?.status ?? null,
+      nextStatus: merged.status,
+    });
     if (existing?.externalId) {
       updatePayload.externalId = existing.externalId;
     }

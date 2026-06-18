@@ -13,6 +13,8 @@ const matchSchema = new mongoose.Schema(
     stadiumId: String,
     type: { type: String, default: 'group' },
     status: { type: String, enum: ['upcoming', 'live', 'finished'], default: 'upcoming' },
+    /** Pitido final (reloj de pared); usado para mostrar el partido 30 min en ranking/predicciones. */
+    finishedAt: Date,
     /** Puntaje provisional inicializado en 0-0 al pasar a live. */
     liveScoringInitialized: { type: Boolean, default: false },
     kickoffAt: Date,
@@ -51,6 +53,7 @@ const matchSchema = new mongoose.Schema(
 );
 
 matchSchema.index({ status: 1, kickoffAt: 1 });
+matchSchema.index({ status: 1, finishedAt: -1 });
 matchSchema.index({ group: 1, kickoffAt: 1 });
 
 export const Match = mongoose.model('Match', matchSchema);

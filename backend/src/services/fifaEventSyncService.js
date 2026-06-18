@@ -23,6 +23,7 @@ import {
   applyShirtNumbersToTimeline,
   buildShirtLookups,
 } from '../utils/fifaSquadShirtMap.js';
+import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 
 async function loadMatchTeams(match) {
   const [homeTeam, awayTeam] = await Promise.all([
@@ -283,6 +284,10 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
       }
 
       if (matchUpdated) {
+        applyStatusTransitionFields(rawUpdate, {
+          previousStatus: match.status,
+          nextStatus: effectiveStatus,
+        });
         await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
       }
     } catch (err) {

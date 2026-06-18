@@ -81,6 +81,7 @@ function FinishedMatchesCollapsible({
 
 export default function PredictionsMatchList({
   matches,
+  excludeMatchIds,
   focusMatchId,
   onSave,
   savingId,
@@ -88,6 +89,7 @@ export default function PredictionsMatchList({
   onScheduled,
   expandFinished = false,
 }) {
+  const excluded = excludeMatchIds ?? new Set();
   const sections = groupMatchesByPhase(matches);
   const focusIsFinished = Boolean(
     focusMatchId && matches.some((m) => m.id === focusMatchId && m.status === 'finished')
@@ -98,7 +100,9 @@ export default function PredictionsMatchList({
       {sections.map((section) => {
         const sorted = sortByKickoff(section.matches);
         const active = sorted.filter((m) => m.status !== 'finished');
-        const finished = sorted.filter((m) => m.status === 'finished');
+        const finished = sorted.filter(
+          (m) => m.status === 'finished' && !excluded.has(m.id)
+        );
         const showPhaseInHeader = section.key === 'group';
 
         return (

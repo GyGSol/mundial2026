@@ -26,6 +26,7 @@ import {
   readElapsedToken,
   shouldFinalizeStaleLiveMatch,
 } from './matchStatusRules.js';
+import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 
 function matchEvidentlyStartedOnField(match) {
   const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
@@ -246,6 +247,10 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
       status: 'live',
       lastSyncedAt: new Date(),
     };
+    applyStatusTransitionFields(update, {
+      previousStatus: 'finished',
+      nextStatus: 'live',
+    });
     if (badFinished) update['raw.finished'] = 'FALSE';
     if (badElapsed) {
       update['raw.time_elapsed'] = clock ? String(clock).replace(/'+$/, '') : 'live';
@@ -310,15 +315,21 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
 
     if (!shouldFinalize) continue;
 
+    const finalizeUpdate = {
+      status: 'finished',
+      lastSyncedAt: new Date(),
+      'raw.time_elapsed': 'finished',
+      'raw.finished': 'TRUE',
+    };
+    applyStatusTransitionFields(finalizeUpdate, {
+      previousStatus: 'live',
+      nextStatus: 'finished',
+    });
+
     const updated = await Match.findOneAndUpdate(
       { _id: match._id, status: 'live' },
       {
-        $set: {
-          status: 'finished',
-          lastSyncedAt: new Date(),
-          'raw.time_elapsed': 'finished',
-          'raw.finished': 'TRUE',
-        },
+        $set: finalizeUpdate,
       },
       { new: true }
     );

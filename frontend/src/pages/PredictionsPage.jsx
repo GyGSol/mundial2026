@@ -20,6 +20,9 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import PushOptInBanner from '@/components/PushOptInBanner.jsx';
+import { shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
+
+const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
 
 const PredictedGroupStandingsSection = lazy(
   () => import('../components/PredictedGroupStandingsSection.jsx')
@@ -76,7 +79,7 @@ export default function PredictionsPage() {
     groupFilter,
   ], {
     pollIntervalMs: 15000,
-    pollWhen: (payload) => (payload?.matches ?? []).some((m) => m.status === 'live'),
+    pollWhen: shouldPollPredictionsBar,
   });
 
   const {
@@ -125,6 +128,11 @@ export default function PredictionsPage() {
   };
 
   const matches = data?.matches ?? [];
+  const barLiveMatches = data?.liveMatches ?? [];
+  const barRecentFinishedMatches = data?.recentFinishedMatches ?? [];
+  const barFeaturedIds = new Set(
+    [...barLiveMatches, ...barRecentFinishedMatches].map((match) => match.id).filter(Boolean)
+  );
   const standingsGroups = standingsData?.groups ?? [];
   const updatedAt = activeView === 'standings' ? standingsLastUpdated : lastUpdated;
 
@@ -271,8 +279,18 @@ export default function PredictionsPage() {
             </p>
           ) : null}
 
+          {!loading && (barLiveMatches.length > 0 || barRecentFinishedMatches.length > 0) ? (
+            <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
+              <LiveMatchesBar
+                matches={barLiveMatches}
+                recentFinishedMatches={barRecentFinishedMatches}
+              />
+            </Suspense>
+          ) : null}
+
           <PredictionsMatchList
             matches={matches}
+            excludeMatchIds={barFeaturedIds}
             focusMatchId={focusMatchId}
             onSave={handleSave}
             savingId={savingId}
