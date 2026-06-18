@@ -41,9 +41,10 @@ export async function listPredictionsMatches({ status, group }, userId) {
   const barById = new Map(enrichedBar.map((m) => [m.id, m]));
 
   const liveMatches = liveRaw.map((m) => barById.get(m._id.toString())).filter(Boolean);
-  const recentFinishedMatches = filterEligibleRecentFinishedMatches(recentFinishedRaw)
+  const recentFinishedEligible = filterEligibleRecentFinishedMatches(recentFinishedRaw)
     .map((m) => barById.get(m._id.toString()))
     .filter(Boolean);
+  const recentFinishedMatches = liveMatches.length > 0 ? [] : recentFinishedEligible;
 
   return {
     matches: enriched,

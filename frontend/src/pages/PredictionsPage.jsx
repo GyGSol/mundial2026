@@ -133,7 +133,9 @@ export default function PredictionsPage() {
   const listExcludeIds = predictionsListExcludeIds({
     liveMatches: barLiveMatches,
     recentFinishedMatches: barRecentFinishedMatches,
+    allMatches: matches,
   });
+  const barRecentForDisplay = barLiveMatches.length > 0 ? [] : barRecentFinishedMatches;
   const standingsGroups = standingsData?.groups ?? [];
   const updatedAt = activeView === 'standings' ? standingsLastUpdated : lastUpdated;
 
@@ -280,11 +282,11 @@ export default function PredictionsPage() {
             </p>
           ) : null}
 
-          {!loading && (barLiveMatches.length > 0 || barRecentFinishedMatches.length > 0) ? (
+          {!loading && (barLiveMatches.length > 0 || barRecentForDisplay.length > 0) ? (
             <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
               <LiveMatchesBar
                 matches={barLiveMatches}
-                recentFinishedMatches={barRecentFinishedMatches}
+                recentFinishedMatches={barRecentForDisplay}
               />
             </Suspense>
           ) : null}
