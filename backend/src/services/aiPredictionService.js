@@ -93,7 +93,8 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - Para el clima del partido usá EXCLUSIVAMENTE venue.matchWeather (panel Sede y clima, Open-Meteo). Si status=ok, el pronóstico al kickoff es la fuente autoritativa: temperatura, humedad, viento y lluvia del horario del partido.
 - NO estimes ni inventes clima cuando venue.matchWeather.status=ok. NO uses clima típico de junio-julio ni reemplaces por morale.venueClimate heurístico si hay kickoffForecast.
 - El factor sede aplica por ubicación del estadio (desplazamiento, aclimatación, calor, altura), no por quién figura como "local" en el fixture.
-- Usá ranking FIFA, resultados previos del torneo 2026, poder ofensivo/defensivo, historial en Mundiales y enfrentamientos directos del contexto cuando estén disponibles.
+- Usá ranking FIFA, resultados previos del torneo 2026 (solo si PJ>0), poder ofensivo/defensivo, historial en Mundiales, clasificación pre-torneo y enfrentamientos directos históricos del contexto cuando estén disponibles.
+- Si torneo2026.esPrimerPartidoEnMundial2026 o partidosJugados=0: es el DEBUT o primer partido de esa selección en esta Copa; NO digas que "llegan sin anotar" ni que "empataron sin goles" en el grupo. En ese caso priorizá historialReciente.preTorneo, clasificacionYMundiales y worldCupHistory.
 - Usá nationContext: historial Wikipedia (wikiRecords, finalHighlights), población, liga doméstica, talentPoolIndex y factores anímicos (morale).
 - Usá análisisPlantilla (o squadAnalysis en contexto crudo): titulares probables, lesionados, en duda, suspendidos y riesgo de tarjetas.
 - Usá duelosPorPuesto (o positionMatchups): compará portería, defensa, mediocampo y delantera para ponderar el marcador.
@@ -108,7 +109,7 @@ export const AI_COMPETITOR_SCORING_INSTRUCTIONS = `OBJETIVO — Maximizar puntos
 4. En eliminatorias: predicción = resultado a 90 minutos (sin penales). Empate es válido.
 
 PRIORIDAD DE CONTEXTO (lee guiaPrioridadContexto primero):
-- Ponderá PRIMERO mundial2026: forma, goles, tabla, stakes y H2H de ESTA Copa. Si un equipo ya jugó en el torneo, eso pesa más que ranking FIFA o historial lejano.
+- Ponderá PRIMERO mundial2026: forma, goles, tabla, stakes y H2H de ESTA Copa — pero SOLO cuando partidosJugados>0. Si es primer partido del grupo en 2026, usá historial pre-torneo, clasificación y mundiales previos antes que inventar forma en el torneo.
 - Usá guiaPrioridadContexto.calibracionReciente para ADAPTAR pesos: si hay sesgo de goles o error combinado alto, confiá más en tendencias del torneo y menos en señales externas o marcadores altos.
 - plantillaYDisponibilidad (lesiones, titulares) modula el marcador cuando cambia el XI real.
 - senalesExternasYGrupo (mercado/xG, consenso) son apoyo; no copies al grupo ni dejes que xG pise un patrón claro del torneo salvo que la calibración indique sesgo contrario.
@@ -403,17 +404,14 @@ export async function buildPromptContext(match, aiUserId, { adminOnDemand = fals
   });
 
   const venueBase = buildVenueContextForPrompt(match, stadium);
-  const venue = adminOnDemand
-    ? venueBase
-    : await enrichVenueWithWeather(venueBase, match, stadium, { fetchImpl });
-  const weatherRaw = adminOnDemand
-    ? null
-    : await getVenueWeatherForStadium(stadium, { kickoffAt: match.kickoffAt, fetchImpl });
-  const weatherRisk = adminOnDemand
-    ? formatWeatherRiskForClient(null)
-    : formatWeatherRiskForClient(
-        await assessVenueWeatherRisk(stadium, { weather: weatherRaw, kickoffAt: match.kickoffAt })
-      );
+  const weatherRaw = await getVenueWeatherForStadium(stadium, {
+    kickoffAt: match.kickoffAt,
+    fetchImpl,
+  });
+  const venue = await enrichVenueWithWeather(venueBase, match, stadium, { fetchImpl });
+  const weatherRisk = formatWeatherRiskForClient(
+    await assessVenueWeatherRisk(stadium, { weather: weatherRaw, kickoffAt: match.kickoffAt })
+  );
   const liveScheduleContext = buildLiveScheduleContext(match, allMatches);
 
   const enriched = adminOnDemand
@@ -471,6 +469,7 @@ export async function prepareCompetitorMatchPrefetch(
     !adminOnDemand && Number.isFinite(kickoffMs) && kickoffMs - Date.now() < 2 * 60 * 60 * 1000;
 
   if (adminOnDemand) {
+    await fetchExternalMatchIntel(match, { force: false, fetchImpl }).catch(() => null);
     return;
   }
 
@@ -490,23 +489,7 @@ export async function buildAiCompetitorPredictionContext(
   aiUserId,
   { adminOnDemand = false, fetchImpl = fetch } = {}
 ) {
-  if (adminOnDemand) {
-    const [base, calibrationStats] = await Promise.all([
-      buildPromptContext(match, aiUserId, { adminOnDemand: true, fetchImpl }),
-      loadAiCalibrationStats(aiUserId),
-    ]);
-    const externalIntel = match.raw?.externalIntel ?? null;
-    return {
-      ...base,
-      mercadoYxG: formatExternalIntelForPrompt(externalIntel),
-      externalIntel,
-      calibracionReciente: buildCalibrationPromptBlock(calibrationStats),
-      _calibrationStats: calibrationStats,
-      _lightContext: true,
-    };
-  }
-
-  const base = await buildPromptContext(match, aiUserId);
+  const base = await buildPromptContext(match, aiUserId, { adminOnDemand, fetchImpl });
 
   const [homeTeam, awayTeam, allMatches, teams] = await Promise.all([
     Team.findOne({ externalId: match.homeTeamId }).lean(),
@@ -560,7 +543,7 @@ export async function buildAiCompetitorPredictionContext(
     buildPrizeRaceContext(aiUserId, focusGroupId),
     loadAiCalibrationStats(aiUserId),
     adminOnDemand
-      ? (match.raw?.externalIntel ?? null)
+      ? fetchExternalMatchIntel(match, { force: true, fetchImpl }).catch(() => match.raw?.externalIntel ?? null)
       : fetchExternalMatchIntel(match, { fetchImpl }),
   ]);
 

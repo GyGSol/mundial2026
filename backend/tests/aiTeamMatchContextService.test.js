@@ -106,6 +106,13 @@ describe('aiTeamMatchContextService', () => {
       expect(power.offensive.tier).toBe(classifyOffensivePower(1.5));
       expect(power.defensive.tier).toBe(classifyDefensivePower(0.5));
     });
+
+    it('no infiere poder desde 0 PJ', () => {
+      const power = buildPowerMetricsFromStats({ played: 0, goalsFor: 0, goalsAgainst: 0 });
+      expect(power.muestraInsuficiente).toBe(true);
+      expect(power.offensive.tier).toBe('sin_datos');
+      expect(power.defensive.tier).toBe('sin_datos');
+    });
   });
 
   describe('buildWorldCupPedigree', () => {

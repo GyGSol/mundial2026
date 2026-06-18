@@ -158,15 +158,45 @@ export function humanizePromptContext(context) {
 
 const COMPETITOR_CONTEXT_PRIORITY_GUIDE = {
   ordenPorDefecto: [
-    '1) Rendimiento en Mundial 2026 (forma, goles, tabla, stakes, H2H de esta Copa)',
-    '2) Aprendizaje reciente (calibracionReciente) para corregir sesgos de Gdif',
-    '3) Plantilla y disponibilidad (lesiones, titulares, duelos por puesto)',
-    '4) Mercado/xG y consenso del grupo (señales de apoyo)',
-    '5) Ranking FIFA e historial pre-torneo (solo si hay pocos PJ en 2026)',
+    '1) Rendimiento en Mundial 2026 (forma, goles, tabla, stakes, H2H de esta Copa) — solo si partidosJugados>0',
+    '2) Si es primer partido en el grupo 2026: historial pre-torneo, clasificación, mundiales previos y H2H históricos',
+    '3) Aprendizaje reciente (calibracionReciente) para corregir sesgos de Gdif',
+    '4) Plantilla y disponibilidad (lesiones, titulares, duelos por puesto)',
+    '5) Mercado/xG y consenso del grupo (señales de apoyo)',
+    '6) Ranking FIFA (solo desempate fino)',
   ],
   decisionAdaptativa:
     'Ajustá el peso de cada bloque según calibracionReciente: si el error combinado es alto o hay sesgo de goles local/visitante, priorizá mundial2026 y plantilla; reducí confianza en xG/mercado o historial lejano hasta corregir el sesgo.',
 };
+
+function buildTorneo2026ReadingGuide(equipoLocal, equipoVisitante, tablaGrupo, historialDetallado) {
+  const localPj =
+    equipoLocal?.tournament2026?.played ??
+    equipoLocal?.groupStanding?.played ??
+    historialDetallado?.local?.torneo2026?.partidosJugados ??
+    0;
+  const awayPj =
+    equipoVisitante?.tournament2026?.played ??
+    equipoVisitante?.groupStanding?.played ??
+    historialDetallado?.visitante?.torneo2026?.partidosJugados ??
+    0;
+  const grupoSinPartidos =
+    Array.isArray(tablaGrupo) && tablaGrupo.length > 0
+      ? tablaGrupo.every((row) => Number(row.played ?? 0) === 0)
+      : localPj === 0 && awayPj === 0;
+
+  return {
+    localPrimerPartido2026: Number(localPj) <= 0,
+    visitantePrimerPartido2026: Number(awayPj) <= 0,
+    grupoSinPartidosJugados: grupoSinPartidos,
+    reglasLectura: [
+      'Si partidosJugados=0 o esPrimerPartidoEnMundial2026: NO describir al equipo como si ya hubiera jugado partidos cerrados en el grupo.',
+      'Con PJ=0, 0 GF y 0 GC significan tabla inicial, no racha de empates sin goles.',
+      'En primer partido del grupo, citá historialReciente.preTorneo, clasificacionYMundiales y enfrentamientosDirectosHistoricos.',
+      'No inventes puntos en tabla ni posiciones por rendimiento en 2026 si nadie del grupo jugó aún.',
+    ],
+  };
+}
 
 /**
  * Contexto del competidor IA con torneo 2026 primero; calibración guía pesos adaptativos.
@@ -232,6 +262,12 @@ export function humanizeCompetitorPromptContext(context) {
       liveScheduleContext,
     },
     mundial2026: {
+      lecturaTorneo2026: buildTorneo2026ReadingGuide(
+        equipoLocal,
+        equipoVisitante,
+        groupStandings ?? [],
+        historialReciente ?? null
+      ),
       equipoLocal,
       equipoVisitante,
       historialDetallado: historialReciente ?? null,

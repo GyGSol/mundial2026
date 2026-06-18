@@ -145,21 +145,40 @@ export function buildPowerMetricsFromStats(stats) {
   const played = stats?.played ?? 0;
   const goalsFor = stats?.goalsFor ?? 0;
   const goalsAgainst = stats?.goalsAgainst ?? 0;
-  const goalsPerGame = played > 0 ? Number((goalsFor / played).toFixed(2)) : null;
-  const concededPerGame = played > 0 ? Number((goalsAgainst / played).toFixed(2)) : null;
+  if (played <= 0) {
+    return {
+      offensive: {
+        goalsFor: null,
+        goalsPerGame: null,
+        tier: 'sin_datos',
+      },
+      defensive: {
+        goalsAgainst: null,
+        concededPerGame: null,
+        cleanSheets: stats?.cleanSheets ?? 0,
+        tier: 'sin_datos',
+      },
+      muestraInsuficiente: true,
+      nota: 'Sin partidos jugados en el torneo; no inferir poder ofensivo/defensivo desde 0 GF/0 GC.',
+    };
+  }
+
+  const goalsPerGame = Number((goalsFor / played).toFixed(2));
+  const concededPerGame = Number((goalsAgainst / played).toFixed(2));
 
   return {
     offensive: {
       goalsFor,
       goalsPerGame,
-      tier: goalsPerGame == null ? 'sin_datos' : classifyOffensivePower(goalsPerGame),
+      tier: classifyOffensivePower(goalsPerGame),
     },
     defensive: {
       goalsAgainst,
       concededPerGame,
       cleanSheets: stats?.cleanSheets ?? 0,
-      tier: concededPerGame == null ? 'sin_datos' : classifyDefensivePower(concededPerGame),
+      tier: classifyDefensivePower(concededPerGame),
     },
+    muestraInsuficiente: false,
   };
 }
 
@@ -284,6 +303,8 @@ export function buildTeamMatchAnalysis(
   });
 
   const standingPlayed = Number(standingRow?.played ?? 0);
+  const tournamentPlayed = Number(tournamentStats.played ?? 0);
+  const esPrimerPartidoEnMundial2026 = standingPlayed <= 0 && tournamentPlayed <= 0;
   const statsForPower =
     standingPlayed > 0
       ? {
@@ -333,6 +354,10 @@ export function buildTeamMatchAnalysis(
       losses: tournamentStats.losses,
       form: form || null,
       recentResults,
+      esPrimerPartidoEnMundial2026,
+      advertenciaLectura: esPrimerPartidoEnMundial2026
+        ? 'Aún no disputó partidos en el Mundial 2026. PJ=0 y 0 GF/0 GC NO significan partidos cerrados previos en esta Copa.'
+        : null,
     },
     power,
     worldCupHistory: pedigree,

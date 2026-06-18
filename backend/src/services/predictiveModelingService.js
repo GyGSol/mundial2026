@@ -22,11 +22,12 @@ const liveAdjustmentCache = new Map();
 /** Instrucciones exclusivas del esquema Oracle (razonamiento largo + jerarquía de señales). */
 export const ORACLE_REASONING_INSTRUCTIONS = `RAZONAMIENTO ORACLE (campos reasoning y key_variable_impact):
 - "reasoning": explicación COMPLETA en español (mínimo 3 oraciones o 3 viñetas). Markdown ligero permitido (**negritas**, listas).
-- Citá al menos DOS señales del torneo 2026 cuando existan: forma/goles en esta Copa, tabla del grupo, H2H en mundial2026, plantilla/lesiones, clima de la sede al kickoff, mercado/xG o consenso como apoyo.
-- El ranking FIFA NO puede ser el factor principal ni la única justificación. Usalo solo como desempate fino o si ningún equipo jugó aún en el torneo.
-- Si mencionás ranking FIFA, explicá por qué la evidencia del Mundial 2026 no alcanza o cómo el torneo confirma/contradice ese dato.
-- "key_variable_impact": UNA frase con el factor más determinante que NO sea solo "ranking FIFA". Priorizá: forma en 2026, goles a favor/en contra en el torneo, necesidad de puntos, bajas clave, clima/sede, H2H del mundial.
-- El marcador debe seguir la jerarquía de guiaPrioridadContexto: mundial2026 > plantilla > señales externas > referencia pre-torneo.`;
+- Si mundial2026.lecturaTorneo2026 indica primer partido o PJ=0: decilo explícitamente. PROHIBIDO afirmar que "llegan sin anotar en fase de grupos" o que "empataron sin goles" si aún no jugaron en 2026.
+- Con primer partido del grupo, citá al menos DOS señales de: historialReciente.preTorneo, clasificacionYMundiales, enfrentamientosDirectosHistoricos, worldCupHistory/wikiRecords, plantilla o clima de sede.
+- Si ya hay PJ>0 en 2026, citá forma/goles/tabla/H2H del torneo actual.
+- El ranking FIFA NO puede ser el factor principal ni la única justificación. Usalo solo como desempate fino.
+- "key_variable_impact": UNA frase con el factor más determinante que NO sea solo "ranking FIFA".
+- El marcador debe seguir guiaPrioridadContexto; con PJ=0 priorizá pre-torneo y clasificación, no inventes puntos o posiciones en tabla 2026.`;
 
 let cerebrasClient = null;
 

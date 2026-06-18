@@ -1,8 +1,71 @@
 import { Player } from '../models/Player.js';
+import { getNationProfile } from './nationFootballProfileService.js';
 import {
   aggregateTournamentStats,
   buildRecentTournamentResults,
 } from './aiTeamMatchContextService.js';
+
+function normalizeTeamToken(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function opponentMatchesTeam(opponentName, team) {
+  const opp = normalizeTeamToken(opponentName);
+  if (!opp) return false;
+  const tokens = [team?.nameEn, team?.nameEs, team?.fifaCode, team?.externalId]
+    .filter(Boolean)
+    .map(normalizeTeamToken);
+  return tokens.some((token) => opp.includes(token) || token.includes(opp));
+}
+
+export async function buildQualificationContextForTeam(team) {
+  if (!team?.fifaCode) return null;
+  const profile = await getNationProfile(team.fifaCode);
+  if (!profile) return null;
+  return {
+    code: team.fifaCode,
+    nombre: profile.name ?? team.nameEn ?? team.fifaCode,
+    participacionesMundial: profile.worldCupAppearances ?? null,
+    mejorResultadoHistorico: profile.worldCupBestFinish ?? null,
+    notaHistoricaYClasificacion: profile.wikiNote ?? null,
+  };
+}
+
+export function extractHistoricalH2HFromPreTournament(homeCtx, awayCtx, homeTeam, awayTeam) {
+  const meetings = [];
+  const pushMeeting = (row, perspective) => {
+    if (!row?.fecha && !row?.rival) return;
+    meetings.push({
+      fecha: row.fecha ?? null,
+      rival: row.rival ?? null,
+      resultado: row.resultado ?? null,
+      competicion: row.competicion ?? null,
+      perspectiva: perspective,
+    });
+  };
+
+  for (const row of homeCtx?.preTorneo ?? []) {
+    if (opponentMatchesTeam(row.rival, awayTeam)) pushMeeting(row, homeTeam.fifaCode ?? 'local');
+  }
+  for (const row of awayCtx?.preTorneo ?? []) {
+    if (opponentMatchesTeam(row.rival, homeTeam)) pushMeeting(row, awayTeam.fifaCode ?? 'visitante');
+  }
+
+  const seen = new Set();
+  return meetings
+    .filter((row) => {
+      const key = `${row.fecha ?? ''}|${row.resultado ?? ''}|${row.perspectiva ?? ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => String(b.fecha ?? '').localeCompare(String(a.fecha ?? '')))
+    .slice(0, 8);
+}
 
 function avgFromRecent(results, field) {
   if (!results?.length) return null;
@@ -95,6 +158,11 @@ export async function buildTeamMatchHistoryContext(
       promedioGolesContra: concededPerGame,
       ultimosPartidos: recentTournament,
       forma: recentTournament.map((r) => r.result).join('') || null,
+      esPrimerPartidoEnMundial2026: played === 0,
+      advertenciaLectura:
+        played === 0
+          ? 'PJ=0: aún no disputó partidos en este Mundial 2026; no describir como empates sin goles en fase de grupos.'
+          : null,
     },
     tendenciaUltimos3: {
       promedioGolesFavor:
@@ -120,7 +188,7 @@ export async function buildMatchHistoryContext(
   const beforeKickoffMs = match?.kickoffAt ? new Date(match.kickoffAt).getTime() : undefined;
   const excludeExternalId = match?.externalId;
 
-  const [home, away] = await Promise.all([
+  const [home, away, clasificacionLocal, clasificacionVisitante] = await Promise.all([
     buildTeamMatchHistoryContext(homeTeam, {
       allMatches,
       teamById,
@@ -133,7 +201,24 @@ export async function buildMatchHistoryContext(
       beforeKickoffMs,
       excludeExternalId,
     }),
+    buildQualificationContextForTeam(homeTeam),
+    buildQualificationContextForTeam(awayTeam),
   ]);
 
-  return { local: home, visitante: away };
+  const enfrentamientosDirectosHistoricos = extractHistoricalH2HFromPreTournament(
+    home,
+    away,
+    homeTeam,
+    awayTeam
+  );
+
+  return {
+    local: home,
+    visitante: away,
+    enfrentamientosDirectosHistoricos,
+    clasificacionYMundiales: {
+      local: clasificacionLocal,
+      visitante: clasificacionVisitante,
+    },
+  };
 }
