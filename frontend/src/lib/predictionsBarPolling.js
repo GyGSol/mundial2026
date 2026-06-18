@@ -7,6 +7,13 @@ export function matchBarFeaturedIds({ liveMatches = [], recentFinishedMatches = 
   return new Set(barMatches.map((match) => match?.id).filter(Boolean));
 }
 
+/** Ocultar del listado: en vivo (barra) + recién finalizados (gracia 30 min). */
+export function predictionsListExcludeIds({ liveMatches = [], recentFinishedMatches = [] } = {}) {
+  return new Set(
+    [...liveMatches, ...recentFinishedMatches].map((match) => match?.id).filter(Boolean)
+  );
+}
+
 /** ¿Sigue activo el poll de predicciones por partidos en barra? */
 export function shouldPollPredictionsBar(payload) {
   return (

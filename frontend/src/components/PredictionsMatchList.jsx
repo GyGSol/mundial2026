@@ -99,10 +99,9 @@ export default function PredictionsMatchList({
     <div className="mx-auto flex w-full max-w-lg flex-col gap-8 md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
       {sections.map((section) => {
         const sorted = sortByKickoff(section.matches);
-        const active = sorted.filter((m) => m.status !== 'finished');
-        const finished = sorted.filter(
-          (m) => m.status === 'finished' && !excluded.has(m.id)
-        );
+        const visible = sorted.filter((m) => !excluded.has(m.id));
+        const active = visible.filter((m) => m.status !== 'finished');
+        const finished = visible.filter((m) => m.status === 'finished');
         const showPhaseInHeader = section.key === 'group';
 
         return (
@@ -112,7 +111,7 @@ export default function PredictionsMatchList({
                 {section.label}
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {section.matches.length} partido{section.matches.length === 1 ? '' : 's'}
+                {visible.length} partido{visible.length === 1 ? '' : 's'}
               </p>
             </div>
 

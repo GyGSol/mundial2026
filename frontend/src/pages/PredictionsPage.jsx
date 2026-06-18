@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import PushOptInBanner from '@/components/PushOptInBanner.jsx';
-import { matchBarFeaturedIds, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
+import { predictionsListExcludeIds, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
 
 const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
 
@@ -130,7 +130,7 @@ export default function PredictionsPage() {
   const matches = data?.matches ?? [];
   const barLiveMatches = data?.liveMatches ?? [];
   const barRecentFinishedMatches = data?.recentFinishedMatches ?? [];
-  const barFeaturedIds = matchBarFeaturedIds({
+  const listExcludeIds = predictionsListExcludeIds({
     liveMatches: barLiveMatches,
     recentFinishedMatches: barRecentFinishedMatches,
   });
@@ -291,7 +291,7 @@ export default function PredictionsPage() {
 
           <PredictionsMatchList
             matches={matches}
-            excludeMatchIds={barFeaturedIds}
+            excludeMatchIds={listExcludeIds}
             focusMatchId={focusMatchId}
             onSave={handleSave}
             savingId={savingId}
