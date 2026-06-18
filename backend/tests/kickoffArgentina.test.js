@@ -57,6 +57,16 @@ describe('official Argentina kickoffs', () => {
     const kickoff = resolveOfficialKickoffAt('32');
     expect(kickoff.toISOString()).toBe('2026-06-19T19:00:00.000Z');
   });
+
+  it('Chequia vs Sudáfrica (25) a las 13:00 ART', () => {
+    const kickoff = resolveOfficialKickoffAt('25');
+    expect(kickoff.toISOString()).toBe('2026-06-18T16:00:00.000Z');
+  });
+
+  it('Suiza vs Bosnia (26) a las 16:00 ART', () => {
+    const kickoff = resolveOfficialKickoffAt('26');
+    expect(kickoff.toISOString()).toBe('2026-06-18T19:00:00.000Z');
+  });
 });
 
 describe('broadcast schedule', () => {

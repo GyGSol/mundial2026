@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import PushOptInBanner from '@/components/PushOptInBanner.jsx';
-import { predictionsListExcludeIds, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
+import { predictionsListExcludeIds, predictionsPollIntervalMs, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
 import PredictionsFeaturedMatches from '../components/PredictionsFeaturedMatches.jsx';
 
 const PredictedGroupStandingsSection = lazy(
@@ -77,7 +77,7 @@ export default function PredictionsPage() {
     statusFilter,
     groupFilter,
   ], {
-    pollIntervalMs: 15000,
+    getPollIntervalMs: predictionsPollIntervalMs,
     pollWhen: shouldPollPredictionsBar,
   });
 

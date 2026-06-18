@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   matchBarFeaturedIds,
   predictionsListExcludeIds,
+  predictionsPollIntervalMs,
+  shouldPollPredictionsBar,
 } from './predictionsBarPolling.js';
+import {
+  LEADERBOARD_ACTIVE_POLL_MS,
+  LEADERBOARD_LIVE_POLL_MS,
+} from './leaderboardPolling.js';
 
 describe('predictionsBarPolling', () => {
   const live = [{ id: 'live-1' }];
@@ -47,5 +53,19 @@ describe('predictionsBarPolling', () => {
     });
     expect(ids.has('live-1')).toBe(true);
     expect(ids.has('fin-1')).toBe(true);
+  });
+
+  it('poll activo con live o recién finalizados', () => {
+    expect(shouldPollPredictionsBar({ liveMatches: live })).toBe(true);
+    expect(shouldPollPredictionsBar({ liveMatches: [], recentFinishedMatches: recent })).toBe(
+      true
+    );
+  });
+
+  it('poll 5s con live, 10s con recién finalizados', () => {
+    expect(predictionsPollIntervalMs({ liveMatches: live })).toBe(LEADERBOARD_LIVE_POLL_MS);
+    expect(
+      predictionsPollIntervalMs({ liveMatches: [], recentFinishedMatches: recent })
+    ).toBe(LEADERBOARD_ACTIVE_POLL_MS);
   });
 });

@@ -392,6 +392,42 @@ describe('matchLiveData', () => {
       ).toEqual({ homeScore: 3, awayScore: 0 });
     });
 
+    it('sube a 4-1 cuando fifaMeta quedó en 3-0 y la cronología tiene 4 goles locales', () => {
+      const timeline = [
+        { type: 'goal', side: 'home', minute: 74 },
+        { type: 'goal', side: 'home', minute: 84 },
+        { type: 'goal', side: 'home', minute: 90 },
+        { type: 'goal', side: 'home', minute: 92, extraMinute: 1 },
+        { type: 'goal', side: 'away', minute: 55 },
+      ];
+      expect(
+        resolveEffectiveLiveScores(
+          { homeScore: 3, awayScore: 1 },
+          timeline,
+          {
+            fifaMeta: {
+              homeScore: 3,
+              awayScore: 1,
+              syncedAt: '2026-06-18T21:00:00.000Z',
+            },
+          }
+        )
+      ).toEqual({ homeScore: 4, awayScore: 1 });
+    });
+
+    it('usa cronología cuando fifaMeta falta', () => {
+      expect(
+        resolveEffectiveLiveScores(
+          { homeScore: 0, awayScore: 0 },
+          [
+            { type: 'goal', side: 'home', minute: 12 },
+            { type: 'goal', side: 'away', minute: 44 },
+          ],
+          {}
+        )
+      ).toEqual({ homeScore: 1, awayScore: 1 });
+    });
+
     it('ignora marcadores corruptos (año persa 1405) y usa la cronología', () => {
       expect(
         resolveEffectiveLiveScores(
@@ -519,6 +555,56 @@ describe('matchLiveData', () => {
       expect(timeline.filter((event) => event.type === 'goal')).toHaveLength(1);
       expect(timeline[0].player).toBe('Eli Just');
       expect(timeline[0].playerShirtNumber).toBe(11);
+    });
+  });
+
+  describe('enrichMatchLiveFields', () => {
+    it('marcador enriquecido incluye gol visitante desde away_scorers si falta en timeline FIFA', () => {
+      const enriched = enrichMatchLiveFields({
+        status: 'finished',
+        homeScore: 1,
+        awayScore: 1,
+        raw: {
+          fifaMeta: {
+            homeScore: 1,
+            awayScore: 1,
+            syncedAt: '2026-06-18T22:00:00.000Z',
+          },
+          fifaEvents: {
+            timeline: [
+              { type: 'goal', side: 'home', minute: 31, player: 'Provod', sortKey: 31 },
+            ],
+          },
+          away_scorers: "Evidence Makgopa 44'",
+        },
+      });
+
+      expect(enriched.homeScore).toBe(1);
+      expect(enriched.awayScore).toBe(1);
+      const goals = enriched.matchTimeline.filter((event) => event.type === 'goal');
+      expect(goals.length).toBeGreaterThanOrEqual(2);
+      expect(goals.some((event) => event.side === 'away')).toBe(true);
+    });
+
+    it('marcador enriquecido no baja por timeline incompleta si fifaMeta es autoritativo', () => {
+      const enriched = enrichMatchLiveFields({
+        status: 'finished',
+        homeScore: 1,
+        awayScore: 1,
+        raw: {
+          fifaMeta: {
+            homeScore: 1,
+            awayScore: 1,
+            syncedAt: '2026-06-18T22:00:00.000Z',
+          },
+          fifaEvents: {
+            timeline: [{ type: 'goal', side: 'home', minute: 31, player: 'Provod', sortKey: 31 }],
+          },
+        },
+      });
+
+      expect(enriched.homeScore).toBe(1);
+      expect(enriched.awayScore).toBe(1);
     });
   });
 

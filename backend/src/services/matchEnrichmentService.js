@@ -13,6 +13,7 @@ import {
 import { getCachedUserPredictedMatchContext } from './userPredictedMatchContextCache.js';
 import { enrichMatchPhaseFields } from './matchPhaseUtils.js';
 import { enrichMatchLiveFields } from './matchLiveData.js';
+import { RECENTLY_FINISHED_GRACE_MS } from './matchDisplayVisibilityService.js';
 import { ensureFifaShirtMaps } from './fifaShirtMapService.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
 import { formatTeamForClient } from './teamPayload.js';
@@ -181,8 +182,14 @@ export async function enrichMatchesForPredictions(matches, userId) {
 }
 
 export async function prepareFifaShirtMapsForMatches(matches) {
-  const liveMatches = matches.filter((m) => m.status === 'live');
-  if (liveMatches.length) {
-    await ensureFifaShirtMaps(liveMatches);
+  const now = Date.now();
+  const needsShirts = matches.filter((match) => {
+    if (match.status === 'live') return true;
+    if (match.status !== 'finished' || !match.finishedAt) return false;
+    const finishedMs = new Date(match.finishedAt).getTime();
+    return Number.isFinite(finishedMs) && now - finishedMs <= RECENTLY_FINISHED_GRACE_MS;
+  });
+  if (needsShirts.length) {
+    await ensureFifaShirtMaps(needsShirts);
   }
 }

@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Match } from '../src/models/Match.js';
 import { Team } from '../src/models/Team.js';
 import { Stadium } from '../src/models/Stadium.js';
-import { promoteMatchesAtKickoff } from '../src/services/kickoffLiveService.js';
+import { promoteMatchesAtKickoff, finalizeStaleLiveMatches } from '../src/services/kickoffLiveService.js';
+import { recalculateMatchScores } from '../src/services/matchScoringService.js';
 
 vi.mock('../src/models/Match.js', () => ({
   Match: {
@@ -25,6 +26,10 @@ vi.mock('../src/services/matchScoringService.js', () => ({
 vi.mock('../src/services/websocketService.js', () => ({
   notifyLeaderboardUpdated: vi.fn(),
   notifyMatchesUpdated: vi.fn(),
+}));
+
+vi.mock('../src/services/matchRelatedCaches.js', () => ({
+  invalidateMatchRelatedCaches: vi.fn(),
 }));
 
 vi.mock('../src/services/pushNotificationService.js', () => ({
@@ -51,6 +56,10 @@ vi.mock('../src/services/weatherRiskService.js', () => ({
   shouldSuggestPreKickoffDelay: vi.fn().mockReturnValue(false),
 }));
 
+vi.mock('../src/services/fifaEventSyncService.js', () => ({
+  syncFifaMatchEvents: vi.fn().mockResolvedValue({ events: 0, scoringIds: [] }),
+}));
+
 describe('kickoffLiveService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -71,6 +80,15 @@ describe('kickoffLiveService', () => {
           homeTeamId: '10',
           awayTeamId: '11',
           liveStartedPushSentAt: update.liveStartedPushSentAt,
+        };
+      }
+      if (filter.status === 'live') {
+        return {
+          _id: filter._id,
+          externalId: '26',
+          homeTeamId: '10',
+          awayTeamId: '11',
+          ...update.$set,
         };
       }
       return null;
@@ -177,5 +195,50 @@ describe('kickoffLiveService', () => {
     const promoted = await promoteMatchesAtKickoff();
     expect(promoted).toHaveLength(1);
     expect(Match.findOneAndUpdate).toHaveBeenCalled();
+  });
+
+  it('finalizeStaleLiveMatches persiste marcador desde timeline cuando no hay Score FIFA', async () => {
+    const staleLive = {
+      _id: 'live-final',
+      externalId: '26',
+      homeTeamId: '10',
+      awayTeamId: '11',
+      status: 'live',
+      homeScore: 3,
+      awayScore: 1,
+      kickoffAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      raw: {
+        finished: 'TRUE',
+        time_elapsed: 'finished',
+        fifaEvents: {
+          timeline: [
+            { type: 'goal', side: 'home', minute: 74 },
+            { type: 'goal', side: 'home', minute: 84 },
+            { type: 'goal', side: 'home', minute: 90 },
+            { type: 'goal', side: 'home', minute: 92, extraMinute: 1 },
+            { type: 'goal', side: 'away', minute: 55 },
+            { type: 'match_end', minute: 98, extraMinute: 0 },
+          ],
+        },
+      },
+    };
+
+    Match.find.mockImplementation((query) => ({
+      lean: vi.fn().mockResolvedValue(query?.status === 'live' ? [staleLive] : []),
+    }));
+
+    const finalized = await finalizeStaleLiveMatches();
+    expect(Match.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: 'live-final', status: 'live' },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          status: 'finished',
+          homeScore: 4,
+          awayScore: 1,
+        }),
+      }),
+      { new: true }
+    );
+    expect(recalculateMatchScores).toHaveBeenCalledWith('live-final');
   });
 });
