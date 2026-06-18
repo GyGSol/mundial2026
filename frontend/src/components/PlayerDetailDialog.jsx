@@ -111,13 +111,13 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
       onCancel={handleClose}
       aria-labelledby="player-detail-title"
     >
-      <div className="border-b border-neutral-200 bg-white text-neutral-900">
-        <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-6 sm:p-6">
+      <div className="border-b border-border p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
           <div className="mx-auto flex shrink-0 flex-col items-center sm:mx-0">
             {loading ? (
               <Skeleton className="aspect-[3/4] h-52 w-44 rounded-2xl sm:h-60 sm:w-52" />
             ) : (
-              <div className="flex aspect-[3/4] h-52 w-44 items-end justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 sm:h-60 sm:w-52">
+              <div className="flex aspect-[3/4] h-52 w-44 items-end justify-center overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/10 sm:h-60 sm:w-52">
                 <PlayerAvatar
                   name={player?.fullName}
                   photoUrl={player?.photoUrl}
@@ -133,20 +133,20 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
               <div className="min-w-0 text-center sm:text-left">
                 <CardTitle
                   id="player-detail-title"
-                  className="flex flex-wrap items-center justify-center gap-2 text-xl text-neutral-900 sm:justify-start sm:text-2xl"
+                  className="flex flex-wrap items-center justify-center gap-2 text-xl sm:justify-start sm:text-2xl"
                 >
-                  {loading ? <Skeleton className="h-8 w-48 bg-neutral-200" /> : player?.fullName}
+                  {loading ? <Skeleton className="h-8 w-48" /> : player?.fullName}
                   {!loading && player ? (
-                    <Badge className="gap-1 border-violet-500/30 bg-violet-100 text-violet-700">
+                    <Badge className="gap-1 border-violet-500/40 bg-violet-500/10 text-violet-200">
                       <Sparkles className="size-3" aria-hidden />
                       IA
                     </Badge>
                   ) : null}
                 </CardTitle>
                 {loading ? (
-                  <Skeleton className="mx-auto mt-2 h-4 w-64 bg-neutral-200 sm:mx-0" />
+                  <Skeleton className="mx-auto mt-2 h-4 w-64 sm:mx-0" />
                 ) : (
-                  <p className="mt-2 text-sm text-neutral-600">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     <span className="inline-flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                       {flag ? (
                         <img src={flag} alt="" className="size-5 rounded-sm object-cover" />
@@ -175,7 +175,7 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
                   size="sm"
                   disabled={refreshing || loading}
                   onClick={handleRefreshIntel}
-                  className="flex-1 gap-1.5 border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 sm:flex-none"
+                  className="flex-1 gap-1.5 sm:flex-none"
                 >
                   {refreshing ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -189,7 +189,7 @@ export default function PlayerDetailDialog({ playerId, open, onOpenChange, onInt
                   variant="outline"
                   size="sm"
                   onClick={handleClose}
-                  className="flex-1 border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 sm:flex-none"
+                  className="flex-1 sm:flex-none"
                 >
                   Cerrar
                 </Button>
