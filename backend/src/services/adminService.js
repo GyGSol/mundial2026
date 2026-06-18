@@ -1162,7 +1162,9 @@ export async function suggestAdminStreamLinks(matchExternalId) {
   const result = await fetchLa18EventSuggestions(
     match,
     homeTeam?.nameEn || homeTeam?.name || '',
-    awayTeam?.nameEn || awayTeam?.name || ''
+    awayTeam?.nameEn || awayTeam?.name || '',
+    homeTeam,
+    awayTeam
   );
 
   return {

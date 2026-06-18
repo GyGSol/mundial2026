@@ -174,9 +174,12 @@ heroku config:set \
 Flujo operativo:
 
 1. En `/admin/stream-links`, tabla **Partidos de hoy** o formulario manual: asignar `matchExternalId` + URL del evento en [la18hd.com](https://la18hd.com/eventos/).
-2. Los usuarios ven el calendario del día en `/transmissions` (menú **Más → Transmisiones**).
-3. Cuando el sync marque el partido como `live`, aparece "Ver transmisión" si hay URL configurada.
-4. Actualizar URLs desde admin **no requiere redeploy**.
+2. **Auto-mapeo diario:** `npm run sync:streams` lee `/eventos/json/agenda123.json` y upsertea mappings para los partidos de hoy (alias de equipos en español).
+3. Los usuarios ven el calendario del día en `/transmissions` (menú **Más → Transmisiones**).
+4. Cuando el sync marque el partido como `live`, aparece "Ver transmisión" si hay URL configurada.
+5. Actualizar URLs desde admin **no requiere redeploy**.
+
+**Hooks Cursor:** `.cursor/hooks.json` recuerda mapear La18HD al iniciar sesión y sugiere `sync:streams` al terminar cambios en transmisiones.
 
 **Nota:** no guardar URLs `blob:` ni manifests MPD con token expirable; usar la página/evento estable de La18HD.
 

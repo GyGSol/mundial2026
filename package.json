@@ -12,6 +12,7 @@
     "build": "npm run build -w frontend && node scripts/copy-frontend.js",
     "test": "npm run test -w backend",
     "sync": "npm run sync -w backend",
+    "sync:streams": "npm run sync:streams -w backend",
     "sync:players": "npm run sync:players -w backend",
     "sync:history": "node scripts/sync-wikipedia-history.mjs",
     "sync:wiki-nations": "node scripts/sync-wikipedia-nation-records.mjs",

@@ -85,7 +85,30 @@ describe('la18hdScraper', () => {
     expect(ranked[0].score).toBeGreaterThan(0);
   });
 
-  it('rankLa18EventsForMatch matchea títulos en español con equipos en inglés', () => {
+  it('rankLa18EventsForMatch matchea títulos La18HD con equipos en inglés', () => {
+    const events = groupAgendaEntries([
+      {
+        title: 'Copa del Mundo: República Checa vs Sur África',
+        link: 'https://la18hd.com/vivo/canales.php?stream=dsports',
+        time: '11:00',
+        date: '2026-06-18',
+      },
+    ]);
+
+    const ranked = rankLa18EventsForMatch(
+      {},
+      events,
+      'Czech Republic',
+      'South Africa',
+      { nameEn: 'Czech Republic', fifaCode: 'CZE' },
+      { nameEn: 'South Africa', fifaCode: 'RSA' }
+    );
+
+    expect(ranked).toHaveLength(1);
+    expect(ranked[0].streams[0].id).toBe('dsports');
+  });
+
+  it('rankLa18EventsForMatch matchea Bosnia-Herzegovina con guión', () => {
     const events = groupAgendaEntries([
       {
         title: 'Copa del Mundo: Países Bajos vs Japón',

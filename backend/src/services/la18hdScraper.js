@@ -22,6 +22,7 @@ const STREAM_SLUG_LABELS = {
   tyc: 'TyC Sports',
   tycsports: 'TyC Sports',
   telefe: 'Telefe',
+  telemundo: 'Telemundo',
   vtvplus: 'VTV Plus',
   americatv: 'América TV',
   caracol: 'Caracol',
@@ -31,12 +32,24 @@ const STREAM_SLUG_LABELS = {
   foxsports: 'Fox Sports',
 };
 
+/** Variantes de nombres usadas en la18hd.com/eventos/ (agenda JSON). */
 const TEAM_ALIASES = {
-  haiti: ['haiti', 'haití', 'hai', 'hti'],
-  scotland: ['scotland', 'escocia', 'sco'],
+  argentina: ['argentina', 'arg'],
   brazil: ['brazil', 'brasil', 'bra'],
   morocco: ['morocco', 'marruecos', 'mar'],
-  argentina: ['argentina', 'arg'],
+  haiti: ['haiti', 'haití', 'hai', 'hti'],
+  scotland: ['scotland', 'escocia', 'sco'],
+  czech: ['czech', 'checa', 'republica checa', 'rep checa', 'cze', 'checoslovaquia'],
+  southafrica: ['south africa', 'sudafrica', 'sur africa', 'rsa'],
+  bosnia: ['bosnia', 'herzegovina', 'bosnia herzegovina', 'bosnia-herzegovina', 'bih'],
+  korea: ['korea', 'corea', 'corea del sur', 'kor'],
+  usa: ['usa', 'estados unidos', 'united states', 'us'],
+  netherlands: ['netherlands', 'paises bajos', 'holanda', 'ned'],
+  japan: ['japan', 'japon', 'jpn'],
+  mexico: ['mexico', 'méxico', 'mex'],
+  switzerland: ['switzerland', 'suiza', 'sui'],
+  qatar: ['qatar', 'catar', 'qat'],
+  canada: ['canada', 'canadá', 'can'],
 };
 
 let agendaCache = { fetchedAt: 0, entries: [] };
