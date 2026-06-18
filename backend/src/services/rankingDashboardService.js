@@ -14,13 +14,7 @@ import {
 } from './prizePoolService.js';
 import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
-import {
-  isMatchKickoffStale,
-  matchEvidenceShowsInProgress,
-} from './matchStatusRules.js';
-import { resolveLiveTimeElapsed } from './matchLiveData.js';
 
-const RECENT_FINISHED_MS = 7 * 24 * 60 * 60 * 1000;
 const UPCOMING_MATCH_LIMIT = 30;
 
 function kickoffKey(kickoffAt) {
@@ -43,51 +37,6 @@ function findNextUpcomingMatches(matches) {
   return upcoming.filter((m) => kickoffKey(m.scheduleKickoffAt ?? m.kickoffAt) === slot);
 }
 
-function dedupeMatchesById(matches) {
-  const seen = new Set();
-  const result = [];
-  for (const match of matches) {
-    const id = match?.id;
-    if (!id || seen.has(id)) continue;
-    seen.add(id);
-    result.push(match);
-  }
-  return result;
-}
-
-/** Partidos en vivo y recién finalizados para el dashboard (status en MongoDB es la fuente de verdad). */
-export function partitionRankingDashboardMatches(enrichedLive, enrichedFinished, finishedRaw = []) {
-  const rawById = new Map(finishedRaw.map((m) => [m._id.toString(), m]));
-  const misplacedLive = [];
-  const actualFinished = [];
-
-  for (const match of enrichedFinished) {
-    const source = rawById.get(match.id) ?? match;
-    const kickoffAt = source.kickoffAt ?? match.kickoffAt;
-    if (!isMatchKickoffStale(kickoffAt) && matchEvidenceShowsInProgress(source)) {
-      misplacedLive.push({
-        ...match,
-        status: 'live',
-        timeElapsed:
-          match.matchTimeline?.length
-            ? resolveLiveTimeElapsed(source.raw ?? {}, match.matchTimeline)
-            : match.timeElapsed === 'Final'
-              ? null
-              : match.timeElapsed,
-      });
-    } else {
-      actualFinished.push(match);
-    }
-  }
-
-  return {
-    liveMatches: [...enrichedLive, ...misplacedLive],
-    recentFinishedMatches: dedupeMatchesById(actualFinished).sort((a, b) =>
-      compareMatchesBySchedule(b, a)
-    ),
-  };
-}
-
 async function resolveGroup(groupId) {
   if (!groupId) {
     return { group: null };
@@ -108,14 +57,9 @@ export async function getRankingDashboard(groupId, userId) {
     return { notFound: true };
   }
 
-  const cutoff = new Date(Date.now() - RECENT_FINISHED_MS);
-
-  const [lastSyncAt, liveRaw, finishedRaw, upcomingRaw] = await Promise.all([
+  const [lastSyncAt, liveRaw, upcomingRaw] = await Promise.all([
     getLastSyncAt(),
     Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean(),
-    Match.find({ status: 'finished', kickoffAt: { $gte: cutoff } })
-      .sort({ kickoffAt: -1 })
-      .lean(),
     Match.find({ status: 'upcoming' })
       .select('-raw')
       .sort({ kickoffAt: 1 })
@@ -123,18 +67,12 @@ export async function getRankingDashboard(groupId, userId) {
       .lean(),
   ]);
 
-  const matchesToEnrich = [...liveRaw, ...finishedRaw, ...upcomingRaw];
+  const matchesToEnrich = [...liveRaw, ...upcomingRaw];
   await prepareFifaShirtMapsForMatches(matchesToEnrich);
   const enriched = await enrichMatchesLight(matchesToEnrich, userId);
   const byId = new Map(enriched.map((m) => [m.id, m]));
 
-  const enrichedLive = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
-  const enrichedFinished = finishedRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
-  const { liveMatches, recentFinishedMatches } = partitionRankingDashboardMatches(
-    enrichedLive,
-    enrichedFinished,
-    finishedRaw
-  );
+  const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
 
   if (groupId && groupId !== '__nogroup') {
     await ensureAiCompetitorInGroup(groupId);
@@ -196,7 +134,6 @@ export async function getRankingDashboard(groupId, userId) {
     prizePool,
     lastSyncAt,
     liveMatches: liveWithStream,
-    recentFinishedMatches,
     nextUpcomingMatches: nextWithStream,
   };
 }

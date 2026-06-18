@@ -46,24 +46,15 @@ describe('rankingDashboardCache', () => {
     expect(getRankingDashboard).toHaveBeenCalledTimes(2);
   });
 
-  it('usa TTL corto con partidos en vivo o recién finalizados', () => {
-    const now = Date.now();
+  it('usa TTL corto con partidos en vivo', () => {
     expect(
       dashboardCacheTtlMs({
         liveMatches: [{ id: '1' }],
-        recentFinishedMatches: [],
       })
     ).toBe(5_000);
     expect(
       dashboardCacheTtlMs({
         liveMatches: [],
-        recentFinishedMatches: [{ id: '1', kickoffAt: new Date(now - 60_000).toISOString() }],
-      })
-    ).toBe(5_000);
-    expect(
-      dashboardCacheTtlMs({
-        liveMatches: [],
-        recentFinishedMatches: [{ id: '1', kickoffAt: new Date(now - 8 * 60 * 60 * 1000).toISOString() }],
       })
     ).toBe(15_000);
   });

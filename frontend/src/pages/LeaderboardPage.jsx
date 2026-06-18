@@ -196,7 +196,6 @@ export default function LeaderboardPage() {
         <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
           <LiveMatchesBar
             matches={data?.liveMatches ?? []}
-            finishedMatches={data?.recentFinishedMatches ?? []}
             nextMatches={data?.nextUpcomingMatches ?? []}
           />
         </Suspense>

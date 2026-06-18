@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ChevronDown } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
@@ -762,10 +762,6 @@ function LiveMatchCard({ match }) {
   return <TimelineMatchCard match={match} variant="live" />;
 }
 
-function FinishedMatchCard({ match }) {
-  return <TimelineMatchCard match={match} variant="finished" />;
-}
-
 function PredictionClosedDialog({ match, open, onOpenChange }) {
   const dialogRef = useRef(null);
   const homeName = match.homeTeam?.nameEn || 'Local';
@@ -917,8 +913,8 @@ function EmptyMatchesState() {
         <CardContent className="flex flex-col items-center gap-1 py-5 text-center">
           <p className="text-sm font-medium text-foreground">Todavía no hay partidos para mostrar</p>
           <p className="text-sm text-muted-foreground">
-            Cuando haya partidos en curso, próximos o finalizados, van a aparecer acá con el
-            resultado y el timeline de eventos.
+            Cuando haya partidos en curso o próximos, van a aparecer acá con el resultado y el
+            timeline de eventos.
           </p>
         </CardContent>
       </Card>
@@ -937,78 +933,20 @@ function MatchColumn({ title, children }) {
   );
 }
 
-const RECENT_FINISHED_HIGHLIGHT_MS = 4 * 60 * 60 * 1000;
-
-function splitFinishedMatches(finishedMatches, now = Date.now()) {
-  const cutoff = now - RECENT_FINISHED_HIGHLIGHT_MS;
-  const recent = [];
-  const older = [];
-
-  for (const match of finishedMatches) {
-    const kickoffMs = new Date(match.kickoffAt || 0).getTime();
-    if (Number.isFinite(kickoffMs) && kickoffMs >= cutoff) {
-      recent.push(match);
-    } else {
-      older.push(match);
-    }
-  }
-
-  return { recent, older };
-}
-
-function FinishedMatchesCollapsible({ matches = [] }) {
-  if (!matches.length) return null;
-
-  return (
-    <details className="group rounded-xl border border-border bg-muted/20">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
-        <span>Partidos finalizados ({matches.length})</span>
-        <ChevronDown
-          className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-          aria-hidden
-        />
-      </summary>
-      <div className="flex flex-col gap-4 border-t border-border px-2 pb-3 pt-3 sm:px-3">
-        {matches.map((match) => (
-          <FinishedMatchCard key={match.id} match={match} />
-        ))}
-      </div>
-    </details>
-  );
-}
-
 export default function LiveMatchesBar({
   matches = [],
-  finishedMatches = [],
   nextMatches = [],
 }) {
   const hasLive = matches.length > 0;
-  const { recent: recentFinished, older: olderFinished } = splitFinishedMatches(
-    finishedMatches
-  );
-  const hasRecentFinished = recentFinished.length > 0;
-  const hasOlderFinished = olderFinished.length > 0;
   const hasNext = nextMatches.length > 0;
 
-  if (hasLive || hasRecentFinished || hasOlderFinished || hasNext) {
+  if (hasLive || hasNext) {
     return (
       <div className="mx-auto flex w-full flex-col gap-6">
         {hasLive ? (
           <MatchColumn title="Partidos en curso">
             {matches.map((match) => (
               <LiveMatchCard key={match.id} match={match} />
-            ))}
-          </MatchColumn>
-        ) : null}
-
-        {hasRecentFinished ? (
-          <MatchColumn
-            title={
-              recentFinished.length > 1 ? 'Partidos recién finalizados' : 'Partido recién finalizado'
-            }
-          >
-            {recentFinished.map((match) => (
-              <FinishedMatchCard key={match.id} match={match} />
             ))}
           </MatchColumn>
         ) : null}
@@ -1022,8 +960,6 @@ export default function LiveMatchesBar({
             ))}
           </MatchColumn>
         ) : null}
-
-        {hasOlderFinished ? <FinishedMatchesCollapsible matches={olderFinished} /> : null}
       </div>
     );
   }
