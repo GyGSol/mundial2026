@@ -74,6 +74,55 @@ function maxTimelineSortKey(match) {
   return bestKey;
 }
 
+/** Minuto máximo en timeline (sortKey o minute), o null si no hay datos. */
+export function maxTimelineMinute(match) {
+  const key = maxTimelineSortKey(match);
+  return key > Number.NEGATIVE_INFINITY ? key : null;
+}
+
+export function resolveKickoffMs(match) {
+  const kickoff = match?.kickoffAt ?? match?.scheduleKickoffAt;
+  const ms = kickoff ? new Date(kickoff).getTime() : NaN;
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/** Tiempo de reloj mínimo para que un minuto de juego sea creíble (incluye descanso ~15'). */
+export function minWallClockMsForTimelineMinute(timelineMinute) {
+  if (!Number.isFinite(timelineMinute) || timelineMinute <= 0) {
+    return 90 * 60 * 1000;
+  }
+  const halftimeMs = timelineMinute > 45 ? 15 * 60 * 1000 : 0;
+  return timelineMinute * 60 * 1000 + halftimeMs;
+}
+
+/**
+ * El pitido final es creíble según kickoff y minuto en timeline.
+ * Evita mostrar 98' finalizado cuando el reloj de pared no alcanza (p. ej. 58' desde kickoff).
+ */
+export function wallClockAllowsMatchFinished(match, now = Date.now()) {
+  const kickoffMs = resolveKickoffMs(match);
+  if (kickoffMs == null) return true;
+  if (kickoffMs > now) return false;
+
+  const elapsedMs = now - kickoffMs;
+  const timelineMinute = maxTimelineMinute(match);
+
+  if (timelineMinute != null && timelineMinute > 0) {
+    return elapsedMs >= minWallClockMsForTimelineMinute(timelineMinute) * 0.9;
+  }
+
+  if (matchFifaTimelineIndicatesFinished(match) || elapsedTokenIndicatesFinished(readElapsedToken(match))) {
+    return elapsedMs >= 90 * 60 * 1000;
+  }
+
+  return elapsedMs >= 85 * 60 * 1000;
+}
+
+export function matchFinishedImplausibleByWallClock(match, now = Date.now()) {
+  if (match?.status !== 'finished') return false;
+  return !wallClockAllowsMatchFinished(match, now);
+}
+
 function elapsedNumericMinuteIndicatesEarlyPlay(elapsed) {
   const normalized = String(elapsed ?? '').trim().toLowerCase();
   if (normalized === 'ht' || normalized === 'halftime') return true;
@@ -133,6 +182,7 @@ export function shouldFinalizeStaleLiveMatch(match, now = Date.now()) {
   }
 
   if (matchFifaTimelineIndicatesFinished(match)) {
+    if (!wallClockAllowsMatchFinished(match, now)) return false;
     return true;
   }
 

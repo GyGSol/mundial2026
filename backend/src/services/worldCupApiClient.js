@@ -7,6 +7,7 @@ import {
   isMatchKickoffStale,
   matchEvidenceShowsInProgress,
   shouldFinalizeStaleLiveMatch,
+  wallClockAllowsMatchFinished,
 } from './matchStatusRules.js';
 
 let cachedToken = null;
@@ -157,6 +158,10 @@ export function resolveGameStatus(game, kickoffAt, { now = Date.now() } = {}) {
     matchEvidenceShowsInProgress(pseudoMatch)
   ) {
     return 'live';
+  }
+
+  if (status === 'finished' && !wallClockAllowsMatchFinished(pseudoMatch, now)) {
+    return Number.isFinite(kickoffMs) && kickoffMs > now ? 'upcoming' : 'live';
   }
 
   if (status === 'live' && Number.isFinite(kickoffMs)) {

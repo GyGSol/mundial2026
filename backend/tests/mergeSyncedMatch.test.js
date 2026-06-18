@@ -74,9 +74,10 @@ describe('mergeSyncedMatch', () => {
   });
 
   it('no degrada finished', () => {
+    const kickoffLongPast = new Date(Date.now() - 3 * 60 * 60 * 1000);
     const merged = mergeSyncedMatch(
-      { status: 'finished', homeScore: 2, awayScore: 1, kickoffAt: kickoffPast },
-      { status: 'live', homeScore: 1, awayScore: 0, kickoffAt: kickoffPast }
+      { status: 'finished', homeScore: 2, awayScore: 1, kickoffAt: kickoffLongPast },
+      { status: 'live', homeScore: 1, awayScore: 0, kickoffAt: kickoffLongPast }
     );
     expect(merged.status).toBe('finished');
     expect(merged.homeScore).toBe(2);

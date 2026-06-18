@@ -7,6 +7,7 @@ import { sortMatchesBySchedule } from './matchSortService.js';
 import {
   findLiveMatchesQueryWithGroup,
   findRecentlyFinishedMatchesQueryWithGroup,
+  filterEligibleRecentFinishedMatches,
 } from './matchDisplayVisibilityService.js';
 
 export async function listPredictionsMatches({ status, group }, userId) {
@@ -37,7 +38,7 @@ export async function listPredictionsMatches({ status, group }, userId) {
   const barById = new Map(enrichedBar.map((m) => [m.id, m]));
 
   const liveMatches = liveRaw.map((m) => barById.get(m._id.toString())).filter(Boolean);
-  const recentFinishedMatches = recentFinishedRaw
+  const recentFinishedMatches = filterEligibleRecentFinishedMatches(recentFinishedRaw)
     .map((m) => barById.get(m._id.toString()))
     .filter(Boolean);
 

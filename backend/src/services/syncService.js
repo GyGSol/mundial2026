@@ -29,6 +29,7 @@ import {
   matchEvidenceShowsInProgress,
   readElapsedToken,
   shouldFinalizeStaleLiveMatch,
+  wallClockAllowsMatchFinished,
 } from './matchStatusRules.js';
 import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 import { latestClockFromTimeline } from './matchLiveData.js';
@@ -181,6 +182,32 @@ export async function resolveExistingMatchForWorldCup26Sync(doc) {
   return byExternalId;
 }
 
+function downgradeImplausibleFinishedStatus(merged, kickoffAt, kickoffInFuture) {
+  if (merged.status !== 'finished') return;
+  if (wallClockAllowsMatchFinished({ ...merged, kickoffAt })) return;
+
+  merged.status = kickoffInFuture ? 'upcoming' : 'live';
+  const timeline = merged.raw?.fifaEvents?.timeline;
+  const filtered = Array.isArray(timeline)
+    ? timeline.filter((event) => event?.type !== 'match_end')
+    : timeline;
+  const clock =
+    Array.isArray(filtered) && filtered.length ? latestClockFromTimeline(filtered) : null;
+  merged.raw = {
+    ...merged.raw,
+    finished: 'FALSE',
+    time_elapsed: clock ? String(clock).replace(/'+$/, '') : 'live',
+    ...(Array.isArray(timeline)
+      ? {
+          fifaEvents: {
+            ...(merged.raw?.fifaEvents ?? {}),
+            timeline: filtered,
+          },
+        }
+      : {}),
+  };
+}
+
 export function mergeSyncedMatch(existing, incoming) {
   const merged = { ...incoming };
   if (!existing) return merged;
@@ -255,6 +282,7 @@ export function mergeSyncedMatch(existing, incoming) {
       merged.homeScore = mergePlausibleGoalCounts(existing.homeScore, incoming.homeScore);
       merged.awayScore = mergePlausibleGoalCounts(existing.awayScore, incoming.awayScore);
     }
+    downgradeImplausibleFinishedStatus(merged, kickoffAt, kickoffInFuture);
     return merged;
   }
 
@@ -288,6 +316,7 @@ export function mergeSyncedMatch(existing, incoming) {
       merged.homeScore = fifaScores.homeScore;
       merged.awayScore = fifaScores.awayScore;
     }
+    downgradeImplausibleFinishedStatus(merged, kickoffAt, kickoffInFuture);
     return merged;
   }
 
@@ -301,6 +330,7 @@ export function mergeSyncedMatch(existing, incoming) {
       time_elapsed: 'finished',
       finished: 'TRUE',
     };
+    downgradeImplausibleFinishedStatus(merged, kickoffAt, kickoffInFuture);
     return merged;
   }
 

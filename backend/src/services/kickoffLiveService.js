@@ -25,6 +25,9 @@ import {
   matchEvidenceShowsInProgress,
   readElapsedToken,
   shouldFinalizeStaleLiveMatch,
+  matchFinishedImplausibleByWallClock,
+  resolveKickoffMs,
+  wallClockAllowsMatchFinished,
 } from './matchStatusRules.js';
 import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 
@@ -225,14 +228,17 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
   const recentKickoffCutoff = new Date(now - 120 * 60 * 1000);
   const candidates = await Match.find({
     status: 'finished',
-    kickoffAt: { $gte: recentKickoffCutoff, $lte: new Date(now) },
+    kickoffAt: { $gte: recentKickoffCutoff },
   }).lean();
 
   const reopenedIds = [];
 
   for (const match of candidates) {
     if (isMatchKickoffStale(match.kickoffAt, now)) continue;
-    if (!matchEvidenceShowsInProgress(match)) continue;
+
+    const implausibleFinish = matchFinishedImplausibleByWallClock(match, now);
+    const inProgress = !implausibleFinish && matchEvidenceShowsInProgress(match);
+    if (!implausibleFinish && !inProgress) continue;
 
     const timeline = match.raw?.fifaEvents?.timeline;
     const clock =
@@ -243,17 +249,34 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
       match.raw?.finished === true ||
       match.raw?.finished === 'true';
 
+    const kickoffMs = resolveKickoffMs(match);
+    const nextStatus =
+      kickoffMs != null && kickoffMs > now ? 'upcoming' : 'live';
+
     const update = {
-      status: 'live',
+      status: nextStatus,
       lastSyncedAt: new Date(),
     };
     applyStatusTransitionFields(update, {
       previousStatus: 'finished',
-      nextStatus: 'live',
+      nextStatus,
     });
-    if (badFinished) update['raw.finished'] = 'FALSE';
-    if (badElapsed) {
-      update['raw.time_elapsed'] = clock ? String(clock).replace(/'+$/, '') : 'live';
+    if (badFinished || implausibleFinish) update['raw.finished'] = 'FALSE';
+    if (badElapsed || implausibleFinish) {
+      const timelineForClock =
+        implausibleFinish && Array.isArray(timeline)
+          ? timeline.filter((event) => event?.type !== 'match_end')
+          : timeline;
+      const correctedClock =
+        Array.isArray(timelineForClock) && timelineForClock.length
+          ? latestClockFromTimeline(timelineForClock)
+          : clock;
+      update['raw.time_elapsed'] = correctedClock
+        ? String(correctedClock).replace(/'+$/, '')
+        : 'live';
+    }
+    if (implausibleFinish && Array.isArray(timeline)) {
+      update['raw.fifaEvents.timeline'] = timeline.filter((event) => event?.type !== 'match_end');
     }
 
     const updated = await Match.findOneAndUpdate(

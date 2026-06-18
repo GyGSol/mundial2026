@@ -24,6 +24,7 @@ import {
   buildShirtLookups,
 } from '../utils/fifaSquadShirtMap.js';
 import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
+import { wallClockAllowsMatchFinished } from './matchStatusRules.js';
 
 async function loadMatchTeams(match) {
   const [homeTeam, awayTeam] = await Promise.all([
@@ -256,11 +257,28 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
           const hasMatchEnd =
             parsedTimelineHasMatchEnd(timeline) || fifaRawTimelineHasMatchEnd(timelineJson);
           if (match.status === 'live' && hasMatchEnd) {
-            rawUpdate.status = 'finished';
-            rawUpdate['raw.time_elapsed'] = 'finished';
-            rawUpdate['raw.finished'] = 'TRUE';
-            newlyFinishedIds.push(match._id);
-            scoringIds.push(match._id);
+            const finishedCandidate = {
+              ...match,
+              status: 'finished',
+              homeScore: rawUpdate.homeScore ?? match.homeScore,
+              awayScore: rawUpdate.awayScore ?? match.awayScore,
+              raw: {
+                ...(match.raw ?? {}),
+                finished: 'TRUE',
+                time_elapsed: 'finished',
+                fifaEvents: {
+                  ...(match.raw?.fifaEvents ?? {}),
+                  timeline,
+                },
+              },
+            };
+            if (wallClockAllowsMatchFinished(finishedCandidate)) {
+              rawUpdate.status = 'finished';
+              rawUpdate['raw.time_elapsed'] = 'finished';
+              rawUpdate['raw.finished'] = 'TRUE';
+              newlyFinishedIds.push(match._id);
+              scoringIds.push(match._id);
+            }
           }
 
           matchUpdated = true;

@@ -6,6 +6,7 @@ import {
   fifaEntryIndicatesFinished,
   matchFifaTimelineIndicatesFinished,
   elapsedTokenIndicatesFinished,
+  wallClockAllowsMatchFinished,
   MATCH_STALE_AFTER_KICKOFF_MS,
 } from '../src/services/matchStatusRules.js';
 
@@ -109,17 +110,33 @@ describe('matchStatusRules', () => {
     expect(fifaEntryIndicatesFinished({ Period: 'FirstHalf' })).toBe(false);
   });
 
-  it('cierra live cuando la timeline FIFA tiene match_end', () => {
+  it('cierra live cuando la timeline FIFA tiene match_end y el reloj de pared alcanza', () => {
     const match = {
       status: 'live',
       kickoffAt: kickoff,
       raw: {
         finished: 'FALSE',
         time_elapsed: 'live',
-        fifaEvents: { timeline: [{ type: 'match_end', minute: 95 }] },
+        fifaEvents: { timeline: [{ type: 'match_end', minute: 95, sortKey: 95 }] },
       },
     };
     expect(matchFifaTimelineIndicatesFinished(match)).toBe(true);
-    expect(shouldFinalizeStaleLiveMatch(match, kickoff.getTime() + 60_000)).toBe(true);
+    const now = kickoff.getTime() + 110 * 60 * 1000;
+    expect(shouldFinalizeStaleLiveMatch(match, now)).toBe(true);
+  });
+
+  it('no cierra live con match_end si el reloj de pared es demasiado corto', () => {
+    const match = {
+      status: 'live',
+      kickoffAt: kickoff,
+      raw: {
+        finished: 'FALSE',
+        time_elapsed: 'live',
+        fifaEvents: { timeline: [{ type: 'match_end', minute: 98, sortKey: 98 }] },
+      },
+    };
+    const now = kickoff.getTime() + 58 * 60 * 1000;
+    expect(shouldFinalizeStaleLiveMatch(match, now)).toBe(false);
+    expect(wallClockAllowsMatchFinished({ ...match, status: 'finished' }, now)).toBe(false);
   });
 });
