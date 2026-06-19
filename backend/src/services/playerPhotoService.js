@@ -11,13 +11,32 @@ export const PLAYER_PHOTOS_DIR = join(REPO_ROOT, 'imagenes-jugadores');
 
 /** Carpetas en imagenes-jugadores → código FIFA */
 export const TEAM_FOLDER_TO_FIFA = {
+  argelia: 'ALG',
   argentina: 'ARG',
-  espana: 'ESP',
-  uruguay: 'URU',
-  mexico: 'MEX',
-  corea: 'KOR',
   australia: 'AUS',
+  austria: 'AUT',
+  bosnia: 'BIH',
+  brasil: 'BRA',
+  'cabo-verde': 'CPV',
+  canada: 'CAN',
+  catar: 'QAT',
+  corea: 'KOR',
+  'costa-de-marfil': 'CIV',
+  escocia: 'SCO',
+  espana: 'ESP',
   'estados-unidos': 'USA',
+  ghana: 'GHA',
+  haiti: 'HAI',
+  iran: 'IRN',
+  japon: 'JPN',
+  jordania: 'JOR',
+  marruecos: 'MAR',
+  mexico: 'MEX',
+  'paises-bajos': 'NED',
+  panama: 'PAN',
+  portugal: 'POR',
+  uruguay: 'URU',
+  uzbekistan: 'UZB',
 };
 
 export function slugifyPlayerName(value) {

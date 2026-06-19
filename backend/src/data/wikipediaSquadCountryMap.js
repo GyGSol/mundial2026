@@ -65,14 +65,32 @@ export const WIKIPEDIA_NON_TEAM_SECTIONS = new Set([
 
 /** Carpeta en imagenes-jugadores/ cuando existe caricatura (opcional). */
 export const FIFA_TO_PHOTO_FOLDER = {
+  ALG: 'argelia',
   ARG: 'argentina',
-  ESP: 'espana',
-  URU: 'uruguay',
-  MEX: 'mexico',
-  KOR: 'corea',
   AUS: 'australia',
-  USA: 'estados-unidos',
+  AUT: 'austria',
+  BIH: 'bosnia',
+  BRA: 'brasil',
   CAN: 'canada',
+  CIV: 'costa-de-marfil',
+  CPV: 'cabo-verde',
+  ESP: 'espana',
+  GHA: 'ghana',
+  HAI: 'haiti',
+  IRN: 'iran',
+  JOR: 'jordania',
+  JPN: 'japon',
+  KOR: 'corea',
+  MAR: 'marruecos',
+  MEX: 'mexico',
+  NED: 'paises-bajos',
+  PAN: 'panama',
+  POR: 'portugal',
+  QAT: 'catar',
+  SCO: 'escocia',
+  URU: 'uruguay',
+  USA: 'estados-unidos',
+  UZB: 'uzbekistan',
 };
 
 export function fifaCodeForWikipediaCountry(countryName) {
