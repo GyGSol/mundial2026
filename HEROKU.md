@@ -263,7 +263,7 @@ heroku config:set \
 ### 4. Probar manualmente
 
 ```bash
-heroku run npm run backup:push -a mundial2026-pred
+heroku run "npm run backup:push -w backend" -a mundial2026-pred
 ```
 
 Deberías ver commits en el repo bajo `backups/YYYY/MM/DD/match-.../`.

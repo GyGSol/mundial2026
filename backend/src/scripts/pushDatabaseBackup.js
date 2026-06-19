@@ -1,6 +1,11 @@
 import { connectDb } from '../config/db.js';
 import { runManualDatabaseBackup } from '../services/matchFinishBackupService.js';
 import mongoose from 'mongoose';
+// Registra schemas antes de populate en buildPredictionsExport
+import '../models/User.js';
+import '../models/Prediction.js';
+import '../models/Match.js';
+import '../models/Team.js';
 
 async function main() {
   await connectDb();
