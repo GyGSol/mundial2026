@@ -39,7 +39,7 @@ import {
   notifyMatchesUpdated,
   notifySyncComplete,
 } from './websocketService.js';
-import { syncLiveLineups } from './lineupSyncService.js';
+import { syncLiveLineups, syncUpcomingKickoffLineups, syncUpcomingLineupGrids } from './lineupSyncService.js';
 import { syncFifaMatchEvents, syncFifaReportsForMatchIds } from './fifaEventSyncService.js';
 import { alignMatchesFromFifaCalendar } from './fifaFixtureAlignmentService.js';
 import { auditPredictionMatchLinks } from './predictionMatchLinkService.js';
@@ -670,6 +670,8 @@ export async function runSync({ includeMetadata = true } = {}) {
     );
 
     const lineupResult = await syncLiveLineups();
+    const upcomingLineupResult = await syncUpcomingKickoffLineups();
+    const gridLineupResult = await syncUpcomingLineupGrids();
     const fifaResult = await syncFifaMatchEvents({ extraMatchIds: newlyFinishedIds });
     const assistResult = await assistLiveMatchEvents();
 
@@ -709,6 +711,14 @@ export async function runSync({ includeMetadata = true } = {}) {
       console.log(
         `Lineup/events sync: ${lineupResult.updated} titulares, ${lineupResult.events} partidos con eventos`
       );
+    }
+    if (upcomingLineupResult.updated > 0 || upcomingLineupResult.matches > 0) {
+      console.log(
+        `Upcoming lineup sync: ${upcomingLineupResult.updated} titulares en ${upcomingLineupResult.matches} partidos`
+      );
+    }
+    if (gridLineupResult.updated > 0) {
+      console.log(`Lineup grid sync: ${gridLineupResult.updated} partidos con grid API-Football`);
     }
 
     if (fifaResult.events > 0) {

@@ -1,4 +1,5 @@
-import { Player, POSITIONS } from '../models/Player.js';
+import { Player } from '../models/Player.js';
+import { pickProbableStarters, LINE_ORDER } from './probableLineupService.js';
 import {
   getIntelMapForExternalIds,
   mergePlayerWithIntel,
@@ -14,10 +15,7 @@ import {
 } from './nationFootballProfileService.js';
 import { buildNationHistoricalSummary } from './worldCupHistoryService.js';
 
-const MAX_STARTERS = 11;
 const MAX_ALERTS = 5;
-const LINE_ORDER = ['GK', 'DEF', 'MID', 'FWD'];
-const STARTER_SLOTS = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
 
 const ELITE_LEAGUES = new Set([
   'Premier League',
@@ -86,42 +84,6 @@ function serializePlayerForPrompt(player, { includePerformance = false } = {}) {
     base.rendimiento = buildCompactPerformanceContext(player);
   }
   return base;
-}
-
-function starterPriority(player) {
-  if (player.lineupStatus === 'starter') return 0;
-  if (player.isStarter === true) return 1;
-  if (player.isStarter === false) return 4;
-  const num = Number(player.shirtNumber);
-  if (Number.isFinite(num) && num >= 1 && num <= 11) return 2;
-  return 3;
-}
-
-function pickProbableStarters(players) {
-  const byPosition = Object.fromEntries(POSITIONS.map((p) => [p, []]));
-  for (const player of players) {
-    if (player.position && byPosition[player.position]) {
-      byPosition[player.position].push(player);
-    }
-  }
-
-  const picked = [];
-  for (const pos of LINE_ORDER) {
-    const slots = STARTER_SLOTS[pos] ?? 1;
-    const sorted = [...byPosition[pos]].sort((a, b) => {
-      const diff = starterPriority(a) - starterPriority(b);
-      if (diff !== 0) return diff;
-      const aNum = Number(a.shirtNumber) || 99;
-      const bNum = Number(b.shirtNumber) || 99;
-      return aNum - bNum;
-    });
-    for (const player of sorted.slice(0, slots)) {
-      player._probableStarter = true;
-      picked.push(player);
-    }
-  }
-
-  return picked.slice(0, MAX_STARTERS);
 }
 
 function availabilityStats(players) {

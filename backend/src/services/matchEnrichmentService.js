@@ -29,6 +29,7 @@ import {
 import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 import { unifyRawTeamPlayers } from './playerRosterUnifyService.js';
+import { buildMatchLineupPayload } from './matchLineupService.js';
 
 /**
  * @param {import('mongoose').LeanDocument[]} matches
@@ -40,6 +41,7 @@ import { unifyRawTeamPlayers } from './playerRosterUnifyService.js';
  *   includeWeather?: boolean,
  *   includeLiveFields?: boolean,
  *   includeTimelineTournamentGoals?: boolean,
+ *   includeLineup?: boolean,
  * }} options
  */
 export async function enrichMatches(matches, userId, options = {}) {
@@ -50,6 +52,7 @@ export async function enrichMatches(matches, userId, options = {}) {
     includeWeather = true,
     includeLiveFields = true,
     includeTimelineTournamentGoals = includeLiveFields,
+    includeLineup = false,
   } = options;
 
   if (userId && ensureUserDefaults) {
@@ -134,7 +137,8 @@ export async function enrichMatches(matches, userId, options = {}) {
       )
     : null;
 
-  const enrichedBase = matches.map((m) => {
+  const enrichedBase = await Promise.all(
+    matches.map(async (m) => {
     const prediction = predictionMap[m._id.toString()] || null;
     const meta = enrichMatchPredictionMeta(m, prediction);
 
@@ -187,11 +191,18 @@ export async function enrichMatches(matches, userId, options = {}) {
       ...meta,
     };
 
-    return applyResolvedKnockoutToMatch(
+    const enriched = applyResolvedKnockoutToMatch(
       base,
       resolvedKnockoutByExternalId?.get(String(m.externalId))
     );
-  });
+
+    if (includeLineup) {
+      enriched.lineup = await buildMatchLineupPayload(m);
+    }
+
+    return enriched;
+  })
+  );
 
   return attachWeatherAndScheduleToEnrichedMatches(matches, enrichedBase, stadiumMap, {
     includeWeather,
@@ -218,7 +229,7 @@ export async function enrichMatchesForRankingDashboard(matches, userId) {
   });
 }
 
-/** Próximos partidos en ranking: solo metadata, sin timeline ni clima. */
+/** Próximos partidos en ranking: metadata + alineación probable/confirmada. */
 export async function enrichMatchesForRankingUpcoming(matches, userId) {
   return enrichMatches(matches, userId, {
     includePlayers: false,
@@ -227,6 +238,7 @@ export async function enrichMatchesForRankingUpcoming(matches, userId) {
     includeWeather: false,
     includeLiveFields: false,
     includeTimelineTournamentGoals: false,
+    includeLineup: true,
   });
 }
 

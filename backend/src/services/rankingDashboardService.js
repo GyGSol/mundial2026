@@ -72,7 +72,6 @@ export async function getRankingDashboard(groupId, userId) {
     getLastSyncAt(),
     Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean(),
     Match.find({ status: 'upcoming' })
-      .select('-raw')
       .sort({ kickoffAt: 1 })
       .limit(UPCOMING_MATCH_LIMIT)
       .lean(),

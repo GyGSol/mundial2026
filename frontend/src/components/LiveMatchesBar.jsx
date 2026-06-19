@@ -37,6 +37,7 @@ import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
+import MatchLineupSection from '@/components/lineup/MatchLineupSection.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 import { matchBarGridClass } from '@/lib/matchBarLayout.js';
@@ -1108,6 +1109,9 @@ function NextMatchCard({ match }) {
             {match.group ? `Grupo ${match.group} · ` : ''}
             {matchDateLabel(match)}
           </span>
+
+          <MatchLineupSection match={match} />
+
           {!predictionsOpen ? (
             <div
               className="w-full"

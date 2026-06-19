@@ -8,6 +8,18 @@ import {
 } from './footballDataApiClient.js';
 import { countStoredEvents, splitFootballDataEvents } from './matchLiveData.js';
 import { notifyPlayersUpdated } from './websocketService.js';
+import {
+  buildLineupSnapshotFromSources,
+  fetchAndMergeApiFootballGrids,
+  loadMatchTeams,
+  parseFootballDataMatchLineups,
+} from './matchLineupService.js';
+import {
+  fetchFixtureLineups,
+  hasApiFootballKey,
+  resolveApiFootballFixtureId,
+  shouldRefreshApiFootballGrid,
+} from './apiFootballLineupClient.js';
 
 function extractStarterIds(lineupData) {
   const starters = new Set();
@@ -19,15 +31,17 @@ function extractStarterIds(lineupData) {
       if (id) starters.add(Number(id));
     }
   }
-  return starters;
-}
 
-async function loadMatchTeams(match) {
-  const [homeTeam, awayTeam] = await Promise.all([
-    Team.findOne({ externalId: match.homeTeamId }).lean(),
-    Team.findOne({ externalId: match.awayTeamId }).lean(),
-  ]);
-  return { homeTeam, awayTeam };
+  if (!starters.size && lineupData?.homeTeam?.lineup) {
+    for (const entry of lineupData.homeTeam.lineup) {
+      if (entry.id) starters.add(Number(entry.id));
+    }
+    for (const entry of lineupData.awayTeam?.lineup ?? []) {
+      if (entry.id) starters.add(Number(entry.id));
+    }
+  }
+
+  return starters;
 }
 
 async function applyStartersToTeams(teamExternalIds, starterIds) {
@@ -44,6 +58,15 @@ async function applyStartersToTeams(teamExternalIds, starterIds) {
   );
 
   return result.modifiedCount;
+}
+
+function buildSnapshotFromMatchData(matchData, homeTeam, awayTeam) {
+  const fdSides = parseFootballDataMatchLineups(
+    matchData,
+    homeTeam?.footballDataTeamId,
+    awayTeam?.footballDataTeamId
+  );
+  return buildLineupSnapshotFromSources({ fdSides, source: 'football-data' });
 }
 
 /** Sincroniza titulares y eventos FD para un partido. */
@@ -78,9 +101,21 @@ export async function syncMatchLineupsFromFootballData(match, { applyStarters = 
       awayTeam.footballDataTeamId
     );
 
+    let lineupSnapshot = buildSnapshotFromMatchData(matchData, homeTeam, awayTeam);
+    if ((lineupSnapshot.home.players.length || lineupSnapshot.away.players.length) > 0) {
+      lineupSnapshot = await fetchAndMergeApiFootballGrids(match, homeTeam, awayTeam, lineupSnapshot);
+    }
+
     const rawUpdate = { 'raw.footballDataMatchId': fdMatchId };
     if (countStoredEvents(fdEvents) > 0 || !match.raw?.fdEvents) {
       rawUpdate['raw.fdEvents'] = fdEvents;
+    }
+    if (lineupSnapshot.home.players.length || lineupSnapshot.away.players.length) {
+      rawUpdate['raw.lineupSnapshot'] = lineupSnapshot;
+    }
+    if (lineupSnapshot.source === 'api-football') {
+      const fixtureId = await resolveApiFootballFixtureId(match, homeTeam, awayTeam);
+      if (fixtureId) rawUpdate['raw.apiFootballFixtureId'] = fixtureId;
     }
 
     await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
@@ -92,8 +127,8 @@ export async function syncMatchLineupsFromFootballData(match, { applyStarters = 
   }
 }
 
-/** Partidos upcoming con kickoff próximo: intenta traer formación antes del bot IA (T-5). */
-export async function syncUpcomingKickoffLineups({ withinMs = 45 * 60 * 1000 } = {}) {
+/** Partidos upcoming con kickoff próximo: intenta traer formación (T-120). */
+export async function syncUpcomingKickoffLineups({ withinMs = 120 * 60 * 1000 } = {}) {
   if (!hasToken()) return { updated: 0, matches: 0 };
 
   const now = Date.now();
@@ -108,6 +143,64 @@ export async function syncUpcomingKickoffLineups({ withinMs = 45 * 60 * 1000 } =
   for (const match of matches) {
     const result = await syncMatchLineupsFromFootballData(match);
     updated += result.updated;
+  }
+
+  return { updated, matches: matches.length };
+}
+
+/** Refresca grid API-Football para partidos próximos (T-90 → T+5). */
+export async function syncUpcomingLineupGrids({
+  withinMs = 90 * 60 * 1000,
+  afterMs = 5 * 60 * 1000,
+} = {}) {
+  if (!hasApiFootballKey()) return { updated: 0, matches: 0 };
+
+  const now = Date.now();
+  const matches = await Match.find({
+    status: { $in: ['upcoming', 'live'] },
+    kickoffAt: {
+      $gte: new Date(now - afterMs),
+      $lte: new Date(now + withinMs),
+    },
+    'raw.lineupSnapshot': { $exists: true },
+  }).lean();
+
+  if (!matches.length) return { updated: 0, matches: 0 };
+
+  let updated = 0;
+  for (const match of matches) {
+    const snapshot = match.raw?.lineupSnapshot;
+    if (!shouldRefreshApiFootballGrid(snapshot)) continue;
+
+    const { homeTeam, awayTeam } = await loadMatchTeams(match);
+    if (!homeTeam || !awayTeam) continue;
+
+    try {
+      const fixtureId = await resolveApiFootballFixtureId(match, homeTeam, awayTeam);
+      if (!fixtureId) continue;
+
+      const apiLineups = await fetchFixtureLineups(fixtureId);
+      if (!apiLineups?.home && !apiLineups?.away) continue;
+
+      const merged = buildLineupSnapshotFromSources({
+        fdSides: snapshot,
+        apiSides: apiLineups,
+        source: 'api-football',
+      });
+
+      await Match.updateOne(
+        { _id: match._id },
+        {
+          $set: {
+            'raw.lineupSnapshot': merged,
+            'raw.apiFootballFixtureId': fixtureId,
+          },
+        }
+      );
+      updated += 1;
+    } catch (err) {
+      console.warn(`Lineup grid sync skip match ${match.externalId}:`, err.message);
+    }
   }
 
   return { updated, matches: matches.length };
@@ -141,6 +234,9 @@ export async function syncLiveLineups() {
     if (result.synced) eventsSynced += 1;
     updated += result.updated;
   }
+
+  const gridResult = await syncUpcomingLineupGrids();
+  updated += gridResult.updated;
 
   return { updated, matches: matchesToSync.length, events: eventsSynced };
 }
