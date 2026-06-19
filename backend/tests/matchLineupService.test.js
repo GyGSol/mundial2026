@@ -169,6 +169,33 @@ describe('probableLineupService', () => {
     );
   });
 
+  it('pickProbableStarters normaliza posiciones DF/MF/FW de FIFA', () => {
+    const roster = [
+      { fullName: 'GK', position: 'GK', shirtNumber: 1, healthStatus: 'available' },
+      ...Array.from({ length: 4 }, (_, i) => ({
+        fullName: `DEF${i}`,
+        position: 'DF',
+        shirtNumber: i + 2,
+        healthStatus: 'available',
+      })),
+      ...Array.from({ length: 3 }, (_, i) => ({
+        fullName: `MID${i}`,
+        position: 'MF',
+        shirtNumber: i + 6,
+        healthStatus: 'available',
+      })),
+      ...Array.from({ length: 3 }, (_, i) => ({
+        fullName: `FWD${i}`,
+        position: 'FW',
+        shirtNumber: i + 9,
+        healthStatus: 'available',
+      })),
+    ];
+
+    const starters = pickProbableStarters(roster);
+    expect(starters).toHaveLength(11);
+  });
+
   it('pickProbableStarters excluye lesionados', () => {
     const roster = [
       { fullName: 'GK', position: 'GK', shirtNumber: 1, healthStatus: 'available' },

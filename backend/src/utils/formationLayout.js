@@ -244,6 +244,9 @@ export function mapFootballDataPositionText(text) {
   const p = String(text ?? '').trim().toLowerCase();
   if (!p) return 'MID';
   if (p.includes('goalkeeper') || p === 'gk' || p === 'g') return 'GK';
+  if (p === 'df' || p === 'def') return 'DEF';
+  if (p === 'mf' || p === 'mid') return 'MID';
+  if (p === 'fw' || p === 'fwd') return 'FWD';
 
   // Delanteros / extremos (antes de "defen" y "mid")
   if ((p.includes('wing') || p.includes('winger')) && !p.includes('back')) return 'FWD';

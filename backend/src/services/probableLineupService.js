@@ -42,8 +42,9 @@ export function pickProbableStarters(players) {
   );
   const byPosition = Object.fromEntries(POSITIONS.map((p) => [p, []]));
   for (const player of available) {
-    if (player.position && byPosition[player.position]) {
-      byPosition[player.position].push(player);
+    const pos = mapFootballDataPositionText(player.position);
+    if (byPosition[pos]) {
+      byPosition[pos].push({ ...player, position: pos });
     }
   }
 
@@ -66,11 +67,12 @@ export function pickProbableStarters(players) {
 }
 
 function serializeProbablePlayer(player) {
+  const position = mapFootballDataPositionText(player.position);
   return {
     playerId: player.externalId ?? null,
     name: player.fullName,
     shirtNumber: player.shirtNumber ?? null,
-    position: player.position ?? 'MID',
+    position,
     photoUrl: resolvePlayerPhotoUrl(player.photoKey) || null,
     isStarter: true,
   };

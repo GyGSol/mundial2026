@@ -104,5 +104,8 @@ describe('formationLayout', () => {
     expect(mapFootballDataPositionText('Centre-Back')).toBe('DEF');
     expect(mapFootballDataPositionText('Central Midfield')).toBe('MID');
     expect(mapFootballDataPositionText('Centre-Forward')).toBe('FWD');
+    expect(mapFootballDataPositionText('DF')).toBe('DEF');
+    expect(mapFootballDataPositionText('MF')).toBe('MID');
+    expect(mapFootballDataPositionText('FW')).toBe('FWD');
   });
 });
