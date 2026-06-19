@@ -10,6 +10,9 @@ import {
   generateTemporaryPassword,
   requestPasswordReset,
 } from '../src/services/passwordResetService.js';
+import { getTestMongoUri } from '../src/config/testDbGuard.js';
+
+const mongoUri = getTestMongoUri();
 
 vi.mock('../src/services/emailService.js', () => ({
   sendPasswordResetEmail: vi.fn().mockResolvedValue({ delivered: false, logged: true }),
@@ -19,7 +22,7 @@ const TEST_EMAIL = 'password-reset-test@example.com';
 
 describe('passwordResetService', () => {
   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026_test');
+    await mongoose.connect(mongoUri);
   });
 
   afterAll(async () => {

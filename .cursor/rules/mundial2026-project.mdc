@@ -51,3 +51,11 @@ git push heroku main
 ```
 
 Ver [HEROKU.md](../../HEROKU.md) para Atlas, config vars y panel admin.
+
+## Seguridad de la base de datos (CRÍTICO)
+
+- **Nunca** correr `npm test` con `MONGODB_URI` de Heroku/Atlas en el entorno. Varios tests hacen `deleteMany({})` y **borraron producción** en jun-2026.
+- Antes de tests: `unset MONGODB_URI` o usar solo `mongodb://127.0.0.1:27017/mundial2026_test`.
+- Tests deben usar `getTestMongoUri()` ([`backend/src/config/testDbGuard.js`](../../backend/src/config/testDbGuard.js)); el guard bloquea URIs de prod.
+- Backups automáticos a `GyGSol/mundial2026-db-backups` al finalizar partido. Manual: `heroku run "npm run backup:push -w backend" -a mundial2026-pred`.
+- Procedimientos completos: [docs/DATABASE_BACKUP_AND_RECOVERY.md](../../docs/DATABASE_BACKUP_AND_RECOVERY.md).

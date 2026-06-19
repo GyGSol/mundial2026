@@ -15,6 +15,9 @@ import {
   removeGroupMember,
   requestJoinCompetitionGroup,
 } from '../src/services/competitionGroupService.js';
+import { getTestMongoUri } from '../src/config/testDbGuard.js';
+
+const mongoUri = getTestMongoUri();
 
 describe('competitionGroupService', () => {
   it('valida nombre obligatorio', async () => {
@@ -41,9 +44,7 @@ describe('competitionGroupService', () => {
 
     beforeAll(async () => {
       if (mongoose.connection.readyState === 0) {
-        await mongoose.connect(
-          process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026-test'
-        );
+        await mongoose.connect(mongoUri);
       }
       const user = await User.create({
         name: 'Test Leave',

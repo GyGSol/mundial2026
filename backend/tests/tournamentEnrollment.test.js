@@ -9,6 +9,9 @@ import {
   enrollUser,
   listEnrollmentsForUserInGroup,
 } from '../src/services/tournamentEnrollmentService.js';
+import { getTestMongoUri } from '../src/config/testDbGuard.js';
+
+const mongoUri = getTestMongoUri();
 
 describe('tournamentEnrollmentService', () => {
   let ownerId;
@@ -18,9 +21,7 @@ describe('tournamentEnrollmentService', () => {
 
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(
-        process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026-test'
-      );
+      await mongoose.connect(mongoUri);
     }
 
     const owner = await User.create({

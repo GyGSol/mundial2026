@@ -44,5 +44,11 @@ Tras editar `mcp.json`: **MCP Reload** en Cursor.
 
 - Variables sensibles solo en `.env` (nunca en git ni Engram).
 - Commits en español o inglés claro; mensaje con el *por qué*.
-- Tests: `npm test` (backend, puntuación y rutas críticas).
+- Tests: `npm test` (backend, puntuación y rutas críticas). **Nunca** con `MONGODB_URI` de prod exportada — ver [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md).
 - Deploy Heroku: tras cambios implementados, commit + `git push heroku main` + `git push origin main` (sin esperar confirmación del usuario).
+
+## Base de datos y backups
+
+- Incidente jun-2026: tests con Atlas prod → wipe. Guard: `backend/src/config/testDbGuard.js` + `tests/setupTestDb.js`.
+- Backups automáticos al finalizar partido → repo privado `GyGSol/mundial2026-db-backups`.
+- Procedimientos: [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md).

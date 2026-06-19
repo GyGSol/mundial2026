@@ -8,10 +8,13 @@ import {
   findUserBySessionToken,
   revokeSessionToken,
 } from '../src/services/sessionService.js';
+import { getTestMongoUri } from '../src/config/testDbGuard.js';
+
+const mongoUri = getTestMongoUri();
 
 describe('sessionService', () => {
   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026_test');
+    await mongoose.connect(mongoUri);
   });
 
   afterAll(async () => {

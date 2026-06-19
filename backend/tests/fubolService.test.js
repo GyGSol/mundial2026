@@ -19,13 +19,14 @@ import {
   getTotalUserBalances,
 } from '../src/services/fubolService.js';
 import { GROUP_ENTRY_FEE, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../src/config/economy.js';
+import { getTestMongoUri } from '../src/config/testDbGuard.js';
+
+const mongoUri = getTestMongoUri();
 
 describe('fubolService', () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(
-        process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026-test'
-      );
+      await mongoose.connect(mongoUri);
     }
   });
 
@@ -332,9 +333,7 @@ describe('fubolIsolation', () => {
 
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(
-        process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026-test'
-      );
+      await mongoose.connect(mongoUri);
     }
 
     const group = await CompetitionGroup.create({

@@ -286,6 +286,8 @@ CONFIRM=1 node src/scripts/restoreFamilyProFromExport.js --file=/ruta/prediction
 
 Estado del último backup: documento `SyncMeta` con clave `matchFinishBackups` en MongoDB.
 
+**Documentación completa:** [docs/DATABASE_BACKUP_AND_RECOVERY.md](../docs/DATABASE_BACKUP_AND_RECOVERY.md) (incidente jun-2026, prevención, restore).
+
 ## Deploy de cambios futuros
 
 ```bash
