@@ -23,10 +23,8 @@ export default function CoachDetailDialog({ coach, open, onOpenChange }) {
     else if (!open && dialog.open) dialog.close();
   }, [open]);
 
-  if (!coach?.name) return null;
-
   const handleClose = () => onOpenChange(false);
-  const flag = getTeamFlag({ fifaCode: coach.teamFifaCode });
+  const flag = coach?.teamFifaCode ? getTeamFlag({ fifaCode: coach.teamFifaCode }) : null;
 
   return (
     <dialog
@@ -36,6 +34,7 @@ export default function CoachDetailDialog({ coach, open, onOpenChange }) {
       onCancel={handleClose}
       aria-labelledby="coach-detail-title"
     >
+      {coach?.name ? (
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-2.5">
@@ -101,6 +100,7 @@ export default function CoachDetailDialog({ coach, open, onOpenChange }) {
           </div>
         </CardContent>
       </Card>
+      ) : null}
     </dialog>
   );
 }

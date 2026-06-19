@@ -60,7 +60,7 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
   return (
     <div
       key={player.playerId ?? `${side}-${index}`}
-      className="group/marker absolute z-10 -translate-x-1/2 -translate-y-1/2"
+      className="group/marker pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2"
       style={style}
     >
       <button
@@ -121,7 +121,7 @@ function PitchHalf({ players, side, teamLabel, teamCode, onPlayerClick }) {
   return (
     <div
       className={cn(
-        'absolute inset-y-0 w-1/2',
+        'pointer-events-none absolute inset-y-0 w-1/2',
         side === 'home' ? 'left-0' : 'right-0'
       )}
       aria-label={teamLabel}
@@ -281,33 +281,29 @@ export default function PitchFormation({
       >
         <div className="absolute inset-0 overflow-hidden rounded-lg border border-emerald-700/50 bg-gradient-to-b from-emerald-700 to-emerald-800">
           <PitchMarkings />
+        </div>
 
-          <div className="pointer-events-none absolute bottom-1 left-2 flex items-end gap-1">
-            <div className="pointer-events-auto">
-              <CoachBadge
-                coach={lineup?.home?.coach}
-                side="home"
-                formation={lineup?.home?.formation}
-                onCoachClick={handleCoachClick}
-              />
-            </div>
-            <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
-              {homeLabel}
-            </span>
-          </div>
-          <div className="pointer-events-none absolute bottom-1 right-2 flex items-end gap-1">
-            <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
-              {awayLabel}
-            </span>
-            <div className="pointer-events-auto">
-              <CoachBadge
-                coach={lineup?.away?.coach}
-                side="away"
-                formation={lineup?.away?.formation}
-                onCoachClick={handleCoachClick}
-              />
-            </div>
-          </div>
+        <div className="pointer-events-auto absolute bottom-1 left-2 z-20 flex items-end gap-1">
+          <CoachBadge
+            coach={lineup?.home?.coach}
+            side="home"
+            formation={lineup?.home?.formation}
+            onCoachClick={handleCoachClick}
+          />
+          <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
+            {homeLabel}
+          </span>
+        </div>
+        <div className="pointer-events-auto absolute bottom-1 right-2 z-20 flex items-end gap-1">
+          <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
+            {awayLabel}
+          </span>
+          <CoachBadge
+            coach={lineup?.away?.coach}
+            side="away"
+            formation={lineup?.away?.formation}
+            onCoachClick={handleCoachClick}
+          />
         </div>
 
         <PitchHalf
@@ -336,13 +332,11 @@ export default function PitchFormation({
         />
       ) : null}
 
-      {coachDetailOpen ? (
-        <CoachDetailDialog
-          coach={coachDetail}
-          open={coachDetailOpen}
-          onOpenChange={handleCoachDetailOpenChange}
-        />
-      ) : null}
+      <CoachDetailDialog
+        coach={coachDetail}
+        open={coachDetailOpen}
+        onOpenChange={handleCoachDetailOpenChange}
+      />
     </>
   );
 }
