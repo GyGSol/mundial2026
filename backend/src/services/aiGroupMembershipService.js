@@ -1,6 +1,10 @@
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
-import { getAiUser } from './aiPredictionService.js';
+import { getAiUser } from './aiUserService.js';
 import { chargeGroupEntryFee } from './fubolService.js';
+import {
+  ensureEliminationEnrollment,
+  getEliminationTournamentRecord,
+} from './eliminationTournamentService.js';
 
 /**
  * Predictive Modeling (IA) compite en cada grupo: membresía + inscripción de 100 Fubols al pozo.
@@ -28,6 +32,12 @@ export async function ensureAiCompetitorInGroup(groupId) {
       { $setOnInsert: { role: 'member' } },
       { upsert: true, new: true }
     );
+  }
+
+  const eliminationTournament = await getEliminationTournamentRecord(groupId);
+  if (eliminationTournament && eliminationTournament.status === 'open') {
+    const memberCount = await UserGroupMembership.countDocuments({ groupId });
+    await ensureEliminationEnrollment(aiUser._id, groupId, memberCount);
   }
 
   return {

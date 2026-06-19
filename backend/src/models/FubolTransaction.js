@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const FUBOL_TX_TYPES = [
   'deposit',
   'entry_fee',
+  'elimination_entry_fee',
   'prize_payout',
   'withdrawal',
   'welcome_bonus',

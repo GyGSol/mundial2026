@@ -1,8 +1,13 @@
 import mongoose from 'mongoose';
-import { isEnrollableTournamentType } from '../constants/tournamentTypes.js';
+import { isEnrollableTournamentType, TOURNAMENT_TYPE_ELIMINATION } from '../constants/tournamentTypes.js';
+import { computeEliminationEntryFee } from '../config/economy.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { TournamentEnrollment } from '../models/TournamentEnrollment.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
+import {
+  assertEliminationEnrollmentOpen,
+  ensureEliminationEnrollment,
+} from './eliminationTournamentService.js';
 
 function serializeEnrollment(row) {
   return {
@@ -88,6 +93,16 @@ export async function enrollUser(userId, groupId, tournamentType) {
   }
 
   const group = await assertGroupMember(userId, groupId);
+
+  if (tournamentType === TOURNAMENT_TYPE_ELIMINATION) {
+    await assertEliminationEnrollmentOpen(group._id);
+    const memberCount = await UserGroupMembership.countDocuments({ groupId: group._id });
+    const enrollment = await ensureEliminationEnrollment(userId, group._id, memberCount);
+    return {
+      ...serializeEnrollment(enrollment),
+      entryFeeFubols: enrollment.entryFeeFubols ?? computeEliminationEntryFee(memberCount),
+    };
+  }
 
   const enrollment = await TournamentEnrollment.findOneAndUpdate(
     {

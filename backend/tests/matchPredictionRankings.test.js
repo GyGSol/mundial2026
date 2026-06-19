@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { rankMatchPredictions } from '../src/services/matchPredictionRankingsService.js';
+import {
+  rankMatchPredictions,
+  rankActivePlayersForMatch,
+} from '../src/services/matchPredictionRankingsService.js';
 
 describe('matchPredictionRankingsService', () => {
   it('ordena jugadores por puntos sin exponer predicciones', () => {
@@ -74,5 +77,44 @@ describe('matchPredictionRankingsService', () => {
       'Bruno Díaz',
     ]);
     expect(ranked[2]).toMatchObject({ pb: 1, points: 1 });
+  });
+
+  it('rankActivePlayersForMatch incluye jugadores sin predicción con 0 puntos al final', () => {
+    const userMap = {
+      u1: 'Ana',
+      u2: 'Bruno',
+      u3: 'Carla',
+    };
+
+    const predictionsByUserId = new Map([
+      [
+        'u1',
+        {
+          userId: 'u1',
+          pointsEarned: 3,
+          pointsBreakdown: { winner: 3, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+        },
+      ],
+      [
+        'u2',
+        {
+          userId: 'u2',
+          pointsEarned: 1,
+          pointsBreakdown: { winner: 0, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+        },
+      ],
+    ]);
+
+    const ranked = rankActivePlayersForMatch({
+      activeUserIds: ['u1', 'u2', 'u3'],
+      predictionsByUserId,
+      userMap,
+      actual: { home: 2, away: 0 },
+    });
+
+    expect(ranked).toHaveLength(3);
+    expect(ranked[0].name).toBe('Ana');
+    expect(ranked[1].name).toBe('Bruno');
+    expect(ranked[2]).toMatchObject({ name: 'Carla', points: 0, rank: 3 });
   });
 });

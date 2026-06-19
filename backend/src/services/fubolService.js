@@ -2,9 +2,10 @@ import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { FubolTransaction } from '../models/FubolTransaction.js';
 import { AppTreasury } from '../models/AppTreasury.js';
+import { EliminationTournament } from '../models/EliminationTournament.js';
 import { PrizePool } from '../models/PrizePool.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
-import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../config/economy.js';
+import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE, ELIMINATION_TOURNAMENT_PRIZE_FUBOLS, computeEliminationEntryFee } from '../config/economy.js';
 
 function economyError(message, status = 400) {
   const error = new Error(message);
@@ -207,11 +208,11 @@ async function resolveAiConsultationGroupId(userId, user, session = null) {
   return membership ? candidate : null;
 }
 
-async function fundAiUserForEntryIfNeeded(userId, session = null) {
+async function fundAiUserForFeeIfNeeded(userId, fee, session = null) {
   const user = await User.findById(userId).select('isAiUser balanceFubols').session(session).lean();
   if (!user?.isAiUser) return;
 
-  const shortfall = GROUP_ENTRY_FEE - (user.balanceFubols || 0);
+  const shortfall = fee - (user.balanceFubols || 0);
   if (shortfall <= 0) return;
 
   const treasury = await getTreasury(session);
@@ -225,10 +226,14 @@ async function fundAiUserForEntryIfNeeded(userId, session = null) {
     userId,
     amount: shortfall,
     type: 'ai_entry_float',
-    metadata: { reason: 'group_entry_prefund', fee: GROUP_ENTRY_FEE },
+    metadata: { reason: 'tournament_entry_prefund', fee },
     skipTreasuryDeposit: true,
     session,
   });
+}
+
+async function fundAiUserForEntryIfNeeded(userId, session = null) {
+  return fundAiUserForFeeIfNeeded(userId, GROUP_ENTRY_FEE, session);
 }
 
 async function ensurePrizePool(groupId, session = null) {
@@ -555,4 +560,108 @@ export async function getUserBalanceSummary(userId) {
     maxWithdrawal,
     liquidFubols,
   };
+}
+
+export async function chargeEliminationEntryFee({ userId, groupId, memberCount }) {
+  const user = await User.findById(userId).select('isAiUser balanceFubols').lean();
+  if (!user) throw economyError('Usuario no encontrado', 404);
+
+  const fee = computeEliminationEntryFee(memberCount);
+  if (fee <= 0) throw economyError('Cuota de inscripción inválida');
+
+  const idempotencyKey = `elimination-entry:${userId}:${groupId}`;
+
+  return runInTransaction(async (session) => {
+    const existing = await findIdempotentTx(idempotencyKey, session);
+    if (existing) {
+      const fresh = await User.findById(userId).select('balanceFubols').lean();
+      return {
+        charged: false,
+        reason: 'already_paid',
+        fee,
+        balanceFubols: fresh?.balanceFubols ?? 0,
+        transaction: existing,
+      };
+    }
+
+    if (user.isAiUser) {
+      await fundAiUserForFeeIfNeeded(userId, fee, session);
+    }
+
+    const tournamentQuery = EliminationTournament.findOne({ groupId, status: 'open' });
+    if (session) tournamentQuery.session(session);
+    const tournament = await tournamentQuery;
+    if (!tournament) {
+      throw economyError('El Torneo Eliminación no está abierto a inscripciones', 400);
+    }
+
+    const debit = await debitUser({
+      userId,
+      amount: fee,
+      type: 'elimination_entry_fee',
+      groupId,
+      idempotencyKey,
+      metadata: { fee, tournamentType: 'elimination', memberCount },
+      session,
+    });
+
+    tournament.eliminationPoolFubols = (tournament.eliminationPoolFubols || 0) + fee;
+    await tournament.save(session ? { session } : undefined);
+
+    return {
+      charged: true,
+      fee,
+      balanceFubols: debit.balanceFubols,
+      transaction: debit.transaction,
+      poolTotal: tournament.eliminationPoolFubols,
+    };
+  });
+}
+
+export async function payoutEliminationChampion({ userId, groupId }) {
+  const prize = ELIMINATION_TOURNAMENT_PRIZE_FUBOLS;
+  const idempotencyKey = `elimination-prize:${groupId}`;
+
+  return runInTransaction(async (session) => {
+    const existing = await findIdempotentTx(idempotencyKey, session);
+    if (existing) {
+      return { paid: false, duplicate: true, transaction: existing };
+    }
+
+    const tournamentQuery = EliminationTournament.findOne({ groupId });
+    if (session) tournamentQuery.session(session);
+    const tournament = await tournamentQuery;
+    if (!tournament) throw economyError('Torneo eliminación no encontrado', 404);
+
+    const poolAvailable = tournament.eliminationPoolFubols || 0;
+    const fromPool = Math.min(prize, poolAvailable);
+    tournament.eliminationPoolFubols = poolAvailable - fromPool;
+    tournament.prizePaidAt = new Date();
+    await tournament.save(session ? { session } : undefined);
+
+    const fromHouse = prize - fromPool;
+    if (fromHouse > 0) {
+      const treasury = await getTreasury(session);
+      treasury.houseBalanceFubols = Math.max(0, (treasury.houseBalanceFubols || 0) - fromHouse);
+      await treasury.save(session ? { session } : undefined);
+    }
+
+    const credit = await creditUser({
+      userId,
+      amount: prize,
+      type: 'prize_payout',
+      groupId,
+      idempotencyKey,
+      metadata: {
+        tournamentType: 'elimination',
+        fromPool,
+        fromHouse,
+        prizeFubols: prize,
+      },
+      skipTreasuryDeposit: true,
+      session,
+    });
+
+    return { paid: true, ...credit, fromPool, fromHouse };
+  });
 }

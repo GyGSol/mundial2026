@@ -1,12 +1,19 @@
 /** Mirrors backend economy config for UI-only constants */
 export const MOCK_CHECKOUT_DELAY_MS = 2000;
 export const GROUP_ENTRY_FEE = 100;
+export const ELIMINATION_TOURNAMENT_PRIZE_FUBOLS = 100;
+
+export function computeEliminationEntryFee(memberCount) {
+  const members = Math.max(1, Math.floor(Number(memberCount) || 0));
+  return Math.floor(ELIMINATION_TOURNAMENT_PRIZE_FUBOLS / members);
+}
 export const AI_CONSULTATION_FEE = 1;
 export const AI_QUESTIONS_PER_FEE = 3;
 
 export const TX_TYPE_LABELS = {
   deposit: 'Ingreso',
   entry_fee: 'Inscripción',
+  elimination_entry_fee: 'Inscripción Torneo Eliminación',
   prize_payout: 'Premio',
   withdrawal: 'Retiro',
   welcome_bonus: 'Bono de bienvenida',

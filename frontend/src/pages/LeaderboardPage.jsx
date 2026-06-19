@@ -4,6 +4,7 @@ import { competitionGroupsApi, leaderboardApi } from '../api/client.js';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../lib/apiError.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
+import EliminationTournamentPanel from '../components/EliminationTournamentPanel.jsx';
 import TournamentLeaderboardPlaceholder from '../components/TournamentLeaderboardPlaceholder.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -11,6 +12,7 @@ import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/lea
 import {
   DEFAULT_TOURNAMENT_TYPE,
   TOURNAMENT_TYPE_COMMON,
+  TOURNAMENT_TYPE_ELIMINATION,
   TOURNAMENT_TYPES,
   isValidTournamentType,
 } from '../lib/tournamentTypes.js';
@@ -127,6 +129,23 @@ export default function LeaderboardPage() {
 
   const canLoadRanking = Boolean(effectiveGroupId);
   const isCommonTournament = selectedTournamentType === TOURNAMENT_TYPE_COMMON;
+  const isEliminationTournament = selectedTournamentType === TOURNAMENT_TYPE_ELIMINATION;
+
+  const fetchEliminationDashboard = useCallback(
+    () => competitionGroupsApi.eliminationTournament.get(effectiveGroupId),
+    [effectiveGroupId]
+  );
+
+  const {
+    data: eliminationData,
+    loading: eliminationLoading,
+    error: eliminationError,
+    refresh: refreshElimination,
+  } = useLiveData(fetchEliminationDashboard, [effectiveGroupId, isEliminationTournament], {
+    enabled: canLoadRanking && isEliminationTournament && isAuthenticated,
+    getPollIntervalMs: () => 15_000,
+    pollWhen: (data) => data?.tournament?.status === 'running',
+  });
 
   useEffect(() => {
     if (!isAuthenticated || !effectiveGroupId || effectiveGroupId === '__nogroup') {
@@ -424,6 +443,14 @@ export default function LeaderboardPage() {
               hasLiveMatches={hasLiveMatches}
               showGroupName={false}
               prizesWinnersCount={prizesWinnersCount}
+            />
+          ) : isEliminationTournament ? (
+            <EliminationTournamentPanel
+              data={eliminationData}
+              loading={eliminationLoading}
+              error={eliminationError}
+              isAuthenticated={isAuthenticated}
+              onRetry={refreshElimination}
             />
           ) : (
             <TournamentLeaderboardPlaceholder

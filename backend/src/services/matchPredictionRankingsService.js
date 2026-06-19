@@ -53,6 +53,34 @@ export function rankMatchPredictions(predictions, userMap, { onlyScorers = true,
   }));
 }
 
+export function rankActivePlayersForMatch({
+  activeUserIds,
+  predictionsByUserId,
+  userMap,
+  actual = null,
+}) {
+  const predictions = activeUserIds.map((userId) => {
+    const key = userId.toString();
+    const prediction = predictionsByUserId.get(key);
+    if (prediction) return prediction;
+    return {
+      userId,
+      pointsEarned: 0,
+      pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+      bonusPoint: 0,
+      homeGoals: 0,
+      awayGoals: 0,
+      goalDiffHome: 0,
+      goalDiffAway: 0,
+    };
+  });
+
+  return rankMatchPredictions(predictions, userMap, {
+    onlyScorers: false,
+    actual,
+  });
+}
+
 async function rescoreUnscoredPredictions(finishedMatches = []) {
   for (const match of finishedMatches) {
     const unscored = await Prediction.countDocuments({

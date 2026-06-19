@@ -27,6 +27,11 @@ import {
   enrollUser,
   listEnrollmentsForUserInGroup,
 } from '../services/tournamentEnrollmentService.js';
+import {
+  activateTournament,
+  getEliminationDashboard,
+  startTournament,
+} from '../services/eliminationTournamentService.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 const router = Router();
@@ -245,6 +250,33 @@ router.post('/:groupId/tournament-enrollments', authMiddleware, async (req, res,
       req.body.tournamentType
     );
     res.status(201).json({ enrollment });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:groupId/elimination-tournament', authMiddleware, async (req, res, next) => {
+  try {
+    const dashboard = await getEliminationDashboard(req.params.groupId, req.user._id);
+    res.json(dashboard);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:groupId/elimination-tournament/activate', authMiddleware, async (req, res, next) => {
+  try {
+    const dashboard = await activateTournament(req.params.groupId, req.user._id);
+    res.json(dashboard);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:groupId/elimination-tournament/start', authMiddleware, async (req, res, next) => {
+  try {
+    const dashboard = await startTournament(req.params.groupId, req.user._id);
+    res.json(dashboard);
   } catch (err) {
     next(err);
   }

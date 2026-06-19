@@ -1,6 +1,12 @@
 /** 10 USD = 100 Fubols → 10 Fubols per USD */
 export const FUBOLS_PER_USD = 10;
 export const GROUP_ENTRY_FEE = 100;
+export const ELIMINATION_TOURNAMENT_PRIZE_FUBOLS = 100;
+
+export function computeEliminationEntryFee(memberCount) {
+  const members = Math.max(1, Math.floor(Number(memberCount) || 0));
+  return Math.floor(ELIMINATION_TOURNAMENT_PRIZE_FUBOLS / members);
+}
 export const WELCOME_BONUS_FUBOLS = 100;
 export const AI_PLAY_BONUS_FUBOLS = 10;
 export const AI_CONSULTATION_FEE = 1;

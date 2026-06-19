@@ -16,6 +16,8 @@ const tournamentEnrollmentSchema = new mongoose.Schema(
       required: true,
     },
     enrolledAt: { type: Date, default: Date.now },
+    entryFeeFubols: { type: Number, default: null },
+    entryFeePaidAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

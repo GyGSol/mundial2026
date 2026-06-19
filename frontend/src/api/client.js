@@ -125,6 +125,17 @@ export const competitionGroupsApi = {
         body: JSON.stringify({ tournamentType }),
       }),
   },
+  eliminationTournament: {
+    get: (groupId) => request(`/competition-groups/${groupId}/elimination-tournament`),
+    activate: (groupId) =>
+      request(`/competition-groups/${groupId}/elimination-tournament/activate`, {
+        method: 'POST',
+      }),
+    start: (groupId) =>
+      request(`/competition-groups/${groupId}/elimination-tournament/start`, {
+        method: 'POST',
+      }),
+  },
 };
 
 export const matchesApi = {
