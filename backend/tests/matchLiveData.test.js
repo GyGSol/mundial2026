@@ -796,6 +796,43 @@ describe('matchLiveData', () => {
       expect(event.playerMongoId).toBe('507f1f77bcf86cd799439011');
       expect(event.playerExternalId).toBe('MEX-brian-gutierrez');
     });
+
+    it('enrichTimelineRosterFields empareja SEOL Youngwoo con foto KOR', () => {
+      const awayPlayers = [
+        {
+          mongoId: '6a2572f5f22c99c462a44c80',
+          externalId: 'KOR-seol-young-woo',
+          fullName: 'Seol Young-woo',
+          position: 'DEF',
+          shirtNumber: 22,
+          photoUrl: 'https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/corea/kor-seol-young-woo.png',
+        },
+        {
+          mongoId: '6a2572f5f22c99c462a44c8a',
+          externalId: 'KOR-yang-hyun-jun',
+          fullName: 'Yang Hyun-jun',
+          position: 'MID',
+          shirtNumber: 20,
+          photoUrl: 'https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/corea/kor-yang-hyun-jun.png',
+        },
+      ];
+      const timeline = [
+        {
+          type: 'substitution',
+          side: 'away',
+          minute: 78,
+          playerOut: 'SEOL Youngwoo',
+          playerOutShirtNumber: 22,
+          playerIn: 'H J YANG',
+          playerInShirtNumber: 20,
+        },
+      ];
+
+      const [event] = enrichTimelineRosterFields(timeline, [], awayPlayers);
+      expect(event.playerOut).toBe('Seol Young-woo');
+      expect(event.playerOutPhotoUrl).toContain('kor-seol-young-woo.png');
+      expect(event.playerIn).toBe('Yang Hyun-jun');
+    });
   });
 
 });

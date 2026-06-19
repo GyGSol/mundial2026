@@ -6,20 +6,68 @@ export function normalizeName(value) {
     .trim();
 }
 
+/** Tokens separados por espacios o guiones (Young-woo → young, woo). */
+export function nameTokens(value) {
+  return normalizeName(value)
+    .split(/[\s-]+/)
+    .filter(Boolean);
+}
+
+/** Clave sin espacios ni guiones: "Seol Young-woo" y "SEOL Youngwoo" → "seolyoungwoo". */
+export function compactNameKey(value) {
+  return nameTokens(value).join('');
+}
+
 export function nameVariantKeys(fullName) {
-  const normalized = normalizeName(fullName);
-  const tokens = normalized.split(/\s+/).filter(Boolean);
+  const tokens = nameTokens(fullName);
   if (!tokens.length) return [];
 
-  const keys = new Set([tokens.join(' '), [...tokens].reverse().join(' ')]);
+  const keys = new Set([
+    tokens.join(' '),
+    [...tokens].reverse().join(' '),
+    compactNameKey(fullName),
+  ]);
   return [...keys];
 }
 
 export function tokensMatchAnyOrder(a, b) {
-  const left = normalizeName(a).split(/\s+/).filter(Boolean).sort();
-  const right = normalizeName(b).split(/\s+/).filter(Boolean).sort();
+  const left = nameTokens(a).sort();
+  const right = nameTokens(b).sort();
   if (!left.length || left.length !== right.length) return false;
   return left.every((token, index) => token === right[index]);
+}
+
+function parseInitialsPlusSurname(name) {
+  const tokens = normalizeName(name).split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return null;
+
+  const surname = tokens[tokens.length - 1];
+  const initials = tokens.slice(0, -1).map((token) => token.replace(/\./g, ''));
+  if (!initials.length || initials.some((token) => token.length > 2)) return null;
+  if (!initials.every((token) => token.length === 1)) return null;
+
+  return { surname, initials };
+}
+
+function scoreInitialsSurnameMatch(target, player) {
+  const parsed = parseInitialsPlusSurname(target);
+  if (!parsed) return 0;
+
+  const tokens = nameTokens(player?.fullName);
+  if (tokens.length < 2) return 0;
+
+  let surnameIndex = -1;
+  if (tokens[0] === parsed.surname) surnameIndex = 0;
+  else if (tokens[tokens.length - 1] === parsed.surname) surnameIndex = tokens.length - 1;
+  else return 0;
+
+  const givenTokens = tokens.filter((_, index) => index !== surnameIndex);
+  if (givenTokens.length < parsed.initials.length) return 0;
+
+  const initialsFromGiven = givenTokens.map((token) => token[0]).join('');
+  if (initialsFromGiven === parsed.initials.join('')) return 88;
+
+  return 0;
 }
 
 function scoreNameMatch(target, player) {
@@ -29,19 +77,25 @@ function scoreNameMatch(target, player) {
   const rosterNorm = normalizeName(player?.fullName);
   if (targetNorm === rosterNorm) return 100;
 
-  const rosterTokens = rosterNorm.split(/\s+/).filter(Boolean);
-  const targetTokens = targetNorm.split(/\s+/).filter(Boolean);
+  const rosterTokens = nameTokens(player?.fullName);
+  const targetTokens = nameTokens(target);
 
   if (rosterTokens.length && targetNorm === [...rosterTokens].reverse().join(' ')) return 95;
+  if (compactNameKey(target) === compactNameKey(player?.fullName)) return 93;
   if (tokensMatchAnyOrder(target, player.fullName)) return 90;
+
+  const initialsScore = scoreInitialsSurnameMatch(target, player);
+  if (initialsScore > 0) return initialsScore;
 
   for (const alias of player?.aliasNames ?? []) {
     const aliasNorm = normalizeName(alias);
     if (targetNorm === aliasNorm) return 90;
+    if (compactNameKey(target) === compactNameKey(alias)) return 89;
     if (tokensMatchAnyOrder(target, alias)) return 88;
   }
 
   if (player?.nameLookupKeys?.includes(targetNorm)) return 87;
+  if (player?.nameLookupKeys?.includes(compactNameKey(target))) return 86;
 
   if (targetTokens.length >= 1 && rosterTokens.length >= 2) {
     const targetLast = targetTokens[targetTokens.length - 1];
@@ -77,6 +131,13 @@ export function matchNameToRosterPlayer(name, rosterPlayers = []) {
   return bestScore >= 70 ? best : null;
 }
 
+export function matchRosterPlayerByShirtNumber(shirtNumber, rosterPlayers = []) {
+  if (shirtNumber == null || !Number.isFinite(Number(shirtNumber))) return null;
+  const num = Number(shirtNumber);
+  const matches = rosterPlayers.filter((player) => player.shirtNumber === num);
+  return matches.length === 1 ? matches[0] : null;
+}
+
 export function canonicalPlayerName(name, rosterPlayers = []) {
   const trimmed = String(name ?? '').trim();
   if (!trimmed) return trimmed;
@@ -87,13 +148,16 @@ export function rosterPositionForName(name, rosterPlayers = []) {
   return matchNameToRosterPlayer(name, rosterPlayers)?.position ?? null;
 }
 
-export function enrichNameFromRoster(name, rosterPlayers = []) {
+export function enrichNameFromRoster(name, rosterPlayers = [], { shirtNumber = null } = {}) {
   const trimmed = String(name ?? '').trim();
   if (!trimmed) {
     return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null, externalId: null };
   }
 
-  const matched = matchNameToRosterPlayer(trimmed, rosterPlayers);
+  let matched = matchNameToRosterPlayer(trimmed, rosterPlayers);
+  if (!matched && shirtNumber != null) {
+    matched = matchRosterPlayerByShirtNumber(shirtNumber, rosterPlayers);
+  }
   if (!matched) {
     return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null, externalId: null };
   }

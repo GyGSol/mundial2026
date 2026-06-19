@@ -1152,7 +1152,9 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
     const next = { ...event };
 
     if (next.player) {
-      const enriched = enrichNameFromRoster(next.player, roster);
+      const enriched = enrichNameFromRoster(next.player, roster, {
+        shirtNumber: next.playerShirtNumber ?? null,
+      });
       next.player = enriched.name;
       next.playerPosition = next.playerPosition ?? enriched.position ?? null;
       next.playerShirtNumber = next.playerShirtNumber ?? enriched.shirtNumber ?? null;
@@ -1161,7 +1163,9 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
       if (enriched.externalId) next.playerExternalId = enriched.externalId;
     }
     if (next.playerIn) {
-      const enriched = enrichNameFromRoster(next.playerIn, roster);
+      const enriched = enrichNameFromRoster(next.playerIn, roster, {
+        shirtNumber: next.playerInShirtNumber ?? null,
+      });
       next.playerIn = enriched.name;
       next.playerInPosition = next.playerInPosition ?? enriched.position ?? null;
       next.playerInShirtNumber = next.playerInShirtNumber ?? enriched.shirtNumber ?? null;
@@ -1170,7 +1174,9 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
       if (enriched.externalId) next.playerInExternalId = enriched.externalId;
     }
     if (next.playerOut) {
-      const enriched = enrichNameFromRoster(next.playerOut, roster);
+      const enriched = enrichNameFromRoster(next.playerOut, roster, {
+        shirtNumber: next.playerOutShirtNumber ?? null,
+      });
       next.playerOut = enriched.name;
       next.playerOutPosition = next.playerOutPosition ?? enriched.position ?? null;
       next.playerOutShirtNumber = next.playerOutShirtNumber ?? enriched.shirtNumber ?? null;
