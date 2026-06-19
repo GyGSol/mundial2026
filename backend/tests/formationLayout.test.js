@@ -20,7 +20,7 @@ describe('formationLayout', () => {
     const def = parseApiFootballGrid('2:2', '4-3-3');
     const fwd = parseApiFootballGrid('4:2', '4-3-3');
     expect(gk).not.toBeNull();
-    expect(gk.gridX).toBe(4);
+    expect(gk.gridX).toBe(3);
     expect(def.gridX).toBeGreaterThan(30);
     expect(def.gridX).toBeLessThan(50);
     expect(fwd.gridX).toBeGreaterThan(85);
@@ -29,9 +29,19 @@ describe('formationLayout', () => {
   it('assignFormationGrid devuelve 11 slots para 4-3-3', () => {
     const slots = assignFormationGrid('4-3-3', 11);
     expect(slots).toHaveLength(11);
-    expect(slots[0].gridX).toBe(4);
-    expect(slots[5].gridX).toBe(70);
-    expect(slots[10].gridX).toBe(94);
+    expect(slots[0].gridX).toBe(3);
+    expect(slots[5].gridX).toBe(72);
+    expect(slots[10].gridX).toBe(97);
+  });
+
+  it('prioriza positionDetail sobre position cacheado incorrecto', () => {
+    const players = [
+      { name: 'Adams', position: 'DEF', positionDetail: 'Defensive Midfield', shirtNumber: 6 },
+      { name: 'Pulisic', position: 'MID', positionDetail: 'Left Winger', shirtNumber: 10 },
+    ];
+    const assigned = assignPlayersToFormation(players, '4-3-3');
+    expect(assigned.find((p) => p.name === 'Adams').gridX).toBe(68);
+    expect(assigned.find((p) => p.name === 'Pulisic').gridX).toBe(97);
   });
 
   it('assignPlayersToFormation separa DEF, MID y FWD en tres profundidades', () => {
@@ -61,7 +71,7 @@ describe('formationLayout', () => {
     expect(assigned.find((p) => p.name === 'MID2').gridX).toBeLessThan(
       assigned.find((p) => p.name === 'ST').gridX
     );
-    expect(assigned.filter((p) => p.gridX === 44)).toHaveLength(4);
+    expect(assigned.filter((p) => p.gridX === 48)).toHaveLength(4);
   });
 
   it('mapFootballDataPositionText no clasifica pivote como defensa', () => {
@@ -77,9 +87,9 @@ describe('formationLayout', () => {
       { name: 'C', position: 'FWD', gridRaw: '2:3' },
     ];
     const merged = mergePlayerGrids(players, '4-3-3');
-    expect(merged[0].gridX).toBe(4);
-    expect(merged[1].gridX).toBe(44);
-    expect(merged[2].gridX).toBe(94);
+    expect(merged[0].gridX).toBe(3);
+    expect(merged[1].gridX).toBe(48);
+    expect(merged[2].gridX).toBe(97);
     expect(merged[0].gridRaw).toBeUndefined();
   });
 

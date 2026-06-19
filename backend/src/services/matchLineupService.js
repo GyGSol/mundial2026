@@ -1,4 +1,4 @@
-import { Match } from '../models/Match.js';
+import { fetchMatchDetails, hasToken } from './footballDataApiClient.js';
 import { Team } from '../models/Team.js';
 import {
   fetchFixtureLineups,
@@ -65,10 +65,22 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
   return { home, away };
 }
 
+export const LINEUP_LAYOUT_VERSION = 2;
+
+function normalizePlayerForFormation(player) {
+  const detail = player.positionDetail ?? player.position;
+  const mapped = mapFootballDataPositionText(detail);
+  return {
+    ...player,
+    position: mapped,
+  };
+}
+
 function applyGridsToSide(side) {
   if (!side?.players?.length) return side;
+  const players = side.players.map(normalizePlayerForFormation);
   const withGrids = assignPlayersToFormation(
-    side.players,
+    players,
     side.formation || DEFAULT_PROBABLE_FORMATION
   );
   return { ...side, players: withGrids };
@@ -100,6 +112,7 @@ export function buildLineupSnapshotFromSources({
   const snapshot = {
     fetchedAt: new Date().toISOString(),
     source: apiSides ? 'api-football' : source,
+    layoutVersion: LINEUP_LAYOUT_VERSION,
     home: applyGridsToSide(home),
     away: applyGridsToSide(away),
   };
@@ -133,6 +146,7 @@ export function formatLineupPayload(snapshot) {
     status: confirmed ? 'confirmed' : 'probable',
     updatedAt: refreshed.fetchedAt ?? null,
     source: refreshed.source ?? 'heuristic',
+    layoutVersion: LINEUP_LAYOUT_VERSION,
     home: {
       formation: refreshed.home?.formation ?? null,
       coach: refreshed.home?.coach ?? null,
@@ -162,13 +176,58 @@ export async function buildProbableLineupPayload(match) {
   return formatLineupPayload(snapshot);
 }
 
+function sideNeedsPositionDetailRefresh(side) {
+  return (side?.players ?? []).some(
+    (player) => !player.positionDetail || String(player.positionDetail).length <= 3
+  );
+}
+
+async function refreshLineupSnapshotFromFootballData(match) {
+  const fdMatchId = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
+  if (!fdMatchId || !hasToken()) return null;
+
+  const { homeTeam, awayTeam } = await loadMatchTeams(match);
+  if (!homeTeam || !awayTeam) return null;
+
+  const matchData = await fetchMatchDetails(fdMatchId);
+  const fdSides = parseFootballDataMatchLineups(
+    matchData,
+    homeTeam.footballDataTeamId,
+    awayTeam.footballDataTeamId
+  );
+  let snapshot = buildLineupSnapshotFromSources({ fdSides, source: 'football-data' });
+  snapshot = await fetchAndMergeApiFootballGrids(match, homeTeam, awayTeam, snapshot);
+  snapshot.layoutVersion = LINEUP_LAYOUT_VERSION;
+  return snapshot;
+}
+
 export async function buildMatchLineupPayload(match) {
   if (!match?.homeTeamId || !match?.awayTeamId) {
     return formatLineupPayload(null);
   }
 
-  const snapshot = match.raw?.lineupSnapshot;
+  let snapshot = match.raw?.lineupSnapshot;
   if (snapshot?.home?.players?.length || snapshot?.away?.players?.length) {
+    if (
+      snapshot.layoutVersion !== LINEUP_LAYOUT_VERSION &&
+      (sideNeedsPositionDetailRefresh(snapshot.home) ||
+        sideNeedsPositionDetailRefresh(snapshot.away))
+    ) {
+      try {
+        const refreshed = await refreshLineupSnapshotFromFootballData(match);
+        if (refreshed?.home?.players?.length || refreshed?.away?.players?.length) {
+          snapshot = refreshed;
+          if (match._id) {
+            await Match.updateOne(
+              { _id: match._id },
+              { $set: { 'raw.lineupSnapshot': refreshed } }
+            );
+          }
+        }
+      } catch (err) {
+        console.warn(`Lineup snapshot refresh skip ${match.externalId}:`, err.message);
+      }
+    }
     return formatLineupPayload(snapshot);
   }
 
