@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   matchPlayerToPhotoFile,
   parsePhotoFilename,
+  photoSlugVariants,
   resolvePlayerPhotoUrl,
   slugifyPlayerName,
 } from '../src/services/playerPhotoService.js';
@@ -28,6 +29,32 @@ describe('playerPhotoService', () => {
     const player = { fifaCode: 'ARG', fullName: 'Lionel Messi' };
     expect(matchPlayerToPhotoFile(player, parsed)).toBe(true);
     expect(matchPlayerToPhotoFile({ ...player, fullName: 'Julian Alvarez' }, parsed)).toBe(false);
+  });
+
+  it('empareja variantes de slug (apellido-nombre, apóstrofo, abreviatura)', () => {
+    expect(photoSlugVariants("Aiden O'Neill")).toContain('aiden-o-neill');
+    expect(photoSlugVariants("Aiden O'Neill")).toContain('aidenoneill');
+    expect(photoSlugVariants('Timothy Weah')).toContain('weah-timothy');
+    expect(photoSlugVariants('Mathew Ryan')).toContain('mat-ryan');
+
+    expect(
+      matchPlayerToPhotoFile(
+        { fifaCode: 'AUS', fullName: "Aiden O'Neill" },
+        parsePhotoFilename('aus-aiden-oneill.png')
+      )
+    ).toBe(true);
+    expect(
+      matchPlayerToPhotoFile(
+        { fifaCode: 'USA', fullName: 'Tyler Adams' },
+        parsePhotoFilename('usa-adams-tyler.png')
+      )
+    ).toBe(true);
+    expect(
+      matchPlayerToPhotoFile(
+        { fifaCode: 'AUS', fullName: 'Mathew Ryan' },
+        parsePhotoFilename('aus-mat-ryan.png')
+      )
+    ).toBe(true);
   });
 
   it('resuelve URL de GitHub cuando no hay archivo local', () => {

@@ -37,6 +37,30 @@ export function tokensMatchAnyOrder(a, b) {
   return left.every((token, index) => token === right[index]);
 }
 
+/** Mismo apellido y nombre compatible (Mat / Mathew, Tim / Timothy). */
+export function sameSurnameWithCompatibleGivenName(a, b) {
+  const left = nameTokens(a);
+  const right = nameTokens(b);
+  if (left.length < 2 || right.length < 2) return false;
+
+  const lastLeft = left[left.length - 1];
+  const lastRight = right[right.length - 1];
+  if (lastLeft !== lastRight) return false;
+
+  const givenLeft = left.slice(0, -1).join(' ');
+  const givenRight = right.slice(0, -1).join(' ');
+  if (givenLeft === givenRight) return true;
+  if (givenLeft.startsWith(givenRight) || givenRight.startsWith(givenLeft)) return true;
+
+  const shortLeft = left[0];
+  const shortRight = right[0];
+  if (shortLeft.length >= 3 && shortRight.length >= 3 && shortLeft.slice(0, 3) === shortRight.slice(0, 3)) {
+    return true;
+  }
+
+  return false;
+}
+
 function parseInitialsPlusSurname(name) {
   const tokens = normalizeName(name).split(/\s+/).filter(Boolean);
   if (tokens.length < 2) return null;

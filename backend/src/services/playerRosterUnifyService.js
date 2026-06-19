@@ -1,4 +1,4 @@
-import { normalizeName, nameVariantKeys, tokensMatchAnyOrder } from '../utils/playerNameMatch.js';
+import { normalizeName, nameVariantKeys, tokensMatchAnyOrder, sameSurnameWithCompatibleGivenName } from '../utils/playerNameMatch.js';
 import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 
 export function isOfficialSquadExternalId(externalId) {
@@ -16,6 +16,20 @@ function playerIdentityScore(player) {
   return score;
 }
 
+function lineupCanonicalScore(player) {
+  let score = playerIdentityScore(player);
+  if (player.dataSources?.structural === 'wikipedia-squads') score += 200;
+  return score;
+}
+
+function mergeGroupFields(group, canonical) {
+  const photoKey = group.find((p) => p.photoKey)?.photoKey || canonical.photoKey || '';
+  const footballDataPersonId =
+    group.find((p) => p.footballDataPersonId)?.footballDataPersonId ??
+    canonical.footballDataPersonId;
+  return { ...canonical, photoKey, footballDataPersonId };
+}
+
 export function areSamePlayer(a, b) {
   if (!a || !b) return false;
 
@@ -24,6 +38,7 @@ export function areSamePlayer(a, b) {
   if (fdA && fdB && String(fdA) === String(fdB)) return true;
 
   if (tokensMatchAnyOrder(a.fullName, b.fullName)) return true;
+  if (sameSurnameWithCompatibleGivenName(a.fullName, b.fullName)) return true;
 
   const keysA = new Set(nameVariantKeys(a.fullName));
   const keysB = nameVariantKeys(b.fullName);
@@ -33,6 +48,37 @@ export function areSamePlayer(a, b) {
 export function pickCanonicalPlayer(candidates = []) {
   if (!candidates.length) return null;
   return [...candidates].sort((a, b) => playerIdentityScore(b) - playerIdentityScore(a))[0];
+}
+
+/** Para alineaciones: prioriza Wikipedia y hereda foto de duplicados. */
+export function unifyTeamPlayerDocuments(players = []) {
+  if (!players.length) return [];
+
+  const groups = [];
+  const used = new Set();
+
+  for (let i = 0; i < players.length; i += 1) {
+    if (used.has(i)) continue;
+    const group = [players[i]];
+    used.add(i);
+
+    for (let j = i + 1; j < players.length; j += 1) {
+      if (used.has(j)) continue;
+      if (areSamePlayer(players[i], players[j])) {
+        group.push(players[j]);
+        used.add(j);
+      }
+    }
+
+    groups.push(group);
+  }
+
+  return groups.map((group) => {
+    const canonical = [...group].sort(
+      (a, b) => lineupCanonicalScore(b) - lineupCanonicalScore(a)
+    )[0];
+    return mergeGroupFields(group, canonical);
+  });
 }
 
 /**

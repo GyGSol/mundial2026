@@ -3,6 +3,7 @@ import {
   areSamePlayer,
   pickCanonicalPlayer,
   unifyRawTeamPlayers,
+  unifyTeamPlayerDocuments,
 } from '../src/services/playerRosterUnifyService.js';
 
 describe('playerRosterUnifyService', () => {
@@ -45,5 +46,29 @@ describe('playerRosterUnifyService', () => {
     expect(roster[0].aliasNames).toEqual(
       expect.arrayContaining(['Son Heung-min', 'Heung-min Son'])
     );
+  });
+
+  it('unifyTeamPlayerDocuments prioriza Wikipedia y hereda foto del duplicado', () => {
+    const wikiRyan = {
+      externalId: 'AUS-mathew-ryan',
+      fullName: 'Mathew Ryan',
+      shirtNumber: 1,
+      photoKey: '',
+      dataSources: { structural: 'wikipedia-squads' },
+      fifaCode: 'AUS',
+    };
+    const seedRyan = {
+      externalId: 'AUS-mat-ryan',
+      fullName: 'Mat Ryan',
+      shirtNumber: 1,
+      photoKey: 'australia/aus-mat-ryan.png',
+      dataSources: { structural: 'seed' },
+      fifaCode: 'AUS',
+    };
+
+    const unified = unifyTeamPlayerDocuments([seedRyan, wikiRyan]);
+    expect(unified).toHaveLength(1);
+    expect(unified[0].fullName).toBe('Mathew Ryan');
+    expect(unified[0].photoKey).toBe('australia/aus-mat-ryan.png');
   });
 });

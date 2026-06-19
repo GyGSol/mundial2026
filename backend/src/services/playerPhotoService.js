@@ -4,7 +4,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Player } from '../models/Player.js';
 import { env } from '../config/env.js';
-
+import { compactNameKey } from '../utils/playerNameMatch.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '../../..');
 export const PLAYER_PHOTOS_DIR = join(REPO_ROOT, 'imagenes-jugadores');
@@ -66,11 +66,38 @@ export function mapPlayerToTimelineRosterEntry(player) {
   };
 }
 
+export function photoSlugVariants(fullName) {
+  const primary = slugifyPlayerName(fullName);
+  const variants = new Set([primary, compactNameKey(fullName)]);
+  const words = primary.split('-').filter(Boolean);
+
+  if (words.length >= 2) {
+    variants.add([...words].reverse().join('-'));
+
+    for (let i = 0; i < words.length - 1; i += 1) {
+      if (words[i].length === 1) {
+        const merged = [...words];
+        merged[i] = merged[i] + merged[i + 1];
+        merged.splice(i + 1, 1);
+        variants.add(merged.join('-'));
+        variants.add(merged.join(''));
+      }
+    }
+
+    const first = words[0];
+    if (first.length > 3) {
+      variants.add(`${first.slice(0, 3)}-${words.slice(1).join('-')}`);
+    }
+  }
+
+  return [...variants];
+}
+
 export function matchPlayerToPhotoFile(player, parsed) {
   if (!player || !parsed) return false;
   const fifa = String(player.fifaCode || '').toLowerCase();
   if (!fifa || fifa.slice(0, 3) !== parsed.fifaPrefix) return false;
-  return slugifyPlayerName(player.fullName) === parsed.nameSlug;
+  return photoSlugVariants(player.fullName).includes(parsed.nameSlug);
 }
 
 export async function scanPlayerPhotoFiles(photosDir = PLAYER_PHOTOS_DIR) {
@@ -126,20 +153,22 @@ export async function runPlayerPhotoSync({ photosDir = PLAYER_PHOTOS_DIR } = {})
 
   for (const file of photoFiles) {
     const roster = byFifa.get(file.fifaCode) ?? [];
-    const player = roster.find((p) => matchPlayerToPhotoFile(p, file.parsed));
-    if (!player) {
+    const matches = roster.filter((p) => matchPlayerToPhotoFile(p, file.parsed));
+    if (!matches.length) {
       unmatchedFiles.push(file.photoKey);
       continue;
     }
 
     matched += 1;
-    matchedKeys.add(player.externalId);
 
-    const result = await Player.updateOne(
-      { _id: player._id },
-      { $set: { photoKey: file.photoKey } }
-    );
-    if (result.modifiedCount > 0) updated += 1;
+    for (const player of matches) {
+      matchedKeys.add(player.externalId);
+      const result = await Player.updateOne(
+        { _id: player._id },
+        { $set: { photoKey: file.photoKey } }
+      );
+      if (result.modifiedCount > 0) updated += 1;
+    }
   }
 
   const cleared =

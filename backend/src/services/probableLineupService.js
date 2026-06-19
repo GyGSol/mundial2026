@@ -6,6 +6,7 @@ import {
 } from '../utils/formationLayout.js';
 import { MIN_CONFIRMED_STARTERS_PER_TEAM } from './aiLineupContextService.js';
 import { resolvePlayerPhotoUrl } from './playerPhotoService.js';
+import { unifyTeamPlayerDocuments } from './playerRosterUnifyService.js';
 
 export const MAX_STARTERS = 11;
 export const LINE_ORDER = ['GK', 'DEF', 'MID', 'FWD'];
@@ -81,7 +82,8 @@ export async function buildProbableSide(teamExternalId, formation = DEFAULT_PROB
   }
 
   const roster = await Player.find({ teamExternalId }).lean();
-  const starters = pickProbableStarters(roster);
+  const unifiedRoster = unifyTeamPlayerDocuments(roster);
+  const starters = pickProbableStarters(unifiedRoster);
   const players = assignPlayersToFormation(
     starters.map(serializeProbablePlayer),
     formation
