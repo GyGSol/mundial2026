@@ -400,6 +400,7 @@ async function upsertMatches() {
     applyStatusTransitionFields(updatePayload, {
       previousStatus: existing?.status ?? null,
       nextStatus: merged.status,
+      existingFinishedAt: existing?.finishedAt ?? null,
     });
     if (existing?.externalId) {
       updatePayload.externalId = existing.externalId;

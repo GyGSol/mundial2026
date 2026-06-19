@@ -631,6 +631,7 @@ export async function updateAdminMatch(
   applyStatusTransitionFields(transitionPatch, {
     previousStatus,
     nextStatus: match.status,
+    existingFinishedAt: match.finishedAt ?? null,
   });
   if (Object.prototype.hasOwnProperty.call(transitionPatch, 'finishedAt')) {
     match.finishedAt = transitionPatch.finishedAt;
@@ -718,6 +719,7 @@ export async function updateAdminMatchWeatherOps(matchId, weatherOps) {
   applyStatusTransitionFields(transitionPatch, {
     previousStatus,
     nextStatus: match.status,
+    existingFinishedAt: match.finishedAt ?? null,
   });
   if (Object.prototype.hasOwnProperty.call(transitionPatch, 'finishedAt')) {
     match.finishedAt = transitionPatch.finishedAt;

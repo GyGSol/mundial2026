@@ -9,15 +9,17 @@ export const RECENT_FINISHED_FEATURED_MAX = 1;
 /**
  * Aplica side-effects de transición de status en un payload de persistencia ($set).
  * @param {Record<string, unknown>} update
- * @param {{ previousStatus?: string | null, nextStatus: string, now?: Date }} ctx
+ * @param {{ previousStatus?: string | null, nextStatus: string, now?: Date, existingFinishedAt?: Date | string | null }} ctx
  */
-export function applyStatusTransitionFields(update, { previousStatus, nextStatus, now = new Date() }) {
+export function applyStatusTransitionFields(
+  update,
+  { previousStatus, nextStatus, now = new Date(), existingFinishedAt = null }
+) {
   if (nextStatus === 'finished' && previousStatus !== 'finished') {
-    update.finishedAt = now;
+    const existingMs = existingFinishedAt ? new Date(existingFinishedAt).getTime() : NaN;
+    update.finishedAt = Number.isFinite(existingMs) ? new Date(existingMs) : now;
   }
-  if (nextStatus === 'live' && previousStatus === 'finished') {
-    update.finishedAt = null;
-  }
+  // No borrar finishedAt al reabrir live: un re-cierre no debe robar "recién finalizado".
   return update;
 }
 
@@ -60,6 +62,11 @@ export function filterEligibleRecentFinishedMatches(matches, now = Date.now()) {
 /** Solo el/los más recientes para la barra destacada (evita apilar varios finalizados en gracia). */
 export function pickFeaturedRecentFinishedMatches(matches, now = Date.now()) {
   return filterEligibleRecentFinishedMatches(matches, now)
-    .sort((a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime())
+    .sort((a, b) => {
+      const kickoffDiff =
+        new Date(b.kickoffAt ?? 0).getTime() - new Date(a.kickoffAt ?? 0).getTime();
+      if (kickoffDiff !== 0) return kickoffDiff;
+      return new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime();
+    })
     .slice(0, RECENT_FINISHED_FEATURED_MAX);
 }

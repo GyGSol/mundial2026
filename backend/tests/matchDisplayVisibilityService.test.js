@@ -22,24 +22,38 @@ describe('matchDisplayVisibilityService', () => {
     expect(update.finishedAt).toEqual(now);
   });
 
-  it('no sobrescribe si ya estaba finished', () => {
-    const update = { status: 'finished', finishedAt: new Date('2026-06-15T19:00:00.000Z') };
+  it('no sobrescribe finishedAt si ya estaba finished', () => {
+    const prior = new Date('2026-06-15T19:00:00.000Z');
+    const update = { status: 'finished', finishedAt: prior };
     applyStatusTransitionFields(update, {
       previousStatus: 'finished',
       nextStatus: 'finished',
       now,
     });
-    expect(update.finishedAt).toEqual(new Date('2026-06-15T19:00:00.000Z'));
+    expect(update.finishedAt).toEqual(prior);
   });
 
-  it('limpia finishedAt al reabrir de finished a live', () => {
-    const update = { status: 'live' };
+  it('conserva finishedAt al reabrir de finished a live', () => {
+    const prior = new Date('2026-06-15T19:00:00.000Z');
+    const update = { status: 'live', finishedAt: prior };
     applyStatusTransitionFields(update, {
       previousStatus: 'finished',
       nextStatus: 'live',
       now,
     });
-    expect(update.finishedAt).toBeNull();
+    expect(update.finishedAt).toEqual(prior);
+  });
+
+  it('re-finalize conserva finishedAt previo', () => {
+    const prior = new Date('2026-06-18T21:55:00.000Z');
+    const update = { status: 'finished' };
+    applyStatusTransitionFields(update, {
+      previousStatus: 'live',
+      nextStatus: 'finished',
+      now,
+      existingFinishedAt: prior,
+    });
+    expect(update.finishedAt).toEqual(prior);
   });
 
   it('findRecentlyFinishedMatchesQuery usa ventana de 30 min', () => {
@@ -97,7 +111,32 @@ describe('matchDisplayVisibilityService', () => {
     ).toBe(true);
   });
 
-  it('pickFeaturedRecentFinishedMatches devuelve solo el más reciente', () => {
+  it('pickFeaturedRecentFinishedMatches devuelve solo el más reciente por kickoff', () => {
+    const now = new Date('2026-06-19T00:20:00.000Z').getTime();
+    const picked = pickFeaturedRecentFinishedMatches(
+      [
+        {
+          id: '25',
+          status: 'finished',
+          kickoffAt: new Date('2026-06-18T16:00:00.000Z'),
+          finishedAt: new Date('2026-06-19T00:10:46.605Z'),
+          raw: { fifaEvents: { timeline: [{ type: 'match_end', minute: 98, sortKey: 98 }] } },
+        },
+        {
+          id: '27',
+          status: 'finished',
+          kickoffAt: new Date('2026-06-18T22:00:00.000Z'),
+          finishedAt: new Date('2026-06-19T00:00:45.500Z'),
+          raw: { fifaEvents: { timeline: [{ type: 'match_end', minute: 90, sortKey: 90 }] } },
+        },
+      ],
+      now
+    );
+    expect(picked).toHaveLength(1);
+    expect(picked[0].id).toBe('27');
+  });
+
+  it('pickFeaturedRecentFinishedMatches desempata por finishedAt con mismo kickoff', () => {
     const now = new Date('2026-06-18T21:10:00.000Z').getTime();
     const kickoff = new Date('2026-06-18T15:00:00.000Z');
     const base = {

@@ -307,6 +307,7 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
         applyStatusTransitionFields(rawUpdate, {
           previousStatus: match.status,
           nextStatus: effectiveStatus,
+          existingFinishedAt: match.finishedAt ?? null,
         });
         await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
       }

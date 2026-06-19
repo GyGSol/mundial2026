@@ -284,6 +284,7 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
     applyStatusTransitionFields(update, {
       previousStatus: 'finished',
       nextStatus,
+      existingFinishedAt: match.finishedAt ?? null,
     });
     if (badFinished || stripMatchEnd) update['raw.finished'] = 'FALSE';
     if (badElapsed || stripMatchEnd) {
@@ -391,6 +392,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
     applyStatusTransitionFields(finalizeUpdate, {
       previousStatus: 'live',
       nextStatus: 'finished',
+      existingFinishedAt: match.finishedAt ?? null,
     });
 
     const updated = await Match.findOneAndUpdate(

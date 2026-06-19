@@ -3,14 +3,13 @@ import { enrichMatchLiveFields } from '../src/services/matchLiveData.js';
 import { pickFeaturedRecentFinishedMatches } from '../src/services/matchDisplayVisibilityService.js';
 
 describe('rankingPredictionsParity', () => {
-  const now = new Date('2026-06-18T22:00:00.000Z').getTime();
-
   it('pickFeatured elige el mismo destacado que ranking y predicciones comparten', () => {
+    const now = new Date('2026-06-19T00:20:00.000Z').getTime();
     const matches = [
       {
         externalId: '25',
         status: 'finished',
-        finishedAt: new Date('2026-06-18T21:55:00.000Z'),
+        finishedAt: new Date('2026-06-19T00:10:46.000Z'),
         kickoffAt: new Date('2026-06-18T16:00:00.000Z'),
         raw: {
           fifaEvents: {
@@ -19,10 +18,10 @@ describe('rankingPredictionsParity', () => {
         },
       },
       {
-        externalId: '26',
+        externalId: '27',
         status: 'finished',
-        finishedAt: new Date('2026-06-18T21:01:00.000Z'),
-        kickoffAt: new Date('2026-06-18T19:00:00.000Z'),
+        finishedAt: new Date('2026-06-19T00:00:45.000Z'),
+        kickoffAt: new Date('2026-06-18T22:00:00.000Z'),
         raw: {
           fifaEvents: {
             timeline: [{ minute: 90, type: 'match_end', sortKey: 90 }],
@@ -32,7 +31,7 @@ describe('rankingPredictionsParity', () => {
     ];
 
     expect(pickFeaturedRecentFinishedMatches(matches, now).map((m) => m.externalId)).toEqual([
-      '25',
+      '27',
     ]);
   });
 
