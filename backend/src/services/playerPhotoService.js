@@ -14,6 +14,7 @@ export const TEAM_FOLDER_TO_FIFA = {
   argentina: 'ARG',
   espana: 'ESP',
   uruguay: 'URU',
+  mexico: 'MEX',
 };
 
 export function slugifyPlayerName(value) {
