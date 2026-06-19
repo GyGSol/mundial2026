@@ -98,6 +98,11 @@ export function formatTimelinePlayer(event, role = 'player') {
   });
 }
 
+/** @param {unknown} value */
+export function isMongoPlayerId(value) {
+  return typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value);
+}
+
 /** @param {Record<string, unknown>} event @param {'player' | 'in' | 'out'} role */
 export function extractTimelinePlayerFields(event, role = 'player') {
   const suffix = role === 'player' ? '' : role === 'in' ? 'In' : 'Out';
@@ -148,9 +153,18 @@ export function extractTimelinePlayerFields(event, role = 'player') {
         ? 'playerInMongoId'
         : 'playerOutMongoId';
   const mongoRaw = event?.[mongoIdKey];
-  const playerId = mongoRaw ? String(mongoRaw) : null;
+  const playerId = mongoRaw && isMongoPlayerId(String(mongoRaw)) ? String(mongoRaw) : null;
 
-  return { shirtNumber, position, name, tournamentGoals, photoUrl, playerId };
+  const externalIdKey =
+    role === 'player'
+      ? 'playerExternalId'
+      : role === 'in'
+        ? 'playerInExternalId'
+        : 'playerOutExternalId';
+  const externalRaw = event?.[externalIdKey];
+  const externalId = externalRaw ? String(externalRaw) : null;
+
+  return { shirtNumber, position, name, tournamentGoals, photoUrl, playerId, externalId };
 }
 
 /** @param {string} type */

@@ -200,6 +200,8 @@ export const playersApi = {
     return request(`/players${query ? `?${query}` : ''}`);
   },
   get: (id) => request(`/players/${id}`),
+  getByExternal: (externalId) =>
+    request(`/players/by-external/${encodeURIComponent(externalId)}`),
   meta: () => request('/players/meta'),
   refreshTeamIntel: (team, { force = false } = {}) =>
     request('/players/ai/refresh-team', {

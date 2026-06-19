@@ -34,16 +34,17 @@ export function rosterPositionForName(name, rosterPlayers = []) {
 export function enrichNameFromRoster(name, rosterPlayers = []) {
   const trimmed = String(name ?? '').trim();
   if (!trimmed) {
-    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null };
+    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null, externalId: null };
   }
 
   const matched = matchNameToRosterPlayer(trimmed, rosterPlayers);
   if (!matched) {
-    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null };
+    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null, externalId: null };
   }
 
   const photoUrl = matched.photoUrl ? String(matched.photoUrl) : null;
   const mongoId = matched.mongoId ? String(matched.mongoId) : null;
+  const externalId = matched.externalId ? String(matched.externalId) : null;
 
   return {
     name: matched.fullName,
@@ -51,5 +52,6 @@ export function enrichNameFromRoster(name, rosterPlayers = []) {
     shirtNumber: matched.shirtNumber ?? null,
     photoUrl,
     mongoId,
+    externalId,
   };
 }

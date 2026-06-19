@@ -4,6 +4,7 @@ import { getPlayerSyncMeta } from '../services/playerSyncService.js';
 import { getPlayerWikiSyncMeta } from '../services/playerWikiService.js';
 import {
   askPlayerIntelFollowUp,
+  getPlayerByExternalIdWithIntel,
   getPlayerByIdWithIntel,
   listPlayersWithIntel,
   refreshPlayerIntel,
@@ -63,6 +64,18 @@ router.post('/ai/refresh-team', authMiddleware, async (req, res, next) => {
     if (err.message.includes('plantel local')) {
       return res.status(404).json({ error: err.message });
     }
+    next(err);
+  }
+});
+
+router.get('/by-external/:externalId', async (req, res, next) => {
+  try {
+    const player = await getPlayerByExternalIdWithIntel(req.params.externalId);
+    if (!player) {
+      return res.status(404).json({ error: 'Jugador no encontrado' });
+    }
+    res.json({ player, aiAvailable: hasAiProvider() });
+  } catch (err) {
     next(err);
   }
 });

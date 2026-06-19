@@ -713,6 +713,7 @@ describe('matchLiveData', () => {
       const homePlayers = [
         {
           mongoId: '507f1f77bcf86cd799439011',
+          externalId: 'MEX-brian-gutierrez',
           fullName: 'Brian GUTIERREZ',
           position: 'DC',
           shirtNumber: 26,
@@ -732,6 +733,7 @@ describe('matchLiveData', () => {
       expect(event.playerPhotoUrl).toBe('/player-photos/mex/brian-gutierrez.png');
       expect(event.playerShirtNumber).toBe(26);
       expect(event.playerMongoId).toBe('507f1f77bcf86cd799439011');
+      expect(event.playerExternalId).toBe('MEX-brian-gutierrez');
     });
 
     it('enrichMatchLiveFields adjunta playerPhotoUrl cuando hay roster con foto', () => {
@@ -758,6 +760,7 @@ describe('matchLiveData', () => {
           homePlayers: [
             {
               mongoId: '507f1f77bcf86cd799439011',
+              externalId: 'MEX-brian-gutierrez',
               fullName: 'Brian GUTIERREZ',
               position: 'DC',
               shirtNumber: 26,
@@ -770,6 +773,7 @@ describe('matchLiveData', () => {
       const event = enriched.matchTimeline[0];
       expect(event.playerPhotoUrl).toBe('/player-photos/mex/brian-gutierrez.png');
       expect(event.playerMongoId).toBe('507f1f77bcf86cd799439011');
+      expect(event.playerExternalId).toBe('MEX-brian-gutierrez');
     });
   });
 

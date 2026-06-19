@@ -388,6 +388,16 @@ export async function getPlayerByIdWithIntel(id) {
   return mergePlayerWithWiki(mergePlayerWithIntel(player, intel), wikiDoc);
 }
 
+export async function getPlayerByExternalIdWithIntel(externalId) {
+  const trimmed = String(externalId ?? '').trim();
+  if (!trimmed) return null;
+
+  const dbPlayer = await Player.findOne({ externalId: trimmed }).lean();
+  if (!dbPlayer) return null;
+
+  return getPlayerByIdWithIntel(dbPlayer._id.toString());
+}
+
 export async function refreshTeamPlayerIntel(teamCode, { force = false, fetchImpl = fetch } = {}) {
   if (!hasAiProvider()) throw new Error('IA no configurada');
 
