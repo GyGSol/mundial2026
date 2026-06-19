@@ -194,7 +194,8 @@ export default function PlayerDetailDialog({
     <dialog
       ref={dialogRef}
       className={cn(
-        'fixed m-0 flex flex-col overflow-hidden rounded-xl border border-border bg-card p-0 text-card-foreground shadow-xl backdrop:bg-black/50 open:flex',
+        // hidden + open:flex — never bare flex on <dialog> (overrides UA display:none when closed)
+        'fixed m-0 hidden overflow-hidden rounded-xl border border-border bg-card p-0 text-card-foreground shadow-xl backdrop:bg-black/50 open:flex open:flex-col',
         'inset-x-2 top-[max(0.5rem,env(safe-area-inset-top))] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] w-auto max-h-none',
         'sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[min(calc(100vw-2rem),42rem)] sm:max-h-[min(90dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2'
       )}

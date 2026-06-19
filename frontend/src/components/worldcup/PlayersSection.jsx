@@ -382,12 +382,14 @@ export default function PlayersSection() {
         </div>
       ) : null}
 
-      <PlayerDetailDialog
-        playerId={selectedPlayerId}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        onIntelUpdated={refresh}
-      />
+      {detailOpen ? (
+        <PlayerDetailDialog
+          playerId={selectedPlayerId}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          onIntelUpdated={refresh}
+        />
+      ) : null}
     </div>
   );
 }

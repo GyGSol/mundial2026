@@ -703,13 +703,15 @@ function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
         ))}
       </div>
     </div>
-    <PlayerDetailDialog
-      playerId={selectedPlayerId}
-      externalId={selectedExternalId}
-      preview={detailPreview}
-      open={detailOpen}
-      onOpenChange={handleDetailOpenChange}
-    />
+    {detailOpen ? (
+      <PlayerDetailDialog
+        playerId={selectedPlayerId}
+        externalId={selectedExternalId}
+        preview={detailPreview}
+        open={detailOpen}
+        onOpenChange={handleDetailOpenChange}
+      />
+    ) : null}
     </>
   );
 }
