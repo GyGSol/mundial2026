@@ -2,7 +2,7 @@ import { Player, POSITIONS } from '../models/Player.js';
 import {
   assignFormationGrid,
   mapFootballDataPositionText,
-  mergePlayerGrids,
+  assignPlayersToFormation,
 } from '../utils/formationLayout.js';
 import { MIN_CONFIRMED_STARTERS_PER_TEAM } from './aiLineupContextService.js';
 
@@ -67,7 +67,7 @@ export async function buildProbableSide(teamExternalId, formation = DEFAULT_PROB
 
   const roster = await Player.find({ teamExternalId }).lean();
   const starters = pickProbableStarters(roster);
-  const players = mergePlayerGrids(
+  const players = assignPlayersToFormation(
     starters.map(serializeProbablePlayer),
     formation
   );
@@ -91,6 +91,7 @@ export function serializeFdLineupPlayer(entry) {
     name: entry.name ?? '',
     shirtNumber: entry.shirtNumber ?? null,
     position: mapFootballDataPositionText(entry.position),
+    positionDetail: entry.position ?? null,
     isStarter: true,
   };
 }

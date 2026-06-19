@@ -12,7 +12,7 @@ function shortName(fullName) {
 
 /**
  * gridX: 0 = arco propio, 100 = línea rival (profundidad).
- * gridY: 0 = banda izquierda del equipo, 100 = banda derecha.
+ * gridY: 0 = banda superior, 100 = banda inferior (eje vertical).
  * Local (home) a la izquierda; visitante (away) a la derecha.
  */
 function teamDotStyle(player, side) {
@@ -84,6 +84,35 @@ function PitchHalf({ players, side, teamLabel }) {
   );
 }
 
+function PitchMarkings() {
+  return (
+    <>
+      <div className="pointer-events-none absolute inset-2 rounded border border-white/35" />
+
+      {/* Línea de medio campo */}
+      <div className="pointer-events-none absolute bottom-2 left-1/2 top-2 w-px -translate-x-1/2 bg-white/35" />
+
+      {/* Círculo central */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[24%] w-[24%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40" />
+
+      {/* Área grande local (izquierda) */}
+      <div className="pointer-events-none absolute bottom-[18%] left-2 top-[18%] w-[18%] border border-white/30" />
+      {/* Área chica local */}
+      <div className="pointer-events-none absolute bottom-[32%] left-2 top-[32%] w-[7%] border border-white/25" />
+
+      {/* Área grande visitante (derecha) */}
+      <div className="pointer-events-none absolute bottom-[18%] right-2 top-[18%] w-[18%] border border-white/30" />
+      {/* Área chica visitante */}
+      <div className="pointer-events-none absolute bottom-[32%] right-2 top-[32%] w-[7%] border border-white/25" />
+
+      {/* Arcos (línea de meta) */}
+      <div className="pointer-events-none absolute bottom-[28%] left-2 top-[28%] w-px bg-white/50" />
+      <div className="pointer-events-none absolute bottom-[28%] right-2 top-[28%] w-px bg-white/50" />
+    </>
+  );
+}
+
 export default function PitchFormation({ lineup, homeLabel, awayLabel, className }) {
   const homePlayers = lineup?.home?.players ?? [];
   const awayPlayers = lineup?.away?.players ?? [];
@@ -97,12 +126,7 @@ export default function PitchFormation({ lineup, homeLabel, awayLabel, className
         className
       )}
     >
-      {/* Líneas de cancha */}
-      <div className="pointer-events-none absolute inset-2 rounded border border-white/30" />
-      <div className="pointer-events-none absolute bottom-2 left-1/2 top-2 w-px -translate-x-1/2 bg-white/30" />
-      <div className="pointer-events-none absolute bottom-1/2 left-2 top-1/2 w-[14%] -translate-y-1/2 rounded-sm border border-white/25" />
-      <div className="pointer-events-none absolute bottom-1/2 right-2 top-1/2 w-[14%] -translate-y-1/2 rounded-sm border border-white/25" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[22%] w-[22%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/25" />
+      <PitchMarkings />
 
       <PitchHalf players={homePlayers} side="home" teamLabel={homeLabel} />
       <PitchHalf players={awayPlayers} side="away" teamLabel={awayLabel} />

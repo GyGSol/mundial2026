@@ -12,7 +12,7 @@ import {
   isConfirmedSnapshot,
   serializeFdLineupPlayer,
 } from './probableLineupService.js';
-import { mergePlayerGrids, mapFootballDataPositionText } from '../utils/formationLayout.js';
+import { assignPlayersToFormation, mapFootballDataPositionText } from '../utils/formationLayout.js';
 
 function parseFdTeamSide(teamSide) {
   if (!teamSide) return { formation: DEFAULT_PROBABLE_FORMATION, players: [], coach: null };
@@ -49,6 +49,7 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
         name: person.name ?? '',
         shirtNumber: person.shirtNumber ?? person.number ?? null,
         position: mapFootballDataPositionText(person.position ?? person.pos),
+        positionDetail: person.position ?? person.pos ?? null,
         isStarter: true,
       };
     });
@@ -66,7 +67,10 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
 
 function applyGridsToSide(side) {
   if (!side?.players?.length) return side;
-  const withGrids = mergePlayerGrids(side.players, side.formation || DEFAULT_PROBABLE_FORMATION);
+  const withGrids = assignPlayersToFormation(
+    side.players,
+    side.formation || DEFAULT_PROBABLE_FORMATION
+  );
   return { ...side, players: withGrids };
 }
 

@@ -67,6 +67,17 @@ function teamsMatch(fixtureSide, team) {
   );
 }
 
+import { mapFootballDataPositionText } from '../utils/formationLayout.js';
+
+function mapApiFootballPos(pos) {
+  const code = String(pos ?? '').trim().toUpperCase();
+  if (code === 'G') return 'GK';
+  if (code === 'D') return 'DEF';
+  if (code === 'M') return 'MID';
+  if (code === 'F') return 'FWD';
+  return mapFootballDataPositionText(pos);
+}
+
 export function parseApiFootballLineupSide(side) {
   if (!side) return null;
   const formation = side.formation || null;
@@ -76,7 +87,8 @@ export function parseApiFootballLineupSide(side) {
     apiFootballPlayerId: entry.player?.id ?? null,
     name: entry.player?.name ?? '',
     shirtNumber: entry.player?.number ?? null,
-    position: entry.player?.pos ?? null,
+    position: mapApiFootballPos(entry.player?.pos),
+    positionDetail: entry.player?.pos ?? null,
     gridRaw: entry.player?.grid ?? null,
     isStarter: true,
   }));
