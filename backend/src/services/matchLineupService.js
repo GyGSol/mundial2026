@@ -144,6 +144,11 @@ function enrichSidePlayersWithRoster(side, roster) {
         ...player,
         name: enriched.name || player.name,
         photoUrl: enriched.photoUrl ?? player.photoUrl ?? null,
+        mongoId: enriched.mongoId ?? player.mongoId ?? null,
+        externalId:
+          enriched.externalId ??
+          player.externalId ??
+          (player.footballDataPersonId != null ? String(player.footballDataPersonId) : null),
       };
     }),
   };

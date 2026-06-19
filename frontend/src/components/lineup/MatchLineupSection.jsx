@@ -70,7 +70,13 @@ export default function MatchLineupSection({ match, className }) {
         </p>
       ) : null}
 
-      <PitchFormation lineup={lineup} homeLabel={homeName} awayLabel={awayName} />
+      <PitchFormation
+        lineup={lineup}
+        homeLabel={homeName}
+        awayLabel={awayName}
+        homeTeamCode={match?.homeTeam?.fifaCode}
+        awayTeamCode={match?.awayTeam?.fifaCode}
+      />
     </div>
   );
 }
