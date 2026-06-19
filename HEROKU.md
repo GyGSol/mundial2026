@@ -233,6 +233,59 @@ Si en logs aparece `534 Application-specific password required`, estás usando l
 
 Variables: `SMTP_HOST`, `SMTP_PORT` (default 587), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (default `SMTP_USER`), `APP_PUBLIC_NAME`.
 
+## Backup automático al finalizar partido (GitHub)
+
+Tras cada pitido final, el backend sube al repo privado de backups:
+
+- `full-database.json.gz` — dump **completo** de MongoDB (todas las colecciones, incl. `passwordHash` para restore total)
+- `predictions-export.json` — predicciones en formato legible (como el export FamilyPro)
+
+### 1. Crear repo privado
+
+Ejemplo: `GyGSol/mundial2026-db-backups` (vacío, privado).
+
+### 2. Token fine-grained (GitHub)
+
+- Permiso **Contents: Read and write** solo en ese repo.
+- No guardar el token en git ni Engram.
+
+### 3. Config vars en Heroku
+
+```bash
+heroku config:set \
+  BACKUP_ENABLED=true \
+  BACKUP_GITHUB_TOKEN="ghp_..." \
+  BACKUP_GITHUB_REPO="GyGSol/mundial2026-db-backups" \
+  BACKUP_GITHUB_BRANCH=main \
+  -a mundial2026-pred
+```
+
+### 4. Probar manualmente
+
+```bash
+heroku run npm run backup:push -a mundial2026-pred
+```
+
+Deberías ver commits en el repo bajo `backups/YYYY/MM/DD/match-.../`.
+
+### 5. Restaurar desde backup
+
+Descargá `full-database.json.gz` del repo y en local (con `MONGODB_URI` de destino):
+
+```bash
+cd backend
+DRY_RUN=1 node src/scripts/restoreDatabaseFromBackup.js --file=/ruta/full-database.json.gz
+CONFIRM=1 node src/scripts/restoreDatabaseFromBackup.js --file=/ruta/full-database.json.gz
+```
+
+Solo predicciones (export legible):
+
+```bash
+CONFIRM=1 node src/scripts/restoreFamilyProFromExport.js --file=/ruta/predictions-export.json
+```
+
+Estado del último backup: documento `SyncMeta` con clave `matchFinishBackups` en MongoDB.
+
 ## Deploy de cambios futuros
 
 ```bash

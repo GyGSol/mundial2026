@@ -403,7 +403,8 @@ async function upsertMatches() {
       nextStatus: merged.status,
       existingFinishedAt: existing?.finishedAt ?? null,
     });
-    if (existing?.externalId) {
+    // Placeholder ids (e.g. test/snapshot fixtures) must not block FIFA MatchNumber from sync.
+    if (existing?.externalId && existing.externalId !== 'finished-only') {
       updatePayload.externalId = existing.externalId;
     }
     if (existing?.kickoffAt) {
@@ -681,6 +682,21 @@ export async function runSync({ includeMetadata = true } = {}) {
 
     for (const matchId of fifaResult.scoringIds ?? []) {
       await recalculateMatchScores(matchId);
+    }
+
+    const allNewlyFinished = [
+      ...new Set([
+        ...newlyFinishedIds.map((id) => id.toString()),
+        ...(fifaResult.newlyFinishedIds ?? []).map((id) => id.toString()),
+      ]),
+    ];
+    if (allNewlyFinished.length) {
+      try {
+        const { scheduleBackupsForFinishedMatches } = await import('./matchFinishBackupService.js');
+        scheduleBackupsForFinishedMatches(allNewlyFinished);
+      } catch (err) {
+        console.warn('Match finish backup skipped:', err.message);
+      }
     }
 
     try {

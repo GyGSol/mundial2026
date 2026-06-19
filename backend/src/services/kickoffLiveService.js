@@ -433,6 +433,13 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
     } catch (err) {
       console.warn('FIFA refresh after stale finalize skipped:', err.message);
     }
+
+    try {
+      const { scheduleBackupsForFinishedMatches } = await import('./matchFinishBackupService.js');
+      scheduleBackupsForFinishedMatches(finalizedIds);
+    } catch (err) {
+      console.warn('Match finish backup skipped:', err.message);
+    }
   }
 
   return finalizedIds;

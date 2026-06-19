@@ -28,6 +28,8 @@
     "ai:backfill-calibration-hints": "node src/scripts/backfillPostMatchCalibrationHints.js",
     "oracle:export": "node src/scripts/exportTrainingBuffer.js",
     "backup:db": "node src/scripts/backupDatabase.js",
+    "backup:push": "node src/scripts/pushDatabaseBackup.js",
+    "backup:restore": "node src/scripts/restoreDatabaseFromBackup.js",
     "migrate:fubols-welcome": "node src/scripts/migrateWelcomeBonusFubols.js",
     "migrate:fubols-entry-fees": "node src/scripts/migrateBackfillEntryFees.js",
     "migrate:ensure-ai-groups": "node src/scripts/migrateEnsureAiInGroups.js",

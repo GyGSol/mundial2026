@@ -75,10 +75,13 @@ function mapPredictionSource(origen) {
 }
 
 function loadExport() {
-  if (!fs.existsSync(EXPORT_PATH)) {
-    throw new Error(`Export not found: ${EXPORT_PATH}`);
+  const argIdx = process.argv.indexOf('--file');
+  const filePath =
+    (argIdx >= 0 && process.argv[argIdx + 1]) || process.env.EXPORT_FILE || EXPORT_PATH;
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Export not found: ${filePath}`);
   }
-  return JSON.parse(fs.readFileSync(EXPORT_PATH, 'utf8'));
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
 async function buildImportPlan(exportData) {

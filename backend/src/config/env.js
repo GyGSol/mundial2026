@@ -82,4 +82,8 @@ export const env = {
   playerPhotosGithubBase:
     process.env.PLAYER_PHOTOS_GITHUB_BASE ||
     'https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores',
+  backupEnabled: process.env.BACKUP_ENABLED === 'true',
+  backupGithubToken: process.env.BACKUP_GITHUB_TOKEN || '',
+  backupGithubRepo: process.env.BACKUP_GITHUB_REPO || '',
+  backupGithubBranch: process.env.BACKUP_GITHUB_BRANCH || 'main',
 };
