@@ -91,14 +91,16 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
             className={cn('h-9 w-9 shadow-md ring-2', ringClass)}
           />
 
-          <span
-            className={cn(
-              'absolute -right-1 -top-1 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[8px] font-bold leading-none text-white shadow',
-              numberClass
-            )}
-          >
-            {number != null ? number : '·'}
-          </span>
+          {number != null ? (
+            <span
+              className={cn(
+                'absolute -right-1 -top-1 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[8px] font-bold leading-none text-white shadow',
+                numberClass
+              )}
+            >
+              {number}
+            </span>
+          ) : null}
         </div>
 
         {label ? (
