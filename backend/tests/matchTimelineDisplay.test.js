@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   annotateTimelineForDisplay,
+  buildSynchronizedTimelineRows,
   filterTimelineForDisplay,
 } from '../../frontend/src/lib/matchTimelineDisplay.js';
 
@@ -44,5 +45,21 @@ describe('matchTimelineDisplay shot/goal dedup', () => {
 
     expect(types).toEqual(['goal', 'shot_attempt']);
     expect(rows[0]).toMatchObject({ type: 'goal', includesShot: true });
+  });
+});
+
+describe('buildSynchronizedTimelineRows', () => {
+  it('alinea eventos del mismo minuto en una fila', () => {
+    const rows = buildSynchronizedTimelineRows([
+      { key: 'h1', side: 'home', sortKey: 90.06, minute: "90+6'", actionLabel: 'Falta' },
+      { key: 'n1', side: 'neutral', sortKey: 68, minute: "68'", actionLabel: 'Pausa hidratación' },
+      { key: 'a1', side: 'away', sortKey: 90.03, minute: "90+3'", actionLabel: 'Falta' },
+      { key: 'a2', side: 'away', sortKey: 90.06, minute: "90+6'", actionLabel: 'Cambio' },
+    ]);
+
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toMatchObject({ sortKey: 90.06, home: [{ key: 'h1' }], away: [{ key: 'a2' }] });
+    expect(rows[1]).toMatchObject({ sortKey: 90.03, away: [{ key: 'a1' }] });
+    expect(rows[2]).toMatchObject({ sortKey: 68, neutral: [{ key: 'n1' }] });
   });
 });

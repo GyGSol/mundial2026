@@ -136,3 +136,63 @@ export function formatNeutralTimelineLabel(event) {
       return null;
   }
 }
+
+export function timelineSortKey(event) {
+  if (event?.sortKey != null) {
+    const key = Number(event.sortKey);
+    if (Number.isFinite(key)) return key;
+  }
+  if (event?.minute == null || !Number.isFinite(Number(event.minute))) {
+    return Number.NEGATIVE_INFINITY;
+  }
+  const minute = Number(event.minute);
+  const extra = Number(event.extraMinute ?? 0);
+  return minute + extra / 100;
+}
+
+/** Desempate en el límite del entretiempo (Fin 1.er vs Inicio 2.º). */
+export function compareTimelineEntries(a, b) {
+  const keyDiff = timelineSortKey(b) - timelineSortKey(a);
+  if (keyDiff !== 0) return keyDiff;
+  const halftimeOrder = { period_start: 1, period_end: 0 };
+  return (halftimeOrder[b?.type] ?? 0) - (halftimeOrder[a?.type] ?? 0);
+}
+
+function timelineRowGroupKey(entry) {
+  const sk = entry.sortKey ?? timelineSortKey(entry);
+  if (Number.isFinite(sk) && sk !== Number.NEGATIVE_INFINITY) {
+    return `t:${Number(sk).toFixed(4)}`;
+  }
+  return `id:${entry.key}`;
+}
+
+/**
+ * Agrupa entradas de cronología en filas por minuto (sortKey) para alinear
+ * las tres columnas (local | acciones | visitante) en la misma escala temporal.
+ */
+export function buildSynchronizedTimelineRows(entries = []) {
+  const sorted = [...entries].sort(compareTimelineEntries);
+  const rowMap = new Map();
+  const rowOrder = [];
+
+  for (const entry of sorted) {
+    const rowKey = timelineRowGroupKey(entry);
+    if (!rowMap.has(rowKey)) {
+      rowMap.set(rowKey, {
+        key: rowKey,
+        sortKey: entry.sortKey ?? timelineSortKey(entry),
+        home: [],
+        neutral: [],
+        away: [],
+      });
+      rowOrder.push(rowKey);
+    }
+
+    const row = rowMap.get(rowKey);
+    if (entry.side === 'home') row.home.push(entry);
+    else if (entry.side === 'away') row.away.push(entry);
+    else row.neutral.push(entry);
+  }
+
+  return rowOrder.map((key) => rowMap.get(key));
+}

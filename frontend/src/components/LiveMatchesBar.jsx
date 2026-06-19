@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
 import { BrokenLegIcon } from '@/components/icons/BrokenLegIcon.jsx';
@@ -8,8 +8,11 @@ import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
 import {
   filterTimelineForDisplay,
   formatNeutralTimelineLabel,
+  buildSynchronizedTimelineRows,
+  compareTimelineEntries,
   timelineEventIdentity,
   timelineEventsSignature,
+  timelineSortKey,
 } from '@/lib/matchTimelineDisplay.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import {
@@ -495,27 +498,6 @@ function formatTimelineEntry(event) {
   }
 }
 
-function timelineSortKey(event) {
-  if (event?.sortKey != null) {
-    const key = Number(event.sortKey);
-    if (Number.isFinite(key)) return key;
-  }
-  if (event?.minute == null || !Number.isFinite(Number(event.minute))) {
-    return Number.NEGATIVE_INFINITY;
-  }
-  const minute = Number(event.minute);
-  const extra = Number(event.extraMinute ?? 0);
-  return minute + extra / 100;
-}
-
-/** Desempate en el límite del entretiempo (Fin 1.er vs Inicio 2.º). */
-function compareTimelineEntries(a, b) {
-  const keyDiff = timelineSortKey(b) - timelineSortKey(a);
-  if (keyDiff !== 0) return keyDiff;
-  const halftimeOrder = { period_start: 1, period_end: 0 };
-  return (halftimeOrder[b.type] ?? 0) - (halftimeOrder[a.type] ?? 0);
-}
-
 function MatchTimeline({ events = [] }) {
   const scrollRef = useRef(null);
   const signature = useMemo(() => timelineEventsSignature(events), [events]);
@@ -536,22 +518,19 @@ function MatchTimeline({ events = [] }) {
         .map((event) => {
           const entry = formatTimelineEntry(event);
           if (!entry) return null;
-          return { ...entry, key: timelineEventIdentity(event) };
+          return {
+            ...entry,
+            key: timelineEventIdentity(event),
+            sortKey: timelineSortKey(event),
+            type: event.type,
+          };
         })
         .filter(Boolean),
     [displayEvents]
   );
 
-  const homeEntries = useMemo(
-    () => displayEntries.filter((entry) => entry.side === 'home'),
-    [displayEntries]
-  );
-  const neutralEntries = useMemo(
-    () => displayEntries.filter((entry) => entry.side === 'neutral'),
-    [displayEntries]
-  );
-  const awayEntries = useMemo(
-    () => displayEntries.filter((entry) => entry.side === 'away'),
+  const timelineRows = useMemo(
+    () => buildSynchronizedTimelineRows(displayEntries),
     [displayEntries]
   );
 
@@ -562,28 +541,37 @@ function MatchTimeline({ events = [] }) {
       ref={scrollRef}
       className="match-live-timeline max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div className={cn(MATCH_SIDE_GRID_CLASS, 'match-live-text text-[10px] leading-snug text-muted-foreground')}>
-        <div className="match-live-timeline-col match-live-timeline-col-home flex min-w-0 flex-col gap-1.5 px-1">
-          {homeEntries.map((entry) => (
-            <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
-              <TimelineActionCard entry={entry} align="home" />
+      <div
+        className={cn(
+          MATCH_SIDE_GRID_CLASS,
+          'match-live-text auto-rows-min items-stretch gap-y-1.5 text-[10px] leading-snug text-muted-foreground'
+        )}
+      >
+        {timelineRows.map((row) => (
+          <Fragment key={row.key}>
+            <div className="match-live-timeline-col match-live-timeline-col-home flex min-w-0 flex-col gap-1.5 px-1">
+              {row.home.map((entry) => (
+                <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
+                  <TimelineActionCard entry={entry} align="home" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="match-live-timeline-col match-live-timeline-col-center flex min-w-[3.25rem] flex-col items-center gap-1.5 px-1">
-          {neutralEntries.map((entry) => (
-            <div key={entry.key} className="match-live-center-entry w-full max-w-[7rem]">
-              <TimelineActionCard entry={entry} align="center" />
+            <div className="match-live-timeline-col match-live-timeline-col-center flex min-w-[7rem] flex-col gap-1.5 px-1 sm:min-w-[8.5rem]">
+              {row.neutral.map((entry) => (
+                <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
+                  <TimelineActionCard entry={entry} align="home" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="match-live-timeline-col match-live-timeline-col-away flex min-w-0 flex-col items-end gap-1.5 px-1">
-          {awayEntries.map((entry) => (
-            <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
-              <TimelineActionCard entry={entry} align="away" />
+            <div className="match-live-timeline-col match-live-timeline-col-away flex min-w-0 flex-col items-end gap-1.5 px-1">
+              {row.away.map((entry) => (
+                <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
+                  <TimelineActionCard entry={entry} align="away" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </Fragment>
+        ))}
       </div>
     </div>
   );
