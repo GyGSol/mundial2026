@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
-const PITCH_INSET = 4;
-const HALF_USABLE = 46;
+const PITCH_INSET = 3;
+const HALF_USABLE = 49;
 
 function shortName(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean);

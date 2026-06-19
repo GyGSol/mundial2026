@@ -16,17 +16,22 @@ describe('formationLayout', () => {
   });
 
   it('parseApiFootballGrid normaliza row:col según formación', () => {
-    const coords = parseApiFootballGrid('2:3', '4-3-3');
-    expect(coords).not.toBeNull();
-    expect(coords.gridX).toBe(30);
-    expect(coords.gridY).toBe(65);
+    const gk = parseApiFootballGrid('1:1', '4-3-3');
+    const def = parseApiFootballGrid('2:2', '4-3-3');
+    const fwd = parseApiFootballGrid('4:2', '4-3-3');
+    expect(gk).not.toBeNull();
+    expect(gk.gridX).toBe(5);
+    expect(def.gridX).toBeGreaterThan(30);
+    expect(def.gridX).toBeLessThan(45);
+    expect(fwd.gridX).toBeGreaterThan(80);
   });
 
   it('assignFormationGrid devuelve 11 slots para 4-3-3', () => {
     const slots = assignFormationGrid('4-3-3', 11);
     expect(slots).toHaveLength(11);
-    expect(slots[0].gridX).toBe(12);
-    expect(slots[10].gridX).toBe(80);
+    expect(slots[0].gridX).toBe(5);
+    expect(slots[5].gridX).toBe(58);
+    expect(slots[10].gridX).toBe(88);
   });
 
   it('assignPlayersToFormation coloca líneas tácticas GK→DEF→MID→FWD', () => {
@@ -51,7 +56,10 @@ describe('formationLayout', () => {
 
     expect(gk.gridX).toBeLessThan(st.gridX);
     expect(ld.gridY).toBeLessThan(rd.gridY);
-    expect(assigned.filter((p) => p.gridX === 30)).toHaveLength(4);
+    expect(assigned.filter((p) => p.gridX === 38)).toHaveLength(4);
+    expect(assigned.find((p) => p.name === 'ST').gridX).toBeGreaterThan(
+      assigned.find((p) => p.name === 'MID2').gridX
+    );
   });
 
   it('mergePlayerGrids usa gridRaw cuando existe', () => {
@@ -60,7 +68,7 @@ describe('formationLayout', () => {
       { name: 'B', position: 'DEF' },
     ];
     const merged = mergePlayerGrids(players, '4-3-3');
-    expect(merged[0].gridX).toBe(12);
+    expect(merged[0].gridX).toBe(5);
     expect(merged[0].gridRaw).toBeUndefined();
     expect(merged[1].gridX).toBeDefined();
   });

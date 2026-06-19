@@ -3,11 +3,22 @@
 const DEFAULT_FORMATION = '4-3-3';
 const LINE_POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
 
-/** Profundidad por línea (portería → centro del campo). */
+/**
+ * Profundidad por línea (0 = arco propio, 100 = línea de medio campo).
+ * Calibrado para cancha horizontal: DEF en borde del área, MID en centro del campo propio, FWD adelantados.
+ */
 const DEPTH_BY_ROWS = {
-  4: [12, 30, 55, 80],
-  5: [10, 26, 42, 62, 82],
-  6: [10, 22, 36, 50, 66, 82],
+  4: [5, 38, 58, 88],
+  5: [5, 32, 48, 68, 88],
+  6: [5, 28, 42, 55, 72, 88],
+};
+
+/** Profundidad por rol cuando no hay fila de formación. */
+const DEPTH_BY_POOL = {
+  GK: 5,
+  DEF: 38,
+  MID: 58,
+  FWD: 88,
 };
 
 /** Distribución lateral por cantidad de jugadores en la línea. */
@@ -34,7 +45,13 @@ function depthForRow(rowIndex, totalRows) {
   const preset = DEPTH_BY_ROWS[totalRows];
   if (preset?.[rowIndex] != null) return preset[rowIndex];
   if (totalRows <= 1) return 50;
-  return 10 + (rowIndex / (totalRows - 1)) * 72;
+  return 5 + (rowIndex / (totalRows - 1)) * 83;
+}
+
+function depthFromApiRow(row, maxRow) {
+  if (maxRow <= 1) return DEPTH_BY_POOL.GK;
+  const t = (Math.min(row, maxRow) - 1) / (maxRow - 1);
+  return 5 + t * 83;
 }
 
 function lateralForSlot(slotIndex, count) {
@@ -105,9 +122,10 @@ export function parseApiFootballGrid(grid, formation = DEFAULT_FORMATION) {
 
   const rows = parseFormationString(formation);
   const maxRow = rows.length;
-  const maxCol = Math.max(...rows, 1);
+  const lineCount = rows[Math.min(row, maxRow) - 1] ?? 1;
+  const maxCol = Math.max(lineCount, 1);
 
-  const depth = depthForRow(Math.min(row - 1, maxRow - 1), maxRow);
+  const depth = depthFromApiRow(row, maxRow);
   const lateral = lateralForSlot(Math.min(col - 1, maxCol - 1), maxCol);
 
   return {
@@ -175,7 +193,7 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
       const midBias =
         spec.pool === 'MID' ? midfieldDepthBias(player) : 0;
       const coords = fromApi ?? {
-        gridX: Number(Math.min(92, Math.max(8, depth + midBias)).toFixed(1)),
+        gridX: Number(Math.min(94, Math.max(4, depth + midBias)).toFixed(1)),
         gridY: Number(lateralForSlot(slotIndex, picked.length).toFixed(1)),
       };
       const { gridRaw: _gridRaw, ...rest } = player;
@@ -189,8 +207,7 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
       const fromApi = leftover.gridRaw
         ? parseApiFootballGrid(leftover.gridRaw, formation)
         : null;
-      const fallbackDepth =
-        pool === 'GK' ? 12 : pool === 'DEF' ? 30 : pool === 'FWD' ? 80 : 55;
+      const fallbackDepth = DEPTH_BY_POOL[pool] ?? DEPTH_BY_POOL.MID;
       const { gridRaw: _gridRaw, ...rest } = leftover;
       assigned.push({
         ...rest,
