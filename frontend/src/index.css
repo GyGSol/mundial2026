@@ -963,20 +963,12 @@ body:has(.game-shell) {
   font-size: 0.95em;
 }
 
-.match-live-timeline-col {
-  align-content: flex-start;
+.match-live-timeline-row {
+  min-height: 0;
 }
 
-.match-live-timeline-col-home {
-  align-items: flex-start;
-}
-
-.match-live-timeline-col-center {
-  align-items: flex-start;
-}
-
-.match-live-timeline-col-away {
-  align-items: flex-end;
+.match-live-timeline-slot {
+  width: 100%;
 }
 
 /* ── Landing y login del juego: fondo foto + tratamiento moderno ── */

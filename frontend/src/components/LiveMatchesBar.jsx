@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
 import { BrokenLegIcon } from '@/components/icons/BrokenLegIcon.jsx';
@@ -8,11 +8,8 @@ import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
 import {
   filterTimelineForDisplay,
   formatNeutralTimelineLabel,
-  buildSynchronizedTimelineRows,
-  compareTimelineEntries,
   timelineEventIdentity,
   timelineEventsSignature,
-  timelineSortKey,
 } from '@/lib/matchTimelineDisplay.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import {
@@ -147,24 +144,17 @@ function TimelinePlayerRow({ player, align = 'left' }) {
 
 function TimelineActionCard({ entry, align = 'center' }) {
   const hasPlayers = (entry.players?.length ?? 0) > 0;
-  const headerAlign =
-    align === 'home' ? 'text-left' : align === 'away' ? 'text-right' : 'text-center';
   const bodyAlign = align === 'home' ? 'left' : align === 'away' ? 'right' : 'center';
 
   return (
-    <div
-      className={cn(
-        'match-live-action-card w-full max-w-full',
-        headerAlign
-      )}
-    >
+    <div className="match-live-action-card w-full max-w-full text-left">
       <div className="match-live-action-header flex items-center justify-between gap-2">
-        <span className="tabular-nums font-semibold text-foreground">{entry.minute || '—'}</span>
-        <span className="inline-flex items-center gap-1 font-medium text-foreground">
+        <span className="shrink-0 tabular-nums font-semibold text-foreground">{entry.minute || '—'}</span>
+        <span className="inline-flex min-w-0 items-center justify-end gap-1 text-right font-medium text-foreground">
           {entry.iconNode ?? (entry.icon ? <span aria-hidden="true">{entry.icon}</span> : null)}
-          <span>{entry.actionLabel}</span>
+          <span className="truncate">{entry.actionLabel}</span>
           {entry.actionSuffix ? (
-            <span className="text-muted-foreground">{entry.actionSuffix}</span>
+            <span className="shrink-0 text-muted-foreground">{entry.actionSuffix}</span>
           ) : null}
         </span>
       </div>
@@ -498,6 +488,75 @@ function formatTimelineEntry(event) {
   }
 }
 
+function timelineSortKey(event) {
+  if (event?.sortKey != null) {
+    const key = Number(event.sortKey);
+    if (Number.isFinite(key)) return key;
+  }
+  if (event?.minute == null || !Number.isFinite(Number(event.minute))) {
+    return Number.NEGATIVE_INFINITY;
+  }
+  const minute = Number(event.minute);
+  const extra = Number(event.extraMinute ?? 0);
+  return minute + extra / 100;
+}
+
+/** Desempate en el límite del entretiempo (Fin 1.er vs Inicio 2.º). */
+function compareTimelineEntries(a, b) {
+  const keyDiff = timelineSortKey(b) - timelineSortKey(a);
+  if (keyDiff !== 0) return keyDiff;
+  const halftimeOrder = { period_start: 1, period_end: 0 };
+  return (halftimeOrder[b.type] ?? 0) - (halftimeOrder[a.type] ?? 0);
+}
+
+/** Agrupa entradas por instante de juego para alinear las 3 columnas en la misma fila. */
+function groupTimelineEntriesByTimeSlot(entries = []) {
+  const bySlot = new Map();
+
+  for (const entry of entries) {
+    const slotKey = Number.isFinite(entry.sortKey) ? entry.sortKey : entry.minute ?? entry.key;
+    if (!bySlot.has(slotKey)) {
+      bySlot.set(slotKey, { sortKey: entry.sortKey, home: [], neutral: [], away: [] });
+    }
+    const row = bySlot.get(slotKey);
+    if (entry.side === 'home') row.home.push(entry);
+    else if (entry.side === 'neutral') row.neutral.push(entry);
+    else if (entry.side === 'away') row.away.push(entry);
+  }
+
+  return [...bySlot.values()].sort((a, b) => {
+    const keyDiff = (b.sortKey ?? Number.NEGATIVE_INFINITY) - (a.sortKey ?? Number.NEGATIVE_INFINITY);
+    if (keyDiff !== 0) return keyDiff;
+    return 0;
+  });
+}
+
+function TimelineRowCell({ entries, align }) {
+  if (!entries.length) {
+    return <div className="match-live-timeline-slot min-h-0" aria-hidden="true" />;
+  }
+
+  const cellAlign =
+    align === 'home' ? 'items-start' : align === 'away' ? 'items-end' : 'items-center';
+
+  return (
+    <div className={cn('match-live-timeline-slot flex flex-col gap-1.5', cellAlign)}>
+      {entries.map((entry) => (
+        <div
+          key={entry.key}
+          className={cn(
+            'match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]',
+            align === 'away' && 'ml-auto',
+            align === 'center' && 'mx-auto'
+          )}
+        >
+          <TimelineActionCard entry={entry} align={align} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MatchTimeline({ events = [] }) {
   const scrollRef = useRef(null);
   const signature = useMemo(() => timelineEventsSignature(events), [events]);
@@ -522,7 +581,6 @@ function MatchTimeline({ events = [] }) {
             ...entry,
             key: timelineEventIdentity(event),
             sortKey: timelineSortKey(event),
-            type: event.type,
           };
         })
         .filter(Boolean),
@@ -530,7 +588,7 @@ function MatchTimeline({ events = [] }) {
   );
 
   const timelineRows = useMemo(
-    () => buildSynchronizedTimelineRows(displayEntries),
+    () => groupTimelineEntriesByTimeSlot(displayEntries),
     [displayEntries]
   );
 
@@ -541,36 +599,22 @@ function MatchTimeline({ events = [] }) {
       ref={scrollRef}
       className="match-live-timeline max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      <div
-        className={cn(
-          MATCH_SIDE_GRID_CLASS,
-          'match-live-text auto-rows-min items-stretch gap-y-1.5 text-[10px] leading-snug text-muted-foreground'
-        )}
-      >
+      <div className="flex flex-col gap-2 match-live-text text-[10px] leading-snug text-muted-foreground">
         {timelineRows.map((row) => (
-          <Fragment key={row.key}>
-            <div className="match-live-timeline-col match-live-timeline-col-home flex min-w-0 flex-col gap-1.5 px-1">
-              {row.home.map((entry) => (
-                <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
-                  <TimelineActionCard entry={entry} align="home" />
-                </div>
-              ))}
+          <div
+            key={String(row.sortKey ?? row.home[0]?.key ?? row.neutral[0]?.key ?? row.away[0]?.key)}
+            className={cn(MATCH_SIDE_GRID_CLASS, 'match-live-timeline-row items-stretch')}
+          >
+            <div className="min-w-0 px-1">
+              <TimelineRowCell entries={row.home} align="home" />
             </div>
-            <div className="match-live-timeline-col match-live-timeline-col-center flex min-w-[7rem] flex-col gap-1.5 px-1 sm:min-w-[8.5rem]">
-              {row.neutral.map((entry) => (
-                <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
-                  <TimelineActionCard entry={entry} align="home" />
-                </div>
-              ))}
+            <div className="min-w-[3.25rem] px-1">
+              <TimelineRowCell entries={row.neutral} align="center" />
             </div>
-            <div className="match-live-timeline-col match-live-timeline-col-away flex min-w-0 flex-col items-end gap-1.5 px-1">
-              {row.away.map((entry) => (
-                <div key={entry.key} className="match-live-entry w-full max-w-[9rem] sm:max-w-[11rem]">
-                  <TimelineActionCard entry={entry} align="away" />
-                </div>
-              ))}
+            <div className="min-w-0 px-1">
+              <TimelineRowCell entries={row.away} align="away" />
             </div>
-          </Fragment>
+          </div>
         ))}
       </div>
     </div>
