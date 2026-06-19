@@ -1,7 +1,8 @@
 import { cn } from '@/lib/utils';
 
-const PITCH_INSET = 2;
-const HALF_USABLE = 52;
+/** Margen desde el arco dentro de cada mitad (0–100 de profundidad). */
+const DEPTH_EDGE = 6;
+const DEPTH_SPAN = 88;
 
 function shortName(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean);
@@ -11,27 +12,17 @@ function shortName(fullName) {
 }
 
 /**
- * gridX: 0 = arco propio, 100 = línea rival (profundidad).
- * gridY: 0 = banda superior, 100 = banda inferior (eje vertical).
- * Local (home) a la izquierda; visitante (away) a la derecha.
+ * gridX: 0 = arco propio, 100 = línea de medio campo (dentro de la mitad del equipo).
+ * gridY: 0 = banda superior, 100 = banda inferior.
  */
 function teamDotStyle(player, side) {
   const depth = Math.min(100, Math.max(0, Number(player.gridX ?? 50)));
   const lateral = Math.min(100, Math.max(0, Number(player.gridY ?? 50)));
+  const top = `${8 + lateral * 0.84}%`;
+  const alongHalf = DEPTH_EDGE + (depth / 100) * DEPTH_SPAN;
+  const horizontal = side === 'home' ? alongHalf : 100 - alongHalf;
 
-  const top = `${PITCH_INSET + lateral * 0.84}%`;
-
-  if (side === 'home') {
-    return {
-      left: `${PITCH_INSET + (depth / 100) * HALF_USABLE}%`,
-      top,
-    };
-  }
-
-  return {
-    left: `${100 - PITCH_INSET - (depth / 100) * HALF_USABLE}%`,
-    top,
-  };
+  return { left: `${horizontal}%`, top };
 }
 
 function PlayerMarker({ player, side, index }) {
@@ -72,14 +63,16 @@ function PitchHalf({ players, side, teamLabel }) {
       )}
       aria-label={teamLabel}
     >
-      {players.map((player, index) => (
-        <PlayerMarker
-          key={player.playerId ?? `${side}-${index}`}
-          player={player}
-          side={side}
-          index={index}
-        />
-      ))}
+      <div className="relative h-full w-full">
+        {players.map((player, index) => (
+          <PlayerMarker
+            key={player.playerId ?? `${side}-${index}`}
+            player={player}
+            side={side}
+            index={index}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -89,24 +82,18 @@ function PitchMarkings() {
     <>
       <div className="pointer-events-none absolute inset-2 rounded border border-white/35" />
 
-      {/* Línea de medio campo */}
       <div className="pointer-events-none absolute bottom-2 left-1/2 top-2 w-px -translate-x-1/2 bg-white/35" />
 
-      {/* Círculo central */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[24%] w-[24%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40" />
 
-      {/* Área grande local (izquierda) */}
+      {/* Área grande local: profundidad ~31% de la mitad (borde en gridX≈30) */}
       <div className="pointer-events-none absolute bottom-[18%] left-2 top-[18%] w-[18%] border border-white/30" />
-      {/* Área chica local */}
       <div className="pointer-events-none absolute bottom-[32%] left-2 top-[32%] w-[7%] border border-white/25" />
 
-      {/* Área grande visitante (derecha) */}
       <div className="pointer-events-none absolute bottom-[18%] right-2 top-[18%] w-[18%] border border-white/30" />
-      {/* Área chica visitante */}
       <div className="pointer-events-none absolute bottom-[32%] right-2 top-[32%] w-[7%] border border-white/25" />
 
-      {/* Arcos (línea de meta) */}
       <div className="pointer-events-none absolute bottom-[28%] left-2 top-[28%] w-px bg-white/50" />
       <div className="pointer-events-none absolute bottom-[28%] right-2 top-[28%] w-px bg-white/50" />
     </>

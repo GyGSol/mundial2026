@@ -65,7 +65,7 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
   return { home, away };
 }
 
-export const LINEUP_LAYOUT_VERSION = 2;
+export const LINEUP_LAYOUT_VERSION = 3;
 
 function normalizePlayerForFormation(player) {
   const detail = player.positionDetail ?? player.position;

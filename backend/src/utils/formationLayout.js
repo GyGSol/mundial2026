@@ -8,17 +8,17 @@ const LINE_POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
  * DEF en borde del área, MID en centro del campo propio, FWD cerca de la línea media.
  */
 const DEPTH_BY_ROWS = {
-  4: [3, 48, 72, 97],
-  5: [3, 40, 58, 78, 97],
-  6: [3, 34, 50, 64, 82, 97],
+  4: [6, 30, 58, 85],
+  5: [6, 26, 44, 64, 85],
+  6: [6, 22, 36, 50, 68, 85],
 };
 
 /** Profundidad por rol cuando no hay fila de formación. */
 const DEPTH_BY_POOL = {
-  GK: 3,
-  DEF: 48,
-  MID: 72,
-  FWD: 97,
+  GK: 6,
+  DEF: 30,
+  MID: 58,
+  FWD: 85,
 };
 
 /** Distribución lateral por cantidad de jugadores en la línea. */
@@ -45,13 +45,13 @@ function depthForRow(rowIndex, totalRows) {
   const preset = DEPTH_BY_ROWS[totalRows];
   if (preset?.[rowIndex] != null) return preset[rowIndex];
   if (totalRows <= 1) return 50;
-  return 3 + (rowIndex / (totalRows - 1)) * 94;
+  return 6 + (rowIndex / (totalRows - 1)) * 79;
 }
 
 function depthFromApiRow(row, maxRow) {
   if (maxRow <= 1) return DEPTH_BY_POOL.GK;
   const t = (Math.min(row, maxRow) - 1) / (maxRow - 1);
-  return 3 + t * 94;
+  return 6 + t * 79;
 }
 
 function lateralForSlot(slotIndex, count) {
@@ -214,7 +214,7 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
       const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = player;
       assigned.push({
         ...rest,
-        gridX: Number(Math.min(97, Math.max(3, depth + midBias)).toFixed(1)),
+        gridX: Number(Math.min(88, Math.max(4, depth + midBias)).toFixed(1)),
         gridY: Number((apiLateral ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)),
       });
     });
