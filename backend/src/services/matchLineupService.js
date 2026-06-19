@@ -2,7 +2,7 @@ import { fetchMatchDetails, fetchTeamWithSquad, hasToken } from './footballDataA
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
 import { Match } from '../models/Match.js';
-import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
+import { mapCoachToLineupEntry, mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js';
 import {
   fetchFixtureLineups,
@@ -305,6 +305,14 @@ function enrichSidePlayersWithRoster(
   };
 }
 
+function enrichSideCoach(coachField, team) {
+  const name =
+    (typeof coachField === 'string' ? coachField : coachField?.name) ||
+    team?.headCoach ||
+    '';
+  return mapCoachToLineupEntry(team?.fifaCode ?? '', name);
+}
+
 async function enrichLineupPayloadWithRoster(payload, match, options = {}) {
   const { fetchExternalShirts = true } = options;
   if (payload?.status === 'unavailable') return payload;
@@ -319,7 +327,7 @@ async function enrichLineupPayloadWithRoster(payload, match, options = {}) {
   const [homePlayers, awayPlayers, teams] = await Promise.all([
     homeTeamId ? Player.find({ teamExternalId: homeTeamId }).lean() : [],
     awayTeamId ? Player.find({ teamExternalId: awayTeamId }).lean() : [],
-    needHomeShirts || needAwayShirts ? loadMatchTeams(match) : Promise.resolve({ homeTeam: null, awayTeam: null }),
+    loadMatchTeams(match),
   ]);
 
   let homeSquadMap = {};
@@ -334,22 +342,31 @@ async function enrichLineupPayloadWithRoster(payload, match, options = {}) {
   const homeRoster = homePlayers.map(mapPlayerToTimelineRosterEntry);
   const awayRoster = awayPlayers.map(mapPlayerToTimelineRosterEntry);
 
+  const homeSide = enrichSidePlayersWithRoster(
+    payload.home,
+    homeRoster,
+    'home',
+    shirtBySideName,
+    homeSquadMap
+  );
+  const awaySide = enrichSidePlayersWithRoster(
+    payload.away,
+    awayRoster,
+    'away',
+    shirtBySideName,
+    awaySquadMap
+  );
+
   return {
     ...payload,
-    home: enrichSidePlayersWithRoster(
-      payload.home,
-      homeRoster,
-      'home',
-      shirtBySideName,
-      homeSquadMap
-    ),
-    away: enrichSidePlayersWithRoster(
-      payload.away,
-      awayRoster,
-      'away',
-      shirtBySideName,
-      awaySquadMap
-    ),
+    home: {
+      ...homeSide,
+      coach: enrichSideCoach(payload.home?.coach, teams.homeTeam),
+    },
+    away: {
+      ...awaySide,
+      coach: enrichSideCoach(payload.away?.coach, teams.awayTeam),
+    },
   };
 }
 

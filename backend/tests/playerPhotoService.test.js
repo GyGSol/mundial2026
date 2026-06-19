@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildCoachPhotoKey,
+  mapCoachToLineupEntry,
   matchPlayerToPhotoFile,
   parsePhotoFilename,
   photoSlugVariants,
@@ -60,5 +62,19 @@ describe('playerPhotoService', () => {
   it('resuelve URL de GitHub cuando no hay archivo local', () => {
     const url = resolvePlayerPhotoUrl('argentina/arg-lionel-messi.png');
     expect(url).toMatch(/\/player-photos\/|raw\.githubusercontent\.com/);
+  });
+
+  it('construye photoKey del DT con la misma convención que jugadores', () => {
+    expect(buildCoachPhotoKey('SCO', 'Steve Clarke')).toBe('escocia/sco-steve-clarke.png');
+    expect(buildCoachPhotoKey('MAR', 'Mohamed Ouahbi')).toBe('marruecos/mar-mohamed-ouahbi.png');
+  });
+
+  it('mapea DT a entrada de alineación con foto', () => {
+    const entry = mapCoachToLineupEntry('SCO', 'Steve Clarke');
+    expect(entry).toMatchObject({
+      name: 'Steve Clarke',
+      photoKey: 'escocia/sco-steve-clarke.png',
+    });
+    expect(entry.photoUrl).toMatch(/sco-steve-clarke\.png/);
   });
 });

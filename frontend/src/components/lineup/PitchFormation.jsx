@@ -141,6 +141,32 @@ function PitchHalf({ players, side, teamLabel, teamCode, onPlayerClick }) {
   );
 }
 
+function CoachBadge({ coach, side }) {
+  const coachName = typeof coach === 'string' ? coach : coach?.name;
+  const photoUrl = typeof coach === 'object' && coach ? coach.photoUrl : null;
+  if (!coachName) return null;
+
+  const label = shortName(coachName);
+  const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
+
+  return (
+    <div className="flex flex-col items-center gap-px">
+      <span className="text-[5px] font-semibold leading-none text-white/90 sm:text-[6px]">DT</span>
+      <PlayerAvatar
+        name={coachName}
+        photoUrl={photoUrl}
+        size="xs"
+        className={cn('h-5 w-5 shadow-sm ring-1 sm:h-6 sm:w-6', ringClass)}
+      />
+      {label ? (
+        <span className="max-w-[40px] truncate rounded bg-black/65 px-0.5 py-px text-[6px] font-medium leading-tight text-white shadow-sm sm:max-w-[48px] sm:text-[7px]">
+          {label}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function PitchMarkings() {
   return (
     <>
@@ -215,11 +241,17 @@ export default function PitchFormation({
         <div className="absolute inset-0 overflow-hidden rounded-lg border border-emerald-700/50 bg-gradient-to-b from-emerald-700 to-emerald-800">
           <PitchMarkings />
 
-          <div className="pointer-events-none absolute bottom-1 left-2 rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
-            {homeLabel}
+          <div className="pointer-events-none absolute bottom-1 left-2 flex items-end gap-1">
+            <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
+              {homeLabel}
+            </span>
+            <CoachBadge coach={lineup?.home?.coach} side="home" />
           </div>
-          <div className="pointer-events-none absolute bottom-1 right-2 rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
-            {awayLabel}
+          <div className="pointer-events-none absolute bottom-1 right-2 flex flex-row-reverse items-end gap-1">
+            <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
+              {awayLabel}
+            </span>
+            <CoachBadge coach={lineup?.away?.coach} side="away" />
           </div>
         </div>
 

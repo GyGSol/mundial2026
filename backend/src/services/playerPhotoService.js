@@ -4,6 +4,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Player } from '../models/Player.js';
 import { env } from '../config/env.js';
+import { FIFA_TO_PHOTO_FOLDER } from '../data/wikipediaSquadCountryMap.js';
 import { compactNameKey } from '../utils/playerNameMatch.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '../../..');
@@ -71,6 +72,27 @@ export function resolvePlayerPhotoUrl(photoKey) {
 
   const base = env.playerPhotosGithubBase?.replace(/\/$/, '');
   return base ? `${base}/${photoKey}` : '';
+}
+
+/** Misma convención que jugadores: `{carpeta}/{fifa3}-{slug-dt}.png`. */
+export function buildCoachPhotoKey(fifaCode, coachName) {
+  const folder = FIFA_TO_PHOTO_FOLDER[fifaCode];
+  const name = String(coachName || '').trim();
+  if (!folder || !name || !fifaCode) return '';
+  const prefix = String(fifaCode).slice(0, 3).toLowerCase();
+  return `${folder}/${prefix}-${slugifyPlayerName(name)}.png`;
+}
+
+export function mapCoachToLineupEntry(fifaCode, coachName) {
+  const name = String(coachName || '').trim();
+  if (!name) return null;
+  const photoKey = buildCoachPhotoKey(fifaCode, name);
+  const photoUrl = photoKey ? resolvePlayerPhotoUrl(photoKey) : '';
+  return {
+    name,
+    photoUrl: photoUrl || null,
+    photoKey: photoKey || null,
+  };
 }
 
 /** @param {{ fullName: string, position?: string, shirtNumber?: number | null, photoKey?: string | null, _id?: { toString(): string }, externalId?: string }} player */
