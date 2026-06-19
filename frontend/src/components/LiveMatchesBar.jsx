@@ -164,7 +164,7 @@ function TimelinePlayerRow({ player, align = 'left', teamSide, onPhotoClick }) {
             photoUrl={photoUrl}
             size="xs"
             variant="portrait"
-            className="pointer-events-none"
+            className="pointer-events-none max-h-7 max-w-[1.375rem] sm:max-h-10 sm:max-w-[2.25rem]"
           />
         </button>
       ) : null}

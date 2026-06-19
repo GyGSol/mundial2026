@@ -54,7 +54,6 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
   const position = lineupPositionLabel(player);
   const style = teamDotStyle(player, side);
   const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
-  const numberClass = side === 'home' ? 'bg-sky-600' : 'bg-rose-600';
   const hoverDetail = formatHoverDetail(player, position);
 
   return (
@@ -77,34 +76,27 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
         }}
         aria-label={`Ver ficha de ${player.name}`}
       >
-        <div className="relative">
-          {position ? (
-            <span className="absolute -left-0.5 -top-0.5 z-10 rounded bg-black/80 px-px text-[6px] font-semibold leading-tight text-white shadow-sm">
-              {position}
-            </span>
-          ) : null}
+        {position ? (
+          <span className="text-[5px] font-semibold leading-none text-white/90 sm:text-[6px]">
+            {position}
+          </span>
+        ) : null}
 
-          <PlayerAvatar
-            name={player.name}
-            photoUrl={player.photoUrl}
-            size="xs"
-            className={cn('h-6 w-6 shadow-sm ring-1', ringClass)}
-          />
-
-          {number != null ? (
-            <span
-              className={cn(
-                'absolute -right-0.5 -top-0.5 z-10 flex h-3 min-w-3 items-center justify-center rounded-full px-px text-[6px] font-bold leading-none text-white shadow',
-                numberClass
-              )}
-            >
-              {number}
-            </span>
-          ) : null}
-        </div>
+        <PlayerAvatar
+          name={player.name}
+          photoUrl={player.photoUrl}
+          size="xs"
+          className={cn('h-5 w-5 shadow-sm ring-1 sm:h-6 sm:w-6', ringClass)}
+        />
 
         {label ? (
-          <span className="max-w-[48px] truncate rounded bg-black/65 px-0.5 py-px text-[7px] font-medium leading-tight text-white shadow-sm">
+          <span className="max-w-[40px] truncate rounded bg-black/65 px-0.5 py-px text-[6px] font-medium leading-tight text-white shadow-sm sm:max-w-[48px] sm:text-[7px]">
+            {number != null ? (
+              <span className={cn('font-bold', side === 'home' ? 'text-sky-200' : 'text-rose-200')}>
+                {number}
+              </span>
+            ) : null}
+            {number != null ? ' ' : null}
             {label}
           </span>
         ) : null}

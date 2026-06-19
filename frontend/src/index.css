@@ -968,6 +968,13 @@ body:has(.game-shell) {
   padding: 0;
   border: 0;
   background: transparent;
+  max-width: 1.375rem;
+}
+
+@media (min-width: 640px) {
+  .match-live-action-player-thumb {
+    max-width: 2.25rem;
+  }
 }
 
 .match-live-timeline-row {
