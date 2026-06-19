@@ -23,6 +23,7 @@ import {
   isMatchClearlyInProgress,
   isMatchKickoffStale,
   matchEvidenceShowsInProgress,
+  matchFifaTimelineIndicatesFinished,
   readElapsedToken,
   shouldFinalizeStaleLiveMatch,
   matchFinishedImplausibleByWallClock,
@@ -253,6 +254,10 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
 
   for (const match of candidates) {
     if (isMatchKickoffStale(match.kickoffAt, now)) continue;
+
+    if (matchFifaTimelineIndicatesFinished(match) && wallClockAllowsMatchFinished(match, now)) {
+      continue;
+    }
 
     const fifaEntry = fifaCalendar.length
       ? await loadFifaEntryForMatch(match, fifaCalendar, teamMap)

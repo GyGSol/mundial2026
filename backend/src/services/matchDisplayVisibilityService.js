@@ -1,7 +1,16 @@
-import { wallClockAllowsMatchFinished } from './matchStatusRules.js';
+import {
+  matchFifaTimelineIndicatesFinished,
+  maxTimelineMinute,
+  minWallClockMsForTimelineMinute,
+  resolveKickoffMs,
+  wallClockAllowsMatchFinished,
+} from './matchStatusRules.js';
 
 /** Ventana en la que un partido finalizado sigue visible en ranking/predicciones. */
 export const RECENTLY_FINISHED_GRACE_MS = 30 * 60 * 1000;
+
+/** 90' + descanso + margen de alargue para acotar candidatos en Mongo. */
+export const MAX_MATCH_DURATION_MS = 105 * 60 * 1000;
 
 /** Máximo de partidos en la barra destacada "recién finalizados" (el más reciente). */
 export const RECENT_FINISHED_FEATURED_MAX = 1;
@@ -23,13 +32,41 @@ export function applyStatusTransitionFields(
   return update;
 }
 
-/** Query Mongo para partidos finalizados dentro de la ventana de gracia. */
+/**
+ * Fin efectivo del partido: kickoff + minuto en timeline (no finishedAt de DB, que puede
+ * refrescarse al re-finalizar un cierre prematuro).
+ */
+export function resolveEffectiveFinishedAtMs(match) {
+  const kickoffMs = resolveKickoffMs(match);
+  if (kickoffMs == null) {
+    const finishedMs = match?.finishedAt ? new Date(match.finishedAt).getTime() : NaN;
+    return Number.isFinite(finishedMs) ? finishedMs : null;
+  }
+
+  const timelineMinute = maxTimelineMinute(match);
+  if (timelineMinute != null && matchFifaTimelineIndicatesFinished(match)) {
+    const plausibleEndMs = kickoffMs + minWallClockMsForTimelineMinute(timelineMinute);
+    const finishedMs = match?.finishedAt ? new Date(match.finishedAt).getTime() : NaN;
+    if (
+      Number.isFinite(finishedMs) &&
+      finishedMs >= plausibleEndMs &&
+      finishedMs - plausibleEndMs <= RECENTLY_FINISHED_GRACE_MS * 2
+    ) {
+      return finishedMs;
+    }
+    return plausibleEndMs;
+  }
+
+  const finishedMs = match?.finishedAt ? new Date(match.finishedAt).getTime() : NaN;
+  return Number.isFinite(finishedMs) ? finishedMs : null;
+}
+
+/** Query Mongo para partidos finalizados candidatos a gracia (filtrado fino en app). */
 export function findRecentlyFinishedMatchesQuery(now = Date.now()) {
-  const cutoff = new Date(now - RECENTLY_FINISHED_GRACE_MS);
+  const kickoffCutoff = new Date(now - RECENTLY_FINISHED_GRACE_MS - MAX_MATCH_DURATION_MS);
   return {
     status: 'finished',
-    finishedAt: { $gte: cutoff },
-    kickoffAt: { $lte: new Date(now) },
+    kickoffAt: { $gte: kickoffCutoff, $lte: new Date(now) },
   };
 }
 
@@ -49,9 +86,10 @@ export function findLiveMatchesQueryWithGroup(group) {
 /** Partidos finished recientes elegibles para la barra (gracia + reloj de pared creíble). */
 export function isEligibleRecentFinishedMatch(match, now = Date.now()) {
   if (match?.status !== 'finished') return false;
-  if (!match.finishedAt) return false;
-  const finishedMs = new Date(match.finishedAt).getTime();
-  if (!Number.isFinite(finishedMs) || now - finishedMs > RECENTLY_FINISHED_GRACE_MS) return false;
+  const effectiveFinishedMs = resolveEffectiveFinishedAtMs(match);
+  if (effectiveFinishedMs == null || !Number.isFinite(effectiveFinishedMs)) return false;
+  if (effectiveFinishedMs > now) return false;
+  if (now - effectiveFinishedMs > RECENTLY_FINISHED_GRACE_MS) return false;
   return wallClockAllowsMatchFinished(match, now);
 }
 
@@ -66,7 +104,9 @@ export function pickFeaturedRecentFinishedMatches(matches, now = Date.now()) {
       const kickoffDiff =
         new Date(b.kickoffAt ?? 0).getTime() - new Date(a.kickoffAt ?? 0).getTime();
       if (kickoffDiff !== 0) return kickoffDiff;
-      return new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime();
+      const aMs = resolveEffectiveFinishedAtMs(a) ?? 0;
+      const bMs = resolveEffectiveFinishedAtMs(b) ?? 0;
+      return bMs - aMs;
     })
     .slice(0, RECENT_FINISHED_FEATURED_MAX);
 }

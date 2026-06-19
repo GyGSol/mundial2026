@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   RECENTLY_FINISHED_GRACE_MS,
+  MAX_MATCH_DURATION_MS,
   applyStatusTransitionFields,
   findRecentlyFinishedMatchesQuery,
   findRecentlyFinishedMatchesQueryWithGroup,
@@ -56,11 +57,11 @@ describe('matchDisplayVisibilityService', () => {
     expect(update.finishedAt).toEqual(prior);
   });
 
-  it('findRecentlyFinishedMatchesQuery usa ventana de 30 min', () => {
+  it('findRecentlyFinishedMatchesQuery acota por kickoff reciente', () => {
     const query = findRecentlyFinishedMatchesQuery(now.getTime());
     expect(query.status).toBe('finished');
-    expect(query.finishedAt.$gte).toEqual(
-      new Date(now.getTime() - RECENTLY_FINISHED_GRACE_MS)
+    expect(query.kickoffAt.$gte).toEqual(
+      new Date(now.getTime() - RECENTLY_FINISHED_GRACE_MS - MAX_MATCH_DURATION_MS)
     );
     expect(query.kickoffAt.$lte).toEqual(new Date(now.getTime()));
   });
@@ -75,7 +76,42 @@ describe('matchDisplayVisibilityService', () => {
     expect(findLiveMatchesQueryWithGroup()).toEqual({ status: 'live' });
   });
 
-  it('isEligibleRecentFinishedMatch exige finishedAt y reloj de pared creíble', () => {
+  it('isEligibleRecentFinishedMatch usa fin efectivo por timeline, no finishedAt refrescado', () => {
+    const now = new Date('2026-06-19T00:20:00.000Z').getTime();
+    expect(
+      isEligibleRecentFinishedMatch(
+        {
+          status: 'finished',
+          finishedAt: new Date('2026-06-19T00:10:46.000Z'),
+          kickoffAt: new Date('2026-06-18T16:00:00.000Z'),
+          raw: {
+            fifaEvents: {
+              timeline: [{ type: 'match_end', minute: 98, sortKey: 98 }],
+            },
+          },
+        },
+        now
+      )
+    ).toBe(false);
+
+    expect(
+      isEligibleRecentFinishedMatch(
+        {
+          status: 'finished',
+          finishedAt: new Date('2026-06-19T00:00:45.000Z'),
+          kickoffAt: new Date('2026-06-18T22:00:00.000Z'),
+          raw: {
+            fifaEvents: {
+              timeline: [{ type: 'match_end', minute: 90, sortKey: 90 }],
+            },
+          },
+        },
+        now
+      )
+    ).toBe(true);
+  });
+
+  it('isEligibleRecentFinishedMatch exige reloj de pared creíble', () => {
     const now = new Date('2026-06-18T18:58:00.000Z').getTime();
     const kickoff = new Date('2026-06-18T18:00:00.000Z');
     expect(
@@ -93,22 +129,6 @@ describe('matchDisplayVisibilityService', () => {
         now
       )
     ).toBe(false);
-
-    expect(
-      isEligibleRecentFinishedMatch(
-        {
-          status: 'finished',
-          finishedAt: new Date(now - 5 * 60 * 1000).toISOString(),
-          kickoffAt: new Date('2026-06-18T15:00:00.000Z'),
-          raw: {
-            fifaEvents: {
-              timeline: [{ type: 'match_end', minute: 98, sortKey: 98 }],
-            },
-          },
-        },
-        now
-      )
-    ).toBe(true);
   });
 
   it('pickFeaturedRecentFinishedMatches devuelve solo el más reciente por kickoff', () => {
@@ -136,9 +156,9 @@ describe('matchDisplayVisibilityService', () => {
     expect(picked[0].id).toBe('27');
   });
 
-  it('pickFeaturedRecentFinishedMatches desempata por finishedAt con mismo kickoff', () => {
+  it('pickFeaturedRecentFinishedMatches desempata por fin efectivo con mismo kickoff', () => {
     const now = new Date('2026-06-18T21:10:00.000Z').getTime();
-    const kickoff = new Date('2026-06-18T15:00:00.000Z');
+    const kickoff = new Date('2026-06-18T19:15:00.000Z');
     const base = {
       status: 'finished',
       kickoffAt: kickoff,
