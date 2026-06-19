@@ -4,8 +4,9 @@ import { Match } from '../src/models/Match.js';
 import { Prediction } from '../src/models/Prediction.js';
 import { User } from '../src/models/User.js';
 import { backfillPredictionGoalDiffs } from '../src/services/predictionMigrationService.js';
+import { getTestMongoUri } from '../src/config/testDbGuard.js';
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026_test';
+const mongoUri = getTestMongoUri();
 
 describe('backfillPredictionGoalDiffs', () => {
   beforeAll(async () => {

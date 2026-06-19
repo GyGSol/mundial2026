@@ -6,8 +6,9 @@ import { User } from '../src/models/User.js';
 import { UserGroupMembership } from '../src/models/UserGroupMembership.js';
 import { CompetitionGroup } from '../src/models/CompetitionGroup.js';
 import { getLeaderboard } from '../src/services/leaderboardService.js';
+import { getTestMongoUri } from '../src/config/testDbGuard.js';
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026_test';
+const mongoUri = getTestMongoUri();
 
 describe('leaderboard kickoff baseline', () => {
   beforeAll(async () => {

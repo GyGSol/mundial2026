@@ -14,6 +14,8 @@ async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickof
   const affectedUsers = new Set();
 
   for (const prediction of predictions) {
+    if (prediction.predictionSource === 'admin') continue;
+
     const predicted = { home: prediction.homeGoals, away: prediction.awayGoals };
     const actual = { home: scoreHome, away: scoreAway };
     const { total, breakdown } = calculatePoints(predicted, actual);
