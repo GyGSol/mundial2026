@@ -8,7 +8,7 @@
  *
  * Variables opcionales:
  *   RECOVERY_TEMP_PASSWORD — contraseña temporal (default Mundial2026!)
- *   GONZALO_EMAIL — default gonzalomlopolitoadm@gmail.com
+ *   GONZALO_EMAIL — default gonzalomlopolito@gmail.com
  */
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
@@ -27,7 +27,7 @@ const GROUP_NAME = 'FamilyPro 🇺🇾 🇪🇦 🇦🇷';
 const dryRun = process.env.DRY_RUN === '1';
 const confirm = process.env.CONFIRM === '1';
 const tempPassword = process.env.RECOVERY_TEMP_PASSWORD || 'Mundial2026!';
-const gonzaloEmail = (process.env.GONZALO_EMAIL || 'gonzalomlopolitoadm@gmail.com').toLowerCase();
+const gonzaloEmail = (process.env.GONZALO_EMAIL || 'gonzalomlopolito@gmail.com').toLowerCase();
 
 /** IDs y nombres conocidos (emails desconocidos → recovery.*@mundial2026.local). */
 const PLAYERS = [
@@ -50,7 +50,7 @@ const PLAYERS = [
   {
     _id: '6a205b4e82c32257e3fa6429',
     name: 'Ramdow Player',
-    email: 'recovery.ramdow@mundial2026.local',
+    email: 'gonzalomlopolitoadm@gmail.com',
     role: 'member',
   },
   { _id: '6a21f9a7d64dde09c5ce49a0', name: 'Raguccito', email: 'recovery.raguccito@mundial2026.local', role: 'member' },
