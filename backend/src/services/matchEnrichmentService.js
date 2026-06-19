@@ -28,7 +28,7 @@ import {
 } from './matchWeatherEnrichmentService.js';
 import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
-import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
+import { unifyRawTeamPlayers } from './playerRosterUnifyService.js';
 
 /**
  * @param {import('mongoose').LeanDocument[]} matches
@@ -85,11 +85,15 @@ export async function enrichMatches(matches, userId, options = {}) {
             ),
           ];
     const players = await Player.find({ teamExternalId: { $in: rosterTeamIds } }).lean();
+    const rawPlayersByTeamId = {};
     for (const player of players) {
-      if (!playersByTeamId[player.teamExternalId]) {
-        playersByTeamId[player.teamExternalId] = [];
+      if (!rawPlayersByTeamId[player.teamExternalId]) {
+        rawPlayersByTeamId[player.teamExternalId] = [];
       }
-      playersByTeamId[player.teamExternalId].push(mapPlayerToTimelineRosterEntry(player));
+      rawPlayersByTeamId[player.teamExternalId].push(player);
+    }
+    for (const [teamId, teamPlayers] of Object.entries(rawPlayersByTeamId)) {
+      playersByTeamId[teamId] = unifyRawTeamPlayers(teamPlayers);
     }
   }
 

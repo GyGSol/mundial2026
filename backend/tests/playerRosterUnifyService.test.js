@@ -1,0 +1,49 @@
+import { describe, expect, it } from 'vitest';
+import {
+  areSamePlayer,
+  pickCanonicalPlayer,
+  unifyRawTeamPlayers,
+} from '../src/services/playerRosterUnifyService.js';
+
+describe('playerRosterUnifyService', () => {
+  const officialSon = {
+    _id: '507f1f77bcf86cd799439011',
+    externalId: 'KOR-son-heung-min',
+    fullName: 'Son Heung-min',
+    position: 'FWD',
+    shirtNumber: 7,
+    photoKey: 'corea/kor-son-heung-min.png',
+    teamExternalId: 'team-kor',
+    fifaCode: 'KOR',
+  };
+
+  const fdSon = {
+    _id: '507f1f77bcf86cd799439099',
+    externalId: 'fd-12345',
+    fullName: 'Heung-min Son',
+    position: 'Offence',
+    shirtNumber: 7,
+    footballDataPersonId: 99,
+    teamExternalId: 'team-kor',
+    fifaCode: 'KOR',
+  };
+
+  it('areSamePlayer detecta duplicados seed vs Football-Data', () => {
+    expect(areSamePlayer(officialSon, fdSon)).toBe(true);
+  });
+
+  it('pickCanonicalPlayer prefiere plantel oficial con foto', () => {
+    expect(pickCanonicalPlayer([fdSon, officialSon]).externalId).toBe('KOR-son-heung-min');
+  });
+
+  it('unifyRawTeamPlayers deduplica y conserva alias', () => {
+    const roster = unifyRawTeamPlayers([fdSon, officialSon]);
+    expect(roster).toHaveLength(1);
+    expect(roster[0].fullName).toBe('Son Heung-min');
+    expect(roster[0].externalId).toBe('KOR-son-heung-min');
+    expect(roster[0].aliasExternalIds).toEqual(expect.arrayContaining(['fd-12345', 'KOR-son-heung-min']));
+    expect(roster[0].aliasNames).toEqual(
+      expect.arrayContaining(['Son Heung-min', 'Heung-min Son'])
+    );
+  });
+});

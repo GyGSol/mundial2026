@@ -23,7 +23,7 @@ import {
   parseSubstitutionFromDescription,
 } from './fifaTimelineParser.js';
 import { callAiForJson, hasAiProvider } from './aiPredictionService.js';
-import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
+import { unifyRawTeamPlayers } from './playerRosterUnifyService.js';
 
 const LIVE_ASSIST_TTL_MS = 2 * 60 * 1000;
 const FINISHED_ASSIST_TTL_MS = 6 * 60 * 60 * 1000;
@@ -48,6 +48,10 @@ function rosterForSide(side, homePlayers, awayPlayers) {
   if (side === 'home') return homePlayers;
   if (side === 'away') return awayPlayers;
   return [];
+}
+
+function timelineRosterFromRawPlayers(players = []) {
+  return unifyRawTeamPlayers(players);
 }
 
 export function computeAssistInputHash(rawEvents = [], timeline = []) {
@@ -374,6 +378,8 @@ export async function assistMatchEvents(match, { homeTeam, awayTeam, homePlayers
   const fifaEvents = raw.fifaEvents ?? {};
   const rawEvents = Array.isArray(fifaEvents.rawEvents) ? fifaEvents.rawEvents : [];
   const parsedTimeline = Array.isArray(fifaEvents.timeline) ? fifaEvents.timeline : [];
+  const homeRoster = timelineRosterFromRawPlayers(homePlayers);
+  const awayRoster = timelineRosterFromRawPlayers(awayPlayers);
 
   let baseTimeline = parsedTimeline.length > 0 ? [...parsedTimeline] : [];
   if (baseTimeline.length === 0) {
@@ -386,7 +392,7 @@ export async function assistMatchEvents(match, { homeTeam, awayTeam, homePlayers
   }
 
   const inputHash = computeAssistInputHash(rawEvents, parsedTimeline.length > 0 ? parsedTimeline : baseTimeline);
-  const needsPositions = timelineMissingPositions(baseTimeline, homePlayers, awayPlayers);
+  const needsPositions = timelineMissingPositions(baseTimeline, homeRoster, awayRoster);
   if (
     !needsPositions &&
     fifaEvents.assistHash === inputHash &&
@@ -396,7 +402,7 @@ export async function assistMatchEvents(match, { homeTeam, awayTeam, homePlayers
   }
 
   const originalTimeline = baseTimeline.map((event) => ({ ...event }));
-  let assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homePlayers, awayPlayers);
+  let assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homeRoster, awayRoster);
 
   if (rawEvents.length > 0 && raw.fifaMeta?.homeTeamId && raw.fifaMeta?.awayTeamId) {
     const missing = findMissingRawEvents(
@@ -410,7 +416,7 @@ export async function assistMatchEvents(match, { homeTeam, awayTeam, homePlayers
     const stillMissing = [];
 
     for (const missingItem of missing) {
-      const roster = rosterForSide(missingItem.entry.side, homePlayers, awayPlayers);
+      const roster = rosterForSide(missingItem.entry.side, homeRoster, awayRoster);
       const heuristic = tryRecoverEntryHeuristic(missingItem.entry, roster);
       if (isEntryComplete(heuristic) && !timelineHasIdentity(assistedTimeline, heuristic)) {
         recovered.push(heuristic);
@@ -424,18 +430,18 @@ export async function assistMatchEvents(match, { homeTeam, awayTeam, homePlayers
         stillMissing,
         homeTeam?.fifaCode ?? 'LOC',
         awayTeam?.fifaCode ?? 'VIS',
-        homePlayers,
-        awayPlayers
+        homeRoster,
+        awayRoster
       );
       recovered.push(...aiResult.recovered);
     }
 
     const merged = mergeTimelineEntries(assistedTimeline, recovered);
-    assistedTimeline = normalizeTimelinePlayerNames(merged, homePlayers, awayPlayers);
+    assistedTimeline = normalizeTimelinePlayerNames(merged, homeRoster, awayRoster);
   }
 
   if (!validateAssistedTimeline(assistedTimeline, originalTimeline, raw.fifaMeta ?? {})) {
-    assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homePlayers, awayPlayers);
+    assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homeRoster, awayRoster);
   }
 
   const storedTimeline = stripTimelineForStorage(assistedTimeline);
@@ -586,7 +592,9 @@ export async function probeLiveEventAssist(
   }
 
   const originalTimeline = baseTimeline.map((event) => ({ ...event }));
-  let assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homePlayers, awayPlayers);
+  const homeRoster = timelineRosterFromRawPlayers(homePlayers);
+  const awayRoster = timelineRosterFromRawPlayers(awayPlayers);
+  let assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homeRoster, awayRoster);
 
   if (rawEvents.length > 0 && raw.fifaMeta?.homeTeamId && raw.fifaMeta?.awayTeamId) {
     const missing = findMissingRawEvents(
@@ -613,7 +621,7 @@ export async function probeLiveEventAssist(
     const stillMissing = [];
 
     for (const missingItem of missing) {
-      const roster = rosterForSide(missingItem.entry.side, homePlayers, awayPlayers);
+      const roster = rosterForSide(missingItem.entry.side, homeRoster, awayRoster);
       const heuristic = tryRecoverEntryHeuristic(missingItem.entry, roster);
       if (isEntryComplete(heuristic) && !timelineHasIdentity(assistedTimeline, heuristic)) {
         recovered.push(heuristic);
@@ -635,8 +643,8 @@ export async function probeLiveEventAssist(
         stillMissing,
         homeTeam?.fifaCode ?? 'LOC',
         awayTeam?.fifaCode ?? 'VIS',
-        homePlayers,
-        awayPlayers
+        homeRoster,
+        awayRoster
       );
       report.assistPlan.ai = {
         providerConfigured: hasAiProvider(),
@@ -665,8 +673,8 @@ export async function probeLiveEventAssist(
 
     assistedTimeline = normalizeTimelinePlayerNames(
       mergeTimelineEntries(assistedTimeline, recovered),
-      homePlayers,
-      awayPlayers
+      homeRoster,
+      awayRoster
     );
   }
 
@@ -678,7 +686,7 @@ export async function probeLiveEventAssist(
   report.assistPlan.validationPassed = validationPassed;
 
   if (!validationPassed) {
-    assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homePlayers, awayPlayers);
+    assistedTimeline = normalizeTimelinePlayerNames(originalTimeline, homeRoster, awayRoster);
   }
 
   const storedTimeline = stripTimelineForStorage(assistedTimeline);
@@ -699,8 +707,8 @@ export async function probeLiveEventAssist(
       },
     },
     {
-      homePlayers: (homePlayers ?? []).map(mapPlayerToTimelineRosterEntry),
-      awayPlayers: (awayPlayers ?? []).map(mapPlayerToTimelineRosterEntry),
+      homePlayers: homeRoster,
+      awayPlayers: awayRoster,
     }
   );
 

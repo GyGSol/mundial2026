@@ -1,9 +1,12 @@
 import { Match } from '../models/Match.js';
 import { Player } from '../models/Player.js';
 import { Team } from '../models/Team.js';
-import { normalizeName } from '../utils/playerNameMatch.js';
+import { normalizeName, enrichNameFromRoster, rosterPositionForName } from '../utils/playerNameMatch.js';
 import { enrichTimelineRosterFields, readMatchTimeline } from './matchLiveData.js';
-import { resolvePlayerPhotoUrl } from './playerPhotoService.js';
+import {
+  expandIdentityKeysFromUnifiedRosters,
+  groupUnifiedRostersByTeam,
+} from './playerRosterUnifyService.js';
 import { createInMemoryCache } from './inMemoryCache.js';
 
 const MATCHES_CACHE_KEY = 'tournament-activity-matches';
@@ -121,37 +124,8 @@ function bumpTotals(totals, event, roles) {
   }
 }
 
-function rosterEntryFromPlayer(player) {
-  return {
-    mongoId: player._id?.toString?.() ?? String(player._id),
-    externalId: player.externalId,
-    fullName: player.fullName,
-    position: player.position ?? null,
-    shirtNumber: player.shirtNumber ?? null,
-    photoUrl: resolvePlayerPhotoUrl(player.photoKey),
-  };
-}
-
 function groupRosterByTeam(players = []) {
-  const byTeamExternalId = new Map();
-  const byFifaCode = new Map();
-
-  for (const player of players) {
-    const entry = rosterEntryFromPlayer(player);
-    if (player.teamExternalId) {
-      const list = byTeamExternalId.get(player.teamExternalId) ?? [];
-      list.push(entry);
-      byTeamExternalId.set(player.teamExternalId, list);
-    }
-    if (player.fifaCode) {
-      const code = String(player.fifaCode).toUpperCase();
-      const list = byFifaCode.get(code) ?? [];
-      list.push(entry);
-      byFifaCode.set(code, list);
-    }
-  }
-
-  return { byTeamExternalId, byFifaCode };
+  return groupUnifiedRostersByTeam(players);
 }
 
 async function loadTournamentMatches() {
@@ -185,13 +159,13 @@ function formatMatchLabel(match, teamById) {
  * @param {{ mongoId?: string | null, externalId?: string | null, fullName?: string | null }} identity
  */
 export function aggregatePlayerTournamentActivity(matches, teams, players, identity = {}) {
-  const keys = buildPlayerIdentityKeys(identity);
+  const rosterIndex = groupRosterByTeam(players);
+  const keys = expandIdentityKeysFromUnifiedRosters(identity, rosterIndex.byTeamExternalId);
   if (!keys.mongoIds.size && !keys.externalIds.size && !keys.names.size) {
     return { totals: emptyTotals(), matches: [] };
   }
 
   const teamById = new Map(teams.map((team) => [team.externalId, team]));
-  const rosterIndex = groupRosterByTeam(players);
 
   const totals = emptyTotals();
   const matchRows = [];
@@ -244,7 +218,9 @@ export async function buildPlayerTournamentActivity(identity = {}) {
     loadTournamentMatches(),
     Team.find().select('externalId fifaCode nameEn flag').lean(),
     Player.find()
-      .select('_id externalId fullName fifaCode teamExternalId photoKey position shirtNumber')
+      .select(
+        '_id externalId fullName fifaCode teamExternalId photoKey position shirtNumber footballDataPersonId'
+      )
       .lean(),
   ]);
 
