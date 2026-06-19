@@ -51,9 +51,11 @@ export function resolvePlayerPhotoUrl(photoKey) {
   return base ? `${base}/${photoKey}` : '';
 }
 
-/** @param {{ fullName: string, position?: string, shirtNumber?: number | null, photoKey?: string | null }} player */
+/** @param {{ fullName: string, position?: string, shirtNumber?: number | null, photoKey?: string | null, _id?: { toString(): string }, externalId?: string }} player */
 export function mapPlayerToTimelineRosterEntry(player) {
   return {
+    mongoId: player._id?.toString?.() ?? null,
+    externalId: player.externalId ?? null,
     fullName: player.fullName,
     position: player.position,
     shirtNumber: player.shirtNumber ?? null,

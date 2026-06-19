@@ -34,20 +34,22 @@ export function rosterPositionForName(name, rosterPlayers = []) {
 export function enrichNameFromRoster(name, rosterPlayers = []) {
   const trimmed = String(name ?? '').trim();
   if (!trimmed) {
-    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null };
+    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null };
   }
 
   const matched = matchNameToRosterPlayer(trimmed, rosterPlayers);
   if (!matched) {
-    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null };
+    return { name: trimmed, position: null, shirtNumber: null, photoUrl: null, mongoId: null };
   }
 
   const photoUrl = matched.photoUrl ? String(matched.photoUrl) : null;
+  const mongoId = matched.mongoId ? String(matched.mongoId) : null;
 
   return {
     name: matched.fullName,
     position: matched.position ?? null,
     shirtNumber: matched.shirtNumber ?? null,
     photoUrl,
+    mongoId,
   };
 }

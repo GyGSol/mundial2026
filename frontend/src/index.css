@@ -965,6 +965,9 @@ body:has(.game-shell) {
 
 .match-live-action-player-thumb {
   align-self: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .match-live-timeline-row {

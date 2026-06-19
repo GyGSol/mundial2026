@@ -33,7 +33,9 @@ import {
 } from '@/lib/playerPositionLabel.js';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
 import PlayerAvatar from '@/components/PlayerAvatar.jsx';
+import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
 import { Button } from '@/components/ui/button.jsx';
+import { playersApi } from '../api/client.js';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
@@ -110,11 +112,16 @@ function formatBookingLine(booking) {
 const SUBSTITUTION_OUT_ICON = '⬇️';
 const SUBSTITUTION_IN_ICON = '⬆️';
 
-function TimelinePlayerRow({ player, align = 'left' }) {
+function TimelinePlayerRow({ player, align = 'left', teamSide, onPhotoClick, photoBusy = false }) {
   if (!player) return null;
   const { shirtNumber, position, name, tournamentGoals, photoUrl } = player;
   const textAlign =
     align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
+
+  const handlePhotoClick = () => {
+    if (!photoUrl || photoBusy || !onPhotoClick) return;
+    onPhotoClick({ ...player, teamSide });
+  };
 
   return (
     <div className="match-live-action-player flex w-full min-w-0 items-center gap-2">
@@ -142,19 +149,32 @@ function TimelinePlayerRow({ player, align = 'left' }) {
         )}
       </div>
       {photoUrl ? (
-        <PlayerAvatar
-          name={name}
-          photoUrl={photoUrl}
-          size="xs"
-          variant="portrait"
-          className="match-live-action-player-thumb shrink-0"
-        />
+        <button
+          type="button"
+          className={cn(
+            'match-live-action-player-thumb shrink-0 rounded-md transition',
+            'hover:ring-2 hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            photoBusy && 'cursor-wait opacity-70'
+          )}
+          onClick={handlePhotoClick}
+          disabled={photoBusy}
+          aria-label={`Ver ficha de ${name}`}
+          title="Ver ficha del jugador"
+        >
+          <PlayerAvatar
+            name={name}
+            photoUrl={photoUrl}
+            size="xs"
+            variant="portrait"
+            className="pointer-events-none"
+          />
+        </button>
       ) : null}
     </div>
   );
 }
 
-function TimelineActionCard({ entry, align = 'center' }) {
+function TimelineActionCard({ entry, align = 'center', onPlayerPhotoClick, photoBusy = false }) {
   const hasPlayers = (entry.players?.length ?? 0) > 0;
   const bodyAlign = align === 'home' ? 'left' : align === 'away' ? 'right' : 'center';
 
@@ -190,7 +210,13 @@ function TimelineActionCard({ entry, align = 'center' }) {
               {entry.kind === 'foul' && player.role === 'player' ? (
                 <BrokenLegIcon />
               ) : null}
-              <TimelinePlayerRow player={player} align={bodyAlign} />
+              <TimelinePlayerRow
+                player={player}
+                align={bodyAlign}
+                teamSide={entry.side}
+                onPhotoClick={onPlayerPhotoClick}
+                photoBusy={photoBusy}
+              />
             </div>
           ))}
         </div>
@@ -543,7 +569,7 @@ function groupTimelineEntriesByTimeSlot(entries = []) {
   });
 }
 
-function TimelineRowCell({ entries, align }) {
+function TimelineRowCell({ entries, align, onPlayerPhotoClick, photoBusy = false }) {
   if (!entries.length) {
     return <div className="match-live-timeline-slot min-h-0" aria-hidden="true" />;
   }
@@ -562,18 +588,59 @@ function TimelineRowCell({ entries, align }) {
             align === 'center' && 'mx-auto'
           )}
         >
-          <TimelineActionCard entry={entry} align={align} />
+          <TimelineActionCard
+            entry={entry}
+            align={align}
+            onPlayerPhotoClick={onPlayerPhotoClick}
+            photoBusy={photoBusy}
+          />
         </div>
       ))}
     </div>
   );
 }
 
-function MatchTimeline({ events = [] }) {
+function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
   const scrollRef = useRef(null);
   const signature = useMemo(() => timelineEventsSignature(events), [events]);
   const lastSignatureRef = useRef(signature);
   const [displayEvents, setDisplayEvents] = useState(events);
+  const [selectedPlayerId, setSelectedPlayerId] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+
+  const handlePlayerPhotoClick = async (player) => {
+    if (player.playerId) {
+      setSelectedPlayerId(player.playerId);
+      setDetailOpen(true);
+      return;
+    }
+
+    const teamCode =
+      player.teamSide === 'home'
+        ? homeTeamCode
+        : player.teamSide === 'away'
+          ? awayTeamCode
+          : null;
+    if (!player.name?.trim() || !teamCode || photoBusy) return;
+
+    setPhotoBusy(true);
+    try {
+      const data = await playersApi.list({ q: player.name.trim(), team: teamCode, limit: 8 });
+      const target = player.name.trim().toLowerCase();
+      const hit =
+        data.players?.find((row) => row.fullName?.trim().toLowerCase() === target) ??
+        data.players?.[0];
+      if (hit?.id) {
+        setSelectedPlayerId(hit.id);
+        setDetailOpen(true);
+      }
+    } catch {
+      // Sin ficha en plantel local
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (signature === lastSignatureRef.current) return;
@@ -607,6 +674,7 @@ function MatchTimeline({ events = [] }) {
   if (!displayEntries.length) return null;
 
   return (
+    <>
     <div
       ref={scrollRef}
       className="match-live-timeline max-h-60 w-full overflow-y-auto rounded-md border bg-muted/30 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -618,18 +686,39 @@ function MatchTimeline({ events = [] }) {
             className={cn(MATCH_SIDE_GRID_CLASS, 'match-live-timeline-row items-stretch')}
           >
             <div className="min-w-0 px-1">
-              <TimelineRowCell entries={row.home} align="home" />
+              <TimelineRowCell
+                entries={row.home}
+                align="home"
+                onPlayerPhotoClick={handlePlayerPhotoClick}
+                photoBusy={photoBusy}
+              />
             </div>
             <div className="min-w-[3.25rem] px-1">
-              <TimelineRowCell entries={row.neutral} align="center" />
+              <TimelineRowCell
+                entries={row.neutral}
+                align="center"
+                onPlayerPhotoClick={handlePlayerPhotoClick}
+                photoBusy={photoBusy}
+              />
             </div>
             <div className="min-w-0 px-1">
-              <TimelineRowCell entries={row.away} align="away" />
+              <TimelineRowCell
+                entries={row.away}
+                align="away"
+                onPlayerPhotoClick={handlePlayerPhotoClick}
+                photoBusy={photoBusy}
+              />
             </div>
           </div>
         ))}
       </div>
     </div>
+    <PlayerDetailDialog
+      playerId={selectedPlayerId}
+      open={detailOpen}
+      onOpenChange={setDetailOpen}
+    />
+    </>
   );
 }
 
@@ -845,7 +934,11 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             }
           />
 
-          <MatchTimeline events={match.matchTimeline} />
+          <MatchTimeline
+            events={match.matchTimeline}
+            homeTeamCode={homeCode}
+            awayTeamCode={awayCode}
+          />
         </div>
 
         <MatchSummary

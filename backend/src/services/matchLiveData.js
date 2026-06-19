@@ -1134,6 +1134,7 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
       next.playerPosition = next.playerPosition ?? enriched.position ?? null;
       next.playerShirtNumber = next.playerShirtNumber ?? enriched.shirtNumber ?? null;
       if (enriched.photoUrl) next.playerPhotoUrl = enriched.photoUrl;
+      if (enriched.mongoId) next.playerMongoId = enriched.mongoId;
     }
     if (next.playerIn) {
       const enriched = enrichNameFromRoster(next.playerIn, roster);
@@ -1141,6 +1142,7 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
       next.playerInPosition = next.playerInPosition ?? enriched.position ?? null;
       next.playerInShirtNumber = next.playerInShirtNumber ?? enriched.shirtNumber ?? null;
       if (enriched.photoUrl) next.playerInPhotoUrl = enriched.photoUrl;
+      if (enriched.mongoId) next.playerInMongoId = enriched.mongoId;
     }
     if (next.playerOut) {
       const enriched = enrichNameFromRoster(next.playerOut, roster);
@@ -1148,6 +1150,7 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
       next.playerOutPosition = next.playerOutPosition ?? enriched.position ?? null;
       next.playerOutShirtNumber = next.playerOutShirtNumber ?? enriched.shirtNumber ?? null;
       if (enriched.photoUrl) next.playerOutPhotoUrl = enriched.photoUrl;
+      if (enriched.mongoId) next.playerOutMongoId = enriched.mongoId;
     }
 
     return next;
