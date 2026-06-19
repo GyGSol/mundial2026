@@ -68,7 +68,7 @@ export async function getRankingDashboard(groupId, userId) {
     return { notFound: true };
   }
 
-  const [lastSyncAt, liveRaw, upcomingRaw, recentFinishedRaw, finishedMatches] = await Promise.all([
+  const [lastSyncAt, liveRaw, upcomingRaw, recentFinishedRaw] = await Promise.all([
     getLastSyncAt(),
     Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean(),
     Match.find({ status: 'upcoming' })
@@ -80,7 +80,6 @@ export async function getRankingDashboard(groupId, userId) {
       .sort({ finishedAt: -1, kickoffAt: -1 })
       .limit(RECENT_FINISHED_QUERY_LIMIT)
       .lean(),
-    getCachedRankingFinishedMatches(),
   ]);
 
   const matchesToEnrichFeatured = [...liveRaw, ...recentFinishedRaw];
@@ -158,7 +157,11 @@ export async function getRankingDashboard(groupId, userId) {
     lastSyncAt,
     liveMatches: liveWithStream,
     recentFinishedMatches: recentFinishedWithStream,
-    finishedMatches,
     nextUpcomingMatches: nextWithStream,
   };
+}
+
+export async function getRankingFinishedArchive() {
+  const finishedMatches = await getCachedRankingFinishedMatches();
+  return { finishedMatches };
 }

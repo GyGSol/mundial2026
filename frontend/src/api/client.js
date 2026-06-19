@@ -185,6 +185,7 @@ export const leaderboardApi = {
   },
   dashboard: (groupId) =>
     request(`/leaderboard/dashboard?groupId=${encodeURIComponent(groupId)}`),
+  finishedArchive: () => request('/leaderboard/finished-archive'),
 };
 
 export const teamsApi = {

@@ -93,6 +93,8 @@ export default function LeaderboardPage() {
     [effectiveGroupId]
   );
 
+  const fetchFinishedArchive = useCallback(() => leaderboardApi.finishedArchive(), []);
+
   const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId], {
     enabled: canLoadRanking,
     getPollIntervalMs: leaderboardPollIntervalMs,
@@ -113,6 +115,13 @@ export default function LeaderboardPage() {
   const rankingReady = canLoadRanking ? dashboardMatchesGroup : true;
   const rankingLoadFailed = canLoadRanking && !loading && Boolean(error) && !dashboardMatchesGroup;
   const pageReady = !canLoadRanking || dashboardMatchesGroup;
+
+  const { data: archiveData } = useLiveData(fetchFinishedArchive, [effectiveGroupId], {
+    enabled: canLoadRanking && pageReady,
+    getPollIntervalMs: () => 60_000,
+    pollWhen: () => false,
+  });
+  const finishedArchiveMatches = archiveData?.finishedMatches ?? [];
 
   const displayGroup = dashboardMatchesGroup ? data?.group || selectedGroup : selectedGroup;
   const isNoGroupMode = effectiveGroupId === '__nogroup';
@@ -200,7 +209,7 @@ export default function LeaderboardPage() {
             matches={data?.liveMatches ?? []}
             recentFinishedMatches={data?.recentFinishedMatches ?? []}
             nextMatches={data?.nextUpcomingMatches ?? []}
-            finishedMatches={data?.finishedMatches ?? []}
+            finishedMatches={finishedArchiveMatches}
           />
         </Suspense>
       ) : null}

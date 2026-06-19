@@ -3,6 +3,7 @@ import { getLeaderboard } from '../services/leaderboardService.js';
 import { getLastSyncAt } from '../services/syncService.js';
 import { getCompetitionGroupById } from '../services/competitionGroupService.js';
 import { getCachedRankingDashboard } from '../services/rankingDashboardCache.js';
+import { getRankingFinishedArchive } from '../services/rankingDashboardService.js';
 import { optionalAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -20,6 +21,14 @@ router.get('/dashboard', optionalAuth, async (req, res, next) => {
     }
 
     res.json(payload);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/finished-archive', optionalAuth, async (req, res, next) => {
+  try {
+    res.json(await getRankingFinishedArchive());
   } catch (err) {
     next(err);
   }
