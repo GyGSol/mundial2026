@@ -51,6 +51,16 @@ export function resolvePlayerPhotoUrl(photoKey) {
   return base ? `${base}/${photoKey}` : '';
 }
 
+/** @param {{ fullName: string, position?: string, shirtNumber?: number | null, photoKey?: string | null }} player */
+export function mapPlayerToTimelineRosterEntry(player) {
+  return {
+    fullName: player.fullName,
+    position: player.position,
+    shirtNumber: player.shirtNumber ?? null,
+    photoUrl: resolvePlayerPhotoUrl(player.photoKey) || null,
+  };
+}
+
 export function matchPlayerToPhotoFile(player, parsed) {
   if (!player || !parsed) return false;
   const fifa = String(player.fifaCode || '').toLowerCase();

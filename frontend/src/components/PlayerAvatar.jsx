@@ -9,6 +9,7 @@ const SIZE_CLASSES = {
 };
 
 const PORTRAIT_SIZE_CLASSES = {
+  xs: 'max-h-10 max-w-[2.25rem]',
   sm: 'max-h-20 max-w-[4.5rem]',
   md: 'max-h-28 max-w-[5.5rem]',
   lg: 'max-h-36 max-w-[7rem]',

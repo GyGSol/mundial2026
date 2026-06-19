@@ -5,6 +5,7 @@ import {
   completeTimelineEvents,
   deduplicateTimelineGoals,
   enrichMatchLiveFields,
+  enrichTimelineRosterFields,
   formatTimeElapsed,
   latestClockFromTimeline,
   parseElapsedClockToSortKey,
@@ -706,6 +707,65 @@ describe('matchLiveData', () => {
       const foul = enriched.matchTimeline.find((event) => event.type === 'foul');
       expect(goal.playerTournamentGoals).toBe(3);
       expect(foul.playerTournamentGoals).toBe(3);
+    });
+
+    it('enrichTimelineRosterFields adjunta photoUrl del roster al timeline', () => {
+      const homePlayers = [
+        {
+          fullName: 'Brian GUTIERREZ',
+          position: 'DC',
+          shirtNumber: 26,
+          photoUrl: '/player-photos/mex/brian-gutierrez.png',
+        },
+      ];
+      const timeline = [
+        {
+          type: 'shot_attempt',
+          side: 'home',
+          minute: 7,
+          player: 'Brian GUTIERREZ',
+        },
+      ];
+
+      const [event] = enrichTimelineRosterFields(timeline, homePlayers, []);
+      expect(event.playerPhotoUrl).toBe('/player-photos/mex/brian-gutierrez.png');
+      expect(event.playerShirtNumber).toBe(26);
+    });
+
+    it('enrichMatchLiveFields adjunta playerPhotoUrl cuando hay roster con foto', () => {
+      const enriched = enrichMatchLiveFields(
+        {
+          status: 'live',
+          homeScore: 0,
+          awayScore: 0,
+          raw: {
+            fifaEvents: {
+              timeline: [
+                {
+                  type: 'shot_attempt',
+                  side: 'home',
+                  minute: 7,
+                  player: 'Brian GUTIERREZ',
+                  sortKey: 7,
+                },
+              ],
+            },
+          },
+        },
+        {
+          homePlayers: [
+            {
+              fullName: 'Brian GUTIERREZ',
+              position: 'DC',
+              shirtNumber: 26,
+              photoUrl: '/player-photos/mex/brian-gutierrez.png',
+            },
+          ],
+        }
+      );
+
+      const event = enriched.matchTimeline[0];
+      expect(event.playerPhotoUrl).toBe('/player-photos/mex/brian-gutierrez.png');
     });
   });
 

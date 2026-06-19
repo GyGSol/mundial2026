@@ -963,6 +963,10 @@ body:has(.game-shell) {
   font-size: 0.95em;
 }
 
+.match-live-action-player-thumb {
+  align-self: center;
+}
+
 .match-live-timeline-row {
   min-height: 0;
 }

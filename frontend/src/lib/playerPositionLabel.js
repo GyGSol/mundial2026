@@ -132,7 +132,16 @@ export function extractTimelinePlayerFields(event, role = 'player') {
       ? Number(goalsRaw)
       : null;
 
-  return { shirtNumber, position, name, tournamentGoals };
+  const photoKey =
+    role === 'player'
+      ? 'playerPhotoUrl'
+      : role === 'in'
+        ? 'playerInPhotoUrl'
+        : 'playerOutPhotoUrl';
+  const photoRaw = event?.[photoKey];
+  const photoUrl = photoRaw ? String(photoRaw) : null;
+
+  return { shirtNumber, position, name, tournamentGoals, photoUrl };
 }
 
 /** @param {string} type */

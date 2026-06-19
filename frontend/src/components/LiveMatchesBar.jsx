@@ -32,6 +32,7 @@ import {
   getTimelineActionLabel,
 } from '@/lib/playerPositionLabel.js';
 import KickoffCountdown from '@/components/KickoffCountdown.jsx';
+import PlayerAvatar from '@/components/PlayerAvatar.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
@@ -111,33 +112,44 @@ const SUBSTITUTION_IN_ICON = '⬆️';
 
 function TimelinePlayerRow({ player, align = 'left' }) {
   if (!player) return null;
-  const { shirtNumber, position, name, tournamentGoals } = player;
+  const { shirtNumber, position, name, tournamentGoals, photoUrl } = player;
   const textAlign =
     align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
 
   return (
-    <div
-      className={cn(
-        'match-live-action-player grid w-full min-w-0 grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5',
-        textAlign
-      )}
-    >
-      <span className="tabular-nums font-medium text-foreground">
-        {shirtNumber != null ? shirtNumber : '—'}
-      </span>
-      <span className="text-muted-foreground">{position ?? '—'}</span>
-      <span className="min-w-0 truncate font-medium text-foreground">{name}</span>
-      {tournamentGoals != null ? (
-        <span
-          className="inline-flex items-center gap-0.5 tabular-nums text-emerald-700"
-          title="Goles en el torneo"
-        >
-          <span aria-hidden="true">⚽</span>
-          <span>{tournamentGoals}</span>
+    <div className="match-live-action-player flex w-full min-w-0 items-center gap-2">
+      <div
+        className={cn(
+          'grid min-w-0 flex-1 grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-x-1.5',
+          textAlign
+        )}
+      >
+        <span className="tabular-nums font-medium text-foreground">
+          {shirtNumber != null ? shirtNumber : '—'}
         </span>
-      ) : (
-        <span aria-hidden="true" />
-      )}
+        <span className="text-muted-foreground">{position ?? '—'}</span>
+        <span className="min-w-0 truncate font-medium text-foreground">{name}</span>
+        {tournamentGoals != null ? (
+          <span
+            className="inline-flex items-center gap-0.5 tabular-nums text-emerald-700"
+            title="Goles en el torneo"
+          >
+            <span aria-hidden="true">⚽</span>
+            <span>{tournamentGoals}</span>
+          </span>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+      </div>
+      {photoUrl ? (
+        <PlayerAvatar
+          name={name}
+          photoUrl={photoUrl}
+          size="xs"
+          variant="portrait"
+          className="match-live-action-player-thumb shrink-0"
+        />
+      ) : null}
     </div>
   );
 }

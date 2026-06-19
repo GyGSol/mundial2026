@@ -1133,18 +1133,21 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
       next.player = enriched.name;
       next.playerPosition = next.playerPosition ?? enriched.position ?? null;
       next.playerShirtNumber = next.playerShirtNumber ?? enriched.shirtNumber ?? null;
+      if (enriched.photoUrl) next.playerPhotoUrl = enriched.photoUrl;
     }
     if (next.playerIn) {
       const enriched = enrichNameFromRoster(next.playerIn, roster);
       next.playerIn = enriched.name;
       next.playerInPosition = next.playerInPosition ?? enriched.position ?? null;
       next.playerInShirtNumber = next.playerInShirtNumber ?? enriched.shirtNumber ?? null;
+      if (enriched.photoUrl) next.playerInPhotoUrl = enriched.photoUrl;
     }
     if (next.playerOut) {
       const enriched = enrichNameFromRoster(next.playerOut, roster);
       next.playerOut = enriched.name;
       next.playerOutPosition = next.playerOutPosition ?? enriched.position ?? null;
       next.playerOutShirtNumber = next.playerOutShirtNumber ?? enriched.shirtNumber ?? null;
+      if (enriched.photoUrl) next.playerOutPhotoUrl = enriched.photoUrl;
     }
 
     return next;

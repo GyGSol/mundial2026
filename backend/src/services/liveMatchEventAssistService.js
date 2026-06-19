@@ -23,6 +23,7 @@ import {
   parseSubstitutionFromDescription,
 } from './fifaTimelineParser.js';
 import { callAiForJson, hasAiProvider } from './aiPredictionService.js';
+import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 
 const LIVE_ASSIST_TTL_MS = 2 * 60 * 1000;
 const FINISHED_ASSIST_TTL_MS = 6 * 60 * 60 * 1000;
@@ -686,16 +687,22 @@ export async function probeLiveEventAssist(
     storedTimeline.length - stripTimelineForStorage(originalTimeline).length
   );
 
-  const payloadAfter = enrichMatchLiveFields({
-    ...match,
-    raw: {
-      ...raw,
-      fifaEvents: {
-        ...fifaEvents,
-        timeline: storedTimeline,
+  const payloadAfter = enrichMatchLiveFields(
+    {
+      ...match,
+      raw: {
+        ...raw,
+        fifaEvents: {
+          ...fifaEvents,
+          timeline: storedTimeline,
+        },
       },
     },
-  });
+    {
+      homePlayers: (homePlayers ?? []).map(mapPlayerToTimelineRosterEntry),
+      awayPlayers: (awayPlayers ?? []).map(mapPlayerToTimelineRosterEntry),
+    }
+  );
 
   report.apiPayloadAfter = {
     homeScore: payloadAfter.homeScore,

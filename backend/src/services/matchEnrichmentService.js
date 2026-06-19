@@ -25,6 +25,7 @@ import {
 } from './matchWeatherEnrichmentService.js';
 import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
+import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 
 /**
  * @param {import('mongoose').LeanDocument[]} matches
@@ -57,18 +58,18 @@ export async function enrichMatches(matches, userId, options = {}) {
   const teams = await Team.find({ externalId: { $in: [...teamIds] } }).lean();
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
 
+  const needsTournamentGoals = matches.some(
+    (m) => m.status === 'live' || m.status === 'finished'
+  );
+
   let playersByTeamId = {};
-  if (includePlayers) {
+  if (includePlayers || needsTournamentGoals) {
     const players = await Player.find({ teamExternalId: { $in: [...teamIds] } }).lean();
     for (const player of players) {
       if (!playersByTeamId[player.teamExternalId]) {
         playersByTeamId[player.teamExternalId] = [];
       }
-      playersByTeamId[player.teamExternalId].push({
-        fullName: player.fullName,
-        position: player.position,
-        shirtNumber: player.shirtNumber ?? null,
-      });
+      playersByTeamId[player.teamExternalId].push(mapPlayerToTimelineRosterEntry(player));
     }
   }
 
@@ -103,9 +104,6 @@ export async function enrichMatches(matches, userId, options = {}) {
     resolvedKnockoutByExternalId = ctx.resolvedKnockoutByExternalId;
   }
 
-  const needsTournamentGoals = matches.some(
-    (m) => m.status === 'live' || m.status === 'finished'
-  );
   let finishedMatchesForGoals = [];
   if (needsTournamentGoals) {
     finishedMatchesForGoals = await Match.find({ status: 'finished' })
