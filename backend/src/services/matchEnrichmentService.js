@@ -44,6 +44,7 @@ export async function enrichMatches(matches, userId, options = {}) {
     includePlayers = true,
     includeKnockoutContext = true,
     ensureUserDefaults = true,
+    includeWeather = true,
   } = options;
 
   if (userId && ensureUserDefaults) {
@@ -67,7 +68,17 @@ export async function enrichMatches(matches, userId, options = {}) {
 
   let playersByTeamId = {};
   if (includePlayers || needsTournamentGoals) {
-    const players = await Player.find({ teamExternalId: { $in: [...teamIds] } }).lean();
+    const rosterTeamIds =
+      includePlayers || !needsTournamentGoals
+        ? [...teamIds]
+        : [
+            ...new Set(
+              matches
+                .filter((m) => m.status === 'live' || m.status === 'finished')
+                .flatMap((m) => [m.homeTeamId, m.awayTeamId])
+            ),
+          ];
+    const players = await Player.find({ teamExternalId: { $in: rosterTeamIds } }).lean();
     for (const player of players) {
       if (!playersByTeamId[player.teamExternalId]) {
         playersByTeamId[player.teamExternalId] = [];
@@ -170,7 +181,9 @@ export async function enrichMatches(matches, userId, options = {}) {
     );
   });
 
-  return attachWeatherAndScheduleToEnrichedMatches(matches, enrichedBase, stadiumMap);
+  return attachWeatherAndScheduleToEnrichedMatches(matches, enrichedBase, stadiumMap, {
+    includeWeather,
+  });
 }
 
 export async function enrichMatchesLight(matches, userId) {
@@ -178,6 +191,16 @@ export async function enrichMatchesLight(matches, userId) {
     includePlayers: false,
     includeKnockoutContext: false,
     ensureUserDefaults: false,
+  });
+}
+
+/** Ranking dashboard: sin clima externo ni roster de partidos upcoming. */
+export async function enrichMatchesForRankingDashboard(matches, userId) {
+  return enrichMatches(matches, userId, {
+    includePlayers: false,
+    includeKnockoutContext: false,
+    ensureUserDefaults: false,
+    includeWeather: false,
   });
 }
 

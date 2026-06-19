@@ -1,6 +1,6 @@
 import { Match } from '../models/Match.js';
 import {
-  enrichMatchesLight,
+  enrichMatchesForRankingDashboard,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
@@ -26,7 +26,7 @@ async function loadFinishedArchiveMatches() {
     .lean();
 
   await prepareFifaShirtMapsForMatches(finishedArchiveRaw);
-  const enriched = await enrichMatchesLight(finishedArchiveRaw, null);
+  const enriched = await enrichMatchesForRankingDashboard(finishedArchiveRaw, null);
   return attachStreamMetaToMatches(enriched);
 }
 

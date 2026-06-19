@@ -3,7 +3,7 @@ import { getLeaderboard } from './leaderboardService.js';
 import { getLastSyncAt } from './syncService.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import {
-  enrichMatchesLight,
+  enrichMatchesForRankingDashboard,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
@@ -84,7 +84,7 @@ export async function getRankingDashboard(groupId, userId) {
 
   const matchesToEnrich = [...liveRaw, ...upcomingRaw, ...recentFinishedRaw];
   await prepareFifaShirtMapsForMatches(matchesToEnrich);
-  const enriched = await enrichMatchesLight(matchesToEnrich, userId);
+  const enriched = await enrichMatchesForRankingDashboard(matchesToEnrich, userId);
   const byId = new Map(enriched.map((m) => [m.id, m]));
 
   const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);

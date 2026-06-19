@@ -62,7 +62,7 @@ export async function attachWeatherAndScheduleToEnrichedMatches(
   rawMatches,
   enrichedMatches,
   stadiumMap,
-  { fetchImpl = fetch } = {}
+  { fetchImpl = fetch, includeWeather = true } = {}
 ) {
   if (!enrichedMatches.length) return enrichedMatches;
 
@@ -72,24 +72,31 @@ export async function attachWeatherAndScheduleToEnrichedMatches(
   );
 
   const weatherById = new Map();
-  await Promise.all(
-    rawMatches.map(async (m) => {
-      const stadium = stadiumMap[m.stadiumId];
-      if (!stadium) return;
-      const fields = await enrichMatchWeatherFields(m, stadium, {
-        fetchImpl,
-        urgent: m.status === 'live',
-      });
-      weatherById.set(m._id.toString(), fields);
-    })
-  );
+  if (includeWeather) {
+    await Promise.all(
+      rawMatches.map(async (m) => {
+        const stadium = stadiumMap[m.stadiumId];
+        if (!stadium) return;
+        const fields = await enrichMatchWeatherFields(m, stadium, {
+          fetchImpl,
+          urgent: m.status === 'live',
+        });
+        weatherById.set(m._id.toString(), fields);
+      })
+    );
+  }
 
   return enrichedMatches.map((enriched) => {
     const id = enriched.id;
-    const weatherFields = weatherById.get(id) ?? {
-      weatherRisk: null,
-      weatherOps: serializeWeatherOpsForClient(null),
-    };
+    const weatherFields = includeWeather
+      ? (weatherById.get(id) ?? {
+          weatherRisk: null,
+          weatherOps: serializeWeatherOpsForClient(null),
+        })
+      : {
+          weatherRisk: null,
+          weatherOps: enriched.weatherOps ?? serializeWeatherOpsForClient(null),
+        };
     const liveScheduleContext = overlapById.get(id) ?? null;
     const pair = pairMap.get(id);
 
