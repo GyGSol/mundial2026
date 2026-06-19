@@ -34,6 +34,8 @@ import {
 
 import { LiveMatchViewerSync } from '../context/LiveMatchViewerContext.jsx';
 
+const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
+
 const GROUP_POSITIONS_TABLE_ID = 'group-positions-table';
 
 function formatLastUpdated(date) {
