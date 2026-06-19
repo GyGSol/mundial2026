@@ -151,7 +151,7 @@ export const EMBED_SQUADS = {
     p('Maximiliano Araujo', 'FWD', 'Sporting CP', 26),
     p('Darwin Nunez', 'FWD', 'Liverpool', 27),
     p('Agustin Canobbio', 'FWD', 'Athletico Paranaense', 28),
-    p('Luciano Rodriguez', 'FWD', 'Bahia', 23),
+    p('Juan Manuel Sanabria', 'DEF', 'Real Salt Lake', 26),
     p('Cristian Olivera', 'FWD', 'LAFC', 24),
   ],
   COL: [

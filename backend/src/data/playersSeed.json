@@ -1748,12 +1748,12 @@
       }
     },
     {
-      "externalId": "URU-luciano-rodriguez",
-      "fullName": "Luciano Rodriguez",
+      "externalId": "URU-juan-manuel-sanabria",
+      "fullName": "Juan Manuel Sanabria",
       "fifaCode": "URU",
-      "position": "FWD",
-      "currentClub": "Bahia",
-      "age": 23,
+      "position": "DEF",
+      "currentClub": "Real Salt Lake",
+      "age": 26,
       "healthStatus": "available",
       "dataSources": {
         "structural": "embed-squads",
