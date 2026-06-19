@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
@@ -1029,6 +1029,29 @@ function NextMatchCard({ match }) {
   );
 }
 
+function FinishedMatchesArchive({ matches }) {
+  if (!matches.length) return null;
+
+  return (
+    <details className="group rounded-xl border border-border bg-muted/20">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+        <span>
+          Partidos finalizados ({matches.length})
+        </span>
+        <ChevronDown
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+      <div className="flex flex-col gap-4 border-t border-border p-3">
+        {matches.map((match) => (
+          <FinishedMatchCard key={match.id} match={match} />
+        ))}
+      </div>
+    </details>
+  );
+}
+
 function EmptyMatchesState() {
   return (
     <div className="mx-auto flex w-full flex-col">
@@ -1060,13 +1083,22 @@ export default function LiveMatchesBar({
   matches = [],
   recentFinishedMatches = [],
   nextMatches = [],
+  finishedMatches = [],
 }) {
   const hasLive = matches.length > 0;
   const hasRecentFinished = recentFinishedMatches.length > 0;
   const showRecentFinishedBar = hasRecentFinished && !hasLive;
   const hasNext = nextMatches.length > 0;
+  const archiveMatches = useMemo(() => {
+    const featuredIds = new Set([
+      ...matches.map((match) => match.id),
+      ...recentFinishedMatches.map((match) => match.id),
+    ]);
+    return finishedMatches.filter((match) => !featuredIds.has(match.id));
+  }, [finishedMatches, matches, recentFinishedMatches]);
+  const hasArchive = archiveMatches.length > 0;
 
-  if (!hasLive && !showRecentFinishedBar && !hasNext) {
+  if (!hasLive && !showRecentFinishedBar && !hasNext && !hasArchive) {
     return <EmptyMatchesState />;
   }
 
@@ -1101,6 +1133,8 @@ export default function LiveMatchesBar({
           ))}
         </MatchColumn>
       ) : null}
+
+      {hasArchive ? <FinishedMatchesArchive matches={archiveMatches} /> : null}
     </div>
   );
 }

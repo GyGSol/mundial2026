@@ -200,6 +200,7 @@ export default function LeaderboardPage() {
             matches={data?.liveMatches ?? []}
             recentFinishedMatches={data?.recentFinishedMatches ?? []}
             nextMatches={data?.nextUpcomingMatches ?? []}
+            finishedMatches={data?.finishedMatches ?? []}
           />
         </Suspense>
       ) : null}

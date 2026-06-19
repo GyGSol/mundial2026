@@ -20,6 +20,8 @@ import {
 } from './matchDisplayVisibilityService.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
+/** Partidos finalizados en el archivo colapsable del ranking (más recientes primero). */
+export const FINISHED_ARCHIVE_LIMIT = 40;
 
 function kickoffKey(kickoffAt) {
   if (!kickoffAt) return '';
@@ -61,7 +63,7 @@ export async function getRankingDashboard(groupId, userId) {
     return { notFound: true };
   }
 
-  const [lastSyncAt, liveRaw, upcomingRaw, recentFinishedRaw] = await Promise.all([
+  const [lastSyncAt, liveRaw, upcomingRaw, recentFinishedRaw, finishedArchiveRaw] = await Promise.all([
     getLastSyncAt(),
     Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean(),
     Match.find({ status: 'upcoming' })
@@ -72,15 +74,25 @@ export async function getRankingDashboard(groupId, userId) {
     Match.find(findRecentlyFinishedMatchesQuery())
       .sort({ finishedAt: -1, kickoffAt: -1 })
       .lean(),
+    Match.find({
+      status: 'finished',
+      kickoffAt: { $lte: new Date() },
+    })
+      .sort({ kickoffAt: -1, externalId: -1 })
+      .limit(FINISHED_ARCHIVE_LIMIT)
+      .lean(),
   ]);
 
-  const matchesToEnrich = [...liveRaw, ...upcomingRaw, ...recentFinishedRaw];
+  const matchesToEnrich = [...liveRaw, ...upcomingRaw, ...recentFinishedRaw, ...finishedArchiveRaw];
   await prepareFifaShirtMapsForMatches(matchesToEnrich);
   const enriched = await enrichMatchesLight(matchesToEnrich, userId);
   const byId = new Map(enriched.map((m) => [m.id, m]));
 
   const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
   const recentFinishedMatches = pickFeaturedRecentFinishedMatches(recentFinishedRaw)
+    .map((m) => byId.get(m._id.toString()))
+    .filter(Boolean);
+  const finishedMatches = finishedArchiveRaw
     .map((m) => byId.get(m._id.toString()))
     .filter(Boolean);
 
@@ -105,11 +117,13 @@ export async function getRankingDashboard(groupId, userId) {
     upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
   );
 
-  const [liveWithStream, nextWithStream, recentFinishedWithStream] = await Promise.all([
-    attachStreamMetaToMatches(liveMatches),
-    attachStreamMetaToMatches(nextUpcomingMatches),
-    attachStreamMetaToMatches(recentFinishedMatches),
-  ]);
+  const [liveWithStream, nextWithStream, recentFinishedWithStream, finishedWithStream] =
+    await Promise.all([
+      attachStreamMetaToMatches(liveMatches),
+      attachStreamMetaToMatches(nextUpcomingMatches),
+      attachStreamMetaToMatches(recentFinishedMatches),
+      attachStreamMetaToMatches(finishedMatches),
+    ]);
 
   let enrichedLeaderboard = leaderboard;
   let prizePool = null;
@@ -144,6 +158,7 @@ export async function getRankingDashboard(groupId, userId) {
     lastSyncAt,
     liveMatches: liveWithStream,
     recentFinishedMatches: recentFinishedWithStream,
+    finishedMatches: finishedWithStream,
     nextUpcomingMatches: nextWithStream,
   };
 }
