@@ -17,10 +17,13 @@ import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
 import {
   findRecentlyFinishedMatchesQuery,
   pickFeaturedRecentFinishedMatches,
+  RECENT_FINISHED_FEATURED_MAX,
 } from './matchDisplayVisibilityService.js';
 import { getCachedRankingFinishedMatches } from './rankingFinishedMatchesCache.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
+/** Solo hace falta enriquecer candidatos a la barra destacada (máx. 1 visible). */
+const RECENT_FINISHED_QUERY_LIMIT = Math.max(RECENT_FINISHED_FEATURED_MAX + 2, 3);
 
 export { FINISHED_ARCHIVE_LIMIT } from './rankingFinishedMatchesCache.js';
 
@@ -74,6 +77,7 @@ export async function getRankingDashboard(groupId, userId) {
       .lean(),
     Match.find(findRecentlyFinishedMatchesQuery())
       .sort({ finishedAt: -1, kickoffAt: -1 })
+      .limit(RECENT_FINISHED_QUERY_LIMIT)
       .lean(),
     getCachedRankingFinishedMatches(),
   ]);

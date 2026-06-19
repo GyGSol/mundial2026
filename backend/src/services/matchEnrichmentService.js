@@ -1,6 +1,5 @@
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
-import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
 import { Prediction } from '../models/Prediction.js';
 import {
@@ -13,7 +12,11 @@ import {
 } from './predictedMatchContextService.js';
 import { getCachedUserPredictedMatchContext } from './userPredictedMatchContextCache.js';
 import { enrichMatchPhaseFields } from './matchPhaseUtils.js';
-import { enrichMatchLiveFields, buildPriorTournamentGoalCounts } from './matchLiveData.js';
+import {
+  enrichMatchLiveFields,
+  createPriorTournamentGoalCountsResolver,
+} from './matchLiveData.js';
+import { getCachedFinishedMatchesForTournamentGoals } from './tournamentGoalsFinishedMatchesCache.js';
 import { RECENTLY_FINISHED_GRACE_MS } from './matchDisplayVisibilityService.js';
 import { ensureFifaShirtMaps } from './fifaShirtMapService.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
@@ -104,12 +107,11 @@ export async function enrichMatches(matches, userId, options = {}) {
     resolvedKnockoutByExternalId = ctx.resolvedKnockoutByExternalId;
   }
 
-  let finishedMatchesForGoals = [];
-  if (needsTournamentGoals) {
-    finishedMatchesForGoals = await Match.find({ status: 'finished' })
-      .select('externalId raw')
-      .lean();
-  }
+  const resolvePriorTournamentGoalCounts = needsTournamentGoals
+    ? createPriorTournamentGoalCountsResolver(
+        await getCachedFinishedMatchesForTournamentGoals()
+      )
+    : null;
 
   const enrichedBase = matches.map((m) => {
     const prediction = predictionMap[m._id.toString()] || null;
@@ -117,8 +119,8 @@ export async function enrichMatches(matches, userId, options = {}) {
 
     const phaseFields = enrichMatchPhaseFields(m);
     const priorTournamentGoalCounts =
-      m.status === 'live' || m.status === 'finished'
-        ? buildPriorTournamentGoalCounts(finishedMatchesForGoals, m.externalId)
+      resolvePriorTournamentGoalCounts && (m.status === 'live' || m.status === 'finished')
+        ? resolvePriorTournamentGoalCounts(m.externalId, m.status)
         : undefined;
     const liveFields = enrichMatchLiveFields(m, {
       homePlayers: playersByTeamId[m.homeTeamId] ?? [],

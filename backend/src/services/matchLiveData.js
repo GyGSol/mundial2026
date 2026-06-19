@@ -1045,6 +1045,29 @@ export function playerGoalCountKey(event, role = 'player') {
  * @param {Array<{ externalId?: string, raw?: Record<string, unknown> | null }>} finishedMatches
  * @param {string | null | undefined} excludeExternalId
  */
+/** Memoiza prior counts por partido en un mismo enrich (live comparte un mapa). */
+export function createPriorTournamentGoalCountsResolver(finishedMatches = []) {
+  let liveCounts = null;
+  const byExcludeExternalId = new Map();
+
+  return function resolvePriorTournamentGoalCounts(excludeExternalId, status) {
+    if (status === 'live') {
+      if (!liveCounts) {
+        liveCounts = buildPriorTournamentGoalCounts(finishedMatches, null);
+      }
+      return liveCounts;
+    }
+    const key = excludeExternalId ?? '';
+    if (!byExcludeExternalId.has(key)) {
+      byExcludeExternalId.set(
+        key,
+        buildPriorTournamentGoalCounts(finishedMatches, excludeExternalId || null)
+      );
+    }
+    return byExcludeExternalId.get(key);
+  };
+}
+
 export function buildPriorTournamentGoalCounts(finishedMatches = [], excludeExternalId = null) {
   const counts = new Map();
 

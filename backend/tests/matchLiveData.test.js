@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   attachTimelineTournamentGoals,
+  createPriorTournamentGoalCountsResolver,
   buildPriorTournamentGoalCounts,
   completeTimelineEvents,
   deduplicateTimelineGoals,
@@ -663,6 +664,26 @@ describe('matchLiveData', () => {
 
       const prior = buildPriorTournamentGoalCounts(finished, 'current-match');
       expect(prior.get('name:jonathan david')).toBe(2);
+    });
+
+    it('createPriorTournamentGoalCountsResolver reutiliza counts para partidos live', () => {
+      const finished = [
+        {
+          externalId: 'prev-match',
+          raw: {
+            fifaEvents: {
+              timeline: [
+                { type: 'goal', side: 'home', minute: 12, player: 'Erik Lira', sortKey: 12 },
+              ],
+            },
+          },
+        },
+      ];
+      const resolve = createPriorTournamentGoalCountsResolver(finished);
+      const a = resolve('live-a', 'live');
+      const b = resolve('live-b', 'live');
+      expect(a).toBe(b);
+      expect(a.get('name:erik lira')).toBe(1);
     });
 
     it('attachTimelineTournamentGoals acumula goles previos y del partido en curso', () => {
