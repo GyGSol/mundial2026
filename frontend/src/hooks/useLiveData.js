@@ -46,37 +46,74 @@ export function useLiveData(
   const requestIdRef = useRef(0);
   const inFlightRef = useRef(false);
   const pendingRefreshRef = useRef(false);
+  const refreshWaitersRef = useRef([]);
   const debounceTimerRef = useRef(null);
   dataRef.current = data;
 
-  const refresh = useCallback(async () => {
-    if (!enabled) return;
-    if (inFlightRef.current) {
-      pendingRefreshRef.current = true;
-      return;
+  const resolveRefreshWaiters = useCallback(() => {
+    const waiters = refreshWaitersRef.current.splice(0);
+    for (const resolve of waiters) {
+      resolve();
     }
-    inFlightRef.current = true;
-    const requestId = ++requestIdRef.current;
-    try {
-      setError(null);
-      const result = await fetchFn();
-      if (requestId !== requestIdRef.current) return;
-      if (result === undefined) return;
-      setData(result);
-      setLastUpdated(new Date());
-      writeMemoryCache(resolvedCacheKey, result, memoryCacheTtlMs);
-    } catch (err) {
-      if (requestId !== requestIdRef.current) return;
-      setError(err.message);
-    } finally {
-      inFlightRef.current = false;
-      setLoading(false);
-      if (pendingRefreshRef.current) {
-        pendingRefreshRef.current = false;
-        refresh();
+  }, []);
+
+  const refresh = useCallback(() => {
+    if (!enabled) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      if (inFlightRef.current) {
+        refreshWaitersRef.current.push(resolve);
+        pendingRefreshRef.current = true;
+        return;
       }
-    }
-  }, [...deps, enabled, fetchFn, resolvedCacheKey, memoryCacheTtlMs]);
+
+      const run = async () => {
+        inFlightRef.current = true;
+        try {
+          do {
+            pendingRefreshRef.current = false;
+            const requestId = ++requestIdRef.current;
+            setError(null);
+            try {
+              const result = await fetchFn();
+              if (requestId !== requestIdRef.current) continue;
+              if (result === undefined) continue;
+              setData(result);
+              setLastUpdated(new Date());
+              writeMemoryCache(resolvedCacheKey, result, memoryCacheTtlMs);
+            } catch (err) {
+              if (requestId === requestIdRef.current) {
+                setError(err.message);
+              }
+            }
+          } while (pendingRefreshRef.current);
+        } finally {
+          inFlightRef.current = false;
+          setLoading(false);
+          resolve();
+          resolveRefreshWaiters();
+        }
+      };
+
+      void run();
+    });
+  }, [...deps, enabled, fetchFn, resolvedCacheKey, memoryCacheTtlMs, resolveRefreshWaiters]);
+
+  const patchData = useCallback(
+    (updater) => {
+      setData((prev) => {
+        if (prev == null) return prev;
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        if (next != null) {
+          writeMemoryCache(resolvedCacheKey, next, memoryCacheTtlMs);
+          dataRef.current = next;
+        }
+        return next;
+      });
+      setLastUpdated(new Date());
+    },
+    [resolvedCacheKey, memoryCacheTtlMs]
+  );
 
   const scheduleRealtimeRefresh = useCallback(() => {
     if (!enabled) return;
@@ -96,12 +133,14 @@ export function useLiveData(
   useEffect(() => {
     if (!enabled) {
       pendingRefreshRef.current = false;
+      refreshWaitersRef.current = [];
       setLoading(true);
       return undefined;
     }
 
     requestIdRef.current += 1;
     pendingRefreshRef.current = false;
+    refreshWaitersRef.current = [];
     inFlightRef.current = false;
 
     const cached = readMemoryCache(resolvedCacheKey);
@@ -155,7 +194,7 @@ export function useLiveData(
     };
   }, [refresh, enabled, pollIntervalMs, getPollIntervalMs, pollWhen]);
 
-  return { data, loading, error, lastUpdated, refresh };
+  return { data, loading, error, lastUpdated, refresh, patchData };
 }
 
 /** Test helper */

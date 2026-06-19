@@ -21,7 +21,12 @@ import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import PushOptInBanner from '@/components/PushOptInBanner.jsx';
 import { predictionsListExcludeIds, predictionsPollIntervalMs, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
+import {
+  findMatchInPredictionsPayload,
+  patchMatchPrediction,
+} from '../lib/patchMatchPrediction.js';
 import PredictionsFeaturedMatches from '../components/PredictionsFeaturedMatches.jsx';
+import PredictionSavedDialog from '../components/PredictionSavedDialog.jsx';
 
 const PredictedGroupStandingsSection = lazy(
   () => import('../components/PredictedGroupStandingsSection.jsx')
@@ -48,6 +53,8 @@ export default function PredictionsPage() {
   const [groupFilter, setGroupFilter] = useState('');
   const [savingId, setSavingId] = useState(null);
   const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [savedDialog, setSavedDialog] = useState(null);
   const scrolledToMatch = useRef(false);
   const { isScheduled, markScheduled, markManyScheduled, unmarkScheduled } =
     useScheduledMatches();
@@ -73,7 +80,7 @@ export default function PredictionsPage() {
     return predictionsApi.groupStandings(params);
   }, [groupFilter]);
 
-  const { data, loading, error, lastUpdated, refresh } = useLiveData(fetchMatches, [
+  const { data, loading, error, lastUpdated, refresh, patchData } = useLiveData(fetchMatches, [
     statusFilter,
     groupFilter,
   ], {
@@ -96,23 +103,37 @@ export default function PredictionsPage() {
 
   const handleSave = async (matchId, homeGoals, awayGoals) => {
     if (!isAuthenticated) {
-      setMessage('Iniciá sesión para guardar predicciones');
+      setErrorMessage('Iniciá sesión para guardar predicciones');
       return;
     }
 
     setSavingId(matchId);
-    setMessage('');
+    setErrorMessage('');
     try {
-      await predictionsApi.save(matchId, homeGoals, awayGoals);
+      const { prediction } = await predictionsApi.save(matchId, homeGoals, awayGoals);
       unmarkScheduled(matchId);
-      setMessage('Predicción guardada');
-      const refreshTasks = [refresh()];
+
+      const savedPrediction = {
+        ...prediction,
+        homeGoals,
+        awayGoals,
+      };
+      const matchSnapshot = findMatchInPredictionsPayload(data, matchId);
+
+      patchData((prev) => patchMatchPrediction(prev, matchId, savedPrediction));
+      setSavedDialog({
+        match: matchSnapshot,
+        homeGoals,
+        awayGoals,
+      });
+
+      void refresh();
       if (activeView === 'standings') {
-        refreshTasks.push(refreshStandings());
+        void refreshStandings();
       }
-      await Promise.all(refreshTasks);
     } catch (err) {
-      setMessage(err.message);
+      setErrorMessage(err.message);
+      throw err;
     } finally {
       setSavingId(null);
     }
@@ -255,7 +276,18 @@ export default function PredictionsPage() {
         <PushOptInBanner enabled={isAuthenticated} />
       ) : null}
 
-      {message && <p className="text-sm text-foreground">{message}</p>}
+      {message ? <p className="text-sm text-foreground">{message}</p> : null}
+      {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+
+      <PredictionSavedDialog
+        match={savedDialog?.match}
+        homeGoals={savedDialog?.homeGoals}
+        awayGoals={savedDialog?.awayGoals}
+        open={Boolean(savedDialog)}
+        onOpenChange={(open) => {
+          if (!open) setSavedDialog(null);
+        }}
+      />
 
       {activeView === 'matches' ? (
         <>

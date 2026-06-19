@@ -166,15 +166,33 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
   const [away, setAway] = useState(match.prediction?.awayGoals ?? 0);
 
   useEffect(() => {
+    if (editing) return;
     setHome(match.prediction?.homeGoals ?? 0);
     setAway(match.prediction?.awayGoals ?? 0);
     setEditing(!hasPrediction && !locked);
-  }, [match.id, match.prediction?.homeGoals, match.prediction?.awayGoals, hasPrediction, locked]);
+  }, [match.id, match.prediction?.homeGoals, match.prediction?.awayGoals, hasPrediction, locked, editing]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSave(match.id, Number(home), Number(away));
-    setEditing(false);
+    const homeGoals = Number(home);
+    const awayGoals = Number(away);
+    if (
+      !Number.isInteger(homeGoals) ||
+      !Number.isInteger(awayGoals) ||
+      homeGoals < 0 ||
+      awayGoals < 0 ||
+      homeGoals > MAX_GOALS_PER_TEAM ||
+      awayGoals > MAX_GOALS_PER_TEAM
+    ) {
+      return;
+    }
+
+    try {
+      await onSave(match.id, homeGoals, awayGoals);
+      setEditing(false);
+    } catch {
+      // Mantener modo edición si el guardado falló.
+    }
   };
 
   const applyRandomScore = () => {
