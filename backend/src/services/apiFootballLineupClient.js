@@ -116,6 +116,31 @@ function findApiPlayerMatch(player, apiPlayers, byNumber, byName) {
   return byLastName.length === 1 ? byLastName[0] : null;
 }
 
+import { MIN_CONFIRMED_STARTERS_PER_TEAM } from './aiLineupContextService.js';
+
+/** Elige el XI más completo: si FD está incompleto y API tiene 9+, usa API como base. */
+export function mergeFdAndApiSide(fdSide, apiSide) {
+  const fd = fdSide ?? { formation: null, players: [], coach: null };
+  const api = apiSide ?? null;
+  const fdCount = fd.players?.length ?? 0;
+  const apiCount = api?.players?.length ?? 0;
+
+  if (!apiCount) return fd;
+  if (apiCount >= MIN_CONFIRMED_STARTERS_PER_TEAM && fdCount < MIN_CONFIRMED_STARTERS_PER_TEAM) {
+    return {
+      formation: api.formation || fd.formation,
+      coach: api.coach || fd.coach,
+      players: mergeGridOntoPlayers(api.players, fd.players),
+    };
+  }
+
+  return {
+    formation: api.formation || fd.formation,
+    coach: api.coach || fd.coach,
+    players: mergeGridOntoPlayers(fd.players, api.players),
+  };
+}
+
 export function mergeGridOntoPlayers(basePlayers, apiPlayers) {
   if (!apiPlayers?.length) return basePlayers;
 

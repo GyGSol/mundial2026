@@ -7,9 +7,10 @@ import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js
 import {
   fetchFixtureLineups,
   hasApiFootballKey,
-  mergeGridOntoPlayers,
+  mergeFdAndApiSide,
   resolveApiFootballFixtureId,
 } from './apiFootballLineupClient.js';
+import { MIN_CONFIRMED_STARTERS_PER_TEAM } from './aiLineupContextService.js';
 import {
   buildProbableSide,
   DEFAULT_PROBABLE_FORMATION,
@@ -112,19 +113,11 @@ export function buildLineupSnapshotFromSources({
   let home = fdSides?.home ?? { formation: DEFAULT_PROBABLE_FORMATION, players: [], coach: null };
   let away = fdSides?.away ?? { formation: DEFAULT_PROBABLE_FORMATION, players: [], coach: null };
 
-  if (apiSides?.home?.players?.length) {
-    home = {
-      formation: apiSides.home.formation || home.formation,
-      coach: apiSides.home.coach || home.coach,
-      players: mergeGridOntoPlayers(home.players, apiSides.home.players),
-    };
+  if (apiSides?.home) {
+    home = mergeFdAndApiSide(home, apiSides.home);
   }
-  if (apiSides?.away?.players?.length) {
-    away = {
-      formation: apiSides.away.formation || away.formation,
-      coach: apiSides.away.coach || away.coach,
-      players: mergeGridOntoPlayers(away.players, apiSides.away.players),
-    };
+  if (apiSides?.away) {
+    away = mergeFdAndApiSide(away, apiSides.away);
   }
 
   const snapshot = {
@@ -136,6 +129,72 @@ export function buildLineupSnapshotFromSources({
   };
 
   return snapshot;
+}
+
+async function hydrateIncompleteSide(side, teamExternalId, apiSide) {
+  const count = side?.players?.length ?? 0;
+  if (count >= MIN_CONFIRMED_STARTERS_PER_TEAM) return side;
+
+  const merged = mergeFdAndApiSide(side, apiSide);
+  if ((merged.players?.length ?? 0) >= MIN_CONFIRMED_STARTERS_PER_TEAM) {
+    return applyGridsToSide(merged);
+  }
+
+  const probable = await buildProbableSide(
+    teamExternalId,
+    merged.formation || side?.formation || DEFAULT_PROBABLE_FORMATION
+  );
+  if ((probable.players?.length ?? 0) > count) {
+    return {
+      formation: side?.formation || probable.formation,
+      coach: side?.coach || probable.coach,
+      players: probable.players,
+    };
+  }
+
+  return applyGridsToSide(merged);
+}
+
+async function hydrateIncompleteSnapshotSides(snapshot, match) {
+  if (!snapshot) return snapshot;
+
+  const homeCount = snapshot.home?.players?.length ?? 0;
+  const awayCount = snapshot.away?.players?.length ?? 0;
+  if (
+    homeCount >= MIN_CONFIRMED_STARTERS_PER_TEAM &&
+    awayCount >= MIN_CONFIRMED_STARTERS_PER_TEAM
+  ) {
+    return snapshot;
+  }
+
+  let apiSides = null;
+  if (hasApiFootballKey()) {
+    try {
+      const { homeTeam, awayTeam } = await loadMatchTeams(match);
+      const fixtureId = await resolveApiFootballFixtureId(match, homeTeam, awayTeam);
+      if (fixtureId) {
+        apiSides = await fetchFixtureLineups(fixtureId);
+      }
+    } catch (err) {
+      console.warn(`Lineup API hydrate skip ${match.externalId}:`, err.message);
+    }
+  }
+
+  const [home, away] = await Promise.all([
+    hydrateIncompleteSide(snapshot.home, match.homeTeamId, apiSides?.home),
+    hydrateIncompleteSide(snapshot.away, match.awayTeamId, apiSides?.away),
+  ]);
+
+  const usedProbable =
+    ((home.players?.length ?? 0) > homeCount && homeCount < MIN_CONFIRMED_STARTERS_PER_TEAM) ||
+    ((away.players?.length ?? 0) > awayCount && awayCount < MIN_CONFIRMED_STARTERS_PER_TEAM);
+
+  return {
+    ...snapshot,
+    source: usedProbable && snapshot.source !== 'heuristic' ? 'hybrid' : snapshot.source,
+    home,
+    away,
+  };
 }
 
 function refreshSnapshotGrids(snapshot) {
@@ -416,6 +475,8 @@ export async function buildMatchLineupPayload(match, options = {}) {
         console.warn(`Lineup shirt merge skip ${match.externalId}:`, err.message);
       }
     }
+
+    snapshot = await hydrateIncompleteSnapshotSides(snapshot, match);
 
     const payload = formatLineupPayload(snapshot);
     return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });

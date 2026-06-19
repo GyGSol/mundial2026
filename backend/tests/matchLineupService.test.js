@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   parseFootballDataMatchLineups,
   buildLineupSnapshotFromSources,
@@ -9,7 +9,19 @@ import {
   isConfirmedSnapshot,
   starterPriority,
 } from '../src/services/probableLineupService.js';
-import { mergeGridOntoPlayers } from '../src/services/apiFootballLineupClient.js';
+import {
+  mergeFdAndApiSide,
+  mergeGridOntoPlayers,
+} from '../src/services/apiFootballLineupClient.js';
+
+function mkPlayers(count, prefix = 'P') {
+  return Array.from({ length: count }, (_, i) => ({
+    name: `${prefix}${i + 1}`,
+    shirtNumber: i + 1,
+    position: i === 0 ? 'GK' : 'MID',
+    isStarter: true,
+  }));
+}
 
 describe('matchLineupService', () => {
   it('parseFootballDataMatchLineups lee homeTeam.lineup v4', () => {
@@ -33,6 +45,57 @@ describe('matchLineupService', () => {
     expect(sides.home.players).toHaveLength(2);
     expect(sides.home.players[0].position).toBe('GK');
     expect(sides.away.formation).toBe('3-5-2');
+  });
+
+  it('buildLineupSnapshotFromSources prefiere XI completo de API cuando FD está incompleto', () => {
+    const fdSides = {
+      home: {
+        formation: '4-3-3',
+        players: mkPlayers(3, 'SCO'),
+        coach: null,
+      },
+      away: {
+        formation: '4-3-3',
+        players: mkPlayers(11, 'MAR'),
+        coach: null,
+      },
+    };
+    const apiSides = {
+      home: {
+        formation: '4-3-3',
+        players: mkPlayers(11, 'SCO-API').map((p, i) => ({
+          ...p,
+          gridRaw: `${(i % 4) + 1}:${(i % 3) + 1}`,
+        })),
+        coach: null,
+      },
+      away: {
+        formation: '4-3-3',
+        players: mkPlayers(11, 'MAR-API'),
+        coach: null,
+      },
+    };
+
+    const snapshot = buildLineupSnapshotFromSources({ fdSides, apiSides, source: 'api-football' });
+    expect(snapshot.home.players).toHaveLength(11);
+    expect(snapshot.away.players).toHaveLength(11);
+    expect(snapshot.home.players[0].gridX).toBeDefined();
+  });
+
+  it('buildLineupSnapshotFromSources no altera snapshot completo 11+11', () => {
+    const fdSides = {
+      home: { formation: '4-3-3', players: mkPlayers(11, 'H'), coach: null },
+      away: { formation: '4-3-3', players: mkPlayers(11, 'A'), coach: null },
+    };
+    const apiSides = {
+      home: { formation: '4-3-3', players: mkPlayers(11, 'H-API'), coach: null },
+      away: { formation: '4-3-3', players: mkPlayers(11, 'A-API'), coach: null },
+    };
+
+    const snapshot = buildLineupSnapshotFromSources({ fdSides, apiSides });
+    expect(snapshot.home.players).toHaveLength(11);
+    expect(snapshot.away.players).toHaveLength(11);
+    expect(snapshot.home.players[0].name).toBe('H1');
   });
 
   it('buildLineupSnapshotFromSources merge API-Football grid', () => {
@@ -131,6 +194,31 @@ describe('probableLineupService', () => {
     const mk = (n) => ({ players: Array.from({ length: n }, () => ({})) });
     expect(isConfirmedSnapshot({ home: mk(9), away: mk(9) })).toBe(true);
     expect(isConfirmedSnapshot({ home: mk(8), away: mk(9) })).toBe(false);
+  });
+});
+
+describe('apiFootballLineupClient mergeFdAndApiSide', () => {
+  it('usa XI de API cuando FD tiene menos de 9 jugadores', () => {
+    const fdSide = { formation: '4-3-3', players: mkPlayers(3, 'SCO'), coach: null };
+    const apiSide = {
+      formation: '4-3-3',
+      players: mkPlayers(11, 'SCO-API'),
+      coach: 'Coach',
+    };
+
+    const merged = mergeFdAndApiSide(fdSide, apiSide);
+    expect(merged.players).toHaveLength(11);
+    expect(merged.players[0].name).toBe('SCO-API1');
+    expect(merged.coach).toBe('Coach');
+  });
+
+  it('mantiene FD como base cuando ambos lados están completos', () => {
+    const fdSide = { formation: '4-3-3', players: mkPlayers(11, 'FD'), coach: null };
+    const apiSide = { formation: '4-3-3', players: mkPlayers(11, 'API'), coach: null };
+
+    const merged = mergeFdAndApiSide(fdSide, apiSide);
+    expect(merged.players).toHaveLength(11);
+    expect(merged.players[0].name).toBe('FD1');
   });
 });
 
