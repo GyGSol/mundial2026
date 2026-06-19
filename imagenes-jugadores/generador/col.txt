@@ -1,0 +1,61 @@
+# Colombia (COL)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Néstor Lorenzo
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+col-david-ospina.png | #1 | David Ospina | GK | 130 pj | 0 goles
+col-daniel-munoz.png | #2 | Daniel Muñoz | DF | 46 pj | 3 goles
+col-jhon-lucumi.png | #3 | Jhon Lucumí | DF | 37 pj | 1 goles
+col-santiago-arias.png | #4 | Santiago Arias | DF | 68 pj | 0 goles
+col-kevin-castano.png | #5 | Kevin Castaño | MF | 25 pj | 0 goles
+col-richard-rios.png | #6 | Richard Ríos | MF | 32 pj | 2 goles
+col-luis-diaz.png | #7 | Luis Díaz | FW | 74 pj | 22 goles
+col-jorge-carrascal.png | #8 | Jorge Carrascal | MF | 24 pj | 2 goles
+col-jhon-cordoba.png | #9 | Jhon Córdoba | FW | 21 pj | 6 goles
+col-james-rodriguez.png | #10 | James Rodríguez (C) | MF | 126 pj | 31 goles
+col-jhon-arias.png | #11 | Jhon Arias | MF | 38 pj | 6 goles
+col-camilo-vargas.png | #12 | Camilo Vargas | GK | 42 pj | 0 goles
+col-yerry-mina.png | #13 | Yerry Mina | DF | 54 pj | 8 goles
+col-gustavo-puerta.png | #14 | Gustavo Puerta | DF | 6 pj | 1 goles
+col-juan-portilla.png | #15 | Juan Portilla | MF | 10 pj | 0 goles
+col-jefferson-lerma.png | #16 | Jefferson Lerma | MF | 65 pj | 5 goles
+col-johan-mojica.png | #17 | Johan Mojica | DF | 45 pj | 1 goles
+col-willer-ditta.png | #18 | Willer Ditta | DF | 5 pj | 0 goles
+col-cucho-hernandez.png | #19 | Cucho Hernández | FW | 9 pj | 2 goles
+col-juan-fernando-quintero.png | #20 | Juan Fernando Quintero | MF | 49 pj | 6 goles
+col-jaminton-campaz.png | #21 | Jaminton Campaz | FW | 10 pj | 1 goles
+col-deiver-machado.png | #22 | Deiver Machado | DF | 15 pj | 0 goles
+col-davinson-sanchez.png | #23 | Davinson Sánchez | DF | 79 pj | 4 goles
+col-alvaro-montero.png | #24 | Álvaro Montero | GK | 12 pj | 0 goles
+col-luis-suarez.png | #25 | Luis Suárez | FW | 12 pj | 5 goles
+col-andres-gomez.png | #26 | Andrés Gómez | FW | 8 pj | 2 goles
+
+# Solo nombres (pegar en generador):
+
+David Ospina
+Daniel Muñoz
+Jhon Lucumí
+Santiago Arias
+Kevin Castaño
+Richard Ríos
+Luis Díaz
+Jorge Carrascal
+Jhon Córdoba
+James Rodríguez
+Jhon Arias
+Camilo Vargas
+Yerry Mina
+Gustavo Puerta
+Juan Portilla
+Jefferson Lerma
+Johan Mojica
+Willer Ditta
+Cucho Hernández
+Juan Fernando Quintero
+Jaminton Campaz
+Deiver Machado
+Davinson Sánchez
+Álvaro Montero
+Luis Suárez
+Andrés Gómez

@@ -93,6 +93,36 @@ async function fetchFromFootballData(teamsByCode) {
   return players;
 }
 
+async function fetchFromWikipedia(teamsByCode) {
+  const raw = await loadJson('wikipediaSquads.json');
+  if (!raw?.teams?.length) return [];
+
+  const players = [];
+  for (const team of raw.teams) {
+    const dbTeam = teamsByCode.get(team.fifaCode);
+    if (!dbTeam) continue;
+    for (const p of team.players) {
+      players.push(
+        toSeedPlayer(
+          {
+            fullName: p.fullName,
+            position: p.position,
+            currentClub: p.currentClub,
+            age: p.age,
+            shirtNumber: p.shirtNumber,
+            isCaptain: p.isCaptain,
+            source: 'wikipedia-squads',
+            raw: { internationalCaps: p.caps, internationalGoals: p.goals },
+          },
+          dbTeam
+        )
+      );
+    }
+    console.log(`Wikipedia: ${team.fifaCode} → ${team.players.length} jugadores`);
+  }
+  return players;
+}
+
 function fetchFromEmbed(teamsByCode) {
   const players = [];
   for (const [rawCode, squad] of Object.entries(EMBED_SQUADS)) {
@@ -119,11 +149,14 @@ async function main() {
     process.exit(1);
   }
 
-  const fdPlayers = await fetchFromFootballData(teamsByCode);
-  const embedPlayers = fetchFromEmbed(teamsByCode);
+  const [fdPlayers, wikiPlayers, embedPlayers] = await Promise.all([
+    fetchFromFootballData(teamsByCode),
+    fetchFromWikipedia(teamsByCode),
+    Promise.resolve(fetchFromEmbed(teamsByCode)),
+  ]);
 
   const byKey = new Map();
-  for (const p of [...embedPlayers, ...fdPlayers]) {
+  for (const p of [...embedPlayers, ...fdPlayers, ...wikiPlayers]) {
     byKey.set(p.externalId, p);
   }
 
@@ -136,7 +169,11 @@ async function main() {
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
-        sources: ['embedSquads.js', hasToken() ? 'football-data.org' : null].filter(Boolean),
+        sources: [
+          'wikipediaSquads.json',
+          'embedSquads.js',
+          hasToken() ? 'football-data.org' : null,
+        ].filter(Boolean),
         playerCount: players.length,
         players,
       },

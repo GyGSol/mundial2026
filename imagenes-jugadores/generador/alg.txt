@@ -1,0 +1,61 @@
+# Algeria (ALG)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Vladimir Petković
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+alg-melvin-mastil.png | #1 | Melvin Mastil | GK | 3 pj | 0 goles
+alg-aissa-mandi.png | #2 | Aïssa Mandi | DF | 120 pj | 9 goles
+alg-achref-abada.png | #3 | Achref Abada | DF | 9 pj | 1 goles
+alg-mohamed-amine-tougai.png | #4 | Mohamed Amine Tougai | DF | 31 pj | 2 goles
+alg-zineddine-belaid.png | #5 | Zineddine Belaïd | DF | 13 pj | 1 goles
+alg-ramiz-zerrouki.png | #6 | Ramiz Zerrouki | MF | 54 pj | 3 goles
+alg-riyad-mahrez.png | #7 | Riyad Mahrez (C) | FW | 117 pj | 38 goles
+alg-houssem-aouar.png | #8 | Houssem Aouar | MF | 23 pj | 6 goles
+alg-amine-gouiri.png | #9 | Amine Gouiri | FW | 24 pj | 12 goles
+alg-fares-chaibi.png | #10 | Farès Chaïbi | MF | 32 pj | 3 goles
+alg-anis-hadj-moussa.png | #11 | Anis Hadj Moussa | FW | 16 pj | 3 goles
+alg-nadhir-benbouali.png | #12 | Nadhir Benbouali | FW | 5 pj | 1 goles
+alg-jaouen-hadjam.png | #13 | Jaouen Hadjam | DF | 19 pj | 3 goles
+alg-hicham-boudaoui.png | #14 | Hicham Boudaoui | MF | 35 pj | 0 goles
+alg-rayan-ait-nouri.png | #15 | Rayan Aït-Nouri | DF | 31 pj | 0 goles
+alg-oussama-benbot.png | #16 | Oussama Benbot | GK | 4 pj | 0 goles
+alg-rafik-belghali.png | #17 | Rafik Belghali | DF | 14 pj | 1 goles
+alg-mohamed-amoura.png | #18 | Mohamed Amoura | FW | 48 pj | 19 goles
+alg-nabil-bentaleb.png | #19 | Nabil Bentaleb | MF | 62 pj | 6 goles
+alg-adil-boulbina.png | #20 | Adil Boulbina | FW | 11 pj | 4 goles
+alg-ramy-bensebaini.png | #21 | Ramy Bensebaini | DF | 82 pj | 9 goles
+alg-ibrahim-maza.png | #22 | Ibrahim Maza | MF | 18 pj | 2 goles
+alg-luca-zidane.png | #23 | Luca Zidane | GK | 7 pj | 0 goles
+alg-yacine-titraoui.png | #24 | Yacine Titraoui | MF | 5 pj | 0 goles
+alg-fares-ghedjemis.png | #25 | Farès Ghedjemis | FW | 1 pj | 1 goles
+alg-samir-chergui.png | #26 | Samir Chergui | DF | 6 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Melvin Mastil
+Aïssa Mandi
+Achref Abada
+Mohamed Amine Tougai
+Zineddine Belaïd
+Ramiz Zerrouki
+Riyad Mahrez
+Houssem Aouar
+Amine Gouiri
+Farès Chaïbi
+Anis Hadj Moussa
+Nadhir Benbouali
+Jaouen Hadjam
+Hicham Boudaoui
+Rayan Aït-Nouri
+Oussama Benbot
+Rafik Belghali
+Mohamed Amoura
+Nabil Bentaleb
+Adil Boulbina
+Ramy Bensebaini
+Ibrahim Maza
+Luca Zidane
+Yacine Titraoui
+Farès Ghedjemis
+Samir Chergui

@@ -1,0 +1,61 @@
+# Turkey (TUR)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Vincenzo Montella
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+tur-mert-gunok.png | #1 | Mert Günok | GK | 37 pj | 0 goles
+tur-zeki-celik.png | #2 | Zeki Çelik | DF | 61 pj | 3 goles
+tur-merih-demiral.png | #3 | Merih Demiral | DF | 62 pj | 6 goles
+tur-caglar-soyuncu.png | #4 | Çağlar Söyüncü | DF | 60 pj | 2 goles
+tur-salih-ozcan.png | #5 | Salih Özcan | MF | 30 pj | 1 goles
+tur-orkun-kokcu.png | #6 | Orkun Kökçü | MF | 50 pj | 4 goles
+tur-kerem-akturkoglu.png | #7 | Kerem Aktürkoğlu | FW | 52 pj | 15 goles
+tur-arda-guler.png | #8 | Arda Güler | FW | 29 pj | 6 goles
+tur-deniz-gul.png | #9 | Deniz Gül | FW | 8 pj | 2 goles
+tur-hakan-calhanoglu.png | #10 | Hakan Çalhanoğlu (C) | MF | 105 pj | 22 goles
+tur-kenan-y-ld-z.png | #11 | Kenan Yıldız | FW | 28 pj | 5 goles
+tur-altay-bay-nd-r.png | #12 | Altay Bayındır | GK | 12 pj | 0 goles
+tur-eren-elmal.png | #13 | Eren Elmalı | DF | 23 pj | 0 goles
+tur-abdulkerim-bardakc.png | #14 | Abdülkerim Bardakcı | DF | 27 pj | 2 goles
+tur-ozan-kabak.png | #15 | Ozan Kabak | DF | 30 pj | 2 goles
+tur-ismail-yuksek.png | #16 | İsmail Yüksek | MF | 32 pj | 1 goles
+tur-irfan-can-kahveci.png | #17 | İrfan Can Kahveci | FW | 47 pj | 6 goles
+tur-mert-muldur.png | #18 | Mert Müldür | DF | 45 pj | 3 goles
+tur-yunus-akgun.png | #19 | Yunus Akgün | FW | 19 pj | 4 goles
+tur-ferdi-kad-oglu.png | #20 | Ferdi Kadıoğlu | DF | 30 pj | 2 goles
+tur-bar-s-alper-y-lmaz.png | #21 | Barış Alper Yılmaz | FW | 35 pj | 4 goles
+tur-kaan-ayhan.png | #22 | Kaan Ayhan | MF | 73 pj | 5 goles
+tur-ugurcan-cak-r.png | #23 | Uğurcan Çakır | GK | 39 pj | 0 goles
+tur-oguz-ayd-n.png | #24 | Oğuz Aydın | FW | 11 pj | 0 goles
+tur-samet-akaydin.png | #25 | Samet Akaydin | DF | 19 pj | 1 goles
+tur-can-uzun.png | #26 | Can Uzun | FW | 6 pj | 1 goles
+
+# Solo nombres (pegar en generador):
+
+Mert Günok
+Zeki Çelik
+Merih Demiral
+Çağlar Söyüncü
+Salih Özcan
+Orkun Kökçü
+Kerem Aktürkoğlu
+Arda Güler
+Deniz Gül
+Hakan Çalhanoğlu
+Kenan Yıldız
+Altay Bayındır
+Eren Elmalı
+Abdülkerim Bardakcı
+Ozan Kabak
+İsmail Yüksek
+İrfan Can Kahveci
+Mert Müldür
+Yunus Akgün
+Ferdi Kadıoğlu
+Barış Alper Yılmaz
+Kaan Ayhan
+Uğurcan Çakır
+Oğuz Aydın
+Samet Akaydin
+Can Uzun

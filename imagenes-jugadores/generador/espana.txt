@@ -1,0 +1,61 @@
+# Spain (ESP)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Luis de la Fuente
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+esp-david-raya.png | #1 | David Raya | GK | 13 pj | 0 goles
+esp-marc-pubill.png | #2 | Marc Pubill | DF | 2 pj | 0 goles
+esp-alex-grimaldo.png | #3 | Álex Grimaldo | DF | 14 pj | 0 goles
+esp-eric-garcia.png | #4 | Eric García | DF | 21 pj | 0 goles
+esp-marcos-llorente.png | #5 | Marcos Llorente | DF | 24 pj | 0 goles
+esp-mikel-merino.png | #6 | Mikel Merino | MF | 43 pj | 10 goles
+esp-ferran-torres.png | #7 | Ferran Torres | FW | 57 pj | 24 goles
+esp-fabian-ruiz.png | #8 | Fabián Ruiz | MF | 42 pj | 6 goles
+esp-gavi.png | #9 | Gavi | MF | 30 pj | 5 goles
+esp-dani-olmo.png | #10 | Dani Olmo | FW | 50 pj | 12 goles
+esp-yeremy-pino.png | #11 | Yéremy Pino | FW | 23 pj | 4 goles
+esp-pedro-porro.png | #12 | Pedro Porro | DF | 18 pj | 0 goles
+esp-joan-garcia.png | #13 | Joan Garcia | GK | 2 pj | 0 goles
+esp-aymeric-laporte.png | #14 | Aymeric Laporte | DF | 46 pj | 2 goles
+esp-alex-baena.png | #15 | Álex Baena | MF | 17 pj | 2 goles
+esp-rodri.png | #16 | Rodri (C) | MF | 62 pj | 4 goles
+esp-nico-williams.png | #17 | Nico Williams | FW | 30 pj | 6 goles
+esp-martin-zubimendi.png | #18 | Martín Zubimendi | MF | 26 pj | 3 goles
+esp-lamine-yamal.png | #19 | Lamine Yamal | FW | 25 pj | 6 goles
+esp-pedri.png | #20 | Pedri | MF | 41 pj | 6 goles
+esp-mikel-oyarzabal.png | #21 | Mikel Oyarzabal | FW | 53 pj | 25 goles
+esp-pau-cubarsi.png | #22 | Pau Cubarsí | DF | 12 pj | 0 goles
+esp-unai-simon.png | #23 | Unai Simón | GK | 58 pj | 0 goles
+esp-marc-cucurella.png | #24 | Marc Cucurella | DF | 24 pj | 1 goles
+esp-victor-munoz.png | #25 | Víctor Muñoz | FW | 2 pj | 1 goles
+esp-borja-iglesias.png | #26 | Borja Iglesias | FW | 8 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+David Raya
+Marc Pubill
+Álex Grimaldo
+Eric García
+Marcos Llorente
+Mikel Merino
+Ferran Torres
+Fabián Ruiz
+Gavi
+Dani Olmo
+Yéremy Pino
+Pedro Porro
+Joan Garcia
+Aymeric Laporte
+Álex Baena
+Rodri
+Nico Williams
+Martín Zubimendi
+Lamine Yamal
+Pedri
+Mikel Oyarzabal
+Pau Cubarsí
+Unai Simón
+Marc Cucurella
+Víctor Muñoz
+Borja Iglesias

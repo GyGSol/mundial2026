@@ -1,0 +1,61 @@
+# Sweden (SWE)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Graham Potter
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+swe-jacob-widell-zetterstrom.png | #1 | Jacob Widell Zetterström | GK | 3 pj | 0 goles
+swe-gustaf-lagerbielke.png | #2 | Gustaf Lagerbielke | DF | 11 pj | 2 goles
+swe-victor-lindelof.png | #3 | Victor Lindelöf (C) | DF | 76 pj | 3 goles
+swe-isak-hien.png | #4 | Isak Hien | DF | 29 pj | 0 goles
+swe-gabriel-gudmundsson.png | #5 | Gabriel Gudmundsson | DF | 24 pj | 0 goles
+swe-herman-johansson.png | #6 | Herman Johansson | DF | 3 pj | 0 goles
+swe-lucas-bergvall.png | #7 | Lucas Bergvall | MF | 10 pj | 0 goles
+swe-daniel-svensson.png | #8 | Daniel Svensson | DF | 13 pj | 0 goles
+swe-alexander-isak.png | #9 | Alexander Isak | FW | 58 pj | 17 goles
+swe-benjamin-nygren.png | #10 | Benjamin Nygren | MF | 11 pj | 3 goles
+swe-anthony-elanga.png | #11 | Anthony Elanga | FW | 30 pj | 6 goles
+swe-viktor-johansson.png | #12 | Viktor Johansson | GK | 12 pj | 0 goles
+swe-ken-sema.png | #13 | Ken Sema | MF | 33 pj | 5 goles
+swe-hjalmar-ekdal.png | #14 | Hjalmar Ekdal | DF | 13 pj | 0 goles
+swe-carl-starfelt.png | #15 | Carl Starfelt | DF | 18 pj | 0 goles
+swe-jesper-karlstrom.png | #16 | Jesper Karlström | MF | 25 pj | 0 goles
+swe-viktor-gyokeres.png | #17 | Viktor Gyökeres | FW | 33 pj | 20 goles
+swe-yasin-ayari.png | #18 | Yasin Ayari | MF | 21 pj | 3 goles
+swe-mattias-svanberg.png | #19 | Mattias Svanberg | MF | 41 pj | 2 goles
+swe-eric-smith.png | #20 | Eric Smith | DF | 2 pj | 0 goles
+swe-alexander-bernhardsson.png | #21 | Alexander Bernhardsson | DF | 11 pj | 0 goles
+swe-besfort-zeneli.png | #22 | Besfort Zeneli | MF | 8 pj | 0 goles
+swe-kristoffer-nordfeldt.png | #23 | Kristoffer Nordfeldt | GK | 21 pj | 0 goles
+swe-elliot-stroud.png | #24 | Elliot Stroud | DF | 1 pj | 0 goles
+swe-gustaf-nilsson.png | #25 | Gustaf Nilsson | FW | 10 pj | 4 goles
+swe-taha-ali.png | #26 | Taha Ali | FW | 2 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Jacob Widell Zetterström
+Gustaf Lagerbielke
+Victor Lindelöf
+Isak Hien
+Gabriel Gudmundsson
+Herman Johansson
+Lucas Bergvall
+Daniel Svensson
+Alexander Isak
+Benjamin Nygren
+Anthony Elanga
+Viktor Johansson
+Ken Sema
+Hjalmar Ekdal
+Carl Starfelt
+Jesper Karlström
+Viktor Gyökeres
+Yasin Ayari
+Mattias Svanberg
+Eric Smith
+Alexander Bernhardsson
+Besfort Zeneli
+Kristoffer Nordfeldt
+Elliot Stroud
+Gustaf Nilsson
+Taha Ali

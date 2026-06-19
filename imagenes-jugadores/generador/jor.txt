@@ -1,0 +1,61 @@
+# Jordan (JOR)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Jamal Sellami
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+jor-yazeed-abulaila.png | #1 | Yazeed Abulaila | GK | 76 pj | 0 goles
+jor-mohammad-abu-hashish.png | #2 | Mohammad Abu Hashish | DF | 56 pj | 1 goles
+jor-abdallah-nasib.png | #3 | Abdallah Nasib | DF | 65 pj | 3 goles
+jor-husam-abu-dahab.png | #4 | Husam Abu Dahab | DF | 18 pj | 0 goles
+jor-yazan-al-arab.png | #5 | Yazan Al-Arab | DF | 80 pj | 3 goles
+jor-amer-jamous.png | #6 | Amer Jamous | MF | 19 pj | 1 goles
+jor-mohammad-abu-zrayq.png | #7 | Mohammad Abu Zrayq | FW | 41 pj | 5 goles
+jor-noor-al-rawabdeh.png | #8 | Noor Al-Rawabdeh | MF | 68 pj | 3 goles
+jor-ali-olwan.png | #9 | Ali Olwan | FW | 66 pj | 29 goles
+jor-musa-al-taamari.png | #10 | Musa Al-Taamari | FW | 92 pj | 24 goles
+jor-odeh-al-fakhouri.png | #11 | Odeh Al-Fakhouri | FW | 10 pj | 1 goles
+jor-nour-bani-attiah.png | #12 | Nour Bani Attiah | GK | 5 pj | 0 goles
+jor-mahmoud-al-mardi.png | #13 | Mahmoud Al-Mardi | FW | 89 pj | 9 goles
+jor-rajaei-ayed.png | #14 | Rajaei Ayed | MF | 72 pj | 0 goles
+jor-ibrahim-sadeh.png | #15 | Ibrahim Sadeh | MF | 57 pj | 3 goles
+jor-mo-abualnadi.png | #16 | Mo Abualnadi | DF | 18 pj | 0 goles
+jor-salim-obaid.png | #17 | Salim Obaid | DF | 11 pj | 0 goles
+jor-mohammad-taha.png | #18 | Mohammad Taha | MF | 2 pj | 0 goles
+jor-saed-al-rosan.png | #19 | Saed Al-Rosan | DF | 21 pj | 2 goles
+jor-mohannad-abu-taha.png | #20 | Mohannad Abu Taha | MF | 29 pj | 1 goles
+jor-nizar-al-rashdan.png | #21 | Nizar Al-Rashdan | MF | 47 pj | 4 goles
+jor-abdallah-al-fakhouri.png | #22 | Abdallah Al-Fakhouri | GK | 11 pj | 0 goles
+jor-ihsan-haddad.png | #23 | Ihsan Haddad (C) | DF | 92 pj | 2 goles
+jor-ali-azaizeh.png | #24 | Ali Azaizeh | FW | 4 pj | 0 goles
+jor-mohammad-al-dawoud.png | #25 | Mohammad Al-Dawoud | MF | 13 pj | 1 goles
+jor-anas-badawi.png | #26 | Anas Badawi | DF | 1 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Yazeed Abulaila
+Mohammad Abu Hashish
+Abdallah Nasib
+Husam Abu Dahab
+Yazan Al-Arab
+Amer Jamous
+Mohammad Abu Zrayq
+Noor Al-Rawabdeh
+Ali Olwan
+Musa Al-Taamari
+Odeh Al-Fakhouri
+Nour Bani Attiah
+Mahmoud Al-Mardi
+Rajaei Ayed
+Ibrahim Sadeh
+Mo Abualnadi
+Salim Obaid
+Mohammad Taha
+Saed Al-Rosan
+Mohannad Abu Taha
+Nizar Al-Rashdan
+Abdallah Al-Fakhouri
+Ihsan Haddad
+Ali Azaizeh
+Mohammad Al-Dawoud
+Anas Badawi

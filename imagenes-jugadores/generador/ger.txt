@@ -1,0 +1,61 @@
+# Germany (GER)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Julian Nagelsmann
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+ger-manuel-neuer.png | #1 | Manuel Neuer | GK | 124 pj | 0 goles
+ger-antonio-rudiger.png | #2 | Antonio Rüdiger | DF | 82 pj | 3 goles
+ger-waldemar-anton.png | #3 | Waldemar Anton | DF | 13 pj | 0 goles
+ger-jonathan-tah.png | #4 | Jonathan Tah | DF | 47 pj | 1 goles
+ger-aleksandar-pavlovic.png | #5 | Aleksandar Pavlović | MF | 11 pj | 1 goles
+ger-joshua-kimmich.png | #6 | Joshua Kimmich (C) | DF | 110 pj | 10 goles
+ger-kai-havertz.png | #7 | Kai Havertz | FW | 58 pj | 22 goles
+ger-leon-goretzka.png | #8 | Leon Goretzka | MF | 70 pj | 15 goles
+ger-jamie-leweling.png | #9 | Jamie Leweling | MF | 5 pj | 1 goles
+ger-jamal-musiala.png | #10 | Jamal Musiala | MF | 42 pj | 9 goles
+ger-nick-woltemade.png | #11 | Nick Woltemade | FW | 11 pj | 4 goles
+ger-oliver-baumann.png | #12 | Oliver Baumann | GK | 13 pj | 0 goles
+ger-pascal-gro.png | #13 | Pascal Groß | MF | 18 pj | 1 goles
+ger-maximilian-beier.png | #14 | Maximilian Beier | FW | 9 pj | 0 goles
+ger-nico-schlotterbeck.png | #15 | Nico Schlotterbeck | DF | 27 pj | 0 goles
+ger-angelo-stiller.png | #16 | Angelo Stiller | MF | 8 pj | 0 goles
+ger-florian-wirtz.png | #17 | Florian Wirtz | MF | 41 pj | 11 goles
+ger-nathaniel-brown.png | #18 | Nathaniel Brown | DF | 5 pj | 0 goles
+ger-leroy-sane.png | #19 | Leroy Sané | MF | 76 pj | 17 goles
+ger-nadiem-amiri.png | #20 | Nadiem Amiri | MF | 11 pj | 1 goles
+ger-alexander-nubel.png | #21 | Alexander Nübel | GK | 3 pj | 0 goles
+ger-david-raum.png | #22 | David Raum | DF | 37 pj | 1 goles
+ger-felix-nmecha.png | #23 | Felix Nmecha | MF | 8 pj | 1 goles
+ger-malick-thiaw.png | #24 | Malick Thiaw | DF | 5 pj | 0 goles
+ger-assan-ouedraogo.png | #25 | Assan Ouédraogo | MF | 1 pj | 1 goles
+ger-deniz-undav.png | #26 | Deniz Undav | FW | 9 pj | 6 goles
+
+# Solo nombres (pegar en generador):
+
+Manuel Neuer
+Antonio Rüdiger
+Waldemar Anton
+Jonathan Tah
+Aleksandar Pavlović
+Joshua Kimmich
+Kai Havertz
+Leon Goretzka
+Jamie Leweling
+Jamal Musiala
+Nick Woltemade
+Oliver Baumann
+Pascal Groß
+Maximilian Beier
+Nico Schlotterbeck
+Angelo Stiller
+Florian Wirtz
+Nathaniel Brown
+Leroy Sané
+Nadiem Amiri
+Alexander Nübel
+David Raum
+Felix Nmecha
+Malick Thiaw
+Assan Ouédraogo
+Deniz Undav

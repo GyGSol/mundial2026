@@ -1,0 +1,61 @@
+# Uzbekistan (UZB)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Fabio Cannavaro
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+uzb-utkir-yusupov.png | #1 | Utkir Yusupov | GK | 40 pj | 0 goles
+uzb-abdukodir-khusanov.png | #2 | Abdukodir Khusanov | DF | 27 pj | 0 goles
+uzb-khojiakbar-alijonov.png | #3 | Khojiakbar Alijonov | DF | 40 pj | 2 goles
+uzb-farrukh-sayfiev.png | #4 | Farrukh Sayfiev | DF | 46 pj | 1 goles
+uzb-rustam-ashurmatov.png | #5 | Rustam Ashurmatov | DF | 49 pj | 1 goles
+uzb-akmal-mozgovoy.png | #6 | Akmal Mozgovoy | MF | 25 pj | 1 goles
+uzb-otabek-shukurov.png | #7 | Otabek Shukurov | MF | 84 pj | 9 goles
+uzb-jamshid-iskanderov.png | #8 | Jamshid Iskanderov | MF | 38 pj | 4 goles
+uzb-odiljon-hamrobekov.png | #9 | Odiljon Hamrobekov | MF | 72 pj | 1 goles
+uzb-ruslanbek-jiyanov.png | #10 | Ruslanbek Jiyanov | MF | 5 pj | 0 goles
+uzb-oston-urunov.png | #11 | Oston Urunov | MF | 42 pj | 10 goles
+uzb-abduvohid-nematov.png | #12 | Abduvohid Nematov | GK | 8 pj | 0 goles
+uzb-sherzod-nasrullaev.png | #13 | Sherzod Nasrullaev | DF | 31 pj | 2 goles
+uzb-eldor-shomurodov.png | #14 | Eldor Shomurodov (C) | FW | 92 pj | 44 goles
+uzb-umar-eshmurodov.png | #15 | Umar Eshmurodov | DF | 29 pj | 0 goles
+uzb-botirali-ergashev.png | #16 | Botirali Ergashev | GK | 2 pj | 0 goles
+uzb-dostonbek-khamdamov.png | #17 | Dostonbek Khamdamov | MF | 34 pj | 5 goles
+uzb-abdulla-abdullaev.png | #18 | Abdulla Abdullaev | DF | 17 pj | 0 goles
+uzb-azizjon-ganiev.png | #19 | Azizjon Ganiev | MF | 19 pj | 0 goles
+uzb-azizbek-amonov.png | #20 | Azizbek Amonov | FW | 12 pj | 2 goles
+uzb-igor-sergeev.png | #21 | Igor Sergeev | FW | 83 pj | 25 goles
+uzb-abbosbek-fayzullaev.png | #22 | Abbosbek Fayzullaev | MF | 32 pj | 9 goles
+uzb-sherzod-esanov.png | #23 | Sherzod Esanov | MF | 1 pj | 0 goles
+uzb-bekhruz-karimov.png | #24 | Bekhruz Karimov | DF | 2 pj | 0 goles
+uzb-avazbek-ulmasaliev.png | #25 | Avazbek Ulmasaliev | DF | 0 pj | 0 goles
+uzb-jakhongir-urozov.png | #26 | Jakhongir Urozov | DF | 4 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Utkir Yusupov
+Abdukodir Khusanov
+Khojiakbar Alijonov
+Farrukh Sayfiev
+Rustam Ashurmatov
+Akmal Mozgovoy
+Otabek Shukurov
+Jamshid Iskanderov
+Odiljon Hamrobekov
+Ruslanbek Jiyanov
+Oston Urunov
+Abduvohid Nematov
+Sherzod Nasrullaev
+Eldor Shomurodov
+Umar Eshmurodov
+Botirali Ergashev
+Dostonbek Khamdamov
+Abdulla Abdullaev
+Azizjon Ganiev
+Azizbek Amonov
+Igor Sergeev
+Abbosbek Fayzullaev
+Sherzod Esanov
+Bekhruz Karimov
+Avazbek Ulmasaliev
+Jakhongir Urozov

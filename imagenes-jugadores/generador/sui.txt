@@ -1,0 +1,61 @@
+# Switzerland (SUI)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Murat Yakin
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+sui-gregor-kobel.png | #1 | Gregor Kobel | GK | 21 pj | 0 goles
+sui-miro-muheim.png | #2 | Miro Muheim | DF | 10 pj | 0 goles
+sui-silvan-widmer.png | #3 | Silvan Widmer | DF | 60 pj | 5 goles
+sui-nico-elvedi.png | #4 | Nico Elvedi | DF | 67 pj | 3 goles
+sui-manuel-akanji.png | #5 | Manuel Akanji | DF | 81 pj | 4 goles
+sui-denis-zakaria.png | #6 | Denis Zakaria | MF | 65 pj | 3 goles
+sui-breel-embolo.png | #7 | Breel Embolo | FW | 86 pj | 24 goles
+sui-remo-freuler.png | #8 | Remo Freuler | MF | 88 pj | 11 goles
+sui-johan-manzambi.png | #9 | Johan Manzambi | MF | 12 pj | 3 goles
+sui-granit-xhaka.png | #10 | Granit Xhaka (C) | MF | 146 pj | 17 goles
+sui-dan-ndoye.png | #11 | Dan Ndoye | FW | 31 pj | 8 goles
+sui-yvon-mvogo.png | #12 | Yvon Mvogo | GK | 13 pj | 0 goles
+sui-ricardo-rodriguez.png | #13 | Ricardo Rodriguez | DF | 138 pj | 9 goles
+sui-ardon-jashari.png | #14 | Ardon Jashari | MF | 8 pj | 0 goles
+sui-djibril-sow.png | #15 | Djibril Sow | MF | 52 pj | 0 goles
+sui-christian-fassnacht.png | #16 | Christian Fassnacht | FW | 23 pj | 5 goles
+sui-ruben-vargas.png | #17 | Rubén Vargas | FW | 61 pj | 11 goles
+sui-eray-comert.png | #18 | Eray Cömert | DF | 22 pj | 0 goles
+sui-noah-okafor.png | #19 | Noah Okafor | FW | 25 pj | 2 goles
+sui-michel-aebischer.png | #20 | Michel Aebischer | MF | 40 pj | 2 goles
+sui-marvin-keller.png | #21 | Marvin Keller | GK | 1 pj | 0 goles
+sui-fabian-rieder.png | #22 | Fabian Rieder | MF | 28 pj | 1 goles
+sui-zeki-amdouni.png | #23 | Zeki Amdouni | FW | 29 pj | 11 goles
+sui-aurele-amenda.png | #24 | Aurèle Amenda | DF | 7 pj | 0 goles
+sui-luca-jaquez.png | #25 | Luca Jaquez | DF | 3 pj | 0 goles
+sui-cedric-itten.png | #26 | Cedric Itten | FW | 15 pj | 5 goles
+
+# Solo nombres (pegar en generador):
+
+Gregor Kobel
+Miro Muheim
+Silvan Widmer
+Nico Elvedi
+Manuel Akanji
+Denis Zakaria
+Breel Embolo
+Remo Freuler
+Johan Manzambi
+Granit Xhaka
+Dan Ndoye
+Yvon Mvogo
+Ricardo Rodriguez
+Ardon Jashari
+Djibril Sow
+Christian Fassnacht
+Rubén Vargas
+Eray Cömert
+Noah Okafor
+Michel Aebischer
+Marvin Keller
+Fabian Rieder
+Zeki Amdouni
+Aurèle Amenda
+Luca Jaquez
+Cedric Itten

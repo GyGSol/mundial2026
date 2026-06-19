@@ -1,0 +1,80 @@
+/**
+ * Nombre de selección en Wikipedia → código FIFA (MongoDB / worldcup26).
+ * Solo incluye los 48 clasificados al Mundial 2026.
+ */
+export const WIKIPEDIA_COUNTRY_TO_FIFA = {
+  'Czech Republic': 'CZE',
+  Mexico: 'MEX',
+  'South Africa': 'RSA',
+  'South Korea': 'KOR',
+  'Bosnia and Herzegovina': 'BIH',
+  Canada: 'CAN',
+  Qatar: 'QAT',
+  Switzerland: 'SUI',
+  Brazil: 'BRA',
+  Haiti: 'HAI',
+  Morocco: 'MAR',
+  Scotland: 'SCO',
+  Australia: 'AUS',
+  Paraguay: 'PAR',
+  Turkey: 'TUR',
+  'United States': 'USA',
+  Curaçao: 'CUW',
+  Ecuador: 'ECU',
+  Germany: 'GER',
+  'Ivory Coast': 'CIV',
+  Japan: 'JPN',
+  Netherlands: 'NED',
+  Sweden: 'SWE',
+  Tunisia: 'TUN',
+  Belgium: 'BEL',
+  Egypt: 'EGY',
+  Iran: 'IRN',
+  'New Zealand': 'NZL',
+  'Cape Verde': 'CPV',
+  'Saudi Arabia': 'KSA',
+  Spain: 'ESP',
+  Uruguay: 'URU',
+  France: 'FRA',
+  Iraq: 'IRQ',
+  Norway: 'NOR',
+  Senegal: 'SEN',
+  Algeria: 'ALG',
+  Argentina: 'ARG',
+  Austria: 'AUT',
+  Jordan: 'JOR',
+  Colombia: 'COL',
+  'DR Congo': 'COD',
+  Portugal: 'POR',
+  Uzbekistan: 'UZB',
+  Croatia: 'CRO',
+  England: 'ENG',
+  Ghana: 'GHA',
+  Panama: 'PAN',
+};
+
+/** Secciones de estadísticas al final de la página (no son selecciones). */
+export const WIKIPEDIA_NON_TEAM_SECTIONS = new Set([
+  'Age',
+  'Player representation by club',
+  'Player representation by league system',
+  'Player representation by club confederation',
+  'Average age of squads',
+  'Coach representation by country',
+]);
+
+/** Carpeta en imagenes-jugadores/ cuando existe caricatura (opcional). */
+export const FIFA_TO_PHOTO_FOLDER = {
+  ARG: 'argentina',
+  ESP: 'espana',
+  URU: 'uruguay',
+  MEX: 'mexico',
+  KOR: 'corea',
+  AUS: 'australia',
+  USA: 'estados-unidos',
+  CAN: 'canada',
+};
+
+export function fifaCodeForWikipediaCountry(countryName) {
+  return WIKIPEDIA_COUNTRY_TO_FIFA[countryName] ?? '';
+}

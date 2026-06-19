@@ -1,0 +1,61 @@
+# Ghana (GHA)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Carlos Queiroz
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+gha-lawrence-ati-zigi.png | #1 | Lawrence Ati-Zigi | GK | 29 pj | 0 goles
+gha-alidu-seidu.png | #2 | Alidu Seidu | DF | 24 pj | 1 goles
+gha-caleb-yirenkyi.png | #3 | Caleb Yirenkyi | MF | 11 pj | 1 goles
+gha-jonas-adjetey.png | #4 | Jonas Adjetey | DF | 10 pj | 0 goles
+gha-thomas-partey.png | #5 | Thomas Partey | MF | 57 pj | 15 goles
+gha-abdul-mumin.png | #6 | Abdul Mumin | DF | 5 pj | 0 goles
+gha-abdul-fatawu.png | #7 | Abdul Fatawu | FW | 28 pj | 3 goles
+gha-kwasi-sibo.png | #8 | Kwasi Sibo | MF | 8 pj | 0 goles
+gha-jordan-ayew.png | #9 | Jordan Ayew (C) | FW | 120 pj | 34 goles
+gha-brandon-thomas-asante.png | #10 | Brandon Thomas-Asante | FW | 8 pj | 1 goles
+gha-antoine-semenyo.png | #11 | Antoine Semenyo | MF | 34 pj | 3 goles
+gha-joseph-anang.png | #12 | Joseph Anang | GK | 1 pj | 0 goles
+gha-christopher-bonsu-baah.png | #13 | Christopher Bonsu Baah | FW | 9 pj | 0 goles
+gha-gideon-mensah.png | #14 | Gideon Mensah | DF | 40 pj | 0 goles
+gha-elisha-owusu.png | #15 | Elisha Owusu | MF | 20 pj | 0 goles
+gha-benjamin-asare.png | #16 | Benjamin Asare | GK | 11 pj | 0 goles
+gha-abdul-rahman-baba.png | #17 | Abdul Rahman Baba | DF | 51 pj | 1 goles
+gha-jerome-opoku.png | #18 | Jerome Opoku | DF | 11 pj | 1 goles
+gha-inaki-williams.png | #19 | Iñaki Williams | FW | 26 pj | 2 goles
+gha-augustine-boakye.png | #20 | Augustine Boakye | MF | 0 pj | 0 goles
+gha-kojo-peprah-oppong.png | #21 | Kojo Peprah Oppong | DF | 4 pj | 0 goles
+gha-kamaldeen-sulemana.png | #22 | Kamaldeen Sulemana | FW | 28 pj | 1 goles
+gha-derrick-luckassen.png | #23 | Derrick Luckassen | DF | 1 pj | 0 goles
+gha-ernest-nuamah.png | #24 | Ernest Nuamah | FW | 18 pj | 4 goles
+gha-prince-kwabena-adu.png | #25 | Prince Kwabena Adu | FW | 5 pj | 0 goles
+gha-marvin-senaya.png | #26 | Marvin Senaya | DF | 2 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Lawrence Ati-Zigi
+Alidu Seidu
+Caleb Yirenkyi
+Jonas Adjetey
+Thomas Partey
+Abdul Mumin
+Abdul Fatawu
+Kwasi Sibo
+Jordan Ayew
+Brandon Thomas-Asante
+Antoine Semenyo
+Joseph Anang
+Christopher Bonsu Baah
+Gideon Mensah
+Elisha Owusu
+Benjamin Asare
+Abdul Rahman Baba
+Jerome Opoku
+Iñaki Williams
+Augustine Boakye
+Kojo Peprah Oppong
+Kamaldeen Sulemana
+Derrick Luckassen
+Ernest Nuamah
+Prince Kwabena Adu
+Marvin Senaya

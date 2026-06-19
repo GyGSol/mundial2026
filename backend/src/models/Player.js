@@ -64,6 +64,7 @@ const playerSchema = new mongoose.Schema(
     photoKey: { type: String, default: '' },
     age: { type: Number },
     shirtNumber: { type: Number },
+    isCaptain: { type: Boolean, default: false },
     nationality: { type: String, default: '' },
     healthStatus: {
       type: String,

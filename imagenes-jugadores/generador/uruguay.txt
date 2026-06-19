@@ -1,0 +1,61 @@
+# Uruguay (URU)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Marcelo Bielsa
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+uru-sergio-rochet.png | #1 | Sergio Rochet | GK | 35 pj | 0 goles
+uru-jose-maria-gimenez.png | #2 | José María Giménez (C) | DF | 99 pj | 8 goles
+uru-sebastian-caceres.png | #3 | Sebastián Cáceres | DF | 24 pj | 0 goles
+uru-ronald-araujo.png | #4 | Ronald Araújo | DF | 27 pj | 1 goles
+uru-manuel-ugarte.png | #5 | Manuel Ugarte | MF | 36 pj | 1 goles
+uru-rodrigo-bentancur.png | #6 | Rodrigo Bentancur | MF | 74 pj | 3 goles
+uru-nicolas-de-la-cruz.png | #7 | Nicolás de la Cruz | MF | 34 pj | 5 goles
+uru-federico-valverde.png | #8 | Federico Valverde | MF | 73 pj | 9 goles
+uru-darwin-nunez.png | #9 | Darwin Núñez | FW | 38 pj | 13 goles
+uru-giorgian-de-arrascaeta.png | #10 | Giorgian de Arrascaeta | MF | 60 pj | 13 goles
+uru-facundo-pellistri.png | #11 | Facundo Pellistri | FW | 39 pj | 2 goles
+uru-santiago-mele.png | #12 | Santiago Mele | GK | 8 pj | 0 goles
+uru-guillermo-varela.png | #13 | Guillermo Varela | DF | 28 pj | 0 goles
+uru-agustin-canobbio.png | #14 | Agustín Canobbio | MF | 15 pj | 1 goles
+uru-emiliano-martinez.png | #15 | Emiliano Martínez | MF | 10 pj | 0 goles
+uru-mathias-olivera.png | #16 | Mathías Olivera | DF | 35 pj | 2 goles
+uru-matias-vina.png | #17 | Matías Viña | DF | 43 pj | 1 goles
+uru-brian-rodriguez.png | #18 | Brian Rodríguez | FW | 32 pj | 4 goles
+uru-rodrigo-aguirre.png | #19 | Rodrigo Aguirre | FW | 10 pj | 3 goles
+uru-maximiliano-araujo.png | #20 | Maximiliano Araújo | MF | 28 pj | 3 goles
+uru-federico-vinas.png | #21 | Federico Viñas | FW | 11 pj | 2 goles
+uru-joaquin-piquerez.png | #22 | Joaquín Piquerez | MF | 19 pj | 0 goles
+uru-fernando-muslera.png | #23 | Fernando Muslera | GK | 134 pj | 0 goles
+uru-santiago-bueno.png | #24 | Santiago Bueno | DF | 8 pj | 0 goles
+uru-juan-manuel-sanabria.png | #25 | Juan Manuel Sanabria | MF | 5 pj | 1 goles
+uru-rodrigo-zalazar.png | #26 | Rodrigo Zalazar | MF | 8 pj | 2 goles
+
+# Solo nombres (pegar en generador):
+
+Sergio Rochet
+José María Giménez
+Sebastián Cáceres
+Ronald Araújo
+Manuel Ugarte
+Rodrigo Bentancur
+Nicolás de la Cruz
+Federico Valverde
+Darwin Núñez
+Giorgian de Arrascaeta
+Facundo Pellistri
+Santiago Mele
+Guillermo Varela
+Agustín Canobbio
+Emiliano Martínez
+Mathías Olivera
+Matías Viña
+Brian Rodríguez
+Rodrigo Aguirre
+Maximiliano Araújo
+Federico Viñas
+Joaquín Piquerez
+Fernando Muslera
+Santiago Bueno
+Juan Manuel Sanabria
+Rodrigo Zalazar

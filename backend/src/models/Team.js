@@ -9,6 +9,8 @@ const teamSchema = new mongoose.Schema(
     group: String,
     flag: String,
     footballDataTeamId: { type: Number, sparse: true, index: true },
+    headCoach: { type: String, default: '' },
+    coachNationality: { type: String, default: '' },
     raw: mongoose.Schema.Types.Mixed,
   },
   { timestamps: true }

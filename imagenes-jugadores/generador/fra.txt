@@ -1,0 +1,61 @@
+# France (FRA)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Didier Deschamps
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+fra-brice-samba.png | #1 | Brice Samba | GK | 4 pj | 0 goles
+fra-malo-gusto.png | #2 | Malo Gusto | DF | 11 pj | 0 goles
+fra-lucas-digne.png | #3 | Lucas Digne | DF | 58 pj | 0 goles
+fra-dayot-upamecano.png | #4 | Dayot Upamecano | DF | 38 pj | 2 goles
+fra-jules-kounde.png | #5 | Jules Koundé | DF | 48 pj | 0 goles
+fra-manu-kone.png | #6 | Manu Koné | MF | 14 pj | 0 goles
+fra-ousmane-dembele.png | #7 | Ousmane Dembélé | FW | 59 pj | 7 goles
+fra-aurelien-tchouameni.png | #8 | Aurélien Tchouaméni | MF | 46 pj | 3 goles
+fra-marcus-thuram.png | #9 | Marcus Thuram | FW | 34 pj | 3 goles
+fra-kylian-mbappe.png | #10 | Kylian Mbappé (C) | FW | 98 pj | 56 goles
+fra-michael-olise.png | #11 | Michael Olise | FW | 17 pj | 7 goles
+fra-bradley-barcola.png | #12 | Bradley Barcola | FW | 20 pj | 3 goles
+fra-n-golo-kante.png | #13 | N'Golo Kanté | MF | 69 pj | 2 goles
+fra-adrien-rabiot.png | #14 | Adrien Rabiot | MF | 59 pj | 7 goles
+fra-ibrahima-konate.png | #15 | Ibrahima Konaté | DF | 28 pj | 0 goles
+fra-mike-maignan.png | #16 | Mike Maignan | GK | 40 pj | 0 goles
+fra-william-saliba.png | #17 | William Saliba | DF | 32 pj | 0 goles
+fra-warren-zaire-emery.png | #18 | Warren Zaïre-Emery | MF | 11 pj | 1 goles
+fra-theo-hernandez.png | #19 | Théo Hernandez | DF | 44 pj | 2 goles
+fra-desire-doue.png | #20 | Désiré Doué | FW | 7 pj | 2 goles
+fra-lucas-hernandez.png | #21 | Lucas Hernandez | DF | 42 pj | 0 goles
+fra-jean-philippe-mateta.png | #22 | Jean-Philippe Mateta | FW | 4 pj | 2 goles
+fra-robin-risser.png | #23 | Robin Risser | GK | 0 pj | 0 goles
+fra-rayan-cherki.png | #24 | Rayan Cherki | MF | 7 pj | 2 goles
+fra-maghnes-akliouche.png | #25 | Maghnes Akliouche | MF | 9 pj | 1 goles
+fra-maxence-lacroix.png | #26 | Maxence Lacroix | DF | 4 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Brice Samba
+Malo Gusto
+Lucas Digne
+Dayot Upamecano
+Jules Koundé
+Manu Koné
+Ousmane Dembélé
+Aurélien Tchouaméni
+Marcus Thuram
+Kylian Mbappé
+Michael Olise
+Bradley Barcola
+N'Golo Kanté
+Adrien Rabiot
+Ibrahima Konaté
+Mike Maignan
+William Saliba
+Warren Zaïre-Emery
+Théo Hernandez
+Désiré Doué
+Lucas Hernandez
+Jean-Philippe Mateta
+Robin Risser
+Rayan Cherki
+Maghnes Akliouche
+Maxence Lacroix
