@@ -91,7 +91,7 @@ function resolveCountryEs(fifaCode, teamName = '') {
 
 function parseInfoboxText(wikitext, fields) {
   for (const field of fields) {
-    const re = new RegExp(`\\|\\s*${field}\\s*=\\s*([^\\n|]+)`, 'i');
+    const re = new RegExp(`\\|\\s*${field}\\s*=\\s*([^\\n]+)`, 'i');
     const match = wikitext.match(re);
     if (match) return stripWikiMarkup(match[1]);
   }

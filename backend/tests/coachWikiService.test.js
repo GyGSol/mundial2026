@@ -41,4 +41,16 @@ describe('coachWikiService', () => {
   it('parseManagerWorldCups detecta mundiales como DT en español', () => {
     expect(parseManagerWorldCups(CLARKE_WIKITEXT_ES)).toEqual([2026]);
   });
+
+  it('parseCoachWikiFromWikitext limpia enlaces wiki en nacionalidad', () => {
+    const wikitext = `
+{{Ficha de entrenador de fútbol
+| nacionalidad = [[Francia|Francesa]]
+}}
+`;
+    const parsed = parseCoachWikiFromWikitext(wikitext, { countryEs: 'Haití' });
+
+    expect(parsed.nationality).toBe('Francesa');
+    expect(parsed.nationality).not.toMatch(/\[\[/);
+  });
 });

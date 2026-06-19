@@ -40,6 +40,9 @@ export function stripWikiMarkup(value) {
     .replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, '')
     .replace(/\{\{[^}]*\}\}/g, '')
     .replace(/\[\[(?:[^|\]]+\|)?([^\]]+)\]\]/g, '$1')
+    .replace(/\[\[([^\]|]+)(?:\|[^\]]*)?$/g, '$1')
+    .replace(/\[\[/g, '')
+    .replace(/\]\]/g, '')
     .replace(/''+/g, '')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
@@ -61,7 +64,7 @@ function parseInfoboxNumber(wikitext, fields) {
 
 function parseInfoboxText(wikitext, fields) {
   for (const field of fields) {
-    const re = new RegExp(`\\|\\s*${field}\\s*=\\s*([^\\n|]+)`, 'i');
+    const re = new RegExp(`\\|\\s*${field}\\s*=\\s*([^\\n]+)`, 'i');
     const match = wikitext.match(re);
     if (match) return stripWikiMarkup(match[1]);
   }
