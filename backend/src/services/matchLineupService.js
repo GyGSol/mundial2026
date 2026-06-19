@@ -1,9 +1,9 @@
-import { fetchMatchDetails, hasToken } from './footballDataApiClient.js';
+import { fetchMatchDetails, fetchTeamWithSquad, hasToken } from './footballDataApiClient.js';
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
 import { Match } from '../models/Match.js';
 import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
-import { enrichNameFromRoster } from '../utils/playerNameMatch.js';
+import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js';
 import {
   fetchFixtureLineups,
   hasApiFootballKey,
@@ -154,7 +154,56 @@ function sideNeedsShirtNumbers(side) {
   return withShirt < Math.min(players.length, 6);
 }
 
-function enrichSidePlayersWithRoster(side, roster, sideKey, shirtBySideName = { home: {}, away: {} }) {
+const SQUAD_SHIRT_CACHE_MS = 6 * 60 * 60 * 1000;
+/** @type {Map<string, { map: Record<string, number>, fetchedAt: number }>} */
+const squadShirtCache = new Map();
+
+function shirtFromLookupMap(name, lookup = {}) {
+  if (!name || !lookup) return null;
+  const normalized = normalizeName(name);
+  if (lookup[normalized] != null) return lookup[normalized];
+
+  const last = normalized.split(/\s+/).filter(Boolean).pop();
+  if (last && lookup[last] != null) return lookup[last];
+
+  return null;
+}
+
+async function loadFootballDataSquadShirtMap(team) {
+  if (!team?.footballDataTeamId || !hasToken()) return {};
+
+  const cacheKey = String(team.externalId || team.footballDataTeamId);
+  const cached = squadShirtCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < SQUAD_SHIRT_CACHE_MS) {
+    return cached.map;
+  }
+
+  try {
+    const data = await fetchTeamWithSquad(team.footballDataTeamId);
+    const map = {};
+    for (const person of data?.squad ?? []) {
+      const shirt = extractShirtNumber(person);
+      if (!shirt || !person?.name) continue;
+      const normalized = normalizeName(person.name);
+      map[normalized] = shirt;
+      const last = normalized.split(/\s+/).filter(Boolean).pop();
+      if (last && map[last] == null) map[last] = shirt;
+    }
+    squadShirtCache.set(cacheKey, { map, fetchedAt: Date.now() });
+    return map;
+  } catch (err) {
+    console.warn(`FD squad shirt map skip ${team.externalId}:`, err.message);
+    return {};
+  }
+}
+
+function enrichSidePlayersWithRoster(
+  side,
+  roster,
+  sideKey,
+  shirtBySideName = { home: {}, away: {} },
+  squadShirtMap = {}
+) {
   if (!side?.players?.length) return side;
   return {
     ...side,
@@ -163,10 +212,12 @@ function enrichSidePlayersWithRoster(side, roster, sideKey, shirtBySideName = { 
         shirtNumber: player.shirtNumber,
       });
       const fifaShirt = shirtForName(player.name, sideKey, shirtBySideName);
+      const squadShirt = shirtFromLookupMap(player.name, squadShirtMap);
       return {
         ...player,
         name: enriched.name || player.name,
-        shirtNumber: player.shirtNumber ?? enriched.shirtNumber ?? fifaShirt ?? null,
+        shirtNumber:
+          player.shirtNumber ?? enriched.shirtNumber ?? fifaShirt ?? squadShirt ?? null,
         photoUrl: enriched.photoUrl ?? player.photoUrl ?? null,
         mongoId: enriched.mongoId ?? player.mongoId ?? null,
         externalId:
@@ -185,18 +236,43 @@ async function enrichLineupPayloadWithRoster(payload, match) {
   const awayTeamId = match?.awayTeamId;
   const shirtBySideName = match?.raw?.fifaMeta?.shirtBySideName ?? { home: {}, away: {} };
 
-  const [homePlayers, awayPlayers] = await Promise.all([
+  const needHomeShirts = sideNeedsShirtNumbers(payload.home);
+  const needAwayShirts = sideNeedsShirtNumbers(payload.away);
+
+  const [homePlayers, awayPlayers, teams] = await Promise.all([
     homeTeamId ? Player.find({ teamExternalId: homeTeamId }).lean() : [],
     awayTeamId ? Player.find({ teamExternalId: awayTeamId }).lean() : [],
+    needHomeShirts || needAwayShirts ? loadMatchTeams(match) : Promise.resolve({ homeTeam: null, awayTeam: null }),
   ]);
+
+  let homeSquadMap = {};
+  let awaySquadMap = {};
+  if (needHomeShirts && teams.homeTeam) {
+    homeSquadMap = await loadFootballDataSquadShirtMap(teams.homeTeam);
+  }
+  if (needAwayShirts && teams.awayTeam) {
+    awaySquadMap = await loadFootballDataSquadShirtMap(teams.awayTeam);
+  }
 
   const homeRoster = homePlayers.map(mapPlayerToTimelineRosterEntry);
   const awayRoster = awayPlayers.map(mapPlayerToTimelineRosterEntry);
 
   return {
     ...payload,
-    home: enrichSidePlayersWithRoster(payload.home, homeRoster, 'home', shirtBySideName),
-    away: enrichSidePlayersWithRoster(payload.away, awayRoster, 'away', shirtBySideName),
+    home: enrichSidePlayersWithRoster(
+      payload.home,
+      homeRoster,
+      'home',
+      shirtBySideName,
+      homeSquadMap
+    ),
+    away: enrichSidePlayersWithRoster(
+      payload.away,
+      awayRoster,
+      'away',
+      shirtBySideName,
+      awaySquadMap
+    ),
   };
 }
 
@@ -308,9 +384,14 @@ export async function buildMatchLineupPayload(match) {
 
     if (sideNeedsShirtNumbers(snapshot.home) || sideNeedsShirtNumbers(snapshot.away)) {
       try {
-        const { homeTeam, awayTeam } = await loadMatchTeams(match);
-        const merged = await fetchAndMergeApiFootballGrids(match, homeTeam, awayTeam, snapshot);
-        if (merged) snapshot = merged;
+        const refreshed = await refreshLineupSnapshotFromFootballData(match);
+        if (refreshed?.home?.players?.length || refreshed?.away?.players?.length) {
+          snapshot = refreshed;
+        } else {
+          const { homeTeam, awayTeam } = await loadMatchTeams(match);
+          const merged = await fetchAndMergeApiFootballGrids(match, homeTeam, awayTeam, snapshot);
+          if (merged) snapshot = merged;
+        }
       } catch (err) {
         console.warn(`Lineup shirt merge skip ${match.externalId}:`, err.message);
       }
