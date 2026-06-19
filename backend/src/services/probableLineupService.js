@@ -12,6 +12,19 @@ export const LINE_ORDER = ['GK', 'DEF', 'MID', 'FWD'];
 export const STARTER_SLOTS = { GK: 1, DEF: 4, MID: 3, FWD: 3 };
 export const DEFAULT_PROBABLE_FORMATION = '4-3-3';
 
+function extractShirtNumber(entity) {
+  for (const value of [
+    entity?.shirtNumber,
+    entity?.shirt,
+    entity?.number,
+    entity?.jerseyNumber,
+  ]) {
+    const num = Number(value);
+    if (Number.isFinite(num) && num > 0) return num;
+  }
+  return null;
+}
+
 export function starterPriority(player) {
   if (player.lineupStatus === 'starter') return 0;
   if (player.isStarter === true) return 1;
@@ -91,7 +104,7 @@ export function serializeFdLineupPlayer(entry) {
     playerId: entry.id ? `fd-${entry.id}` : null,
     footballDataPersonId: entry.id ? Number(entry.id) : null,
     name: entry.name ?? '',
-    shirtNumber: entry.shirtNumber ?? null,
+    shirtNumber: extractShirtNumber(entry),
     position: mapFootballDataPositionText(entry.position),
     positionDetail: entry.position ?? null,
     isStarter: true,

@@ -97,6 +97,25 @@ export function parseApiFootballLineupSide(side) {
   return { formation, coach, players: startXI };
 }
 
+function lastNameKey(value) {
+  const tokens = normalizeTeamLabel(value).split(/\s+/).filter(Boolean);
+  return tokens.length ? tokens[tokens.length - 1] : '';
+}
+
+function findApiPlayerMatch(player, apiPlayers, byNumber, byName) {
+  const num = player.shirtNumber != null ? Number(player.shirtNumber) : null;
+  if (num != null && byNumber.get(num)) return byNumber.get(num);
+
+  const exact = byName.get(normalizeTeamLabel(player.name));
+  if (exact) return exact;
+
+  const last = lastNameKey(player.name);
+  if (!last || last.length < 3) return null;
+
+  const byLastName = apiPlayers.filter((api) => lastNameKey(api.name) === last);
+  return byLastName.length === 1 ? byLastName[0] : null;
+}
+
 export function mergeGridOntoPlayers(basePlayers, apiPlayers) {
   if (!apiPlayers?.length) return basePlayers;
 
@@ -110,13 +129,15 @@ export function mergeGridOntoPlayers(basePlayers, apiPlayers) {
   );
 
   return basePlayers.map((player) => {
-    const num = player.shirtNumber != null ? Number(player.shirtNumber) : null;
-    const apiMatch =
-      (num != null && byNumber.get(num)) ||
-      byName.get(normalizeTeamLabel(player.name)) ||
-      null;
-    if (!apiMatch?.gridRaw) return player;
-    return { ...player, gridRaw: apiMatch.gridRaw };
+    const apiMatch = findApiPlayerMatch(player, apiPlayers, byNumber, byName);
+    if (!apiMatch) return player;
+
+    return {
+      ...player,
+      shirtNumber: player.shirtNumber ?? apiMatch.shirtNumber ?? null,
+      gridRaw: apiMatch.gridRaw ?? player.gridRaw,
+      positionDetail: player.positionDetail ?? apiMatch.positionDetail ?? null,
+    };
   });
 }
 

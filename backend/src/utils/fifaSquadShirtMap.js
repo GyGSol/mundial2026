@@ -65,7 +65,7 @@ function shirtForId(id, shirtByPlayerId = {}) {
   return num != null && Number.isFinite(Number(num)) ? Number(num) : null;
 }
 
-function shirtForName(name, side, shirtBySideName = {}) {
+export function shirtForName(name, side, shirtBySideName = {}) {
   const sideMap = shirtBySideName?.[side];
   if (!name || !sideMap) return null;
 

@@ -1,6 +1,7 @@
 import { fetchMatchDetails, hasToken } from './footballDataApiClient.js';
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
+import { Match } from '../models/Match.js';
 import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 import { enrichNameFromRoster } from '../utils/playerNameMatch.js';
 import {
@@ -16,6 +17,20 @@ import {
   serializeFdLineupPlayer,
 } from './probableLineupService.js';
 import { assignPlayersToFormation, mapFootballDataPositionText } from '../utils/formationLayout.js';
+import { shirtForName } from '../utils/fifaSquadShirtMap.js';
+
+function extractShirtNumber(entity) {
+  for (const value of [
+    entity?.shirtNumber,
+    entity?.shirt,
+    entity?.number,
+    entity?.jerseyNumber,
+  ]) {
+    const num = Number(value);
+    if (Number.isFinite(num) && num > 0) return num;
+  }
+  return null;
+}
 
 function parseFdTeamSide(teamSide) {
   if (!teamSide) return { formation: DEFAULT_PROBABLE_FORMATION, players: [], coach: null };
@@ -50,7 +65,7 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
         playerId: person.id ? `fd-${person.id}` : null,
         footballDataPersonId: person.id ? Number(person.id) : null,
         name: person.name ?? '',
-        shirtNumber: person.shirtNumber ?? person.number ?? null,
+        shirtNumber: extractShirtNumber(person),
         position: mapFootballDataPositionText(person.position ?? person.pos),
         positionDetail: person.position ?? person.pos ?? null,
         isStarter: true,
@@ -132,7 +147,14 @@ function refreshSnapshotGrids(snapshot) {
   };
 }
 
-function enrichSidePlayersWithRoster(side, roster) {
+function sideNeedsShirtNumbers(side) {
+  const players = side?.players ?? [];
+  if (!players.length) return false;
+  const withShirt = players.filter((p) => p.shirtNumber != null).length;
+  return withShirt < Math.min(players.length, 6);
+}
+
+function enrichSidePlayersWithRoster(side, roster, sideKey, shirtBySideName = { home: {}, away: {} }) {
   if (!side?.players?.length) return side;
   return {
     ...side,
@@ -140,9 +162,11 @@ function enrichSidePlayersWithRoster(side, roster) {
       const enriched = enrichNameFromRoster(player.name, roster, {
         shirtNumber: player.shirtNumber,
       });
+      const fifaShirt = shirtForName(player.name, sideKey, shirtBySideName);
       return {
         ...player,
         name: enriched.name || player.name,
+        shirtNumber: player.shirtNumber ?? enriched.shirtNumber ?? fifaShirt ?? null,
         photoUrl: enriched.photoUrl ?? player.photoUrl ?? null,
         mongoId: enriched.mongoId ?? player.mongoId ?? null,
         externalId:
@@ -154,8 +178,12 @@ function enrichSidePlayersWithRoster(side, roster) {
   };
 }
 
-async function enrichLineupPayloadWithRoster(payload, homeTeamId, awayTeamId) {
+async function enrichLineupPayloadWithRoster(payload, match) {
   if (payload?.status === 'unavailable') return payload;
+
+  const homeTeamId = match?.homeTeamId;
+  const awayTeamId = match?.awayTeamId;
+  const shirtBySideName = match?.raw?.fifaMeta?.shirtBySideName ?? { home: {}, away: {} };
 
   const [homePlayers, awayPlayers] = await Promise.all([
     homeTeamId ? Player.find({ teamExternalId: homeTeamId }).lean() : [],
@@ -167,8 +195,8 @@ async function enrichLineupPayloadWithRoster(payload, homeTeamId, awayTeamId) {
 
   return {
     ...payload,
-    home: enrichSidePlayersWithRoster(payload.home, homeRoster),
-    away: enrichSidePlayersWithRoster(payload.away, awayRoster),
+    home: enrichSidePlayersWithRoster(payload.home, homeRoster, 'home', shirtBySideName),
+    away: enrichSidePlayersWithRoster(payload.away, awayRoster, 'away', shirtBySideName),
   };
 }
 
@@ -209,15 +237,20 @@ export async function buildProbableLineupPayload(match) {
     buildProbableSide(match.awayTeamId),
   ]);
 
-  const snapshot = {
+  let snapshot = {
     fetchedAt: new Date().toISOString(),
     source: 'heuristic',
     home: homeSide,
     away: awaySide,
   };
 
+  if (sideNeedsShirtNumbers(snapshot.home) || sideNeedsShirtNumbers(snapshot.away)) {
+    const { homeTeam, awayTeam } = await loadMatchTeams(match);
+    snapshot = await fetchAndMergeApiFootballGrids(match, homeTeam, awayTeam, snapshot);
+  }
+
   const payload = formatLineupPayload(snapshot);
-  return enrichLineupPayloadWithRoster(payload, match.homeTeamId, match.awayTeamId);
+  return enrichLineupPayloadWithRoster(payload, match);
 }
 
 function sideNeedsPositionDetailRefresh(side) {
@@ -272,8 +305,19 @@ export async function buildMatchLineupPayload(match) {
         console.warn(`Lineup snapshot refresh skip ${match.externalId}:`, err.message);
       }
     }
+
+    if (sideNeedsShirtNumbers(snapshot.home) || sideNeedsShirtNumbers(snapshot.away)) {
+      try {
+        const { homeTeam, awayTeam } = await loadMatchTeams(match);
+        const merged = await fetchAndMergeApiFootballGrids(match, homeTeam, awayTeam, snapshot);
+        if (merged) snapshot = merged;
+      } catch (err) {
+        console.warn(`Lineup shirt merge skip ${match.externalId}:`, err.message);
+      }
+    }
+
     const payload = formatLineupPayload(snapshot);
-    return enrichLineupPayloadWithRoster(payload, match.homeTeamId, match.awayTeamId);
+    return enrichLineupPayloadWithRoster(payload, match);
   }
 
   return buildProbableLineupPayload(match);

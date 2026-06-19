@@ -141,4 +141,19 @@ describe('apiFootballLineupClient mergeGridOntoPlayers', () => {
     const merged = mergeGridOntoPlayers(base, api);
     expect(merged[0].gridRaw).toBe('3:2');
   });
+
+  it('rellena dorsal desde API cuando falta en base', () => {
+    const base = [{ name: 'Messi', shirtNumber: null }];
+    const api = [{ name: 'L. Messi', shirtNumber: 10, gridRaw: '4:2' }];
+    const merged = mergeGridOntoPlayers(base, api);
+    expect(merged[0].shirtNumber).toBe(10);
+    expect(merged[0].gridRaw).toBe('4:2');
+  });
+
+  it('no pisa dorsal existente en base', () => {
+    const base = [{ name: 'Player', shirtNumber: 7 }];
+    const api = [{ name: 'Player', shirtNumber: 10, gridRaw: '3:2' }];
+    const merged = mergeGridOntoPlayers(base, api);
+    expect(merged[0].shirtNumber).toBe(7);
+  });
 });
