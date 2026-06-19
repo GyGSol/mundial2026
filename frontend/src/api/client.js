@@ -147,6 +147,7 @@ export const matchesApi = {
     const query = new URLSearchParams({ ...params, full: '1' }).toString();
     return request(`/matches?${query}`);
   },
+  getById: (matchId) => request(`/matches/${encodeURIComponent(matchId)}`),
 };
 
 export const aiConsultationsApi = {

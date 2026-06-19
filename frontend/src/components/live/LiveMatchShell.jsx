@@ -14,8 +14,14 @@ import { getTeamFlag } from '@/lib/teamMeta.js';
 import { ARGENTINA_TIMEZONE, formatMatchDate, formatPredictionUpdatedAt } from '@/lib/dateFormat';
 import { isMatchStreamWarmup } from '@/lib/streamWatch.js';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
+import {
+  liveCardBadgeLabel,
+  matchHasCreibleFinishEvidence,
+  shouldKeepLiveViewerOpen,
+} from '@/lib/matchStatus.js';
 import TeamFlag from '../TeamFlag.jsx';
 import LiveMatchPanel from './LiveMatchPanel.jsx';
+import LiveMatchSwitcher from './LiveMatchSwitcher.jsx';
 
 function FlagInline({ team }) {
   const flagUrl = getTeamFlag(team);
@@ -35,6 +41,7 @@ function FlagInline({ team }) {
 function LiveMatchSummary({ match }) {
   const homeName = match?.homeTeam?.nameEn || 'Local';
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
+  const badge = liveCardBadgeLabel(match);
 
   return (
     <div className="flex flex-col gap-3">
@@ -52,8 +59,17 @@ function LiveMatchSummary({ match }) {
         </span>
       </div>
 
-      {match?.timeElapsed ? (
-        <p className="text-xs text-red-600 dark:text-red-400">En vivo · {match.timeElapsed}</p>
+      {badge ? (
+        <p
+          className={cn(
+            'text-xs',
+            match?.status === 'live' && !badge.startsWith('Final')
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-muted-foreground'
+          )}
+        >
+          {badge}
+        </p>
       ) : null}
 
       {match?.prediction ? (
@@ -79,9 +95,20 @@ function LiveMatchSummary({ match }) {
   );
 }
 
-export default function LiveMatchShell({ match, open, onOpenChange, sideContent }) {
+const CLOSE_GRACE_MS = 12_000;
+
+export default function LiveMatchShell({
+  match,
+  open,
+  onOpenChange,
+  sideContent,
+  liveMatches = [],
+  onSwitchMatch,
+}) {
   const dialogRef = useRef(null);
+  const closeTimerRef = useRef(null);
   const [theaterMode, setTheaterMode] = useState(false);
+  const [finishedBanner, setFinishedBanner] = useState(null);
   const homeName = match?.homeTeam?.nameEn || 'Local';
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
 
@@ -93,10 +120,45 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
   }, [open]);
 
   useEffect(() => {
-    if (open && match?.status === 'finished') {
-      onOpenChange(false);
+    if (!open) {
+      setFinishedBanner(null);
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      return undefined;
     }
-  }, [open, match?.status, onOpenChange]);
+
+    if (!match) return undefined;
+
+    if (shouldKeepLiveViewerOpen(match)) {
+      setFinishedBanner(null);
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      return undefined;
+    }
+
+    if (!matchHasCreibleFinishEvidence(match)) return undefined;
+
+    const othersLive = liveMatches.filter((m) => m.id !== match.id);
+    setFinishedBanner({
+      othersLive,
+    });
+
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(() => {
+      onOpenChange(false);
+    }, CLOSE_GRACE_MS);
+
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, [open, match, liveMatches, onOpenChange]);
 
   useEffect(() => {
     if (!open) setTheaterMode(false);
@@ -107,6 +169,7 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
   if (!match) return null;
 
   const isWarmup = isMatchStreamWarmup(match);
+  const switcherMatches = liveMatches.length > 0 ? liveMatches : [match];
 
   return (
     <dialog
@@ -123,7 +186,7 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
     >
       <Card className="flex min-h-0 max-h-[inherit] flex-col border-0 shadow-none">
         <CardHeader className="flex shrink-0 flex-row items-start justify-between gap-3 space-y-0 border-b border-border/60 pb-3">
-          <div className="min-w-0 space-y-1">
+          <div className="min-w-0 flex-1 space-y-2">
             <DialogTitleWithIcon
               icon={PopupLiveIcon}
               id="live-match-title"
@@ -139,11 +202,41 @@ export default function LiveMatchShell({ match, open, onOpenChange, sideContent 
                   ? `Calentamiento · ${USER_STREAM_BRAND}`
                   : 'Transmisión en vivo'}
             </CardDescription>
+            {onSwitchMatch ? (
+              <LiveMatchSwitcher
+                matches={switcherMatches}
+                activeMatchId={match.id}
+                onSelect={onSwitchMatch}
+              />
+            ) : null}
           </div>
           <Button type="button" size="icon" variant="ghost" onClick={handleClose} aria-label="Cerrar">
             <X className="size-4" />
           </Button>
         </CardHeader>
+
+        {finishedBanner ? (
+          <div className="border-b border-emerald-300/40 bg-emerald-50/90 px-4 py-2 text-sm text-emerald-950 dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-100">
+            <p className="font-medium">Partido finalizado</p>
+            {finishedBanner.othersLive.length > 0 && onSwitchMatch ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {finishedBanner.othersLive.map((other) => (
+                  <Button
+                    key={other.id}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onSwitchMatch(other.id)}
+                  >
+                    Ver {other.homeTeam?.nameEn ?? 'Local'} vs {other.awayTeam?.nameEn ?? 'Visitante'}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">El visor se cerrará en unos segundos.</p>
+            )}
+          </div>
+        ) : null}
 
         <CardContent className="min-h-0 flex-1 overflow-y-auto p-0">
           <div

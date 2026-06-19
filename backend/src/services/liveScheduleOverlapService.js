@@ -1,4 +1,5 @@
 import { normalizeWeatherOps } from './matchWeatherOpsRules.js';
+import { isMatchActivelyLive } from './matchStatusRules.js';
 
 const KICKOFF_SLOT_MS = 5 * 60 * 1000;
 const OVERLAP_WINDOW_MS = 3 * 60 * 60 * 1000;
@@ -54,11 +55,12 @@ function formatOverlapEntry(match) {
   };
 }
 
-export function buildLiveScheduleContext(targetMatch, allMatches = []) {
+export function buildLiveScheduleContext(targetMatch, allMatches = [], now = Date.now()) {
   const targetId = targetMatch._id?.toString() ?? targetMatch.id;
-  const now = Date.now();
-  const liveMatches = allMatches.filter((m) => m.status === 'live');
-  const concurrentLiveCount = liveMatches.length;
+  const statusLiveMatches = allMatches.filter((m) => m.status === 'live');
+  const activelyLiveMatches = statusLiveMatches.filter((m) => isMatchActivelyLive(m, now));
+  const concurrentLiveCount = activelyLiveMatches.length;
+  const staleLiveCount = statusLiveMatches.length - activelyLiveMatches.length;
 
   const targetKickoff = kickoffMs(targetMatch);
   const overlappingKickoffs = allMatches
@@ -95,10 +97,11 @@ export function buildLiveScheduleContext(targetMatch, allMatches = []) {
     }
   }
 
-  const weatherDelayedLiveCount = liveMatches.filter(weatherDelayActive).length;
+  const weatherDelayedLiveCount = activelyLiveMatches.filter(weatherDelayActive).length;
 
   return {
     concurrentLiveCount,
+    staleLiveCount,
     weatherDelayedLiveCount,
     overlappingKickoffs,
     simultaneousGroupPair: pairInfo

@@ -27,6 +27,7 @@ import {
 } from '../lib/patchMatchPrediction.js';
 import PredictionsFeaturedMatches from '../components/PredictionsFeaturedMatches.jsx';
 import PredictionSavedDialog from '../components/PredictionSavedDialog.jsx';
+import { LiveMatchViewerSync } from '../context/LiveMatchViewerContext.jsx';
 
 const PredictedGroupStandingsSection = lazy(
   () => import('../components/PredictedGroupStandingsSection.jsx')
@@ -155,8 +156,7 @@ export default function PredictionsPage() {
     recentFinishedMatches: barRecentFinishedMatches,
     allMatches: matches,
   });
-  const featuredRecentFinished =
-    barLiveMatches.length > 0 ? [] : barRecentFinishedMatches;
+  const featuredRecentFinished = barRecentFinishedMatches;
   const standingsGroups = standingsData?.groups ?? [];
   const updatedAt = activeView === 'standings' ? standingsLastUpdated : lastUpdated;
 
@@ -315,7 +315,9 @@ export default function PredictionsPage() {
           ) : null}
 
           {!loading && (barLiveMatches.length > 0 || featuredRecentFinished.length > 0) ? (
-            <PredictionsFeaturedMatches
+            <>
+              <LiveMatchViewerSync matches={barLiveMatches} />
+              <PredictionsFeaturedMatches
               liveMatches={barLiveMatches}
               recentFinishedMatches={featuredRecentFinished}
               focusMatchId={focusMatchId}
@@ -324,6 +326,7 @@ export default function PredictionsPage() {
               isScheduled={isScheduled}
               onScheduled={markScheduled}
             />
+            </>
           ) : null}
 
           <PredictionsMatchList

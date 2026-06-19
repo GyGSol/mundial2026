@@ -7,8 +7,11 @@ import { sortMatchesBySchedule } from './matchSortService.js';
 import {
   findLiveMatchesQueryWithGroup,
   findRecentlyFinishedMatchesQueryWithGroup,
-  pickFeaturedRecentFinishedMatches,
 } from './matchDisplayVisibilityService.js';
+import {
+  partitionLiveMatchesByActivity,
+  buildFeaturedRecentFinishedRaw,
+} from './liveMatchPartitionService.js';
 
 const BAR_MATCH_PROJECTION =
   'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.finished raw.time_elapsed raw.fifaEvents.timeline';
@@ -34,14 +37,17 @@ export async function listPredictionsMatches({ status, group }, userId) {
       .lean(),
   ]);
 
-  const barMatches = [...liveRaw, ...recentFinishedRaw];
+  const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
+  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
+
+  const barMatches = [...activeLiveRaw, ...recentFeaturedRaw];
   await prepareFifaShirtMapsForMatches([...matches, ...barMatches]);
   const enriched = await enrichMatchesForPredictions(matches, userId);
   const enrichedBar = await enrichMatchesForPredictions(barMatches, userId);
   const barById = new Map(enrichedBar.map((m) => [m.id, m]));
 
-  const liveMatches = liveRaw.map((m) => barById.get(m._id.toString())).filter(Boolean);
-  const recentFinishedMatches = pickFeaturedRecentFinishedMatches(recentFinishedRaw)
+  const liveMatches = activeLiveRaw.map((m) => barById.get(m._id.toString())).filter(Boolean);
+  const recentFinishedMatches = recentFeaturedRaw
     .map((m) => barById.get(m._id.toString()))
     .filter(Boolean);
 

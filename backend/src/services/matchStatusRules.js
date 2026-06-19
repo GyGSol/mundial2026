@@ -178,6 +178,12 @@ export function isMatchClearlyInProgress(match) {
   return matchEvidenceShowsInProgress(match);
 }
 
+/** Partido con `status: live` que sigue en juego (no zombie con evidencia de pitido final). */
+export function isMatchActivelyLive(match, now = Date.now()) {
+  if (match?.status !== 'live') return false;
+  return !shouldFinalizeStaleLiveMatch(match, now);
+}
+
 /** Cierra partidos `live` cuando la API quedó en live/finished=FALSE tras el pitido final. */
 export function shouldFinalizeStaleLiveMatch(match, now = Date.now()) {
   if (match?.status !== 'live') return false;

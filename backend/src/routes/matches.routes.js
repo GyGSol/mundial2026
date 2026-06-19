@@ -5,8 +5,10 @@ import { getMatchStreamConfig } from '../services/streamLinkService.js';
 import {
   enrichMatchesFull,
   enrichMatchesLight,
+  enrichMatchesForRankingDashboard,
   prepareFifaShirtMapsForMatches,
 } from '../services/matchEnrichmentService.js';
+import { attachStreamMetaToMatches } from '../services/streamMetaService.js';
 import { sortMatchesBySchedule } from '../services/matchSortService.js';
 
 const router = Router();
@@ -22,6 +24,26 @@ router.get('/:id/stream', authMiddleware, async (req, res, next) => {
     }
 
     res.json(config);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:id', optionalAuth, async (req, res, next) => {
+  try {
+    const match = await Match.findById(req.params.id).lean();
+    if (!match) {
+      return res.status(404).json({ error: 'Partido no encontrado' });
+    }
+
+    await prepareFifaShirtMapsForMatches([match]);
+    const enriched = await enrichMatchesForRankingDashboard([match], req.user?._id);
+    const [withStream] = await attachStreamMetaToMatches(enriched);
+    if (!withStream) {
+      return res.status(404).json({ error: 'Partido no encontrado' });
+    }
+
+    res.json({ match: withStream });
   } catch (err) {
     next(err);
   }

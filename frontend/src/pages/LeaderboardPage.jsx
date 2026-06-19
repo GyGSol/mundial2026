@@ -32,7 +32,7 @@ import {
   formatPrizeDistributionLabel,
 } from '../lib/economyConstants.js';
 
-const LiveMatchesBar = lazy(() => import('../components/LiveMatchesBar.jsx'));
+import { LiveMatchViewerSync } from '../context/LiveMatchViewerContext.jsx';
 
 const GROUP_POSITIONS_TABLE_ID = 'group-positions-table';
 
@@ -289,14 +289,17 @@ export default function LeaderboardPage() {
       ) : null}
 
       {rankingReady ? (
-        <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
-          <LiveMatchesBar
-            matches={data?.liveMatches ?? []}
-            recentFinishedMatches={data?.recentFinishedMatches ?? []}
-            nextMatches={data?.nextUpcomingMatches ?? []}
-            finishedMatches={finishedArchiveMatches}
-          />
-        </Suspense>
+        <>
+          <LiveMatchViewerSync matches={data?.liveMatches ?? []} />
+          <Suspense fallback={<LoadingSpinner label="Cargando partidos…" />}>
+            <LiveMatchesBar
+              matches={data?.liveMatches ?? []}
+              recentFinishedMatches={data?.recentFinishedMatches ?? []}
+              nextMatches={data?.nextUpcomingMatches ?? []}
+              finishedMatches={finishedArchiveMatches}
+            />
+          </Suspense>
+        </>
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">

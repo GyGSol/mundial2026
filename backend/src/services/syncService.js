@@ -350,6 +350,16 @@ export function mergeSyncedMatch(existing, incoming) {
       merged.homeScore = mergePlausibleGoalCounts(existing.homeScore, incoming.homeScore);
       merged.awayScore = mergePlausibleGoalCounts(existing.awayScore, incoming.awayScore);
     }
+
+    if (shouldFinalizeStaleLiveMatch({ ...existing, kickoffAt, raw: merged.raw })) {
+      merged.status = 'finished';
+      merged.raw = {
+        ...merged.raw,
+        time_elapsed: 'finished',
+        finished: 'TRUE',
+      };
+      downgradeImplausibleFinishedStatus(merged, kickoffAt, kickoffInFuture);
+    }
   }
 
   merged.homeScore = sanitizeMatchGoalCount(merged.homeScore, 0);

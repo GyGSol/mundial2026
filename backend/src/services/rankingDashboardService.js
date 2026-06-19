@@ -17,11 +17,14 @@ import { ensureAiCompetitorInGroup } from './aiGroupMembershipService.js';
 import { getGroupEntryFeeStats, syncMemberEntryFees } from './fubolService.js';
 import {
   findRecentlyFinishedMatchesQuery,
-  pickFeaturedRecentFinishedMatches,
   RECENT_FINISHED_FEATURED_MAX,
 } from './matchDisplayVisibilityService.js';
 import { getCachedRankingFinishedMatches } from './rankingFinishedMatchesCache.js';
 import { buildMatchLineupPayload } from './matchLineupService.js';
+import {
+  partitionLiveMatchesByActivity,
+  buildFeaturedRecentFinishedRaw,
+} from './liveMatchPartitionService.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
 /** Solo hace falta enriquecer candidatos a la barra destacada (máx. 1 visible). */
@@ -82,7 +85,10 @@ export async function getRankingDashboard(groupId, userId) {
       .lean(),
   ]);
 
-  const matchesToEnrichFeatured = [...liveRaw, ...recentFinishedRaw];
+  const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
+  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
+
+  const matchesToEnrichFeatured = [...activeLiveRaw, ...recentFeaturedRaw];
   await prepareFifaShirtMapsForMatches([...matchesToEnrichFeatured, ...upcomingRaw]);
   const [enrichedFeatured, enrichedUpcoming] = await Promise.all([
     enrichMatchesForRankingDashboard(matchesToEnrichFeatured, userId),
@@ -92,8 +98,8 @@ export async function getRankingDashboard(groupId, userId) {
     [...enrichedFeatured, ...enrichedUpcoming].map((m) => [m.id, m])
   );
 
-  const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
-  const recentFinishedMatches = pickFeaturedRecentFinishedMatches(recentFinishedRaw)
+  const liveMatches = activeLiveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
+  const recentFinishedMatches = recentFeaturedRaw
     .map((m) => byId.get(m._id.toString()))
     .filter(Boolean);
 

@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/button.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import MatchLineupSection from '@/components/lineup/MatchLineupSection.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
+import { liveCardBadgeLabel, isLiveCardFinalizing } from '@/lib/matchStatus.js';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 
@@ -795,6 +796,42 @@ function FinishedTeamsHeader({
   );
 }
 
+function LiveStatusBadge({ match, isLive, weatherLabel }) {
+  const finalizingLive = isLive && isLiveCardFinalizing(match);
+  const showLiveBadge = isLive && !weatherLabel && !finalizingLive;
+
+  if (showLiveBadge) {
+    const label = liveCardBadgeLabel(match);
+    return (
+      <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
+        {label?.startsWith('En vivo') ? label : `En vivo${match.timeElapsed ? ` · ${match.timeElapsed}` : ''}`}
+      </Badge>
+    );
+  }
+
+  if (finalizingLive) {
+    return (
+      <Badge variant="outline" className="border-amber-300/70 bg-amber-50 text-amber-900">
+        Finalizando…
+      </Badge>
+    );
+  }
+
+  if (isLive && weatherLabel) {
+    return (
+      <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
+        {match.timeElapsed ? `${match.timeElapsed}` : 'En pausa'}
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
+      Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
+    </Badge>
+  );
+}
+
 function ResultMatchCard({ match, variant = 'live' }) {
   const homeName = match.homeTeam?.nameEn || 'Local';
   const awayName = match.awayTeam?.nameEn || 'Visitante';
@@ -803,7 +840,6 @@ function ResultMatchCard({ match, variant = 'live' }) {
   const isArgentina = matchInvolvesArgentina(match);
   const isLive = variant === 'live';
   const weatherLabel = getWeatherOpsLabel(match.weatherOps);
-  const showLiveBadge = isLive && !weatherLabel;
   const showWeatherLayer =
     isLive ||
     weatherLabel ||
@@ -820,19 +856,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
             <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
           </>
         ) : null}
-        {showLiveBadge ? (
-          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-            En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
-          </Badge>
-        ) : isLive && weatherLabel ? (
-          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-            {match.timeElapsed ? `${match.timeElapsed}` : 'En pausa'}
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
-            Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
-          </Badge>
-        )}
+        <LiveStatusBadge match={match} isLive={isLive} weatherLabel={weatherLabel} />
 
         <MatchTeamsLayout
           homeName={homeName}
@@ -876,7 +900,6 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
   const isArgentina = matchInvolvesArgentina(match);
   const isLive = variant === 'live';
   const weatherLabel = getWeatherOpsLabel(match.weatherOps);
-  const showLiveBadge = isLive && !weatherLabel;
   const showWeatherLayer =
     isLive ||
     weatherLabel ||
@@ -898,19 +921,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
           </>
         ) : null}
-        {showLiveBadge ? (
-          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-            En vivo{match.timeElapsed ? ` · ${match.timeElapsed}` : ''}
-          </Badge>
-        ) : isLive && weatherLabel ? (
-          <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-            {match.timeElapsed ? `${match.timeElapsed}` : 'En pausa'}
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
-            Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
-          </Badge>
-        )}
+        <LiveStatusBadge match={match} isLive={isLive} weatherLabel={weatherLabel} />
 
         <div className="flex w-full flex-col gap-1.5">
           <FinishedTeamsHeader
@@ -1192,7 +1203,7 @@ export default function LiveMatchesBar({
 }) {
   const hasLive = matches.length > 0;
   const hasRecentFinished = recentFinishedMatches.length > 0;
-  const showRecentFinishedBar = hasRecentFinished && !hasLive;
+  const showRecentFinishedBar = hasRecentFinished;
   const hasNext = nextMatches.length > 0;
   const archiveMatches = useMemo(() => {
     const featuredIds = new Set([
