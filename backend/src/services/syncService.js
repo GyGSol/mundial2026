@@ -371,6 +371,7 @@ async function upsertMatches() {
   const scoringIds = [];
   const newlyFinishedIds = [];
   const clearedScoreIds = [];
+  let finishedArchiveDirty = false;
   const worldcup26Warnings = [];
   const stadiumTimezones = await buildStadiumTimezoneMap();
 
@@ -427,23 +428,34 @@ async function upsertMatches() {
 
     if (match.status === 'finished' && !wasFinished) {
       newlyFinishedIds.push(match._id);
+      finishedArchiveDirty = true;
     }
 
     if ((wasFinished || wasLive) && match.status === 'upcoming') {
       clearedScoreIds.push(match._id);
+      if (wasFinished) finishedArchiveDirty = true;
     }
 
     if (reopenedToLive) {
       clearedScoreIds.push(match._id);
       scoringIds.push(match._id);
+      finishedArchiveDirty = true;
     } else if (match.status === 'finished' && (!wasFinished || scoreChanged)) {
       scoringIds.push(match._id);
+      if (wasFinished && scoreChanged) finishedArchiveDirty = true;
     } else if (match.status === 'live' && (becameLive || scoreChanged)) {
       scoringIds.push(match._id);
     }
   }
 
-  return { count: list.length, scoringIds, newlyFinishedIds, clearedScoreIds, worldcup26Warnings };
+  return {
+    count: list.length,
+    scoringIds,
+    newlyFinishedIds,
+    clearedScoreIds,
+    finishedArchiveDirty,
+    worldcup26Warnings,
+  };
 }
 
 function needsRescore(before, after) {
@@ -527,7 +539,7 @@ export async function runSync({ includeMetadata = true } = {}) {
       stadiumsCount = await upsertStadiums();
     }
 
-    const { count, scoringIds, newlyFinishedIds, clearedScoreIds, worldcup26Warnings } =
+    const { count, scoringIds, newlyFinishedIds, clearedScoreIds, finishedArchiveDirty, worldcup26Warnings } =
       await upsertMatches();
 
     let fixtureAlignment = {
@@ -682,7 +694,15 @@ export async function runSync({ includeMetadata = true } = {}) {
       fifaEventsSynced: fifaResult.events ?? 0,
     });
     notifyLeaderboardUpdated({ reason: 'sync_complete' });
-    const { invalidateMatchRelatedCaches } = await import('./matchRelatedCaches.js');
+    const { invalidateMatchRelatedCaches, invalidateFinishedMatchArchiveCaches } =
+      await import('./matchRelatedCaches.js');
+    if (
+      finishedArchiveDirty ||
+      newlyFinishedIds.length ||
+      (fifaResult.newlyFinishedIds?.length ?? 0) > 0
+    ) {
+      invalidateFinishedMatchArchiveCaches();
+    }
     invalidateMatchRelatedCaches();
 
     if (lineupResult.updated > 0 || lineupResult.events > 0) {

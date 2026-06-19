@@ -3,6 +3,7 @@ import { Stadium } from '../models/Stadium.js';
 import { recalculateMatchScores, recalculateAllLiveMatches, clearMatchScores } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
+import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesCache.js';
 import { notifyMatchesLiveStarted } from './pushNotificationService.js';
 import { blocksKickoffPromotion, clearWeatherOpsToNormal, isPreKickoffDelayExpired } from './matchWeatherOpsRules.js';
 import {
@@ -325,6 +326,7 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
   }
 
   if (reopenedIds.length) {
+    invalidateRankingFinishedMatchesCache();
     invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'premature_finish_reopened',
@@ -414,6 +416,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
   }
 
   if (finalizedIds.length) {
+    invalidateRankingFinishedMatchesCache();
     invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'stale_live_finalized',
