@@ -296,6 +296,15 @@ async function main() {
   const topScorersByTournament = parseTournamentTopScorers(scorersWiki);
   const titlesByNation = buildTitlesByNation(finals);
 
+  let existing = {};
+  if (fs.existsSync(OUT)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(OUT, 'utf8'));
+    } catch {
+      existing = {};
+    }
+  }
+
   const payload = {
     source: 'Wikipedia (en)',
     sourceUrls: [
@@ -303,11 +312,18 @@ async function main() {
       'https://en.wikipedia.org/wiki/List_of_FIFA_World_Cup_top_goalscorers',
     ],
     syncedAt: new Date().toISOString(),
-    nationNames: NATION_NAMES,
+    nationNames: { ...(existing.nationNames ?? {}), ...NATION_NAMES },
     titlesByNation,
     finals,
     allTimeTopScorers,
     topScorersByTournament,
+    ...(existing.recordsByNation ? { recordsByNation: existing.recordsByNation } : {}),
+    ...(existing.recordsByNationSyncedAt
+      ? { recordsByNationSyncedAt: existing.recordsByNationSyncedAt }
+      : {}),
+    ...(existing.recordsByNationSource
+      ? { recordsByNationSource: existing.recordsByNationSource }
+      : {}),
   };
 
   fs.mkdirSync(path.dirname(OUT), { recursive: true });

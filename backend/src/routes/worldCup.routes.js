@@ -6,8 +6,19 @@ import {
   getWorldCupAiBriefing,
   refreshWorldCupAiBriefing,
 } from '../services/aiWorldCupStatsService.js';
+import { getCachedWorldCupDataCenter } from '../services/worldCupDataCenterService.js';
 
 const router = Router();
+
+router.get('/data-center', async (req, res, next) => {
+  try {
+    const nationCode = req.query.nation ? String(req.query.nation) : null;
+    const payload = await getCachedWorldCupDataCenter({ nationCode });
+    res.json(payload);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/history', async (_req, res, next) => {
   try {

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { worldCupApi } from '../api/client.js';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { Button } from '@/components/ui/button.jsx';
@@ -33,7 +33,7 @@ const TeamsSection = lazy(() =>
   }))
 );
 const FixtureSection = lazy(() => import('@/components/worldcup/FixtureSection.jsx'));
-const HistorySection = lazy(() => import('@/components/worldcup/HistorySection.jsx'));
+const DataCenterSection = lazy(() => import('@/components/worldcup/datacenter/DataCenterSection.jsx'));
 const PlayersSection = lazy(() => import('@/components/worldcup/PlayersSection.jsx'));
 const AiStatsBriefing = lazy(() => import('@/components/worldcup/AiStatsBriefing.jsx'));
 
@@ -44,7 +44,6 @@ const tabs = [
   { id: 'stats', label: 'Estadísticas', ai: true },
   { id: 'teams', label: 'Equipos' },
   { id: 'fixture', label: 'Fixture' },
-  { id: 'history', label: 'Historia' },
   { id: 'players', label: 'Jugadores', ai: true },
 ];
 
@@ -63,8 +62,9 @@ function TabFallback() {
 
 export default function WorldCupPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('groups');
-  const needsOverview = activeTab !== 'history' && activeTab !== 'players';
+  const needsOverview = activeTab !== 'players';
   const fetchOverview = useCallback(
     () => worldCupApi.overview({ playerStats: activeTab === 'stats' }),
     [activeTab]
@@ -78,10 +78,15 @@ export default function WorldCupPage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
+    if (tab === 'history') {
+      navigate('/mundial?tab=stats', { replace: true });
+      setActiveTab('stats');
+      return;
+    }
     if (tab && tabs.some((t) => t.id === tab)) {
       setActiveTab(tab);
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -117,10 +122,6 @@ export default function WorldCupPage() {
         <Suspense fallback={<TabFallback />}>
           <PlayersSection />
         </Suspense>
-      ) : activeTab === 'history' ? (
-        <Suspense fallback={<TabFallback />}>
-          <HistorySection />
-        </Suspense>
       ) : (
         <>
           {pageLoading && (
@@ -147,6 +148,7 @@ export default function WorldCupPage() {
                     stadiums={data?.stadiums}
                     tournament2026PlayerStats={data?.tournament2026PlayerStats}
                   />
+                  <DataCenterSection />
                 </div>
               )}
               {activeTab === 'teams' && <TeamsSection teams={data?.teams} />}

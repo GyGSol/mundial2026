@@ -229,6 +229,12 @@ export const worldCupApi = {
     return request(`/world-cup${query ? `?${query}` : ''}`);
   },
   history: () => request('/world-cup/history'),
+  dataCenter: ({ nation } = {}) => {
+    const params = new URLSearchParams();
+    if (nation) params.set('nation', nation);
+    const query = params.toString();
+    return request(`/world-cup/data-center${query ? `?${query}` : ''}`);
+  },
   aiBriefing: () => request('/world-cup/ai-briefing'),
   refreshAiBriefing: () =>
     request('/world-cup/ai-briefing/refresh', {
