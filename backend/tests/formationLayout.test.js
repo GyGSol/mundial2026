@@ -20,21 +20,21 @@ describe('formationLayout', () => {
     const def = parseApiFootballGrid('2:2', '4-3-3');
     const fwd = parseApiFootballGrid('4:2', '4-3-3');
     expect(gk).not.toBeNull();
-    expect(gk.gridX).toBe(5);
+    expect(gk.gridX).toBe(4);
     expect(def.gridX).toBeGreaterThan(30);
-    expect(def.gridX).toBeLessThan(45);
-    expect(fwd.gridX).toBeGreaterThan(80);
+    expect(def.gridX).toBeLessThan(50);
+    expect(fwd.gridX).toBeGreaterThan(85);
   });
 
   it('assignFormationGrid devuelve 11 slots para 4-3-3', () => {
     const slots = assignFormationGrid('4-3-3', 11);
     expect(slots).toHaveLength(11);
-    expect(slots[0].gridX).toBe(5);
-    expect(slots[5].gridX).toBe(58);
-    expect(slots[10].gridX).toBe(88);
+    expect(slots[0].gridX).toBe(4);
+    expect(slots[5].gridX).toBe(70);
+    expect(slots[10].gridX).toBe(94);
   });
 
-  it('assignPlayersToFormation coloca líneas tácticas GK→DEF→MID→FWD', () => {
+  it('assignPlayersToFormation separa DEF, MID y FWD en tres profundidades', () => {
     const players = [
       { name: 'GK', position: 'GK', shirtNumber: 1 },
       { name: 'LD', position: 'DEF', positionDetail: 'Left-Back', shirtNumber: 3 },
@@ -49,28 +49,38 @@ describe('formationLayout', () => {
       { name: 'RW', position: 'FWD', positionDetail: 'Right Winger', shirtNumber: 7 },
     ];
     const assigned = assignPlayersToFormation(players, '4-3-3');
-    const gk = assigned.find((p) => p.name === 'GK');
-    const st = assigned.find((p) => p.name === 'ST');
-    const ld = assigned.find((p) => p.name === 'LD');
-    const rd = assigned.find((p) => p.name === 'RD');
+    const depths = [...new Set(assigned.map((p) => p.gridX))].sort((a, b) => a - b);
 
-    expect(gk.gridX).toBeLessThan(st.gridX);
-    expect(ld.gridY).toBeLessThan(rd.gridY);
-    expect(assigned.filter((p) => p.gridX === 38)).toHaveLength(4);
-    expect(assigned.find((p) => p.name === 'ST').gridX).toBeGreaterThan(
+    expect(depths.length).toBeGreaterThanOrEqual(4);
+    expect(assigned.find((p) => p.name === 'GK').gridX).toBeLessThan(
+      assigned.find((p) => p.name === 'LD').gridX
+    );
+    expect(assigned.find((p) => p.name === 'LD').gridX).toBeLessThan(
       assigned.find((p) => p.name === 'MID2').gridX
     );
+    expect(assigned.find((p) => p.name === 'MID2').gridX).toBeLessThan(
+      assigned.find((p) => p.name === 'ST').gridX
+    );
+    expect(assigned.filter((p) => p.gridX === 44)).toHaveLength(4);
   });
 
-  it('mergePlayerGrids usa gridRaw cuando existe', () => {
+  it('mapFootballDataPositionText no clasifica pivote como defensa', () => {
+    expect(mapFootballDataPositionText('Defensive Midfield')).toBe('MID');
+    expect(mapFootballDataPositionText('Left Wing')).toBe('FWD');
+    expect(mapFootballDataPositionText('Right Wing')).toBe('FWD');
+  });
+
+  it('mergePlayerGrids ignora gridRaw para profundidad y usa formación', () => {
     const players = [
       { name: 'A', position: 'GK', gridRaw: '1:1' },
-      { name: 'B', position: 'DEF' },
+      { name: 'B', position: 'DEF', gridRaw: '2:2' },
+      { name: 'C', position: 'FWD', gridRaw: '2:3' },
     ];
     const merged = mergePlayerGrids(players, '4-3-3');
-    expect(merged[0].gridX).toBe(5);
+    expect(merged[0].gridX).toBe(4);
+    expect(merged[1].gridX).toBe(44);
+    expect(merged[2].gridX).toBe(94);
     expect(merged[0].gridRaw).toBeUndefined();
-    expect(merged[1].gridX).toBeDefined();
   });
 
   it('lateralSortKey ordena laterales izq→der', () => {

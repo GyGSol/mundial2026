@@ -5,20 +5,20 @@ const LINE_POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
 
 /**
  * Profundidad por línea (0 = arco propio, 100 = línea de medio campo).
- * Calibrado para cancha horizontal: DEF en borde del área, MID en centro del campo propio, FWD adelantados.
+ * DEF en borde del área, MID en centro del campo propio, FWD cerca de la línea media.
  */
 const DEPTH_BY_ROWS = {
-  4: [5, 38, 58, 88],
-  5: [5, 32, 48, 68, 88],
-  6: [5, 28, 42, 55, 72, 88],
+  4: [4, 44, 70, 94],
+  5: [4, 38, 56, 76, 94],
+  6: [4, 32, 48, 62, 78, 94],
 };
 
 /** Profundidad por rol cuando no hay fila de formación. */
 const DEPTH_BY_POOL = {
-  GK: 5,
-  DEF: 38,
-  MID: 58,
-  FWD: 88,
+  GK: 4,
+  DEF: 44,
+  MID: 70,
+  FWD: 94,
 };
 
 /** Distribución lateral por cantidad de jugadores en la línea. */
@@ -45,19 +45,25 @@ function depthForRow(rowIndex, totalRows) {
   const preset = DEPTH_BY_ROWS[totalRows];
   if (preset?.[rowIndex] != null) return preset[rowIndex];
   if (totalRows <= 1) return 50;
-  return 5 + (rowIndex / (totalRows - 1)) * 83;
+  return 4 + (rowIndex / (totalRows - 1)) * 90;
 }
 
 function depthFromApiRow(row, maxRow) {
   if (maxRow <= 1) return DEPTH_BY_POOL.GK;
   const t = (Math.min(row, maxRow) - 1) / (maxRow - 1);
-  return 5 + t * 83;
+  return 4 + t * 90;
 }
 
 function lateralForSlot(slotIndex, count) {
   const slots = LATERAL_SLOTS[count] ?? LATERAL_SLOTS[3];
   if (count <= 1) return slots[0];
   return slots[Math.min(slotIndex, slots.length - 1)];
+}
+
+function lateralFromApiGrid(grid, lineCount) {
+  const col = Number(String(grid ?? '').split(':')[1]);
+  if (!Number.isFinite(col) || col < 1) return null;
+  return lateralForSlot(Math.min(col - 1, lineCount - 1), lineCount);
 }
 
 /** Orden lateral izq→der según texto de posición (estilo diagrama táctico). */
@@ -78,8 +84,8 @@ export function lateralSortKey(player) {
 /** Profundidad relativa dentro del mediocampo (pivote vs interior). */
 function midfieldDepthBias(player) {
   const text = `${player.positionDetail ?? ''}`.toLowerCase();
-  if (text.includes('defensive') || text.includes('holding')) return -6;
-  if (text.includes('attacking')) return 6;
+  if (text.includes('defensive') || text.includes('holding')) return -4;
+  if (text.includes('attacking')) return 4;
   return 0;
 }
 
@@ -108,6 +114,11 @@ function poolForLine(rowIndex, totalRows) {
   return 'MID';
 }
 
+function isForwardLike(player) {
+  const mapped = mapFootballDataPositionText(player.positionDetail ?? player.position);
+  return mapped === 'FWD';
+}
+
 /**
  * API-Football grid "fila:cola" — fila 1 = portería, columna izq→der del equipo.
  * @returns {{ gridX: number, gridY: number } | null}
@@ -123,10 +134,9 @@ export function parseApiFootballGrid(grid, formation = DEFAULT_FORMATION) {
   const rows = parseFormationString(formation);
   const maxRow = rows.length;
   const lineCount = rows[Math.min(row, maxRow) - 1] ?? 1;
-  const maxCol = Math.max(lineCount, 1);
 
   const depth = depthFromApiRow(row, maxRow);
-  const lateral = lateralForSlot(Math.min(col - 1, maxCol - 1), maxCol);
+  const lateral = lateralForSlot(Math.min(col - 1, lineCount - 1), lineCount);
 
   return {
     gridX: Number(depth.toFixed(1)),
@@ -158,7 +168,7 @@ export function assignFormationGrid(formation, playerCount = 11) {
 
 /**
  * Agrupa jugadores por líneas tácticas y asigna coordenadas estilo Wikipedia.
- * Prioriza grid API-Football cuando existe.
+ * La profundidad (gridX) siempre sale de la formación; el grid API solo ayuda en el eje lateral.
  */
 export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION) {
   const rows = parseFormationString(formation);
@@ -166,8 +176,11 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
 
   const pools = Object.fromEntries(LINE_POSITIONS.map((p) => [p, []]));
   for (const player of players) {
-    const pool = LINE_POSITIONS.includes(player.position) ? player.position : 'MID';
-    pools[pool].push(player);
+    const detail = player.positionDetail ?? player.position;
+    const pool = LINE_POSITIONS.includes(player.position)
+      ? player.position
+      : mapFootballDataPositionText(detail);
+    pools[pool].push({ ...player, position: pool });
   }
 
   const assigned = [];
@@ -179,6 +192,15 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
 
   for (const spec of lineSpecs) {
     const available = pools[spec.pool];
+
+    // Si faltan delanteros, tomar los más ofensivos del pool de medios
+    if (spec.pool === 'FWD' && available.length < spec.count && pools.MID.length) {
+      const forwardLike = pools.MID.filter(isForwardLike);
+      const rest = pools.MID.filter((p) => !isForwardLike(p));
+      pools.MID = rest;
+      available.push(...forwardLike);
+    }
+
     const picked = sortPlayersInLine(available.splice(0, spec.count), {
       pool: spec.pool,
       lineIndex: spec.rowIndex,
@@ -187,32 +209,27 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
 
     const depth = depthForRow(spec.rowIndex, rowCount);
     picked.forEach((player, slotIndex) => {
-      const fromApi = player.gridRaw
-        ? parseApiFootballGrid(player.gridRaw, formation)
+      const apiLateral = player.gridRaw
+        ? lateralFromApiGrid(player.gridRaw, picked.length)
         : null;
-      const midBias =
-        spec.pool === 'MID' ? midfieldDepthBias(player) : 0;
-      const coords = fromApi ?? {
-        gridX: Number(Math.min(94, Math.max(4, depth + midBias)).toFixed(1)),
-        gridY: Number(lateralForSlot(slotIndex, picked.length).toFixed(1)),
-      };
-      const { gridRaw: _gridRaw, ...rest } = player;
-      assigned.push({ ...rest, gridX: coords.gridX, gridY: coords.gridY });
+      const midBias = spec.pool === 'MID' ? midfieldDepthBias(player) : 0;
+      const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = player;
+      assigned.push({
+        ...rest,
+        gridX: Number(Math.min(96, Math.max(3, depth + midBias)).toFixed(1)),
+        gridY: Number((apiLateral ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)),
+      });
     });
   }
 
-  // Jugadores sin slot (datos incompletos): rellenar con heurística por posición
   for (const pool of LINE_POSITIONS) {
     for (const leftover of pools[pool]) {
-      const fromApi = leftover.gridRaw
-        ? parseApiFootballGrid(leftover.gridRaw, formation)
-        : null;
       const fallbackDepth = DEPTH_BY_POOL[pool] ?? DEPTH_BY_POOL.MID;
-      const { gridRaw: _gridRaw, ...rest } = leftover;
+      const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = leftover;
       assigned.push({
         ...rest,
-        gridX: fromApi?.gridX ?? fallbackDepth,
-        gridY: fromApi?.gridY ?? lateralSortKey(leftover),
+        gridX: fallbackDepth,
+        gridY: lateralSortKey(leftover),
       });
     }
   }
@@ -226,24 +243,37 @@ export function mergePlayerGrids(players, formation) {
 }
 
 export function mapFootballDataPositionText(text) {
-  const p = String(text ?? '').toLowerCase();
-  if (p.includes('goalkeeper') || p === 'gk') return 'GK';
+  const p = String(text ?? '').trim().toLowerCase();
+  if (!p) return 'MID';
+  if (p.includes('goalkeeper') || p === 'gk' || p === 'g') return 'GK';
+
+  // Delanteros / extremos (antes de "defen" y "mid")
+  if ((p.includes('wing') || p.includes('winger')) && !p.includes('back')) return 'FWD';
+  if (
+    p.includes('forward') ||
+    p.includes('striker') ||
+    p.includes('offence') ||
+    p.includes('offense') ||
+    p === 'fwd' ||
+    p === 'f' ||
+    p === 'st' ||
+    p === 'cf'
+  ) {
+    return 'FWD';
+  }
+
+  if (p.includes('mid') || p === 'mid' || p === 'm' || p.includes('midfield')) return 'MID';
+
   if (
     p.includes('back') ||
     p.includes('defen') ||
     p === 'def' ||
-    p.includes('centre-back')
+    p === 'd' ||
+    p.includes('centre-back') ||
+    p.includes('center back')
   ) {
     return 'DEF';
   }
-  if (p.includes('mid') || p === 'mid') return 'MID';
-  if (
-    p.includes('forward') ||
-    p.includes('winger') ||
-    p.includes('striker') ||
-    p === 'fwd'
-  ) {
-    return 'FWD';
-  }
+
   return 'MID';
 }

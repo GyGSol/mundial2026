@@ -107,6 +107,15 @@ export function buildLineupSnapshotFromSources({
   return snapshot;
 }
 
+function refreshSnapshotGrids(snapshot) {
+  if (!snapshot) return snapshot;
+  return {
+    ...snapshot,
+    home: snapshot.home?.players?.length ? applyGridsToSide(snapshot.home) : snapshot.home,
+    away: snapshot.away?.players?.length ? applyGridsToSide(snapshot.away) : snapshot.away,
+  };
+}
+
 export function formatLineupPayload(snapshot) {
   if (!snapshot?.home?.players?.length && !snapshot?.away?.players?.length) {
     return {
@@ -118,20 +127,21 @@ export function formatLineupPayload(snapshot) {
     };
   }
 
-  const confirmed = isConfirmedSnapshot(snapshot);
+  const refreshed = refreshSnapshotGrids(snapshot);
+  const confirmed = isConfirmedSnapshot(refreshed);
   return {
     status: confirmed ? 'confirmed' : 'probable',
-    updatedAt: snapshot.fetchedAt ?? null,
-    source: snapshot.source ?? 'heuristic',
+    updatedAt: refreshed.fetchedAt ?? null,
+    source: refreshed.source ?? 'heuristic',
     home: {
-      formation: snapshot.home?.formation ?? null,
-      coach: snapshot.home?.coach ?? null,
-      players: snapshot.home?.players ?? [],
+      formation: refreshed.home?.formation ?? null,
+      coach: refreshed.home?.coach ?? null,
+      players: refreshed.home?.players ?? [],
     },
     away: {
-      formation: snapshot.away?.formation ?? null,
-      coach: snapshot.away?.coach ?? null,
-      players: snapshot.away?.players ?? [],
+      formation: refreshed.away?.formation ?? null,
+      coach: refreshed.away?.coach ?? null,
+      players: refreshed.away?.players ?? [],
     },
   };
 }
