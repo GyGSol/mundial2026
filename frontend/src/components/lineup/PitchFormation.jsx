@@ -65,7 +65,7 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
     >
       <button
         type="button"
-        className="flex flex-col items-center gap-0.5 rounded-md p-0.5 transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        className="flex flex-col items-center gap-px rounded-md p-px transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
         onClick={(event) => {
           event.stopPropagation();
           onPlayerClick?.({
@@ -79,7 +79,7 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
       >
         <div className="relative">
           {position ? (
-            <span className="absolute -left-1 -top-1 z-10 rounded bg-black/80 px-0.5 text-[7px] font-semibold leading-tight text-white shadow-sm">
+            <span className="absolute -left-0.5 -top-0.5 z-10 rounded bg-black/80 px-px text-[6px] font-semibold leading-tight text-white shadow-sm">
               {position}
             </span>
           ) : null}
@@ -87,14 +87,14 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
           <PlayerAvatar
             name={player.name}
             photoUrl={player.photoUrl}
-            size="sm"
-            className={cn('h-9 w-9 shadow-md ring-2', ringClass)}
+            size="xs"
+            className={cn('h-6 w-6 shadow-sm ring-1', ringClass)}
           />
 
           {number != null ? (
             <span
               className={cn(
-                'absolute -right-1 -top-1 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[8px] font-bold leading-none text-white shadow',
+                'absolute -right-0.5 -top-0.5 z-10 flex h-3 min-w-3 items-center justify-center rounded-full px-px text-[6px] font-bold leading-none text-white shadow',
                 numberClass
               )}
             >
@@ -104,7 +104,7 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
         </div>
 
         {label ? (
-          <span className="max-w-[64px] truncate rounded bg-black/65 px-1 py-px text-[8px] font-medium leading-tight text-white shadow-sm">
+          <span className="max-w-[48px] truncate rounded bg-black/65 px-0.5 py-px text-[7px] font-medium leading-tight text-white shadow-sm">
             {label}
           </span>
         ) : null}
