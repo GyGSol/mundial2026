@@ -1,0 +1,3406 @@
+{
+  "total": 340,
+  "jugadores": 12,
+  "predicciones": [
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.438Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.416Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.393Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.372Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.349Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.327Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.305Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.284Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.263Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.240Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.219Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#13 KSA vs URU (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:11:59.195Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.639Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.627Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.615Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.602Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.588Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.574Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.562Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.549Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.536Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.523Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.510Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#16 BEL vs EGY (G) [live]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T21:09:43.497Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#62 NOR vs FRA (I) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.975Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#57 JPN vs SWE (F) [upcoming]",
+      "marcador": "0-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.913Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#58 TUR vs USA (D) [upcoming]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.882Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#52 CZE vs MEX (A) [upcoming]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.791Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#52 CZE vs MEX (A) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.771Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#51 RSA vs KOR (A) [upcoming]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.738Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#51 RSA vs KOR (A) [upcoming]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.718Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#45 POR vs UZB (K) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.580Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#45 POR vs UZB (K) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.560Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#45 POR vs UZB (K) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.540Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#47 POR vs UZB (K) [upcoming]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.505Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#47 POR vs UZB (K) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.486Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#47 POR vs UZB (K) [upcoming]",
+      "marcador": "4-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.466Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#42 NOR vs SEN (I) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.355Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#42 NOR vs SEN (I) [upcoming]",
+      "marcador": "4-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.335Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#42 NOR vs SEN (I) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#37 BEL vs IRN (G) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.202Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#37 BEL vs IRN (G) [upcoming]",
+      "marcador": "4-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.181Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#37 BEL vs IRN (G) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.161Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#39 ESP vs KSA (H) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.125Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#39 ESP vs KSA (H) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.106Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#39 ESP vs KSA (H) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.085Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#39 ESP vs KSA (H) [upcoming]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.065Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#38 ESP vs KSA (H) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.026Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#38 ESP vs KSA (H) [upcoming]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:39.006Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#38 ESP vs KSA (H) [upcoming]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.986Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#32 TUR vs PAR (D) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.873Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#32 TUR vs PAR (D) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.853Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#32 TUR vs PAR (D) [upcoming]",
+      "marcador": "5-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.833Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#32 TUR vs PAR (D) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.812Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#32 TUR vs PAR (D) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.791Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#25 MEX vs KOR (A) [upcoming]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.629Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#25 MEX vs KOR (A) [upcoming]",
+      "marcador": "0-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.609Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#25 MEX vs KOR (A) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.588Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#25 MEX vs KOR (A) [upcoming]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.568Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#25 MEX vs KOR (A) [upcoming]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.546Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#21 POR vs COD (K) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.387Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#21 POR vs COD (K) [upcoming]",
+      "marcador": "6-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.367Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#21 POR vs COD (K) [upcoming]",
+      "marcador": "2-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.347Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#21 POR vs COD (K) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.326Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#21 POR vs COD (K) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.307Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#21 POR vs COD (K) [upcoming]",
+      "marcador": "6-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.286Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#23 POR vs COD (K) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.245Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#23 POR vs COD (K) [upcoming]",
+      "marcador": "3-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.225Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#23 POR vs COD (K) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.204Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#23 POR vs COD (K) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.185Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#23 POR vs COD (K) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.165Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#23 POR vs COD (K) [upcoming]",
+      "marcador": "3-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T21:09:38.145Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#19 ARG vs ALG (J) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:59:38.442Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#18 IRQ vs NOR (I) [upcoming]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:59:23.822Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#27 CAN vs QAT (B) [upcoming]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "2-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#18 IRQ vs NOR (I) [upcoming]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#19 ARG vs ALG (J) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#20 AUT vs JOR (J) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#22 ENG vs CRO (L) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#65 CPV vs KSA (H) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#66 URU vs ESP (H) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#69 ALG vs AUT (J) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#43 ARG vs AUT (J) [upcoming]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#70 JOR vs ARG (J) [upcoming]",
+      "marcador": "1-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#35 NED vs SWE (F) [upcoming]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#36 TUN vs JPN (F) [upcoming]",
+      "marcador": "2-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#64 NZL vs BEL (G) [upcoming]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#63 EGY vs IRN (G) [upcoming]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#71 COL vs POR (K) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#72 COD vs UZB (K) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#68 CRO vs GHA (L) [upcoming]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#67 PAN vs ENG (L) [upcoming]",
+      "marcador": "1-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#73 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#74 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#30 SCO vs MAR (C) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#49 SCO vs BRA (C) [upcoming]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#50 MAR vs HAI (C) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#29 BRA vs HAI (C) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#88 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#33 GER vs CIV (E) [upcoming]",
+      "marcador": "3-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#55 CUW vs CIV (E) [upcoming]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#34 ECU vs CUW (E) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#56 ECU vs GER (E) [upcoming]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#26 SUI vs BIH (B) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#44 JOR vs ALG (J) [upcoming]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#46 PAN vs CRO (L) [upcoming]",
+      "marcador": "1-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#76 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#89 0 vs 0 (R16) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#87 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#86 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#85 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#84 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#83 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#82 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#81 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#80 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#79 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#78 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#77 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Gonzalo",
+      "email": "gonzalomlopolito@gmail.com",
+      "partido": "#75 0 vs 0 (R32) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T20:07:42.672Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "3-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "5-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "3-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "2-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Prueba",
+      "email": "torneo@gon.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T20:07:34.772Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Guido",
+      "email": "guido.catelani@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T20:07:26.873Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "5-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Raguccito",
+      "email": "ramiroragucci@hotmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:45.127Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Tisho",
+      "email": "schvarzmanpatricio@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:01:37.230Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Martin",
+      "email": "martindieste06@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:29.330Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gisela",
+      "email": "giselaragucci@gmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:13.930Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#20 AUT vs JOR (J) [upcoming]",
+      "marcador": "2-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "4-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "4-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "2-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "0-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#19 ARG vs ALG (J) [upcoming]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#18 IRQ vs NOR (I) [upcoming]",
+      "marcador": "2-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#22 ENG vs CRO (L) [upcoming]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#26 SUI vs BIH (B) [upcoming]",
+      "marcador": "5-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#27 CAN vs QAT (B) [upcoming]",
+      "marcador": "3-5",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#29 BRA vs HAI (C) [upcoming]",
+      "marcador": "5-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "0-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#33 GER vs CIV (E) [upcoming]",
+      "marcador": "5-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Gon admin",
+      "email": "gonzalomlopolitoadm@gmail.com",
+      "partido": "#30 SCO vs MAR (C) [upcoming]",
+      "marcador": "1-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:01:06.029Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "0-0",
+      "enviado": "no",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "4-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "6-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "4-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#18 IRQ vs NOR (I) [upcoming]",
+      "marcador": "0-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#19 ARG vs ALG (J) [upcoming]",
+      "marcador": "4-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#20 AUT vs JOR (J) [upcoming]",
+      "marcador": "5-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#22 ENG vs CRO (L) [upcoming]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#26 SUI vs BIH (B) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#27 CAN vs QAT (B) [upcoming]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#29 BRA vs HAI (C) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#30 SCO vs MAR (C) [upcoming]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#33 GER vs CIV (E) [upcoming]",
+      "marcador": "4-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#34 ECU vs CUW (E) [upcoming]",
+      "marcador": "4-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#35 NED vs SWE (F) [upcoming]",
+      "marcador": "4-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#36 TUN vs JPN (F) [upcoming]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Jorge",
+      "email": "jorgedudo@hotmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:58.132Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#22 ENG vs CRO (L) [upcoming]",
+      "marcador": "3-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#20 AUT vs JOR (J) [upcoming]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#19 ARG vs ALG (J) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#18 IRQ vs NOR (I) [upcoming]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "5-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#33 GER vs CIV (E) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "3-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "5-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#26 SUI vs BIH (B) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#35 NED vs SWE (F) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#36 TUN vs JPN (F) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#43 ARG vs AUT (J) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#34 ECU vs CUW (E) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#44 JOR vs ALG (J) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#29 BRA vs HAI (C) [upcoming]",
+      "marcador": "4-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#30 SCO vs MAR (C) [upcoming]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Tixe",
+      "email": "tixeibz@gmail.com",
+      "partido": "#27 CAN vs QAT (B) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:42.316Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "5-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:34.428Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#19 ARG vs ALG (J) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#20 AUT vs JOR (J) [upcoming]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#22 ENG vs CRO (L) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "0-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "6-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "2-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#18 IRQ vs NOR (I) [upcoming]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Marcelo",
+      "email": "tomasgonzalez200648@gmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 6,
+      "actualizado": "2026-06-15T18:00:34.397Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#1 MEX vs RSA (A) [finished]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#2 KOR vs CZE (A) [finished]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#33 GER vs CIV (E) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#3 CAN vs BIH (B) [finished]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#34 ECU vs CUW (E) [upcoming]",
+      "marcador": "4-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#30 SCO vs MAR (C) [upcoming]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#50 MAR vs HAI (C) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#49 SCO vs BRA (C) [upcoming]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#36 TUN vs JPN (F) [upcoming]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#26 SUI vs BIH (B) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#43 ARG vs AUT (J) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#20 AUT vs JOR (J) [upcoming]",
+      "marcador": "1-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#19 ARG vs ALG (J) [upcoming]",
+      "marcador": "2-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#18 IRQ vs NOR (I) [upcoming]",
+      "marcador": "0-4",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#17 FRA vs SEN (I) [upcoming]",
+      "marcador": "3-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#14 ESP vs CPV (H) [finished]",
+      "marcador": "8-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#12 SWE vs TUN (F) [finished]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#11 NED vs JPN (F) [finished]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#22 ENG vs CRO (L) [upcoming]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#35 NED vs SWE (F) [upcoming]",
+      "marcador": "3-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#46 PAN vs CRO (L) [upcoming]",
+      "marcador": "1-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#27 CAN vs QAT (B) [upcoming]",
+      "marcador": "2-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#10 GER vs CUW (E) [finished]",
+      "marcador": "7-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 4,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#9 CIV vs ECU (E) [finished]",
+      "marcador": "2-5",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#8 QAT vs SUI (B) [finished]",
+      "marcador": "0-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#7 BRA vs MAR (C) [finished]",
+      "marcador": "2-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 3,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#6 AUS vs TUR (D) [finished]",
+      "marcador": "0-3",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#5 HAI vs SCO (C) [finished]",
+      "marcador": "1-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 1,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#4 USA vs PAR (D) [finished]",
+      "marcador": "1-2",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": 0,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#44 JOR vs ALG (J) [upcoming]",
+      "marcador": "0-1",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    },
+    {
+      "usuario": "Yago",
+      "email": "yagolopolito@hotmail.com",
+      "partido": "#29 BRA vs HAI (C) [upcoming]",
+      "marcador": "3-0",
+      "enviado": "sí",
+      "origen": "user",
+      "puntos": null,
+      "actualizado": "2026-06-15T18:00:26.501Z"
+    }
+  ]
+}
