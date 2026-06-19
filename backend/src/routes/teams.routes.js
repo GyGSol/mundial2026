@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Team } from '../models/Team.js';
+import { fetchCoachWiki } from '../services/coachWikiService.js';
 
 const router = Router();
 
@@ -20,6 +21,32 @@ router.get('/teams', async (req, res, next) => {
       })),
       total: teams.length,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/teams/coach-wiki', async (req, res, next) => {
+  try {
+    const name = String(req.query.name ?? '').trim();
+    const fifaCode = String(req.query.fifaCode ?? '').trim().toUpperCase();
+    let teamName = String(req.query.teamName ?? '').trim();
+
+    if (!name) {
+      return res.status(400).json({ error: 'Falta el nombre del técnico' });
+    }
+
+    if (!teamName && fifaCode) {
+      const team = await Team.findOne({ fifaCode }).lean();
+      teamName = team?.nameEn ?? '';
+    }
+
+    const wiki = await fetchCoachWiki({ name, fifaCode, teamName });
+    if (!wiki) {
+      return res.status(404).json({ error: 'No se encontró ficha del técnico en Wikipedia' });
+    }
+
+    res.json({ wiki });
   } catch (err) {
     next(err);
   }

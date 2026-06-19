@@ -212,6 +212,14 @@ export const teamsApi = {
     const query = new URLSearchParams(params).toString();
     return request(`/teams${query ? `?${query}` : ''}`);
   },
+  coachWiki: ({ name, fifaCode, teamName } = {}) => {
+    const params = new URLSearchParams();
+    if (name) params.set('name', name);
+    if (fifaCode) params.set('fifaCode', fifaCode);
+    if (teamName) params.set('teamName', teamName);
+    const query = params.toString();
+    return request(`/teams/coach-wiki${query ? `?${query}` : ''}`);
+  },
 };
 
 export const playersApi = {
