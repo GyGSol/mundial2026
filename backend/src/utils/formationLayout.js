@@ -1,6 +1,10 @@
 /** Posiciones en cancha (0–100) a partir de formación táctica o grid API-Football. */
 
 const DEFAULT_FORMATION = '4-3-3';
+const DEPTH_MIN = 10;
+const DEPTH_MAX = 90;
+const LATERAL_MIN = 14;
+const LATERAL_MAX = 86;
 
 /** @returns {number[]} filas desde portero hacia delante, ej. [1,4,3,3] */
 export function parseFormationString(formation) {
@@ -49,8 +53,13 @@ export function assignFormationGrid(formation, playerCount = 11) {
   rows.forEach((count, rowIndex) => {
     for (let i = 0; i < count; i += 1) {
       const depth =
-        rowCount <= 1 ? 50 : (rowIndex / (rowCount - 1)) * 100;
-      const lateral = count <= 1 ? 50 : (i / (count - 1)) * 100;
+        rowCount <= 1
+          ? 50
+          : DEPTH_MIN + (rowIndex / (rowCount - 1)) * (DEPTH_MAX - DEPTH_MIN);
+      const lateral =
+        count <= 1
+          ? 50
+          : LATERAL_MIN + (i / (count - 1)) * (LATERAL_MAX - LATERAL_MIN);
       slots.push({
         gridX: Number(depth.toFixed(1)),
         gridY: Number(lateral.toFixed(1)),

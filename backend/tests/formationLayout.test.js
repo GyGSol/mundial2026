@@ -23,8 +23,8 @@ describe('formationLayout', () => {
   it('assignFormationGrid devuelve 11 slots para 4-3-3', () => {
     const slots = assignFormationGrid('4-3-3', 11);
     expect(slots).toHaveLength(11);
-    expect(slots[0].gridX).toBe(0);
-    expect(slots[10].gridX).toBe(100);
+    expect(slots[0].gridX).toBe(10);
+    expect(slots[10].gridX).toBe(90);
   });
 
   it('mergePlayerGrids usa gridRaw cuando existe', () => {
