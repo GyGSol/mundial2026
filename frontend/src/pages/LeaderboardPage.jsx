@@ -1,12 +1,19 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { leaderboardApi } from '../api/client.js';
+import { Link, useSearchParams } from 'react-router-dom';
+import { competitionGroupsApi, leaderboardApi } from '../api/client.js';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../lib/apiError.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
+import TournamentLeaderboardPlaceholder from '../components/TournamentLeaderboardPlaceholder.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
+import {
+  DEFAULT_TOURNAMENT_TYPE,
+  TOURNAMENT_TYPE_COMMON,
+  TOURNAMENT_TYPES,
+  isValidTournamentType,
+} from '../lib/tournamentTypes.js';
 import {
   Select,
   SelectContent,
@@ -45,8 +52,14 @@ function buildRankingGroupOptions(groups, { includeNoGroup = false } = {}) {
 
 export default function LeaderboardPage() {
   const { user, isAuthenticated } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const myGroups = user?.competitionGroups ?? [];
   const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [selectedTournamentType, setSelectedTournamentType] = useState(() => {
+    const fromQuery = searchParams.get('torneo');
+    return isValidTournamentType(fromQuery) ? fromQuery : DEFAULT_TOURNAMENT_TYPE;
+  });
+  const [enrolledTournamentTypes, setEnrolledTournamentTypes] = useState([]);
 
   const canViewNoGroupRanking = useMemo(
     () => isAuthenticated && myGroups.some(isUserGroupAdmin),
@@ -81,12 +94,65 @@ export default function LeaderboardPage() {
     setSelectedGroupId((current) => resolveDefaultGroupId(current));
   }, [rankingGroupOptions, resolveDefaultGroupId]);
 
+  useEffect(() => {
+    const fromQuery = searchParams.get('torneo');
+    if (fromQuery && isValidTournamentType(fromQuery) && fromQuery !== selectedTournamentType) {
+      setSelectedTournamentType(fromQuery);
+    }
+  }, [searchParams, selectedTournamentType]);
+
+  const handleTournamentTypeChange = useCallback(
+    (tournamentType) => {
+      setSelectedTournamentType(tournamentType);
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          if (tournamentType === DEFAULT_TOURNAMENT_TYPE) {
+            next.delete('torneo');
+          } else {
+            next.set('torneo', tournamentType);
+          }
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
   const effectiveGroupId = useMemo(
     () => resolveDefaultGroupId(selectedGroupId),
     [resolveDefaultGroupId, selectedGroupId]
   );
 
   const canLoadRanking = Boolean(effectiveGroupId);
+  const isCommonTournament = selectedTournamentType === TOURNAMENT_TYPE_COMMON;
+
+  useEffect(() => {
+    if (!isAuthenticated || !effectiveGroupId || effectiveGroupId === '__nogroup') {
+      setEnrolledTournamentTypes([]);
+      return;
+    }
+
+    let cancelled = false;
+    competitionGroupsApi.tournamentEnrollments
+      .list(effectiveGroupId)
+      .then((payload) => {
+        if (cancelled) return;
+        setEnrolledTournamentTypes(
+          (payload.enrollments ?? []).map((row) => row.tournamentType)
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setEnrolledTournamentTypes([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveGroupId, isAuthenticated]);
+
+  const isEnrolledInSelectedTournament = enrolledTournamentTypes.includes(selectedTournamentType);
 
   const fetchLeaderboard = useCallback(
     () => leaderboardApi.dashboard(effectiveGroupId),
@@ -328,19 +394,44 @@ export default function LeaderboardPage() {
 
       {rankingReady ? (
         <section id={GROUP_POSITIONS_TABLE_ID} className="scroll-mt-24">
-          {hasLiveMatches ? (
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <label htmlFor="ranking-tournament-type" className="text-sm font-medium">
+              Torneo
+            </label>
+            <Select value={selectedTournamentType} onValueChange={handleTournamentTypeChange}>
+              <SelectTrigger id="ranking-tournament-type" className="w-full sm:w-[240px]">
+                <SelectValue placeholder="Elegir torneo" />
+              </SelectTrigger>
+              <SelectContent>
+                {TOURNAMENT_TYPES.map((tournament) => (
+                  <SelectItem key={tournament.id} value={tournament.id}>
+                    {tournament.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {hasLiveMatches && isCommonTournament ? (
             <p className="mb-2 text-xs text-muted-foreground">
               Partido en vivo: las flechas marcan cambios desde el 0-0 inicial (PA = acierto
               ganador/empate; GL/GV/GT = goles exactos ganados con el marcador en vivo).
             </p>
           ) : null}
-          <LeaderboardTable
-            leaderboard={dashboardLeaderboard}
-            leaderboardKickoffBaseline={dashboardKickoffBaseline}
-            hasLiveMatches={hasLiveMatches}
-            showGroupName={false}
-            prizesWinnersCount={prizesWinnersCount}
-          />
+          {isCommonTournament ? (
+            <LeaderboardTable
+              leaderboard={dashboardLeaderboard}
+              leaderboardKickoffBaseline={dashboardKickoffBaseline}
+              hasLiveMatches={hasLiveMatches}
+              showGroupName={false}
+              prizesWinnersCount={prizesWinnersCount}
+            />
+          ) : (
+            <TournamentLeaderboardPlaceholder
+              tournamentType={selectedTournamentType}
+              isEnrolled={isEnrolledInSelectedTournament}
+              isAuthenticated={isAuthenticated}
+            />
+          )}
         </section>
       ) : null}
     </div>

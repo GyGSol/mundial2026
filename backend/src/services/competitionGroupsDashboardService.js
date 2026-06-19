@@ -8,6 +8,7 @@ import {
   listUserCompetitionGroups,
   listUserPendingJoinRequests,
 } from './competitionGroupService.js';
+import { listEnrollmentsByUserGroups } from './tournamentEnrollmentService.js';
 
 function membershipRoleForUser(group, membership, userId) {
   if (group.createdBy && String(group.createdBy) === String(userId)) return 'owner';
@@ -103,6 +104,7 @@ export async function getCompetitionGroupsPage(userId) {
       pendingGroupIds: [],
       joinRequests: {},
       members: {},
+      tournamentEnrollments: {},
     };
   }
 
@@ -113,7 +115,12 @@ export async function getCompetitionGroupsPage(userId) {
   ]);
 
   const adminGroupIds = myGroups.filter((group) => group.isAdmin).map((group) => group.id);
-  const { joinRequests, members } = await batchAdminGroupDetails(adminGroupIds, userId);
+  const myGroupIds = myGroups.map((group) => group.id);
+  const [adminDetails, tournamentEnrollments] = await Promise.all([
+    batchAdminGroupDetails(adminGroupIds, userId),
+    listEnrollmentsByUserGroups(userId, myGroupIds),
+  ]);
+  const { joinRequests, members } = adminDetails;
 
   return {
     groups,
@@ -121,5 +128,6 @@ export async function getCompetitionGroupsPage(userId) {
     pendingGroupIds,
     joinRequests,
     members,
+    tournamentEnrollments,
   };
 }

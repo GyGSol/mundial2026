@@ -117,6 +117,14 @@ export const competitionGroupsApi = {
     request(`/competition-groups/${groupId}`, {
       method: 'DELETE',
     }),
+  tournamentEnrollments: {
+    list: (groupId) => request(`/competition-groups/${groupId}/tournament-enrollments`),
+    enroll: (groupId, tournamentType) =>
+      request(`/competition-groups/${groupId}/tournament-enrollments`, {
+        method: 'POST',
+        body: JSON.stringify({ tournamentType }),
+      }),
+  },
 };
 
 export const matchesApi = {

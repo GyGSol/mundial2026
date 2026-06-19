@@ -23,6 +23,10 @@ import {
 } from '../services/competitionGroupService.js';
 import { getCompetitionGroupsPage } from '../services/competitionGroupsDashboardService.js';
 import { projectPrizeDistribution } from '../services/prizePoolService.js';
+import {
+  enrollUser,
+  listEnrollmentsForUserInGroup,
+} from '../services/tournamentEnrollmentService.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 const router = Router();
@@ -219,6 +223,28 @@ router.post('/:groupId/join', authMiddleware, async (req, res, next) => {
       groupId: req.params.groupId,
     });
     res.status(201).json({ group });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:groupId/tournament-enrollments', authMiddleware, async (req, res, next) => {
+  try {
+    const enrollments = await listEnrollmentsForUserInGroup(req.user._id, req.params.groupId);
+    res.json({ enrollments });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/:groupId/tournament-enrollments', authMiddleware, async (req, res, next) => {
+  try {
+    const enrollment = await enrollUser(
+      req.user._id,
+      req.params.groupId,
+      req.body.tournamentType
+    );
+    res.status(201).json({ enrollment });
   } catch (err) {
     next(err);
   }

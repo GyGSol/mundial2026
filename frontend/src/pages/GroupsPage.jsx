@@ -5,6 +5,8 @@ import { competitionGroupsApi } from '../api/client.js';
 import FormField from '../components/FormField.jsx';
 import GroupDirectoryRow from '../components/GroupDirectoryRow.jsx';
 import GroupInvitePanel from '../components/GroupInvitePanel.jsx';
+import TournamentEnrollmentSection from '../components/TournamentEnrollmentSection.jsx';
+import { getTournamentLabel } from '../lib/tournamentTypes.js';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
 import FubolCoinIcon from '../components/FubolCoinIcon.jsx';
 import {
@@ -55,6 +57,7 @@ export default function GroupsPage() {
   const [pendingJoinGroupIds, setPendingJoinGroupIds] = useState(() => new Set());
   const [groupJoinRequests, setGroupJoinRequests] = useState({});
   const [groupMembers, setGroupMembers] = useState({});
+  const [tournamentEnrollmentsByGroupId, setTournamentEnrollmentsByGroupId] = useState({});
   const [memberActionLoading, setMemberActionLoading] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
   const [showHelp, setShowHelp] = useState(
@@ -84,11 +87,13 @@ export default function GroupsPage() {
       setPendingJoinGroupIds(new Set(page.pendingGroupIds ?? []));
       setGroupJoinRequests(page.joinRequests ?? {});
       setGroupMembers(page.members ?? {});
+      setTournamentEnrollmentsByGroupId(page.tournamentEnrollments ?? {});
     } else {
       setMyGroups([]);
       setPendingJoinGroupIds(new Set());
       setGroupJoinRequests({});
       setGroupMembers({});
+      setTournamentEnrollmentsByGroupId({});
     }
     refreshPendingApprovals();
   };
@@ -114,6 +119,15 @@ export default function GroupsPage() {
   );
 
   const isNoGroupParticipant = isAuthenticated && myGroups.length === 0;
+
+  const handleTournamentEnrolled = (groupId, tournamentType) => {
+    setTournamentEnrollmentsByGroupId((current) => {
+      const existing = new Set(current[groupId] ?? []);
+      existing.add(tournamentType);
+      return { ...current, [groupId]: [...existing] };
+    });
+    setSuccessMessage(`Te inscribiste en ${getTournamentLabel(tournamentType)}.`);
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -786,6 +800,14 @@ export default function GroupsPage() {
               })}
             </CardContent>
           </Card>
+
+          <TournamentEnrollmentSection
+            myGroups={myGroups}
+            activeGroupId={user?.activeCompetitionGroupId ?? user?.competitionGroup?.id}
+            tournamentEnrollmentsByGroupId={tournamentEnrollmentsByGroupId}
+            onEnrolled={handleTournamentEnrolled}
+            onError={setError}
+          />
 
           <Card>
             <CardHeader>
