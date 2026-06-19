@@ -20,7 +20,7 @@ vi.mock('../src/models/Match.js', () => ({
 
 vi.mock('../src/services/matchEnrichmentService.js', () => ({
   prepareFifaShirtMapsForMatches: vi.fn(async () => {}),
-  enrichMatchesForRankingDashboard: vi.fn(async (matches) =>
+  enrichMatchesForRankingArchive: vi.fn(async (matches) =>
     matches.map((m) => ({ id: String(m._id), externalId: m.externalId, status: 'finished' }))
   ),
 }));

@@ -4,6 +4,7 @@ import { getLastSyncAt } from './syncService.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import {
   enrichMatchesForRankingDashboard,
+  enrichMatchesForRankingUpcoming,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
@@ -82,10 +83,15 @@ export async function getRankingDashboard(groupId, userId) {
     getCachedRankingFinishedMatches(),
   ]);
 
-  const matchesToEnrich = [...liveRaw, ...upcomingRaw, ...recentFinishedRaw];
-  await prepareFifaShirtMapsForMatches(matchesToEnrich);
-  const enriched = await enrichMatchesForRankingDashboard(matchesToEnrich, userId);
-  const byId = new Map(enriched.map((m) => [m.id, m]));
+  const matchesToEnrichFeatured = [...liveRaw, ...recentFinishedRaw];
+  await prepareFifaShirtMapsForMatches([...matchesToEnrichFeatured, ...upcomingRaw]);
+  const [enrichedFeatured, enrichedUpcoming] = await Promise.all([
+    enrichMatchesForRankingDashboard(matchesToEnrichFeatured, userId),
+    enrichMatchesForRankingUpcoming(upcomingRaw, userId),
+  ]);
+  const byId = new Map(
+    [...enrichedFeatured, ...enrichedUpcoming].map((m) => [m.id, m])
+  );
 
   const liveMatches = liveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
   const recentFinishedMatches = pickFeaturedRecentFinishedMatches(recentFinishedRaw)

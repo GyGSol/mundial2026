@@ -37,6 +37,9 @@ import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
  *   includePlayers?: boolean,
  *   includeKnockoutContext?: boolean,
  *   ensureUserDefaults?: boolean,
+ *   includeWeather?: boolean,
+ *   includeLiveFields?: boolean,
+ *   includeTimelineTournamentGoals?: boolean,
  * }} options
  */
 export async function enrichMatches(matches, userId, options = {}) {
@@ -45,6 +48,8 @@ export async function enrichMatches(matches, userId, options = {}) {
     includeKnockoutContext = true,
     ensureUserDefaults = true,
     includeWeather = true,
+    includeLiveFields = true,
+    includeTimelineTournamentGoals = includeLiveFields,
   } = options;
 
   if (userId && ensureUserDefaults) {
@@ -62,9 +67,10 @@ export async function enrichMatches(matches, userId, options = {}) {
   const teams = await Team.find({ externalId: { $in: [...teamIds] } }).lean();
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
 
-  const needsTournamentGoals = matches.some(
-    (m) => m.status === 'live' || m.status === 'finished'
-  );
+  const needsTournamentGoals =
+    includeTimelineTournamentGoals &&
+    includeLiveFields &&
+    matches.some((m) => m.status === 'live' || m.status === 'finished');
 
   let playersByTeamId = {};
   if (includePlayers || needsTournamentGoals) {
@@ -133,11 +139,13 @@ export async function enrichMatches(matches, userId, options = {}) {
       resolvePriorTournamentGoalCounts && (m.status === 'live' || m.status === 'finished')
         ? resolvePriorTournamentGoalCounts(m.externalId, m.status)
         : undefined;
-    const liveFields = enrichMatchLiveFields(m, {
-      homePlayers: playersByTeamId[m.homeTeamId] ?? [],
-      awayPlayers: playersByTeamId[m.awayTeamId] ?? [],
-      priorTournamentGoalCounts,
-    });
+    const liveFields = includeLiveFields
+      ? enrichMatchLiveFields(m, {
+          homePlayers: playersByTeamId[m.homeTeamId] ?? [],
+          awayPlayers: playersByTeamId[m.awayTeamId] ?? [],
+          priorTournamentGoalCounts,
+        })
+      : {};
 
     const displayKickoff = resolveDisplayKickoffAt(m) ?? m.kickoffAt;
     const scheduleKickoff = resolveScheduleKickoffAt(m);
@@ -194,13 +202,39 @@ export async function enrichMatchesLight(matches, userId) {
   });
 }
 
-/** Ranking dashboard: sin clima externo ni roster de partidos upcoming. */
+/** Ranking dashboard: timeline completo en live/recién finalizado. */
 export async function enrichMatchesForRankingDashboard(matches, userId) {
   return enrichMatches(matches, userId, {
     includePlayers: false,
     includeKnockoutContext: false,
     ensureUserDefaults: false,
     includeWeather: false,
+    includeLiveFields: true,
+    includeTimelineTournamentGoals: true,
+  });
+}
+
+/** Próximos partidos en ranking: solo metadata, sin timeline ni clima. */
+export async function enrichMatchesForRankingUpcoming(matches, userId) {
+  return enrichMatches(matches, userId, {
+    includePlayers: false,
+    includeKnockoutContext: false,
+    ensureUserDefaults: false,
+    includeWeather: false,
+    includeLiveFields: false,
+    includeTimelineTournamentGoals: false,
+  });
+}
+
+/** Archivo colapsable: timeline básico sin goles torneo ni roster. */
+export async function enrichMatchesForRankingArchive(matches, userId) {
+  return enrichMatches(matches, userId, {
+    includePlayers: false,
+    includeKnockoutContext: false,
+    ensureUserDefaults: false,
+    includeWeather: false,
+    includeLiveFields: true,
+    includeTimelineTournamentGoals: false,
   });
 }
 
