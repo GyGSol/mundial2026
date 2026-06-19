@@ -4,39 +4,41 @@ import {
   parseManagerWorldCups,
 } from '../src/services/coachWikiService.js';
 
-const CLARKE_WIKITEXT = `
-{{Infobox football manager
-| name = Steve Clarke
-| nationality = Scottish
-| birth_date = {{birth date and age|1963|8|29|df=y}}
-| currentclub = [[Scotland national football team|Scotland]]
-| managerclubs1 = [[Scotland national football team|Scotland]]
-| manageryears1 = 2019–
+const CLARKE_WIKITEXT_ES = `
+{{Ficha de entrenador de fútbol
+| nombre = Steve Clarke
+| nacionalidad = escocés
+| fechadenacimiento = 29 de agosto de 1963 ({{edad|29|8|1963}})
+| seleccion = [[Selección de fútbol de Escocia|Escocia]]
+| años1 = 2019–
 }}
 
-== Managerial career ==
-Clarke was appointed manager of the [[Scotland national football team|Scotland national team]] in May 2019.
-He led Scotland to the [[2020 UEFA European Championship]] and the [[2024 UEFA European Championship]].
-He will manage Scotland at the [[2026 FIFA World Cup]].
+== Carrera como entrenador ==
+=== Selección de Escocia ===
+En mayo de 2019 fue nombrado entrenador de la [[Selección de fútbol de Escocia|selección de Escocia]].
+Llevó a Escocia a la [[Eurocopa 2020]] y a la [[Eurocopa 2024]].
+Dirigirá a Escocia en la [[Copa Mundial de Fútbol de 2026]].
 `;
 
 describe('coachWikiService', () => {
-  it('parseCoachWikiFromWikitext extrae datos del infobox y sección con la selección', () => {
-    const parsed = parseCoachWikiFromWikitext(CLARKE_WIKITEXT, {
-      summary: 'Scottish football manager',
+  it('parseCoachWikiFromWikitext extrae datos del infobox y sección con la selección (es)', () => {
+    const parsed = parseCoachWikiFromWikitext(CLARKE_WIKITEXT_ES, {
+      summary: 'Exfutbolista y entrenador de fútbol escocés.',
       wikiTitle: 'Steve Clarke',
-      wikiUrl: 'https://en.wikipedia.org/wiki/Steve_Clarke',
+      wikiUrl: 'https://es.wikipedia.org/wiki/Steve_Clarke',
       teamName: 'Scotland',
+      countryEs: 'Escocia',
     });
 
-    expect(parsed.nationality).toMatch(/Scottish/i);
-    expect(parsed.currentTeam).toMatch(/Scotland/i);
-    expect(parsed.teamSection).toMatch(/Scotland national team/i);
+    expect(parsed.nationality).toMatch(/escoc/i);
+    expect(parsed.currentTeam).toMatch(/Escocia/i);
+    expect(parsed.teamSection).toMatch(/selección de Escocia/i);
     expect(parsed.worldCupAsManager).toContain(2026);
-    expect(parsed.highlights.some((line) => line.includes('Scotland'))).toBe(true);
+    expect(parsed.highlights.some((line) => line.includes('Escocia'))).toBe(true);
+    expect(parsed.summary).toMatch(/entrenador/i);
   });
 
-  it('parseManagerWorldCups detecta mundiales como DT', () => {
-    expect(parseManagerWorldCups(CLARKE_WIKITEXT)).toEqual([2026]);
+  it('parseManagerWorldCups detecta mundiales como DT en español', () => {
+    expect(parseManagerWorldCups(CLARKE_WIKITEXT_ES)).toEqual([2026]);
   });
 });
