@@ -155,8 +155,10 @@ function sideNeedsShirtNumbers(side) {
 }
 
 const SQUAD_SHIRT_CACHE_MS = 6 * 60 * 60 * 1000;
-/** @type {Map<string, { map: Record<string, number>, fetchedAt: number }>} */
+/** @type {Map<string, { map: Record<string, number>, fetchedAt: number, blockedUntil?: number }>} */
 const squadShirtCache = new Map();
+/** @type {Map<string, Promise<Record<string, number>>>} */
+const squadShirtInflight = new Map();
 
 function shirtFromLookupMap(name, lookup = {}) {
   if (!name || !lookup) return null;
@@ -174,27 +176,42 @@ async function loadFootballDataSquadShirtMap(team) {
 
   const cacheKey = String(team.externalId || team.footballDataTeamId);
   const cached = squadShirtCache.get(cacheKey);
-  if (cached && Date.now() - cached.fetchedAt < SQUAD_SHIRT_CACHE_MS) {
-    return cached.map;
+  if (cached) {
+    if (cached.blockedUntil && Date.now() < cached.blockedUntil) return cached.map;
+    if (Date.now() - cached.fetchedAt < SQUAD_SHIRT_CACHE_MS) return cached.map;
   }
 
-  try {
-    const data = await fetchTeamWithSquad(team.footballDataTeamId);
-    const map = {};
-    for (const person of data?.squad ?? []) {
-      const shirt = extractShirtNumber(person);
-      if (!shirt || !person?.name) continue;
-      const normalized = normalizeName(person.name);
-      map[normalized] = shirt;
-      const last = normalized.split(/\s+/).filter(Boolean).pop();
-      if (last && map[last] == null) map[last] = shirt;
-    }
-    squadShirtCache.set(cacheKey, { map, fetchedAt: Date.now() });
-    return map;
-  } catch (err) {
-    console.warn(`FD squad shirt map skip ${team.externalId}:`, err.message);
-    return {};
+  if (squadShirtInflight.has(cacheKey)) {
+    return squadShirtInflight.get(cacheKey);
   }
+
+  const promise = (async () => {
+    try {
+      const data = await fetchTeamWithSquad(team.footballDataTeamId);
+      const map = {};
+      for (const person of data?.squad ?? []) {
+        const shirt = extractShirtNumber(person);
+        if (!shirt || !person?.name) continue;
+        const normalized = normalizeName(person.name);
+        map[normalized] = shirt;
+        const last = normalized.split(/\s+/).filter(Boolean).pop();
+        if (last && map[last] == null) map[last] = shirt;
+      }
+      squadShirtCache.set(cacheKey, { map, fetchedAt: Date.now() });
+      return map;
+    } catch (err) {
+      const waitMatch = /Wait (\d+) seconds/i.exec(String(err.message));
+      const blockedUntil = Date.now() + (waitMatch ? Number(waitMatch[1]) * 1000 : 60_000);
+      squadShirtCache.set(cacheKey, { map: {}, fetchedAt: Date.now(), blockedUntil });
+      console.warn(`FD squad shirt map skip ${team.externalId}:`, err.message);
+      return {};
+    } finally {
+      squadShirtInflight.delete(cacheKey);
+    }
+  })();
+
+  squadShirtInflight.set(cacheKey, promise);
+  return promise;
 }
 
 function enrichSidePlayersWithRoster(
@@ -229,15 +246,16 @@ function enrichSidePlayersWithRoster(
   };
 }
 
-async function enrichLineupPayloadWithRoster(payload, match) {
+async function enrichLineupPayloadWithRoster(payload, match, options = {}) {
+  const { fetchExternalShirts = true } = options;
   if (payload?.status === 'unavailable') return payload;
 
   const homeTeamId = match?.homeTeamId;
   const awayTeamId = match?.awayTeamId;
   const shirtBySideName = match?.raw?.fifaMeta?.shirtBySideName ?? { home: {}, away: {} };
 
-  const needHomeShirts = sideNeedsShirtNumbers(payload.home);
-  const needAwayShirts = sideNeedsShirtNumbers(payload.away);
+  const needHomeShirts = fetchExternalShirts && sideNeedsShirtNumbers(payload.home);
+  const needAwayShirts = fetchExternalShirts && sideNeedsShirtNumbers(payload.away);
 
   const [homePlayers, awayPlayers, teams] = await Promise.all([
     homeTeamId ? Player.find({ teamExternalId: homeTeamId }).lean() : [],
@@ -307,7 +325,8 @@ export function formatLineupPayload(snapshot) {
   };
 }
 
-export async function buildProbableLineupPayload(match) {
+export async function buildProbableLineupPayload(match, options = {}) {
+  const { fetchExternalShirts = true } = options;
   const [homeSide, awaySide] = await Promise.all([
     buildProbableSide(match.homeTeamId),
     buildProbableSide(match.awayTeamId),
@@ -326,7 +345,7 @@ export async function buildProbableLineupPayload(match) {
   }
 
   const payload = formatLineupPayload(snapshot);
-  return enrichLineupPayloadWithRoster(payload, match);
+  return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });
 }
 
 function sideNeedsPositionDetailRefresh(side) {
@@ -354,7 +373,8 @@ async function refreshLineupSnapshotFromFootballData(match) {
   return snapshot;
 }
 
-export async function buildMatchLineupPayload(match) {
+export async function buildMatchLineupPayload(match, options = {}) {
+  const { fetchExternalShirts = true } = options;
   if (!match?.homeTeamId || !match?.awayTeamId) {
     return formatLineupPayload(null);
   }
@@ -398,10 +418,10 @@ export async function buildMatchLineupPayload(match) {
     }
 
     const payload = formatLineupPayload(snapshot);
-    return enrichLineupPayloadWithRoster(payload, match);
+    return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });
   }
 
-  return buildProbableLineupPayload(match);
+  return buildProbableLineupPayload(match, { fetchExternalShirts });
 }
 
 export async function enrichMatchesWithLineups(matches) {

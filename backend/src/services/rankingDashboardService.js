@@ -21,6 +21,7 @@ import {
   RECENT_FINISHED_FEATURED_MAX,
 } from './matchDisplayVisibilityService.js';
 import { getCachedRankingFinishedMatches } from './rankingFinishedMatchesCache.js';
+import { buildMatchLineupPayload } from './matchLineupService.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
 /** Solo hace falta enriquecer candidatos a la barra destacada (máx. 1 visible). */
@@ -115,6 +116,15 @@ export async function getRankingDashboard(groupId, userId) {
 
   const nextUpcomingMatches = findNextUpcomingMatches(
     upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
+  );
+
+  const upcomingRawById = new Map(upcomingRaw.map((m) => [m._id.toString(), m]));
+  await Promise.all(
+    nextUpcomingMatches.map(async (featured) => {
+      const raw = upcomingRawById.get(featured.id);
+      if (!raw) return;
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+    })
   );
 
   const [liveWithStream, nextWithStream, recentFinishedWithStream] = await Promise.all([

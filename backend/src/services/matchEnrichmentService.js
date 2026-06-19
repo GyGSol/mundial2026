@@ -42,6 +42,7 @@ import { buildMatchLineupPayload } from './matchLineupService.js';
  *   includeLiveFields?: boolean,
  *   includeTimelineTournamentGoals?: boolean,
  *   includeLineup?: boolean,
+ *   fetchExternalShirtNumbers?: boolean,
  * }} options
  */
 export async function enrichMatches(matches, userId, options = {}) {
@@ -197,7 +198,9 @@ export async function enrichMatches(matches, userId, options = {}) {
     );
 
     if (includeLineup) {
-      enriched.lineup = await buildMatchLineupPayload(m);
+      enriched.lineup = await buildMatchLineupPayload(m, {
+        fetchExternalShirts: options.fetchExternalShirtNumbers !== false,
+      });
     }
 
     return enriched;
@@ -239,6 +242,7 @@ export async function enrichMatchesForRankingUpcoming(matches, userId) {
     includeLiveFields: false,
     includeTimelineTournamentGoals: false,
     includeLineup: true,
+    fetchExternalShirtNumbers: false,
   });
 }
 
