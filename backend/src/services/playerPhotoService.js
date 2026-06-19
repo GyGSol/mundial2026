@@ -16,6 +16,8 @@ export const TEAM_FOLDER_TO_FIFA = {
   uruguay: 'URU',
   mexico: 'MEX',
   corea: 'KOR',
+  australia: 'AUS',
+  'estados-unidos': 'USA',
 };
 
 export function slugifyPlayerName(value) {
