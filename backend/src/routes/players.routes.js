@@ -1,18 +1,33 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { Player } from '../models/Player.js';
 import { getPlayerSyncMeta } from '../services/playerSyncService.js';
 import { getPlayerWikiSyncMeta } from '../services/playerWikiService.js';
 import {
   askPlayerIntelFollowUp,
-  getPlayerByExternalIdWithIntel,
-  getPlayerByIdWithIntel,
   listPlayersWithIntel,
   refreshPlayerIntel,
   refreshTeamPlayerIntel,
 } from '../services/aiPlayerIntelService.js';
 import { hasAiProvider } from '../services/aiPredictionService.js';
+import { getPlayerById } from '../services/playerService.js';
+import { buildPlayerTournamentActivity } from '../services/playerTournamentActivityService.js';
 
 const router = Router();
+
+async function loadPlayerDetail(id) {
+  const player = await getPlayerById(id, { skipExternalMatches: true });
+  if (!player) return null;
+
+  const tournament = await buildPlayerTournamentActivity({
+    mongoId: player.id,
+    externalId: player.externalId,
+    fullName: player.fullName,
+    fifaCode: player.fifaCode,
+  });
+
+  return { player, tournament };
+}
 
 router.get('/', async (req, res, next) => {
   try {
@@ -68,13 +83,28 @@ router.post('/ai/refresh-team', authMiddleware, async (req, res, next) => {
   }
 });
 
+router.get('/tournament-activity', async (req, res, next) => {
+  try {
+    const tournament = await buildPlayerTournamentActivity({
+      mongoId: req.query.playerId,
+      externalId: req.query.externalId,
+      fullName: req.query.name,
+      fifaCode: req.query.team,
+    });
+    res.json({ tournament });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/by-external/:externalId', async (req, res, next) => {
   try {
-    const player = await getPlayerByExternalIdWithIntel(req.params.externalId);
-    if (!player) {
+    const dbPlayer = await Player.findOne({ externalId: String(req.params.externalId).trim() }).lean();
+    if (!dbPlayer) {
       return res.status(404).json({ error: 'Jugador no encontrado' });
     }
-    res.json({ player, aiAvailable: hasAiProvider() });
+    const detail = await loadPlayerDetail(dbPlayer._id.toString());
+    res.json(detail);
   } catch (err) {
     next(err);
   }
@@ -82,11 +112,11 @@ router.get('/by-external/:externalId', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const player = await getPlayerByIdWithIntel(req.params.id);
-    if (!player) {
+    const detail = await loadPlayerDetail(req.params.id);
+    if (!detail) {
       return res.status(404).json({ error: 'Jugador no encontrado' });
     }
-    res.json({ player, aiAvailable: hasAiProvider() });
+    res.json(detail);
   } catch (err) {
     next(err);
   }

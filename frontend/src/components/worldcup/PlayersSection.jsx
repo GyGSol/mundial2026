@@ -387,7 +387,6 @@ export default function PlayersSection() {
           playerId={selectedPlayerId}
           open={detailOpen}
           onOpenChange={setDetailOpen}
-          onIntelUpdated={refresh}
         />
       ) : null}
     </div>

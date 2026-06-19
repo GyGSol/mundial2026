@@ -620,6 +620,8 @@ function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
       position: player.position,
       tournamentGoals: player.tournamentGoals,
       teamFifaCode: teamCode,
+      playerId: player.playerId ?? null,
+      externalId: player.externalId ?? null,
     });
     setSelectedPlayerId(player.playerId ?? null);
     setSelectedExternalId(player.externalId ?? null);

@@ -203,6 +203,15 @@ export const playersApi = {
   get: (id) => request(`/players/${id}`),
   getByExternal: (externalId) =>
     request(`/players/by-external/${encodeURIComponent(externalId)}`),
+  getTournamentActivity: ({ playerId, externalId, name, team } = {}) => {
+    const params = new URLSearchParams();
+    if (playerId) params.set('playerId', playerId);
+    if (externalId) params.set('externalId', externalId);
+    if (name) params.set('name', name);
+    if (team) params.set('team', team);
+    const query = params.toString();
+    return request(`/players/tournament-activity${query ? `?${query}` : ''}`);
+  },
   meta: () => request('/players/meta'),
   refreshTeamIntel: (team, { force = false } = {}) =>
     request('/players/ai/refresh-team', {
