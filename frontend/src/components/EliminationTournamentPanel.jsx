@@ -12,6 +12,16 @@ const STATUS_LABELS = {
   completed: 'Finalizado',
 };
 
+function formatMatchLine(match) {
+  const home = match.homeTeam?.name ?? match.homeTeam?.nameEn ?? 'Local';
+  const away = match.awayTeam?.name ?? match.awayTeam?.nameEn ?? 'Visitante';
+  const score =
+    match.homeScore != null && match.awayScore != null
+      ? ` · ${match.homeScore}-${match.awayScore}`
+      : '';
+  return `${home} vs ${away}${score}`;
+}
+
 export default function EliminationTournamentPanel({
   data,
   loading,
@@ -41,8 +51,15 @@ export default function EliminationTournamentPanel({
   const { tournament, currentMatchTable, activePlayers, eliminated, champion, prizeFubols } =
     data;
   const status = tournament?.status ?? 'inactive';
-  const match = currentMatchTable?.match;
+  const matches =
+    currentMatchTable?.matches?.length > 0
+      ? currentMatchTable.matches
+      : currentMatchTable?.match
+        ? [currentMatchTable.match]
+        : [];
   const leaderboard = currentMatchTable?.leaderboard ?? [];
+  const roundMode = currentMatchTable?.mode;
+  const hasLive = matches.some((m) => m.status === 'live');
 
   return (
     <div className="flex flex-col gap-4">
@@ -88,28 +105,57 @@ export default function EliminationTournamentPanel({
         </Card>
       ) : null}
 
-      {match ? (
+      {status === 'running' && matches.length > 0 ? (
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">
-            {match.homeTeam?.name ?? 'Local'} vs {match.awayTeam?.name ?? 'Visitante'}
-            {match.status === 'live' ? (
-              <span className="ml-2 text-xs font-normal text-emerald-600">En vivo</span>
-            ) : null}
-            {match.homeScore != null && match.awayScore != null
-              ? ` · ${match.homeScore}-${match.awayScore}`
-              : null}
+            {roundMode === 'preview' ? 'Próximo' : hasLive ? 'En juego' : 'Ronda actual'}
+            {matches.length > 1 ? ` · ${matches.length} partidos` : null}
           </p>
+          <ul className="flex flex-col gap-1 text-sm">
+            {matches.map((match) => (
+              <li key={match.id ?? match.externalId}>
+                {formatMatchLine(match)}
+                {match.status === 'live' ? (
+                  <span className="ml-2 text-xs font-normal text-emerald-600">En vivo</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {roundMode === 'preview' ? (
+            <p className="text-xs text-muted-foreground">
+              Puntos en cero hasta que arranquen. La tabla se ordena por Gdif (menor error arriba).
+            </p>
+          ) : null}
+          {leaderboard.length > 0 ? (
+            <LeaderboardTable
+              leaderboard={leaderboard}
+              showGroupName={false}
+              prizesWinnersCount={0}
+              hasLiveMatches={hasLive}
+            />
+          ) : null}
+        </div>
+      ) : status === 'running' ? (
+        <p className="text-sm text-muted-foreground">
+          No hay partidos programados por ahora. La tabla se actualizará con el próximo encuentro.
+        </p>
+      ) : null}
+
+      {status === 'completed' && matches.length > 0 && leaderboard.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-medium">Última ronda</p>
+          <ul className="flex flex-col gap-1 text-sm">
+            {matches.map((match) => (
+              <li key={match.id ?? match.externalId}>{formatMatchLine(match)}</li>
+            ))}
+          </ul>
           <LeaderboardTable
             leaderboard={leaderboard}
             showGroupName={false}
             prizesWinnersCount={0}
-            hasLiveMatches={match.status === 'live'}
+            hasLiveMatches={false}
           />
         </div>
-      ) : status === 'running' ? (
-        <p className="text-sm text-muted-foreground">
-          Esperando el próximo partido finalizado para actualizar la tabla de eliminación.
-        </p>
       ) : null}
 
       {eliminated.length > 0 ? (

@@ -5,6 +5,7 @@ import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { EliminationTournament } from '../models/EliminationTournament.js';
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
+import { Team } from '../models/Team.js';
 import { TournamentEnrollment } from '../models/TournamentEnrollment.js';
 import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
@@ -15,9 +16,11 @@ import {
   payoutEliminationChampion,
 } from './fubolService.js';
 import {
-  rankActivePlayersForMatch,
+  rankActivePlayersForMatchBatch,
 } from './matchPredictionRankingsService.js';
+import { resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { recalculateMatchScores } from './syncService.js';
+import { kickoffSlotKey, matchesInFirstKickoffSlot } from '../utils/kickoffSlot.js';
 
 function tournamentError(message, status = 400) {
   const error = new Error(message);
@@ -41,7 +44,68 @@ function serializeMatchSummary(match) {
     status: match.status,
     finishedAt: match.finishedAt,
     kickoffAt: match.kickoffAt,
+    scheduleKickoffAt: match.scheduleKickoffAt,
   };
+}
+
+function kickoffSlotQuery(kickoffAt) {
+  if (!kickoffAt) return null;
+  return {
+    $or: [{ kickoffAt }, { scheduleKickoffAt: kickoffAt }],
+  };
+}
+
+async function attachTeamsToMatches(matches = []) {
+  if (!matches.length) return [];
+  const teamIds = [...new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId]))];
+  const teams = teamIds.length
+    ? await Team.find({ externalId: { $in: teamIds } }).select('externalId nameEn fifaCode').lean()
+    : [];
+  const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
+
+  return matches.map((m) => {
+    const home = teamMap[m.homeTeamId];
+    const away = teamMap[m.awayTeamId];
+    const homeName = home?.nameEn ?? m.homeTeamId;
+    const awayName = away?.nameEn ?? m.awayTeamId;
+    return {
+      ...m,
+      homeTeam: { name: homeName, nameEn: homeName, externalId: m.homeTeamId },
+      awayTeam: { name: awayName, nameEn: awayName, externalId: m.awayTeamId },
+    };
+  });
+}
+
+async function findMatchesInKickoffSlot(referenceMatch) {
+  const kickoff = resolveScheduleKickoffAt(referenceMatch);
+  const query = kickoffSlotQuery(kickoff);
+  if (!query) return [referenceMatch];
+  return Match.find(query).sort({ externalId: 1 }).lean();
+}
+
+async function findCurrentRoundMatches(tournament) {
+  const liveRaw = await Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean();
+  if (liveRaw.length) {
+    const slot = matchesInFirstKickoffSlot(liveRaw);
+    const enriched = await attachTeamsToMatches(slot);
+    return { matches: enriched, mode: 'live', zeroPoints: false };
+  }
+
+  if (tournament?.status !== 'running') {
+    return { matches: [], mode: null, zeroPoints: false };
+  }
+
+  const upcomingRaw = await Match.find({ status: 'upcoming' })
+    .sort({ kickoffAt: 1, externalId: 1 })
+    .limit(30)
+    .lean();
+  const nextSlot = matchesInFirstKickoffSlot(upcomingRaw);
+  if (nextSlot.length) {
+    const enriched = await attachTeamsToMatches(nextSlot);
+    return { matches: enriched, mode: 'preview', zeroPoints: true };
+  }
+
+  return { matches: [], mode: null, zeroPoints: false };
 }
 
 function mapRankRowToLeaderboard(row, userById) {
@@ -190,46 +254,67 @@ export async function processEliminationForGroup(groupId) {
     return tournament;
   }
 
-  const matches = await Match.find({
-    status: 'finished',
-    finishedAt: { $gte: tournament.startedAt },
-    _id: { $nin: tournament.processedMatchIds },
-  })
-    .sort({ finishedAt: 1 })
-    .lean();
+  const processedSet = new Set(tournament.processedMatchIds.map((id) => id.toString()));
 
-  if (!matches.length) return tournament;
+  while (tournament.activePlayerIds.length > 1) {
+    const finishedUnprocessed = await Match.find({
+      status: 'finished',
+      finishedAt: { $gte: tournament.startedAt },
+      _id: { $nin: tournament.processedMatchIds },
+    })
+      .sort({ finishedAt: 1 })
+      .lean();
 
-  await rescoreUnscoredPredictions(matches);
+    if (!finishedUnprocessed.length) break;
 
-  for (const match of matches) {
-    if (tournament.activePlayerIds.length <= 1) break;
+    const slotMatches = await findMatchesInKickoffSlot(finishedUnprocessed[0]);
+    const kickoff = resolveScheduleKickoffAt(finishedUnprocessed[0]);
+
+    const pendingInSlot = slotMatches.some(
+      (m) =>
+        (m.status === 'upcoming' || m.status === 'live') &&
+        kickoffSlotKey(m) === kickoffSlotKey(finishedUnprocessed[0])
+    );
+    if (pendingInSlot) break;
+
+    const batch = slotMatches.filter(
+      (m) =>
+        m.status === 'finished' &&
+        m.finishedAt >= tournament.startedAt &&
+        !processedSet.has(m._id.toString())
+    );
+    if (!batch.length) break;
+
+    await rescoreUnscoredPredictions(batch);
 
     const activeIds = [...tournament.activePlayerIds];
     const users = await User.find({ _id: { $in: activeIds } })
       .select('name isAiUser')
       .lean();
     const userMap = Object.fromEntries(users.map((user) => [user._id.toString(), user.name]));
-    const userById = Object.fromEntries(users.map((user) => [user._id.toString(), user]));
 
     const predictions = await Prediction.find({
       userId: { $in: activeIds },
-      matchId: match._id,
+      matchId: { $in: batch.map((m) => m._id) },
       pointsEarned: { $ne: null },
     }).lean();
 
-    const predictionsByUserId = new Map(
-      predictions.map((prediction) => [prediction.userId.toString(), prediction])
+    const predictionsByUserIdAndMatchId = new Map(
+      predictions.map((p) => [`${p.userId.toString()}:${p.matchId.toString()}`, p])
     );
 
-    const ranked = rankActivePlayersForMatch({
+    const ranked = rankActivePlayersForMatchBatch({
       activeUserIds: activeIds,
-      predictionsByUserId,
+      matches: batch,
+      predictionsByUserIdAndMatchId,
       userMap,
-      actual: { home: match.homeScore ?? 0, away: match.awayScore ?? 0 },
+      zeroPoints: false,
     });
 
-    tournament.processedMatchIds.push(match._id);
+    for (const m of batch) {
+      tournament.processedMatchIds.push(m._id);
+      processedSet.add(m._id.toString());
+    }
 
     if (!ranked.length) continue;
 
@@ -241,7 +326,7 @@ export async function processEliminationForGroup(groupId) {
     );
     tournament.eliminated.push({
       userId: eliminatedUserId,
-      matchId: match._id,
+      matchId: batch[0]._id,
       eliminatedAt: new Date(),
       rankInMatch: lastPlace.rank,
     });
@@ -257,48 +342,56 @@ export async function processEliminationForGroup(groupId) {
       });
       return tournament;
     }
+
+    await tournament.save();
   }
 
   await tournament.save();
   return tournament;
 }
 
-async function buildMatchTableForPlayers(match, activePlayerIds) {
-  if (!match || !activePlayerIds.length) {
-    return { match: serializeMatchSummary(match), leaderboard: [] };
+async function buildRoundTableForPlayers(matches, activePlayerIds, { zeroPoints = false } = {}) {
+  if (!matches?.length || !activePlayerIds.length) {
+    return { matches: [], match: null, leaderboard: [], mode: zeroPoints ? 'preview' : null };
   }
 
+  const enriched = await attachTeamsToMatches(matches);
   const users = await User.find({ _id: { $in: activePlayerIds } })
     .select('name isAiUser')
     .lean();
   const userMap = Object.fromEntries(users.map((user) => [user._id.toString(), user.name]));
   const userById = Object.fromEntries(users.map((user) => [user._id.toString(), user]));
 
-  const predictions = await Prediction.find({
+  const predictionFilter = {
     userId: { $in: activePlayerIds },
-    matchId: match._id,
-    pointsEarned: { $ne: null },
-  }).lean();
+    matchId: { $in: enriched.map((m) => m._id) },
+  };
+  if (!zeroPoints) {
+    predictionFilter.pointsEarned = { $ne: null };
+  }
 
-  const predictionsByUserId = new Map(
-    predictions.map((prediction) => [prediction.userId.toString(), prediction])
+  const predictions = await Prediction.find(predictionFilter).lean();
+  const predictionsByUserIdAndMatchId = new Map(
+    predictions.map((p) => [`${p.userId.toString()}:${p.matchId.toString()}`, p])
   );
 
-  const actual =
-    match.status === 'finished' || match.status === 'live'
-      ? { home: match.homeScore ?? 0, away: match.awayScore ?? 0 }
-      : null;
-
-  const ranked = rankActivePlayersForMatch({
+  const ranked = rankActivePlayersForMatchBatch({
     activeUserIds: activePlayerIds,
-    predictionsByUserId,
+    matches: enriched,
+    predictionsByUserIdAndMatchId,
     userMap,
-    actual,
+    zeroPoints,
   });
 
+  const serialized = enriched.map(serializeMatchSummary);
+  const mode =
+    zeroPoints ? 'preview' : enriched.some((m) => m.status === 'live') ? 'live' : 'finished';
+
   return {
-    match: serializeMatchSummary(match),
+    matches: serialized,
+    match: serialized[0] ?? null,
     leaderboard: ranked.map((row) => mapRankRowToLeaderboard(row, userById)),
+    mode,
   };
 }
 
@@ -383,25 +476,27 @@ export async function getEliminationDashboard(groupId, viewerUserId) {
     };
   });
 
-  let currentMatchTable = { match: null, leaderboard: [] };
+  let currentMatchTable = { matches: [], match: null, leaderboard: [], mode: null };
   const lastProcessedId = tournament?.processedMatchIds?.length
     ? tournament.processedMatchIds[tournament.processedMatchIds.length - 1]
     : null;
 
-  if (lastProcessedId && tournament?.status === 'running') {
-    const lastMatch = await Match.findById(lastProcessedId).lean();
-    currentMatchTable = await buildMatchTableForPlayers(lastMatch, activeIds);
+  if (tournament?.status === 'running' && activeIds.length > 1) {
+    const round = await findCurrentRoundMatches(tournament);
+    if (round.matches.length) {
+      currentMatchTable = await buildRoundTableForPlayers(round.matches, activeIds, {
+        zeroPoints: round.zeroPoints,
+      });
+    }
   } else if (lastProcessedId && tournament?.status === 'completed') {
     const lastMatch = await Match.findById(lastProcessedId).lean();
+    const slotMatches = lastMatch ? await findMatchesInKickoffSlot(lastMatch) : [];
+    const finishedSlot = slotMatches.filter((m) => m.status === 'finished');
     const finalActiveIds = tournament.championId ? [tournament.championId] : activeIds;
-    currentMatchTable = await buildMatchTableForPlayers(lastMatch, finalActiveIds);
-  } else if (tournament?.status === 'running' && activeIds.length > 1) {
-    const liveMatch = await Match.findOne({ status: 'live' })
-      .sort({ kickoffAt: 1 })
-      .lean();
-    if (liveMatch) {
-      currentMatchTable = await buildMatchTableForPlayers(liveMatch, activeIds);
-    }
+    const tableMatches = finishedSlot.length ? finishedSlot : lastMatch ? [lastMatch] : [];
+    currentMatchTable = await buildRoundTableForPlayers(tableMatches, finalActiveIds, {
+      zeroPoints: false,
+    });
   }
 
   let champion = null;

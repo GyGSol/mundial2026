@@ -15,6 +15,7 @@ import {
   activateTournament,
   startTournament,
   processEliminationForGroup,
+  getEliminationDashboard,
 } from '../src/services/eliminationTournamentService.js';
 import { enrollUser } from '../src/services/tournamentEnrollmentService.js';
 import { creditUser } from '../src/services/fubolService.js';
@@ -380,5 +381,196 @@ describe('eliminationTournamentService', () => {
     const tournament = await EliminationTournament.findOne({ groupId }).lean();
     expect(tournament.eliminated[0].userId.toString()).toBe(lowPa._id.toString());
     expect(tournament.activePlayerIds).toHaveLength(2);
+  });
+
+  it('elimina según puntos combinados de dos partidos con mismo kickoff', async () => {
+    const { admin, groupId } = await setupGroupWithAdmin();
+    const playerB = await createFundedUser('batchB');
+    const playerC = await createFundedUser('batchC');
+    cleanup.userIds.push(playerB._id, playerC._id);
+    await joinCompetitionGroup({ userId: playerB._id, groupId });
+    await joinCompetitionGroup({ userId: playerC._id, groupId });
+
+    await activateTournament(groupId, admin._id.toString());
+    await enrollUser(playerB._id.toString(), groupId, TOURNAMENT_TYPE_ELIMINATION);
+    await enrollUser(playerC._id.toString(), groupId, TOURNAMENT_TYPE_ELIMINATION);
+
+    const dashboard = await startTournament(groupId, admin._id.toString());
+    const startedAt = new Date(dashboard.tournament.startedAt);
+    const sharedKickoff = new Date(startedAt.getTime() + 60_000);
+
+    const match1 = await Match.create({
+      externalId: `elim-batch1-${Date.now()}`,
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      homeScore: 2,
+      awayScore: 0,
+      status: 'finished',
+      finishedAt: new Date(startedAt.getTime() + 120_000),
+      kickoffAt: sharedKickoff,
+    });
+    const match2 = await Match.create({
+      externalId: `elim-batch2-${Date.now()}`,
+      homeTeamId: 't3',
+      awayTeamId: 't4',
+      homeScore: 1,
+      awayScore: 1,
+      status: 'finished',
+      finishedAt: new Date(startedAt.getTime() + 130_000),
+      kickoffAt: sharedKickoff,
+    });
+    cleanup.matchIds.push(match1._id, match2._id);
+
+    await Prediction.create({
+      userId: admin._id,
+      matchId: match1._id,
+      homeGoals: 2,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+    await Prediction.create({
+      userId: admin._id,
+      matchId: match2._id,
+      homeGoals: 1,
+      awayGoals: 1,
+      pointsEarned: 4,
+      pointsBreakdown: { winner: 1, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+    await Prediction.create({
+      userId: playerB._id,
+      matchId: match1._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 1,
+      pointsBreakdown: { winner: 0, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+    });
+    await Prediction.create({
+      userId: playerB._id,
+      matchId: match2._id,
+      homeGoals: 0,
+      awayGoals: 0,
+      pointsEarned: 0,
+      pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+    });
+    await Prediction.create({
+      userId: playerC._id,
+      matchId: match1._id,
+      homeGoals: 0,
+      awayGoals: 1,
+      pointsEarned: 0,
+      pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+    });
+    await Prediction.create({
+      userId: playerC._id,
+      matchId: match2._id,
+      homeGoals: 0,
+      awayGoals: 0,
+      pointsEarned: 0,
+      pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+    });
+
+    await processEliminationForGroup(groupId);
+
+    const tournament = await EliminationTournament.findOne({ groupId }).lean();
+    expect(tournament.processedMatchIds).toHaveLength(2);
+    expect(tournament.eliminated).toHaveLength(1);
+    expect(tournament.eliminated[0].userId.toString()).toBe(playerC._id.toString());
+    expect(tournament.activePlayerIds).toHaveLength(2);
+  });
+
+  it('no procesa un partido si otro del mismo kickoff sigue en juego', async () => {
+    const { admin, groupId } = await setupGroupWithAdmin();
+    const playerB = await createFundedUser('slotB');
+    cleanup.userIds.push(playerB._id);
+    await joinCompetitionGroup({ userId: playerB._id, groupId });
+
+    await activateTournament(groupId, admin._id.toString());
+    await enrollUser(playerB._id.toString(), groupId, TOURNAMENT_TYPE_ELIMINATION);
+
+    const dashboard = await startTournament(groupId, admin._id.toString());
+    const startedAt = new Date(dashboard.tournament.startedAt);
+    const sharedKickoff = new Date(startedAt.getTime() + 60_000);
+
+    const finished = await Match.create({
+      externalId: `elim-slot-fin-${Date.now()}`,
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      homeScore: 1,
+      awayScore: 0,
+      status: 'finished',
+      finishedAt: new Date(startedAt.getTime() + 120_000),
+      kickoffAt: sharedKickoff,
+    });
+    const live = await Match.create({
+      externalId: `elim-slot-live-${Date.now()}`,
+      homeTeamId: 't3',
+      awayTeamId: 't4',
+      homeScore: 0,
+      awayScore: 0,
+      status: 'live',
+      kickoffAt: sharedKickoff,
+    });
+    cleanup.matchIds.push(finished._id, live._id);
+
+    await Prediction.create({
+      userId: admin._id,
+      matchId: finished._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 4,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+    });
+
+    await processEliminationForGroup(groupId);
+
+    const tournament = await EliminationTournament.findOne({ groupId }).lean();
+    expect(tournament.processedMatchIds).toHaveLength(0);
+    expect(tournament.eliminated).toHaveLength(0);
+  });
+
+  it('dashboard running muestra próximo partido con puntos en cero ordenados por Gdif', async () => {
+    const { admin, groupId } = await setupGroupWithAdmin();
+    const playerB = await createFundedUser('previewB');
+    cleanup.userIds.push(playerB._id);
+    await joinCompetitionGroup({ userId: playerB._id, groupId });
+
+    await activateTournament(groupId, admin._id.toString());
+    await enrollUser(playerB._id.toString(), groupId, TOURNAMENT_TYPE_ELIMINATION);
+    await startTournament(groupId, admin._id.toString());
+
+    const kickoff = new Date(Date.now() + 86_400_000);
+    const upcoming = await Match.create({
+      externalId: `elim-upcoming-${Date.now()}`,
+      homeTeamId: 't1',
+      awayTeamId: 't2',
+      status: 'upcoming',
+      kickoffAt: kickoff,
+    });
+    cleanup.matchIds.push(upcoming._id);
+
+    await Prediction.create({
+      userId: admin._id,
+      matchId: upcoming._id,
+      homeGoals: 2,
+      awayGoals: 1,
+      goalDiffHome: 2,
+      goalDiffAway: 1,
+    });
+    await Prediction.create({
+      userId: playerB._id,
+      matchId: upcoming._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      goalDiffHome: 1,
+      goalDiffAway: 0,
+    });
+
+    const dash = await getEliminationDashboard(groupId, admin._id.toString());
+    expect(dash.currentMatchTable.mode).toBe('preview');
+    expect(dash.currentMatchTable.matches).toHaveLength(1);
+    expect(dash.currentMatchTable.leaderboard.every((row) => row.totalPoints === 0)).toBe(true);
+    expect(dash.currentMatchTable.leaderboard[0].name).toBe(playerB.name);
+    expect(dash.currentMatchTable.leaderboard[1].name).toBe(admin.name);
   });
 });
