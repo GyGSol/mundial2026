@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PlayerAvatar from '@/components/PlayerAvatar.jsx';
 import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
+import CoachDetailDialog from '@/components/lineup/CoachDetailDialog.jsx';
 import { inferTacticalPosition } from '@/lib/playerPositionLabel.js';
 import { cn } from '@/lib/utils';
 
@@ -141,7 +142,7 @@ function PitchHalf({ players, side, teamLabel, teamCode, onPlayerClick }) {
   );
 }
 
-function CoachBadge({ coach, side }) {
+function CoachBadge({ coach, side, formation, onCoachClick }) {
   const coachName = typeof coach === 'string' ? coach : coach?.name;
   const photoUrl = typeof coach === 'object' && coach ? coach.photoUrl : null;
   if (!coachName) return null;
@@ -150,19 +151,41 @@ function CoachBadge({ coach, side }) {
   const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
 
   return (
-    <div className="flex flex-col items-center gap-px">
-      <span className="text-[5px] font-semibold leading-none text-white/90 sm:text-[6px]">DT</span>
-      <PlayerAvatar
-        name={coachName}
-        photoUrl={photoUrl}
-        size="xs"
-        className={cn('h-5 w-5 shadow-sm ring-1 sm:h-6 sm:w-6', ringClass)}
-      />
-      {label ? (
-        <span className="max-w-[40px] truncate rounded bg-black/65 px-0.5 py-px text-[6px] font-medium leading-tight text-white shadow-sm sm:max-w-[48px] sm:text-[7px]">
-          {label}
-        </span>
-      ) : null}
+    <div className="group/coach relative">
+      <button
+        type="button"
+        className="flex flex-col items-center gap-px rounded-md p-px transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        onClick={(event) => {
+          event.stopPropagation();
+          onCoachClick?.({
+            ...(typeof coach === 'object' && coach ? coach : { name: coachName, photoUrl }),
+            formation: formation ?? null,
+            teamSide: side,
+          });
+        }}
+        aria-label={`Ver ficha de ${coachName}`}
+      >
+        <span className="text-[5px] font-semibold leading-none text-white/90 sm:text-[6px]">DT</span>
+        <PlayerAvatar
+          name={coachName}
+          photoUrl={photoUrl}
+          size="xs"
+          className={cn('h-5 w-5 shadow-sm ring-1 sm:h-6 sm:w-6', ringClass)}
+        />
+        {label ? (
+          <span className="max-w-[40px] truncate rounded bg-black/65 px-0.5 py-px text-[6px] font-medium leading-tight text-white shadow-sm sm:max-w-[48px] sm:text-[7px]">
+            {label}
+          </span>
+        ) : null}
+      </button>
+
+      <div
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 hidden w-max max-w-[11rem] -translate-x-1/2 rounded-md border border-white/20 bg-black/90 px-2 py-1 text-center text-[9px] leading-snug text-white shadow-lg group-hover/coach:block"
+      >
+        <p className="font-semibold">DT · {coachName}</p>
+        <p className="mt-0.5 text-[8px] text-white/60">Clic para ver ficha</p>
+      </div>
     </div>
   );
 }
@@ -203,6 +226,8 @@ export default function PitchFormation({
   const [detailPreview, setDetailPreview] = useState(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState(null);
   const [selectedExternalId, setSelectedExternalId] = useState(null);
+  const [coachDetailOpen, setCoachDetailOpen] = useState(false);
+  const [coachDetail, setCoachDetail] = useState(null);
 
   if (!homePlayers.length && !awayPlayers.length) return null;
 
@@ -230,6 +255,22 @@ export default function PitchFormation({
     }
   };
 
+  const handleCoachClick = (coach) => {
+    setCoachDetail({
+      ...coach,
+      teamName:
+        coach.teamName ?? (coach.teamSide === 'home' ? homeLabel : awayLabel),
+      teamFifaCode:
+        coach.teamFifaCode ?? (coach.teamSide === 'home' ? homeTeamCode : awayTeamCode),
+    });
+    setCoachDetailOpen(true);
+  };
+
+  const handleCoachDetailOpenChange = (open) => {
+    setCoachDetailOpen(open);
+    if (!open) setCoachDetail(null);
+  };
+
   return (
     <>
       <div
@@ -242,16 +283,30 @@ export default function PitchFormation({
           <PitchMarkings />
 
           <div className="pointer-events-none absolute bottom-1 left-2 flex items-end gap-1">
+            <div className="pointer-events-auto">
+              <CoachBadge
+                coach={lineup?.home?.coach}
+                side="home"
+                formation={lineup?.home?.formation}
+                onCoachClick={handleCoachClick}
+              />
+            </div>
             <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
               {homeLabel}
             </span>
-            <CoachBadge coach={lineup?.home?.coach} side="home" />
           </div>
-          <div className="pointer-events-none absolute bottom-1 right-2 flex flex-row-reverse items-end gap-1">
+          <div className="pointer-events-none absolute bottom-1 right-2 flex items-end gap-1">
             <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
               {awayLabel}
             </span>
-            <CoachBadge coach={lineup?.away?.coach} side="away" />
+            <div className="pointer-events-auto">
+              <CoachBadge
+                coach={lineup?.away?.coach}
+                side="away"
+                formation={lineup?.away?.formation}
+                onCoachClick={handleCoachClick}
+              />
+            </div>
           </div>
         </div>
 
@@ -278,6 +333,14 @@ export default function PitchFormation({
           preview={detailPreview}
           open={detailOpen}
           onOpenChange={handleDetailOpenChange}
+        />
+      ) : null}
+
+      {coachDetailOpen ? (
+        <CoachDetailDialog
+          coach={coachDetail}
+          open={coachDetailOpen}
+          onOpenChange={handleCoachDetailOpenChange}
         />
       ) : null}
     </>

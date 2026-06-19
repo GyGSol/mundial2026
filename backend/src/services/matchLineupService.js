@@ -310,7 +310,14 @@ function enrichSideCoach(coachField, team) {
     (typeof coachField === 'string' ? coachField : coachField?.name) ||
     team?.headCoach ||
     '';
-  return mapCoachToLineupEntry(team?.fifaCode ?? '', name);
+  const entry = mapCoachToLineupEntry(team?.fifaCode ?? '', name);
+  if (!entry) return null;
+  return {
+    ...entry,
+    nationality: team?.coachNationality || null,
+    teamName: team?.nameEn || null,
+    teamFifaCode: team?.fifaCode || null,
+  };
 }
 
 async function enrichLineupPayloadWithRoster(payload, match, options = {}) {
