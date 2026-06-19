@@ -5,6 +5,7 @@ import {
   assignPlayersToFormation,
 } from '../utils/formationLayout.js';
 import { MIN_CONFIRMED_STARTERS_PER_TEAM } from './aiLineupContextService.js';
+import { resolvePlayerPhotoUrl } from './playerPhotoService.js';
 
 export const MAX_STARTERS = 11;
 export const LINE_ORDER = ['GK', 'DEF', 'MID', 'FWD'];
@@ -56,6 +57,7 @@ function serializeProbablePlayer(player) {
     name: player.fullName,
     shirtNumber: player.shirtNumber ?? null,
     position: player.position ?? 'MID',
+    photoUrl: resolvePlayerPhotoUrl(player.photoKey) || null,
     isStarter: true,
   };
 }

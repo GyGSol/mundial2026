@@ -1,5 +1,8 @@
 import { fetchMatchDetails, hasToken } from './footballDataApiClient.js';
 import { Team } from '../models/Team.js';
+import { Player } from '../models/Player.js';
+import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
+import { enrichNameFromRoster } from '../utils/playerNameMatch.js';
 import {
   fetchFixtureLineups,
   hasApiFootballKey,
@@ -129,6 +132,41 @@ function refreshSnapshotGrids(snapshot) {
   };
 }
 
+function enrichSidePlayersWithRoster(side, roster) {
+  if (!side?.players?.length) return side;
+  return {
+    ...side,
+    players: side.players.map((player) => {
+      const enriched = enrichNameFromRoster(player.name, roster, {
+        shirtNumber: player.shirtNumber,
+      });
+      return {
+        ...player,
+        name: enriched.name || player.name,
+        photoUrl: enriched.photoUrl ?? player.photoUrl ?? null,
+      };
+    }),
+  };
+}
+
+async function enrichLineupPayloadWithRoster(payload, homeTeamId, awayTeamId) {
+  if (payload?.status === 'unavailable') return payload;
+
+  const [homePlayers, awayPlayers] = await Promise.all([
+    homeTeamId ? Player.find({ teamExternalId: homeTeamId }).lean() : [],
+    awayTeamId ? Player.find({ teamExternalId: awayTeamId }).lean() : [],
+  ]);
+
+  const homeRoster = homePlayers.map(mapPlayerToTimelineRosterEntry);
+  const awayRoster = awayPlayers.map(mapPlayerToTimelineRosterEntry);
+
+  return {
+    ...payload,
+    home: enrichSidePlayersWithRoster(payload.home, homeRoster),
+    away: enrichSidePlayersWithRoster(payload.away, awayRoster),
+  };
+}
+
 export function formatLineupPayload(snapshot) {
   if (!snapshot?.home?.players?.length && !snapshot?.away?.players?.length) {
     return {
@@ -173,7 +211,8 @@ export async function buildProbableLineupPayload(match) {
     away: awaySide,
   };
 
-  return formatLineupPayload(snapshot);
+  const payload = formatLineupPayload(snapshot);
+  return enrichLineupPayloadWithRoster(payload, match.homeTeamId, match.awayTeamId);
 }
 
 function sideNeedsPositionDetailRefresh(side) {
@@ -228,7 +267,8 @@ export async function buildMatchLineupPayload(match) {
         console.warn(`Lineup snapshot refresh skip ${match.externalId}:`, err.message);
       }
     }
-    return formatLineupPayload(snapshot);
+    const payload = formatLineupPayload(snapshot);
+    return enrichLineupPayloadWithRoster(payload, match.homeTeamId, match.awayTeamId);
   }
 
   return buildProbableLineupPayload(match);

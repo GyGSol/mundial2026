@@ -1,3 +1,5 @@
+import PlayerAvatar from '@/components/PlayerAvatar.jsx';
+import { inferTacticalPosition } from '@/lib/playerPositionLabel.js';
 import { cn } from '@/lib/utils';
 
 /** Margen desde el arco dentro de cada mitad (0–100 de profundidad). */
@@ -9,6 +11,16 @@ function shortName(fullName) {
   if (!parts.length) return '';
   if (parts.length === 1) return parts[0].slice(0, 9);
   return parts[parts.length - 1].slice(0, 11);
+}
+
+function lineupPositionLabel(player) {
+  return (
+    inferTacticalPosition({
+      position: player.position,
+      positionX: player.gridX,
+      positionY: player.gridY,
+    }) ?? player.position
+  );
 }
 
 /**
@@ -28,28 +40,46 @@ function teamDotStyle(player, side) {
 function PlayerMarker({ player, side, index }) {
   const label = shortName(player.name);
   const number = player.shirtNumber;
+  const position = lineupPositionLabel(player);
   const style = teamDotStyle(player, side);
+  const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
 
   return (
     <div
       key={player.playerId ?? `${side}-${index}`}
       className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5"
       style={style}
-      title={player.name}
+      title={[position, number != null ? `#${number}` : null, player.name].filter(Boolean).join(' · ')}
     >
       {label ? (
-        <span className="max-w-[56px] truncate rounded bg-black/55 px-1 py-px text-[8px] font-medium leading-tight text-white">
+        <span className="max-w-[60px] truncate rounded bg-black/60 px-1 py-px text-[8px] font-medium leading-tight text-white shadow-sm">
           {label}
         </span>
       ) : null}
-      <span
-        className={cn(
-          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold shadow-md ring-1 ring-white/30',
-          side === 'home' ? 'bg-sky-500 text-white' : 'bg-rose-500 text-white'
-        )}
-      >
-        {number ?? '·'}
-      </span>
+
+      <div className="relative">
+        <PlayerAvatar
+          name={player.name}
+          photoUrl={player.photoUrl}
+          size="sm"
+          className={cn('h-9 w-9 shadow-md ring-2', ringClass)}
+        />
+        {number != null ? (
+          <span
+            className={cn(
+              'absolute -bottom-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[8px] font-bold leading-none text-white shadow',
+              side === 'home' ? 'bg-sky-600' : 'bg-rose-600'
+            )}
+          >
+            {number}
+          </span>
+        ) : null}
+        {position ? (
+          <span className="absolute -left-1 -top-1 rounded bg-black/75 px-0.5 text-[7px] font-semibold leading-tight text-white shadow-sm">
+            {position}
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -87,7 +117,6 @@ function PitchMarkings() {
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[24%] w-[24%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40" />
 
-      {/* Área grande local: profundidad ~31% de la mitad (borde en gridX≈30) */}
       <div className="pointer-events-none absolute bottom-[18%] left-2 top-[18%] w-[18%] border border-white/30" />
       <div className="pointer-events-none absolute bottom-[32%] left-2 top-[32%] w-[7%] border border-white/25" />
 
