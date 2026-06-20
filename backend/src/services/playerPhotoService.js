@@ -42,6 +42,7 @@ export const TEAM_FOLDER_TO_FIFA = {
   panama: 'PAN',
   paraguay: 'PAR',
   portugal: 'POR',
+  suiza: 'SUI',
   turquia: 'TUR',
   uruguay: 'URU',
   uzbekistan: 'UZB',

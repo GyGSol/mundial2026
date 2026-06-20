@@ -90,6 +90,7 @@ export const FIFA_TO_PHOTO_FOLDER = {
   TUR: 'turquia',
   QAT: 'catar',
   SCO: 'escocia',
+  SUI: 'suiza',
   URU: 'uruguay',
   USA: 'estados-unidos',
   UZB: 'uzbekistan',
