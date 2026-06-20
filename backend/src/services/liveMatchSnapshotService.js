@@ -11,6 +11,7 @@ import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
 } from './liveMatchPartitionService.js';
+import { buildMatchLineupPayload } from './matchLineupService.js';
 
 const RECENT_FINISHED_QUERY_LIMIT = Math.max(RECENT_FINISHED_FEATURED_MAX + 2, 3);
 
@@ -48,6 +49,21 @@ async function computeLiveMatchSnapshot(userId) {
   const recentFinishedMatches = recentFeaturedRaw
     .map((m) => byMongoId.get(m._id.toString()))
     .filter(Boolean);
+
+  const liveRawById = new Map(activeLiveRaw.map((m) => [m._id.toString(), m]));
+  const recentRawById = new Map(recentFeaturedRaw.map((m) => [m._id.toString(), m]));
+  await Promise.all([
+    ...liveMatches.map(async (featured) => {
+      const raw = liveRawById.get(featured.id);
+      if (!raw) return;
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+    }),
+    ...recentFinishedMatches.map(async (featured) => {
+      const raw = recentRawById.get(featured.id);
+      if (!raw) return;
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+    }),
+  ]);
 
   return { liveMatches, recentFinishedMatches };
 }

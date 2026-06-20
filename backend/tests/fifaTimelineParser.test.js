@@ -3,6 +3,8 @@ import {
   parseFifaMinute,
   parseFifaTimeline,
   mergeShotAttemptsFromRawEvents,
+  dedupeTimelineBySlot,
+  timelineSlotIdentity,
   resolveVarEventType,
   fifaRawTimelineHasMatchEnd,
   parsedTimelineHasMatchEnd,
@@ -147,6 +149,63 @@ describe('fifaTimelineParser', () => {
       expect(merged.map((event) => event.type)).toEqual(['shot_attempt', 'goal', 'shot_attempt']);
       expect(merged[0]).toMatchObject({ type: 'shot_attempt', side: 'home', player: 'Brian GUTIERREZ' });
       expect(merged[2]).toMatchObject({ type: 'shot_attempt', side: 'away', player: 'Lyle FOSTER' });
+    });
+
+    it('dedupeTimelineBySlot elimina tiros duplicados con distinto casing del nombre', () => {
+      const timeline = [
+        {
+          type: 'shot_attempt',
+          side: 'home',
+          minute: 45,
+          extraMinute: null,
+          idPlayer: '448123',
+          player: 'Yasin Ayari',
+          sortKey: 45,
+        },
+        {
+          type: 'shot_attempt',
+          side: 'home',
+          minute: 45,
+          extraMinute: null,
+          idPlayer: '448123',
+          player: 'Yasin AYARI',
+          sortKey: 45,
+        },
+      ];
+
+      const deduped = dedupeTimelineBySlot(timeline);
+      expect(deduped).toHaveLength(1);
+      expect(timelineSlotIdentity(deduped[0])).toBe(timelineSlotIdentity(timeline[0]));
+    });
+
+    it('mergeShotAttemptsFromRawEvents no duplica tiros ya presentes por idPlayer', () => {
+      const base = [
+        {
+          type: 'shot_attempt',
+          side: 'home',
+          minute: 45,
+          extraMinute: null,
+          idPlayer: '448123',
+          player: 'Yasin Ayari',
+          sortKey: 45,
+        },
+      ];
+      const rawEvents = [
+        {
+          Type: 12,
+          IdTeam: '43911',
+          IdPlayer: '448123',
+          MatchMinute: "45'",
+          PositionX: 72,
+          PositionY: 41,
+          EventDescription: [
+            { Locale: 'en-GB', Description: 'Yasin AYARI (Germany) attempts an effort on goal.' },
+          ],
+        },
+      ];
+
+      const merged = mergeShotAttemptsFromRawEvents(base, rawEvents, '43911', '43883');
+      expect(merged.filter((event) => event.type === 'shot_attempt')).toHaveLength(1);
     });
 
     it('incluye pausas de hidratación y cambios de periodo', () => {

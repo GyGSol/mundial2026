@@ -1,9 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import PlayerAvatar from '@/components/PlayerAvatar.jsx';
 import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
 import CoachDetailDialog from '@/components/lineup/CoachDetailDialog.jsx';
+import PitchEventPinInteractions, {
+  PitchEventPinVisuals,
+} from '@/components/lineup/PitchEventLayer.jsx';
+import PitchHeatmapLayer from '@/components/lineup/PitchHeatmapLayer.jsx';
 import { inferTacticalPosition } from '@/lib/playerPositionLabel.js';
+import {
+  buildPlayerEventSummary,
+  playerKeyFromLineupPlayer,
+} from '@/lib/lineupLiveState.js';
 import { cn } from '@/lib/utils';
+import { getTeamFlag } from '@/lib/teamMeta.js';
+import { getTeamPitchPalette } from '@/lib/teamPitchColors.js';
 
 /** Margen desde el arco dentro de cada mitad (0–100 de profundidad). */
 const DEPTH_EDGE = 6;
@@ -35,6 +45,64 @@ function formatHoverDetail(player, position) {
   return parts.join(' · ');
 }
 
+function PitchPlayerHoverCard({ player, position, teamCode, side }) {
+  const palette = getTeamPitchPalette(teamCode, side);
+  const flagUrl = getTeamFlag({ fifaCode: teamCode });
+
+  return (
+    <div
+      className={cn(
+        'match-live-action-card w-max min-w-[9.5rem] max-w-[13rem] overflow-hidden rounded-md border bg-card text-left shadow-md',
+        palette.cardBorder
+      )}
+    >
+      <div
+        className={cn(
+          'match-live-action-header flex items-center justify-between gap-2 px-2 py-1',
+          palette.header,
+          palette.headerText
+        )}
+      >
+        <span className="inline-flex min-w-0 items-center gap-1 text-[10px] font-semibold">
+          {flagUrl ? (
+            <img src={flagUrl} alt="" className="size-3 shrink-0 rounded-sm border border-white/25 object-cover" />
+          ) : null}
+          <span className="truncate">{teamCode || (side === 'home' ? 'Local' : 'Visit')}</span>
+        </span>
+        <span className={cn('shrink-0 text-[10px] font-medium', palette.meta)}>{position}</span>
+      </div>
+
+      <div className="match-live-action-body px-2 py-1.5">
+        <div className="match-live-action-player flex min-w-0 items-center gap-1.5">
+          <PlayerAvatar
+            name={player.name}
+            photoUrl={player.photoUrl}
+            size="xs"
+            variant="portrait"
+            className={cn(
+              'max-h-7 max-w-[1.375rem] shrink-0 shadow-sm ring-1 sm:max-h-9 sm:max-w-[1.75rem]',
+              palette.avatarRing
+            )}
+          />
+          <div className="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1 text-[9px] leading-tight">
+            <span className={cn('tabular-nums font-semibold', palette.number)}>
+              {player.shirtNumber != null ? player.shirtNumber : '—'}
+            </span>
+            <span className="min-w-0 truncate font-medium text-foreground">{player.name}</span>
+          </div>
+        </div>
+        {player.positionDetail ? (
+          <p className="mt-1 text-[8px] text-muted-foreground">{player.positionDetail}</p>
+        ) : null}
+      </div>
+
+      <div className={cn('border-t px-2 py-1 text-center text-[8px]', palette.footer)}>
+        Clic para ver ficha
+      </div>
+    </div>
+  );
+}
+
 /**
  * gridX: 0 = arco propio, 100 = línea de medio campo (dentro de la mitad del equipo).
  * gridY: 0 = banda superior, 100 = banda inferior.
@@ -49,25 +117,68 @@ function teamDotStyle(player, side) {
   return { left: `${horizontal}%`, top };
 }
 
-function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
+function PlayerBadges({ summary }) {
+  if (!summary) return null;
+  const hasGoals = summary.goals > 0;
+  const hasCards = summary.yellow > 0 || summary.red > 0;
+  const hasSub = summary.subOffMinute != null || summary.subInMinute != null;
+  if (!hasGoals && !hasCards && !hasSub) return null;
+
+  return (
+    <div className="absolute -right-1 -top-1 z-20 flex flex-col items-end gap-px">
+      {hasGoals ? (
+        <span className="rounded bg-emerald-600 px-0.5 text-[6px] font-bold leading-none text-white">
+          {'⚽'.repeat(Math.min(summary.goals, 3))}
+        </span>
+      ) : null}
+      {summary.yellow > 0 ? (
+        <span className="h-2 w-1.5 rounded-sm bg-yellow-400 ring-1 ring-yellow-200" aria-label="Tarjeta amarilla" />
+      ) : null}
+      {summary.red > 0 ? (
+        <span className="h-2 w-1.5 rounded-sm bg-red-500 ring-1 ring-red-200" aria-label="Tarjeta roja" />
+      ) : null}
+      {hasSub ? (
+        <span className="rounded bg-violet-700 px-0.5 text-[6px] font-bold leading-none text-white">↕</span>
+      ) : null}
+    </div>
+  );
+}
+
+function PlayerMarker({
+  player,
+  side,
+  index,
+  teamCode,
+  onPlayerClick,
+  eventSummary,
+  highlightKey,
+  onPlayerHighlight,
+}) {
   const label = shortName(player.name);
   const number = player.shirtNumber;
   const position = lineupPositionLabel(player);
   const style = teamDotStyle(player, side);
   const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
   const hoverDetail = formatHoverDetail(player, position);
+  const playerKey = playerKeyFromLineupPlayer(player, side);
+  const isHighlighted = highlightKey && playerKey && highlightKey === playerKey;
 
   return (
     <div
       key={player.playerId ?? `${side}-${index}`}
-      className="group/marker pointer-events-auto absolute z-10 -translate-x-1/2 -translate-y-1/2"
+      className="group/marker pointer-events-auto absolute z-20 -translate-x-1/2 -translate-y-1/2"
       style={style}
     >
       <button
         type="button"
-        className="flex flex-col items-center gap-px rounded-md p-px transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        className={cn(
+          'relative flex flex-col items-center gap-px rounded-md p-px transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+          isHighlighted && 'ring-2 ring-white/90 ring-offset-1 ring-offset-emerald-900',
+          player.subbedIn && 'opacity-95'
+        )}
         onClick={(event) => {
           event.stopPropagation();
+          onPlayerHighlight?.(playerKey);
           onPlayerClick?.({
             ...player,
             position,
@@ -77,6 +188,8 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
         }}
         aria-label={`Ver ficha de ${player.name}`}
       >
+        <PlayerBadges summary={eventSummary} />
+
         {position ? (
           <span className="text-[5px] font-semibold leading-none text-white/90 sm:text-[6px]">
             {position}
@@ -105,19 +218,29 @@ function PlayerMarker({ player, side, index, teamCode, onPlayerClick }) {
 
       <div
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1 hidden w-max max-w-[11rem] -translate-x-1/2 rounded-md border border-white/20 bg-black/90 px-2 py-1 text-center text-[9px] leading-snug text-white shadow-lg group-hover/marker:block"
+        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 hidden -translate-x-1/2 group-hover/marker:block group-focus-within/marker:block"
       >
-        <p className="font-semibold">{hoverDetail}</p>
-        {player.positionDetail ? (
-          <p className="text-[8px] text-white/75">{player.positionDetail}</p>
-        ) : null}
-        <p className="mt-0.5 text-[8px] text-white/60">Clic para ver ficha</p>
+        <PitchPlayerHoverCard
+          player={player}
+          position={position}
+          teamCode={teamCode}
+          side={side}
+        />
       </div>
     </div>
   );
 }
 
-function PitchHalf({ players, side, teamLabel, teamCode, onPlayerClick }) {
+function PitchHalf({
+  players,
+  side,
+  teamLabel,
+  teamCode,
+  onPlayerClick,
+  playerEventSummaries,
+  highlightKey,
+  onPlayerHighlight,
+}) {
   return (
     <div
       className={cn(
@@ -135,6 +258,13 @@ function PitchHalf({ players, side, teamLabel, teamCode, onPlayerClick }) {
             index={index}
             teamCode={teamCode}
             onPlayerClick={onPlayerClick}
+            eventSummary={
+              playerEventSummaries
+                ? playerEventSummaries.get(playerKeyFromLineupPlayer(player, side))
+                : null
+            }
+            highlightKey={highlightKey}
+            onPlayerHighlight={onPlayerHighlight}
           />
         ))}
       </div>
@@ -219,6 +349,11 @@ export default function PitchFormation({
   homeTeamCode,
   awayTeamCode,
   className,
+  events = [],
+  heatmapMode = 'normal',
+  highlightKey = null,
+  onHighlightKeyChange,
+  showEventLayer = false,
 }) {
   const homePlayers = lineup?.home?.players ?? [];
   const awayPlayers = lineup?.away?.players ?? [];
@@ -229,7 +364,18 @@ export default function PitchFormation({
   const [coachDetailOpen, setCoachDetailOpen] = useState(false);
   const [coachDetail, setCoachDetail] = useState(null);
 
-  if (!homePlayers.length && !awayPlayers.length) return null;
+  const homeEventSummaries = useMemo(
+    () => (showEventLayer ? buildPlayerEventSummary(events, 'home') : null),
+    [events, showEventLayer]
+  );
+  const awayEventSummaries = useMemo(
+    () => (showEventLayer ? buildPlayerEventSummary(events, 'away') : null),
+    [events, showEventLayer]
+  );
+
+  const hasPlayers = homePlayers.length > 0 || awayPlayers.length > 0;
+  const hasEvents = showEventLayer && (events?.length ?? 0) > 0;
+  if (!hasPlayers && !hasEvents) return null;
 
   const handlePlayerClick = (player) => {
     setDetailPreview({
@@ -281,45 +427,69 @@ export default function PitchFormation({
       >
         <div className="absolute inset-0 overflow-hidden rounded-lg border border-emerald-700/50 bg-gradient-to-b from-emerald-700 to-emerald-800">
           <PitchMarkings />
+          {showEventLayer ? (
+            <>
+              <PitchHeatmapLayer events={events} heatmapMode={heatmapMode} />
+              <PitchEventPinVisuals events={events} highlightKey={highlightKey} />
+            </>
+          ) : null}
         </div>
 
-        <div className="pointer-events-auto absolute bottom-1 left-2 z-20 flex items-end gap-1">
-          <CoachBadge
-            coach={lineup?.home?.coach}
-            side="home"
-            formation={lineup?.home?.formation}
-            onCoachClick={handleCoachClick}
-          />
-          <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
-            {homeLabel}
-          </span>
-        </div>
-        <div className="pointer-events-auto absolute bottom-1 right-2 z-20 flex items-end gap-1">
-          <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
-            {awayLabel}
-          </span>
-          <CoachBadge
-            coach={lineup?.away?.coach}
-            side="away"
-            formation={lineup?.away?.formation}
-            onCoachClick={handleCoachClick}
-          />
-        </div>
+        {hasPlayers ? (
+          <>
+            <div className="pointer-events-auto absolute bottom-1 left-2 z-20 flex items-end gap-1">
+              <CoachBadge
+                coach={lineup?.home?.coach}
+                side="home"
+                formation={lineup?.home?.formation}
+                onCoachClick={handleCoachClick}
+              />
+              <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
+                {homeLabel}
+              </span>
+            </div>
+            <div className="pointer-events-auto absolute bottom-1 right-2 z-20 flex items-end gap-1">
+              <span className="rounded bg-black/35 px-1.5 py-0.5 text-[9px] font-semibold text-white/90">
+                {awayLabel}
+              </span>
+              <CoachBadge
+                coach={lineup?.away?.coach}
+                side="away"
+                formation={lineup?.away?.formation}
+                onCoachClick={handleCoachClick}
+              />
+            </div>
 
-        <PitchHalf
-          players={homePlayers}
-          side="home"
-          teamLabel={homeLabel}
-          teamCode={homeTeamCode}
-          onPlayerClick={handlePlayerClick}
-        />
-        <PitchHalf
-          players={awayPlayers}
-          side="away"
-          teamLabel={awayLabel}
-          teamCode={awayTeamCode}
-          onPlayerClick={handlePlayerClick}
-        />
+            <PitchHalf
+              players={homePlayers}
+              side="home"
+              teamLabel={homeLabel}
+              teamCode={homeTeamCode}
+              onPlayerClick={handlePlayerClick}
+              playerEventSummaries={homeEventSummaries}
+              highlightKey={highlightKey}
+              onPlayerHighlight={onHighlightKeyChange}
+            />
+            <PitchHalf
+              players={awayPlayers}
+              side="away"
+              teamLabel={awayLabel}
+              teamCode={awayTeamCode}
+              onPlayerClick={handlePlayerClick}
+              playerEventSummaries={awayEventSummaries}
+              highlightKey={highlightKey}
+              onPlayerHighlight={onHighlightKeyChange}
+            />
+          </>
+        ) : null}
+
+        {showEventLayer ? (
+          <PitchEventPinInteractions
+            events={events}
+            highlightKey={highlightKey}
+            onEventSelect={(key) => onHighlightKeyChange?.(key)}
+          />
+        ) : null}
       </div>
 
       {detailOpen ? (

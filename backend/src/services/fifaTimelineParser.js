@@ -268,8 +268,48 @@ export function parsedTimelineHasMatchEnd(timeline = []) {
   return timeline.some((event) => event?.type === 'match_end');
 }
 
+function normalizePlayerNameForSlot(name) {
+  return String(name ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Identidad de slot para deduplicar eventos (prioriza idPlayer sobre nombre). */
+export function timelineSlotIdentity(entry) {
+  const slot = [
+    entry?.type ?? '',
+    entry?.side ?? '',
+    entry?.minute ?? '',
+    entry?.extraMinute ?? '',
+  ].join('|');
+  const playerKey =
+    entry?.idPlayer ??
+    entry?.idPlayerIn ??
+    entry?.idPlayerOut ??
+    normalizePlayerNameForSlot(entry?.player ?? entry?.playerIn ?? entry?.playerOut ?? '');
+  return `${slot}|${playerKey}`;
+}
+
+/** Elimina eventos duplicados por slot (p. ej. mismo tiro con distinto casing del nombre). */
+export function dedupeTimelineBySlot(timeline = []) {
+  const seen = new Set();
+  const deduped = [];
+  for (const event of timeline) {
+    const key = timelineSlotIdentity(event);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(event);
+  }
+  return deduped;
+}
+
 function shotAttemptIdentity(entry) {
-  return [entry.side, entry.minute, entry.extraMinute, entry.player].join('|');
+  const playerKey = entry?.idPlayer
+    ? String(entry.idPlayer)
+    : normalizePlayerNameForSlot(entry?.player);
+  return [entry.side, entry.minute, entry.extraMinute, playerKey].join('|');
 }
 
 /** Incorpora tiros (FIFA type 12) desde rawEvents si el timeline guardado aún no los tiene. */
@@ -292,5 +332,7 @@ export function mergeShotAttemptsFromRawEvents(timeline = [], rawEvents = [], ho
     merged.push(entry);
   }
 
-  return merged.sort((a, b) => (a.sortKey ?? 0) - (b.sortKey ?? 0));
+  return dedupeTimelineBySlot(
+    merged.sort((a, b) => (a.sortKey ?? 0) - (b.sortKey ?? 0))
+  );
 }

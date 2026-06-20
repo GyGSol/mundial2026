@@ -839,6 +839,54 @@ describe('matchLiveData', () => {
       expect(event.playerOutPhotoUrl).toContain('kor-seol-young-woo.png');
       expect(event.playerIn).toBe('Yang Hyun-jun');
     });
+
+    it('no duplica tiros al fusionar rawEvents con distinto casing del nombre', () => {
+      const enriched = enrichMatchLiveFields(
+        {
+          status: 'live',
+          homeScore: 0,
+          awayScore: 0,
+          raw: {
+            fifaMeta: { homeTeamId: '43911', awayTeamId: '43883' },
+            fifaEvents: {
+              timeline: [
+                {
+                  type: 'shot_attempt',
+                  side: 'home',
+                  minute: 45,
+                  extraMinute: null,
+                  idPlayer: '448123',
+                  player: 'Yasin Ayari',
+                  sortKey: 45,
+                  positionX: 72,
+                  positionY: 41,
+                },
+              ],
+              rawEvents: [
+                {
+                  Type: 12,
+                  IdTeam: '43911',
+                  IdPlayer: '448123',
+                  MatchMinute: "45'",
+                  PositionX: 72,
+                  PositionY: 41,
+                  EventDescription: [
+                    {
+                      Locale: 'en-GB',
+                      Description: 'Yasin AYARI (Germany) attempts an effort on goal.',
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        { homePlayers: [], awayPlayers: [] }
+      );
+
+      const shots = enriched.matchTimeline.filter((event) => event.type === 'shot_attempt');
+      expect(shots).toHaveLength(1);
+    });
   });
 
 });

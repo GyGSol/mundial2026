@@ -20,12 +20,16 @@ export function isPlaceholderTimelineGoal(event) {
   return event?.type === 'goal' && event.minute == null && !event.player;
 }
 
-function normalizePlayerName(name) {
+export function normalizePlayerNameForMatch(name) {
   return String(name ?? '')
     .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
+}
+
+function normalizePlayerName(name) {
+  return normalizePlayerNameForMatch(name);
 }
 
 function playersLikelyMatch(shotPlayer, goalPlayer) {
@@ -110,6 +114,42 @@ export function timelineEventsSignature(events = []) {
   return filterTimelineForDisplay(events)
     .map(timelineEventIdentity)
     .join('|');
+}
+
+export function formatTimelineMinute(event) {
+  if (event?.extraMinute != null && event?.minute != null) {
+    return `${event.minute}+${event.extraMinute}'`;
+  }
+  if (event?.minute != null) return `${event.minute}'`;
+  return '';
+}
+
+/** Texto de hover para pins de eventos en la cancha (español + ejecutor). */
+export function formatPitchEventHoverDetail(event, { getActionLabel, extractPlayer } = {}) {
+  const actionLabel = getActionLabel?.(event?.type) ?? event?.type ?? 'Evento';
+  const minute = formatTimelineMinute(event);
+  const parts = [actionLabel];
+  if (minute) parts.push(minute);
+
+  if (event?.type === 'substitution') {
+    const playerOut = extractPlayer?.(event, 'out');
+    const playerIn = extractPlayer?.(event, 'in');
+    if (playerOut?.name && playerIn?.name) {
+      parts.push(`Sale ${playerOut.name} · Entra ${playerIn.name}`);
+    } else if (playerOut?.name) {
+      parts.push(`Sale ${playerOut.name}`);
+    } else if (playerIn?.name) {
+      parts.push(`Entra ${playerIn.name}`);
+    }
+    return parts.join(' · ');
+  }
+
+  const player = extractPlayer?.(event, 'player');
+  if (player?.name) {
+    parts.push(player.name);
+  }
+
+  return parts.join(' · ');
 }
 
 export function formatNeutralTimelineLabel(event) {

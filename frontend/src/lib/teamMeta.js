@@ -22,6 +22,7 @@ export const FIFA_TO_FLAG_ISO = {
   BUL: 'bg',
   CAN: 'ca',
   CHI: 'cl',
+  CIV: 'ci',
   CMR: 'cm',
   COL: 'co',
   CRC: 'cr',

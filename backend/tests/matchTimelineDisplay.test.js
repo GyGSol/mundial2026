@@ -3,6 +3,7 @@ import {
   annotateTimelineForDisplay,
   buildSynchronizedTimelineRows,
   filterTimelineForDisplay,
+  formatPitchEventHoverDetail,
 } from '../../frontend/src/lib/matchTimelineDisplay.js';
 
 describe('matchTimelineDisplay shot/goal dedup', () => {
@@ -61,5 +62,25 @@ describe('buildSynchronizedTimelineRows', () => {
     expect(rows[0]).toMatchObject({ sortKey: 90.06, home: [{ key: 'h1' }], away: [{ key: 'a2' }] });
     expect(rows[1]).toMatchObject({ sortKey: 90.03, away: [{ key: 'a1' }] });
     expect(rows[2]).toMatchObject({ sortKey: 68, neutral: [{ key: 'n1' }] });
+  });
+});
+
+describe('formatPitchEventHoverDetail', () => {
+  it('incluye acción en español, minuto y ejecutor del tiro', () => {
+    const label = formatPitchEventHoverDetail(
+      {
+        type: 'shot_attempt',
+        minute: 1,
+        player: 'Kai Havertz',
+        playerShirtNumber: 7,
+      },
+      {
+        getActionLabel: (type) => (type === 'shot_attempt' ? 'Tiro al arco' : type),
+        extractPlayer: (event) =>
+          event.player ? { name: event.player, shirtNumber: event.playerShirtNumber } : null,
+      }
+    );
+
+    expect(label).toBe("Tiro al arco · 1' · Kai Havertz");
   });
 });

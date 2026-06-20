@@ -37,7 +37,8 @@ import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
-import MatchLineupSection from '@/components/lineup/MatchLineupSection.jsx';
+import MatchLineupSection, { shouldShowMatchLineup } from '@/components/lineup/MatchLineupSection.jsx';
+import { playerKeyFromTimelineEvent } from '@/lib/lineupLiveState.js';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import { liveCardBadgeLabel, isLiveCardFinalizing } from '@/lib/matchStatus.js';
 import { useLiveMatchDisplayClock } from '@/hooks/useLiveMatchDisplayClock.js';
@@ -174,12 +175,38 @@ function TimelinePlayerRow({ player, align = 'left', teamSide, onPhotoClick }) {
   );
 }
 
-function TimelineActionCard({ entry, align = 'center', onPlayerPhotoClick }) {
+function TimelineActionCard({
+  entry,
+  align = 'center',
+  onPlayerPhotoClick,
+  highlightKey = null,
+  onHighlightSelect,
+}) {
   const hasPlayers = (entry.players?.length ?? 0) > 0;
   const bodyAlign = align === 'home' ? 'left' : align === 'away' ? 'right' : 'center';
+  const isHighlighted = highlightKey && entry.highlightKey && highlightKey === entry.highlightKey;
 
   return (
-    <div className="match-live-action-card w-full max-w-full text-left">
+    <div
+      role={onHighlightSelect && entry.highlightKey ? 'button' : undefined}
+      tabIndex={onHighlightSelect && entry.highlightKey ? 0 : undefined}
+      className={cn(
+        'match-live-action-card w-full max-w-full rounded-md text-left transition',
+        onHighlightSelect && entry.highlightKey && 'cursor-pointer hover:bg-muted/40',
+        isHighlighted && 'bg-emerald-100/80 ring-1 ring-emerald-400'
+      )}
+      data-highlight-key={entry.highlightKey ?? undefined}
+      onClick={() => {
+        if (entry.highlightKey) onHighlightSelect?.(entry.highlightKey);
+      }}
+      onKeyDown={(event) => {
+        if (!entry.highlightKey || !onHighlightSelect) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onHighlightSelect(entry.highlightKey);
+        }
+      }}
+    >
       <div className="match-live-action-header flex items-center justify-between gap-2">
         <span className="shrink-0 tabular-nums font-semibold text-foreground">{entry.minute || '—'}</span>
         <span className="inline-flex min-w-0 items-center justify-end gap-1 text-right font-medium text-foreground">
@@ -568,7 +595,7 @@ function groupTimelineEntriesByTimeSlot(entries = []) {
   });
 }
 
-function TimelineRowCell({ entries, align, onPlayerPhotoClick }) {
+function TimelineRowCell({ entries, align, onPlayerPhotoClick, highlightKey, onHighlightSelect }) {
   if (!entries.length) {
     return <div className="match-live-timeline-slot min-h-0" aria-hidden="true" />;
   }
@@ -591,6 +618,8 @@ function TimelineRowCell({ entries, align, onPlayerPhotoClick }) {
             entry={entry}
             align={align}
             onPlayerPhotoClick={onPlayerPhotoClick}
+            highlightKey={highlightKey}
+            onHighlightSelect={onHighlightSelect}
           />
         </div>
       ))}
@@ -598,7 +627,13 @@ function TimelineRowCell({ entries, align, onPlayerPhotoClick }) {
   );
 }
 
-function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
+function MatchTimeline({
+  events = [],
+  homeTeamCode,
+  awayTeamCode,
+  highlightKey = null,
+  onHighlightKeyChange,
+}) {
   const scrollRef = useRef(null);
   const signature = useMemo(() => timelineEventsSignature(events), [events]);
   const lastSignatureRef = useRef(signature);
@@ -658,11 +693,18 @@ function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
             ...entry,
             key: timelineEventIdentity(event),
             sortKey: timelineSortKey(event),
+            highlightKey: playerKeyFromTimelineEvent(event),
           };
         })
         .filter(Boolean),
     [displayEvents]
   );
+
+  useEffect(() => {
+    if (!highlightKey || !scrollRef.current) return;
+    const node = scrollRef.current.querySelector(`[data-highlight-key="${CSS.escape(highlightKey)}"]`);
+    node?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [highlightKey, displayEntries]);
 
   const timelineRows = useMemo(
     () => groupTimelineEntriesByTimeSlot(displayEntries),
@@ -688,6 +730,8 @@ function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
                 entries={row.home}
                 align="home"
                 onPlayerPhotoClick={handlePlayerPhotoClick}
+                highlightKey={highlightKey}
+                onHighlightSelect={onHighlightKeyChange}
               />
             </div>
             <div className="min-w-[3.25rem] px-1">
@@ -695,6 +739,8 @@ function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
                 entries={row.neutral}
                 align="center"
                 onPlayerPhotoClick={handlePlayerPhotoClick}
+                highlightKey={highlightKey}
+                onHighlightSelect={onHighlightKeyChange}
               />
             </div>
             <div className="min-w-0 px-1">
@@ -702,6 +748,8 @@ function MatchTimeline({ events = [], homeTeamCode, awayTeamCode }) {
                 entries={row.away}
                 align="away"
                 onPlayerPhotoClick={handlePlayerPhotoClick}
+                highlightKey={highlightKey}
+                onHighlightSelect={onHighlightKeyChange}
               />
             </div>
           </div>
@@ -893,6 +941,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
 }
 
 function TimelineMatchCard({ match, variant = 'finished' }) {
+  const [highlightKey, setHighlightKey] = useState(null);
   const homeName = match.homeTeam?.nameEn || 'Local';
   const awayName = match.awayTeam?.nameEn || 'Visitante';
   const homeFlag = getTeamFlag(match.homeTeam);
@@ -948,6 +997,8 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             events={match.matchTimeline}
             homeTeamCode={homeCode}
             awayTeamCode={awayCode}
+            highlightKey={isLive ? highlightKey : null}
+            onHighlightKeyChange={isLive ? setHighlightKey : undefined}
           />
         </div>
 
@@ -958,6 +1009,16 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
           awayCode={awayCode}
           status={match.status}
         />
+
+        {shouldShowMatchLineup(match) ? (
+          <MatchLineupSection
+            match={match}
+            mode={isLive ? 'live' : 'default'}
+            events={match.matchTimeline}
+            highlightKey={highlightKey}
+            onHighlightKeyChange={setHighlightKey}
+          />
+        ) : null}
 
         <span className="match-live-text-meta text-[11px] text-muted-foreground">
           Grupo {match.group} · {matchDateLabel(match)}
