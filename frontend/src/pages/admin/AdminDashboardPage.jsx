@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import TechnicalDifficulties from '../../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../../lib/apiError.js';
 import AdminAdvancesSection from '../../components/admin/AdminAdvancesSection.jsx';
@@ -14,7 +15,10 @@ import { Button } from '@/components/ui/button.jsx';
 
 export default function AdminDashboardPage() {
   const fetchStats = useCallback(() => adminApi.stats(), []);
-  const { data, loading, error, refresh } = useLiveData(fetchStats, []);
+  const { data, loading, error, refresh } = useLiveData(fetchStats, [], {
+    realtimeEvents: [REALTIME_EVENTS.SYNC_COMPLETE, REALTIME_EVENTS.LEADERBOARD_UPDATED],
+    realtimeDebounceMs: 750,
+  });
 
   if (error && isSevereError(error)) {
     return (

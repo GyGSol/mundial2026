@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { worldCupApi } from '../api/client.js';
 import { useLiveData } from '../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { Button } from '@/components/ui/button.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -73,6 +74,8 @@ export default function WorldCupPage() {
     enabled: needsOverview,
     pollIntervalMs: 15000,
     pollWhen: shouldPollWorldCupLive,
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.SYNC_COMPLETE],
+    realtimeDebounceMs: 750,
   });
   const pageLoading = loading && needsOverview;
 

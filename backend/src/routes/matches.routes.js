@@ -10,8 +10,18 @@ import {
 } from '../services/matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from '../services/streamMetaService.js';
 import { sortMatchesBySchedule } from '../services/matchSortService.js';
+import { getCachedLiveMatchSnapshot } from '../services/liveMatchSnapshotService.js';
 
 const router = Router();
+
+router.get('/live-snapshot', optionalAuth, async (req, res, next) => {
+  try {
+    const payload = await getCachedLiveMatchSnapshot(req.user?._id);
+    res.json(payload);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/:id/stream', authMiddleware, async (req, res, next) => {
   try {

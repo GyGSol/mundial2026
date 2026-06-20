@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import { adminInput, adminMuted, adminPage, adminTableWrap } from '../../components/admin/adminTheme.js';
@@ -42,6 +43,7 @@ export default function AdminMatchesPage() {
     memoryCacheKey: `admin-matches:${statusFilter || 'all'}`,
     memoryCacheTtlMs: 30_000,
     realtimeDebounceMs: 750,
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
   });
 
   const matches = data?.matches ?? [];

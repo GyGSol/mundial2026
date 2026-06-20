@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { playersApi, teamsApi } from '../../api/client.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import PlayerDetailDialog from '../PlayerDetailDialog.jsx';
 import { getTeamFlag } from '../../lib/teamMeta.js';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -25,7 +26,6 @@ import {
 } from '@/components/ui/table.jsx';
 import { cn } from '@/lib/utils';
 import { ClubCell } from '../ClubDisplay.jsx';
-import PlayerAvatar from '../PlayerAvatar.jsx';
 import { formatKm, formatStatValue, hasPlayerStats, totalSeasonGoals } from '../../lib/playerStats.js';
 
 const POSITIONS = [
@@ -91,7 +91,10 @@ export default function PlayersSection() {
     positionFilter,
     statusFilter,
     searchQuery,
-  ]);
+  ], {
+    realtimeEvents: [REALTIME_EVENTS.PLAYERS_UPDATED],
+    realtimeDebounceMs: 750,
+  });
 
   const players = data?.players ?? [];
   const total = data?.total ?? 0;
@@ -289,16 +292,7 @@ export default function PlayersSection() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => openDetail(player.id)}
                   >
-                    <TableCell className="font-medium">
-                      <span className="inline-flex items-center gap-2.5">
-                        <PlayerAvatar
-                          name={player.fullName}
-                          photoUrl={player.photoUrl}
-                          size="sm"
-                        />
-                        {player.fullName}
-                      </span>
-                    </TableCell>
+                    <TableCell className="font-medium">{player.fullName}</TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-2">
                         {flag ? (
@@ -382,13 +376,12 @@ export default function PlayersSection() {
         </div>
       ) : null}
 
-      {detailOpen ? (
-        <PlayerDetailDialog
-          playerId={selectedPlayerId}
-          open={detailOpen}
-          onOpenChange={setDetailOpen}
-        />
-      ) : null}
+      <PlayerDetailDialog
+        playerId={selectedPlayerId}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onIntelUpdated={refresh}
+      />
     </div>
   );
 }

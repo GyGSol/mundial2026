@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
-import { predictionsApi } from '../api/client.js';
+import { predictionsApi, matchesApi } from '../api/client.js';
 import PredictionsMatchList from '../components/PredictionsMatchList.jsx';
 import ScheduleAllButton from '../components/ScheduleAllButton.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
@@ -25,6 +25,8 @@ import {
   findMatchInPredictionsPayload,
   patchMatchPrediction,
 } from '../lib/patchMatchPrediction.js';
+import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
+import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
 import PredictionsFeaturedMatches from '../components/PredictionsFeaturedMatches.jsx';
 import PredictionSavedDialog from '../components/PredictionSavedDialog.jsx';
 import { LiveMatchViewerSync } from '../context/LiveMatchViewerContext.jsx';
@@ -81,12 +83,22 @@ export default function PredictionsPage() {
     return predictionsApi.groupStandings(params);
   }, [groupFilter]);
 
-  const { data, loading, error, lastUpdated, refresh, patchData } = useLiveData(fetchMatches, [
+  const { data, loading, error, lastUpdated, patchData } = useLiveData(fetchMatches, [
     statusFilter,
     groupFilter,
   ], {
+    enabled: activeView === 'matches',
     getPollIntervalMs: predictionsPollIntervalMs,
     pollWhen: shouldPollPredictionsBar,
+    memoryCacheKey: `predictions:matches:${statusFilter}:${groupFilter}`,
+    memoryCacheTtlMs: 60_000,
+    realtimeDebounceMs: 500,
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
+    onRealtimeMessage: (msg, ctx) =>
+      handleLiveSnapshotRealtime(msg, {
+        patchData: ctx.patchData,
+        fetchSnapshot: matchesApi.liveSnapshot,
+      }),
   });
 
   const {
@@ -100,6 +112,8 @@ export default function PredictionsPage() {
     pollIntervalMs: 15000,
     pollWhen: (payload) =>
       (payload?.groups ?? []).some((group) => (group.liveTeamIds?.length ?? 0) > 0),
+    realtimeEvents: [REALTIME_EVENTS.LEADERBOARD_UPDATED],
+    realtimeDebounceMs: 750,
   });
 
   const handleSave = async (matchId, homeGoals, awayGoals) => {
@@ -128,7 +142,6 @@ export default function PredictionsPage() {
         awayGoals,
       });
 
-      void refresh();
       if (activeView === 'standings') {
         void refreshStandings();
       }

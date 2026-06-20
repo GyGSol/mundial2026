@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, Fragment } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import MarkdownContent from '../../components/MarkdownContent.jsx';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
@@ -255,6 +256,7 @@ export default function AdminAiCompetitorPage() {
     memoryCacheKey: `ai-overview:${filterDeps.join(':')}`,
     memoryCacheTtlMs: 30_000,
     realtimeDebounceMs: 750,
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
   });
 
   const overviewReady = !loading && data !== null;
@@ -265,7 +267,11 @@ export default function AdminAiCompetitorPage() {
     loading: analyticsLoading,
     error: analyticsError,
     refresh: refreshAnalytics,
-  } = useLiveData(fetchAnalytics, []);
+  } = useLiveData(fetchAnalytics, [], {
+    realtimeEvents: [],
+    memoryCacheKey: 'admin:ai-analytics',
+    memoryCacheTtlMs: 300_000,
+  });
 
   const refreshAll = useCallback(() => {
     refresh();

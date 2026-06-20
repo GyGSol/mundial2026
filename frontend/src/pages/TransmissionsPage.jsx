@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { ExternalLink, Radio, TvMinimalPlay } from 'lucide-react';
 import { transmissionsApi } from '../api/client.js';
 import { useLiveData } from '../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import LiveMatchTrigger from '../components/live/LiveMatchTrigger.jsx';
 import TeamHeader from '../components/TeamHeader.jsx';
@@ -205,6 +206,8 @@ export default function TransmissionsPage() {
     enabled: true,
     pollIntervalMs: 20000,
     pollWhen: shouldPollTransmissions,
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
+    realtimeDebounceMs: 750,
   });
 
   const matches = data?.matches ?? [];

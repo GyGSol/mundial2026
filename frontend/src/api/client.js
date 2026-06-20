@@ -148,6 +148,7 @@ export const matchesApi = {
     return request(`/matches?${query}`);
   },
   getById: (matchId) => request(`/matches/${encodeURIComponent(matchId)}`),
+  liveSnapshot: () => request('/matches/live-snapshot'),
 };
 
 export const aiConsultationsApi = {

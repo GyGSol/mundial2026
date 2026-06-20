@@ -59,7 +59,7 @@ export function useRealtimeSubscription(onMessage, onReconnect) {
 
   useEffect(() => {
     if (!onMessage) return undefined;
-    return ctx.subscribe(() => onMessageRef.current?.());
+    return ctx.subscribe((message) => onMessageRef.current?.(message));
   }, [ctx, onMessage]);
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import {
   adminPage,
 } from '../../components/admin/adminTheme.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import {
@@ -140,7 +141,11 @@ export default function AdminSimulationPage() {
   const autoRunningRef = useRef(false);
 
   const fetchStatus = useCallback(() => adminSimulationApi.status(), []);
-  const { data, loading, error, lastUpdated, refresh } = useLiveData(fetchStatus, []);
+  const { data, loading, error, lastUpdated, refresh } = useLiveData(fetchStatus, [], {
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
+    realtimeDebounceMs: 750,
+    onRealtimeMessage: (msg, ctx) => !ctx.getData()?.active,
+  });
 
   useEffect(() => {
     autoRunningRef.current = autoRunning;

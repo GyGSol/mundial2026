@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import { adminBadgeOutline, adminMuted, adminPage } from '../../components/admin/adminTheme.js';
@@ -14,7 +15,9 @@ export default function AdminSyncPage() {
   const [runError, setRunError] = useState(null);
 
   const fetchSync = useCallback(() => adminApi.syncStatus(), []);
-  const { data, loading, error, refresh } = useLiveData(fetchSync, []);
+  const { data, loading, error, refresh } = useLiveData(fetchSync, [], {
+    realtimeEvents: [REALTIME_EVENTS.SYNC_COMPLETE],
+  });
 
   async function handleRunSync() {
     setRunning(true);

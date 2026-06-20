@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { worldCupApi } from '../../api/client.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
@@ -23,6 +24,7 @@ export default function AiStatsBriefing() {
   const { data, loading, error, refresh } = useLiveData(fetchBriefing, [], {
     enabled: true,
     pollIntervalMs: 0,
+    realtimeEvents: [REALTIME_EVENTS.SYNC_COMPLETE],
   });
 
   const handleRefresh = async () => {

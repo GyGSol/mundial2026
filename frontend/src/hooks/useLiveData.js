@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRealtimeSubscription } from '../context/RealtimeContext.jsx';
+import { ALL_REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 
 /** @type {Map<string, { value: unknown, expiresAt: number }>} */
 const memoryCacheByKey = new Map();
@@ -33,6 +34,8 @@ export function useLiveData(
     memoryCacheKey,
     memoryCacheTtlMs = 60_000,
     realtimeDebounceMs = 0,
+    realtimeEvents = ALL_REALTIME_EVENTS,
+    onRealtimeMessage,
   } = {}
 ) {
   const resolvedCacheKey = memoryCacheKey ?? (enabled ? JSON.stringify(deps) : '');
@@ -130,6 +133,31 @@ export function useLiveData(
     }, realtimeDebounceMs);
   }, [enabled, realtimeDebounceMs, refresh]);
 
+  const handleRealtimeMessage = useCallback(
+    (message) => {
+      if (!enabled) return;
+      if (Array.isArray(realtimeEvents) && realtimeEvents.length === 0) return;
+      if (
+        Array.isArray(realtimeEvents) &&
+        realtimeEvents.length > 0 &&
+        !realtimeEvents.includes(message?.type)
+      ) {
+        return;
+      }
+
+      const skipRefresh =
+        onRealtimeMessage?.(message, {
+          refresh,
+          patchData,
+          getData: () => dataRef.current,
+        }) === true;
+
+      if (skipRefresh) return;
+      scheduleRealtimeRefresh();
+    },
+    [enabled, realtimeEvents, onRealtimeMessage, refresh, patchData, scheduleRealtimeRefresh]
+  );
+
   useEffect(() => {
     if (!enabled) {
       pendingRefreshRef.current = false;
@@ -163,7 +191,7 @@ export function useLiveData(
   }, [refresh, enabled, resolvedCacheKey, memoryCacheTtlMs]);
 
   useRealtimeSubscription(
-    enabled ? scheduleRealtimeRefresh : null,
+    enabled && realtimeEvents?.length !== 0 ? handleRealtimeMessage : null,
     enabled ? scheduleRealtimeRefresh : null
   );
 

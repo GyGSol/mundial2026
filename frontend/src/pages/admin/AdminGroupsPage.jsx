@@ -48,7 +48,9 @@ export default function AdminGroupsPage() {
   const [actionLoading, setActionLoading] = useState('');
 
   const fetchGroups = useCallback(() => adminApi.listGroups(), []);
-  const { data, loading, error, refresh } = useLiveData(fetchGroups, []);
+  const { data, loading, error, refresh } = useLiveData(fetchGroups, [], {
+    realtimeEvents: [],
+  });
 
   const groups = data?.groups ?? [];
   const selectedGroup = groups.find((g) => g.id === selectedId);

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import {
@@ -120,13 +121,27 @@ export default function AdminPredictionsPage() {
     return adminApi.listPredictions(params);
   }, filterDeps);
 
-  const { data, loading, error, refresh } = useLiveData(fetchPredictions, filterDeps);
+  const { data, loading, error, refresh } = useLiveData(fetchPredictions, filterDeps, {
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
+    realtimeDebounceMs: 750,
+  });
 
   const fetchUsers = useCallback(() => adminApi.listUsers({ page: 1, limit: 200 }), []);
-  const { data: usersData } = useLiveData(fetchUsers, []);
+  const { data: usersData } = useLiveData(fetchUsers, [], {
+    enabled: showCreate || userFilter !== 'all',
+    realtimeEvents: [],
+    memoryCacheKey: 'admin:users-lookup',
+    memoryCacheTtlMs: 120_000,
+  });
 
   const fetchMatches = useCallback(() => adminApi.listMatches(), []);
-  const { data: matchesData } = useLiveData(fetchMatches, []);
+  const { data: matchesData } = useLiveData(fetchMatches, [], {
+    enabled: showCreate || matchFilter !== 'all',
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
+    realtimeDebounceMs: 750,
+    memoryCacheKey: 'admin:matches-lookup',
+    memoryCacheTtlMs: 60_000,
+  });
 
   const predictions = data?.predictions ?? [];
   const allUsers = usersData?.users ?? [];

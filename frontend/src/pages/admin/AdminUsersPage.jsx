@@ -40,7 +40,9 @@ export default function AdminUsersPage() {
     () => adminApi.listUsers({ page, limit: 20, q: search }),
     [page, search]
   );
-  const { data, loading, error, refresh } = useLiveData(fetchUsers, [page, search]);
+  const { data, loading, error, refresh } = useLiveData(fetchUsers, [page, search], {
+    realtimeEvents: [],
+  });
 
   const users = data?.users ?? [];
 

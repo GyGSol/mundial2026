@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { worldCupApi } from '@/api/client.js';
 import { useLiveData } from '@/hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '@/lib/realtimeSectors.js';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import {
   Select,
@@ -27,7 +28,11 @@ export default function DataCenterSection() {
     [selectedCode]
   );
 
-  const { data, loading, error } = useLiveData(fetchDataCenter, [selectedCode]);
+  const { data, loading, error } = useLiveData(fetchDataCenter, [selectedCode], {
+    realtimeEvents: [],
+    memoryCacheKey: `worldcup:datacenter:${selectedCode}`,
+    memoryCacheTtlMs: 300_000,
+  });
 
   const nations = data?.nationRankings ?? [];
   const selectedNation = useMemo(

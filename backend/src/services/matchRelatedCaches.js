@@ -5,6 +5,7 @@ import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesC
 import { invalidateTournamentGoalsFinishedMatchesCache } from './tournamentGoalsFinishedMatchesCache.js';
 import { invalidatePlayerTournamentActivityCache } from './playerTournamentActivityService.js';
 import { invalidateAdminMatchesCache } from './adminMatchesCache.js';
+import { invalidateLiveMatchSnapshotCache } from './liveMatchSnapshotService.js';
 
 /** Invalida cachés de ranking, dashboard y admin ligadas a partidos. */
 export function invalidateMatchRelatedCaches(groupId) {
@@ -12,6 +13,7 @@ export function invalidateMatchRelatedCaches(groupId) {
   invalidateLeaderboardCache(groupId);
   invalidateRankingDashboardCache(groupId);
   invalidateAdminMatchesCache();
+  invalidateLiveMatchSnapshotCache();
 }
 
 /** Solo cuando cambia el archivo de partidos finalizados (marcador, alta/baja en finished). */
@@ -21,4 +23,5 @@ export function invalidateFinishedMatchArchiveCaches(groupId) {
   invalidatePlayerTournamentActivityCache();
   invalidateRankingDashboardCache(groupId);
   invalidateWorldCupOverviewCache();
+  invalidateLiveMatchSnapshotCache();
 }

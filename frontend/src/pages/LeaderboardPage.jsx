@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { competitionGroupsApi, leaderboardApi } from '../api/client.js';
+import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../lib/apiError.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
@@ -9,6 +9,8 @@ import TournamentLeaderboardPlaceholder from '../components/TournamentLeaderboar
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
+import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
+import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
 import {
   DEFAULT_TOURNAMENT_TYPE,
   TOURNAMENT_TYPE_COMMON,
@@ -147,6 +149,8 @@ export default function LeaderboardPage() {
     enabled: canLoadRanking && isEliminationTournament && isAuthenticated,
     getPollIntervalMs: () => 15_000,
     pollWhen: (data) => data?.tournament?.status === 'running',
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
+    realtimeDebounceMs: 750,
   });
 
   useEffect(() => {
@@ -182,12 +186,28 @@ export default function LeaderboardPage() {
 
   const fetchFinishedArchive = useCallback(() => leaderboardApi.finishedArchive(), []);
 
-  const { data, loading, error, lastUpdated } = useLiveData(fetchLeaderboard, [effectiveGroupId], {
-    enabled: canLoadRanking,
-    getPollIntervalMs: leaderboardPollIntervalMs,
-    pollWhen: shouldPollLeaderboardLive,
-    // Sin caché en memoria: evita tabla sin flechas tras arrancar un partido en vivo.
-  });
+  const { data, loading, error, lastUpdated, patchData } = useLiveData(
+    fetchLeaderboard,
+    [effectiveGroupId],
+    {
+      enabled: canLoadRanking,
+      getPollIntervalMs: leaderboardPollIntervalMs,
+      pollWhen: shouldPollLeaderboardLive,
+      memoryCacheKey: `ranking:dashboard:${effectiveGroupId}`,
+      memoryCacheTtlMs: 30_000,
+      realtimeDebounceMs: 750,
+      realtimeEvents: [
+        REALTIME_EVENTS.MATCHES_UPDATED,
+        REALTIME_EVENTS.LEADERBOARD_UPDATED,
+        REALTIME_EVENTS.SYNC_COMPLETE,
+      ],
+      onRealtimeMessage: (msg, ctx) =>
+        handleLiveSnapshotRealtime(msg, {
+          patchData: ctx.patchData,
+          fetchSnapshot: matchesApi.liveSnapshot,
+        }),
+    }
+  );
 
   const dashboardMatchesGroup =
     Boolean(data) && String(data.group?.id ?? '') === String(effectiveGroupId);
@@ -207,6 +227,9 @@ export default function LeaderboardPage() {
     enabled: canLoadRanking && pageReady,
     getPollIntervalMs: () => 60_000,
     pollWhen: () => false,
+    realtimeEvents: [],
+    memoryCacheKey: 'ranking:archive',
+    memoryCacheTtlMs: 1_800_000,
   });
   const finishedArchiveMatches = archiveData?.finishedMatches ?? [];
 

@@ -41,14 +41,24 @@ export async function listPredictionsMatches({ status, group }, userId) {
   const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
 
   const barMatches = [...activeLiveRaw, ...recentFeaturedRaw];
-  await prepareFifaShirtMapsForMatches([...matches, ...barMatches]);
-  const enriched = await enrichMatchesForPredictions(matches, userId);
-  const enrichedBar = await enrichMatchesForPredictions(barMatches, userId);
-  const barById = new Map(enrichedBar.map((m) => [m.id, m]));
+  const uniqueByMongoId = new Map();
+  for (const match of [...matches, ...barMatches]) {
+    uniqueByMongoId.set(match._id.toString(), match);
+  }
+  const uniqueMatches = [...uniqueByMongoId.values()];
 
-  const liveMatches = activeLiveRaw.map((m) => barById.get(m._id.toString())).filter(Boolean);
+  await prepareFifaShirtMapsForMatches(uniqueMatches);
+  const enrichedAll = await enrichMatchesForPredictions(uniqueMatches, userId);
+  const enrichedById = new Map(enrichedAll.map((m) => [m.id, m]));
+
+  const enriched = matches
+    .map((m) => enrichedById.get(m._id.toString()))
+    .filter(Boolean);
+  const liveMatches = activeLiveRaw
+    .map((m) => enrichedById.get(m._id.toString()))
+    .filter(Boolean);
   const recentFinishedMatches = recentFeaturedRaw
-    .map((m) => barById.get(m._id.toString()))
+    .map((m) => enrichedById.get(m._id.toString()))
     .filter(Boolean);
 
   return {

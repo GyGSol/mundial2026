@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '../../api/adminClient.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
+import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import AdminCard from '../../components/admin/AdminCard.jsx';
 import AdminPageHeader from '../../components/admin/AdminPageHeader.jsx';
 import {
@@ -36,12 +37,19 @@ export default function AdminStreamLinksPage() {
 
   const fetchLinks = useCallback(() => adminApi.listStreamLinks(), []);
   const fetchToday = useCallback(() => adminApi.listTodayTransmissions(), []);
-  const { data, loading, error, refresh } = useLiveData(fetchLinks, []);
+  const { data, loading, error, refresh } = useLiveData(fetchLinks, [], {
+    realtimeEvents: [],
+    memoryCacheKey: 'admin:streams',
+    memoryCacheTtlMs: 120_000,
+  });
   const {
     data: todayData,
     loading: todayLoading,
     refresh: refreshToday,
-  } = useLiveData(fetchToday, []);
+  } = useLiveData(fetchToday, [], {
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
+    realtimeDebounceMs: 750,
+  });
 
   const streamLinks = data?.streamLinks ?? [];
   const todayMatches = todayData?.matches ?? [];

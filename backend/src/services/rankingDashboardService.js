@@ -1,5 +1,5 @@
 import { Match } from '../models/Match.js';
-import { getLeaderboard } from './leaderboardService.js';
+import { getCachedLeaderboard } from './leaderboardCache.js';
 import { getLastSyncAt } from './syncService.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import {
@@ -89,10 +89,11 @@ export async function getRankingDashboard(groupId, userId) {
   const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
 
   const matchesToEnrichFeatured = [...activeLiveRaw, ...recentFeaturedRaw];
-  await prepareFifaShirtMapsForMatches([...matchesToEnrichFeatured, ...upcomingRaw]);
+  const nextSlotRaw = findNextUpcomingMatches(upcomingRaw);
+  await prepareFifaShirtMapsForMatches([...matchesToEnrichFeatured, ...nextSlotRaw]);
   const [enrichedFeatured, enrichedUpcoming] = await Promise.all([
     enrichMatchesForRankingDashboard(matchesToEnrichFeatured, userId),
-    enrichMatchesForRankingUpcoming(upcomingRaw, userId),
+    enrichMatchesForRankingUpcoming(nextSlotRaw, userId),
   ]);
   const byId = new Map(
     [...enrichedFeatured, ...enrichedUpcoming].map((m) => [m.id, m])
@@ -109,29 +110,37 @@ export async function getRankingDashboard(groupId, userId) {
 
   const liveMatchIds = liveMatches.map((match) => match.id);
   const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
-  // Par actual sin sub-caché: el dashboard ya cachea 5s/15s; liveKickoffBaselineMatchIds
-  // deja PJ igual y puntúa el partido en vivo como 0-0 (no excludeMatchIds, que baja PJ).
+  const hasLive = indicatorBaselineMatchIds.length > 0;
   const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
-    getLeaderboard(groupId || null, 100),
-    indicatorBaselineMatchIds.length > 0
-      ? getLeaderboard(groupId || null, 100, {
-          liveKickoffBaselineMatchIds: indicatorBaselineMatchIds,
-        })
+    getCachedLeaderboard(groupId || null, 100, {}, { hasLiveMatches: hasLive }),
+    hasLive
+      ? getCachedLeaderboard(
+          groupId || null,
+          100,
+          { liveKickoffBaselineMatchIds: indicatorBaselineMatchIds },
+          { hasLiveMatches: true }
+        )
       : Promise.resolve(null),
   ]);
 
   const nextUpcomingMatches = findNextUpcomingMatches(
-    upcomingRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
+    enrichedUpcoming
   );
 
+  const liveRawById = new Map(activeLiveRaw.map((m) => [m._id.toString(), m]));
   const upcomingRawById = new Map(upcomingRaw.map((m) => [m._id.toString(), m]));
-  await Promise.all(
-    nextUpcomingMatches.map(async (featured) => {
+  await Promise.all([
+    ...liveMatches.map(async (featured) => {
+      const raw = liveRawById.get(featured.id);
+      if (!raw) return;
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+    }),
+    ...nextUpcomingMatches.map(async (featured) => {
       const raw = upcomingRawById.get(featured.id);
       if (!raw) return;
       featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
-    })
-  );
+    }),
+  ]);
 
   const [liveWithStream, nextWithStream, recentFinishedWithStream] = await Promise.all([
     attachStreamMetaToMatches(liveMatches),
