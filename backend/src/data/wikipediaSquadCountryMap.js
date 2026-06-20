@@ -66,6 +66,7 @@ export const WIKIPEDIA_NON_TEAM_SECTIONS = new Set([
 /** Carpeta en imagenes-jugadores/ cuando existe caricatura (opcional). */
 export const FIFA_TO_PHOTO_FOLDER = {
   ALG: 'argelia',
+  KSA: 'arabia-saudita',
   GER: 'alemania',
   ARG: 'argentina',
   AUS: 'australia',
@@ -75,6 +76,8 @@ export const FIFA_TO_PHOTO_FOLDER = {
   CAN: 'canada',
   CIV: 'costa-de-marfil',
   CPV: 'cabo-verde',
+  CUW: 'curacao',
+  ECU: 'ecuador',
   ESP: 'espana',
   GHA: 'ghana',
   HAI: 'haiti',

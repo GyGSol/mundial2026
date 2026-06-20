@@ -18,6 +18,7 @@ const GENERATOR_LINE =
 /** Carpetas en imagenes-jugadores → código FIFA */
 export const TEAM_FOLDER_TO_FIFA = {
   argelia: 'ALG',
+  'arabia-saudita': 'KSA',
   alemania: 'GER',
   argentina: 'ARG',
   australia: 'AUS',
@@ -28,8 +29,10 @@ export const TEAM_FOLDER_TO_FIFA = {
   canada: 'CAN',
   catar: 'QAT',
   corea: 'KOR',
+  curacao: 'CUW',
   'costa-de-marfil': 'CIV',
   escocia: 'SCO',
+  ecuador: 'ECU',
   espana: 'ESP',
   'estados-unidos': 'USA',
   ghana: 'GHA',
