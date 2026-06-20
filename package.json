@@ -15,6 +15,7 @@
     "sync:streams": "npm run sync:streams -w backend",
     "sync:players": "npm run sync:players -w backend",
     "sync:player-photos": "npm run sync:player-photos -w backend",
+    "photos:clean-local": "node scripts/clean-uploaded-player-photos.mjs",
     "sync:player-wiki": "npm run sync:player-wiki -w backend",
     "build:wikipedia-squads": "npm run build:wikipedia-squads -w backend",
     "sync:wikipedia-squads": "npm run sync:wikipedia-squads -w backend",
