@@ -499,7 +499,26 @@ export async function ensureOfficialKnockoutMatches() {
     return { repaired: false, count: existingCount };
   }
 
-  const data = await fetchGames();
+  let data;
+  let lastError;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      data = await fetchGames();
+      lastError = null;
+      break;
+    } catch (err) {
+      lastError = err;
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+      }
+    }
+  }
+
+  if (lastError) {
+    console.warn('ensureOfficialKnockoutMatches skipped:', lastError.message);
+    return { repaired: false, count: existingCount, error: lastError.message };
+  }
+
   const allGames = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
   const knockoutGames = allGames.filter((item) =>
     isOfficialKnockoutExternalId(String(item.id ?? item._id ?? item.idGame ?? ''))

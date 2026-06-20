@@ -192,4 +192,15 @@ describe('ensureOfficialKnockoutMatches', () => {
     expect(result.count).toBe(32);
     expect(fetchGames).not.toHaveBeenCalled();
   });
+
+  it('no rompe si worldcup26 no responde', async () => {
+    matchCountDocuments.mockResolvedValueOnce(3);
+    fetchGames.mockRejectedValue(new Error('fetch failed'));
+
+    const result = await ensureOfficialKnockoutMatches();
+
+    expect(result.repaired).toBe(false);
+    expect(result.count).toBe(3);
+    expect(result.error).toBe('fetch failed');
+  });
 });
