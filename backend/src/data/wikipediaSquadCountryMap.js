@@ -89,6 +89,7 @@ export const FIFA_TO_PHOTO_FOLDER = {
   PAR: 'paraguay',
   POR: 'portugal',
   TUR: 'turquia',
+  TUN: 'tunez',
   QAT: 'catar',
   SCO: 'escocia',
   SUI: 'suiza',

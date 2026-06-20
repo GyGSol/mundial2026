@@ -46,6 +46,7 @@ export const TEAM_FOLDER_TO_FIFA = {
   suiza: 'SUI',
   suecia: 'SWE',
   turquia: 'TUR',
+  tunez: 'TUN',
   uruguay: 'URU',
   uzbekistan: 'UZB',
 };
