@@ -35,7 +35,9 @@ export const TEAM_FOLDER_TO_FIFA = {
   mexico: 'MEX',
   'paises-bajos': 'NED',
   panama: 'PAN',
+  paraguay: 'PAR',
   portugal: 'POR',
+  turquia: 'TUR',
   uruguay: 'URU',
   uzbekistan: 'UZB',
 };
