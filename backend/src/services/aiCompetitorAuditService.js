@@ -351,7 +351,8 @@ export async function upsertAiCompetitorPrediction(matchId, { homeGoals, awayGoa
     prediction.homeGoals = home;
     prediction.awayGoals = away;
     prediction.userSubmitted = true;
-    prediction.predictionSource = 'admin';
+    // Fuente `ai`: entra al scoring automático (admin queda excluido en matchScoringService).
+    prediction.predictionSource = 'ai';
     await prediction.save();
   } else {
     prediction = await Prediction.create({
@@ -360,7 +361,7 @@ export async function upsertAiCompetitorPrediction(matchId, { homeGoals, awayGoa
       homeGoals: home,
       awayGoals: away,
       userSubmitted: true,
-      predictionSource: 'admin',
+      predictionSource: 'ai',
       pointsEarned: null,
       bonusPoint: 0,
       bonusReason: null,
