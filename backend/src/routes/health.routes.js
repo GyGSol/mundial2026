@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
+import { env } from '../config/env.js';
+import { parseDatabaseName } from '../config/testDbGuard.js';
 import { SyncMeta } from '../models/SyncMeta.js';
 import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
@@ -16,6 +18,9 @@ router.get('/', async (req, res, next) => {
 
     res.json({
       status: 'ok',
+      environment: env.appEnv,
+      databaseName: parseDatabaseName(env.mongodbUri),
+      isLocalQa: env.appEnv === 'local-qa',
       db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
       matchesCount,
       teamsCount,

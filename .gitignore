@@ -2,6 +2,8 @@ node_modules/
 dist/
 backend/public/
 .env
+.env.local-qa
+.local/
 .engram/
 *.log
 .DS_Store

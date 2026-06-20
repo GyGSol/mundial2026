@@ -2,6 +2,7 @@ import { gunzipSync } from 'zlib';
 import fs from 'fs';
 import mongoose from 'mongoose';
 import { connectDb } from '../config/db.js';
+import { assertSafeRestoreTarget } from '../config/testDbGuard.js';
 import { deserializeDocument } from '../services/backupSerialization.js';
 
 const dryRun = process.env.DRY_RUN === '1';
@@ -61,6 +62,8 @@ async function main() {
     console.error('Usage: CONFIRM=1 node src/scripts/restoreDatabaseFromBackup.js --file=path/to/full-database.json.gz');
     process.exit(1);
   }
+
+  assertSafeRestoreTarget(process.env.MONGODB_URI);
 
   await connectDb();
   const db = mongoose.connection.db;

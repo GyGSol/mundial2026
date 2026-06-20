@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import EditPlayerDialog from './EditPlayerDialog.jsx';
 import GameMobileNav from './GameMobileNav.jsx';
+import LocalQaBanner from './LocalQaBanner.jsx';
 import MundialBrandLogo from './MundialBrandLogo.jsx';
 import FubolBalanceChip from './FubolBalanceChip.jsx';
 import { LiveMatchViewerProvider } from '@/context/LiveMatchViewerContext.jsx';
@@ -31,6 +32,7 @@ export default function Layout() {
         </main>
 
         <GameMobileNav onEditPlayer={() => setEditPlayerOpen(true)} />
+        <LocalQaBanner />
       </div>
     </LiveMatchViewerProvider>
   );

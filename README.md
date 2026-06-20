@@ -6,7 +6,7 @@ Aplicación web para predecir resultados del Mundial FIFA 2026 (48 equipos, 104 
 |---|---|
 | **Producción** | https://mundial2026-pred-34de76763ecc.herokuapp.com/ |
 | **Entrega** | [ENTREGA.md](./ENTREGA.md) · zip: `npm run package-zip` |
-| **Deploy** | [HEROKU.md](./HEROKU.md) |
+| **Deploy** | [HEROKU.md](./HEROKU.md) · [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) (QA local → prod) |
 | **Backup y seguridad DB** | [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md) |
 
 ## Stack
@@ -130,6 +130,19 @@ npm run dev
 - Backend: http://localhost:5000
 - WebSocket: ws://localhost:5000/ws
 - Admin: http://localhost:5173/admin
+
+### QA local con copia de producción
+
+Para probar con datos reales (usuarios, predicciones, puntos) sin tocar Atlas:
+
+```bash
+cp .env.local-qa.example .env.local-qa   # BACKUP_GITHUB_TOKEN en .env.local-qa
+npm run db:clone-from-prod                 # clona backup → mundial2026_local
+npm run dev:local-qa                       # banner "QA local" en la UI
+curl http://localhost:5000/api/health      # databaseName: mundial2026_local
+```
+
+Deploy a prod solo tras checklist: [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md).
 
 ## Tests (puntuación — TDD)
 

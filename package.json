@@ -9,6 +9,10 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "dev:local-qa": "ENV_FILE=.env.local-qa concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "db:clone-from-prod": "node scripts/clone-db-from-prod-backup.mjs",
+    "db:clone-from-prod:dry-run": "DRY_RUN=1 node scripts/clone-db-from-prod-backup.mjs",
+    "deploy:production": "node scripts/deploy-production.js",
     "build": "npm run build -w frontend && node scripts/copy-frontend.js",
     "test": "npm run test -w backend",
     "sync": "npm run sync -w backend",

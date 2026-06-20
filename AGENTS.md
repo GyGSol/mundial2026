@@ -28,6 +28,7 @@ Instaladas en `.agents/skills/` (ver también `skills-lock.json`). Las más usad
 - `deploy-to-vercel` / `vercel-cli-with-tokens` — solo si se despliega fuera de Heroku
 - `diagnose` — bugs y regresiones
 - `engram-memory` — cuándo/cómo memorizar con Engram (topic_key, juez, secretos)
+- `heroku-deploy` — QA local primero, prod solo con confirmación ([docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md))
 
 Reglas embebidas de skills Vercel (React, composition, view transitions, RN) se cargan vía `AGENTS.md` en cada skill.
 
@@ -46,7 +47,7 @@ Tras editar `mcp.json`: **MCP Reload** en Cursor.
 - Variables sensibles solo en `.env` (nunca en git ni Engram).
 - Commits en español o inglés claro; mensaje con el *por qué*.
 - Tests: `npm test` (backend, puntuación y rutas críticas). **Nunca** con `MONGODB_URI` de prod exportada — ver [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md).
-- Deploy Heroku: tras cambios implementados, commit + `git push heroku main` + `git push origin main` (sin esperar confirmación del usuario).
+- **Deploy:** QA local primero → confirmación del usuario → prod. Ver [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md). **No** hacer `git push heroku main` sin que el usuario lo pida explícitamente.
 
 ## Base de datos y backups
 

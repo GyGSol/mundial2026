@@ -133,7 +133,7 @@ heroku run "npm run backup:push -w backend" -a mundial2026-pred
 ### Restore total (disaster recovery)
 
 1. Descargar `full-database.json.gz` del repo de backups.
-2. En local, apuntar `MONGODB_URI` al destino (idealmente cluster de **staging**, no prod sin confirmación).
+2. En local, apuntar `MONGODB_URI` al destino (**localhost** `mundial2026_local` para QA; prod solo con backup reciente y confirmación explícita).
 3. Dry-run:
    ```bash
    cd backend
@@ -143,6 +143,17 @@ heroku run "npm run backup:push -w backend" -a mundial2026-pred
    ```bash
    CONFIRM=1 node src/scripts/restoreDatabaseFromBackup.js --file=/ruta/full-database.json.gz
    ```
+
+### Clonar prod → QA local (recomendado)
+
+No toca Atlas. Ver [DEPLOYMENT.md](./DEPLOYMENT.md):
+
+```bash
+npm run db:clone-from-prod
+npm run dev:local-qa
+```
+
+El script `restoreDatabaseFromBackup.js` rechaza URIs de Atlas salvo `ALLOW_PRODUCTION_RESTORE=1`.
 
 ### Restore solo predicciones (FamilyPro)
 

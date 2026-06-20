@@ -2,9 +2,15 @@ import dotenv from 'dotenv';
 import { AI_USER_DEFAULT_EMAIL } from '../constants/aiUser.js';
 
 dotenv.config();
+if (process.env.ENV_FILE) {
+  dotenv.config({ path: process.env.ENV_FILE, override: true });
+}
 
 export const env = {
   port: Number(process.env.PORT || 5000),
+  appEnv:
+    process.env.APP_ENV ||
+    (process.env.NODE_ENV === 'production' ? 'production' : 'development'),
   mongodbUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mundial2026',
   jwtSecret: process.env.JWT_SECRET || 'dev-secret-change-me',
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',

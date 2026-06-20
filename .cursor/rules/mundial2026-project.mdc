@@ -32,26 +32,16 @@ npm run sync   # poblar desde worldcup26.ir
 
 ## Deploy
 
-Tras completar cambios de código que el usuario pidió (features, fixes, UI), **siempre** hacer deploy sin esperar que lo pida:
+Tras completar cambios que el usuario pidió (features, fixes, UI):
 
-```bash
-git add <archivos relevantes>
-git commit -m "..."
-git push heroku main
-git push origin main
-```
+1. Commit → `git push origin main`
+2. **QA local:** `npm run db:clone-from-prod` (si hace falta datos frescos) → `npm run dev:local-qa` → verificar `/api/health` (`mundial2026_local`)
+3. Informar al usuario y **preguntar** antes de producción
+4. Solo con confirmación explícita: `CONFIRM_PRODUCTION=1 npm run deploy:production`
 
-- App: `mundial2026-pred` (rama `main`).
-- No incluir en commits archivos no relacionados ni secretos (`.env`).
-- Si los tests fallan por timeout de red u otra causa ajena al cambio, indicarlo; no bloquear deploy de UI pura si el build pasa.
-
-Deploy manual (referencia):
-
-```bash
-git push heroku main
-```
-
-Ver [HEROKU.md](../../HEROKU.md) para Atlas, config vars y panel admin.
+- App prod: `mundial2026-pred` (rama `main`).
+- No incluir en commits archivos no relacionados ni secretos (`.env`, `.env.local-qa`).
+- Detalle: [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md)
 
 ## Seguridad de la base de datos (CRÍTICO)
 
