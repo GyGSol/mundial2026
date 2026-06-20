@@ -26,16 +26,28 @@ alwaysApply: true
 cd /home/magnetico/Nexus/Mundial2026
 npm install
 npm run dev    # frontend :5173, backend :5000
+npm run dev:local-qa   # QA con clon de prod (mundial2026_local)
 npm test
 npm run sync   # poblar desde worldcup26.ir
 ```
+
+## Base local (`mundial2026_local`)
+
+**Antes de actualizar la base local con datos de producción, preguntar siempre al usuario:**
+
+> ¿Querés actualizar la base local con los datos actuales de producción?
+
+- **No ejecutar** `heroku run "npm run backup:push ..."` ni `npm run db:clone-from-prod` sin un **sí** explícito del usuario.
+- Si dice que sí: backup fresco en prod → `npm run db:clone-from-prod` → confirmar `/api/health` (`databaseName: mundial2026_local`).
+- Si dice que no: seguir con el clon que ya tenga en local (o `npm run dev` / `dev:local-qa` sin refrescar).
+- Preguntar en especial cuando el cambio toque login, predicciones, puntuación, usuarios o admin — o al iniciar una sesión de QA local.
 
 ## Deploy
 
 Tras completar cambios que el usuario pidió (features, fixes, UI):
 
 1. Commit → `git push origin main`
-2. **QA local:** `npm run db:clone-from-prod` (si hace falta datos frescos) → `npm run dev:local-qa` → verificar `/api/health` (`mundial2026_local`)
+2. **QA local:** preguntar si refrescar base (ver arriba) → `npm run dev:local-qa` → verificar `/api/health` (`mundial2026_local`)
 3. Informar al usuario y **preguntar** antes de producción
 4. Solo con confirmación explícita: `CONFIRM_PRODUCTION=1 npm run deploy:production`
 

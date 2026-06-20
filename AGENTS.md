@@ -48,6 +48,7 @@ Tras editar `mcp.json`: **MCP Reload** en Cursor.
 - Commits en español o inglés claro; mensaje con el *por qué*.
 - Tests: `npm test` (backend, puntuación y rutas críticas). **Nunca** con `MONGODB_URI` de prod exportada — ver [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md).
 - **Deploy:** QA local primero → confirmación del usuario → prod. Ver [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md). **No** hacer `git push heroku main` sin que el usuario lo pida explícitamente.
+- **Base local:** antes de `backup:push` o `db:clone-from-prod`, **preguntar** al usuario si quiere actualizar `mundial2026_local` con los datos actuales de prod. No refrescar sin un sí explícito.
 
 ## Base de datos y backups
 

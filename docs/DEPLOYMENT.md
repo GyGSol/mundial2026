@@ -30,6 +30,8 @@ cp .env.local-qa.example .env.local-qa
 
 ## Flujo de trabajo
 
+**Regla para agentes:** antes de ejecutar backup o clon, preguntar al usuario: *¿Querés actualizar la base local con los datos actuales de producción?* No refrescar sin confirmación explícita.
+
 ### 1. Clonar prod → local
 
 ```bash
