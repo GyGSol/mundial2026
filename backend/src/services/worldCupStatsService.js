@@ -555,6 +555,9 @@ export async function buildWorldCupOverview({
   getLastSyncAt,
   includePlayerStats = false,
 }) {
+  const { ensureOfficialKnockoutMatches } = await import('./syncService.js');
+  await ensureOfficialKnockoutMatches();
+
   const [teams, matches, groups, stadiums] = await Promise.all([
     Team.find().select('externalId nameEn nameFa fifaCode group flag').sort({ nameEn: 1 }).lean(),
     Match.find().select(WORLD_CUP_MATCH_SELECT).sort({ kickoffAt: 1 }).lean(),
@@ -605,7 +608,11 @@ export async function buildWorldCupOverview({
   }
 
   const groupMatches = matches
-    .filter((m) => normalizePhaseKey(m.type) === 'group' || Boolean(m.group))
+    .filter((m) => {
+      const id = String(m.externalId || '');
+      if (/^\d+$/.test(id) && Number(id) >= 73 && Number(id) <= 104) return false;
+      return normalizePhaseKey(m.type) === 'group' || Boolean(m.group);
+    })
     .map((m) => formatMatchSummary(m, teamMap, stadiumMap, fifaRankings));
 
   const stadiumUsage = stadiums.map((stadium) => {

@@ -145,6 +145,21 @@ export function syncTeamsMatch(existing, incoming) {
   );
 }
 
+export function isPlaceholderTeamSlot(homeTeamId, awayTeamId) {
+  const home = String(homeTeamId ?? '').trim();
+  const away = String(awayTeamId ?? '').trim();
+  return (!home || home === '0') && (!away || away === '0');
+}
+
+export function isOfficialKnockoutExternalId(externalId) {
+  const id = String(externalId || '');
+  return /^\d+$/.test(id) && Number(id) >= 73 && Number(id) <= 104;
+}
+
+export const OFFICIAL_KNOCKOUT_EXTERNAL_IDS = Array.from({ length: 32 }, (_, index) =>
+  String(73 + index)
+);
+
 export function incomingIndicatesNotFinished(incoming, { now = Date.now() } = {}) {
   const raw = incoming.raw ?? {};
   const kickoffAt = incoming.kickoffAt;
@@ -173,11 +188,18 @@ export async function resolveExistingMatchForWorldCup26Sync(doc) {
     return byExternalId;
   }
 
-  const byPair = await Match.findOne({
-    homeTeamId: doc.homeTeamId,
-    awayTeamId: doc.awayTeamId,
-  }).lean();
-  if (byPair) return byPair;
+  // 30+ placeholders KO comparten home/away 0/0; emparejar por par colapsa todos en un documento.
+  if (isOfficialKnockoutExternalId(doc.externalId)) {
+    return byExternalId;
+  }
+
+  if (!isPlaceholderTeamSlot(doc.homeTeamId, doc.awayTeamId)) {
+    const byPair = await Match.findOne({
+      homeTeamId: doc.homeTeamId,
+      awayTeamId: doc.awayTeamId,
+    }).lean();
+    if (byPair) return byPair;
+  }
 
   return byExternalId;
 }
@@ -374,21 +396,18 @@ export function mergeSyncedMatch(existing, incoming) {
   return merged;
 }
 
-async function upsertMatches() {
-  // worldcup26 game.id ≠ FIFA MatchNumber (externalId). Ver normalizeGame y resolveExistingMatchForWorldCup26Sync.
-  const data = await fetchGames();
-  const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
+async function upsertWorldCup26GameItems(list, { stadiumTimezones = null } = {}) {
+  const timezones = stadiumTimezones ?? (await buildStadiumTimezoneMap());
   const scoringIds = [];
   const newlyFinishedIds = [];
   const clearedScoreIds = [];
   let finishedArchiveDirty = false;
   const worldcup26Warnings = [];
-  const stadiumTimezones = await buildStadiumTimezoneMap();
 
   for (const item of list) {
     const stadiumId = String(item.stadium_id ?? item.stadiumId ?? '');
     const doc = normalizeGame(item, {
-      stadiumTimezone: stadiumTimezones[stadiumId] || undefined,
+      stadiumTimezone: timezones[stadiumId] || undefined,
     });
     const existing = await resolveExistingMatchForWorldCup26Sync(doc);
 
@@ -413,8 +432,9 @@ async function upsertMatches() {
       nextStatus: merged.status,
       existingFinishedAt: existing?.finishedAt ?? null,
     });
-    // Placeholder ids (e.g. test/snapshot fixtures) must not block FIFA MatchNumber from sync.
-    if (existing?.externalId && existing.externalId !== 'finished-only') {
+    if (isOfficialKnockoutExternalId(doc.externalId)) {
+      updatePayload.externalId = String(doc.externalId);
+    } else if (existing?.externalId && existing.externalId !== 'finished-only') {
       updatePayload.externalId = existing.externalId;
     }
     if (existing?.kickoffAt) {
@@ -467,6 +487,50 @@ async function upsertMatches() {
     finishedArchiveDirty,
     worldcup26Warnings,
   };
+}
+
+/** Repara partidos 73–104 si el sync previo colapsó placeholders 0/0 en un solo documento. */
+export async function ensureOfficialKnockoutMatches() {
+  const existingCount = await Match.countDocuments({
+    externalId: { $in: OFFICIAL_KNOCKOUT_EXTERNAL_IDS },
+  });
+
+  if (existingCount >= OFFICIAL_KNOCKOUT_EXTERNAL_IDS.length) {
+    return { repaired: false, count: existingCount };
+  }
+
+  const data = await fetchGames();
+  const allGames = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
+  const knockoutGames = allGames.filter((item) =>
+    isOfficialKnockoutExternalId(String(item.id ?? item._id ?? item.idGame ?? ''))
+  );
+
+  const upsertResult = await upsertWorldCup26GameItems(knockoutGames);
+  const count = await Match.countDocuments({
+    externalId: { $in: OFFICIAL_KNOCKOUT_EXTERNAL_IDS },
+  });
+
+  if (count > existingCount) {
+    const { invalidateWorldCupOverviewCache } = await import('./worldCupOverviewCache.js');
+    invalidateWorldCupOverviewCache();
+  }
+
+  return {
+    repaired: count > existingCount,
+    count,
+    previousCount: existingCount,
+    sourceGames: knockoutGames.length,
+    ...upsertResult,
+  };
+}
+
+async function upsertMatches() {
+  // worldcup26 game.id ≠ FIFA MatchNumber (externalId). Ver normalizeGame y resolveExistingMatchForWorldCup26Sync.
+  const data = await fetchGames();
+  const list = Array.isArray(data) ? data : data?.games ?? data?.matches ?? data?.data ?? [];
+  const stadiumTimezones = await buildStadiumTimezoneMap();
+
+  return upsertWorldCup26GameItems(list, { stadiumTimezones });
 }
 
 function needsRescore(before, after) {
