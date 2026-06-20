@@ -31,6 +31,7 @@ export const env = {
   worldCupSyncPassword: process.env.WORLD_CUP_SYNC_PASSWORD || '',
   syncIntervalMs: Number(process.env.SYNC_INTERVAL_MS || 60000),
   syncIntervalLiveMs: Number(process.env.SYNC_INTERVAL_LIVE_MS || 15000),
+  liveFifaRefreshMs: Number(process.env.LIVE_FIFA_REFRESH_MS || 30000),
   kickoffWatchIntervalMs: Number(process.env.KICKOFF_WATCH_MS || 15000),
   predictionLockReminderIntervalMs: Number(process.env.PREDICTION_LOCK_REMINDER_INTERVAL_MS || 60000),
   simulationEnabled: process.env.SIMULATION_ENABLED !== 'false',

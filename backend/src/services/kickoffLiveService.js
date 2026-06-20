@@ -472,8 +472,27 @@ export async function refreshRecentlyFinishedFifaEvents(now = Date.now()) {
 export async function syncLiveMatchScoring() {
   const reopened = await reopenPrematurelyFinishedMatches();
   const finalized = await finalizeStaleLiveMatches();
+  const { syncStaleLiveFifaMatchEvents } = await import('./fifaEventSyncService.js');
+  const liveFifaRefresh = await syncStaleLiveFifaMatchEvents();
   const fifaRefresh = await refreshRecentlyFinishedFifaEvents();
   const promoted = await promoteMatchesAtKickoff();
+
+  for (const matchId of liveFifaRefresh.scoringIds ?? []) {
+    await recalculateMatchScores(matchId);
+  }
+
+  if (liveFifaRefresh.newlyFinishedIds?.length) {
+    invalidateRankingFinishedMatchesCache();
+    invalidateTournamentGoalsFinishedMatchesCache();
+    notifyLeaderboardUpdated({ reason: 'live_fifa_finished' });
+    try {
+      const { scheduleBackupsForFinishedMatches } = await import('./matchFinishBackupService.js');
+      scheduleBackupsForFinishedMatches(liveFifaRefresh.newlyFinishedIds);
+    } catch (err) {
+      console.warn('Match finish backup skipped:', err.message);
+    }
+  }
+
   const { matches, users } = await recalculateAllLiveMatches();
 
   if (matches > 0) {
@@ -490,14 +509,19 @@ export async function syncLiveMatchScoring() {
     }
   }
 
-  if (matches > 0) {
+  if (matches > 0 || liveFifaRefresh.events > 0 || finalized.length > 0) {
     invalidateMatchRelatedCaches();
-    notifyMatchesUpdated({ reason: 'live_scoring_sync', liveMatches: matches });
+    notifyMatchesUpdated({
+      reason: 'live_scoring_sync',
+      liveMatches: matches,
+      fifaEventsRefreshed: liveFifaRefresh.events,
+    });
   }
 
   return {
     reopened: reopened.length,
     finalized: finalized.length,
+    liveFifaRefresh,
     fifaRefresh,
     promoted: promoted.length,
     liveMatches: matches,

@@ -25,6 +25,43 @@ import {
 } from '../utils/fifaSquadShirtMap.js';
 import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 import { wallClockAllowsMatchFinished } from './matchStatusRules.js';
+import { env } from '../config/env.js';
+
+/** Máxima antigüedad de raw.fifaEvents.syncedAt antes de refrescar en el loop en vivo. */
+export const LIVE_FIFA_EVENTS_MAX_AGE_MS = env.liveFifaRefreshMs;
+
+export function readFifaEventsSyncedAtMs(match) {
+  const syncedAt = match?.raw?.fifaEvents?.syncedAt ?? match?.raw?.fifaMeta?.syncedAt;
+  if (!syncedAt) return null;
+  const ms = new Date(syncedAt).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function isLiveFifaEventsStale(match, maxAgeMs = LIVE_FIFA_EVENTS_MAX_AGE_MS, now = Date.now()) {
+  if (match?.status !== 'live') return false;
+  const syncedMs = readFifaEventsSyncedAtMs(match);
+  if (syncedMs == null) return true;
+  return now - syncedMs >= maxAgeMs;
+}
+
+function buildFifaEntryFromStoredMeta(match) {
+  const meta = match?.raw?.fifaMeta;
+  if (!meta?.idMatch || !meta?.idStage) return null;
+
+  return {
+    IdMatch: meta.idMatch,
+    IdStage: meta.idStage,
+    MatchNumber: meta.matchNumber ?? match.externalId,
+    Home: {
+      IdTeam: meta.homeTeamId,
+      Score: meta.homeScore ?? match.homeScore,
+    },
+    Away: {
+      IdTeam: meta.awayTeamId,
+      Score: meta.awayScore ?? match.awayScore,
+    },
+  };
+}
 
 async function loadMatchTeams(match) {
   const [homeTeam, awayTeam] = await Promise.all([
@@ -116,6 +153,217 @@ export async function syncFifaReportsForMatchIds(matchIds = []) {
   return { reports };
 }
 
+async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
+  if (!fifaEntry?.IdMatch || !fifaEntry?.IdStage) {
+    return { events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [], updated: false };
+  }
+
+  const rawUpdate = {};
+  let matchUpdated = false;
+  let reportsSynced = 0;
+
+  const [timelineJson, liveMatch] = await Promise.all([
+    fetchMatchTimeline({
+      idStage: fifaEntry.IdStage,
+      idMatch: fifaEntry.IdMatch,
+    }),
+    fetchLiveMatchFootball({
+      idStage: fifaEntry.IdStage,
+      idMatch: fifaEntry.IdMatch,
+    }).catch(() => null),
+  ]);
+
+  let timeline = parseFifaTimeline(timelineJson, fifaEntry.Home?.IdTeam, fifaEntry.Away?.IdTeam);
+  const shirtLookups = liveMatch
+    ? buildShirtLookups(liveMatch)
+    : { shirtByPlayerId: {}, shirtBySideName: { home: {}, away: {} } };
+  const { shirtByPlayerId, shirtBySideName } = shirtLookups;
+  if (Object.keys(shirtByPlayerId).length > 0) {
+    timeline = applyShirtNumbersToTimeline(timeline, shirtLookups);
+  }
+
+  if (timeline.length === 0) {
+    return { events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [], updated: false };
+  }
+
+  const scoringIds = [];
+  const newlyFinishedIds = [];
+
+  const fifaHomeScore = Number(fifaEntry.Home?.Score);
+  const fifaAwayScore = Number(fifaEntry.Away?.Score);
+  const hasFifaScore =
+    Number.isFinite(fifaHomeScore) &&
+    Number.isFinite(fifaAwayScore) &&
+    isPlausibleMatchGoalCount(fifaHomeScore) &&
+    isPlausibleMatchGoalCount(fifaAwayScore);
+
+  const timelineGoals = goalCountsFromTimeline(timeline);
+  const mergedScores = mergeFifaApiScoreWithTimeline(
+    fifaHomeScore,
+    fifaAwayScore,
+    timeline,
+    hasFifaScore
+  );
+  const resolvedHomeScore = hasFifaScore
+    ? mergedScores.homeScore
+    : mergePlausibleGoalCounts(match.homeScore, mergedScores.homeScore);
+  const resolvedAwayScore = hasFifaScore
+    ? mergedScores.awayScore
+    : mergePlausibleGoalCounts(match.awayScore, mergedScores.awayScore);
+
+  rawUpdate['raw.fifaMeta'] = {
+    idMatch: String(fifaEntry.IdMatch),
+    idStage: String(fifaEntry.IdStage),
+    matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
+    homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
+    awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
+    ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId, shirtBySideName } : {}),
+    ...(Object.keys(shirtByPlayerId).length > 0
+      ? { shirtMapSyncedAt: new Date().toISOString() }
+      : {}),
+    ...(hasFifaScore || timelineGoals.home + timelineGoals.away > 0
+      ? { homeScore: mergedScores.homeScore, awayScore: mergedScores.awayScore }
+      : {}),
+    syncedAt: new Date().toISOString(),
+  };
+  rawUpdate['raw.fifaEvents'] = {
+    timeline,
+    rawEvents: timelineJson?.Event ?? [],
+    source: 'fifa_api',
+    syncedAt: new Date().toISOString(),
+    assistHash: null,
+    assistedAt: null,
+  };
+  const scoreChanged =
+    resolvedHomeScore !== Number(match.homeScore ?? 0) ||
+    resolvedAwayScore !== Number(match.awayScore ?? 0);
+
+  if (scoreChanged) {
+    rawUpdate.homeScore = resolvedHomeScore;
+    rawUpdate.awayScore = resolvedAwayScore;
+    scoringIds.push(match._id);
+  }
+
+  if (match.status === 'upcoming' && (scoreChanged || timeline.length > 0)) {
+    rawUpdate.status = 'live';
+    rawUpdate.weatherOps = { phase: 'normal' };
+    scoringIds.push(match._id);
+  }
+
+  const hasMatchEnd =
+    parsedTimelineHasMatchEnd(timeline) || fifaRawTimelineHasMatchEnd(timelineJson);
+  if (match.status === 'live' && hasMatchEnd) {
+    const finishedCandidate = {
+      ...match,
+      status: 'finished',
+      homeScore: rawUpdate.homeScore ?? match.homeScore,
+      awayScore: rawUpdate.awayScore ?? match.awayScore,
+      raw: {
+        ...(match.raw ?? {}),
+        finished: 'TRUE',
+        time_elapsed: 'finished',
+        fifaEvents: {
+          ...(match.raw?.fifaEvents ?? {}),
+          timeline,
+        },
+      },
+    };
+    if (wallClockAllowsMatchFinished(finishedCandidate)) {
+      rawUpdate.status = 'finished';
+      rawUpdate['raw.time_elapsed'] = 'finished';
+      rawUpdate['raw.finished'] = 'TRUE';
+      newlyFinishedIds.push(match._id);
+      scoringIds.push(match._id);
+    }
+  }
+
+  matchUpdated = true;
+
+  const effectiveStatus = rawUpdate.status ?? match.status;
+  if (effectiveStatus === 'finished') {
+    const reportUpdated = await applyFinishedReportUpdate(
+      { ...match, status: 'finished' },
+      homeTeam,
+      awayTeam,
+      fifaEntry,
+      rawUpdate
+    );
+    if (reportUpdated) {
+      matchUpdated = true;
+      reportsSynced += 1;
+    }
+  }
+
+  if (matchUpdated) {
+    applyStatusTransitionFields(rawUpdate, {
+      previousStatus: match.status,
+      nextStatus: effectiveStatus,
+      existingFinishedAt: match.finishedAt ?? null,
+    });
+    await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
+  }
+
+  return {
+    events: matchUpdated ? 1 : 0,
+    reports: reportsSynced,
+    scoringIds,
+    newlyFinishedIds,
+    updated: matchUpdated,
+  };
+}
+
+/** Refresca cronología FIFA de partidos en vivo con syncedAt vencido (loop kickoff watch). */
+export async function syncStaleLiveFifaMatchEvents({
+  maxAgeMs = LIVE_FIFA_EVENTS_MAX_AGE_MS,
+  now = Date.now(),
+} = {}) {
+  const liveMatches = await Match.find({ status: 'live' }).lean();
+  const staleMatches = liveMatches.filter((match) => isLiveFifaEventsStale(match, maxAgeMs, now));
+  if (!staleMatches.length) {
+    return { matches: 0, events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [] };
+  }
+
+  let calendar = [];
+  try {
+    calendar = await fetchAllCalendarMatches();
+  } catch (err) {
+    console.warn('FIFA calendar unavailable for live refresh:', err.message);
+  }
+
+  let eventsSynced = 0;
+  let reportsSynced = 0;
+  const scoringIds = [];
+  const newlyFinishedIds = [];
+
+  for (const match of staleMatches) {
+    const { homeTeam, awayTeam } = await loadMatchTeams(match);
+    if (!homeTeam || !awayTeam) continue;
+
+    try {
+      const fifaEntry =
+        (calendar.length
+          ? await resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam)
+          : null) ?? buildFifaEntryFromStoredMeta(match);
+
+      const result = await syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry);
+      eventsSynced += result.events;
+      reportsSynced += result.reports;
+      scoringIds.push(...result.scoringIds);
+      newlyFinishedIds.push(...result.newlyFinishedIds);
+    } catch (err) {
+      console.warn(`FIFA live refresh skip match ${match.externalId}:`, err.message);
+    }
+  }
+
+  return {
+    matches: staleMatches.length,
+    events: eventsSynced,
+    reports: reportsSynced,
+    scoringIds,
+    newlyFinishedIds,
+  };
+}
+
 export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
   const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const now = new Date();
@@ -166,151 +414,12 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
     if (!homeTeam || !awayTeam) continue;
 
     try {
-      const rawUpdate = {};
-      let matchUpdated = false;
-
       const fifaEntry = await resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam);
-
-      if (fifaEntry?.IdMatch && fifaEntry?.IdStage) {
-        const [timelineJson, liveMatch] = await Promise.all([
-          fetchMatchTimeline({
-            idStage: fifaEntry.IdStage,
-            idMatch: fifaEntry.IdMatch,
-          }),
-          fetchLiveMatchFootball({
-            idStage: fifaEntry.IdStage,
-            idMatch: fifaEntry.IdMatch,
-          }).catch(() => null),
-        ]);
-
-        let timeline = parseFifaTimeline(
-          timelineJson,
-          fifaEntry.Home?.IdTeam,
-          fifaEntry.Away?.IdTeam
-        );
-        const shirtLookups = liveMatch ? buildShirtLookups(liveMatch) : { shirtByPlayerId: {}, shirtBySideName: { home: {}, away: {} } };
-        const { shirtByPlayerId, shirtBySideName } = shirtLookups;
-        if (Object.keys(shirtByPlayerId).length > 0) {
-          timeline = applyShirtNumbersToTimeline(timeline, shirtLookups);
-        }
-
-        if (timeline.length > 0) {
-          const fifaHomeScore = Number(fifaEntry.Home?.Score);
-          const fifaAwayScore = Number(fifaEntry.Away?.Score);
-          const hasFifaScore =
-            Number.isFinite(fifaHomeScore) &&
-            Number.isFinite(fifaAwayScore) &&
-            isPlausibleMatchGoalCount(fifaHomeScore) &&
-            isPlausibleMatchGoalCount(fifaAwayScore);
-
-          const timelineGoals = goalCountsFromTimeline(timeline);
-          const mergedScores = mergeFifaApiScoreWithTimeline(
-            fifaHomeScore,
-            fifaAwayScore,
-            timeline,
-            hasFifaScore
-          );
-          const resolvedHomeScore = hasFifaScore
-            ? mergedScores.homeScore
-            : mergePlausibleGoalCounts(match.homeScore, mergedScores.homeScore);
-          const resolvedAwayScore = hasFifaScore
-            ? mergedScores.awayScore
-            : mergePlausibleGoalCounts(match.awayScore, mergedScores.awayScore);
-
-          rawUpdate['raw.fifaMeta'] = {
-            idMatch: String(fifaEntry.IdMatch),
-            idStage: String(fifaEntry.IdStage),
-            matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
-            homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
-            awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
-            ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId, shirtBySideName } : {}),
-            ...(Object.keys(shirtByPlayerId).length > 0
-              ? { shirtMapSyncedAt: new Date().toISOString() }
-              : {}),
-            ...(hasFifaScore || timelineGoals.home + timelineGoals.away > 0
-              ? { homeScore: mergedScores.homeScore, awayScore: mergedScores.awayScore }
-              : {}),
-            syncedAt: new Date().toISOString(),
-          };
-          rawUpdate['raw.fifaEvents'] = {
-            timeline,
-            rawEvents: timelineJson?.Event ?? [],
-            source: 'fifa_api',
-            syncedAt: new Date().toISOString(),
-            assistHash: null,
-            assistedAt: null,
-          };
-          const scoreChanged =
-            resolvedHomeScore !== Number(match.homeScore ?? 0) ||
-            resolvedAwayScore !== Number(match.awayScore ?? 0);
-
-          if (scoreChanged) {
-            rawUpdate.homeScore = resolvedHomeScore;
-            rawUpdate.awayScore = resolvedAwayScore;
-            scoringIds.push(match._id);
-          }
-
-          if (match.status === 'upcoming' && (scoreChanged || timeline.length > 0)) {
-            rawUpdate.status = 'live';
-            rawUpdate.weatherOps = { phase: 'normal' };
-            scoringIds.push(match._id);
-          }
-
-          const hasMatchEnd =
-            parsedTimelineHasMatchEnd(timeline) || fifaRawTimelineHasMatchEnd(timelineJson);
-          if (match.status === 'live' && hasMatchEnd) {
-            const finishedCandidate = {
-              ...match,
-              status: 'finished',
-              homeScore: rawUpdate.homeScore ?? match.homeScore,
-              awayScore: rawUpdate.awayScore ?? match.awayScore,
-              raw: {
-                ...(match.raw ?? {}),
-                finished: 'TRUE',
-                time_elapsed: 'finished',
-                fifaEvents: {
-                  ...(match.raw?.fifaEvents ?? {}),
-                  timeline,
-                },
-              },
-            };
-            if (wallClockAllowsMatchFinished(finishedCandidate)) {
-              rawUpdate.status = 'finished';
-              rawUpdate['raw.time_elapsed'] = 'finished';
-              rawUpdate['raw.finished'] = 'TRUE';
-              newlyFinishedIds.push(match._id);
-              scoringIds.push(match._id);
-            }
-          }
-
-          matchUpdated = true;
-          eventsSynced += 1;
-        }
-      }
-
-      const effectiveStatus = rawUpdate.status ?? match.status;
-      if (effectiveStatus === 'finished') {
-        const reportUpdated = await applyFinishedReportUpdate(
-          { ...match, status: 'finished' },
-          homeTeam,
-          awayTeam,
-          fifaEntry,
-          rawUpdate
-        );
-        if (reportUpdated) {
-          matchUpdated = true;
-          reportsSynced += 1;
-        }
-      }
-
-      if (matchUpdated) {
-        applyStatusTransitionFields(rawUpdate, {
-          previousStatus: match.status,
-          nextStatus: effectiveStatus,
-          existingFinishedAt: match.finishedAt ?? null,
-        });
-        await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
-      }
+      const result = await syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry);
+      eventsSynced += result.events;
+      reportsSynced += result.reports;
+      scoringIds.push(...result.scoringIds);
+      newlyFinishedIds.push(...result.newlyFinishedIds);
     } catch (err) {
       console.warn(`FIFA events sync skip match ${match.externalId}:`, err.message);
     }
