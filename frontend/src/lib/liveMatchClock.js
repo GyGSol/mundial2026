@@ -235,6 +235,13 @@ function liveMatchClockSortKey(match) {
   return parseElapsedClockToSortKey(resolveLiveMatchDisplayClock(match, match?.matchTimeline ?? []));
 }
 
+function incomingScoresMatchTimeline(incoming) {
+  const tl = goalCountsFromTimeline(incoming.matchTimeline);
+  const home = Number(incoming.homeScore) || 0;
+  const away = Number(incoming.awayScore) || 0;
+  return home === tl.home && away === tl.away;
+}
+
 /** Parche/snapshot atrasado: no debe pisar marcador ni reloj del cliente. */
 export function isIncomingLivePatchStale(existing, incoming) {
   if (!existing || !incoming) return false;
@@ -260,6 +267,13 @@ export function isIncomingLivePatchStale(existing, incoming) {
   if (incomingTotal > existingTotal) return false;
   if (incomingGoalEvents > existingGoalEvents) return false;
   if (incomingClock < existingClock - 0.001) return true;
+
+  const serverCorrection =
+    incomingClock + 0.001 >= existingClock &&
+    (incomingTotal < existingTotal || incomingGoalEvents < existingGoalEvents) &&
+    incomingScoresMatchTimeline(incoming);
+  if (serverCorrection) return false;
+
   if (incomingClock <= existingClock && incomingTotal < existingTotal) return true;
   if (incomingClock <= existingClock && incomingGoalEvents < existingGoalEvents) return true;
 
@@ -274,8 +288,16 @@ function mergePlausibleGoalCount(official, timelineCount, fallback = 0) {
   return Number.isFinite(t) ? Math.max(base, t) : base;
 }
 
-/** Marcador en vivo: nunca retrocede; alinea con goles visibles en cronología. */
+/** Marcador en vivo: confía en el servidor si el parche es fresco; si no, no retrocede. */
 export function reconcileLiveScores(existing, incoming, mergedTimeline, { incomingStale } = {}) {
+  if (!incomingStale && incoming) {
+    const home = Number(incoming.homeScore);
+    const away = Number(incoming.awayScore);
+    if (Number.isFinite(home) && Number.isFinite(away)) {
+      return { homeScore: home, awayScore: away };
+    }
+  }
+
   const tl = goalCountsFromTimeline(mergedTimeline);
   const scoreSource = incomingStale ? existing : incoming;
 

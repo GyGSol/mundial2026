@@ -68,6 +68,10 @@ export function mergeTimelineEvents(existing = [], incoming = [], options = {}) 
     if (nextMax > prevMax + 0.001 || nextGoalTotal > prevGoalTotal) {
       return sortTimelineEvents(next);
     }
+    // Snapshot fresco con menos goles al mismo minuto: descartar fantasmas acumulados en cliente.
+    if (next.length > 0 && nextGoalTotal < prevGoalTotal && nextMax + 0.001 >= prevMax) {
+      return sortTimelineEvents(next);
+    }
   }
 
   const merged = new Map();
@@ -117,6 +121,12 @@ function mergeDerivedList(existing, incoming, { incomingStale } = {}) {
   return prev;
 }
 
+function mergeLineup(existing, incoming, { incomingStale } = {}) {
+  if (!incoming) return existing;
+  if (incomingStale) return existing ?? incoming;
+  return incoming;
+}
+
 /** Fusiona un partido en vivo sin reemplazar la cronología completa a ciegas. */
 export function mergeLiveMatchFields(existing, incoming) {
   if (!incoming) return existing;
@@ -155,6 +165,10 @@ export function mergeLiveMatchFields(existing, incoming) {
 
   for (const field of LIVE_DERIVED_LIST_FIELDS) {
     merged[field] = mergeDerivedList(existing[field], incoming[field], { incomingStale });
+  }
+
+  if (incoming.lineup !== undefined) {
+    merged.lineup = mergeLineup(existing.lineup, incoming.lineup, { incomingStale });
   }
 
   const scores = reconcileLiveScores(existing, incoming, merged.matchTimeline, { incomingStale });

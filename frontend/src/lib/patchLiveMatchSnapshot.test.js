@@ -30,6 +30,30 @@ describe('mergeLiveSnapshot', () => {
     expect(next.liveMatches[0].minute).toBe(67);
   });
 
+  it('fusiona lineup del snapshot WS sin congelar la cancha', () => {
+    const data = {
+      liveMatches: [
+        {
+          id: 'm1',
+          status: 'live',
+          lineup: { status: 'confirmed', home: { players: [{ name: 'Old XI' }] } },
+        },
+      ],
+    };
+    const snapshot = {
+      liveMatches: [
+        {
+          id: 'm1',
+          status: 'live',
+          lineup: { status: 'confirmed', home: { players: [{ name: 'Fresh XI' }] } },
+        },
+      ],
+    };
+
+    const next = mergeLiveSnapshot(data, snapshot);
+    expect(next.liveMatches[0].lineup.home.players[0].name).toBe('Fresh XI');
+  });
+
   it('conserva eventos de cronología cuando el snapshot trae menos', () => {
     const goal47 = {
       type: 'goal',
@@ -357,6 +381,37 @@ describe('mergeLiveMatchFields', () => {
     expect(merged.homeScore).toBe(4);
     expect(merged.awayScore).toBe(1);
     expect(merged.timeElapsed).toBe("78'");
+  });
+
+  it('corrige goles fantasma cuando el servidor manda 0-1 al mismo minuto', () => {
+    const merged = mergeLiveMatchFields(
+      {
+        id: 'm1',
+        homeScore: 1,
+        awayScore: 2,
+        status: 'live',
+        timeElapsed: "30'",
+        matchTimeline: [
+          { type: 'goal', side: 'home', minute: 30, sortKey: 30, player: 'Musiala' },
+          { type: 'goal', side: 'away', minute: 30, sortKey: 30, player: 'Kessie' },
+          { type: 'goal', side: 'away', minute: 30, sortKey: 30, player: 'Kessie duplicate' },
+        ],
+      },
+      {
+        id: 'm1',
+        homeScore: 0,
+        awayScore: 1,
+        status: 'live',
+        timeElapsed: "30'",
+        matchTimeline: [
+          { type: 'goal', side: 'away', minute: 30, sortKey: 30, player: 'Kessie' },
+        ],
+      }
+    );
+
+    expect(merged.homeScore).toBe(0);
+    expect(merged.awayScore).toBe(1);
+    expect(merged.matchTimeline.filter((e) => e.type === 'goal')).toHaveLength(1);
   });
 });
 
