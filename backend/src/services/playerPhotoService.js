@@ -18,6 +18,7 @@ const GENERATOR_LINE =
 /** Carpetas en imagenes-jugadores → código FIFA */
 export const TEAM_FOLDER_TO_FIFA = {
   argelia: 'ALG',
+  alemania: 'GER',
   argentina: 'ARG',
   australia: 'AUS',
   austria: 'AUT',
