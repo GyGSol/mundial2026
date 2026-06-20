@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/table.jsx';
 import { cn } from '@/lib/utils';
 import { ClubCell } from '../ClubDisplay.jsx';
+import PlayerAvatar from '../PlayerAvatar.jsx';
 import { formatKm, formatStatValue, hasPlayerStats, totalSeasonGoals } from '../../lib/playerStats.js';
 
 const POSITIONS = [
@@ -292,7 +293,18 @@ export default function PlayersSection() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => openDetail(player.id)}
                   >
-                    <TableCell className="font-medium">{player.fullName}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="inline-flex items-center gap-2">
+                        <PlayerAvatar
+                          name={player.fullName}
+                          photoUrl={player.photoUrl}
+                          size="sm"
+                          variant="portrait"
+                          className="max-h-10 max-w-[2.25rem] rounded-md border border-border bg-white"
+                        />
+                        {player.fullName}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-2">
                         {flag ? (

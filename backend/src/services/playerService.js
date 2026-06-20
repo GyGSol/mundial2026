@@ -40,8 +40,6 @@ function serializePlayer(player, teamMap) {
     clubCrestUrl: club.clubCrestUrl,
     leagueName: club.leagueName,
     leagueEmblemUrl: club.leagueEmblemUrl,
-    photoKey: player.photoKey || '',
-    photoUrl: resolvePlayerPhotoUrl(player.photoKey),
     age: player.age ?? null,
     shirtNumber: player.shirtNumber ?? null,
     healthStatus: player.healthStatus,
@@ -51,6 +49,7 @@ function serializePlayer(player, teamMap) {
     isStarter: player.lineupStatus === 'starter',
     recentMatches: player.recentMatches ?? [],
     stats: buildCompactPerformanceContext(player),
+    photoUrl: resolvePlayerPhotoUrl(player.photoKey) || null,
   };
 }
 
