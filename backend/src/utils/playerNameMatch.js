@@ -1,5 +1,8 @@
+/** Normaliza para matching: NFD + minúsculas + turco (ı/İ → i). */
 export function normalizeName(value) {
   return String(value || '')
+    .replace(/ı/g, 'i')
+    .replace(/İ/g, 'i')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()

@@ -33,6 +33,33 @@ describe('playerRosterUnifyService', () => {
     expect(areSamePlayer(officialSon, fdSon)).toBe(true);
   });
 
+  it('areSamePlayer detecta apodo vs nombre compuesto', () => {
+    expect(
+      areSamePlayer(
+        { fullName: 'Kaku Romero', fifaCode: 'PAR' },
+        { fullName: 'Kaku', fifaCode: 'PAR' }
+      )
+    ).toBe(true);
+    expect(
+      areSamePlayer(
+        { fullName: 'Ugurcan Cakir', fifaCode: 'TUR' },
+        { fullName: 'Uğurcan Çakır', fifaCode: 'TUR' }
+      )
+    ).toBe(true);
+    expect(
+      areSamePlayer(
+        { fullName: 'Muhammed Kerem Aktürkoğlu', fifaCode: 'TUR' },
+        { fullName: 'Kerem Aktürkoğlu', fifaCode: 'TUR' }
+      )
+    ).toBe(true);
+    expect(
+      areSamePlayer(
+        { fullName: 'Evren Eren Elmalı', fifaCode: 'TUR' },
+        { fullName: 'Eren Elmalı', fifaCode: 'TUR' }
+      )
+    ).toBe(true);
+  });
+
   it('pickCanonicalPlayer prefiere plantel oficial con foto', () => {
     expect(pickCanonicalPlayer([fdSon, officialSon]).externalId).toBe('KOR-son-heung-min');
   });

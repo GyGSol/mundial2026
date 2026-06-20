@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildCoachPhotoKey,
+  loadGeneratorPhotoNameIndex,
   mapCoachToLineupEntry,
   matchPlayerToPhotoFile,
+  matchPlayerToPhotoFileWithIndex,
   parsePhotoFilename,
   photoSlugVariants,
   resolvePlayerPhotoUrl,
@@ -55,6 +57,35 @@ describe('playerPhotoService', () => {
       matchPlayerToPhotoFile(
         { fifaCode: 'AUS', fullName: 'Mathew Ryan' },
         parsePhotoFilename('aus-mat-ryan.png')
+      )
+    ).toBe(true);
+  });
+
+  it('empareja nombres turcos ASCII vs acentuados y apodo compuesto', async () => {
+    const generatorIndex = await loadGeneratorPhotoNameIndex();
+    const kenanFile = {
+      photoKey: 'turquia/tur-kenan-y-ld-z.png',
+      fifaCode: 'TUR',
+      parsed: parsePhotoFilename('tur-kenan-y-ld-z.png'),
+    };
+
+    expect(
+      matchPlayerToPhotoFileWithIndex(
+        { fifaCode: 'TUR', fullName: 'Kenan Yıldız' },
+        kenanFile,
+        generatorIndex
+      )
+    ).toBe(true);
+    expect(
+      matchPlayerToPhotoFile(
+        { fifaCode: 'TUR', fullName: 'Muhammed Kerem Aktürkoğlu' },
+        parsePhotoFilename('tur-kerem-akturkoglu.png')
+      )
+    ).toBe(true);
+    expect(
+      matchPlayerToPhotoFile(
+        { fifaCode: 'PAR', fullName: 'Kaku Romero' },
+        parsePhotoFilename('par-kaku.png')
       )
     ).toBe(true);
   });

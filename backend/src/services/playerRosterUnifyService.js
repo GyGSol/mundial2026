@@ -1,4 +1,4 @@
-import { normalizeName, nameVariantKeys, tokensMatchAnyOrder, sameSurnameWithCompatibleGivenName } from '../utils/playerNameMatch.js';
+import { normalizeName, nameVariantKeys, nameTokens, tokensMatchAnyOrder, sameSurnameWithCompatibleGivenName } from '../utils/playerNameMatch.js';
 import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 
 export function isOfficialSquadExternalId(externalId) {
@@ -39,6 +39,18 @@ export function areSamePlayer(a, b) {
 
   if (tokensMatchAnyOrder(a.fullName, b.fullName)) return true;
   if (sameSurnameWithCompatibleGivenName(a.fullName, b.fullName)) return true;
+
+  const tokensA = nameTokens(a.fullName);
+  const tokensB = nameTokens(b.fullName);
+  if (tokensA.length === 1 && tokensB.length >= 2 && tokensA[0] === tokensB[0]) return true;
+  if (tokensB.length === 1 && tokensA.length >= 2 && tokensB[0] === tokensA[0]) return true;
+
+  const longer = tokensA.length >= tokensB.length ? tokensA : tokensB;
+  const shorter = tokensA.length >= tokensB.length ? tokensB : tokensA;
+  if (shorter.length >= 2 && shorter.length < longer.length) {
+    const offset = longer.length - shorter.length;
+    if (shorter.every((token, index) => token === longer[offset + index])) return true;
+  }
 
   const keysA = new Set(nameVariantKeys(a.fullName));
   const keysB = nameVariantKeys(b.fullName);
