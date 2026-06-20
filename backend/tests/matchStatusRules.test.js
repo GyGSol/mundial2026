@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   isMatchKickoffStale,
   matchEvidentlyStarted,
+  matchEvidenceShowsInProgress,
   shouldFinalizeStaleLiveMatch,
   fifaEntryIndicatesFinished,
   matchFifaTimelineIndicatesFinished,
@@ -163,5 +164,56 @@ describe('matchStatusRules', () => {
         raw: { fifaEvents: { timeline: [{ type: 'match_end', minute: 90, sortKey: 90 }] } },
       })
     ).toBe(false);
+  });
+
+  it('no bloquea cierre cuando timeline quedó en HT pero goleadores avanzaron (NED–SWE)', () => {
+    const now = kickoff.getTime() + MATCH_STALE_AFTER_KICKOFF_MS + 5 * 60 * 1000;
+    const match = {
+      status: 'live',
+      kickoffAt: kickoff,
+      homeScore: 5,
+      awayScore: 1,
+      raw: {
+        finished: 'FALSE',
+        time_elapsed: '45+5',
+        home_scorers: [
+          { name: 'Brobbey', minute: 5 },
+          { name: 'Brobbey', minute: 17 },
+          { name: 'Khakpo', minute: 47 },
+          { name: 'Khakpo', minute: 54 },
+          { name: 'Summerville', minute: 89 },
+        ],
+        away_scorers: [{ name: 'Elanga', minute: 59 }],
+        fifaEvents: {
+          timeline: [
+            { type: 'kickoff', minute: 0, sortKey: 0 },
+            { type: 'goal', minute: 5, side: 'home', sortKey: 5 },
+            { type: 'halftime', minute: 45, sortKey: 45 },
+          ],
+        },
+      },
+    };
+
+    expect(matchEvidenceShowsInProgress(match)).toBe(false);
+    expect(shouldFinalizeStaleLiveMatch(match, now)).toBe(true);
+  });
+
+  it('sigue bloqueando cierre prematuro si solo timeline temprana y sin goleadores tardíos', () => {
+    const match = {
+      status: 'live',
+      kickoffAt: kickoff,
+      raw: {
+        finished: 'TRUE',
+        time_elapsed: 'final',
+        home_scorers: [{ name: 'Early', minute: 4 }],
+        fifaEvents: {
+          timeline: [
+            { type: 'kickoff', minute: 0, sortKey: 0 },
+            { type: 'goal', minute: 4, side: 'home', sortKey: 4 },
+          ],
+        },
+      },
+    };
+    expect(shouldFinalizeStaleLiveMatch(match, kickoff.getTime() + 10 * 60 * 1000)).toBe(false);
   });
 });

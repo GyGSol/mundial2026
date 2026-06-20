@@ -1,5 +1,9 @@
 import { parsedTimelineHasMatchEnd } from './fifaTimelineParser.js';
-import { parseElapsedClockToSortKey } from './matchLiveData.js';
+import {
+  latestMinuteFromScorerLists,
+  parseElapsedClockToSortKey,
+  parseScorersField,
+} from './matchLiveData.js';
 import { resolveDisplayKickoffAt } from './kickoffTimeService.js';
 
 /** Tiempo máximo desde kickoff para cerrar un partido que quedó en `live` (90' + descanso + margen). */
@@ -81,6 +85,27 @@ export function maxTimelineMinute(match) {
   return key > Number.NEGATIVE_INFINITY ? key : null;
 }
 
+function maxScorerSortKey(match) {
+  const raw = match?.raw ?? {};
+  const label = latestMinuteFromScorerLists(
+    parseScorersField(raw.home_scorers ?? raw.homeScorers),
+    parseScorersField(raw.away_scorers ?? raw.awayScorers)
+  );
+  if (!label) return null;
+  const key = parseElapsedClockToSortKey(label);
+  return key > Number.NEGATIVE_INFINITY ? key : null;
+}
+
+/** Mejor evidencia de minuto de juego: timeline FIFA o goleadores worldcup26 (el más alto). */
+export function maxEffectivePlayMinute(match) {
+  const timelineMinute = maxTimelineMinute(match);
+  const scorerMinute = maxScorerSortKey(match);
+  if (timelineMinute == null && scorerMinute == null) return null;
+  if (timelineMinute == null) return scorerMinute;
+  if (scorerMinute == null) return timelineMinute;
+  return Math.max(timelineMinute, scorerMinute);
+}
+
 function readTimestampMs(value) {
   if (!value) return null;
   const ms = new Date(value).getTime();
@@ -121,10 +146,10 @@ export function wallClockAllowsMatchFinished(match, now = Date.now()) {
   if (kickoffMs > now) return false;
 
   const elapsedMs = now - kickoffMs;
-  const timelineMinute = maxTimelineMinute(match);
+  const playMinute = maxEffectivePlayMinute(match);
 
-  if (timelineMinute != null && timelineMinute > 0) {
-    return elapsedMs >= minWallClockMsForTimelineMinute(timelineMinute) * 0.9;
+  if (playMinute != null && playMinute > 0) {
+    return elapsedMs >= minWallClockMsForTimelineMinute(playMinute) * 0.9;
   }
 
   if (matchFifaTimelineIndicatesFinished(match) || elapsedTokenIndicatesFinished(readElapsedToken(match))) {
@@ -164,9 +189,12 @@ function elapsedNumericMinuteIndicatesEarlyPlay(elapsed) {
 export function matchEvidenceShowsInProgress(match) {
   if (matchFifaTimelineIndicatesFinished(match)) return false;
 
-  const timelineKey = maxTimelineSortKey(match);
-  if (timelineKey >= 0 && timelineKey < MATCH_CLEARLY_IN_PROGRESS_MAX_MINUTE) {
-    return true;
+  const effectiveMinute = maxEffectivePlayMinute(match);
+  if (effectiveMinute != null) {
+    if (effectiveMinute >= MATCH_CLEARLY_IN_PROGRESS_MAX_MINUTE) return false;
+    if (effectiveMinute >= 0 && effectiveMinute < MATCH_CLEARLY_IN_PROGRESS_MAX_MINUTE) {
+      return true;
+    }
   }
 
   return elapsedNumericMinuteIndicatesEarlyPlay(readElapsedToken(match));

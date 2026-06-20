@@ -379,6 +379,11 @@ function extractQuotedScorerParts(trimmed) {
 export function parseScorersField(value) {
   if (isNullishScorerValue(value)) return [];
 
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const entry = normalizeScorerEntry(value);
+    return entry ? [entry] : [];
+  }
+
   if (Array.isArray(value)) {
     return value.flatMap((entry) => parseScorersField(entry));
   }
