@@ -18,6 +18,7 @@ alwaysApply: true
 - Proyecto: `mundial2026`
 - Datos: `.engram/` en la raíz del repo (gitignored)
 - No guardar JWT, passwords, `MONGODB_URI` ni PII de usuarios.
+- Buenas prácticas: skill `engram-memory` (`.agents/skills/engram-memory/SKILL.md`) — `mem_save` con What/Why/Where, `topic_key` `mundial2026/<dominio>/<slug>`, `mem_session_summary` al cerrar.
 
 ## Desarrollo
 

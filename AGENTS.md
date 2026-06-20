@@ -27,6 +27,7 @@ Instaladas en `.agents/skills/` (ver también `skills-lock.json`). Las más usad
 - `vercel-react-best-practices` — rendimiento React
 - `deploy-to-vercel` / `vercel-cli-with-tokens` — solo si se despliega fuera de Heroku
 - `diagnose` — bugs y regresiones
+- `engram-memory` — cuándo/cómo memorizar con Engram (topic_key, juez, secretos)
 
 Reglas embebidas de skills Vercel (React, composition, view transitions, RN) se cargan vía `AGENTS.md` en cada skill.
 
