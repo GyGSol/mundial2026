@@ -447,6 +447,27 @@ describe('matchLiveData', () => {
         )
       ).toEqual({ homeScore: 0, awayScore: 1 });
     });
+
+    it('en partido finalizado usa marcador oficial sin inflar por cronología duplicada', () => {
+      expect(
+        resolveEffectiveLiveScores(
+          { status: 'finished', homeScore: 2, awayScore: 1 },
+          [
+            { type: 'goal', side: 'home', minute: 68 },
+            { type: 'goal', side: 'home', minute: 90, extraMinute: 4 },
+            { type: 'goal', side: 'home', minute: null, player: 'Dniz Avndav 90+4\'' },
+            { type: 'goal', side: 'away', minute: 30 },
+          ],
+          {
+            fifaMeta: {
+              homeScore: 2,
+              awayScore: 1,
+              syncedAt: '2026-06-20T22:00:00.000Z',
+            },
+          }
+        )
+      ).toEqual({ homeScore: 2, awayScore: 1 });
+    });
   });
 
   describe('score sanitization', () => {
@@ -547,6 +568,32 @@ describe('matchLiveData', () => {
       expect(homeGoals).toHaveLength(1);
       expect(homeGoals[0].player).toBe('Ramin Rezaeian');
       expect(homeGoals[0].playerShirtNumber).toBe(23);
+    });
+
+    it('parsea 90+4 en goleadores worldcup y no duplica gol FIFA (GER–CIV)', () => {
+      const timeline = completeTimelineEvents(
+        [
+          { type: 'goal', side: 'away', minute: 30, player: 'Franck KESSIE', sortKey: 30 },
+          { type: 'goal', side: 'home', minute: 68, player: 'Deniz UNDAV', sortKey: 68 },
+          {
+            type: 'goal',
+            side: 'home',
+            minute: 90,
+            extraMinute: 4,
+            player: 'Deniz UNDAV',
+            sortKey: 90.04,
+          },
+        ],
+        {
+          homeScorers: [{ name: "Dniz Avndav 68'" }, { name: "Dniz Avndav 90+4'" }],
+          awayScorers: [{ name: "Franck Kessié 30'" }],
+          homeScore: 2,
+          awayScore: 1,
+        }
+      );
+
+      expect(goalCountsFromTimeline(timeline)).toEqual({ home: 2, away: 1 });
+      expect(timeline.filter((event) => event.type === 'goal')).toHaveLength(3);
     });
 
     it('deduplicateTimelineGoals conserva el evento con más metadatos', () => {
@@ -838,6 +885,56 @@ describe('matchLiveData', () => {
       expect(event.playerOut).toBe('Seol Young-woo');
       expect(event.playerOutPhotoUrl).toContain('kor-seol-young-woo.png');
       expect(event.playerIn).toBe('Yang Hyun-jun');
+    });
+
+    it('homeSubstitutions incluye fotos desde cronología y roster', () => {
+      const enriched = enrichMatchLiveFields(
+        {
+          status: 'live',
+          homeScore: 0,
+          awayScore: 0,
+          raw: {
+            fifaEvents: {
+              timeline: [
+                {
+                  type: 'substitution',
+                  side: 'home',
+                  minute: 70,
+                  playerOut: 'KIMMICH',
+                  playerOutShirtNumber: 6,
+                  playerIn: 'SANE',
+                  playerInShirtNumber: 19,
+                  sortKey: 70,
+                },
+              ],
+            },
+          },
+        },
+        {
+          homePlayers: [
+            {
+              mongoId: '507f1f77bcf86cd799439011',
+              externalId: 'GER-joshua-kimmich',
+              fullName: 'Joshua Kimmich',
+              position: 'MID',
+              shirtNumber: 6,
+              photoUrl: '/player-photos/ger/joshua-kimmich.png',
+            },
+            {
+              mongoId: '507f1f77bcf86cd799439012',
+              externalId: 'GER-leroy-sane',
+              fullName: 'Leroy Sané',
+              position: 'FWD',
+              shirtNumber: 19,
+              photoUrl: '/player-photos/ger/leroy-sane.png',
+            },
+          ],
+        }
+      );
+
+      expect(enriched.homeSubstitutions).toHaveLength(1);
+      expect(enriched.homeSubstitutions[0].playerOutPhotoUrl).toContain('kimmich');
+      expect(enriched.homeSubstitutions[0].playerInPhotoUrl).toContain('sane');
     });
 
     it('no duplica tiros al fusionar rawEvents con distinto casing del nombre', () => {

@@ -1,4 +1,4 @@
-/** @typedef {{ name: string, minute: number | null }} MatchScorer */
+/** @typedef {{ name: string, minute: number | null, extraMinute?: number | null, isPenalty?: boolean }} MatchScorer */
 /** @typedef {{ minute: number | null, player: string, card: string }} MatchBooking */
 /** @typedef {{ minute: number | null, playerOut: string, playerIn: string }} MatchSubstitution */
 
@@ -291,6 +291,15 @@ function parseScorerText(trimmed) {
     };
   }
 
+  const extraTimeSuffix = trimmed.match(/^(.+?)\s+(\d+)\+(\d+)\s*['']?\s*$/);
+  if (extraTimeSuffix) {
+    return {
+      name: extraTimeSuffix[1].trim(),
+      minute: Number(extraTimeSuffix[2]),
+      extraMinute: Number(extraTimeSuffix[3]),
+    };
+  }
+
   const minuteSuffix = trimmed.match(/^(.+?)\s+(\d+)\s*['']?\s*$/);
   if (minuteSuffix) {
     return {
@@ -320,7 +329,8 @@ function normalizeGoalEvent(event) {
     ...event,
     player: parsed.name,
     minute: parsed.minute,
-    sortKey: toSortKey(parsed.minute),
+    extraMinute: parsed.extraMinute ?? event.extraMinute ?? null,
+    sortKey: clockSortKeyFromParts(parsed.minute, parsed.extraMinute),
     ...(parsed.isPenalty ? { isPenalty: true } : {}),
   };
 }
@@ -351,12 +361,17 @@ function normalizeScorerEntry(entry) {
 
     let parsedName = String(name).trim();
     let isPenalty = Boolean(record.isPenalty);
+    let extraMinute =
+      record.extraMinute != null && Number.isFinite(Number(record.extraMinute))
+        ? Number(record.extraMinute)
+        : null;
 
     if (minute == null) {
       const parsed = parseScorerText(parsedName);
       if (parsed.minute != null) {
         parsedName = parsed.name;
         minute = parsed.minute;
+        extraMinute = parsed.extraMinute ?? extraMinute;
         isPenalty = isPenalty || Boolean(parsed.isPenalty);
       }
     }
@@ -364,6 +379,7 @@ function normalizeScorerEntry(entry) {
     return {
       name: parsedName,
       minute,
+      ...(extraMinute != null ? { extraMinute } : {}),
       ...(isPenalty ? { isPenalty: true } : {}),
     };
   }
@@ -666,18 +682,18 @@ export function deduplicateTimelineGoals(timeline = []) {
   return result;
 }
 
-function timelineIncludesGoal(timeline, { side, minute, player }) {
+function timelineIncludesGoal(timeline, { side, minute, extraMinute = null, player }) {
   return timeline.some((event) => {
     if (event.type !== 'goal' || event.side !== side) return false;
 
-    const sameMinute =
-      minute == null ||
-      event.minute == null ||
-      Number(event.minute) === Number(minute);
+    if (minute != null && event.minute != null) {
+      if (Number(event.minute) !== Number(minute)) return false;
+      const exA = Number(event.extraMinute ?? 0);
+      const exB = Number(extraMinute ?? 0);
+      return exA === exB;
+    }
 
-    if (!sameMinute) return false;
-
-    if (minute != null && event.minute != null) return true;
+    if (minute != null || event.minute != null) return false;
 
     return (
       !player ||
@@ -699,6 +715,7 @@ export function completeTimelineEvents(
 
     let name = String(scorer.name).trim();
     let minute = scorer.minute ?? null;
+    let extraMinute = scorer.extraMinute ?? null;
     let isPenalty = Boolean(scorer.isPenalty);
 
     if (minute == null) {
@@ -706,16 +723,17 @@ export function completeTimelineEvents(
       if (parsed.minute != null) {
         name = parsed.name;
         minute = parsed.minute;
+        extraMinute = parsed.extraMinute ?? extraMinute;
         isPenalty = isPenalty || Boolean(parsed.isPenalty);
       }
     }
 
-    if (timelineIncludesGoal(merged, { side, minute, player: name })) return;
+    if (timelineIncludesGoal(merged, { side, minute, extraMinute, player: name })) return;
 
     merged.push({
-      sortKey: toSortKey(minute),
+      sortKey: clockSortKeyFromParts(minute, extraMinute),
       minute,
-      extraMinute: null,
+      extraMinute,
       type: 'goal',
       side,
       player: name,
@@ -925,7 +943,7 @@ export function bookingsFromTimeline(timeline = []) {
   return { homeBookings, awayBookings };
 }
 
-/** @param {Array<{ type?: string, side?: string, playerIn?: string, playerOut?: string, playerInPosition?: string | null, playerOutPosition?: string | null, minute?: number | null }>} timeline */
+/** @param {Array<{ type?: string, side?: string, playerIn?: string, playerOut?: string, playerInPosition?: string | null, playerOutPosition?: string | null, minute?: number | null, playerInPhotoUrl?: string | null, playerOutPhotoUrl?: string | null, playerInMongoId?: string | null, playerOutMongoId?: string | null, playerInExternalId?: string | null, playerOutExternalId?: string | null, playerInShirtNumber?: number | null, playerOutShirtNumber?: number | null, playerInPositionX?: number | null, playerInPositionY?: number | null, playerOutPositionX?: number | null, playerOutPositionY?: number | null }>} timeline */
 export function substitutionsFromTimeline(timeline = []) {
   const homeSubstitutions = [];
   const awaySubstitutions = [];
@@ -941,10 +959,18 @@ export function substitutionsFromTimeline(timeline = []) {
       playerInPosition: event.playerInPosition ?? null,
       playerOutShirtNumber: event.playerOutShirtNumber ?? null,
       playerInShirtNumber: event.playerInShirtNumber ?? null,
-      playerOutPositionX: event.positionX ?? null,
-      playerOutPositionY: event.positionY ?? null,
-      playerInPositionX: event.positionX ?? null,
-      playerInPositionY: event.positionY ?? null,
+      playerOutPositionX: event.playerOutPositionX ?? event.positionX ?? null,
+      playerOutPositionY: event.playerOutPositionY ?? event.positionY ?? null,
+      playerInPositionX: event.playerInPositionX ?? event.positionX ?? null,
+      playerInPositionY: event.playerInPositionY ?? event.positionY ?? null,
+      playerOutPhotoUrl: event.playerOutPhotoUrl ?? null,
+      playerInPhotoUrl: event.playerInPhotoUrl ?? null,
+      playerOutMongoId: event.playerOutMongoId ?? null,
+      playerInMongoId: event.playerInMongoId ?? null,
+      playerOutExternalId: event.playerOutExternalId ?? null,
+      playerInExternalId: event.playerInExternalId ?? null,
+      idPlayerOut: event.idPlayerOut ?? null,
+      idPlayerIn: event.idPlayerIn ?? null,
     };
 
     if (event.side === 'home') homeSubstitutions.push(entry);
@@ -952,6 +978,34 @@ export function substitutionsFromTimeline(timeline = []) {
   }
 
   return { homeSubstitutions, awaySubstitutions };
+}
+
+/** @param {Array<Record<string, unknown>>} substitutions @param {Array<{ fullName?: string, photoUrl?: string | null, shirtNumber?: number | null, mongoId?: string | null, externalId?: string | null, position?: string | null }>} roster */
+export function enrichSubstitutionsFromRoster(substitutions = [], roster = []) {
+  return substitutions.map((sub) => {
+    const out = enrichNameFromRoster(sub.playerOut, roster, {
+      shirtNumber: sub.playerOutShirtNumber ?? null,
+    });
+    const incoming = enrichNameFromRoster(sub.playerIn, roster, {
+      shirtNumber: sub.playerInShirtNumber ?? null,
+    });
+
+    return {
+      ...sub,
+      playerOut: out.name || sub.playerOut,
+      playerIn: incoming.name || sub.playerIn,
+      playerOutPosition: sub.playerOutPosition ?? out.position ?? null,
+      playerInPosition: sub.playerInPosition ?? incoming.position ?? null,
+      playerOutShirtNumber: sub.playerOutShirtNumber ?? out.shirtNumber ?? null,
+      playerInShirtNumber: sub.playerInShirtNumber ?? incoming.shirtNumber ?? null,
+      playerOutPhotoUrl: sub.playerOutPhotoUrl ?? out.photoUrl ?? null,
+      playerInPhotoUrl: sub.playerInPhotoUrl ?? incoming.photoUrl ?? null,
+      playerOutMongoId: sub.playerOutMongoId ?? out.mongoId ?? null,
+      playerInMongoId: sub.playerInMongoId ?? incoming.mongoId ?? null,
+      playerOutExternalId: sub.playerOutExternalId ?? out.externalId ?? null,
+      playerInExternalId: sub.playerInExternalId ?? incoming.externalId ?? null,
+    };
+  });
 }
 
 /** @param {Array<{ minute?: number | null, sortKey?: number }>} timeline */
@@ -1001,6 +1055,19 @@ export function readFifaAuthoritativeScores(raw = {}) {
 export function resolveEffectiveLiveScores(match, timeline = [], raw = {}) {
   const { home: timelineHome, away: timelineAway } = goalCountsFromTimeline(timeline);
   const fifaScores = readFifaAuthoritativeScores(raw);
+
+  if (match.status === 'finished') {
+    return {
+      homeScore: sanitizeMatchGoalCount(
+        match.homeScore,
+        fifaScores?.homeScore ?? timelineHome
+      ),
+      awayScore: sanitizeMatchGoalCount(
+        match.awayScore,
+        fifaScores?.awayScore ?? timelineAway
+      ),
+    };
+  }
 
   if (fifaScores) {
     // fifaMeta refleja goles anulados; si la cronología tiene más goles, el Score FIFA va retrasado.
@@ -1322,10 +1389,16 @@ export function enrichMatchLiveFields(match, options = {}) {
     ? pickNonEmptyList(events.awayBookings, timelineBookings.awayBookings)
     : [];
   const homeSubstitutions = showResults
-    ? pickNonEmptyList(events.homeSubstitutions, timelineSubstitutions.homeSubstitutions)
+    ? enrichSubstitutionsFromRoster(
+        pickNonEmptyList(timelineSubstitutions.homeSubstitutions, events.homeSubstitutions),
+        homePlayers
+      )
     : [];
   const awaySubstitutions = showResults
-    ? pickNonEmptyList(events.awaySubstitutions, timelineSubstitutions.awaySubstitutions)
+    ? enrichSubstitutionsFromRoster(
+        pickNonEmptyList(timelineSubstitutions.awaySubstitutions, events.awaySubstitutions),
+        awayPlayers
+      )
     : [];
 
   let timeElapsed =
