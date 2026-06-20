@@ -1,9 +1,21 @@
 import dotenv from 'dotenv';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { AI_USER_DEFAULT_EMAIL } from '../constants/aiUser.js';
 
-dotenv.config();
-if (process.env.ENV_FILE) {
-  dotenv.config({ path: process.env.ENV_FILE, override: true });
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..');
+
+dotenv.config({ path: join(repoRoot, '.env') });
+
+const envFileName = process.env.ENV_FILE;
+if (envFileName) {
+  const envPath = envFileName.startsWith('/')
+    ? envFileName
+    : join(repoRoot, envFileName);
+  if (existsSync(envPath)) {
+    dotenv.config({ path: envPath, override: true });
+  }
 }
 
 export const env = {

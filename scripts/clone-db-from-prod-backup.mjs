@@ -11,6 +11,7 @@
  */
 import dotenv from 'dotenv';
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { createWriteStream } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -18,10 +19,13 @@ import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
 import { LOCAL_QA_URI } from '../backend/src/config/testDbGuard.js';
 
-dotenv.config();
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+
+dotenv.config({ path: join(ROOT, '.env') });
+if (!process.env.BACKUP_GITHUB_TOKEN && existsSync(join(ROOT, '.env.local-qa'))) {
+  dotenv.config({ path: join(ROOT, '.env.local-qa'), override: true });
+}
 const BACKUP_DIR = join(ROOT, '.local', 'backups');
 const DEFAULT_REPO = 'GyGSol/mundial2026-db-backups';
 const dryRun = process.env.DRY_RUN === '1';
@@ -132,7 +136,7 @@ async function main() {
   console.log('Restoring to local MongoDB (BACKUP_RESTORE_DROP=1)...');
   const restore = spawnSync(
     'node',
-    ['src/scripts/restoreDatabaseFromBackup.js', `--file=${localPath}`],
+    ['src/scripts/restoreDatabaseFromBackup.js', '--file', localPath],
     {
       cwd: join(ROOT, 'backend'),
       env: {
