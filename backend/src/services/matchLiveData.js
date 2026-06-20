@@ -507,7 +507,12 @@ export function resolveLiveTimeElapsed(raw, timeline = []) {
 
   if (!fromTimeline) return fromApi;
   if (!fromApi) return fromTimeline;
-  if (fromApi === 'Entretiempo') return fromApi;
+
+  if (fromApi === 'Entretiempo') {
+    if (parseElapsedClockToSortKey(fromTimeline) > 45.5) return fromTimeline;
+    return fromApi;
+  }
+
   if (fromApi === 'Final') {
     const timelineKey = parseElapsedClockToSortKey(fromTimeline);
     if (timelineKey >= 0 && timelineKey < 85) return fromTimeline;
@@ -517,6 +522,51 @@ export function resolveLiveTimeElapsed(raw, timeline = []) {
   return parseElapsedClockToSortKey(fromTimeline) >= parseElapsedClockToSortKey(fromApi)
     ? fromTimeline
     : fromApi;
+}
+
+/** Último minuto declarado en goleadores (worldcup26 suele ir adelantado vs fifaEvents.timeline). */
+export function latestMinuteFromScorerLists(...lists) {
+  let best = null;
+
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue;
+    for (const scorer of list) {
+      const minute = Number(scorer?.minute);
+      if (Number.isFinite(minute)) {
+        best = best == null ? minute : Math.max(best, minute);
+      }
+    }
+  }
+
+  return best != null ? `${best}'` : null;
+}
+
+function pickMaxClockLabel(...labels) {
+  let bestKey = Number.NEGATIVE_INFINITY;
+  let bestLabel = null;
+  for (const label of labels) {
+    if (!label) continue;
+    const key = parseElapsedClockToSortKey(label);
+    if (key > bestKey) {
+      bestKey = key;
+      bestLabel = label;
+    }
+  }
+  return bestLabel;
+}
+
+/**
+ * @param {Array<{ type?: string, side?: string, minute?: number | null, sortKey?: number }>} timeline
+ * @param {Record<string, unknown>} raw
+ */
+export function resolveLiveMatchDisplayClock(_match, timeline = [], raw = {}) {
+  const fromResolved = resolveLiveTimeElapsed(raw, timeline);
+  const fromScorers = latestMinuteFromScorerLists(
+    parseScorersField(raw.home_scorers ?? raw.homeScorers),
+    parseScorersField(raw.away_scorers ?? raw.awayScorers)
+  );
+
+  return pickMaxClockLabel(fromResolved, fromScorers) ?? fromResolved;
 }
 
 
@@ -1224,7 +1274,7 @@ export function enrichMatchLiveFields(match, options = {}) {
   const baseTimelineScorers = scorersFromTimeline(baseTimeline);
   const parsedHomeScorers = parseScorersField(raw.home_scorers ?? raw.homeScorers);
   const parsedAwayScorers = parseScorersField(raw.away_scorers ?? raw.awayScorers);
-  const effectiveScores = showResults
+  const scoreSeed = showResults
     ? resolveEffectiveLiveScores(match, baseTimeline, raw)
     : { homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 };
 
@@ -1232,14 +1282,18 @@ export function enrichMatchLiveFields(match, options = {}) {
     ? completeTimelineEvents(baseTimeline, {
         homeScorers: pickNonEmptyList(parsedHomeScorers, baseTimelineScorers.home),
         awayScorers: pickNonEmptyList(parsedAwayScorers, baseTimelineScorers.away),
-        homeScore: effectiveScores.homeScore,
-        awayScore: effectiveScores.awayScore,
+        homeScore: scoreSeed.homeScore,
+        awayScore: scoreSeed.awayScore,
       })
     : [];
 
   if (showResults && matchTimeline.length > 0 && priorTournamentGoalCounts) {
     matchTimeline = attachTimelineTournamentGoals(matchTimeline, priorTournamentGoalCounts);
   }
+
+  const effectiveScores = showResults
+    ? resolveEffectiveLiveScores(match, matchTimeline, raw)
+    : scoreSeed;
   const timelineScorers = scorersFromTimeline(matchTimeline);
   const timelineBookings = bookingsFromTimeline(matchTimeline);
   const timelineSubstitutions = substitutionsFromTimeline(matchTimeline);
@@ -1266,7 +1320,7 @@ export function enrichMatchLiveFields(match, options = {}) {
 
   let timeElapsed =
     match.status === 'live'
-      ? resolveLiveTimeElapsed(raw, matchTimeline)
+      ? resolveLiveMatchDisplayClock(match, matchTimeline, raw)
       : match.status === 'finished'
         ? 'Final'
         : null;

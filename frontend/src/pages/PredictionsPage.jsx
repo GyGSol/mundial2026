@@ -27,6 +27,7 @@ import {
 } from '../lib/patchMatchPrediction.js';
 import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
+import { mergeLiveDashboard } from '../lib/patchLiveMatchSnapshot.js';
 import PredictionsFeaturedMatches from '../components/PredictionsFeaturedMatches.jsx';
 import PredictionSavedDialog from '../components/PredictionSavedDialog.jsx';
 import { LiveMatchViewerSync } from '../context/LiveMatchViewerContext.jsx';
@@ -91,7 +92,8 @@ export default function PredictionsPage() {
     getPollIntervalMs: predictionsPollIntervalMs,
     pollWhen: shouldPollPredictionsBar,
     memoryCacheKey: `predictions:matches:${statusFilter}:${groupFilter}`,
-    memoryCacheTtlMs: 60_000,
+    memoryCacheTtlMs: 10_000,
+    mergeOnRefresh: mergeLiveDashboard,
     realtimeDebounceMs: 500,
     realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
     onRealtimeMessage: (msg, ctx) =>

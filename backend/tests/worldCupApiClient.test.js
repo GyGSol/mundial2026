@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
+  fetchWithRetry,
   mapGameStatus,
   normalizeGame,
   normalizeTeam,
@@ -165,11 +166,55 @@ describe('worldCupApiClient normalization', () => {
   });
 });
 
-describe('worldCupApiClient live API', () => {
+describe('fetchWithRetry', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('reintenta ante fetch failed intermitente', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce({ ok: true, status: 200 });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchWithRetry('https://worldcup26.ir/get/games', {}, { attempts: 3 });
+
+    expect(res.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('reintenta ante HTTP 503', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 503 })
+      .mockResolvedValueOnce({ ok: true, status: 200 });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchWithRetry('https://worldcup26.ir/get/games', {}, { attempts: 3 });
+
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('no reintenta ante HTTP 401', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401 });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await fetchWithRetry('https://worldcup26.ir/get/games', {}, { attempts: 4 });
+
+    expect(res.status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe.skipIf(process.env.RUN_LIVE_WORLDCUP_TESTS !== '1')('worldCupApiClient live API', () => {
   it('obtiene equipos y partidos desde la API pública', async () => {
     const [gamesRes, teamsRes] = await Promise.all([
-      fetch('https://worldcup26.ir/get/games'),
-      fetch('https://worldcup26.ir/get/teams'),
+      fetchWithRetry('https://worldcup26.ir/get/games'),
+      fetchWithRetry('https://worldcup26.ir/get/teams'),
     ]);
 
     expect(gamesRes.ok).toBe(true);

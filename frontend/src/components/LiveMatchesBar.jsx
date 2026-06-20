@@ -40,6 +40,7 @@ import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import MatchLineupSection from '@/components/lineup/MatchLineupSection.jsx';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import { liveCardBadgeLabel, isLiveCardFinalizing } from '@/lib/matchStatus.js';
+import { useLiveMatchDisplayClock } from '@/hooks/useLiveMatchDisplayClock.js';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 
@@ -797,14 +798,15 @@ function FinishedTeamsHeader({
 }
 
 function LiveStatusBadge({ match, isLive, weatherLabel }) {
+  const displayClock = useLiveMatchDisplayClock(isLive ? match : null);
   const finalizingLive = isLive && isLiveCardFinalizing(match);
   const showLiveBadge = isLive && !weatherLabel && !finalizingLive;
 
   if (showLiveBadge) {
-    const label = liveCardBadgeLabel(match);
+    const label = liveCardBadgeLabel(match, { displayClock });
     return (
       <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-        {label?.startsWith('En vivo') ? label : `En vivo${match.timeElapsed ? ` · ${match.timeElapsed}` : ''}`}
+        {label?.startsWith('En vivo') ? label : `En vivo${displayClock ? ` · ${displayClock}` : ''}`}
       </Badge>
     );
   }
@@ -820,14 +822,14 @@ function LiveStatusBadge({ match, isLive, weatherLabel }) {
   if (isLive && weatherLabel) {
     return (
       <Badge variant="outline" className="border-red-300/70 bg-red-50 text-red-800">
-        {match.timeElapsed ? `${match.timeElapsed}` : 'En pausa'}
+        {displayClock ? `${displayClock}` : 'En pausa'}
       </Badge>
     );
   }
 
   return (
     <Badge variant="outline" className="border-emerald-300/70 bg-emerald-50 text-emerald-900">
-      Final{match.timeElapsed && match.timeElapsed !== 'Final' ? ` · ${match.timeElapsed}` : ''}
+      Final{displayClock && displayClock !== 'Final' ? ` · ${displayClock}` : ''}
     </Badge>
   );
 }

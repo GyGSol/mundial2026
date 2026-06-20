@@ -490,7 +490,8 @@ export async function syncLiveMatchScoring() {
     }
   }
 
-  if (matches > 0 && users > 0) {
+  if (matches > 0) {
+    invalidateMatchRelatedCaches();
     notifyMatchesUpdated({ reason: 'live_scoring_sync', liveMatches: matches });
   }
 

@@ -36,6 +36,7 @@ export function useLiveData(
     realtimeDebounceMs = 0,
     realtimeEvents = ALL_REALTIME_EVENTS,
     onRealtimeMessage,
+    mergeOnRefresh,
   } = {}
 ) {
   const resolvedCacheKey = memoryCacheKey ?? (enabled ? JSON.stringify(deps) : '');
@@ -81,9 +82,16 @@ export function useLiveData(
               const result = await fetchFn();
               if (requestId !== requestIdRef.current) continue;
               if (result === undefined) continue;
-              setData(result);
+              setData((prev) => {
+                const next =
+                  typeof mergeOnRefresh === 'function' && prev != null
+                    ? mergeOnRefresh(prev, result)
+                    : result;
+                writeMemoryCache(resolvedCacheKey, next, memoryCacheTtlMs);
+                dataRef.current = next;
+                return next;
+              });
               setLastUpdated(new Date());
-              writeMemoryCache(resolvedCacheKey, result, memoryCacheTtlMs);
             } catch (err) {
               if (requestId === requestIdRef.current) {
                 setError(err.message);
@@ -100,7 +108,7 @@ export function useLiveData(
 
       void run();
     });
-  }, [...deps, enabled, fetchFn, resolvedCacheKey, memoryCacheTtlMs, resolveRefreshWaiters]);
+  }, [...deps, enabled, fetchFn, resolvedCacheKey, memoryCacheTtlMs, resolveRefreshWaiters, mergeOnRefresh]);
 
   const patchData = useCallback(
     (updater) => {

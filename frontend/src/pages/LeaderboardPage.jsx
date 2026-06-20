@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
 import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
+import { mergeLiveDashboard } from '../lib/patchLiveMatchSnapshot.js';
 import {
   DEFAULT_TOURNAMENT_TYPE,
   TOURNAMENT_TYPE_COMMON,
@@ -194,7 +195,8 @@ export default function LeaderboardPage() {
       getPollIntervalMs: leaderboardPollIntervalMs,
       pollWhen: shouldPollLeaderboardLive,
       memoryCacheKey: `ranking:dashboard:${effectiveGroupId}`,
-      memoryCacheTtlMs: 30_000,
+      memoryCacheTtlMs: 5_000,
+      mergeOnRefresh: mergeLiveDashboard,
       realtimeDebounceMs: 750,
       realtimeEvents: [
         REALTIME_EVENTS.MATCHES_UPDATED,

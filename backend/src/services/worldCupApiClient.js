@@ -13,6 +13,64 @@ import {
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
+const DEFAULT_FETCH_TIMEOUT_MS = 30_000;
+const MAX_FETCH_ATTEMPTS = 4;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableFetchError(err) {
+  if (!err) return false;
+  const msg = String(err.message ?? err).toLowerCase();
+  return (
+    err.name === 'AbortError' ||
+    msg.includes('fetch failed') ||
+    msg.includes('network') ||
+    msg.includes('timeout') ||
+    msg.includes('ssl') ||
+    msg.includes('unexpected eof') ||
+    msg.includes('econnreset') ||
+    msg.includes('etimedout') ||
+    msg.includes('socket hang up')
+  );
+}
+
+function isRetryableHttpStatus(status) {
+  return status === 429 || status === 502 || status === 503 || status === 504;
+}
+
+/** Reintentos ante cortes SSL/timeouts intermitentes de worldcup26.ir. */
+export async function fetchWithRetry(url, options = {}, { attempts = MAX_FETCH_ATTEMPTS } = {}) {
+  let lastError;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_FETCH_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (isRetryableHttpStatus(res.status) && attempt < attempts - 1) {
+        await sleep(500 * (attempt + 1));
+        continue;
+      }
+
+      return res;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastError = err;
+      if (!isRetryableFetchError(err) || attempt >= attempts - 1) {
+        throw err;
+      }
+      await sleep(500 * (attempt + 1));
+    }
+  }
+
+  throw lastError ?? new Error('fetch failed');
+}
+
 async function request(path, options = {}) {
   const url = `${env.worldCupApiUrl.replace(/\/$/, '')}${path}`;
   const headers = {
@@ -24,7 +82,7 @@ async function request(path, options = {}) {
     headers.Authorization = `Bearer ${cachedToken}`;
   }
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetchWithRetry(url, { ...options, headers });
   if (res.status === 401 && !options._retried) {
     await authenticate();
     return request(path, { ...options, _retried: true });
@@ -50,7 +108,7 @@ export async function authenticate() {
   }
 
   const url = `${env.worldCupApiUrl.replace(/\/$/, '')}/auth/authenticate`;
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

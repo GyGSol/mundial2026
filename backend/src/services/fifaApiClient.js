@@ -1,5 +1,6 @@
 import { env } from '../config/env.js';
 import { resolveStadiumTimezone } from './stadiumTimezones.js';
+import { fetchWithRetry } from './worldCupApiClient.js';
 
 export const ARGENTINA_TIMEZONE = 'America/Argentina/Buenos_Aires';
 
@@ -17,7 +18,7 @@ async function fifaRequest(path, { searchParams } = {}) {
     }
   }
 
-  const res = await fetch(url, { headers: DEFAULT_HEADERS });
+  const res = await fetchWithRetry(url, { headers: DEFAULT_HEADERS });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`FIFA API ${res.status}: ${text.slice(0, 200)}`);

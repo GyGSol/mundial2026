@@ -799,12 +799,6 @@ export async function runSync({ includeMetadata = true } = {}) {
       console.warn('Premature finish reopen skipped:', err.message);
     }
 
-    notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
-    notifyMatchesUpdated({
-      matchesCount: count,
-      fifaEventsSynced: fifaResult.events ?? 0,
-    });
-    notifyLeaderboardUpdated({ reason: 'sync_complete' });
     const { invalidateMatchRelatedCaches, invalidateFinishedMatchArchiveCaches } =
       await import('./matchRelatedCaches.js');
     if (
@@ -815,6 +809,13 @@ export async function runSync({ includeMetadata = true } = {}) {
       invalidateFinishedMatchArchiveCaches();
     }
     invalidateMatchRelatedCaches();
+
+    notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
+    notifyMatchesUpdated({
+      matchesCount: count,
+      fifaEventsSynced: fifaResult.events ?? 0,
+    });
+    notifyLeaderboardUpdated({ reason: 'sync_complete' });
 
     if (lineupResult.updated > 0 || lineupResult.events > 0) {
       console.log(

@@ -145,9 +145,12 @@ export function isLiveCardFinalizing(match) {
   return elapsedTokenIndicatesFinished(elapsed) || matchTimelineHasMatchEnd(match);
 }
 
-export function liveCardBadgeLabel(match) {
+export function liveCardBadgeLabel(match, { displayClock } = {}) {
   if (match?.status === 'finished') return 'Final';
   if (isLiveCardFinalizing(match)) return 'Finalizando…';
-  if (match?.status === 'live') return match.timeElapsed ? `En vivo · ${match.timeElapsed}` : 'En vivo';
+  if (match?.status === 'live') {
+    const clock = displayClock ?? match?.timeElapsed;
+    return clock ? `En vivo · ${clock}` : 'En vivo';
+  }
   return 'Final';
 }

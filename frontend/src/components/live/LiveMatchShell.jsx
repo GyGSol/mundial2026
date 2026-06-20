@@ -14,6 +14,7 @@ import { getTeamFlag } from '@/lib/teamMeta.js';
 import { ARGENTINA_TIMEZONE, formatMatchDate, formatPredictionUpdatedAt } from '@/lib/dateFormat';
 import { isMatchStreamWarmup } from '@/lib/streamWatch.js';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
+import { useLiveMatchDisplayClock } from '@/hooks/useLiveMatchDisplayClock.js';
 import {
   liveCardBadgeLabel,
   matchHasCreibleFinishEvidence,
@@ -41,7 +42,8 @@ function FlagInline({ team }) {
 function LiveMatchSummary({ match }) {
   const homeName = match?.homeTeam?.nameEn || 'Local';
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
-  const badge = liveCardBadgeLabel(match);
+  const displayClock = useLiveMatchDisplayClock(match);
+  const badge = liveCardBadgeLabel(match, { displayClock });
 
   return (
     <div className="flex flex-col gap-3">

@@ -3,7 +3,6 @@ import {
   enrichMatchesForRankingDashboard,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
-import { createInMemoryCache } from './inMemoryCache.js';
 import {
   findRecentlyFinishedMatchesQuery,
   RECENT_FINISHED_FEATURED_MAX,
@@ -13,13 +12,10 @@ import {
   buildFeaturedRecentFinishedRaw,
 } from './liveMatchPartitionService.js';
 
-const LIVE_TTL_MS = 2_500;
-const cache = createInMemoryCache({ defaultTtlMs: LIVE_TTL_MS });
-
 const RECENT_FINISHED_QUERY_LIMIT = Math.max(RECENT_FINISHED_FEATURED_MAX + 2, 3);
 
 const BAR_PROJECTION =
-  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.finished raw.time_elapsed raw.fifaEvents.timeline';
+  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.finished raw.time_elapsed raw.home_scorers raw.away_scorers raw.fifaMeta raw.fifaEvents.timeline raw.fifaEvents.rawEvents';
 
 async function computeLiveMatchSnapshot(userId) {
   const [liveRaw, recentFinishedRaw] = await Promise.all([
@@ -56,16 +52,13 @@ async function computeLiveMatchSnapshot(userId) {
   return { liveMatches, recentFinishedMatches };
 }
 
+/** Sin TTL: alimenta parches WS en vivo; cachearlo devolvía cronologías atrasadas. */
 export async function getCachedLiveMatchSnapshot(userId) {
-  const key = userId ? `user:${userId}` : 'anon';
-  return cache.getOrCompute(key, () => computeLiveMatchSnapshot(userId), LIVE_TTL_MS);
+  return computeLiveMatchSnapshot(userId);
 }
 
-export function invalidateLiveMatchSnapshotCache() {
-  cache.clear();
-}
+/** No-op (cache eliminado); se mantiene para compatibilidad con invalidadores. */
+export function invalidateLiveMatchSnapshotCache() {}
 
 /** Test helper */
-export function clearLiveMatchSnapshotCache() {
-  cache.clear();
-}
+export function clearLiveMatchSnapshotCache() {}

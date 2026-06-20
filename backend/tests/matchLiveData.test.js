@@ -74,6 +74,12 @@ describe('matchLiveData', () => {
       );
     });
 
+    it('ignora entretiempo si la cronología ya está en 2.º tiempo', () => {
+      expect(
+        resolveLiveTimeElapsed({ time_elapsed: 'ht' }, [{ minute: 59, extraMinute: null, sortKey: 59 }])
+      ).toBe("59'");
+    });
+
     it('no devuelve Final en live si timeline muestra minuto temprano', () => {
       expect(
         resolveLiveTimeElapsed({ time_elapsed: 'finished' }, [{ minute: 4, sortKey: 4 }])
