@@ -464,6 +464,22 @@ body:has(.game-shell) {
       0 0 20px rgba(245, 158, 11, 0.12);
   }
 
+  .user-profile-dialog {
+    position: fixed;
+    inset: unset;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    margin: 0;
+    width: min(calc(100vw - 1.5rem), 40rem);
+    max-width: min(calc(100vw - 1.5rem), 40rem);
+    max-height: min(92vh, 44rem);
+  }
+
+  .user-profile-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+
   .game-shell .game-btn-outline {
     border-color: rgba(148, 163, 184, 0.25);
     background: rgba(15, 23, 42, 0.6);

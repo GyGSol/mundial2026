@@ -18,7 +18,7 @@ Documentación completa: [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md)
 5. Si el cambio afecta UI/API/DB → `npm run dev:local-qa` (con o sin refresco previo, según respuesta del usuario).
 6. Verificar `curl http://localhost:5000/api/health` → `databaseName: mundial2026_local`, `environment: local-qa`.
 7. Reportar checklist al usuario y **preguntar** antes de prod.
-8. Prod solo con `CONFIRM_PRODUCTION=1 npm run deploy:production` o confirmación interactiva del script.
+8. Prod solo con `CONFIRM_PRODUCTION=1 npm run deploy:production` o confirmación interactiva del script. **No** `git push heroku main` manual (ver [DEPLOYMENT.md](../../docs/DEPLOYMENT.md) — caricaturas).
 9. **Nunca** `npm test` con `MONGODB_URI` de Atlas/Heroku — `unset MONGODB_URI` primero.
 10. Scripts destructivos (`restore`, `reset-db`) solo contra `mundial2026_local` o `mundial2026_test`.
 

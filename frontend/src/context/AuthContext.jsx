@@ -87,8 +87,8 @@ export function AuthProvider({ children }) {
       async refreshUser() {
         return refreshUser();
       },
-      async updateProfile(name) {
-        const data = await authApi.updateProfile(name);
+      async updateProfile(updates) {
+        const data = await authApi.updateProfile(updates);
         setUser(data.user);
         return data.user;
       },

@@ -111,6 +111,47 @@ Rollback si hace falta:
 heroku releases:rollback -a mundial2026-pred
 ```
 
+**Importante:** no uses `git push heroku main` a mano. El script `deploy:production` mergea `origin/main` sobre `heroku/main` y **excluye `imagenes-jugadores/`** del commit desplegado (Heroku rechaza checkouts >1 GB). Ver [Caricaturas y deploy](#caricaturas-y-deploy).
+
+---
+
+## Caricaturas y deploy
+
+Las caricaturas de jugadores **no van en el slug de Heroku** ni conviene guardar los PNG en MongoDB.
+
+| Qué | Dónde |
+|-----|--------|
+| Archivo PNG | Repo GitHub `imagenes-jugadores/` (~1 GB) |
+| Referencia | MongoDB `Player.photoKey` (ej. `ecuador/ecu-nilson-angulo.png`) |
+| URL en prod | GitHub raw (`PLAYER_PHOTOS_GITHUB_BASE`, default abajo) |
+| Servidor local | `/player-photos/` solo en dev/QA (no en `APP_ENV=production`) |
+
+```text
+https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores
+```
+
+### Sincronizar photoKey en Mongo
+
+Tras agregar PNG en GitHub/local:
+
+```bash
+npm run sync:player-photos
+```
+
+Eso empareja archivos con jugadores y escribe `photoKey` en Atlas. La app en prod arma la URL con esa clave.
+
+### Avatares de usuario (perfil)
+
+Distinto flujo: la imagen del usuario puede guardarse en Mongo (`User.avatarDataUrl`) y servirse por `/api/users/:id/avatar`. No usar ese campo para caricaturas FIFA.
+
+### `.slugignore` vs git push
+
+- **`.slugignore`:** excluye `imagenes-jugadores/` del **slug** comprimido (~112 MB en prod).
+- **Checkout de deploy:** si el commit incluye los PNG, Heroku falla al clonar aunque el slug los ignore después.
+- **`npm run deploy:production`:** crea un commit sin esa carpeta y hace push a `heroku` (rama temporal `heroku-deploy-tmp`).
+
+Subí siempre primero a GitHub (`git push origin main`) para que las URLs raw de prod apunten a archivos nuevos.
+
 ---
 
 ## Tres bases locales

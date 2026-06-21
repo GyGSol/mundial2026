@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
     isAiUser: { type: Boolean, default: false, index: true },
     mustChangePassword: { type: Boolean, default: false },
     passwordResetAt: { type: Date, default: null },
+    avatarDataUrl: { type: String, default: null },
     pushSubscriptions: [
       {
         endpoint: { type: String, required: true },

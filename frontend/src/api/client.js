@@ -48,10 +48,10 @@ export const authApi = {
     }),
   me: () => request('/auth/me'),
   logout: () => request('/auth/logout', { method: 'POST' }),
-  updateProfile: (name) =>
+  updateProfile: ({ name, avatarDataUrl } = {}) =>
     request('/auth/me', {
       method: 'PATCH',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, avatarDataUrl }),
     }),
   forgotPassword: (email) =>
     request('/auth/forgot-password', {

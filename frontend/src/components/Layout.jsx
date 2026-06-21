@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import EditPlayerDialog from './EditPlayerDialog.jsx';
+import UserProfileDialog from './UserProfileDialog.jsx';
 import GameMobileNav from './GameMobileNav.jsx';
 import LocalQaBanner from './LocalQaBanner.jsx';
 import MundialBrandLogo from './MundialBrandLogo.jsx';
 import FubolBalanceChip from './FubolBalanceChip.jsx';
+import UserProfileAvatarButton from './UserProfileAvatarButton.jsx';
 import { LiveMatchViewerProvider } from '@/context/LiveMatchViewerContext.jsx';
 
 export default function Layout() {
-  const [editPlayerOpen, setEditPlayerOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <LiveMatchViewerProvider>
@@ -22,16 +23,20 @@ export default function Layout() {
             >
               <MundialBrandLogo />
             </Link>
-            <FubolBalanceChip />
-            <EditPlayerDialog open={editPlayerOpen} onOpenChange={setEditPlayerOpen} />
+            <div className="ml-auto flex items-center gap-2">
+              <FubolBalanceChip className="ml-0" />
+              <UserProfileAvatarButton onOpenProfile={() => setProfileOpen(true)} goldBorder />
+            </div>
           </div>
         </header>
+
+        <UserProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
 
         <main className="game-shell__frame py-5 pb-[calc(4.75rem+env(safe-area-inset-bottom))]">
           <Outlet />
         </main>
 
-        <GameMobileNav onEditPlayer={() => setEditPlayerOpen(true)} />
+        <GameMobileNav onEditPlayer={() => setProfileOpen(true)} />
         <LocalQaBanner />
       </div>
     </LiveMatchViewerProvider>
