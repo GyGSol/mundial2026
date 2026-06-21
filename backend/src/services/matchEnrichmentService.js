@@ -71,23 +71,28 @@ export async function enrichMatches(matches, userId, options = {}) {
   const teams = await Team.find({ externalId: { $in: [...teamIds] } }).lean();
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
 
+  const hasLiveOrFinished = matches.some(
+    (m) => m.status === 'live' || m.status === 'finished'
+  );
+
   const needsTournamentGoals =
-    includeTimelineTournamentGoals &&
-    includeLiveFields &&
-    matches.some((m) => m.status === 'live' || m.status === 'finished');
+    includeTimelineTournamentGoals && includeLiveFields && hasLiveOrFinished;
+
+  /** Fotos de cronología/cambios requieren plantel aunque no calculemos goles del torneo. */
+  const needsLiveRosterForEnrichment =
+    includeLiveFields && !includePlayers && hasLiveOrFinished;
 
   let playersByTeamId = {};
-  if (includePlayers || needsTournamentGoals) {
-    const rosterTeamIds =
-      includePlayers || !needsTournamentGoals
-        ? [...teamIds]
-        : [
-            ...new Set(
-              matches
-                .filter((m) => m.status === 'live' || m.status === 'finished')
-                .flatMap((m) => [m.homeTeamId, m.awayTeamId])
-            ),
-          ];
+  if (includePlayers || needsTournamentGoals || needsLiveRosterForEnrichment) {
+    const rosterTeamIds = includePlayers
+      ? [...teamIds]
+      : [
+          ...new Set(
+            matches
+              .filter((m) => m.status === 'live' || m.status === 'finished')
+              .flatMap((m) => [m.homeTeamId, m.awayTeamId])
+          ),
+        ];
     const players = await Player.find({ teamExternalId: { $in: rosterTeamIds } }).lean();
     const rawPlayersByTeamId = {};
     for (const player of players) {
