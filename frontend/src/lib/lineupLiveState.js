@@ -470,6 +470,24 @@ export function applyExpulsionsToLineup(lineupSide, timeline = [], side = 'home'
   };
 }
 
+/** Aplica separación de solapes en la cancha (defensa, mediocampo, ataque). */
+export function normalizeLineupSideForPitch(lineupSide) {
+  if (!lineupSide?.players?.length) return lineupSide;
+  return {
+    ...lineupSide,
+    players: spreadOverlappingGridPositions(lineupSide.players),
+  };
+}
+
+export function normalizeLineupForPitch(lineup) {
+  if (!lineup) return lineup;
+  return {
+    ...lineup,
+    home: normalizeLineupSideForPitch(lineup.home),
+    away: normalizeLineupSideForPitch(lineup.away),
+  };
+}
+
 /** Sustituciones + expulsiones en orden (cancha interactiva en vivo). */
 export function applyLiveLineupState(lineup, homeSubstitutions = [], awaySubstitutions = [], timeline = []) {
   if (!lineup) return lineup;
