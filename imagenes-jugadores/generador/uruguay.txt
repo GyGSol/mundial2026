@@ -31,6 +31,10 @@ uru-santiago-bueno.png | #24 | Santiago Bueno | DF | 8 pj | 0 goles
 uru-juan-manuel-sanabria.png | #25 | Juan Manuel Sanabria | MF | 5 pj | 1 goles
 uru-rodrigo-zalazar.png | #26 | Rodrigo Zalazar | MF | 8 pj | 2 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+uru-marcelo-bielsa.png | — | Marcelo Bielsa | DT
+
 # Solo nombres (pegar en generador):
 
 Sergio Rochet
@@ -59,3 +63,4 @@ Fernando Muslera
 Santiago Bueno
 Juan Manuel Sanabria
 Rodrigo Zalazar
+Marcelo Bielsa
