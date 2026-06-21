@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   isInAiPredictionWindow,
+  isDueForAiPrediction,
   parseGeminiJsonResponse,
   clampGoals,
   computeHeuristicScore,
@@ -45,6 +46,39 @@ describe('aiPredictionService', () => {
     it('ignora partidos no upcoming', () => {
       vi.setSystemTime(new Date('2026-06-15T18:25:00.000Z'));
       expect(isInAiPredictionWindow({ ...match, status: 'live' })).toBe(false);
+    });
+  });
+
+  describe('isDueForAiPrediction', () => {
+    it('incluye ventana principal T-5', () => {
+      vi.setSystemTime(new Date('2026-06-15T19:55:00.000Z'));
+      expect(isDueForAiPrediction(match)).toBe(true);
+    });
+
+    it('catch-up entre fin de ventana principal y kickoff', () => {
+      vi.setSystemTime(new Date('2026-06-15T19:58:00.000Z'));
+      expect(isInAiPredictionWindow(match)).toBe(false);
+      expect(isDueForAiPrediction(match)).toBe(true);
+    });
+
+    it('catch-up upcoming retrasado tras kickoff (hasta 30 min)', () => {
+      vi.setSystemTime(new Date('2026-06-15T20:15:00.000Z'));
+      expect(isDueForAiPrediction({ ...match, status: 'upcoming' })).toBe(true);
+    });
+
+    it('catch-up en vivo durante la primera hora', () => {
+      vi.setSystemTime(new Date('2026-06-15T20:30:00.000Z'));
+      expect(isDueForAiPrediction({ ...match, status: 'live' })).toBe(true);
+    });
+
+    it('excluye partido finalizado', () => {
+      vi.setSystemTime(new Date('2026-06-15T19:58:00.000Z'));
+      expect(isDueForAiPrediction({ ...match, status: 'finished' })).toBe(false);
+    });
+
+    it('excluye live fuera de grace period', () => {
+      vi.setSystemTime(new Date('2026-06-15T21:05:00.000Z'));
+      expect(isDueForAiPrediction({ ...match, status: 'live' })).toBe(false);
     });
   });
 

@@ -304,6 +304,10 @@ export async function getAiCompetitorOverview({
         : null,
       logCount: logCountByMatch.get(key) ?? 0,
       canSimulate: match.status === 'upcoming',
+      canRunOfficial:
+        match.status === 'upcoming' ||
+        match.status === 'live' ||
+        (match.status === 'finished' && state === 'faltante'),
     });
   }
 

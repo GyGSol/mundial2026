@@ -47,6 +47,7 @@ import {
 } from './aiPredictionCalibrationService.js';
 import { saveAiCompetitorPredictionLog } from './aiCompetitorAuditService.js';
 import { getAiUser } from './aiUserService.js';
+import { recalculateMatchScores } from './syncService.js';
 import {
   fetchExternalMatchIntel,
   formatExternalIntelForPrompt,
@@ -223,6 +224,36 @@ export function isInAiPredictionWindow(match, now = Date.now()) {
   const minKickoff = now + lead - window;
   const maxKickoff = now + lead + window;
   return kickoffMs >= minKickoff && kickoffMs <= maxKickoff;
+}
+
+const AI_PREDICT_CATCHUP_DELAYED_MS = 30 * 60 * 1000;
+const AI_PREDICT_CATCHUP_LIVE_MS = 60 * 60 * 1000;
+
+/**
+ * Partido que aún necesita predicción automática del competidor IA.
+ * Incluye ventana principal T-lead y catch-up si el job la perdió (hasta kickoff, retraso o 1ª hora en vivo).
+ */
+export function isDueForAiPrediction(match, now = Date.now()) {
+  if (!match?.kickoffAt) return false;
+  if (match.status !== 'upcoming' && match.status !== 'live') return false;
+
+  if (isInAiPredictionWindow(match, now)) return true;
+
+  const kickoffMs = new Date(match.kickoffAt).getTime();
+  const lead = env.aiPredictLeadMs;
+  const window = env.aiPredictWindowMs;
+  const primaryWindowEndMs = kickoffMs - lead + window;
+
+  if (match.status === 'upcoming') {
+    if (now >= primaryWindowEndMs && now < kickoffMs) return true;
+    if (now >= kickoffMs && now < kickoffMs + AI_PREDICT_CATCHUP_DELAYED_MS) return true;
+  }
+
+  if (match.status === 'live' && now < kickoffMs + AI_PREDICT_CATCHUP_LIVE_MS) {
+    return true;
+  }
+
+  return false;
 }
 
 export function parseGeminiJsonResponse(text) {
@@ -1219,12 +1250,12 @@ export function isOfficialAiCompetitorPrediction(prediction) {
 }
 
 export async function findMatchesDueForAiPrediction(aiUserId, now = Date.now()) {
-  const upcoming = await Match.find({
-    status: 'upcoming',
+  const candidates = await Match.find({
+    status: { $in: ['upcoming', 'live'] },
     kickoffAt: { $ne: null },
   }).lean();
 
-  const inWindow = upcoming.filter((match) => isInAiPredictionWindow(match, now));
+  const inWindow = candidates.filter((match) => isDueForAiPrediction(match, now));
 
   if (!inWindow.length) return [];
 
@@ -1399,7 +1430,10 @@ export async function simulateAiCompetitorPrediction(matchId, { fetchImpl } = {}
 }
 
 /** Ejecuta el pipeline IA y persiste predicción oficial (admin: reemplaza 0-0 o correcciones manuales). */
-export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } = {}) {
+export async function runOfficialAiCompetitorPrediction(
+  matchId,
+  { fetchImpl, retroactive = false } = {}
+) {
   const timedFetch = fetchImpl ?? createFetchWithTimeout(30_000);
   const aiUser = await getAiUser();
   if (!aiUser) {
@@ -1414,9 +1448,28 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
     error.status = 404;
     throw error;
   }
-  if (!['upcoming', 'live'].includes(match.status)) {
-    const error = new Error('Solo se puede ejecutar IA en partidos próximos o en vivo');
+  const allowedStatuses = retroactive
+    ? ['upcoming', 'live', 'finished']
+    : ['upcoming', 'live'];
+  if (!allowedStatuses.includes(match.status)) {
+    const error = new Error(
+      retroactive
+        ? 'Solo se puede ejecutar IA en partidos próximos, en vivo o finalizados (retroactivo)'
+        : 'Solo se puede ejecutar IA en partidos próximos o en vivo'
+    );
     error.status = 400;
+    throw error;
+  }
+
+  const existing = await Prediction.findOne({
+    userId: aiUser._id,
+    matchId: match._id,
+  })
+    .select('userSubmitted predictionSource aiModel')
+    .lean();
+  if (retroactive && existing && isOfficialAiCompetitorPrediction(existing)) {
+    const error = new Error('El bot ya tiene predicción oficial en este partido');
+    error.status = 409;
     throw error;
   }
 
@@ -1457,6 +1510,10 @@ export async function runOfficialAiCompetitorPrediction(matchId, { fetchImpl } =
   }).catch((err) => {
     console.warn(`AI audit log failed (${match.externalId}):`, err.message);
   });
+
+  if (match.status === 'finished' || match.status === 'live') {
+    await recalculateMatchScores(match._id);
+  }
 
   return buildAdminCompetitorActionResponse(match, {
     predictionId: prediction._id.toString(),

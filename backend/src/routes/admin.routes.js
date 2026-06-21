@@ -11,6 +11,7 @@ import {
   setupAdminAccount,
 } from '../services/adminSetupService.js';
 import { runSync } from '../services/syncService.js';
+import { Match } from '../models/Match.js';
 import { getMatchPredictionDiagnostics } from '../services/predictionMatchLinkService.js';
 import { runPlayerSync } from '../services/playerSyncService.js';
 import {
@@ -696,7 +697,11 @@ router.post('/ai-competitor/simulate/:matchId', adminMiddleware, async (req, res
 
 router.post('/ai-competitor/run-official/:matchId', adminMiddleware, async (req, res, next) => {
   try {
-    res.status(201).json(await runOfficialAiCompetitorPrediction(req.params.matchId));
+    const match = await Match.findById(req.params.matchId).select('status').lean();
+    const retroactive = match?.status === 'finished';
+    res.status(201).json(
+      await runOfficialAiCompetitorPrediction(req.params.matchId, { retroactive })
+    );
   } catch (err) {
     next(err);
   }
