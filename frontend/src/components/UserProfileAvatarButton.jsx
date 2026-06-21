@@ -1,5 +1,5 @@
 import { useAuth } from '../context/AuthContext.jsx';
-import { getInitials } from '@/lib/userAvatarUpload.js';
+import { getInitials, resolveUserAvatarUrl } from '@/lib/userAvatarUpload.js';
 import { cn } from '@/lib/utils';
 
 export default function UserProfileAvatarButton({
@@ -15,7 +15,9 @@ export default function UserProfileAvatarButton({
   if (onOpenProfile && !user) return null;
 
   const displayName = name ?? user?.name;
-  const displayAvatar = avatarUrl !== undefined ? avatarUrl : user?.avatarUrl;
+  const isAiUser = Boolean(user?.isAIAgent);
+  const rawAvatar = avatarUrl !== undefined ? avatarUrl : user?.avatarUrl;
+  const displayAvatar = resolveUserAvatarUrl(rawAvatar, isAiUser, displayName);
   const sizeClass = size === 'lg' ? 'size-32 text-2xl' : 'size-9 text-xs';
   const shellClass = cn(
     'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full',

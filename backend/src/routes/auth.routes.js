@@ -14,6 +14,7 @@ import {
   changeUserPassword,
   requestPasswordReset,
 } from '../services/passwordResetService.js';
+import { AI_USER_AVATAR_URL } from '../constants/aiUser.js';
 import { normalizeAvatarDataUrlInput } from '../services/userAvatarService.js';
 
 const router = Router();
@@ -51,7 +52,7 @@ async function serializeUser(user) {
     aiQuestionCredits: user.aiQuestionCredits ?? 0,
     isAIAgent: Boolean(user.isAiUser),
     mustChangePassword: Boolean(user.mustChangePassword),
-    avatarUrl: user.avatarDataUrl || null,
+    avatarUrl: user.isAiUser ? AI_USER_AVATAR_URL : user.avatarDataUrl || null,
     competitionGroup: group,
     competitionGroups: groups,
   };

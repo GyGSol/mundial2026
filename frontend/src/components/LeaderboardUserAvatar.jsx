@@ -5,17 +5,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover.jsx';
-import { getInitials } from '@/lib/userAvatarUpload.js';
+import { getInitials, resolveUserAvatarUrl } from '@/lib/userAvatarUpload.js';
 import { cn } from '@/lib/utils';
 
 const thumbClass =
   'inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-amber-400/90 bg-[#ffffff] shadow-[0_0_8px_rgba(245,158,11,0.25)]';
 
-export default function LeaderboardUserAvatar({ name, avatarUrl, className }) {
+export default function LeaderboardUserAvatar({ name, avatarUrl, isAiUser, className }) {
   const [open, setOpen] = useState(false);
+  const displayAvatarUrl = resolveUserAvatarUrl(avatarUrl, isAiUser, name);
 
-  const thumb = avatarUrl ? (
-    <img src={avatarUrl} alt="" className="size-full object-contain" loading="lazy" />
+  const thumb = displayAvatarUrl ? (
+    <img src={displayAvatarUrl} alt="" className="size-full object-contain" loading="lazy" />
   ) : (
     <span className="text-[10px] font-semibold uppercase text-muted-foreground" aria-hidden>
       {getInitials(name)}
@@ -50,8 +51,8 @@ export default function LeaderboardUserAvatar({ name, avatarUrl, className }) {
         </button>
         <div className="flex flex-col items-center gap-2">
           <span className="inline-flex size-24 items-center justify-center overflow-hidden rounded-full border-2 border-amber-400 bg-[#ffffff] shadow-[0_0_16px_rgba(245,158,11,0.35)]">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="size-full object-contain" />
+            {displayAvatarUrl ? (
+              <img src={displayAvatarUrl} alt="" className="size-full object-contain" />
             ) : (
               <span className="text-2xl font-semibold uppercase text-muted-foreground" aria-hidden>
                 {getInitials(name)}

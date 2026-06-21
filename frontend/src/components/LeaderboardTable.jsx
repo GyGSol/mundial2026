@@ -199,7 +199,11 @@ export default function LeaderboardTable({
                   <TableCell className="max-w-[6.5rem] px-1 font-medium sm:max-w-none sm:px-2">
                     <div className="flex min-w-0 items-center justify-between gap-2">
                       <span className="flex min-w-0 items-center gap-1.5">
-                        <LeaderboardUserAvatar name={row.name} avatarUrl={row.avatarUrl} />
+                        <LeaderboardUserAvatar
+                          name={row.name}
+                          avatarUrl={row.avatarUrl}
+                          isAiUser={row.isAiUser}
+                        />
                         <span className="truncate">
                           {row.name}
                           {row.isAiUser ? (

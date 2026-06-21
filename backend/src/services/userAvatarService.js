@@ -1,3 +1,5 @@
+import { AI_USER_AVATAR_URL } from '../constants/aiUser.js';
+
 const ALLOWED_PREFIXES = ['data:image/jpeg;base64,', 'data:image/webp;base64,'];
 const MAX_DECODED_BYTES = 120 * 1024;
 
@@ -58,4 +60,11 @@ export function decodeAvatarDataUrl(dataUrl) {
 /** @param {string} userId */
 export function getUserAvatarPublicPath(userId) {
   return `/api/users/${userId}/avatar`;
+}
+
+/** URL pública para ranking/header: moneda Fubol en IA, API en humanos con foto. */
+export function resolvePublicAvatarUrl({ isAiUser, avatarDataUrl, userId }) {
+  if (isAiUser) return AI_USER_AVATAR_URL;
+  if (avatarDataUrl) return getUserAvatarPublicPath(userId);
+  return null;
 }

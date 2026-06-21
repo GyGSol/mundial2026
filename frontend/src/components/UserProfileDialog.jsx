@@ -13,7 +13,7 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card.jsx';
-import { readAndCompressAvatar } from '@/lib/userAvatarUpload.js';
+import { readAndCompressAvatar, resolveUserAvatarUrl } from '@/lib/userAvatarUpload.js';
 import FubolCoinIcon from './FubolCoinIcon.jsx';
 
 function ReadOnlyField({ label, children }) {
@@ -44,13 +44,13 @@ export default function UserProfileDialog({ open, onOpenChange }) {
     if (open && !dialog.open) {
       dialog.showModal();
       setName(user?.name ?? '');
-      setAvatarPreview(user?.avatarUrl ?? null);
+      setAvatarPreview(resolveUserAvatarUrl(user?.avatarUrl, user?.isAIAgent, user?.name));
       setAvatarPending(undefined);
       setError('');
     } else if (!open && dialog.open) {
       dialog.close();
     }
-  }, [open, user?.name, user?.avatarUrl]);
+  }, [open, user?.name, user?.avatarUrl, user?.isAIAgent]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -146,19 +146,23 @@ export default function UserProfileDialog({ open, onOpenChange }) {
                 name={name}
                 goldBorder
               />
-              {avatarPreview !== (user.avatarUrl ?? null) ? (
+              {avatarPreview !== resolveUserAvatarUrl(user.avatarUrl, user.isAIAgent, user.name) ? (
                 <p className="text-xs text-muted-foreground">Vista previa — guardá para aplicar</p>
               ) : null}
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={handlePickPhoto} disabled={saving}>
-                  Cambiar foto
-                </Button>
-                {avatarPreview ? (
-                  <Button type="button" variant="ghost" size="sm" onClick={handleRemovePhoto} disabled={saving}>
-                    Quitar foto
+              {user.isAIAgent ? (
+                <p className="text-xs text-muted-foreground">Avatar oficial del competidor IA</p>
+              ) : (
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handlePickPhoto} disabled={saving}>
+                    Cambiar foto
                   </Button>
-                ) : null}
-              </div>
+                  {avatarPreview ? (
+                    <Button type="button" variant="ghost" size="sm" onClick={handleRemovePhoto} disabled={saving}>
+                      Quitar foto
+                    </Button>
+                  ) : null}
+                </div>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"

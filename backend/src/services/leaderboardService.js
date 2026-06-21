@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
-import { getUserAvatarPublicPath } from './userAvatarService.js';
+import { resolvePublicAvatarUrl } from './userAvatarService.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 import { calculatePoints, calculateGoalDiff } from './scoringService.js';
 import { compareAvgGoalDiff, compareGoalDiffScore } from './goalDiffStats.js';
@@ -288,7 +288,11 @@ export async function getLeaderboard(competitionGroupId, limit = 100, options = 
     return {
       id: user._id.toString(),
       name: user.name,
-      avatarUrl: user.avatarDataUrl ? getUserAvatarPublicPath(user._id.toString()) : null,
+      avatarUrl: resolvePublicAvatarUrl({
+        isAiUser: user.isAiUser,
+        avatarDataUrl: user.avatarDataUrl,
+        userId: user._id.toString(),
+      }),
       isAiUser: Boolean(user.isAiUser),
       groupName: groupNameById[(user.activeCompetitionGroupId || user.competitionGroupId)?.toString()] || null,
       totalPoints: stats.totalPoints ?? 0,
