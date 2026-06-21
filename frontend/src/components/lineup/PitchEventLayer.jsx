@@ -214,7 +214,7 @@ export function PitchEventPinInteractions({
       {pins.map(({ event, key, highlight, style, ariaLabel }) => (
         <div
           key={key}
-          className="group/pin pointer-events-auto absolute z-40 -translate-x-1/2 -translate-y-1/2"
+          className="group/pin pointer-events-auto absolute z-40 -translate-x-1/2 -translate-y-1/2 group-hover/pin:z-[60] group-focus-within/pin:z-[60]"
           style={style}
         >
           <button

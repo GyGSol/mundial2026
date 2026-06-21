@@ -170,7 +170,7 @@ function PlayerMarker({
   return (
     <div
       key={player.playerId ?? `${side}-${index}`}
-      className="group/marker pointer-events-auto absolute z-20 -translate-x-1/2 -translate-y-1/2"
+      className="group/marker pointer-events-auto absolute z-20 -translate-x-1/2 -translate-y-1/2 group-hover/marker:z-[60] group-focus-within/marker:z-[60]"
       style={style}
     >
       <button
@@ -307,7 +307,7 @@ function CoachBadge({ coach, side, formation, onCoachClick }) {
   const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
 
   return (
-    <div className="group/coach relative">
+    <div className="group/coach relative z-20 group-hover/coach:z-[60] group-focus-within/coach:z-[60]">
       <button
         type="button"
         className="flex flex-col items-center gap-px rounded-md p-px transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
