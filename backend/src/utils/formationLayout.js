@@ -440,9 +440,24 @@ function centerClusterLateralSlots(count) {
   );
 }
 
+function forwardCenterClusterLateralSlots(count) {
+  if (count <= 1) return [50];
+  if (count === 2) return [40, 60];
+  if (count === 3) return [38, 50, 62];
+  return centerClusterLateralSlots(count);
+}
+
 function spreadPoolCenterClusters(
   players,
-  { pool, minDepth, maxDepth, isCenterLike, yTolerance = 10, depthBucket = 8 } = {}
+  {
+    pool,
+    minDepth,
+    maxDepth,
+    isCenterLike,
+    yTolerance = 10,
+    depthBucket = 8,
+    slotFn = centerClusterLateralSlots,
+  } = {}
 ) {
   if (!players?.length) return players ?? [];
 
@@ -467,7 +482,7 @@ function spreadPoolCenterClusters(
     const sorted = [...group].sort(
       (a, b) => (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
     );
-    const slots = centerClusterLateralSlots(sorted.length);
+    const slots = slotFn(sorted.length);
     sorted.forEach(({ index }, slot) => {
       result[index] = { ...result[index], gridY: slots[slot] };
     });
@@ -482,6 +497,9 @@ export function spreadForwardCenterClusters(players) {
     minDepth: 68,
     maxDepth: 100,
     isCenterLike: isCenterForwardLike,
+    yTolerance: 14,
+    depthBucket: 20,
+    slotFn: forwardCenterClusterLateralSlots,
   });
 }
 

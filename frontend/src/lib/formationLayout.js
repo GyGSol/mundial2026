@@ -249,6 +249,14 @@ export function centerClusterLateralSlots(count) {
   );
 }
 
+/** Delanteros centros: más apertura lateral que el resto de líneas. */
+function forwardCenterClusterLateralSlots(count) {
+  if (count <= 1) return [50];
+  if (count === 2) return [40, 60];
+  if (count === 3) return [38, 50, 62];
+  return centerClusterLateralSlots(count);
+}
+
 /** @deprecated alias */
 function centerForwardLateralSlots(count) {
   return centerClusterLateralSlots(count);
@@ -448,7 +456,7 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
     const allCenterForwards = group.every(({ player }) => isCenterForwardLike(player));
     const step =
       allCenterForwards && group.length === 2
-        ? 8
+        ? 14
         : Math.max(lateralStep, 12 / Math.max(1, group.length - 1));
 
     group.forEach((entry, slot) => {
@@ -466,7 +474,15 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
 
 function spreadPoolCenterClusters(
   players,
-  { pool, minDepth, maxDepth, isCenterLike, yTolerance = 10, depthBucket = 8 } = {}
+  {
+    pool,
+    minDepth,
+    maxDepth,
+    isCenterLike,
+    yTolerance = 10,
+    depthBucket = 8,
+    slotFn = centerClusterLateralSlots,
+  } = {}
 ) {
   if (!players?.length) return players ?? [];
 
@@ -491,7 +507,7 @@ function spreadPoolCenterClusters(
     const sorted = [...group].sort(
       (a, b) => (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
     );
-    const slots = centerClusterLateralSlots(sorted.length);
+    const slots = slotFn(sorted.length);
     sorted.forEach(({ index }, slot) => {
       result[index] = { ...result[index], gridY: slots[slot] };
     });
@@ -500,13 +516,16 @@ function spreadPoolCenterClusters(
   return result;
 }
 
-/** Dos+ DC en línea de ataque con casi la misma Y → abrir en el centro (46/54). */
+/** Dos+ DC en línea de ataque con casi la misma Y → abrir en el centro (40/60). */
 export function spreadForwardCenterClusters(players) {
   return spreadPoolCenterClusters(players, {
     pool: 'FWD',
     minDepth: 68,
     maxDepth: 100,
     isCenterLike: isCenterForwardLike,
+    yTolerance: 14,
+    depthBucket: 20,
+    slotFn: forwardCenterClusterLateralSlots,
   });
 }
 

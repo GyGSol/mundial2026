@@ -38,8 +38,8 @@ describe('formationLayout center forwards', () => {
     ];
 
     const next = spreadForwardCenterClusters(players);
-    expect(next[0].gridY).toBe(46);
-    expect(next[1].gridY).toBe(54);
+    expect(next[0].gridY).toBe(40);
+    expect(next[1].gridY).toBe(60);
     expect(next[2].gridY).toBe(50);
   });
 
