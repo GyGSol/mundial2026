@@ -46,6 +46,8 @@ const TRANSLITERATION_TOKEN_ALIASES = {
   firas: ['feras'],
   brikan: ['buraikan'],
   buraikan: ['brikan'],
+  mehdi: ['mahdi'],
+  mahdi: ['mehdi'],
 };
 
 function tokenAliasSet(token) {
