@@ -21,6 +21,7 @@ import {
   assignPlayersWithFormationLayout,
   mapFootballDataPositionText,
   resolveFormation,
+  spreadOverlappingGridPositions,
 } from '../utils/formationLayout.js';
 import { shirtForName } from '../utils/fifaSquadShirtMap.js';
 import { fetchFifaLiveMatchLineup } from './fifaLineupService.js';
@@ -88,7 +89,7 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
   return { home, away };
 }
 
-export const LINEUP_LAYOUT_VERSION = 3;
+export const LINEUP_LAYOUT_VERSION = 4;
 
 function normalizePlayerForFormation(player) {
   const detail = player.positionDetail ?? player.position;
@@ -103,7 +104,9 @@ function applyGridsToSide(side) {
   if (!side?.players?.length) return side;
   const players = side.players.map(normalizePlayerForFormation);
   const formation = resolveFormation(players, side.formation);
-  const withGrids = assignPlayersWithFormationLayout(players, formation);
+  const withGrids = spreadOverlappingGridPositions(
+    assignPlayersWithFormationLayout(players, formation)
+  );
   return { ...side, formation, players: withGrids };
 }
 

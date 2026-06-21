@@ -109,7 +109,7 @@ describe('formationLayout', () => {
       { name: 'Pulisic', position: 'MID', positionDetail: 'Left Winger', shirtNumber: 10 },
     ];
     const assigned = assignPlayersToFormation(players, '4-3-3');
-    expect(assigned.find((p) => p.name === 'Adams').gridX).toBe(54);
+    expect(assigned.find((p) => p.name === 'Adams').gridX).toBe(52);
     expect(assigned.find((p) => p.name === 'Pulisic').gridX).toBe(85);
   });
 

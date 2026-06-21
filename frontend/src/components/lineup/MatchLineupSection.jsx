@@ -8,7 +8,7 @@ import {
   pitchHighlightKeyForTimeline,
 } from '@/components/lineup/PitchEventLayer.jsx';
 import { eventHasPitchCoords } from '@/lib/pitchCoordinates.js';
-import { applyLiveLineupState } from '@/lib/lineupLiveState.js';
+import { applyLiveLineupState, normalizeLineupForPitch } from '@/lib/lineupLiveState.js';
 import { formatSummaryPlayer } from '@/lib/playerPositionLabel.js';
 import {
   resolveSubstitutionsForSide,
@@ -348,6 +348,11 @@ export default function MatchLineupSection({
     return applyLiveLineupState(lineup, hydratedHomeSubs, hydratedAwaySubs, timelineEvents);
   }, [isInteractivePitch, lineup, status, hydratedHomeSubs, hydratedAwaySubs, timelineEvents]);
 
+  const pitchLineup = useMemo(
+    () => normalizeLineupForPitch(liveLineup ?? lineup),
+    [liveLineup, lineup]
+  );
+
   const homeExpulsions = liveLineup?.home?.expelledPlayers ?? [];
   const awayExpulsions = liveLineup?.away?.expelledPlayers ?? [];
 
@@ -468,7 +473,7 @@ export default function MatchLineupSection({
         ) : null}
 
         <PitchFormation
-          lineup={liveLineup ?? lineup}
+          lineup={pitchLineup}
           homeLabel={homeName}
           awayLabel={awayName}
           homeTeamCode={match?.homeTeam?.fifaCode}

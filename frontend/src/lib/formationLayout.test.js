@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   assignPlayersToFormation,
+  isCenterBackLike,
   isCenterForwardLike,
+  isCenterMidLike,
+  spreadDefCenterClusters,
   spreadForwardCenterClusters,
+  spreadMidCenterClusters,
   spreadOverlappingGridPositions,
 } from './formationLayout.js';
 
@@ -46,5 +50,66 @@ describe('formationLayout center forwards', () => {
 
     const next = spreadOverlappingGridPositions(players);
     expect(next[0].gridY).not.toBe(next[1].gridY);
+  });
+});
+
+describe('formationLayout midfield and defense', () => {
+  it('isCenterMidLike detecta MC/MCO y excluye bandas', () => {
+    expect(isCenterMidLike({ position: 'MCO' })).toBe(true);
+    expect(isCenterMidLike({ position: 'MC' })).toBe(true);
+    expect(isCenterMidLike({ position: 'MI' })).toBe(false);
+    expect(isCenterMidLike({ position: 'MD' })).toBe(false);
+  });
+
+  it('isCenterBackLike detecta DFC', () => {
+    expect(isCenterBackLike({ position: 'DFC' })).toBe(true);
+    expect(isCenterBackLike({ position: 'LI' })).toBe(false);
+  });
+
+  it('spreadMidCenterClusters separa dos mediocampistas centrales superpuestos', () => {
+    const players = [
+      { name: 'Sanabria', shirtNumber: 25, position: 'MCO', gridX: 64, gridY: 50 },
+      { name: 'Araujo', shirtNumber: 20, position: 'MC', gridX: 64, gridY: 50 },
+      { name: 'Valverde', shirtNumber: 8, position: 'MI', gridX: 58, gridY: 18 },
+    ];
+
+    const next = spreadMidCenterClusters(players);
+    expect(next.find((p) => p.shirtNumber === 20)?.gridY).toBe(46);
+    expect(next.find((p) => p.shirtNumber === 25)?.gridY).toBe(54);
+    expect(next.find((p) => p.shirtNumber === 8)?.gridY).toBe(18);
+  });
+
+  it('spreadDefCenterClusters separa dos DFC superpuestos', () => {
+    const players = [
+      { name: 'Varela', shirtNumber: 13, position: 'DFC', gridX: 26, gridY: 50 },
+      { name: 'Gutiérrez', shirtNumber: 4, position: 'DFC', gridX: 26, gridY: 50 },
+      { name: 'Cáceres', shirtNumber: 3, position: 'LI', gridX: 26, gridY: 12 },
+    ];
+
+    const next = spreadDefCenterClusters(players);
+    expect(next.find((p) => p.shirtNumber === 4)?.gridY).toBe(46);
+    expect(next.find((p) => p.shirtNumber === 13)?.gridY).toBe(54);
+    expect(next.find((p) => p.shirtNumber === 3)?.gridY).toBe(12);
+  });
+
+  it('assignPlayersToFormation coloca 4 defensores en 4-2-3-1', () => {
+    const players = [
+      { name: 'Muslera', shirtNumber: 23, position: 'POR' },
+      { name: 'Cáceres', shirtNumber: 3, position: 'LI' },
+      { name: 'Varela', shirtNumber: 13, position: 'DFC' },
+      { name: 'Gutiérrez', shirtNumber: 4, position: 'DFC' },
+      { name: 'Olivera', shirtNumber: 16, position: 'LD' },
+      { name: 'Ugarte', shirtNumber: 5, position: 'MCD' },
+      { name: 'Bentancur', shirtNumber: 6, position: 'MC' },
+      { name: 'Valverde', shirtNumber: 8, position: 'MI' },
+      { name: 'Sanabria', shirtNumber: 25, position: 'MCO' },
+      { name: 'Araujo', shirtNumber: 20, position: 'MD' },
+      { name: 'Viñas', shirtNumber: 21, position: 'DC' },
+    ];
+
+    const laidOut = assignPlayersToFormation(players, '4-2-3-1', { includeLeftovers: true });
+    const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
+    expect(defenders).toHaveLength(4);
+    expect(new Set(defenders.map((p) => p.gridY)).size).toBe(4);
   });
 });
