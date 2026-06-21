@@ -610,7 +610,7 @@ router.get('/ai-competitor/overview', adminMiddleware, async (req, res, next) =>
       await getAiCompetitorOverview({
         status: req.query.status,
         group: req.query.group,
-        matchNumber: req.query.matchNumber,
+        teamId: req.query.teamId,
         predictionFilter: req.query.predictionFilter,
       })
     );

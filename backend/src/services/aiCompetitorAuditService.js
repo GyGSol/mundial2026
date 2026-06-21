@@ -165,10 +165,25 @@ export function buildAiCompetitorStats(scoredPredictions, stateCounts, partidosT
   };
 }
 
+const AI_OVERVIEW_LOG_FIELDS =
+  'matchId createdAt isSimulation homeGoals awayGoals finalResponse.reasoning';
+
+/** Filtro Mongo para partidos del overview IA (estado, grupo, selección). */
+export function buildAiCompetitorMatchFilter({ status, group, teamId } = {}) {
+  const filter = { kickoffAt: { $ne: null } };
+  if (status) filter.status = status;
+  if (group) filter.group = String(group).toUpperCase();
+  const team = String(teamId ?? '').trim();
+  if (team) {
+    filter.$or = [{ homeTeamId: team }, { awayTeamId: team }];
+  }
+  return filter;
+}
+
 export async function getAiCompetitorOverview({
   status,
   group,
-  matchNumber,
+  teamId,
   predictionFilter,
 } = {}) {
   const aiUser = await resolveAiUser();
@@ -178,28 +193,29 @@ export async function getAiCompetitorOverview({
     throw error;
   }
 
-  const [allMatches, allPredictions] = await Promise.all([
-    Match.find({ kickoffAt: { $ne: null } }).lean(),
-    Prediction.find({ userId: aiUser._id }).lean(),
+  const matchFilter = buildAiCompetitorMatchFilter({ status, group, teamId });
+
+  const [statsMatches, allPredictions, filteredMatchesRaw] = await Promise.all([
+    Match.find({ kickoffAt: { $ne: null } }).select('_id status kickoffAt').lean(),
+    Prediction.find({ userId: aiUser._id })
+      .select(
+        'matchId userSubmitted pointsEarned goalDiffHome goalDiffAway pointsBreakdown updatedAt createdAt'
+      )
+      .lean(),
+    Match.find(matchFilter).lean(),
   ]);
-  allMatches.sort(compareMatchesBySchedule);
 
   const allPredByMatch = new Map(allPredictions.map((p) => [p.matchId.toString(), p]));
   const globalStateCounts = { predicha: 0, faltante: 0, pendiente: 0 };
-  for (const match of allMatches) {
+  for (const match of statsMatches) {
     const state = classifyPredictionState(match, allPredByMatch.get(match._id.toString()) ?? null);
     globalStateCounts[state] = (globalStateCounts[state] ?? 0) + 1;
   }
   const globalScored = allPredictions.filter((p) => p.pointsEarned != null);
-  const stats = buildAiCompetitorStats(globalScored, globalStateCounts, allMatches.length);
+  const stats = buildAiCompetitorStats(globalScored, globalStateCounts, statsMatches.length);
 
-  let matches = allMatches.filter((match) => {
-    if (status && match.status !== status) return false;
-    if (group && String(match.group ?? '').toUpperCase() !== String(group).toUpperCase()) return false;
-    if (matchNumber && String(match.externalId) !== String(matchNumber)) return false;
-    return true;
-  });
-
+  let matches = filteredMatchesRaw;
+  matches.sort(compareMatchesBySchedule);
   if (status === 'finished') {
     matches = sortMatchesByScheduleDesc(matches);
   }
@@ -215,8 +231,13 @@ export async function getAiCompetitorOverview({
   const matchIds = matches.map((m) => m._id);
 
   const [predictions, logs, teams] = await Promise.all([
-    Prediction.find({ userId: aiUser._id, matchId: { $in: matchIds } }).lean(),
+    Prediction.find({ userId: aiUser._id, matchId: { $in: matchIds } })
+      .select(
+        'matchId homeGoals awayGoals userSubmitted predictionSource pointsEarned goalDiffHome goalDiffAway pointsBreakdown aiModel aiCalibrationApplied aiReasoning updatedAt createdAt'
+      )
+      .lean(),
     AiCompetitorPredictionLog.find({ userId: aiUser._id, matchId: { $in: matchIds } })
+      .select(AI_OVERVIEW_LOG_FIELDS)
       .sort({ createdAt: -1 })
       .lean(),
     Team.find({
