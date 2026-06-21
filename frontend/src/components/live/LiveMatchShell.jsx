@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
-import { PopupLiveIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
@@ -190,7 +190,7 @@ export default function LiveMatchShell({
         <CardHeader className="flex shrink-0 flex-row items-start justify-between gap-3 space-y-0 border-b border-border/60 pb-3">
           <div className="min-w-0 flex-1 space-y-2">
             <DialogTitleWithIcon
-              icon={PopupLiveIcon}
+              icon={PopupFubolIcon}
               id="live-match-title"
               titleClassName="text-base md:text-lg"
               iconLabel="¡A la cancha, en vivo!"

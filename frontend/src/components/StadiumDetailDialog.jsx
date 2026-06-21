@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
-import { PopupStadiumIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
@@ -51,7 +51,7 @@ export default function StadiumDetailDialog({ stadium, open, onOpenChange }) {
             ) : null}
             <div className="min-w-0">
               <DialogTitleWithIcon
-                icon={PopupStadiumIcon}
+                icon={PopupFubolIcon}
                 id="stadium-detail-title"
                 titleClassName="text-lg leading-tight"
                 className="justify-center sm:justify-start"

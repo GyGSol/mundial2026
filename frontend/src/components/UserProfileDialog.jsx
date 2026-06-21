@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
 import UserProfileAvatarButton from '@/components/UserProfileAvatarButton.jsx';
-import { PopupEditIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import {
@@ -127,7 +127,7 @@ export default function UserProfileDialog({ open, onOpenChange }) {
         <Card className="w-full border-0 shadow-none">
           <CardHeader className="gap-2 pb-4 text-center">
             <DialogTitleWithIcon
-              icon={PopupEditIcon}
+              icon={PopupFubolIcon}
               id="user-profile-title"
               iconLabel="Tu perfil de jugador"
               className="justify-center"

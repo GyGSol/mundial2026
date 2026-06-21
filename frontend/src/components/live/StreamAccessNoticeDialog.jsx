@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ExternalLink, RefreshCw, X } from 'lucide-react';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
-import { PopupStreamIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
@@ -49,7 +49,7 @@ export default function StreamAccessNoticeDialog({
         <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
           <div className="space-y-1">
             <DialogTitleWithIcon
-              icon={PopupStreamIcon}
+              icon={PopupFubolIcon}
               id="stream-access-notice-title"
               titleClassName="text-base"
               iconLabel="Dificultades técnicas, aguantá un cachito"

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
 import { BrokenLegIcon } from '@/components/icons/BrokenLegIcon.jsx';
-import { PopupClosedIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { getTeamFlag, matchInvolvesArgentina } from '@/lib/teamMeta';
 import {
   filterTimelineForDisplay,
@@ -1101,7 +1101,7 @@ function PredictionClosedDialog({ match, open, onOpenChange }) {
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
             <DialogTitleWithIcon
-              icon={PopupClosedIcon}
+              icon={PopupFubolIcon}
               id="prediction-closed-title"
               titleClassName="text-lg"
               iconLabel="Se acabó el tiempo, loco"
