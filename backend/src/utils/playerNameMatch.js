@@ -40,6 +40,57 @@ export function tokensMatchAnyOrder(a, b) {
   return left.every((token, index) => token === right[index]);
 }
 
+/** Variantes de transliteración árabe/latina (mismo jugador, distinto spelling en fuentes). */
+const TRANSLITERATION_TOKEN_ALIASES = {
+  feras: ['firas'],
+  firas: ['feras'],
+  brikan: ['buraikan'],
+  buraikan: ['brikan'],
+};
+
+function tokenAliasSet(token) {
+  return new Set([token, ...(TRANSLITERATION_TOKEN_ALIASES[token] ?? [])]);
+}
+
+function tokensEquivalent(leftToken, rightToken) {
+  if (leftToken === rightToken) return true;
+  const leftAliases = tokenAliasSet(leftToken);
+  return leftAliases.has(rightToken);
+}
+
+/** Mismos tokens en cualquier orden, tolerando transliteraciones conocidas. */
+export function tokensMatchWithTransliterationAliases(a, b) {
+  const left = nameTokens(a).sort();
+  const right = nameTokens(b).sort();
+  if (!left.length || left.length !== right.length) return false;
+  return left.every((token, index) => tokensEquivalent(token, right[index]));
+}
+
+/** Slugs con sustitución de tokens (ej. feras-al-brikan → firas-al-buraikan). */
+export function slugTransliterationVariants(slug) {
+  const words = String(slug || '')
+    .split('-')
+    .filter(Boolean);
+  if (!words.length) return [];
+
+  const variants = new Set([words.join('-')]);
+
+  function expand(index, current) {
+    if (index >= words.length) {
+      variants.add(current.join('-'));
+      return;
+    }
+    const token = words[index];
+    const options = tokenAliasSet(token);
+    for (const option of options) {
+      expand(index + 1, [...current, option]);
+    }
+  }
+
+  expand(0, []);
+  return [...variants];
+}
+
 /** Mismo apellido y nombre compatible (Mat / Mathew, Tim / Timothy). */
 export function sameSurnameWithCompatibleGivenName(a, b) {
   const left = nameTokens(a);

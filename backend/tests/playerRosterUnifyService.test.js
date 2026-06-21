@@ -58,6 +58,12 @@ describe('playerRosterUnifyService', () => {
         { fullName: 'Eren Elmalı', fifaCode: 'TUR' }
       )
     ).toBe(true);
+    expect(
+      areSamePlayer(
+        { fullName: 'Feras Al Brikan', fifaCode: 'KSA' },
+        { fullName: 'Firas Al-Buraikan', fifaCode: 'KSA' }
+      )
+    ).toBe(true);
   });
 
   it('pickCanonicalPlayer prefiere plantel oficial con foto', () => {

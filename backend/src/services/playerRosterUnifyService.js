@@ -1,4 +1,11 @@
-import { normalizeName, nameVariantKeys, nameTokens, tokensMatchAnyOrder, sameSurnameWithCompatibleGivenName } from '../utils/playerNameMatch.js';
+import {
+  normalizeName,
+  nameVariantKeys,
+  nameTokens,
+  tokensMatchAnyOrder,
+  tokensMatchWithTransliterationAliases,
+  sameSurnameWithCompatibleGivenName,
+} from '../utils/playerNameMatch.js';
 import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 
 export function isOfficialSquadExternalId(externalId) {
@@ -38,6 +45,7 @@ export function areSamePlayer(a, b) {
   if (fdA && fdB && String(fdA) === String(fdB)) return true;
 
   if (tokensMatchAnyOrder(a.fullName, b.fullName)) return true;
+  if (tokensMatchWithTransliterationAliases(a.fullName, b.fullName)) return true;
   if (sameSurnameWithCompatibleGivenName(a.fullName, b.fullName)) return true;
 
   const tokensA = nameTokens(a.fullName);

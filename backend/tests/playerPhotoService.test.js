@@ -48,6 +48,14 @@ describe('playerPhotoService', () => {
         parsePhotoFilename('aus-aiden-oneill.png')
       )
     ).toBe(true);
+
+    expect(photoSlugVariants('Feras Al Brikan')).toContain('firas-al-buraikan');
+    expect(
+      matchPlayerToPhotoFile(
+        { fifaCode: 'KSA', fullName: 'Feras Al Brikan' },
+        parsePhotoFilename('ksa-firas-al-buraikan.png')
+      )
+    ).toBe(true);
     expect(
       matchPlayerToPhotoFile(
         { fifaCode: 'USA', fullName: 'Tyler Adams' },
