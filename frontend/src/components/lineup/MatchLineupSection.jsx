@@ -230,6 +230,7 @@ export default function MatchLineupSection({
 }) {
   const [heatmapMode, setHeatmapMode] = useState('normal');
   const pitchSectionRef = useRef(null);
+  const syncedHighlightRef = useRef(null);
   const timelineEvents = events ?? match?.matchTimeline ?? [];
   const isInteractivePitch = shouldUseInteractivePitch(match, mode);
   const lineup = match?.lineup;
@@ -273,7 +274,19 @@ export default function MatchLineupSection({
   }, [highlightKey, isInteractivePitch]);
 
   useEffect(() => {
-    if (!highlightKey || !isInteractivePitch) return;
+    if (!highlightKey || !isInteractivePitch) {
+      if (!highlightKey) {
+        if (syncedHighlightRef.current) {
+          syncedHighlightRef.current = null;
+          setHeatmapMode('normal');
+        } else {
+          syncedHighlightRef.current = null;
+        }
+      }
+      return;
+    }
+    if (syncedHighlightRef.current === highlightKey) return;
+    syncedHighlightRef.current = highlightKey;
 
     const event = timelineEvents.find(
       (item) => pitchHighlightKeyForTimeline(item) === highlightKey
@@ -283,6 +296,14 @@ export default function MatchLineupSection({
     const suggestedMode = HEATMAP_MODE_BY_EVENT_TYPE[event.type];
     if (suggestedMode) setHeatmapMode(suggestedMode);
   }, [highlightKey, isInteractivePitch, timelineEvents]);
+
+  function handleHeatmapModeChange(nextMode) {
+    setHeatmapMode(nextMode);
+    if (nextMode === 'normal') {
+      syncedHighlightRef.current = null;
+      onHighlightKeyChange?.(null);
+    }
+  }
 
   if (!shouldShowMatchLineup(match)) {
     return (
@@ -398,7 +419,7 @@ export default function MatchLineupSection({
                   ? 'border-emerald-600 bg-emerald-600 text-white'
                   : 'border-border bg-background text-muted-foreground hover:bg-muted/50'
               )}
-              onClick={() => setHeatmapMode(option.value)}
+              onClick={() => handleHeatmapModeChange(option.value)}
             >
               {option.label}
             </button>
