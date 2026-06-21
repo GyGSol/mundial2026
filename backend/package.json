@@ -24,6 +24,7 @@
     "reset-db": "node src/scripts/resetDatabase.js",
     "mark-ai-user": "node src/scripts/markAiUser.js",
     "ai:run-official": "node src/scripts/runOfficialAiForMatch.js",
+    "ai:backfill-missing": "node src/scripts/backfillMissingAiPredictions.js",
     "ai:evaluate": "node src/scripts/evaluateAiPredictions.js",
     "ai:backfill-calibration-hints": "node src/scripts/backfillPostMatchCalibrationHints.js",
     "oracle:export": "node src/scripts/exportTrainingBuffer.js",

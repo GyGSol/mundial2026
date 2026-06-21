@@ -428,7 +428,7 @@ export default function AdminAiCompetitorPage() {
 
   async function runOfficialAi(row, event) {
     event?.stopPropagation();
-    if (!row.canSimulate) return;
+    if (!row.canRunOfficial) return;
 
     setRunOfficialBusyId(row.matchId);
     setMessage('');
@@ -772,27 +772,27 @@ export default function AdminAiCompetitorPage() {
                             >
                               {row.predictionState === 'faltante' ? 'Cargar' : 'Editar'}
                             </Button>
+                            {row.canRunOfficial ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={adminBtnOutline}
+                                disabled={runOfficialBusyId === row.matchId}
+                                onClick={(e) => runOfficialAi(row, e)}
+                              >
+                                {runOfficialBusyId === row.matchId ? '…' : 'IA oficial'}
+                              </Button>
+                            ) : null}
                             {row.canSimulate ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className={adminBtnOutline}
-                                  disabled={runOfficialBusyId === row.matchId}
-                                  onClick={(e) => runOfficialAi(row, e)}
-                                >
-                                  {runOfficialBusyId === row.matchId ? '…' : 'IA oficial'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className={adminBtnOutline}
-                                  disabled={simulateBusyId === row.matchId}
-                                  onClick={(e) => simulateMatch(row, e)}
-                                >
-                                  {simulateBusyId === row.matchId ? '…' : 'Simular'}
-                                </Button>
-                              </>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={adminBtnOutline}
+                                disabled={simulateBusyId === row.matchId}
+                                onClick={(e) => simulateMatch(row, e)}
+                              >
+                                {simulateBusyId === row.matchId ? '…' : 'Simular'}
+                              </Button>
                             ) : null}
                           </div>
                         </TableCell>
@@ -897,7 +897,7 @@ export default function AdminAiCompetitorPage() {
                     Usar resultado real ({selectedRow.match.homeScore}-{selectedRow.match.awayScore})
                   </Button>
                 ) : null}
-                {selectedRow?.canSimulate ? (
+                {selectedRow?.canRunOfficial ? (
                   <Button
                     type="button"
                     size="sm"

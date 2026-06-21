@@ -26,7 +26,8 @@ async function main() {
   }
 
   console.log(`Ejecutando IA oficial: match ${match.externalId} (${match.homeTeamId} vs ${match.awayTeamId})`);
-  const result = await runOfficialAiCompetitorPrediction(match._id);
+  const retroactive = process.argv.includes('--retroactive') || match.status === 'finished';
+  const result = await runOfficialAiCompetitorPrediction(match._id, { retroactive });
   console.log(JSON.stringify(result, null, 2));
   await mongoose.disconnect();
 }
