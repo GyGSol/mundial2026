@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { namesLikelyMatch } from './substitutionPhotos.js';
 import {
+  applyExpulsionsToLineup,
+  applyLiveLineupState,
   applyLiveSubstitutions,
   applySubstitutionsToLineup,
   buildPlayerEventSummary,
+  extractExpulsionsFromTimeline,
   matchPlayerToTimeline,
   playerKeyFromLineupPlayer,
 } from './lineupLiveState.js';
@@ -196,5 +199,87 @@ describe('lineupLiveState', () => {
     expect(uniqueGrids.size).toBe(11);
     expect(next.away.players.find((p) => p.name === 'Juninho Bacuna')).toBeUndefined();
     expect(next.away.players.find((p) => p.name === 'Leandro Bacuna')).toBeDefined();
+  });
+
+  it('extractExpulsionsFromTimeline deduplica rojas del mismo jugador', () => {
+    const timeline = [
+      { type: 'red_card', side: 'home', minute: 55, player: 'De Bruyne', playerShirtNumber: 7 },
+      { type: 'red_card', side: 'home', minute: 55, player: 'De Bruyne', playerShirtNumber: 7 },
+      { type: 'red_card', side: 'away', minute: 80, player: 'Taremi', playerShirtNumber: 9 },
+    ];
+    expect(extractExpulsionsFromTimeline(timeline, 'home')).toHaveLength(1);
+    expect(extractExpulsionsFromTimeline(timeline, 'away')).toHaveLength(1);
+  });
+
+  it('applyExpulsionsToLineup saca expulsado de la cancha y lo lista en expelledPlayers', () => {
+    const side = {
+      formation: '4-2-3-1',
+      players: Array.from({ length: 11 }, (_, index) => ({
+        playerId: `p${index}`,
+        name: index === 5 ? 'Kevin De Bruyne' : `Player ${index}`,
+        shirtNumber: index === 5 ? 7 : index === 0 ? 1 : index + 10,
+        gridX: 20 + index * 6,
+        gridY: 20 + (index % 3) * 25,
+        position: index === 0 ? 'GK' : index < 5 ? 'DEF' : index < 8 ? 'MID' : 'FWD',
+      })),
+    };
+
+    const timeline = [
+      { type: 'red_card', side: 'home', minute: 62, player: 'De Bruyne', playerShirtNumber: 7 },
+    ];
+
+    const next = applyExpulsionsToLineup(side, timeline, 'home');
+
+    expect(next.players).toHaveLength(10);
+    expect(next.players.find((p) => p.shirtNumber === 7)).toBeUndefined();
+    expect(next.expelledPlayers).toHaveLength(1);
+    expect(next.expelledPlayers[0]).toMatchObject({
+      name: 'Kevin De Bruyne',
+      shirtNumber: 7,
+      expelled: true,
+      expelledMinute: 62,
+    });
+    const uniqueGrids = new Set(next.players.map((p) => `${p.gridX},${p.gridY}`));
+    expect(uniqueGrids.size).toBe(10);
+  });
+
+  it('applyLiveLineupState soporta dos expulsiones en el mismo equipo', () => {
+    const lineup = {
+      home: {
+        formation: '4-3-3',
+        players: Array.from({ length: 11 }, (_, index) => ({
+          playerId: `h${index}`,
+          name: `Home ${index}`,
+          shirtNumber: index + 1,
+          gridX: 20 + index * 6,
+          gridY: 15 + (index % 4) * 20,
+          position: index === 0 ? 'GK' : index < 5 ? 'DEF' : index < 8 ? 'MID' : 'FWD',
+        })),
+      },
+      away: {
+        formation: '4-3-3',
+        players: Array.from({ length: 11 }, (_, index) => ({
+          playerId: `a${index}`,
+          name: `Away ${index}`,
+          shirtNumber: index + 1,
+          gridX: 20 + index * 6,
+          gridY: 15 + (index % 4) * 20,
+          position: index === 0 ? 'GK' : index < 5 ? 'DEF' : index < 8 ? 'MID' : 'FWD',
+        })),
+      },
+    };
+
+    const timeline = [
+      { type: 'red_card', side: 'home', minute: 40, player: 'Home 3', playerShirtNumber: 3 },
+      { type: 'red_card', side: 'home', minute: 78, player: 'Home 8', playerShirtNumber: 8 },
+      { type: 'red_card', side: 'away', minute: 90, player: 'Away 11', playerShirtNumber: 11 },
+    ];
+
+    const next = applyLiveLineupState(lineup, [], [], timeline);
+
+    expect(next.home.players).toHaveLength(9);
+    expect(next.home.expelledPlayers).toHaveLength(2);
+    expect(next.away.players).toHaveLength(10);
+    expect(next.away.expelledPlayers).toHaveLength(1);
   });
 });
