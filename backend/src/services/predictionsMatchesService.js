@@ -1,6 +1,6 @@
 import { Match } from '../models/Match.js';
 import {
-  enrichMatchesForPredictions,
+  enrichMatchesForPredictionsList,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
 import { sortMatchesBySchedule } from './matchSortService.js';
@@ -41,14 +41,17 @@ export async function listPredictionsMatches({ status, group }, userId) {
   const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
 
   const barMatches = [...activeLiveRaw, ...recentFeaturedRaw];
+  const liveBarMatchIds = new Set(barMatches.map((m) => m._id.toString()));
   const uniqueByMongoId = new Map();
   for (const match of [...matches, ...barMatches]) {
     uniqueByMongoId.set(match._id.toString(), match);
   }
   const uniqueMatches = [...uniqueByMongoId.values()];
 
-  await prepareFifaShirtMapsForMatches(uniqueMatches);
-  const enrichedAll = await enrichMatchesForPredictions(uniqueMatches, userId);
+  await prepareFifaShirtMapsForMatches(barMatches);
+  const enrichedAll = await enrichMatchesForPredictionsList(uniqueMatches, userId, {
+    liveBarMatchIds,
+  });
   const enrichedById = new Map(enrichedAll.map((m) => [m.id, m]));
 
   const enriched = matches

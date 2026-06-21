@@ -1,32 +1,25 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { Player } from '../models/Player.js';
 import { getPlayerSyncMeta } from '../services/playerSyncService.js';
 import { getPlayerWikiSyncMeta } from '../services/playerWikiService.js';
 import {
   askPlayerIntelFollowUp,
+  getPlayerByExternalIdWithIntel,
+  getPlayerByIdWithIntel,
   listPlayersWithIntel,
   refreshPlayerIntel,
   refreshTeamPlayerIntel,
 } from '../services/aiPlayerIntelService.js';
 import { hasAiProvider } from '../services/aiPredictionService.js';
-import { getPlayerById } from '../services/playerService.js';
 import { buildPlayerTournamentActivity } from '../services/playerTournamentActivityService.js';
 
 const router = Router();
 
 async function loadPlayerDetail(id) {
-  const player = await getPlayerById(id, { skipExternalMatches: true });
+  const player = await getPlayerByIdWithIntel(id);
   if (!player) return null;
 
-  const tournament = await buildPlayerTournamentActivity({
-    mongoId: player.id,
-    externalId: player.externalId,
-    fullName: player.fullName,
-    fifaCode: player.fifaCode,
-  });
-
-  return { player, tournament };
+  return { player, aiAvailable: hasAiProvider() };
 }
 
 router.get('/', async (req, res, next) => {
@@ -99,12 +92,11 @@ router.get('/tournament-activity', async (req, res, next) => {
 
 router.get('/by-external/:externalId', async (req, res, next) => {
   try {
-    const dbPlayer = await Player.findOne({ externalId: String(req.params.externalId).trim() }).lean();
-    if (!dbPlayer) {
+    const player = await getPlayerByExternalIdWithIntel(req.params.externalId);
+    if (!player) {
       return res.status(404).json({ error: 'Jugador no encontrado' });
     }
-    const detail = await loadPlayerDetail(dbPlayer._id.toString());
-    res.json(detail);
+    res.json({ player, aiAvailable: hasAiProvider() });
   } catch (err) {
     next(err);
   }

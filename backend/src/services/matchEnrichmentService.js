@@ -279,6 +279,61 @@ export async function enrichMatchesForPredictions(matches, userId) {
   });
 }
 
+const PREDICTIONS_LIST_LIGHT_OPTS = {
+  includePlayers: false,
+  includeKnockoutContext: true,
+  ensureUserDefaults: false,
+  includeWeather: false,
+  includeLiveFields: false,
+};
+
+const PREDICTIONS_LIST_LIVE_OPTS = {
+  ...PREDICTIONS_LIST_LIGHT_OPTS,
+  includeLiveFields: true,
+  includeTimelineTournamentGoals: true,
+};
+
+/**
+ * /predicciones: knockout + predicción en toda la lista; timeline/roster solo en
+ * partidos en vivo o destacados en la barra (evita ~1s de roster en 100+ partidos).
+ *
+ * @param {import('mongoose').LeanDocument[]} matches
+ * @param {import('mongoose').Types.ObjectId | undefined} userId
+ * @param {{ liveBarMatchIds?: Set<string> | string[] }} [options]
+ */
+export async function enrichMatchesForPredictionsList(
+  matches,
+  userId,
+  { liveBarMatchIds = new Set() } = {}
+) {
+  const liveBarIdSet =
+    liveBarMatchIds instanceof Set ? liveBarMatchIds : new Set(liveBarMatchIds);
+  const needsLiveEnrichment = (match) =>
+    match.status === 'live' || liveBarIdSet.has(match._id.toString());
+
+  const lightBatch = [];
+  const liveBatch = [];
+  for (const match of matches) {
+    (needsLiveEnrichment(match) ? liveBatch : lightBatch).push(match);
+  }
+
+  const [lightEnriched, liveEnriched] = await Promise.all([
+    lightBatch.length
+      ? enrichMatches(lightBatch, userId, PREDICTIONS_LIST_LIGHT_OPTS)
+      : [],
+    liveBatch.length
+      ? enrichMatches(liveBatch, userId, PREDICTIONS_LIST_LIVE_OPTS)
+      : [],
+  ]);
+
+  const enrichedById = new Map(
+    [...lightEnriched, ...liveEnriched].map((match) => [match.id, match])
+  );
+  return matches
+    .map((match) => enrichedById.get(match._id.toString()))
+    .filter(Boolean);
+}
+
 export async function prepareFifaShirtMapsForMatches(matches) {
   const now = Date.now();
   const needsShirts = matches.filter((match) => {
