@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
@@ -6,9 +6,35 @@ import { isSevereError } from '../lib/apiError.js';
 import { joinGroupAfterAuth } from '../lib/joinGroupAfterAuth.js';
 import { buildAuthPathWithJoin } from '../lib/inviteLink.js';
 import InfoPanel, { InfoList } from '../components/InfoPanel.jsx';
+import { healthApi } from '../api/client.js';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+
+function LocalDevDbHint() {
+  const [hint, setHint] = useState('');
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    healthApi
+      .get()
+      .then((health) => {
+        if (health?.databaseName === 'mundial2026_local') return;
+        setHint(
+          `El backend usa la base "${health?.databaseName ?? 'desconocida'}". Para login con usuarios de prod local, ejecutá npm run dev:local-qa y verificá /api/health → mundial2026_local.`
+        );
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!hint) return null;
+
+  return (
+    <p className="rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-left text-xs text-amber-950">
+      {hint}
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const { login, refreshUser } = useAuth();
@@ -86,6 +112,7 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <LocalDevDbHint />
               <Input
                 type="email"
                 placeholder="Email"

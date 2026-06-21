@@ -1,4 +1,12 @@
-import { normalizePlayerNameForMatch } from '@/lib/matchTimelineDisplay.js';
+import { normalizePlayerNameForMatch, timelineEventIdentity } from '@/lib/matchTimelineDisplay.js';
+import {
+  assignPlayersToFormation,
+  resolveFormation,
+  resolvePlayerPool,
+} from '@/lib/formationLayout.js';
+import { namesLikelyMatch } from '@/lib/substitutionPhotos.js';
+
+const MAX_XI = 11;
 
 function playerKeyFromParts({ mongoId, externalId, idPlayer, shirtNumber, name, side }) {
   if (mongoId) return `mongo:${mongoId}`;
@@ -70,6 +78,21 @@ export function matchPlayerToTimeline(player, event, side) {
   return keys.includes(playerKey);
 }
 
+/** Resalta jugador en Normal cuando la clave viene del timeline (evento o jugador). */
+export function playerMatchesPitchHighlight(player, side, highlightKey, timeline = []) {
+  if (!highlightKey) return false;
+  const playerKey = playerKeyFromLineupPlayer(player, side);
+  if (playerKey && playerKey === highlightKey) return true;
+
+  for (const event of timeline) {
+    if (event?.side !== side) continue;
+    if (timelineEventIdentity(event) !== highlightKey) continue;
+    return matchPlayerToTimeline(player, event, side);
+  }
+
+  return false;
+}
+
 /** Resumen de eventos por jugador para badges en la cancha. */
 export function buildPlayerEventSummary(timeline = [], side) {
   const summary = new Map();
@@ -128,21 +151,125 @@ function findPlayerIndex(players, subPlayer, side) {
     name: subPlayer?.name ?? subPlayer?.player,
     side,
   });
-  if (!targetKey) return -1;
+  if (targetKey) {
+    const byKey = players.findIndex((player) => playerKeyFromLineupPlayer(player, side) === targetKey);
+    if (byKey >= 0) return byKey;
+  }
 
-  return players.findIndex((player) => playerKeyFromLineupPlayer(player, side) === targetKey);
+  const name = subPlayer?.name ?? subPlayer?.player;
+  const shirtNumber = subPlayer?.shirtNumber;
+
+  if (name) {
+    const byName = players.findIndex((player) => namesLikelyMatch(player.name, name));
+    if (byName >= 0) return byName;
+  }
+
+  if (shirtNumber != null) {
+    return players.findIndex((player) => Number(player.shirtNumber) === Number(shirtNumber));
+  }
+
+  return -1;
+}
+
+function dedupeSubstitutions(substitutions = []) {
+  const seen = new Set();
+  return substitutions.filter((sub) => {
+    const key = [
+      sub.minute ?? '',
+      normalizePlayerNameForMatch(sub.playerOut),
+      normalizePlayerNameForMatch(sub.playerIn),
+    ].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function playerWasSubbedOut(player, substitutions) {
+  if (player?.subbedIn) return false;
+  return substitutions.some((sub) => {
+    if (
+      sub.playerOutShirtNumber != null &&
+      player.shirtNumber != null &&
+      Number(sub.playerOutShirtNumber) !== Number(player.shirtNumber)
+    ) {
+      return false;
+    }
+    return namesLikelyMatch(player.name, sub.playerOut);
+  });
+}
+
+function dedupeLineupPlayers(players, side) {
+  const byKey = new Map();
+
+  for (const player of players) {
+    const key =
+      playerKeyFromLineupPlayer(player, side) ??
+      `fallback:${side}:${player.shirtNumber ?? ''}:${normalizePlayerNameForMatch(player.name)}`;
+
+    const prev = byKey.get(key);
+    if (!prev || (player.subbedIn && !prev.subbedIn)) {
+      byKey.set(key, player);
+    }
+  }
+
+  return [...byKey.values()];
+}
+
+function finalizeLiveXi(players, side, substitutions) {
+  const withoutSubbedOut = players.filter((player) => !playerWasSubbedOut(player, substitutions));
+  const unique = dedupeLineupPlayers(withoutSubbedOut, side);
+  return unique.slice(0, MAX_XI);
+}
+
+function mergePlayerMeta(reassigned, original, side) {
+  const byKey = new Map(
+    original.map((player) => [playerKeyFromLineupPlayer(player, side), player])
+  );
+
+  return reassigned.map((player) => {
+    const key = playerKeyFromLineupPlayer(player, side);
+    const prev = key ? byKey.get(key) : null;
+    if (!prev) return player;
+    return {
+      ...player,
+      subbedIn: prev.subbedIn ?? player.subbedIn,
+      subMinute: prev.subMinute ?? player.subMinute,
+      photoUrl: prev.photoUrl ?? player.photoUrl,
+      mongoId: prev.mongoId ?? player.mongoId,
+      externalId: prev.externalId ?? player.externalId,
+      idPlayer: prev.idPlayer ?? prev.fifaPlayerId ?? player.idPlayer,
+    };
+  });
+}
+
+function shouldRecalculateFormation(outPlayer, incomingPosition, incomingCoords) {
+  if (!outPlayer) return true;
+
+  const outPool = resolvePlayerPool(outPlayer);
+  const inPool = resolvePlayerPool({
+    position: incomingPosition,
+    positionX: incomingCoords?.x,
+    positionY: incomingCoords?.y,
+  });
+
+  return outPool !== inPool;
 }
 
 /**
- * Aplica sustituciones al XI mostrado: sale el titular, entra el suplente en su posición táctica.
+ * Aplica sustituciones al XI mostrado. Si el suplente juega otra línea táctica,
+ * recalcula la formación en cancha; si no, hereda el slot del titular que sale.
  */
 export function applySubstitutionsToLineup(lineupSide, substitutionsForSide = [], side = 'home') {
-  const players = [...(lineupSide?.players ?? [])];
-  if (!players.length || !substitutionsForSide.length) {
+  let players = [...(lineupSide?.players ?? [])];
+  const substitutions = dedupeSubstitutions(substitutionsForSide);
+  if (!players.length || !substitutions.length) {
     return { ...lineupSide, players };
   }
 
-  for (const sub of substitutionsForSide) {
+  let needsFormationRecalc = false;
+
+  for (const sub of substitutions) {
     const outIndex = findPlayerIndex(
       players,
       {
@@ -156,26 +283,50 @@ export function applySubstitutionsToLineup(lineupSide, substitutionsForSide = []
     );
 
     const outPlayer = outIndex >= 0 ? players[outIndex] : null;
+    const incomingPosition = sub.playerInPosition ?? outPlayer?.position ?? 'MID';
+
     const incoming = {
       playerId: sub.playerInMongoId ?? sub.playerInExternalId ?? `sub-in-${sub.minute}`,
       mongoId: sub.playerInMongoId ?? null,
       externalId: sub.playerInExternalId ?? null,
       idPlayer: sub.idPlayerIn ?? null,
+      fifaPlayerId: sub.idPlayerIn ?? null,
       name: sub.playerIn ?? sub.player ?? 'Suplente',
       shirtNumber: sub.playerInShirtNumber ?? null,
       photoUrl: sub.playerInPhotoUrl ?? null,
-      position: sub.playerInPosition ?? outPlayer?.position ?? 'MID',
+      position: incomingPosition,
+      positionDetail: sub.playerInPosition ?? incomingPosition,
+      positionX: sub.playerInPositionX ?? null,
+      positionY: sub.playerInPositionY ?? null,
       gridX: outPlayer?.gridX ?? 50,
       gridY: outPlayer?.gridY ?? 50,
       subbedIn: true,
       subMinute: sub.minute ?? null,
     };
 
+    const recalc = shouldRecalculateFormation(outPlayer, incomingPosition, {
+      x: sub.playerInPositionX,
+      y: sub.playerInPositionY,
+    });
+    if (recalc) needsFormationRecalc = true;
+
     if (outIndex >= 0) {
       players.splice(outIndex, 1, incoming);
     } else {
       players.push(incoming);
     }
+  }
+
+  players = finalizeLiveXi(players, side, substitutions);
+
+  if (needsFormationRecalc) {
+    const tagged = players.map((player) => ({ ...player, side }));
+    const formation = resolveFormation(tagged, lineupSide?.formation);
+    const reassigned = assignPlayersToFormation(tagged, formation, {
+      includeLeftovers: false,
+    });
+    players = finalizeLiveXi(mergePlayerMeta(reassigned, tagged, side), side, substitutions);
+    return { ...lineupSide, formation, players };
   }
 
   return { ...lineupSide, players };

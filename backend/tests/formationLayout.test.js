@@ -4,6 +4,10 @@ import {
   parseApiFootballGrid,
   assignFormationGrid,
   assignPlayersToFormation,
+  assignPlayersWithFormationLayout,
+  inferFormationFromGridRows,
+  inferFormationFromPositionPools,
+  resolveFormation,
   mergePlayerGrids,
   lateralSortKey,
   mapFootballDataPositionText,
@@ -13,6 +17,71 @@ describe('formationLayout', () => {
   it('parseFormationString agrega portero', () => {
     expect(parseFormationString('4-3-3')).toEqual([1, 4, 3, 3]);
     expect(parseFormationString('3-4-1-2')).toEqual([1, 3, 4, 1, 2]);
+    expect(parseFormationString('3-1-4-2')).toEqual([1, 3, 1, 4, 2]);
+  });
+
+  it('inferFormationFromGridRows deduce 3-1-4-2 y 5-4-1', () => {
+    const ecuador = [
+      { gridRaw: '1:1' },
+      { gridRaw: '2:1' },
+      { gridRaw: '2:2' },
+      { gridRaw: '2:3' },
+      { gridRaw: '3:2' },
+      { gridRaw: '4:1' },
+      { gridRaw: '4:2' },
+      { gridRaw: '4:3' },
+      { gridRaw: '4:4' },
+      { gridRaw: '5:1' },
+      { gridRaw: '5:2' },
+    ];
+    const curacao = [
+      { gridRaw: '1:1' },
+      ...Array.from({ length: 5 }, (_, i) => ({ gridRaw: `2:${i + 1}` })),
+      ...Array.from({ length: 4 }, (_, i) => ({ gridRaw: `3:${i + 1}` })),
+      { gridRaw: '4:2' },
+    ];
+
+    expect(inferFormationFromGridRows(ecuador)).toBe('3-1-4-2');
+    expect(inferFormationFromGridRows(curacao)).toBe('5-4-1');
+  });
+
+  it('resolveFormation prefiere grid sobre 4-3-3 por defecto', () => {
+    const players = [
+      { gridRaw: '1:1', position: 'GK' },
+      { gridRaw: '2:1', position: 'DEF' },
+      { gridRaw: '2:2', position: 'DEF' },
+      { gridRaw: '2:3', position: 'DEF' },
+      { gridRaw: '3:2', position: 'MID' },
+      { gridRaw: '4:1', position: 'MID' },
+      { gridRaw: '4:2', position: 'MID' },
+      { gridRaw: '4:3', position: 'MID' },
+      { gridRaw: '4:4', position: 'MID' },
+      { gridRaw: '5:1', position: 'FWD' },
+      { gridRaw: '5:2', position: 'FWD' },
+    ];
+
+    expect(resolveFormation(players, '4-3-3')).toBe('3-1-4-2');
+    expect(resolveFormation(players, '3-1-4-2')).toBe('3-1-4-2');
+  });
+
+  it('inferFormationFromPositionPools deduce 5-4-1', () => {
+    const players = [
+      { position: 'GK' },
+      ...Array.from({ length: 5 }, () => ({ position: 'DEF' })),
+      ...Array.from({ length: 4 }, () => ({ position: 'MID' })),
+      { position: 'FWD' },
+    ];
+    expect(inferFormationFromPositionPools(players)).toBe('5-4-1');
+  });
+
+  it('assignPlayersWithFormationLayout usa profundidad del grid API', () => {
+    const players = [
+      { name: 'GK', position: 'GK', gridRaw: '1:1' },
+      { name: 'ST', position: 'FWD', gridRaw: '5:2' },
+    ];
+    const placed = assignPlayersWithFormationLayout(players, '3-1-4-2');
+    expect(placed.find((p) => p.name === 'GK').gridX).toBe(6);
+    expect(placed.find((p) => p.name === 'ST').gridX).toBeGreaterThan(75);
   });
 
   it('parseApiFootballGrid normaliza row:col según formación', () => {
@@ -80,16 +149,17 @@ describe('formationLayout', () => {
     expect(mapFootballDataPositionText('Right Wing')).toBe('FWD');
   });
 
-  it('mergePlayerGrids ignora gridRaw para profundidad y usa formación', () => {
+  it('mergePlayerGrids usa grid API para profundidad y lateral', () => {
     const players = [
       { name: 'A', position: 'GK', gridRaw: '1:1' },
       { name: 'B', position: 'DEF', gridRaw: '2:2' },
-      { name: 'C', position: 'FWD', gridRaw: '2:3' },
+      { name: 'C', position: 'FWD', gridRaw: '5:2' },
     ];
-    const merged = mergePlayerGrids(players, '4-3-3');
+    const merged = mergePlayerGrids(players, '3-1-4-2');
     expect(merged[0].gridX).toBe(6);
-    expect(merged[1].gridX).toBe(30);
-    expect(merged[2].gridX).toBe(85);
+    expect(merged[1].gridX).toBeGreaterThan(20);
+    expect(merged[1].gridX).toBeLessThan(40);
+    expect(merged[2].gridX).toBeGreaterThan(75);
     expect(merged[0].gridRaw).toBeUndefined();
   });
 

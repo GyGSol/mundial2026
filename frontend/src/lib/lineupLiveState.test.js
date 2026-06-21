@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { namesLikelyMatch } from './substitutionPhotos.js';
 import {
   applySubstitutionsToLineup,
   buildPlayerEventSummary,
@@ -86,5 +87,92 @@ describe('lineupLiveState', () => {
       gridX: 40,
       subbedIn: true,
     });
+  });
+
+  it('applySubstitutionsToLineup recalcula formación si entra otra línea táctica', () => {
+    const side = {
+      formation: '4-3-3',
+      players: [
+        {
+          playerId: 'gk',
+          name: 'Neuer',
+          shirtNumber: 1,
+          gridX: 6,
+          gridY: 50,
+          position: 'GK',
+        },
+        {
+          playerId: 'mid',
+          name: 'Kimmich',
+          shirtNumber: 6,
+          gridX: 58,
+          gridY: 50,
+          position: 'MID',
+        },
+        {
+          playerId: 'fwd',
+          name: 'Musiala',
+          shirtNumber: 10,
+          gridX: 85,
+          gridY: 50,
+          position: 'FWD',
+        },
+      ],
+    };
+
+    const next = applySubstitutionsToLineup(
+      side,
+      [
+        {
+          minute: 70,
+          playerOut: 'Kimmich',
+          playerOutShirtNumber: 6,
+          playerIn: 'Schlotterbeck',
+          playerInShirtNumber: 15,
+          playerInPosition: 'DEF',
+        },
+      ],
+      'home'
+    );
+
+    const defender = next.players.find((p) => p.name === 'Schlotterbeck');
+    expect(defender).toMatchObject({ subbedIn: true, position: 'DEF' });
+    expect(defender.gridX).toBeLessThan(40);
+    expect(next.players.find((p) => p.name === 'Kimmich')).toBeUndefined();
+  });
+
+  it('applySubstitutionsToLineup no duplica suplentes si el titular no matchea por id', () => {
+    const side = {
+      formation: '4-3-3',
+      players: [
+        { playerId: 'p1', name: 'Nicolas Pépé', shirtNumber: 19, gridX: 85, gridY: 50, position: 'FWD' },
+        { playerId: 'p2', name: 'Other', shirtNumber: 9, gridX: 85, gridY: 20, position: 'FWD' },
+      ],
+    };
+
+    const next = applySubstitutionsToLineup(
+      side,
+      [
+        {
+          minute: 85,
+          playerOut: 'Pepe',
+          playerOutShirtNumber: 19,
+          playerIn: 'New Striker',
+          playerInShirtNumber: 7,
+        },
+        {
+          minute: 85,
+          playerOut: 'Pepe',
+          playerOutShirtNumber: 19,
+          playerIn: 'New Striker',
+          playerInShirtNumber: 7,
+        },
+      ],
+      'away'
+    );
+
+    expect(next.players).toHaveLength(2);
+    expect(next.players.filter((p) => namesLikelyMatch(p.name, 'Pepe'))).toHaveLength(0);
+    expect(next.players.filter((p) => p.name === 'New Striker')).toHaveLength(1);
   });
 });

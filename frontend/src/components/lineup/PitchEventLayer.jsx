@@ -1,12 +1,17 @@
 import PlayerAvatar from '@/components/PlayerAvatar.jsx';
-import { eventHasPitchCoords, fifaEventToPitchPercent } from '@/lib/pitchCoordinates.js';
+import {
+  eventHasPitchCoords,
+  fifaEventToPitchPercent,
+  HEATMAP_EVENT_TYPES,
+} from '@/lib/pitchCoordinates.js';
+import { getTeamPitchPinColors } from '@/lib/teamPitchColors.js';
+import { playerKeyFromTimelineEvent } from '@/lib/lineupLiveState.js';
 import {
   filterTimelineForDisplay,
   formatPitchEventHoverDetail,
   formatTimelineMinute,
   timelineEventIdentity,
 } from '@/lib/matchTimelineDisplay.js';
-import { playerKeyFromTimelineEvent } from '@/lib/lineupLiveState.js';
 import {
   extractTimelinePlayerFields,
   getTimelineActionIcon,
@@ -27,22 +32,48 @@ function eventHighlightKey(event) {
   return playerKeyFromTimelineEvent(event) ?? timelineEventIdentity(event);
 }
 
-function pinDotClassName(event, highlighted) {
+/** Clave al elegir una fila del timeline (evento con coords → identidad única). */
+export function pitchHighlightKeyForTimeline(event) {
+  if (eventHasPitchCoords(event)) return timelineEventIdentity(event);
+  return playerKeyFromTimelineEvent(event) ?? timelineEventIdentity(event);
+}
+
+export function pinMatchesHighlight(event, highlightKey) {
+  if (!highlightKey) return false;
+  if (timelineEventIdentity(event) === highlightKey) return true;
+  return eventHighlightKey(event) === highlightKey;
+}
+
+function pinMatchesHeatmapMode(event, heatmapMode) {
+  if (!heatmapMode || heatmapMode === 'normal') return false;
+  const types = HEATMAP_EVENT_TYPES[heatmapMode];
+  return types?.has(event?.type) ?? false;
+}
+
+function pinDotClassName(event, highlighted, homeTeamCode, awayTeamCode) {
+  const side = event.side === 'away' ? 'away' : 'home';
+  const teamCode = side === 'home' ? homeTeamCode : awayTeamCode;
+  const jersey = getTeamPitchPinColors(teamCode, side);
+
   return cn(
     'block h-2 w-2 rounded-full ring-2 transition',
-    event.type === 'goal' && 'bg-emerald-400 ring-emerald-200',
-    event.type === 'yellow_card' && 'bg-yellow-400 ring-yellow-200',
-    event.type === 'red_card' && 'bg-red-500 ring-red-200',
-    event.type === 'shot_attempt' && 'bg-sky-300 ring-sky-100',
-    event.type === 'foul' && 'bg-orange-400 ring-orange-200',
-    event.type === 'substitution' && 'bg-violet-400 ring-violet-200',
+    jersey.dot,
+    jersey.ring,
+    event.type === 'goal' && 'h-2.5 w-2.5',
     highlighted && 'scale-150 ring-white'
   );
 }
 
-function buildPitchPins(events = []) {
+function buildPitchPins(events = [], { heatmapMode = 'normal', homeTeamCode, awayTeamCode } = {}) {
+  const isHeatmapView =
+    heatmapMode === 'shots' || heatmapMode === 'fouls' || heatmapMode === 'goals';
+
   return filterTimelineForDisplay(events)
-    .filter((event) => PIN_EVENT_TYPES.has(event.type) && eventHasPitchCoords(event))
+    .filter((event) => {
+      if (!PIN_EVENT_TYPES.has(event.type) || !eventHasPitchCoords(event)) return false;
+      if (isHeatmapView) return pinMatchesHeatmapMode(event, heatmapMode);
+      return false;
+    })
     .map((event) => ({
       event,
       key: timelineEventIdentity(event),
@@ -133,8 +164,15 @@ function PitchEventHoverCard({ event }) {
 }
 
 /** Puntos visuales debajo de los jugadores (sin interacción). */
-export function PitchEventPinVisuals({ events = [], highlightKey = null, className }) {
-  const pins = buildPitchPins(events);
+export function PitchEventPinVisuals({
+  events = [],
+  highlightKey = null,
+  heatmapMode = 'normal',
+  homeTeamCode,
+  awayTeamCode,
+  className,
+}) {
+  const pins = buildPitchPins(events, { heatmapMode, homeTeamCode, awayTeamCode });
   if (!pins.length) return null;
 
   return (
@@ -144,7 +182,12 @@ export function PitchEventPinVisuals({ events = [], highlightKey = null, classNa
           key={key}
           className={cn(
             'absolute -translate-x-1/2 -translate-y-1/2',
-            pinDotClassName(event, highlightKey && highlightKey === highlight)
+            pinDotClassName(
+              event,
+              pinMatchesHighlight(event, highlightKey),
+              homeTeamCode,
+              awayTeamCode
+            )
           )}
           style={style}
         />
@@ -157,10 +200,13 @@ export function PitchEventPinVisuals({ events = [], highlightKey = null, classNa
 export function PitchEventPinInteractions({
   events = [],
   highlightKey = null,
+  heatmapMode = 'normal',
+  homeTeamCode,
+  awayTeamCode,
   onEventSelect,
   className,
 }) {
-  const pins = buildPitchPins(events);
+  const pins = buildPitchPins(events, { heatmapMode, homeTeamCode, awayTeamCode });
   if (!pins.length) return null;
 
   return (
@@ -173,11 +219,16 @@ export function PitchEventPinInteractions({
         >
           <button
             type="button"
-            className="h-4 w-4 rounded-full bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            className={cn(
+              'h-6 w-6 rounded-full bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+              pinMatchesHighlight(event, highlightKey) && 'ring-2 ring-white/90 ring-offset-1 ring-offset-emerald-900'
+            )}
             aria-label={ariaLabel}
+            aria-pressed={pinMatchesHighlight(event, highlightKey)}
             onClick={(clickEvent) => {
               clickEvent.stopPropagation();
-              onEventSelect?.(highlight, event);
+              const nextKey = pitchHighlightKeyForTimeline(event);
+              onEventSelect?.(nextKey, event);
             }}
           />
           <div

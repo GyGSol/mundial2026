@@ -129,9 +129,15 @@ export async function getRankingDashboard(groupId, userId) {
 
   const liveRawById = new Map(activeLiveRaw.map((m) => [m._id.toString(), m]));
   const upcomingRawById = new Map(upcomingRaw.map((m) => [m._id.toString(), m]));
+  const recentRawById = new Map(recentFeaturedRaw.map((m) => [m._id.toString(), m]));
   await Promise.all([
     ...liveMatches.map(async (featured) => {
       const raw = liveRawById.get(featured.id);
+      if (!raw) return;
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+    }),
+    ...recentFinishedMatches.map(async (featured) => {
+      const raw = recentRawById.get(featured.id);
       if (!raw) return;
       featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
     }),

@@ -37,7 +37,11 @@ import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
 import { Button } from '@/components/ui/button.jsx';
 
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
-import MatchLineupSection, { shouldShowMatchLineup } from '@/components/lineup/MatchLineupSection.jsx';
+import MatchLineupSection, {
+  shouldShowMatchLineup,
+  shouldUseInteractivePitch,
+} from '@/components/lineup/MatchLineupSection.jsx';
+import { pitchHighlightKeyForTimeline } from '@/components/lineup/PitchEventLayer.jsx';
 import { playerKeyFromTimelineEvent } from '@/lib/lineupLiveState.js';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import { liveCardBadgeLabel, isLiveCardFinalizing } from '@/lib/matchStatus.js';
@@ -184,7 +188,11 @@ function TimelineActionCard({
 }) {
   const hasPlayers = (entry.players?.length ?? 0) > 0;
   const bodyAlign = align === 'home' ? 'left' : align === 'away' ? 'right' : 'center';
-  const isHighlighted = highlightKey && entry.highlightKey && highlightKey === entry.highlightKey;
+  const isHighlighted =
+    highlightKey &&
+    entry.highlightKey &&
+    (highlightKey === entry.highlightKey ||
+      (entry.playerHighlightKey && highlightKey === entry.playerHighlightKey));
 
   return (
     <div
@@ -196,14 +204,16 @@ function TimelineActionCard({
         isHighlighted && 'bg-emerald-100/80 ring-1 ring-emerald-400'
       )}
       data-highlight-key={entry.highlightKey ?? undefined}
+      data-player-key={entry.playerHighlightKey ?? undefined}
       onClick={() => {
-        if (entry.highlightKey) onHighlightSelect?.(entry.highlightKey);
+        if (!entry.highlightKey || !onHighlightSelect) return;
+        onHighlightSelect(isHighlighted ? null : entry.highlightKey);
       }}
       onKeyDown={(event) => {
         if (!entry.highlightKey || !onHighlightSelect) return;
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          onHighlightSelect(entry.highlightKey);
+          onHighlightSelect(isHighlighted ? null : entry.highlightKey);
         }
       }}
     >
@@ -693,7 +703,8 @@ function MatchTimeline({
             ...entry,
             key: timelineEventIdentity(event),
             sortKey: timelineSortKey(event),
-            highlightKey: playerKeyFromTimelineEvent(event),
+            highlightKey: pitchHighlightKeyForTimeline(event),
+            playerHighlightKey: playerKeyFromTimelineEvent(event),
           };
         })
         .filter(Boolean),
@@ -702,7 +713,9 @@ function MatchTimeline({
 
   useEffect(() => {
     if (!highlightKey || !scrollRef.current) return;
-    const node = scrollRef.current.querySelector(`[data-highlight-key="${CSS.escape(highlightKey)}"]`);
+    const node =
+      scrollRef.current.querySelector(`[data-highlight-key="${CSS.escape(highlightKey)}"]`) ??
+      scrollRef.current.querySelector(`[data-player-key="${CSS.escape(highlightKey)}"]`);
     node?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [highlightKey, displayEntries]);
 
@@ -958,6 +971,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
     match.weatherRisk?.riskLevel === 'high' ||
     match.liveScheduleContext?.integrityWarning;
   const hasTimeline = (match.matchTimeline?.length ?? 0) > 0;
+  const isInteractivePitch = shouldUseInteractivePitch(match, isLive ? 'live' : 'default');
 
   if (!hasTimeline) {
     return <ResultMatchCard match={match} variant={variant} />;
@@ -997,8 +1011,8 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             events={match.matchTimeline}
             homeTeamCode={homeCode}
             awayTeamCode={awayCode}
-            highlightKey={isLive ? highlightKey : null}
-            onHighlightKeyChange={isLive ? setHighlightKey : undefined}
+            highlightKey={isInteractivePitch ? highlightKey : null}
+            onHighlightKeyChange={isInteractivePitch ? setHighlightKey : undefined}
           />
         </div>
 

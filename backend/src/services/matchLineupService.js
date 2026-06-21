@@ -17,8 +17,13 @@ import {
   isConfirmedSnapshot,
   serializeFdLineupPlayer,
 } from './probableLineupService.js';
-import { assignPlayersToFormation, mapFootballDataPositionText } from '../utils/formationLayout.js';
+import {
+  assignPlayersWithFormationLayout,
+  mapFootballDataPositionText,
+  resolveFormation,
+} from '../utils/formationLayout.js';
 import { shirtForName } from '../utils/fifaSquadShirtMap.js';
+import { fetchFifaLiveMatchLineup } from './fifaLineupService.js';
 
 function extractShirtNumber(entity) {
   for (const value of [
@@ -34,11 +39,10 @@ function extractShirtNumber(entity) {
 }
 
 function parseFdTeamSide(teamSide) {
-  if (!teamSide) return { formation: DEFAULT_PROBABLE_FORMATION, players: [], coach: null };
-  const formation = teamSide.formation || DEFAULT_PROBABLE_FORMATION;
+  if (!teamSide) return { formation: null, players: [], coach: null };
   const players = (teamSide.lineup ?? []).map(serializeFdLineupPlayer);
   return {
-    formation,
+    formation: teamSide.formation || null,
     coach: teamSide.coach?.name ?? null,
     players,
   };
@@ -54,8 +58,8 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
   }
 
   const lineups = matchData?.lineups ?? [];
-  let home = { formation: DEFAULT_PROBABLE_FORMATION, players: [], coach: null };
-  let away = { formation: DEFAULT_PROBABLE_FORMATION, players: [], coach: null };
+  let home = { formation: null, players: [], coach: null };
+  let away = { formation: null, players: [], coach: null };
 
   for (const side of lineups) {
     const teamId = side.team?.id ?? side.teamId;
@@ -73,7 +77,7 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
       };
     });
     const parsed = {
-      formation: side.formation || DEFAULT_PROBABLE_FORMATION,
+      formation: side.formation || null,
       coach: side.coach?.name ?? null,
       players,
     };
@@ -98,11 +102,9 @@ function normalizePlayerForFormation(player) {
 function applyGridsToSide(side) {
   if (!side?.players?.length) return side;
   const players = side.players.map(normalizePlayerForFormation);
-  const withGrids = assignPlayersToFormation(
-    players,
-    side.formation || DEFAULT_PROBABLE_FORMATION
-  );
-  return { ...side, players: withGrids };
+  const formation = resolveFormation(players, side.formation);
+  const withGrids = assignPlayersWithFormationLayout(players, formation);
+  return { ...side, formation, players: withGrids };
 }
 
 export function buildLineupSnapshotFromSources({
@@ -456,6 +458,19 @@ async function refreshLineupSnapshotFromFootballData(match) {
   return snapshot;
 }
 
+async function fetchFifaLineupSnapshot(match) {
+  const sides = await fetchFifaLiveMatchLineup(match);
+  if (!sides?.home?.players?.length && !sides?.away?.players?.length) return null;
+
+  return buildLineupSnapshotFromSources({
+    fdSides: {
+      home: sides.home ?? { formation: null, players: [], coach: null },
+      away: sides.away ?? { formation: null, players: [], coach: null },
+    },
+    source: 'fifa-live',
+  });
+}
+
 export async function buildMatchLineupPayload(match, options = {}) {
   const { fetchExternalShirts = true } = options;
   if (!match?.homeTeamId || !match?.awayTeamId) {
@@ -504,6 +519,16 @@ export async function buildMatchLineupPayload(match, options = {}) {
 
     const payload = formatLineupPayload(snapshot);
     return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });
+  }
+
+  try {
+    const fifaSnapshot = await fetchFifaLineupSnapshot(match);
+    if (fifaSnapshot?.home?.players?.length || fifaSnapshot?.away?.players?.length) {
+      const payload = formatLineupPayload(fifaSnapshot);
+      return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });
+    }
+  } catch (err) {
+    console.warn(`FIFA lineup payload skip ${match.externalId}:`, err.message);
   }
 
   return buildProbableLineupPayload(match, { fetchExternalShirts });

@@ -98,6 +98,51 @@ describe('matchLineupService', () => {
     expect(snapshot.home.players[0].name).toBe('H1');
   });
 
+  it('buildLineupSnapshotFromSources infiere formación desde grid API', () => {
+    const gridPlayers = (formation, rows) =>
+      rows.flatMap(([row, count]) =>
+        Array.from({ length: count }, (_, i) => ({
+          name: `${formation}-R${row}-${i + 1}`,
+          shirtNumber: row * 10 + i,
+          position: row === 1 ? 'GK' : row >= 5 ? 'FWD' : 'MID',
+          gridRaw: `${row}:${i + 1}`,
+          isStarter: true,
+        }))
+      );
+
+    const fdSides = {
+      home: {
+        formation: '4-3-3',
+        players: gridPlayers('ECU', [
+          [1, 1],
+          [2, 3],
+          [3, 1],
+          [4, 4],
+          [5, 2],
+        ]),
+        coach: null,
+      },
+      away: {
+        formation: '4-3-3',
+        players: gridPlayers('CUW', [
+          [1, 1],
+          [2, 5],
+          [3, 4],
+          [4, 1],
+        ]),
+        coach: null,
+      },
+    };
+
+    const snapshot = buildLineupSnapshotFromSources({ fdSides, source: 'football-data' });
+    expect(snapshot.home.formation).toBe('3-1-4-2');
+    expect(snapshot.away.formation).toBe('5-4-1');
+    expect(snapshot.home.players[0].gridX).toBe(6);
+    expect(snapshot.home.players.find((p) => p.gridRaw === '5:2' || p.name.includes('R5-2'))?.gridX).toBeGreaterThan(
+      75
+    );
+  });
+
   it('buildLineupSnapshotFromSources merge API-Football grid', () => {
     const fdSides = {
       home: {

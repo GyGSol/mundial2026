@@ -228,3 +228,41 @@ export function getTeamPitchPalette(fifaCode, side = 'home') {
   if (code === 'FRG') return TEAM_PALETTES.GER ?? SIDE_FALLBACK[side];
   return TEAM_PALETTES[code] ?? SIDE_FALLBACK[side] ?? SIDE_FALLBACK.home;
 }
+
+/** Color de punto en cancha según camiseta (tiros, etc.). */
+const SIDE_PIN_FALLBACK = {
+  home: { dot: 'bg-sky-300', ring: 'ring-sky-100' },
+  away: { dot: 'bg-rose-300', ring: 'ring-rose-100' },
+};
+
+/** Color dominante de camiseta por selección (punto sólido en la cancha). */
+const TEAM_JERSEY_PIN = {
+  ARG: { dot: 'bg-sky-200', ring: 'ring-sky-100' },
+  AUS: { dot: 'bg-yellow-400', ring: 'ring-yellow-200' },
+  BRA: { dot: 'bg-yellow-400', ring: 'ring-yellow-200' },
+  CAN: { dot: 'bg-red-600', ring: 'ring-red-300' },
+  CIV: { dot: 'bg-orange-500', ring: 'ring-orange-200' },
+  COL: { dot: 'bg-yellow-400', ring: 'ring-yellow-200' },
+  CRO: { dot: 'bg-red-600', ring: 'ring-red-300' },
+  ECU: { dot: 'bg-yellow-400', ring: 'ring-yellow-200' },
+  ENG: { dot: 'bg-white', ring: 'ring-red-400' },
+  ESP: { dot: 'bg-red-600', ring: 'ring-red-300' },
+  FRA: { dot: 'bg-blue-600', ring: 'ring-blue-300' },
+  GER: { dot: 'bg-white', ring: 'ring-neutral-400' },
+  ITA: { dot: 'bg-blue-700', ring: 'ring-blue-300' },
+  JPN: { dot: 'bg-blue-800', ring: 'ring-blue-300' },
+  KOR: { dot: 'bg-red-600', ring: 'ring-red-300' },
+  MAR: { dot: 'bg-red-700', ring: 'ring-red-300' },
+  MEX: { dot: 'bg-green-600', ring: 'ring-green-300' },
+  NED: { dot: 'bg-orange-500', ring: 'ring-orange-200' },
+  POR: { dot: 'bg-red-600', ring: 'ring-red-300' },
+  SEN: { dot: 'bg-white', ring: 'ring-green-500' },
+  USA: { dot: 'bg-white', ring: 'ring-blue-600' },
+  URU: { dot: 'bg-sky-400', ring: 'ring-sky-200' },
+};
+
+export function getTeamPitchPinColors(fifaCode, side = 'home') {
+  const code = String(fifaCode ?? '').toUpperCase();
+  if (code === 'FRG') return TEAM_JERSEY_PIN.GER ?? SIDE_PIN_FALLBACK[side];
+  return TEAM_JERSEY_PIN[code] ?? SIDE_PIN_FALLBACK[side] ?? SIDE_PIN_FALLBACK.home;
+}

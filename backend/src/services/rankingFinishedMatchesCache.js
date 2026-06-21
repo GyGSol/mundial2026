@@ -3,6 +3,7 @@ import {
   enrichMatchesForRankingArchive,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
+import { buildMatchLineupPayload } from './matchLineupService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
 import { createInMemoryCache } from './inMemoryCache.js';
 
@@ -27,6 +28,14 @@ async function loadFinishedArchiveMatches() {
 
   await prepareFifaShirtMapsForMatches(finishedArchiveRaw);
   const enriched = await enrichMatchesForRankingArchive(finishedArchiveRaw, null);
+  const rawById = new Map(finishedArchiveRaw.map((m) => [m._id.toString(), m]));
+  await Promise.all(
+    enriched.map(async (featured) => {
+      const raw = rawById.get(featured.id);
+      if (!raw) return;
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+    })
+  );
   return attachStreamMetaToMatches(enriched);
 }
 

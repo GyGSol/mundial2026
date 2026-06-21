@@ -92,10 +92,10 @@ router.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email: email?.toLowerCase().trim() });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
 
     const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!valid) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
 
     const session = await createUserSession(user._id);
     await ensureDefaultPredictionsForUser(user._id);

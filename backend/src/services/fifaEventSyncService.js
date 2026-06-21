@@ -26,6 +26,8 @@ import {
 import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 import { wallClockAllowsMatchFinished } from './matchStatusRules.js';
 import { env } from '../config/env.js';
+import { buildFifaLineupSides } from './fifaLineupService.js';
+import { buildLineupSnapshotFromSources } from './matchLineupService.js';
 
 /** Máxima antigüedad de raw.fifaEvents.syncedAt antes de refrescar en el loop en vivo. */
 export const LIVE_FIFA_EVENTS_MAX_AGE_MS = env.liveFifaRefreshMs;
@@ -182,7 +184,36 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
     timeline = applyShirtNumbersToTimeline(timeline, shirtLookups);
   }
 
+  if (liveMatch) {
+    const sides = buildFifaLineupSides(liveMatch);
+    if (sides.home?.players?.length || sides.away?.players?.length) {
+      rawUpdate['raw.lineupSnapshot'] = buildLineupSnapshotFromSources({
+        fdSides: {
+          home: sides.home ?? { formation: null, players: [], coach: null },
+          away: sides.away ?? { formation: null, players: [], coach: null },
+        },
+        source: 'fifa-live',
+      });
+    }
+  }
+
   if (timeline.length === 0) {
+    if (rawUpdate['raw.lineupSnapshot']) {
+      rawUpdate['raw.fifaMeta'] = {
+        idMatch: String(fifaEntry.IdMatch),
+        idStage: String(fifaEntry.IdStage),
+        matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
+        homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
+        awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
+        ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId, shirtBySideName } : {}),
+        ...(Object.keys(shirtByPlayerId).length > 0
+          ? { shirtMapSyncedAt: new Date().toISOString() }
+          : {}),
+        syncedAt: new Date().toISOString(),
+      };
+      await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
+      return { events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [], updated: true };
+    }
     return { events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [], updated: false };
   }
 
