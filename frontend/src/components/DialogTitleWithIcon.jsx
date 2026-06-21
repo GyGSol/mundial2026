@@ -2,7 +2,7 @@ import { CardTitle } from '@/components/ui/card.jsx';
 import { cn } from '@/lib/utils';
 
 /**
- * Título de popup con icono cartoon a la izquierda.
+ * Título de popup con icono Fubol a la izquierda.
  */
 export default function DialogTitleWithIcon({
   icon: Icon,

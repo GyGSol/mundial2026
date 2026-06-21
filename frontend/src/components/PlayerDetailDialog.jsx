@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, RefreshCw, SendHorizontal, Sparkles } from 'lucide-react';
-import { PopupPlayerIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { playersApi } from '../api/client.js';
 import { getTeamFlag } from '../lib/teamMeta.js';
 import { isMongoPlayerId } from '../lib/playerPositionLabel.js';
@@ -318,7 +318,7 @@ export default function PlayerDetailDialog({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 text-center sm:text-left">
                 <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <PopupPlayerIcon className="size-5 shrink-0 text-muted-foreground" title="Ficha del crack" />
+                  <PopupFubolIcon className="size-5 shrink-0" title="Ficha del crack" />
                   <CardTitle
                     id="player-detail-title"
                     className="flex flex-wrap items-center justify-center gap-2 text-xl sm:justify-start sm:text-2xl"

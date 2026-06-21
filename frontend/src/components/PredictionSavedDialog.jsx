@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { CheckCircle2 } from 'lucide-react';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import TeamHeader from '@/components/TeamHeader.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card.jsx';
@@ -55,10 +55,9 @@ export default function PredictionSavedDialog({ match, homeGoals, awayGoals, ope
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
             <DialogTitleWithIcon
-              icon={CheckCircle2}
+              icon={PopupFubolIcon}
               id="prediction-saved-title"
               titleClassName="text-lg"
-              iconClassName="text-emerald-500"
               iconLabel="Predicción guardada"
             >
               Predicción guardada

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Loader2, MessageSquareOff, Sparkles, Trash2, X } from 'lucide-react';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
-import { PopupClearIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { Button } from '@/components/ui/button.jsx';
 import {
   Card,
@@ -49,7 +49,7 @@ export default function ClearConversationDialog({
         <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-2">
           <div className="space-y-1">
             <DialogTitleWithIcon
-              icon={PopupClearIcon}
+              icon={PopupFubolIcon}
               id="clear-conversation-title"
               titleClassName="text-base"
               iconLabel="El operador borró la pizarra"

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Sparkles } from 'lucide-react';
 import DialogTitleWithIcon from '@/components/DialogTitleWithIcon.jsx';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import FubolCoinIcon from './FubolCoinIcon.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import {
@@ -45,12 +45,9 @@ export default function AiPricingDialog({
     >
       <Card className="border-0 shadow-none">
         <CardHeader className="pb-2">
-          <DialogTitleWithIcon
-            id="ai-pricing-title"
-            icon={Sparkles}
-            iconClassName="text-violet-300"
-            title={isConfirm ? 'Confirmar consulta' : 'Consultas con IA'}
-          />
+          <DialogTitleWithIcon id="ai-pricing-title" icon={PopupFubolIcon}>
+            {isConfirm ? 'Confirmar consulta' : 'Consultas con IA'}
+          </DialogTitleWithIcon>
           <CardDescription>
             {isConfirm
               ? 'Esta pregunta usará tu pack de consultas o descontará Fubols de tu saldo.'

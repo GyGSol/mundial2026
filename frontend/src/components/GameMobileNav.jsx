@@ -15,7 +15,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { PopupMoreIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePendingApprovals } from '../context/PendingApprovalsContext.jsx';
 import { cn } from '@/lib/utils';
@@ -87,7 +87,7 @@ export default function GameMobileNav({ onEditPlayer }) {
           <div className="game-mobile-more__panel" role="dialog" aria-labelledby="game-mobile-more-title">
             <div className="game-mobile-more__header">
               <div className="game-mobile-more__title-row">
-                <PopupMoreIcon className="size-7" title="Más opciones del operador" />
+                <PopupFubolIcon className="size-7" title="Más opciones del operador" />
                 <p className="game-mobile-more__title" id="game-mobile-more-title">
                   Más
                 </p>

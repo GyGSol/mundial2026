@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Loader2 } from 'lucide-react';
-import { PopupStadiumIcon } from '@/components/icons/popup/index.js';
+import { PopupFubolIcon } from '@/components/icons/popup/index.js';
 import PlayerAvatar from '@/components/PlayerAvatar.jsx';
 import { teamsApi } from '@/api/client.js';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -65,7 +65,7 @@ export default function CoachDetailDialog({ coach, open, onOpenChange }) {
         <Card className="border-0 shadow-none">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-2.5">
-              <PopupStadiumIcon className="mt-0.5" title="Ficha del técnico" />
+              <PopupFubolIcon className="mt-0.5 size-8" title="Ficha del técnico" />
               <div className="flex min-w-0 flex-col gap-2">
                 <CardTitle id="coach-detail-title" className="text-xl">
                   {coach.name}
