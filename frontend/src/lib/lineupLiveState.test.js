@@ -8,6 +8,7 @@ import {
   buildPlayerEventSummary,
   extractExpulsionsFromTimeline,
   matchPlayerToTimeline,
+  normalizeLineupForPitch,
   playerKeyFromLineupPlayer,
 } from './lineupLiveState.js';
 import ecuadorCuracaoLive34 from './__fixtures__/ecuador-curacao-live34.json';
@@ -315,5 +316,38 @@ describe('lineupLiveState', () => {
     );
     expect(forwards).toHaveLength(2);
     expect(Math.abs(forwards[0].gridY - forwards[1].gridY)).toBeGreaterThanOrEqual(6);
+  });
+
+  it('normalizeLineupForPitch separa MD y MCO superpuestos en 4-2-3-1', () => {
+    const lineup = {
+      home: {
+        formation: '4-2-3-1',
+        players: [
+          { playerId: 'gk', name: 'Muslera', shirtNumber: 23, position: 'POR', gridX: 6, gridY: 50 },
+          { playerId: 'lb', name: 'Cáceres', shirtNumber: 3, position: 'LI', gridX: 26, gridY: 50 },
+          { playerId: 'cb1', name: 'Varela', shirtNumber: 13, position: 'DFC', gridX: 26, gridY: 50 },
+          { playerId: 'cb2', name: 'Gutiérrez', shirtNumber: 4, position: 'DFC', gridX: 26, gridY: 50 },
+          { playerId: 'rb', name: 'Olivera', shirtNumber: 16, position: 'LD', gridX: 26, gridY: 50 },
+          { playerId: 'dm1', name: 'Ugarte', shirtNumber: 5, position: 'MCD', gridX: 44, gridY: 50 },
+          { playerId: 'dm2', name: 'Bentancur', shirtNumber: 6, position: 'MC', gridX: 44, gridY: 50 },
+          { playerId: 'lm', name: 'Valverde', shirtNumber: 8, position: 'MI', gridX: 64, gridY: 50 },
+          { playerId: 'am', name: 'Sanabria', shirtNumber: 25, position: 'MCO', gridX: 64, gridY: 50 },
+          { playerId: 'rm', name: 'Araujo', shirtNumber: 20, position: 'MD', gridX: 64, gridY: 50 },
+          { playerId: 'st', name: 'Viñas', shirtNumber: 21, position: 'DC', gridX: 85, gridY: 50 },
+        ],
+      },
+      away: { formation: '4-3-3', players: [] },
+    };
+
+    const next = normalizeLineupForPitch(lineup);
+    const sanabria = next.home.players.find((p) => p.shirtNumber === 25);
+    const araujo = next.home.players.find((p) => p.shirtNumber === 20);
+    expect(sanabria).toBeTruthy();
+    expect(araujo).toBeTruthy();
+    expect(Math.abs(sanabria.gridY - araujo.gridY)).toBeGreaterThanOrEqual(16);
+
+    const defenders = next.home.players.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
+    expect(defenders).toHaveLength(4);
+    expect(new Set(defenders.map((p) => p.gridY)).size).toBe(4);
   });
 });

@@ -7,6 +7,7 @@ import {
   spreadDefCenterClusters,
   spreadForwardCenterClusters,
   spreadMidCenterClusters,
+  spreadMidfieldLineOverlaps,
   spreadOverlappingGridPositions,
 } from './formationLayout.js';
 
@@ -66,6 +67,18 @@ describe('formationLayout midfield and defense', () => {
     expect(isCenterBackLike({ position: 'LI' })).toBe(false);
   });
 
+  it('spreadMidfieldLineOverlaps separa MD y MCO superpuestos', () => {
+    const players = [
+      { name: 'Sanabria', shirtNumber: 25, position: 'MID', positionDetail: 'MCO', gridX: 64, gridY: 50 },
+      { name: 'Araujo', shirtNumber: 20, position: 'MID', positionDetail: 'MD', gridX: 64, gridY: 50 },
+    ];
+
+    const next = spreadMidfieldLineOverlaps(players);
+    expect(next.find((p) => p.shirtNumber === 25)?.gridY).toBe(58);
+    expect(next.find((p) => p.shirtNumber === 20)?.gridY).toBe(82);
+    expect(next[0].gridY).not.toBe(next[1].gridY);
+  });
+
   it('spreadMidCenterClusters separa dos mediocampistas centrales superpuestos', () => {
     const players = [
       { name: 'Sanabria', shirtNumber: 25, position: 'MCO', gridX: 64, gridY: 50 },
@@ -108,6 +121,12 @@ describe('formationLayout midfield and defense', () => {
     ];
 
     const laidOut = assignPlayersToFormation(players, '4-2-3-1', { includeLeftovers: true });
+    const sanabria = laidOut.find((p) => p.shirtNumber === 25);
+    const araujo = laidOut.find((p) => p.shirtNumber === 20);
+    expect(sanabria?.gridY).toBe(58);
+    expect(araujo?.gridY).toBe(82);
+    expect(Math.abs(sanabria.gridY - araujo.gridY)).toBeGreaterThanOrEqual(16);
+
     const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
     expect(defenders).toHaveLength(4);
     expect(new Set(defenders.map((p) => p.gridY)).size).toBe(4);

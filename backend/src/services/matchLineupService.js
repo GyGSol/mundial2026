@@ -18,7 +18,7 @@ import {
   serializeFdLineupPlayer,
 } from './probableLineupService.js';
 import {
-  assignPlayersWithFormationLayout,
+  assignPlayersToFormation,
   mapFootballDataPositionText,
   resolveFormation,
   spreadOverlappingGridPositions,
@@ -89,7 +89,7 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
   return { home, away };
 }
 
-export const LINEUP_LAYOUT_VERSION = 4;
+export const LINEUP_LAYOUT_VERSION = 6;
 
 function normalizePlayerForFormation(player) {
   const detail = player.positionDetail ?? player.position;
@@ -97,6 +97,7 @@ function normalizePlayerForFormation(player) {
   return {
     ...player,
     position: mapped,
+    positionDetail: player.positionDetail ?? player.position,
   };
 }
 
@@ -104,9 +105,8 @@ function applyGridsToSide(side) {
   if (!side?.players?.length) return side;
   const players = side.players.map(normalizePlayerForFormation);
   const formation = resolveFormation(players, side.formation);
-  const withGrids = spreadOverlappingGridPositions(
-    assignPlayersWithFormationLayout(players, formation)
-  );
+  const laidOut = assignPlayersToFormation(players, formation);
+  const withGrids = spreadOverlappingGridPositions(laidOut);
   return { ...side, formation, players: withGrids };
 }
 
