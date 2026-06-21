@@ -413,22 +413,9 @@ function relayoutRemainingPlayers(players, lineupSide, side) {
   const tagged = players.map((player) => ({ ...player, side }));
   const formation = resolveFormation(tagged, lineupSide?.formation);
   const laidOut = assignPlayersToFormation(tagged, formation, {
-    includeLeftovers: false,
+    includeLeftovers: true,
   });
-  const layoutByKey = new Map(
-    laidOut.map((player) => [playerKeyFromLineupPlayer(player, side), player])
-  );
-  const merged = spreadOverlappingGridPositions(
-    mergePlayerMeta(
-      tagged.map((player) => {
-        const key = playerKeyFromLineupPlayer(player, side);
-        const laid = key ? layoutByKey.get(key) : null;
-        return laid ?? player;
-      }),
-      tagged,
-      side
-    )
-  );
+  const merged = spreadOverlappingGridPositions(mergePlayerMeta(laidOut, tagged, side));
   return { formation, players: merged };
 }
 

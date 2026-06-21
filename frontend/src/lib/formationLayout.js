@@ -202,6 +202,44 @@ export function mapFootballDataPositionText(text) {
   return 'MID';
 }
 
+/** Delantero centro (DC/CF/ST) o perfil lateral centrado. */
+export function isCenterForwardLike(player) {
+  const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.trim().toUpperCase();
+  if (
+    text === 'DC' ||
+    text === 'CF' ||
+    text === 'ST' ||
+    text.includes('CENTRE-FORWARD') ||
+    text.includes('CENTER FORWARD')
+  ) {
+    return true;
+  }
+  if (mapFootballDataPositionText(text) !== 'FWD') return false;
+  const lateral = lateralSortKey(player);
+  return lateral >= 38 && lateral <= 62;
+}
+
+/** Dos DC juntos: cerca del centro pero sin superponer avatares. */
+function centerForwardLateralSlots(count) {
+  if (count <= 1) return [50];
+  if (count === 2) return [46, 54];
+  if (count === 3) return [40, 50, 60];
+  const step = Math.min(14, Math.max(8, 36 / (count - 1)));
+  const start = 50 - (step * (count - 1)) / 2;
+  return Array.from({ length: count }, (_, index) =>
+    Number(Math.min(92, Math.max(8, start + step * index)).toFixed(1))
+  );
+}
+
+function lateralPositionsForLine(players, count) {
+  if (count <= 0) return [];
+  const centerLike = players.filter(isCenterForwardLike);
+  if (centerLike.length === count) {
+    return centerForwardLateralSlots(count);
+  }
+  return Array.from({ length: count }, (_, slotIndex) => lateralForSlot(slotIndex, count));
+}
+
 /** Inferir línea táctica desde profundidad FIFA (0–100). */
 export function poolFromPitchDepth(x) {
   const depth = Number(x);
@@ -259,28 +297,37 @@ export function assignPlayersToFormation(
     });
 
     const depth = depthForRow(spec.rowIndex, rowCount);
+    const lateralSlots = lateralPositionsForLine(picked, picked.length);
     picked.forEach((player, slotIndex) => {
       const midBias = spec.pool === 'MID' ? midfieldDepthBias(player) : 0;
       const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = player;
       assigned.push({
         ...rest,
         gridX: Number(Math.min(88, Math.max(4, depth + midBias)).toFixed(1)),
-        gridY: Number(lateralForSlot(slotIndex, picked.length).toFixed(1)),
+        gridY: Number((lateralSlots[slotIndex] ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)),
       });
     });
   }
 
   if (includeLeftovers) {
     for (const pool of LINE_POSITIONS) {
-      for (const leftover of pools[pool]) {
-        const fallbackDepth = DEPTH_BY_POOL[pool] ?? DEPTH_BY_POOL.MID;
+      const leftovers = pools[pool];
+      if (!leftovers.length) continue;
+
+      const fallbackDepth = DEPTH_BY_POOL[pool] ?? DEPTH_BY_POOL.MID;
+      const lateralSlots = lateralPositionsForLine(leftovers, leftovers.length);
+      leftovers.forEach((leftover, slotIndex) => {
         const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = leftover;
         assigned.push({
           ...rest,
           gridX: fallbackDepth,
-          gridY: lateralSortKey(leftover),
+          gridY: Number(
+            (lateralSlots[slotIndex] ??
+              lateralSortKey(leftover) ??
+              lateralForSlot(slotIndex, leftovers.length)).toFixed(1)
+          ),
         });
-      }
+      });
     }
   }
 
@@ -288,12 +335,14 @@ export function assignPlayersToFormation(
 }
 
 /** Separa jugadores que comparten gridX/gridY para que no se oculten en la cancha. */
-export function spreadOverlappingGridPositions(players, { lateralStep = 10 } = {}) {
+export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {}) {
   if (!players?.length) return players ?? [];
 
   const entries = players.map((player, index) => ({
     player,
     index,
+    gridX: Number(player.gridX ?? 50),
+    gridY: Number(player.gridY ?? 50),
     gridKey: `${Number(player.gridX ?? 50).toFixed(1)}:${Number(player.gridY ?? 50).toFixed(1)}`,
   }));
 
@@ -315,16 +364,51 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 10 } = {
     );
     const baseY = Number(group[0].player.gridY ?? 50);
     const baseX = Number(group[0].player.gridX ?? 50);
+    const allCenterForwards = group.every(({ player }) => isCenterForwardLike(player));
+    const step =
+      allCenterForwards && group.length === 2
+        ? 8
+        : Math.max(lateralStep, 12 / Math.max(1, group.length - 1));
 
     group.forEach((entry, slot) => {
-      const offset = (slot - (group.length - 1) / 2) * lateralStep;
+      const offset = (slot - (group.length - 1) / 2) * step;
       adjusted[entry.index] = {
         ...entry.player,
         gridX: baseX,
-        gridY: Math.min(98, Math.max(2, baseY + offset)),
+        gridY: Number(Math.min(98, Math.max(2, baseY + offset)).toFixed(1)),
       };
     });
   }
 
-  return adjusted;
+  return spreadForwardCenterClusters(adjusted);
+}
+
+/** Dos+ DC en línea de ataque con casi la misma Y → abrir en el centro (46/54). */
+export function spreadForwardCenterClusters(players) {
+  if (!players?.length) return players ?? [];
+
+  const clusters = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'FWD') {
+        return false;
+      }
+      if (!isCenterForwardLike(player)) return false;
+      return Number(player.gridX ?? 0) >= 68;
+    });
+
+  if (clusters.length < 2) return players;
+
+  const ys = clusters.map(({ player }) => Number(player.gridY ?? 50));
+  if (Math.max(...ys) - Math.min(...ys) > 10) return players;
+
+  const sorted = [...clusters].sort(
+    (a, b) => (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+  );
+  const slots = centerForwardLateralSlots(sorted.length);
+  const result = [...players];
+  sorted.forEach(({ index }, slot) => {
+    result[index] = { ...result[index], gridY: slots[slot] };
+  });
+  return result;
 }

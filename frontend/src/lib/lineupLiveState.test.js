@@ -282,4 +282,38 @@ describe('lineupLiveState', () => {
     expect(next.away.players).toHaveLength(10);
     expect(next.away.expelledPlayers).toHaveLength(1);
   });
+
+  it('applyExpulsionsToLineup separa dos delanteros centro tras expulsión', () => {
+    const side = {
+      formation: '4-2-3-1',
+      players: [
+        { playerId: 'gk', name: 'Courtois', shirtNumber: 1, gridX: 6, gridY: 50, position: 'GK' },
+        ...Array.from({ length: 4 }, (_, i) => ({
+          playerId: `d${i}`,
+          name: i === 3 ? 'Ngoy' : `Def ${i}`,
+          shirtNumber: i === 3 ? 25 : i + 2,
+          gridX: 28,
+          gridY: 15 + i * 20,
+          position: 'DEF',
+        })),
+        { playerId: 'm1', name: 'Mid A', shirtNumber: 7, gridX: 52, gridY: 35, position: 'MID' },
+        { playerId: 'm2', name: 'Mid B', shirtNumber: 8, gridX: 52, gridY: 65, position: 'MID' },
+        { playerId: 'am1', name: 'Vanaken', shirtNumber: 20, gridX: 64, gridY: 25, position: 'MCO' },
+        { playerId: 'am3', name: 'Wide', shirtNumber: 11, gridX: 64, gridY: 75, position: 'MD' },
+        { playerId: 'st1', name: 'Trossard', shirtNumber: 10, gridX: 85, gridY: 50, position: 'DC' },
+        { playerId: 'st2', name: 'Fernandes', shirtNumber: 26, gridX: 85, gridY: 50, position: 'DC' },
+      ],
+    };
+
+    const timeline = [
+      { type: 'red_card', side: 'home', minute: 66, player: 'Ngoy', playerShirtNumber: 25 },
+    ];
+
+    const next = applyExpulsionsToLineup(side, timeline, 'home');
+    const forwards = next.players.filter(
+      (p) => p.name === 'Trossard' || p.name === 'Fernandes'
+    );
+    expect(forwards).toHaveLength(2);
+    expect(Math.abs(forwards[0].gridY - forwards[1].gridY)).toBeGreaterThanOrEqual(6);
+  });
 });
