@@ -43,6 +43,22 @@ export function assertSafeTestDatabase(uri = process.env.MONGODB_URI) {
     );
   }
 
+  const dbName = parseDatabaseName(resolved);
+  if (dbName === LOCAL_QA_DATABASE && process.env.ALLOW_QA_DB_TESTS !== '1') {
+    throw new Error(
+      `REFUSING to run destructive tests against QA clone database (${LOCAL_QA_DATABASE}). ` +
+        'Use mongodb://127.0.0.1:27017/mundial2026_test. ' +
+        'Set ALLOW_QA_DB_TESTS=1 only if you intentionally want to wipe the local prod clone.'
+    );
+  }
+
+  if (dbName === 'mundial2026' && process.env.ALLOW_DEV_DB_TESTS !== '1') {
+    throw new Error(
+      'REFUSING to run destructive tests against dev database (mundial2026). ' +
+        'Use mongodb://127.0.0.1:27017/mundial2026_test.'
+    );
+  }
+
   const lower = resolved.toLowerCase();
   if (!lower.includes('test') && !isLocalMongoUri(resolved)) {
     throw new Error(

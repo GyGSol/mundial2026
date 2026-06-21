@@ -31,4 +31,14 @@ describe('testDbGuard', () => {
       /REFUSING/
     );
   });
+
+  it('assertSafeTestDatabase blocks QA clone database', () => {
+    expect(() => assertSafeTestDatabase('mongodb://127.0.0.1:27017/mundial2026_local')).toThrow(
+      /mundial2026_local/
+    );
+  });
+
+  it('assertSafeTestDatabase blocks dev database', () => {
+    expect(() => assertSafeTestDatabase('mongodb://127.0.0.1:27017/mundial2026')).toThrow(/mundial2026/);
+  });
 });
