@@ -72,3 +72,17 @@ export function getInitials(name) {
     .join('')
     .toUpperCase();
 }
+
+export const AI_USER_AVATAR_URL = '/fubol-coin.png';
+
+const AI_USER_NAME_PATTERN = /^(?:@predictivemodeling|predictive[-\s]?modeling)$/i;
+
+export function isAiCompetitorUser({ isAiUser, name } = {}) {
+  if (isAiUser) return true;
+  return AI_USER_NAME_PATTERN.test(String(name || '').trim());
+}
+
+export function resolveUserAvatarUrl(avatarUrl, isAiUser, name) {
+  if (isAiCompetitorUser({ isAiUser, name })) return AI_USER_AVATAR_URL;
+  return avatarUrl || null;
+}

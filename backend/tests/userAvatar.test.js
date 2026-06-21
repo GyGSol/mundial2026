@@ -5,7 +5,8 @@ import { createApp } from '../src/app.js';
 import { User } from '../src/models/User.js';
 import { Session } from '../src/models/Session.js';
 import { createUserSession } from '../src/services/sessionService.js';
-import { normalizeAvatarDataUrlInput, decodeAvatarDataUrl, getUserAvatarPublicPath } from '../src/services/userAvatarService.js';
+import { normalizeAvatarDataUrlInput, decodeAvatarDataUrl, getUserAvatarPublicPath, resolvePublicAvatarUrl } from '../src/services/userAvatarService.js';
+import { AI_USER_AVATAR_URL } from '../src/constants/aiUser.js';
 import { getTestMongoUri } from '../src/config/testDbGuard.js';
 
 const mongoUri = getTestMongoUri();
@@ -47,6 +48,18 @@ describe('userAvatarService', () => {
 
   it('getUserAvatarPublicPath devuelve ruta pública', () => {
     expect(getUserAvatarPublicPath('abc123')).toBe('/api/users/abc123/avatar');
+  });
+
+  it('resolvePublicAvatarUrl usa moneda Fubol para IA sin foto', () => {
+    expect(
+      resolvePublicAvatarUrl({ isAiUser: true, avatarDataUrl: null, userId: 'ai1' })
+    ).toBe(AI_USER_AVATAR_URL);
+  });
+
+  it('resolvePublicAvatarUrl usa API para humanos con foto', () => {
+    expect(
+      resolvePublicAvatarUrl({ isAiUser: false, avatarDataUrl: VALID_AVATAR, userId: 'u1' })
+    ).toBe('/api/users/u1/avatar');
   });
 });
 
