@@ -14,6 +14,7 @@ import {
   changeUserPassword,
   requestPasswordReset,
 } from '../services/passwordResetService.js';
+import { normalizeAvatarDataUrlInput } from '../services/userAvatarService.js';
 
 const router = Router();
 
@@ -50,6 +51,7 @@ async function serializeUser(user) {
     aiQuestionCredits: user.aiQuestionCredits ?? 0,
     isAIAgent: Boolean(user.isAiUser),
     mustChangePassword: Boolean(user.mustChangePassword),
+    avatarUrl: user.avatarDataUrl || null,
     competitionGroup: group,
     competitionGroups: groups,
   };
@@ -162,20 +164,35 @@ router.patch('/me', authMiddleware, async (req, res, next) => {
       return res.status(400).json({ error: 'El email no se puede modificar' });
     }
 
-    const trimmedName = String(req.body?.name ?? '').trim();
-    if (!trimmedName) {
-      return res.status(400).json({ error: 'El nombre de jugador es obligatorio' });
+    const hasName = req.body?.name !== undefined;
+    const avatarInput = normalizeAvatarDataUrlInput(req.body?.avatarDataUrl);
+
+    if (!hasName && avatarInput === undefined) {
+      return res.status(400).json({ error: 'No hay cambios para guardar' });
     }
 
-    if (trimmedName.length > 80) {
-      return res.status(400).json({ error: 'El nombre no puede superar 80 caracteres' });
+    if (hasName) {
+      const trimmedName = String(req.body.name).trim();
+      if (!trimmedName) {
+        return res.status(400).json({ error: 'El nombre de jugador es obligatorio' });
+      }
+      if (trimmedName.length > 80) {
+        return res.status(400).json({ error: 'El nombre no puede superar 80 caracteres' });
+      }
+      req.user.name = trimmedName;
     }
 
-    req.user.name = trimmedName;
+    if (avatarInput !== undefined) {
+      req.user.avatarDataUrl = avatarInput;
+    }
+
     await req.user.save();
 
     res.json({ user: await serializeUser(req.user) });
   } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
     next(err);
   }
 });

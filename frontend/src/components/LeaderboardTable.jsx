@@ -19,6 +19,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatGoalDiffScore } from '@/lib/goalDiffStats.js';
 import { useLeaderboardStatDeltas } from '../hooks/useLeaderboardStatDeltas.js';
+import LeaderboardUserAvatar from './LeaderboardUserAvatar.jsx';
 
 const GDIFF_HELP =
   'Error en goles: GLdif y GVdif = diferencia promedio predicción vs resultado (÷ PJ). Gdif = (GLdif × GVdif) / 2 escalado. .000 = sin error; 1.000 = peor caso; menor es mejor.';
@@ -163,7 +164,7 @@ export default function LeaderboardTable({
           <TableHeader>
             <TableRow>
               <TableHead className="w-9 px-1 sm:w-11">#</TableHead>
-              <TableHead className="min-w-[5.5rem] px-1 sm:min-w-0 sm:px-2">Jugador</TableHead>
+              <TableHead className="min-w-[6.5rem] px-1 sm:min-w-[8rem] sm:px-2">Jugador</TableHead>
               {statColumns.map((col) => (
                 <TableHead
                   key={col.key}
@@ -195,9 +196,10 @@ export default function LeaderboardTable({
                   >
                     <span className="text-base font-bold leading-none sm:text-lg">{row.rank}</span>
                   </TableCell>
-                  <TableCell className="max-w-[5.5rem] px-1 font-medium sm:max-w-none sm:px-2">
+                  <TableCell className="max-w-[6.5rem] px-1 font-medium sm:max-w-none sm:px-2">
                     <div className="flex min-w-0 items-center justify-between gap-2">
                       <span className="flex min-w-0 items-center gap-1.5">
+                        <LeaderboardUserAvatar name={row.name} avatarUrl={row.avatarUrl} />
                         <span className="truncate">
                           {row.name}
                           {row.isAiUser ? (
