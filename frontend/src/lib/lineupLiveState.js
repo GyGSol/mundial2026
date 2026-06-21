@@ -470,21 +470,24 @@ export function applyExpulsionsToLineup(lineupSide, timeline = [], side = 'home'
   };
 }
 
-/** Aplica separación de solapes en la cancha (defensa, mediocampo, ataque). */
-export function normalizeLineupSideForPitch(lineupSide) {
+/** Recoloca el XI según formación táctica y separa solapes (MD/MCO, DFC, etc.). */
+export function normalizeLineupSideForPitch(lineupSide, side = 'home') {
   if (!lineupSide?.players?.length) return lineupSide;
-  return {
-    ...lineupSide,
-    players: spreadOverlappingGridPositions(lineupSide.players),
-  };
+
+  const tagged = lineupSide.players.map((player) => ({ ...player, side }));
+  const formation = resolveFormation(tagged, lineupSide.formation);
+  const laidOut = assignPlayersToFormation(tagged, formation, { includeLeftovers: true });
+  const players = spreadOverlappingGridPositions(mergePlayerMeta(laidOut, tagged, side));
+
+  return { ...lineupSide, formation, players };
 }
 
 export function normalizeLineupForPitch(lineup) {
   if (!lineup) return lineup;
   return {
     ...lineup,
-    home: normalizeLineupSideForPitch(lineup.home),
-    away: normalizeLineupSideForPitch(lineup.away),
+    home: normalizeLineupSideForPitch(lineup.home, 'home'),
+    away: normalizeLineupSideForPitch(lineup.away, 'away'),
   };
 }
 

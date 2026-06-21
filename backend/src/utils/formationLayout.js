@@ -256,7 +256,11 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
   for (const player of players) {
     const detail = player.positionDetail ?? player.position;
     const pool = mapFootballDataPositionText(detail);
-    pools[pool].push({ ...player, position: pool });
+    pools[pool].push({
+      ...player,
+      position: pool,
+      positionDetail: player.positionDetail ?? player.position,
+    });
   }
 
   const assigned = [];
@@ -397,17 +401,13 @@ export function mapFootballDataPositionText(text) {
 }
 
 export function isCenterForwardLike(player) {
+  const detail = player?.positionDetail ?? player?.position ?? '';
+  const token = String(detail).trim().split(/\s+/)[0]?.toUpperCase() ?? '';
+  if (token === 'DC' || token === 'CF' || token === 'ST') return true;
+
   const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.trim().toUpperCase();
-  if (
-    text === 'DC' ||
-    text === 'CF' ||
-    text === 'ST' ||
-    text.includes('CENTRE-FORWARD') ||
-    text.includes('CENTER FORWARD')
-  ) {
-    return true;
-  }
-  if (mapFootballDataPositionText(text) !== 'FWD') return false;
+  if (text.includes('CENTRE-FORWARD') || text.includes('CENTER FORWARD')) return true;
+  if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'FWD') return false;
   return lateralSortKey(player) >= 38 && lateralSortKey(player) <= 62;
 }
 
