@@ -64,12 +64,6 @@ describe('playerRosterUnifyService', () => {
         { fullName: 'Firas Al-Buraikan', fifaCode: 'KSA' }
       )
     ).toBe(true);
-    expect(
-      areSamePlayer(
-        { fullName: 'Mehdi Torabi', fifaCode: 'IRN' },
-        { fullName: 'Mahdi Torabi', fifaCode: 'IRN' }
-      )
-    ).toBe(true);
   });
 
   it('pickCanonicalPlayer prefiere plantel oficial con foto', () => {

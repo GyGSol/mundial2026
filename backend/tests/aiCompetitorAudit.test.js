@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildAuditPromptContext, buildAiCompetitorStats } from '../src/services/aiCompetitorAuditService.js';
+import {
+  buildAuditPromptContext,
+  buildAiCompetitorStats,
+  buildAiCompetitorMatchFilter,
+} from '../src/services/aiCompetitorAuditService.js';
 import { briefAiReasoning } from '../src/services/aiPromptHumanizer.js';
 import { goalDiffScore } from '../src/services/goalDiffStats.js';
 
@@ -39,5 +43,17 @@ describe('aiCompetitorAuditService', () => {
     expect(brief).toContain('Portugal favorito');
     expect(brief?.endsWith('…')).toBe(true);
     expect(briefAiReasoning('  ')).toBeNull();
+  });
+
+  it('buildAiCompetitorMatchFilter filtra por selección local o visitante', () => {
+    expect(buildAiCompetitorMatchFilter({ teamId: '17' })).toEqual({
+      kickoffAt: { $ne: null },
+      $or: [{ homeTeamId: '17' }, { awayTeamId: '17' }],
+    });
+    expect(buildAiCompetitorMatchFilter({ status: 'finished', group: 'e' })).toEqual({
+      kickoffAt: { $ne: null },
+      status: 'finished',
+      group: 'E',
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, Fragment } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { adminApi } from '../../api/adminClient.js';
+import { teamsApi } from '../../api/client.js';
 import { useLiveData } from '../../hooks/useLiveData.js';
 import { REALTIME_EVENTS } from '../../lib/realtimeSectors.js';
 import MarkdownContent from '../../components/MarkdownContent.jsx';
@@ -221,10 +222,11 @@ function MatchAiInsightRow({
 
 export default function AdminAiCompetitorPage() {
   const [activeTab, setActiveTab] = useState('resumen');
-  const [matchNumber, setMatchNumber] = useState('');
+  const [teamFilter, setTeamFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [groupFilter, setGroupFilter] = useState('');
   const [predictionFilter, setPredictionFilter] = useState('all');
+  const [teams, setTeams] = useState([]);
   const [selectedMatchId, setSelectedMatchId] = useState(null);
   const [selectedLogId, setSelectedLogId] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -242,11 +244,28 @@ export default function AdminAiCompetitorPage() {
   const [reviewsByMatchId, setReviewsByMatchId] = useState({});
   const detailRef = useRef(null);
 
-  const filterDeps = [matchNumber, statusFilter, groupFilter, predictionFilter];
+  const filterDeps = [teamFilter, statusFilter, groupFilter, predictionFilter];
+
+  useEffect(() => {
+    let cancelled = false;
+    teamsApi
+      .list()
+      .then((payload) => {
+        if (cancelled) return;
+        const sorted = [...(payload.teams ?? [])].sort((a, b) =>
+          (a.nameEn || a.fifaCode || '').localeCompare(b.nameEn || b.fifaCode || '', 'es')
+        );
+        setTeams(sorted);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const fetchOverview = useCallback(() => {
     const params = { predictionFilter };
-    if (matchNumber.trim()) params.matchNumber = matchNumber.trim();
+    if (teamFilter) params.teamId = teamFilter;
     if (statusFilter) params.status = statusFilter;
     if (groupFilter) params.group = groupFilter;
     return adminApi.getAiCompetitorOverview(params);
@@ -583,13 +602,24 @@ export default function AdminAiCompetitorPage() {
         <>
       <AdminCard className="mb-4">
         <div className="flex flex-wrap gap-3">
-          <FilterField label="Nº partido FIFA">
-            <Input
-              className={adminInput}
-              placeholder="ej. 12"
-              value={matchNumber}
-              onChange={(e) => setMatchNumber(e.target.value)}
-            />
+          <FilterField label="Selección">
+            <Select
+              value={teamFilter || 'all'}
+              onValueChange={(v) => setTeamFilter(v === 'all' ? '' : v)}
+            >
+              <SelectTrigger className={adminInput}>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {teams.map((team) => (
+                  <SelectItem key={team.externalId} value={team.externalId}>
+                    {team.nameEn || team.fifaCode}
+                    {team.fifaCode && team.nameEn ? ` (${team.fifaCode})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FilterField>
           <FilterField label="Estado partido">
             <Select value={statusFilter || 'all'} onValueChange={(v) => setStatusFilter(v === 'all' ? '' : v)}>
