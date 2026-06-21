@@ -59,8 +59,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('→ git fetch heroku origin');
-  if (git('fetch', 'heroku', 'origin').status !== 0) {
+  console.log('→ git fetch origin && git fetch heroku');
+  if (git('fetch', 'origin').status !== 0 || git('fetch', 'heroku').status !== 0) {
     process.exit(1);
   }
 
