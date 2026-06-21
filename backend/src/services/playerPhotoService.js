@@ -99,6 +99,11 @@ export function buildCoachPhotoKey(fifaCode, coachName) {
   return `${folder}/${prefix}-${slugifyPlayerName(name)}.png`;
 }
 
+/** Convención de archivo en imagenes-jugadores: `{carpeta}/{fifa3}-{slug-nombre}.png`. */
+export function buildPlayerPhotoKey(fifaCode, fullName) {
+  return buildCoachPhotoKey(fifaCode, fullName);
+}
+
 export function mapCoachToLineupEntry(fifaCode, coachName) {
   const name = String(coachName || '').trim();
   if (!name) return null;
@@ -134,13 +139,19 @@ export function resolveCoachForLineup(coachField, team) {
 
 /** @param {{ fullName: string, position?: string, shirtNumber?: number | null, photoKey?: string | null, _id?: { toString(): string }, externalId?: string }} player */
 export function mapPlayerToTimelineRosterEntry(player) {
+  const photoKey =
+    player.photoKey ||
+    (player.fifaCode && player.fullName
+      ? buildPlayerPhotoKey(player.fifaCode, player.fullName)
+      : '');
+  const photoUrl = resolvePlayerPhotoUrl(photoKey) || player.photoUrl || null;
   return {
-    mongoId: player._id?.toString?.() ?? null,
+    mongoId: player.mongoId ?? player._id?.toString?.() ?? null,
     externalId: player.externalId ?? null,
     fullName: player.fullName,
     position: player.position,
     shirtNumber: player.shirtNumber ?? null,
-    photoUrl: resolvePlayerPhotoUrl(player.photoKey) || null,
+    photoUrl,
   };
 }
 

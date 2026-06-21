@@ -8,6 +8,7 @@ import {
   mergeShotAttemptsFromRawEvents,
 } from './fifaTimelineParser.js';
 import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js';
+import { mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
 import {
   applyShirtNumbersToTimeline,
   attachTimelinePlayerIds,
@@ -1324,6 +1325,8 @@ export function enrichMatchLiveFields(match, options = {}) {
   const showResults = match.status === 'live' || match.status === 'finished';
   const events = readStoredMatchEvents(raw);
   const { homePlayers = [], awayPlayers = [], priorTournamentGoalCounts } = options;
+  const mappedHomePlayers = homePlayers.map(mapPlayerToTimelineRosterEntry);
+  const mappedAwayPlayers = awayPlayers.map(mapPlayerToTimelineRosterEntry);
   let baseTimeline = showResults ? readMatchTimeline(raw) : [];
 
   if (showResults && baseTimeline.length > 0) {
@@ -1344,8 +1347,8 @@ export function enrichMatchLiveFields(match, options = {}) {
       shirtByPlayerId: raw.fifaMeta?.shirtByPlayerId ?? {},
       shirtBySideName: raw.fifaMeta?.shirtBySideName ?? {},
     });
-    if (homePlayers.length > 0 || awayPlayers.length > 0) {
-      baseTimeline = enrichTimelineRosterFields(baseTimeline, homePlayers, awayPlayers);
+    if (mappedHomePlayers.length > 0 || mappedAwayPlayers.length > 0) {
+      baseTimeline = enrichTimelineRosterFields(baseTimeline, mappedHomePlayers, mappedAwayPlayers);
     }
   }
   const baseTimelineScorers = scorersFromTimeline(baseTimeline);
@@ -1391,13 +1394,13 @@ export function enrichMatchLiveFields(match, options = {}) {
   const homeSubstitutions = showResults
     ? enrichSubstitutionsFromRoster(
         pickNonEmptyList(timelineSubstitutions.homeSubstitutions, events.homeSubstitutions),
-        homePlayers
+        mappedHomePlayers
       )
     : [];
   const awaySubstitutions = showResults
     ? enrichSubstitutionsFromRoster(
         pickNonEmptyList(timelineSubstitutions.awaySubstitutions, events.awaySubstitutions),
-        awayPlayers
+        mappedAwayPlayers
       )
     : [];
 

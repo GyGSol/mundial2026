@@ -238,24 +238,15 @@ export default function MatchLineupSection({
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
   const timeLabel = updatedLabel(lineup?.updatedAt);
 
-  const liveLineup = useMemo(() => {
-    if (!isInteractivePitch || !lineup || status === 'unavailable') return lineup;
-    return applyLiveSubstitutions(
-      lineup,
-      match?.homeSubstitutions ?? [],
-      match?.awaySubstitutions ?? []
-    );
-  }, [isInteractivePitch, lineup, status, match?.homeSubstitutions, match?.awaySubstitutions]);
-
   const hydratedHomeSubs = useMemo(
     () =>
       resolveSubstitutionsForSide({
         substitutions: match?.homeSubstitutions ?? [],
         timeline: timelineEvents,
-        lineupSide: liveLineup?.home ?? lineup?.home,
+        lineupSide: lineup?.home,
         side: 'home',
       }),
-    [match?.homeSubstitutions, timelineEvents, liveLineup?.home, lineup?.home]
+    [match?.homeSubstitutions, timelineEvents, lineup?.home]
   );
 
   const hydratedAwaySubs = useMemo(
@@ -263,11 +254,16 @@ export default function MatchLineupSection({
       resolveSubstitutionsForSide({
         substitutions: match?.awaySubstitutions ?? [],
         timeline: timelineEvents,
-        lineupSide: liveLineup?.away ?? lineup?.away,
+        lineupSide: lineup?.away,
         side: 'away',
       }),
-    [match?.awaySubstitutions, timelineEvents, liveLineup?.away, lineup?.away]
+    [match?.awaySubstitutions, timelineEvents, lineup?.away]
   );
+
+  const liveLineup = useMemo(() => {
+    if (!isInteractivePitch || !lineup || status === 'unavailable') return lineup;
+    return applyLiveSubstitutions(lineup, hydratedHomeSubs, hydratedAwaySubs);
+  }, [isInteractivePitch, lineup, status, hydratedHomeSubs, hydratedAwaySubs]);
 
   const missingCoords = isInteractivePitch ? countEventsWithoutCoords(timelineEvents) : 0;
 

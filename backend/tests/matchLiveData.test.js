@@ -937,6 +937,59 @@ describe('matchLiveData', () => {
       expect(enriched.homeSubstitutions[0].playerInPhotoUrl).toContain('sane');
     });
 
+    it('homeSubstitutions resuelve photoUrl desde photoKey de Player sin mapear', () => {
+      const enriched = enrichMatchLiveFields(
+        {
+          status: 'live',
+          homeScore: 0,
+          awayScore: 0,
+          raw: {
+            fifaEvents: {
+              timeline: [
+                {
+                  type: 'substitution',
+                  side: 'home',
+                  minute: 71,
+                  playerOut: 'ESTUPIÑAN',
+                  playerOutShirtNumber: 6,
+                  playerIn: 'ANGULO',
+                  playerInShirtNumber: 20,
+                  sortKey: 71,
+                },
+              ],
+            },
+          },
+        },
+        {
+          homePlayers: [
+            {
+              _id: '507f1f77bcf86cd799439011',
+              externalId: 'ECU-pervis-estupinan',
+              fullName: 'Pervis Estupiñan',
+              fifaCode: 'ECU',
+              position: 'DEF',
+              shirtNumber: 6,
+              photoKey: 'ecuador/ecu-pervis-estupinan.png',
+            },
+            {
+              _id: '507f1f77bcf86cd799439012',
+              externalId: 'ECU-nilson-angulo',
+              fullName: 'Nilson Angulo',
+              fifaCode: 'ECU',
+              position: 'FWD',
+              shirtNumber: 20,
+              photoKey: 'ecuador/ecu-nilson-angulo.png',
+            },
+          ],
+        }
+      );
+
+      expect(enriched.homeSubstitutions).toHaveLength(1);
+      expect(enriched.homeSubstitutions[0].playerOutPhotoUrl).toContain('ecu-pervis-estupinan.png');
+      expect(enriched.homeSubstitutions[0].playerInPhotoUrl).toContain('ecu-nilson-angulo.png');
+      expect(enriched.homeSubstitutions[0].playerInMongoId).toBe('507f1f77bcf86cd799439012');
+    });
+
     it('no duplica tiros al fusionar rawEvents con distinto casing del nombre', () => {
       const enriched = enrichMatchLiveFields(
         {
