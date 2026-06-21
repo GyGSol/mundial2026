@@ -7,6 +7,7 @@ import {
   matchPlayerToPhotoFileWithIndex,
   parsePhotoFilename,
   photoSlugVariants,
+  resolveCoachForLineup,
   resolvePlayerPhotoUrl,
   slugifyPlayerName,
 } from '../src/services/playerPhotoService.js';
@@ -107,5 +108,24 @@ describe('playerPhotoService', () => {
       photoKey: 'escocia/sco-steve-clarke.png',
     });
     expect(entry.photoUrl).toMatch(/sco-steve-clarke\.png/);
+  });
+
+  it('prioriza headCoach oficial para DT cuando FIFA trae otro nombre', () => {
+    const entry = resolveCoachForLineup('Guillermo MARINO', {
+      fifaCode: 'ECU',
+      headCoach: 'Sebastián Beccacece',
+      nameEn: 'Ecuador',
+    });
+    expect(entry).toMatchObject({
+      name: 'Sebastián Beccacece',
+      photoKey: 'ecuador/ecu-sebastian-beccacece.png',
+    });
+    expect(entry.photoUrl).toMatch(/ecu-sebastian-beccacece\.png/);
+  });
+
+  it('construye photoKey de Beccacece con acentos', () => {
+    expect(buildCoachPhotoKey('ECU', 'Sebastián Beccacece')).toBe(
+      'ecuador/ecu-sebastian-beccacece.png'
+    );
   });
 });

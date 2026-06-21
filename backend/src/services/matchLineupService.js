@@ -2,7 +2,7 @@ import { fetchMatchDetails, fetchTeamWithSquad, hasToken } from './footballDataA
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
 import { Match } from '../models/Match.js';
-import { mapCoachToLineupEntry, mapPlayerToTimelineRosterEntry } from './playerPhotoService.js';
+import { mapPlayerToTimelineRosterEntry, resolveCoachForLineup } from './playerPhotoService.js';
 import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js';
 import {
   fetchFixtureLineups,
@@ -308,18 +308,7 @@ function enrichSidePlayersWithRoster(
 }
 
 function enrichSideCoach(coachField, team) {
-  const name =
-    (typeof coachField === 'string' ? coachField : coachField?.name) ||
-    team?.headCoach ||
-    '';
-  const entry = mapCoachToLineupEntry(team?.fifaCode ?? '', name);
-  if (!entry) return null;
-  return {
-    ...entry,
-    nationality: team?.coachNationality || null,
-    teamName: team?.nameEn || null,
-    teamFifaCode: team?.fifaCode || null,
-  };
+  return resolveCoachForLineup(coachField, team);
 }
 
 async function enrichLineupPayloadWithRoster(payload, match, options = {}) {

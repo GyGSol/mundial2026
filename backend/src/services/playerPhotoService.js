@@ -111,6 +111,27 @@ export function mapCoachToLineupEntry(fifaCode, coachName) {
   };
 }
 
+/** DT en alineación: nombre oficial del plantel + caricatura (FIFA a veces trae otro nombre). */
+export function resolveCoachForLineup(coachField, team) {
+  const lineupName =
+    (typeof coachField === 'string' ? coachField : coachField?.name)?.trim() || '';
+  const officialName = team?.headCoach?.trim() || '';
+  const displayName = officialName || lineupName;
+  if (!displayName) return null;
+
+  const photoName = officialName || lineupName;
+  const entry = mapCoachToLineupEntry(team?.fifaCode ?? '', photoName);
+  if (!entry) return null;
+
+  return {
+    ...entry,
+    name: displayName,
+    nationality: team?.coachNationality || null,
+    teamName: team?.nameEn || null,
+    teamFifaCode: team?.fifaCode || null,
+  };
+}
+
 /** @param {{ fullName: string, position?: string, shirtNumber?: number | null, photoKey?: string | null, _id?: { toString(): string }, externalId?: string }} player */
 export function mapPlayerToTimelineRosterEntry(player) {
   return {

@@ -1,11 +1,12 @@
 import { Player, POSITIONS } from '../models/Player.js';
+import { Team } from '../models/Team.js';
 import {
   assignFormationGrid,
   mapFootballDataPositionText,
   assignPlayersToFormation,
 } from '../utils/formationLayout.js';
 import { MIN_CONFIRMED_STARTERS_PER_TEAM } from './aiLineupContextService.js';
-import { resolvePlayerPhotoUrl } from './playerPhotoService.js';
+import { mapCoachToLineupEntry, resolvePlayerPhotoUrl } from './playerPhotoService.js';
 import { unifyTeamPlayerDocuments } from './playerRosterUnifyService.js';
 
 export const MAX_STARTERS = 11;
@@ -91,7 +92,12 @@ export async function buildProbableSide(teamExternalId, formation = DEFAULT_PROB
     formation
   );
 
-  return { formation, players, coach: null };
+  const team = await Team.findOne({ externalId: teamExternalId }).lean();
+  const coach = team?.headCoach
+    ? mapCoachToLineupEntry(team.fifaCode ?? '', team.headCoach)
+    : null;
+
+  return { formation, players, coach };
 }
 
 export function isConfirmedSnapshot(snapshot) {
