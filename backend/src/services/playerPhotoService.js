@@ -32,6 +32,7 @@ export const TEAM_FOLDER_TO_FIFA = {
   corea: 'KOR',
   curacao: 'CUW',
   'costa-de-marfil': 'CIV',
+  colombia: 'COL',
   escocia: 'SCO',
   ecuador: 'ECU',
   egipto: 'EGY',
