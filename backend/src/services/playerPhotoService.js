@@ -6,7 +6,7 @@ import { Player } from '../models/Player.js';
 import { env } from '../config/env.js';
 import { FIFA_TO_PHOTO_FOLDER } from '../data/wikipediaSquadCountryMap.js';
 import { areSamePlayer } from './playerRosterUnifyService.js';
-import { compactNameKey, normalizeName } from '../utils/playerNameMatch.js';
+import { compactNameKey, normalizeName, slugTransliterationVariants } from '../utils/playerNameMatch.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, '../../..');
 export const PLAYER_PHOTOS_DIR = join(REPO_ROOT, 'imagenes-jugadores');
@@ -189,6 +189,10 @@ export function photoSlugVariants(fullName) {
     if (words.length >= 2) {
       variants.add(words[words.length - 1]);
       variants.add(words[0]);
+    }
+
+    for (const aliasSlug of slugTransliterationVariants(primary)) {
+      variants.add(aliasSlug);
     }
   }
 
