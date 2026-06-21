@@ -1,0 +1,384 @@
+{
+  "lineup": {
+    "home": {
+      "formation": "3-5-2",
+      "players": [
+        {
+          "playerId": "fifa-441236",
+          "name": "Hernán Galíndez",
+          "shirtNumber": 1,
+          "position": "GK",
+          "positionDetail": "GK",
+          "gridX": 6,
+          "gridY": 50
+        },
+        {
+          "playerId": "fifa-424031",
+          "name": "Piero Hincapié",
+          "shirtNumber": 3,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 18
+        },
+        {
+          "playerId": "fifa-448290",
+          "name": "Willian Pacho",
+          "shirtNumber": 6,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 50
+        },
+        {
+          "playerId": "fifa-389782",
+          "name": "Pervis Estupiñán",
+          "shirtNumber": 7,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 82
+        },
+        {
+          "playerId": "fifa-419005",
+          "name": "Jordy Alcívar",
+          "shirtNumber": 5,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 12
+        },
+        {
+          "playerId": "fifa-424036",
+          "name": "Pedro Vite",
+          "shirtNumber": 15,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 35
+        },
+        {
+          "playerId": "fifa-389784",
+          "name": "Alan Franco",
+          "shirtNumber": 21,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 65
+        },
+        {
+          "playerId": "fifa-428885",
+          "name": "Moisés Caicedo",
+          "shirtNumber": 23,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 88
+        },
+        {
+          "playerId": "fifa-405920",
+          "name": "John Yeboah",
+          "shirtNumber": 9,
+          "position": "FWD",
+          "positionDetail": "FWD",
+          "gridX": 85,
+          "gridY": 30
+        },
+        {
+          "playerId": "fifa-373400",
+          "name": "Enner Valencia",
+          "shirtNumber": 13,
+          "position": "FWD",
+          "positionDetail": "FWD",
+          "gridX": 85,
+          "gridY": 70
+        },
+        {
+          "playerId": "fifa-419020",
+          "name": "Gonzalo Plata",
+          "shirtNumber": 19,
+          "position": "FWD",
+          "positionDetail": "FWD",
+          "gridX": 85,
+          "gridY": 50
+        }
+      ]
+    },
+    "away": {
+      "formation": "5-3-2",
+      "players": [
+        {
+          "playerId": "fifa-390650",
+          "name": "Eloy Room",
+          "shirtNumber": 1,
+          "position": "GK",
+          "positionDetail": "GK",
+          "gridX": 6,
+          "gridY": 50
+        },
+        {
+          "playerId": "fifa-431698",
+          "name": "Juriën Gaari",
+          "shirtNumber": 3,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 8
+        },
+        {
+          "playerId": "fifa-466350",
+          "name": "Sherel Floranus",
+          "shirtNumber": 5,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 26
+        },
+        {
+          "playerId": "fifa-511141",
+          "name": "Armando Obispo",
+          "shirtNumber": 18,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 50
+        },
+        {
+          "playerId": "fifa-401023",
+          "name": "Joshua Brenet",
+          "shirtNumber": 20,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 74
+        },
+        {
+          "playerId": "fifa-506471",
+          "name": "Deveron Fonville",
+          "shirtNumber": 24,
+          "position": "DEF",
+          "positionDetail": "DEF",
+          "gridX": 30,
+          "gridY": 92
+        },
+        {
+          "playerId": "fifa-466317",
+          "name": "Juninho Bacuna",
+          "shirtNumber": 7,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 18
+        },
+        {
+          "playerId": "fifa-494989",
+          "name": "Livano Comenencia",
+          "shirtNumber": 8,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 50
+        },
+        {
+          "playerId": "fifa-466340",
+          "name": "Leandro Bacuna",
+          "shirtNumber": 10,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 82
+        },
+        {
+          "playerId": "fifa-407680",
+          "name": "Jürgen Locadia",
+          "shirtNumber": 9,
+          "position": "FWD",
+          "positionDetail": "FWD",
+          "gridX": 85,
+          "gridY": 50
+        },
+        {
+          "playerId": "fifa-485347",
+          "name": "Tahith Chong",
+          "shirtNumber": 21,
+          "position": "MID",
+          "positionDetail": "MID",
+          "gridX": 58,
+          "gridY": 50
+        }
+      ]
+    }
+  },
+  "homeSubstitutions": [
+    {
+      "minute": 71,
+      "playerOut": "Pervis Estupiñán",
+      "playerIn": "Nilson Angulo",
+      "playerOutPosition": "DF",
+      "playerInPosition": "FW",
+      "playerOutShirtNumber": 7,
+      "playerInShirtNumber": 20,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/ecuador/ecu-pervis-estupinan.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/ecuador/ecu-nilson-angulo.png",
+      "playerOutMongoId": "6a2572f2f22c99c462a44b59",
+      "playerInMongoId": "6a3544b2d7b38e7ae4b3a952",
+      "playerOutExternalId": "ECU-pervis-estupinan",
+      "playerInExternalId": "ECU-nilson-angulo",
+      "idPlayerOut": "389782",
+      "idPlayerIn": "448312"
+    },
+    {
+      "minute": 83,
+      "playerOut": "Alan Franco",
+      "playerIn": "Ángelo Preciado",
+      "playerOutPosition": "MF",
+      "playerInPosition": "DF",
+      "playerOutShirtNumber": 21,
+      "playerInShirtNumber": 17,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/ecuador/ecu-alan-franco.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/ecuador/ecu-angelo-preciado.png",
+      "playerOutMongoId": "6a2572f2f22c99c462a44b61",
+      "playerInMongoId": "6a2572f2f22c99c462a44b5a",
+      "playerOutExternalId": "ECU-alan-franco",
+      "playerInExternalId": "ECU-angelo-preciado",
+      "idPlayerOut": "389784",
+      "idPlayerIn": "402974"
+    },
+    {
+      "minute": null,
+      "playerOut": "Jordy Alcívar",
+      "playerIn": "Kevin Rodríguez",
+      "playerOutPosition": "MF",
+      "playerInPosition": "FW",
+      "playerOutShirtNumber": 5,
+      "playerInShirtNumber": 11,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/ecuador/ecu-jordy-alcivar.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/ecuador/ecu-kevin-rodriguez.png",
+      "playerOutMongoId": "6a3544afd7b38e7ae4b3a94e",
+      "playerInMongoId": "6a2572f2f22c99c462a44b69",
+      "playerOutExternalId": "ECU-jordy-alcivar",
+      "playerInExternalId": "ECU-kevin-rodriguez",
+      "idPlayerOut": "419005",
+      "idPlayerIn": "448310"
+    }
+  ],
+  "awaySubstitutions": [
+    {
+      "minute": 75,
+      "playerOut": "Tahith Chong",
+      "playerIn": "Jearl Margaritha",
+      "playerOutPosition": "MF",
+      "playerInPosition": "FW",
+      "playerOutShirtNumber": 21,
+      "playerInShirtNumber": 16,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-tahith-chong.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-jearl-margaritha.png",
+      "playerOutMongoId": "6a3544add7b38e7ae4b3a94a",
+      "playerInMongoId": "6a2572f8f22c99c462a44da2",
+      "playerOutExternalId": "CUW-tahith-chong",
+      "playerInExternalId": "CUW-jearl-margaritha",
+      "idPlayerOut": "485347",
+      "idPlayerIn": "466363"
+    },
+    {
+      "minute": 75,
+      "playerOut": "Juninho Bacuna",
+      "playerIn": "Kenji Gorré",
+      "playerOutPosition": "MF",
+      "playerInPosition": "FW",
+      "playerOutShirtNumber": 7,
+      "playerInShirtNumber": 14,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-juninho-bacuna.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-kenji-gorre.png",
+      "playerOutMongoId": "6a2572f8f22c99c462a44d9a",
+      "playerInMongoId": "6a2572f8f22c99c462a44d9d",
+      "playerOutExternalId": "CUW-juninho-bacuna",
+      "playerInExternalId": "CUW-kenji-gorre",
+      "idPlayerOut": "466317",
+      "idPlayerIn": "466352"
+    },
+    {
+      "minute": 75,
+      "playerOut": "Deveron Fonville",
+      "playerIn": "Roshon van Eijma",
+      "playerOutPosition": "DF",
+      "playerInPosition": "DF",
+      "playerOutShirtNumber": 24,
+      "playerInShirtNumber": 4,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-deveron-fonville.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-roshon-van-eijma.png",
+      "playerOutMongoId": "6a3544aed7b38e7ae4b3a94c",
+      "playerInMongoId": "6a2572f8f22c99c462a44d96",
+      "playerOutExternalId": "CUW-deveron-fonville",
+      "playerInExternalId": "CUW-roshon-van-eijma",
+      "idPlayerOut": "506471",
+      "idPlayerIn": "466361"
+    },
+    {
+      "minute": 83,
+      "playerOut": "Gervane Kastaneer",
+      "playerIn": "Jürgen Locadia",
+      "playerOutPosition": "FW",
+      "playerInPosition": "FW",
+      "playerOutShirtNumber": 19,
+      "playerInShirtNumber": 9,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-gervane-kastaneer.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-jurgen-locadia.png",
+      "playerOutMongoId": "6a2572f8f22c99c462a44da0",
+      "playerInMongoId": "6a3544abd7b38e7ae4b3a945",
+      "playerOutExternalId": "CUW-gervane-kastaneer",
+      "playerInExternalId": "CUW-jurgen-locadia",
+      "idPlayerOut": "466372",
+      "idPlayerIn": "407680"
+    },
+    {
+      "minute": 83,
+      "playerOut": "Godfried Roemeratoe",
+      "playerIn": "Livano Comenencia",
+      "playerOutPosition": "MF",
+      "playerInPosition": "MF",
+      "playerOutShirtNumber": 6,
+      "playerInShirtNumber": 8,
+      "playerOutPositionX": null,
+      "playerOutPositionY": null,
+      "playerInPositionX": null,
+      "playerInPositionY": null,
+      "playerOutPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-godfried-roemeratoe.png",
+      "playerInPhotoUrl": "https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores/curacao/cuw-livano-comenencia.png",
+      "playerOutMongoId": "6a3544aad7b38e7ae4b3a944",
+      "playerInMongoId": "6a2572f8f22c99c462a44d9e",
+      "playerOutExternalId": "CUW-godfried-roemeratoe",
+      "playerInExternalId": "CUW-livano-comenencia",
+      "idPlayerOut": "466359",
+      "idPlayerIn": "494989"
+    }
+  ]
+}

@@ -188,13 +188,13 @@ function dedupeSubstitutions(substitutions = []) {
 function playerWasSubbedOut(player, substitutions) {
   if (player?.subbedIn) return false;
   return substitutions.some((sub) => {
-    if (
-      sub.playerOutShirtNumber != null &&
-      player.shirtNumber != null &&
-      Number(sub.playerOutShirtNumber) !== Number(player.shirtNumber)
-    ) {
-      return false;
+    const subShirt = sub.playerOutShirtNumber;
+    const playerShirt = player.shirtNumber;
+
+    if (subShirt != null && playerShirt != null) {
+      return Number(subShirt) === Number(playerShirt);
     }
+
     return namesLikelyMatch(player.name, sub.playerOut);
   });
 }
@@ -323,7 +323,7 @@ export function applySubstitutionsToLineup(lineupSide, substitutionsForSide = []
     const tagged = players.map((player) => ({ ...player, side }));
     const formation = resolveFormation(tagged, lineupSide?.formation);
     const reassigned = assignPlayersToFormation(tagged, formation, {
-      includeLeftovers: false,
+      includeLeftovers: true,
     });
     players = finalizeLiveXi(mergePlayerMeta(reassigned, tagged, side), side, substitutions);
     return { ...lineupSide, formation, players };

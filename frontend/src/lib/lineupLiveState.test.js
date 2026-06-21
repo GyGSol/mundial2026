@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { namesLikelyMatch } from './substitutionPhotos.js';
 import {
+  applyLiveSubstitutions,
   applySubstitutionsToLineup,
   buildPlayerEventSummary,
   matchPlayerToTimeline,
   playerKeyFromLineupPlayer,
 } from './lineupLiveState.js';
+import ecuadorCuracaoLive34 from './__fixtures__/ecuador-curacao-live34.json';
 
 describe('lineupLiveState', () => {
   it('buildPlayerEventSummary acumula goles y tarjetas por jugador', () => {
@@ -174,5 +176,19 @@ describe('lineupLiveState', () => {
     expect(next.players).toHaveLength(2);
     expect(next.players.filter((p) => namesLikelyMatch(p.name, 'Pepe'))).toHaveLength(0);
     expect(next.players.filter((p) => p.name === 'New Striker')).toHaveLength(1);
+  });
+
+  it('applyLiveSubstitutions mantiene 11 jugadores tras cambios tácticos (Ecuador vs Curaçao #34)', () => {
+    const { lineup, homeSubstitutions, awaySubstitutions } = ecuadorCuracaoLive34;
+    const next = applyLiveSubstitutions(lineup, homeSubstitutions, awaySubstitutions);
+
+    expect(next.home.players).toHaveLength(11);
+    expect(next.away.players).toHaveLength(11);
+    expect(next.home.players.find((p) => p.name === 'Pervis Estupiñán')).toBeUndefined();
+    expect(next.home.players.find((p) => p.name === 'Nilson Angulo')).toMatchObject({
+      subbedIn: true,
+    });
+    expect(next.away.players.find((p) => p.name === 'Juninho Bacuna')).toBeUndefined();
+    expect(next.away.players.find((p) => p.name === 'Leandro Bacuna')).toBeDefined();
   });
 });
