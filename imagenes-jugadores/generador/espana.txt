@@ -31,6 +31,10 @@ esp-marc-cucurella.png | #24 | Marc Cucurella | DF | 24 pj | 1 goles
 esp-victor-munoz.png | #25 | Víctor Muñoz | FW | 2 pj | 1 goles
 esp-borja-iglesias.png | #26 | Borja Iglesias | FW | 8 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+esp-luis-de-la-fuente.png | — | Luis de la Fuente | DT
+
 # Solo nombres (pegar en generador):
 
 David Raya
@@ -59,3 +63,4 @@ Unai Simón
 Marc Cucurella
 Víctor Muñoz
 Borja Iglesias
+Luis de la Fuente
