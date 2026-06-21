@@ -188,6 +188,12 @@ describe('lineupLiveState', () => {
     expect(next.home.players.find((p) => p.name === 'Nilson Angulo')).toMatchObject({
       subbedIn: true,
     });
+    expect(next.home.players.find((p) => p.shirtNumber === 13)).toBeDefined();
+    expect(next.home.players.find((p) => p.shirtNumber === 16)).toBeDefined();
+    const uniqueGrids = new Set(
+      next.home.players.map((p) => `${p.gridX},${p.gridY}`)
+    );
+    expect(uniqueGrids.size).toBe(11);
     expect(next.away.players.find((p) => p.name === 'Juninho Bacuna')).toBeUndefined();
     expect(next.away.players.find((p) => p.name === 'Leandro Bacuna')).toBeDefined();
   });

@@ -3,6 +3,7 @@ import {
   assignPlayersToFormation,
   resolveFormation,
   resolvePlayerPool,
+  spreadOverlappingGridPositions,
 } from '@/lib/formationLayout.js';
 import { namesLikelyMatch } from '@/lib/substitutionPhotos.js';
 
@@ -322,13 +323,28 @@ export function applySubstitutionsToLineup(lineupSide, substitutionsForSide = []
   if (needsFormationRecalc) {
     const tagged = players.map((player) => ({ ...player, side }));
     const formation = resolveFormation(tagged, lineupSide?.formation);
-    const reassigned = assignPlayersToFormation(tagged, formation, {
-      includeLeftovers: true,
+    const laidOut = assignPlayersToFormation(tagged, formation, {
+      includeLeftovers: false,
     });
-    players = finalizeLiveXi(mergePlayerMeta(reassigned, tagged, side), side, substitutions);
+    const layoutByKey = new Map(
+      laidOut.map((player) => [playerKeyFromLineupPlayer(player, side), player])
+    );
+    players = spreadOverlappingGridPositions(
+      mergePlayerMeta(
+        tagged.map((player) => {
+          const key = playerKeyFromLineupPlayer(player, side);
+          const laid = key ? layoutByKey.get(key) : null;
+          return laid ?? player;
+        }),
+        tagged,
+        side
+      )
+    );
+    players = finalizeLiveXi(players, side, substitutions);
     return { ...lineupSide, formation, players };
   }
 
+  players = spreadOverlappingGridPositions(players);
   return { ...lineupSide, players };
 }
 

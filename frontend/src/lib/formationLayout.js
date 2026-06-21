@@ -286,3 +286,45 @@ export function assignPlayersToFormation(
 
   return assigned;
 }
+
+/** Separa jugadores que comparten gridX/gridY para que no se oculten en la cancha. */
+export function spreadOverlappingGridPositions(players, { lateralStep = 10 } = {}) {
+  if (!players?.length) return players ?? [];
+
+  const entries = players.map((player, index) => ({
+    player,
+    index,
+    gridKey: `${Number(player.gridX ?? 50).toFixed(1)}:${Number(player.gridY ?? 50).toFixed(1)}`,
+  }));
+
+  const byGrid = new Map();
+  for (const entry of entries) {
+    if (!byGrid.has(entry.gridKey)) byGrid.set(entry.gridKey, []);
+    byGrid.get(entry.gridKey).push(entry);
+  }
+
+  const adjusted = new Array(players.length);
+  for (const group of byGrid.values()) {
+    if (group.length === 1) {
+      adjusted[group[0].index] = group[0].player;
+      continue;
+    }
+
+    group.sort(
+      (a, b) => (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+    );
+    const baseY = Number(group[0].player.gridY ?? 50);
+    const baseX = Number(group[0].player.gridX ?? 50);
+
+    group.forEach((entry, slot) => {
+      const offset = (slot - (group.length - 1) / 2) * lateralStep;
+      adjusted[entry.index] = {
+        ...entry.player,
+        gridX: baseX,
+        gridY: Math.min(98, Math.max(2, baseY + offset)),
+      };
+    });
+  }
+
+  return adjusted;
+}
