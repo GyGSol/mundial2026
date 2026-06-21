@@ -24,6 +24,7 @@ import pushRoutes from './routes/push.routes.js';
 import transmissionsRoutes from './routes/transmissions.routes.js';
 import economyRoutes from './routes/economy.routes.js';
 import oracleRoutes from './routes/oracle.routes.js';
+import usersRoutes from './routes/users.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 import { PLAYER_PHOTOS_DIR } from './services/playerPhotoService.js';
 
@@ -61,8 +62,10 @@ export function createApp() {
   app.use('/api/transmissions', transmissionsRoutes);
   app.use('/api/economy', economyRoutes);
   app.use('/api/oracle', oracleRoutes);
+  app.use('/api/users', usersRoutes);
 
-  if (existsSync(PLAYER_PHOTOS_DIR)) {
+  // Caricaturas: en prod se sirven desde GitHub (PLAYER_PHOTOS_GITHUB_BASE); la DB solo guarda photoKey.
+  if (env.appEnv !== 'production' && existsSync(PLAYER_PHOTOS_DIR)) {
     app.use(
       '/player-photos',
       express.static(PLAYER_PHOTOS_DIR, {
