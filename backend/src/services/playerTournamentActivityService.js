@@ -10,9 +10,13 @@ import {
 import { createInMemoryCache } from './inMemoryCache.js';
 
 const MATCHES_CACHE_KEY = 'tournament-activity-matches';
+const ROSTER_CACHE_KEY = 'tournament-activity-roster';
+const TEAMS_CACHE_KEY = 'tournament-activity-teams';
 const MATCHES_CACHE_TTL_MS = 60_000;
 
 const matchesCache = createInMemoryCache({ defaultTtlMs: MATCHES_CACHE_TTL_MS });
+const rosterCache = createInMemoryCache({ defaultTtlMs: MATCHES_CACHE_TTL_MS });
+const teamsCache = createInMemoryCache({ defaultTtlMs: MATCHES_CACHE_TTL_MS });
 
 const TRACKED_EVENT_TYPES = new Set([
   'goal',
@@ -128,6 +132,27 @@ function groupRosterByTeam(players = []) {
   return groupUnifiedRostersByTeam(players);
 }
 
+async function loadTournamentTeams() {
+  return teamsCache.getOrCompute(
+    TEAMS_CACHE_KEY,
+    () => Team.find().select('externalId fifaCode nameEn flag').lean(),
+    MATCHES_CACHE_TTL_MS
+  );
+}
+
+async function loadTournamentRoster() {
+  return rosterCache.getOrCompute(
+    ROSTER_CACHE_KEY,
+    () =>
+      Player.find()
+        .select(
+          '_id externalId fullName fifaCode teamExternalId photoKey position shirtNumber footballDataPersonId'
+        )
+        .lean(),
+    MATCHES_CACHE_TTL_MS
+  );
+}
+
 async function loadTournamentMatches() {
   return matchesCache.getOrCompute(
     MATCHES_CACHE_KEY,
@@ -216,12 +241,8 @@ export function aggregatePlayerTournamentActivity(matches, teams, players, ident
 export async function buildPlayerTournamentActivity(identity = {}) {
   const [matches, teams, players] = await Promise.all([
     loadTournamentMatches(),
-    Team.find().select('externalId fifaCode nameEn flag').lean(),
-    Player.find()
-      .select(
-        '_id externalId fullName fifaCode teamExternalId photoKey position shirtNumber footballDataPersonId'
-      )
-      .lean(),
+    loadTournamentTeams(),
+    loadTournamentRoster(),
   ]);
 
   return aggregatePlayerTournamentActivity(matches, teams, players, identity);
@@ -229,9 +250,13 @@ export async function buildPlayerTournamentActivity(identity = {}) {
 
 export function invalidatePlayerTournamentActivityCache() {
   matchesCache.invalidate(MATCHES_CACHE_KEY);
+  rosterCache.invalidate(ROSTER_CACHE_KEY);
+  teamsCache.invalidate(TEAMS_CACHE_KEY);
 }
 
 /** Test helper */
 export function clearPlayerTournamentActivityCache() {
   matchesCache.clear();
+  rosterCache.clear();
+  teamsCache.clear();
 }
