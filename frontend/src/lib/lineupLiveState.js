@@ -356,3 +356,140 @@ export function applyLiveSubstitutions(lineup, homeSubstitutions = [], awaySubst
     away: applySubstitutionsToLineup(lineup.away, awaySubstitutions, 'away'),
   };
 }
+
+function dedupeExpulsions(expulsions = []) {
+  const seen = new Set();
+  return expulsions.filter((exp) => {
+    const key = playerKeyFromParts({
+      mongoId: exp.playerMongoId,
+      externalId: exp.playerExternalId,
+      idPlayer: exp.idPlayer,
+      shirtNumber: exp.playerShirtNumber,
+      name: exp.player ?? exp.name,
+      side: exp.side,
+    });
+    const fallback = [
+      exp.side ?? '',
+      exp.minute ?? '',
+      normalizePlayerNameForMatch(exp.player ?? exp.name),
+      exp.playerShirtNumber ?? '',
+    ].join('|');
+    const dedupeKey = key ?? fallback;
+    if (seen.has(dedupeKey)) return false;
+    seen.add(dedupeKey);
+    return true;
+  });
+}
+
+/** Tarjetas rojas del timeline (incluye segunda amarilla si FIFA la emite como red_card). */
+export function extractExpulsionsFromTimeline(timeline = [], side) {
+  const expulsions = [];
+
+  for (const event of timeline) {
+    if (event?.side !== side || event.type !== 'red_card') continue;
+    expulsions.push({
+      side,
+      minute: event.minute ?? null,
+      player: event.player ?? null,
+      playerMongoId: event.playerMongoId ?? null,
+      playerExternalId: event.playerExternalId ?? null,
+      idPlayer: event.idPlayer ?? null,
+      playerShirtNumber: event.playerShirtNumber ?? null,
+      playerPosition: event.playerPosition ?? null,
+      playerPhotoUrl: event.playerPhotoUrl ?? null,
+      positionX: event.positionX ?? null,
+      positionY: event.positionY ?? null,
+    });
+  }
+
+  return dedupeExpulsions(expulsions);
+}
+
+function playerWasExpelled(player, expulsions, side) {
+  return expulsions.some((exp) => findPlayerIndex([player], exp, side) >= 0);
+}
+
+function relayoutRemainingPlayers(players, lineupSide, side) {
+  const tagged = players.map((player) => ({ ...player, side }));
+  const formation = resolveFormation(tagged, lineupSide?.formation);
+  const laidOut = assignPlayersToFormation(tagged, formation, {
+    includeLeftovers: false,
+  });
+  const layoutByKey = new Map(
+    laidOut.map((player) => [playerKeyFromLineupPlayer(player, side), player])
+  );
+  const merged = spreadOverlappingGridPositions(
+    mergePlayerMeta(
+      tagged.map((player) => {
+        const key = playerKeyFromLineupPlayer(player, side);
+        const laid = key ? layoutByKey.get(key) : null;
+        return laid ?? player;
+      }),
+      tagged,
+      side
+    )
+  );
+  return { formation, players: merged };
+}
+
+/**
+ * Saca expulsados del XI en cancha, los devuelve en expelledPlayers y reacomoda la formación.
+ */
+export function applyExpulsionsToLineup(lineupSide, timeline = [], side = 'home') {
+  const expulsions = extractExpulsionsFromTimeline(timeline, side);
+  if (!lineupSide?.players?.length || !expulsions.length) {
+    return { ...lineupSide, expelledPlayers: [] };
+  }
+
+  let players = [...lineupSide.players];
+  const expelledPlayers = [];
+
+  for (const exp of expulsions) {
+    const outIndex = findPlayerIndex(players, exp, side);
+    if (outIndex >= 0) {
+      const expelled = {
+        ...players[outIndex],
+        expelled: true,
+        expelledMinute: exp.minute ?? null,
+        photoUrl: players[outIndex].photoUrl ?? exp.playerPhotoUrl ?? null,
+      };
+      expelledPlayers.push(expelled);
+      players.splice(outIndex, 1);
+      continue;
+    }
+
+    expelledPlayers.push({
+      playerId: exp.playerMongoId ?? exp.playerExternalId ?? `exp-${exp.minute}`,
+      mongoId: exp.playerMongoId ?? null,
+      externalId: exp.playerExternalId ?? null,
+      idPlayer: exp.idPlayer ?? null,
+      name: exp.player ?? 'Jugador',
+      shirtNumber: exp.playerShirtNumber ?? null,
+      photoUrl: exp.playerPhotoUrl ?? null,
+      position: exp.playerPosition ?? null,
+      expelled: true,
+      expelledMinute: exp.minute ?? null,
+    });
+  }
+
+  players = players.filter((player) => !playerWasExpelled(player, expulsions, side));
+  const { formation, players: relaid } = relayoutRemainingPlayers(players, lineupSide, side);
+
+  return {
+    ...lineupSide,
+    formation,
+    players: relaid,
+    expelledPlayers,
+  };
+}
+
+/** Sustituciones + expulsiones en orden (cancha interactiva en vivo). */
+export function applyLiveLineupState(lineup, homeSubstitutions = [], awaySubstitutions = [], timeline = []) {
+  if (!lineup) return lineup;
+  const withSubs = applyLiveSubstitutions(lineup, homeSubstitutions, awaySubstitutions);
+  return {
+    ...withSubs,
+    home: applyExpulsionsToLineup(withSubs.home, timeline, 'home'),
+    away: applyExpulsionsToLineup(withSubs.away, timeline, 'away'),
+  };
+}

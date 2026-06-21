@@ -8,7 +8,7 @@ import {
   pitchHighlightKeyForTimeline,
 } from '@/components/lineup/PitchEventLayer.jsx';
 import { eventHasPitchCoords } from '@/lib/pitchCoordinates.js';
-import { applyLiveSubstitutions } from '@/lib/lineupLiveState.js';
+import { applyLiveLineupState } from '@/lib/lineupLiveState.js';
 import { formatSummaryPlayer } from '@/lib/playerPositionLabel.js';
 import {
   resolveSubstitutionsForSide,
@@ -165,15 +165,61 @@ function SubstitutionChangeRow({ sub, side, density = 'compact' }) {
   );
 }
 
-function SubstitutionChangesColumn({
+function ExpulsionRow({ player, side, density = 'compact' }) {
+  const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
+  const isSide = density === 'side';
+  const avatarClass = isSide ? 'h-7 w-7' : 'h-5 w-5';
+  const nameClass = isSide ? 'text-[10px] leading-tight' : 'text-[8px]';
+  const minuteClass = isSide ? 'text-[10px]' : 'text-[9px]';
+  const minuteLabel = player.expelledMinute != null ? `${player.expelledMinute}'` : '—';
+  const label = formatSummaryPlayer({
+    name: player.name,
+    position: player.position ?? player.positionDetail,
+    shirtNumber: player.shirtNumber,
+  });
+
+  return (
+    <div
+      className={cn(
+        isSide
+          ? 'grid min-h-[2.5rem] w-full grid-cols-[1.75rem_1.75rem_minmax(0,1fr)_1.15rem] items-center gap-x-1 rounded-md border border-red-200/80 bg-red-50/40 px-2 py-1.5'
+          : 'flex min-h-[2rem] w-full min-w-0 items-center gap-1 rounded-md border border-red-200/80 bg-red-50/40 px-1.5 py-1'
+      )}
+    >
+      <span className={cn(minuteClass, 'shrink-0 tabular-nums text-muted-foreground')}>{minuteLabel}</span>
+      <PlayerAvatar
+        name={player.name}
+        photoUrl={player.photoUrl}
+        size="xs"
+        className={cn('shrink-0 ring-2 ring-red-500', avatarClass, ringClass)}
+      />
+      <span
+        className={cn('min-w-0 truncate font-semibold text-red-900', nameClass)}
+        title={label || player.name}
+      >
+        {label || shortPlayerName(player.name)}
+      </span>
+      {isSide ? (
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-red-600 text-[8px] font-bold text-white">
+          ↓
+        </span>
+      ) : (
+        <span className="shrink-0 rounded bg-red-600 px-0.5 text-[6px] font-bold text-white">↓</span>
+      )}
+    </div>
+  );
+}
+
+function SideLineupChangesColumn({
   teamName,
   subs = [],
+  expulsions = [],
   side,
   className,
   align = 'start',
   density = 'compact',
 }) {
-  if (!subs.length) return null;
+  if (!subs.length && !expulsions.length) return null;
 
   return (
     <div
@@ -183,38 +229,74 @@ function SubstitutionChangesColumn({
         className
       )}
     >
-      <p
-        className={cn(
-          'font-semibold text-muted-foreground',
-          density === 'side' ? 'text-[11px]' : 'text-[9px]'
-        )}
-      >
-        {teamName} · cambios
-      </p>
-      {subs.map((sub, index) => (
-        <SubstitutionChangeRow
-          key={`${side}-${sub.minute}-${sub.playerOut}-${index}`}
-          sub={sub}
-          side={side}
-          density={density}
-        />
-      ))}
+      {subs.length > 0 ? (
+        <>
+          <p
+            className={cn(
+              'font-semibold text-muted-foreground',
+              density === 'side' ? 'text-[11px]' : 'text-[9px]'
+            )}
+          >
+            {teamName} · cambios
+          </p>
+          {subs.map((sub, index) => (
+            <SubstitutionChangeRow
+              key={`${side}-sub-${sub.minute}-${sub.playerOut}-${index}`}
+              sub={sub}
+              side={side}
+              density={density}
+            />
+          ))}
+        </>
+      ) : null}
+      {expulsions.length > 0 ? (
+        <>
+          <p
+            className={cn(
+              'font-semibold text-red-800/90',
+              density === 'side' ? 'text-[11px]' : 'text-[9px]',
+              subs.length > 0 && 'mt-1'
+            )}
+          >
+            {teamName} · expulsiones
+          </p>
+          {expulsions.map((player, index) => (
+            <ExpulsionRow
+              key={`${side}-exp-${player.shirtNumber}-${player.name}-${index}`}
+              player={player}
+              side={side}
+              density={density}
+            />
+          ))}
+        </>
+      ) : null}
     </div>
   );
 }
 
-function SubstitutionChangesPanel({ homeName, awayName, homeSubs = [], awaySubs = [] }) {
-  const hasHome = homeSubs.length > 0;
-  const hasAway = awaySubs.length > 0;
+function SideLineupChangesPanel({ homeName, awayName, homeSubs = [], awaySubs = [], homeExpulsions = [], awayExpulsions = [] }) {
+  const hasHome = homeSubs.length > 0 || homeExpulsions.length > 0;
+  const hasAway = awaySubs.length > 0 || awayExpulsions.length > 0;
   if (!hasHome && !hasAway) return null;
 
   return (
     <div className="grid w-full max-w-lg grid-cols-1 gap-1.5 sm:grid-cols-2">
       {hasHome ? (
-        <SubstitutionChangesColumn teamName={homeName} subs={homeSubs} side="home" />
+        <SideLineupChangesColumn
+          teamName={homeName}
+          subs={homeSubs}
+          expulsions={homeExpulsions}
+          side="home"
+        />
       ) : null}
       {hasAway ? (
-        <SubstitutionChangesColumn teamName={awayName} subs={awaySubs} side="away" />
+        <SideLineupChangesColumn
+          teamName={awayName}
+          subs={awaySubs}
+          expulsions={awayExpulsions}
+          side="away"
+          align="end"
+        />
       ) : null}
     </div>
   );
@@ -263,8 +345,11 @@ export default function MatchLineupSection({
 
   const liveLineup = useMemo(() => {
     if (!isInteractivePitch || !lineup || status === 'unavailable') return lineup;
-    return applyLiveSubstitutions(lineup, hydratedHomeSubs, hydratedAwaySubs);
-  }, [isInteractivePitch, lineup, status, hydratedHomeSubs, hydratedAwaySubs]);
+    return applyLiveLineupState(lineup, hydratedHomeSubs, hydratedAwaySubs, timelineEvents);
+  }, [isInteractivePitch, lineup, status, hydratedHomeSubs, hydratedAwaySubs, timelineEvents]);
+
+  const homeExpulsions = liveLineup?.home?.expelledPlayers ?? [];
+  const awayExpulsions = liveLineup?.away?.expelledPlayers ?? [];
 
   const missingCoords = isInteractivePitch ? countEventsWithoutCoords(timelineEvents) : 0;
 
@@ -317,8 +402,12 @@ export default function MatchLineupSection({
   const homeFormation = formationLine(liveLineup?.home ?? lineup?.home);
   const awayFormation = formationLine(liveLineup?.away ?? lineup?.away);
   const showUnavailableBadge = status === 'unavailable' && isInteractivePitch;
-  const showSubsPanel =
-    isInteractivePitch && (hydratedHomeSubs.length > 0 || hydratedAwaySubs.length > 0);
+  const showSidePanel =
+    isInteractivePitch &&
+    (hydratedHomeSubs.length > 0 ||
+      hydratedAwaySubs.length > 0 ||
+      homeExpulsions.length > 0 ||
+      awayExpulsions.length > 0);
   const sideColumnClass = 'hidden w-[12.5rem] shrink-0 md:flex lg:w-[14rem]';
 
   return (
@@ -363,11 +452,12 @@ export default function MatchLineupSection({
         ref={pitchSectionRef}
         className="flex w-full max-w-5xl flex-col items-center gap-2 md:flex-row md:items-start md:justify-center md:gap-2 lg:gap-3"
       >
-        {showSubsPanel ? (
-          hydratedHomeSubs.length > 0 ? (
-            <SubstitutionChangesColumn
+        {showSidePanel ? (
+          hydratedHomeSubs.length > 0 || homeExpulsions.length > 0 ? (
+            <SideLineupChangesColumn
               teamName={homeName}
               subs={hydratedHomeSubs}
+              expulsions={homeExpulsions}
               side="home"
               density="side"
               className={sideColumnClass}
@@ -391,11 +481,12 @@ export default function MatchLineupSection({
           className="w-full min-w-0 max-w-lg md:flex-1"
         />
 
-        {showSubsPanel ? (
-          hydratedAwaySubs.length > 0 ? (
-            <SubstitutionChangesColumn
+        {showSidePanel ? (
+          hydratedAwaySubs.length > 0 || awayExpulsions.length > 0 ? (
+            <SideLineupChangesColumn
               teamName={awayName}
               subs={hydratedAwaySubs}
+              expulsions={awayExpulsions}
               side="away"
               align="end"
               density="side"
@@ -427,13 +518,15 @@ export default function MatchLineupSection({
         </div>
       ) : null}
 
-      {showSubsPanel ? (
+      {showSidePanel ? (
         <div className="w-full md:hidden">
-          <SubstitutionChangesPanel
+          <SideLineupChangesPanel
             homeName={homeName}
             awayName={awayName}
             homeSubs={hydratedHomeSubs}
             awaySubs={hydratedAwaySubs}
+            homeExpulsions={homeExpulsions}
+            awayExpulsions={awayExpulsions}
           />
         </div>
       ) : null}
