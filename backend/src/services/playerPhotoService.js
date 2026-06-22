@@ -38,6 +38,7 @@ export const TEAM_FOLDER_TO_FIFA = {
   egipto: 'EGY',
   espana: 'ESP',
   francia: 'FRA',
+  inglaterra: 'ENG',
   'estados-unidos': 'USA',
   ghana: 'GHA',
   haiti: 'HAI',
