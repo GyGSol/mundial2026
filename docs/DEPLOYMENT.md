@@ -119,16 +119,27 @@ heroku releases:rollback -a mundial2026-pred
 
 Las caricaturas de jugadores **no van en el slug de Heroku** ni conviene guardar los PNG en MongoDB.
 
+**Guía completa (generar → comprimir → subir):** [PLAYER_PHOTOS.md](./PLAYER_PHOTOS.md)
+
 | Qué | Dónde |
 |-----|--------|
-| Archivo PNG | Repo GitHub `imagenes-jugadores/` (~1 GB) |
+| Archivo PNG | Repo GitHub `imagenes-jugadores/` (~100 MB comprimido; **siempre comprimir antes del push**) |
 | Referencia | MongoDB `Player.photoKey` (ej. `ecuador/ecu-nilson-angulo.png`) |
 | URL en prod | GitHub raw (`PLAYER_PHOTOS_GITHUB_BASE`, default abajo) |
+| Manifiesto | `backend/src/data/playerPhotoManifest.json` (PNG publicados en `origin/main`) |
 | Servidor local | `/player-photos/` solo en dev/QA (no en `APP_ENV=production`) |
 
 ```text
 https://raw.githubusercontent.com/GyGSol/mundial2026/main/imagenes-jugadores
 ```
+
+### Resumen rápido
+
+1. PNG en `imagenes-jugadores/{carpeta}/`
+2. **`npm run photos:compress -- {carpeta}`** (obligatorio)
+3. `git push origin main` → `npm run photos:build-manifest` → commit manifiesto si cambió
+4. `npm run sync:player-photos` (con `MONGODB_URI` de prod)
+5. Deploy Heroku solo si cambió backend/manifiesto; opcional `npm run photos:clean-local`
 
 ### Sincronizar photoKey en Mongo
 

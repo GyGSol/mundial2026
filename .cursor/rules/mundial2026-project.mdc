@@ -62,3 +62,9 @@ Tras completar cambios que el usuario pidió (features, fixes, UI):
 - Tests deben usar `getTestMongoUri()` ([`backend/src/config/testDbGuard.js`](../../backend/src/config/testDbGuard.js)); el guard bloquea URIs de prod.
 - Backups automáticos a `GyGSol/mundial2026-db-backups` al finalizar partido. Manual: `heroku run "npm run backup:push -w backend" -a mundial2026-pred`.
 - Procedimientos completos: [docs/DATABASE_BACKUP_AND_RECOVERY.md](../../docs/DATABASE_BACKUP_AND_RECOVERY.md).
+
+## Caricaturas de jugadores
+
+- **Siempre comprimir** antes de subir: `npm run photos:compress -- {carpeta}` — ver [docs/PLAYER_PHOTOS.md](../../docs/PLAYER_PHOTOS.md).
+- No `git add -A` en `imagenes-jugadores/` tras `photos:clean-local`.
+- Deploy prod de código: [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md) (`deploy:production` excluye PNG del slug Heroku).

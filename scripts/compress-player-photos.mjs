@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * Comprime caricaturas de jugadores/DT para subir a GitHub (menor peso).
- * Usa sharp (frontend). Mantiene PNG y nombres de archivo.
+ * Usa sharp. Mantiene PNG y nombres de archivo.
+ *
+ * Documentación: docs/PLAYER_PHOTOS.md
  *
  * Uso:
  *   npm run photos:compress -- austria

@@ -47,6 +47,7 @@ Tras editar `mcp.json`: **MCP Reload** en Cursor.
 - Variables sensibles solo en `.env` (nunca en git ni Engram).
 - Commits en español o inglés claro; mensaje con el *por qué*.
 - Tests: `npm test` (backend, puntuación y rutas críticas). **Nunca** con `MONGODB_URI` de prod exportada — ver [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md).
+- **Caricaturas:** siempre `npm run photos:compress` antes de `git push` de PNG — ver [docs/PLAYER_PHOTOS.md](./docs/PLAYER_PHOTOS.md).
 - **Deploy:** QA local primero → confirmación del usuario → prod. Ver [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md). **No** hacer `git push heroku main` sin que el usuario lo pida explícitamente.
 - **Base local:** antes de `backup:push` o `db:clone-from-prod`, **preguntar** al usuario si quiere actualizar `mundial2026_local` con los datos actuales de prod. No refrescar sin un sí explícito.
 
