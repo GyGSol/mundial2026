@@ -106,6 +106,11 @@ describe('playerPhotoService', () => {
     expect(url).toMatch(/\/player-photos\/|raw\.githubusercontent\.com/);
   });
 
+  it('no devuelve URL si el PNG no está publicado en origin/main', () => {
+    expect(resolvePlayerPhotoUrl('austria/aut-david-alaba.png')).toBe('');
+    expect(resolvePlayerPhotoUrl('argentina/arg-lionel-scaloni.png')).toBe('');
+  });
+
   it('construye photoKey del DT con la misma convención que jugadores', () => {
     expect(buildCoachPhotoKey('SCO', 'Steve Clarke')).toBe('escocia/sco-steve-clarke.png');
     expect(buildCoachPhotoKey('MAR', 'Mohamed Ouahbi')).toBe('marruecos/mar-mohamed-ouahbi.png');

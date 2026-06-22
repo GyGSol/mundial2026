@@ -8,3 +8,4 @@ backend/public/
 *.log
 .DS_Store
 *.zip
+imagenes-jugadores/.originals/
