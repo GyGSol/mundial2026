@@ -110,6 +110,173 @@ export async function recordValidationError(matchId) {
   return { recorded: true, id: doc._id, mseError };
 }
 
+/**
+ * Replay Oracle sobre contexto pre-partido guardado y enriquece TrainingBuffer.
+ * No modifica la predicción publicada ni el leaderboard.
+ */
+export async function replayOracleLearningForMatch(matchId, { fetchImpl, force = false } = {}) {
+  const aiUser = await getAiUser();
+  if (!aiUser) return { replayed: false, reason: 'no_ai_user' };
+
+  const match = await Match.findById(matchId).lean();
+  if (!match || match.status !== 'finished') {
+    return { replayed: false, reason: 'not_finished' };
+  }
+  if (match.homeScore == null || match.awayScore == null) {
+    return { replayed: false, reason: 'no_score' };
+  }
+
+  const actualScoreKey = matchResultScoreKey(match);
+  if (!actualScoreKey) return { replayed: false, reason: 'no_score_key' };
+
+  const buffer = await TrainingBuffer.findOne({ matchId: match._id, actualScoreKey }).lean();
+  if (!force && buffer?.shadowOracle?.replayedAt && buffer?.oracleMeta?.confidence_interval != null) {
+    return { replayed: false, reason: 'already_replayed', shadowMse: buffer.shadowOracle.mseError };
+  }
+
+  const log = await AiCompetitorPredictionLog.findOne({
+    matchId: match._id,
+    userId: aiUser._id,
+    isSimulation: { $ne: true },
+    promptContext: { $exists: true, $ne: null },
+  })
+    .sort({ createdAt: -1 })
+    .select('promptContext finalResponse')
+    .lean();
+
+  const promptContext = log?.promptContext ?? buffer?.promptContext;
+  if (!promptContext) {
+    return { replayed: false, reason: 'no_prompt_context' };
+  }
+
+  if (!force && log?.finalResponse?.oracle) {
+    const oracleMeta = log.finalResponse.oracle;
+    const shadowScore = {
+      home: log.finalResponse.homeGoals ?? 0,
+      away: log.finalResponse.awayGoals ?? 0,
+    };
+    const shadowMse = computeScoreMse(shadowScore, {
+      home: match.homeScore,
+      away: match.awayScore,
+    });
+    await TrainingBuffer.findOneAndUpdate(
+      { matchId: match._id, actualScoreKey },
+      {
+        $set: {
+          oracleMeta: {
+            confidence_interval: oracleMeta.confidence_interval ?? null,
+            error_reduction_factor: oracleMeta.error_reduction_factor ?? null,
+            key_variable_impact: oracleMeta.key_variable_impact ?? null,
+          },
+          shadowOracle: {
+            predictedScore: shadowScore,
+            mseError: shadowMse,
+            source: log.finalResponse.source ?? 'cerebras-oracle',
+            replayedAt: new Date(),
+            usedStoredContext: true,
+          },
+          promptContext,
+        },
+      },
+      { upsert: false }
+    );
+    return {
+      replayed: true,
+      fromLog: true,
+      shadowScore,
+      shadowMse,
+      source: log.finalResponse.source,
+    };
+  }
+
+  const { predictScoreFromAuditContext } = await import('./predictiveModelingService.js');
+  const oracleResult = await predictScoreFromAuditContext(promptContext, { fetchImpl });
+  if (!oracleResult) {
+    return { replayed: false, reason: 'oracle_empty' };
+  }
+
+  const shadowScore = {
+    home: oracleResult.homeGoals,
+    away: oracleResult.awayGoals,
+  };
+  const shadowMse = computeScoreMse(shadowScore, {
+    home: match.homeScore,
+    away: match.awayScore,
+  });
+
+  const prediction = await Prediction.findOne({
+    userId: aiUser._id,
+    matchId: match._id,
+    predictionSource: 'ai',
+  })
+    .select('_id')
+    .lean();
+
+  const oracleMeta = oracleResult.oracle
+    ? {
+        confidence_interval: oracleResult.oracle.confidence_interval ?? null,
+        error_reduction_factor: oracleResult.oracle.error_reduction_factor ?? null,
+        key_variable_impact: oracleResult.oracle.key_variable_impact ?? null,
+      }
+    : null;
+
+  await TrainingBuffer.findOneAndUpdate(
+    { matchId: match._id, actualScoreKey },
+    {
+      $set: {
+        ...(prediction ? { predictionId: prediction._id } : {}),
+        promptContext,
+        oracleMeta,
+        shadowOracle: {
+          predictedScore: shadowScore,
+          mseError: shadowMse,
+          source: oracleResult.source ?? 'cerebras-oracle',
+          replayedAt: new Date(),
+          usedStoredContext: true,
+        },
+      },
+    },
+    { upsert: Boolean(prediction) }
+  );
+
+  return {
+    replayed: true,
+    fromLog: false,
+    shadowScore,
+    shadowMse,
+    source: oracleResult.source,
+  };
+}
+
+/** Partidos finalizados del bot IA elegibles para backfill de aprendizaje. */
+export async function listFinishedMatchesForAiLearning({ externalIds = [] } = {}) {
+  const aiUser = await getAiUser();
+  if (!aiUser) return [];
+
+  const matchQuery = {
+    status: 'finished',
+    homeScore: { $ne: null },
+    awayScore: { $ne: null },
+  };
+  if (externalIds.length) {
+    matchQuery.externalId = { $in: externalIds.map(String) };
+  }
+
+  const matches = await Match.find(matchQuery).sort({ kickoffAt: 1 }).lean();
+  if (!matches.length) return [];
+
+  const preds = await Prediction.find({
+    userId: aiUser._id,
+    matchId: { $in: matches.map((m) => m._id) },
+    predictionSource: 'ai',
+  })
+    .select('matchId pointsEarned')
+    .lean();
+
+  const predMatchIds = new Set(preds.map((p) => String(p.matchId)));
+  return matches.filter((m) => predMatchIds.has(String(m._id)));
+}
+
 export async function listUnexportedTrainingBuffer({ limit = 500 } = {}) {
   return TrainingBuffer.find({ exportedAt: null })
     .sort({ createdAt: 1 })
@@ -128,29 +295,37 @@ export async function markTrainingBufferExported(ids = []) {
 
 function buildExportPromptFromRow(row) {
   const ctx = row.promptContext;
-  const home = ctx?.match?.homeTeamId ?? ctx?.homeTeam?.code ?? '?';
-  const away = ctx?.match?.awayTeamId ?? ctx?.awayTeam?.code ?? '?';
+  const home = ctx?.match?.homeTeamId ?? ctx?.homeTeam?.code ?? ctx?.homeTeam?.name ?? '?';
+  const away = ctx?.match?.awayTeamId ?? ctx?.awayTeam?.code ?? ctx?.awayTeam?.name ?? '?';
   const group = ctx?.match?.group ?? ctx?.group ?? '';
+  const shadow = row.shadowOracle?.predictedScore;
+  const predHome = shadow?.home ?? row.predictedScore.home;
+  const predAway = shadow?.away ?? row.predictedScore.away;
+  const mseForTraining = row.shadowOracle?.mseError ?? row.mseError;
   return (
     `Mundial 2026${group ? ` grupo ${group}` : ''}\n` +
     `Local: ${home}\nVisitante: ${away}\n` +
-    `Predicción previa Oracle: ${row.predictedScore.home}-${row.predictedScore.away}\n` +
+    `Predicción previa Oracle: ${predHome}-${predAway}\n` +
     `Resultado real: ${row.actualScore.home}-${row.actualScore.away}\n` +
+    `Error MSE: ${Number(mseForTraining).toFixed(2)}\n` +
     `Corrige el patrón para minimizar MSE en futuros partidos similares.`
   );
 }
 
 export function serializeTrainingBufferRow(row, { adminFeedback = null } = {}) {
+  const trainingMse = row.shadowOracle?.mseError ?? row.mseError;
   return {
     prompt: buildExportPromptFromRow(row),
     completion: `${row.actualScore.home}-${row.actualScore.away}`,
-    mseError: row.mseError,
-    sample_weight: 1 + row.mseError,
+    mseError: trainingMse,
+    sample_weight: 1 + trainingMse,
     metadata: {
       source: 'trainingBuffer',
       tournament: 2026,
       phase: 'mundial2026',
-      mse_error: row.mseError,
+      mse_error: trainingMse,
+      published_mse_error: row.mseError,
+      shadow_oracle: row.shadowOracle?.source ?? null,
       matchId: String(row.matchId),
       goal_timings: (row.microEvents ?? [])
         .filter((e) => e.type === 'goal')

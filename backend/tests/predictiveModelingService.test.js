@@ -2,6 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   parseOracleStructuredResponse,
   predictScore,
+  callCerebrasOracleViaFetch,
+  buildOraclePromptFromFrozenContext,
   resetLiveAdjustmentCacheForTests,
 } from '../src/services/predictiveModelingService.js';
 import { env } from '../src/config/env.js';
@@ -63,6 +65,62 @@ describe('predictiveModelingService', () => {
       });
       expect(score).toBeNull();
       env.cerebrasApiKey = prev;
+    });
+  });
+
+  describe('callCerebrasOracleViaFetch', () => {
+    it('parsea respuesta Oracle vía fetch mock', async () => {
+      const prev = env.cerebrasApiKey;
+      env.cerebrasApiKey = 'test-key';
+
+      const oracleJson = JSON.stringify({
+        home_goals: 2,
+        away_goals: 1,
+        confidence_interval: 0.8,
+        reasoning: '**Forma:** local superior.',
+        key_variable_impact: 'Ranking FIFA',
+        error_reduction_factor: 0.2,
+      });
+
+      const fetchImpl = vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{ message: { content: oracleJson } }],
+        }),
+      }));
+
+      const result = await callCerebrasOracleViaFetch('prompt test', { fetchImpl });
+      expect(result).toMatchObject({
+        homeGoals: 2,
+        awayGoals: 1,
+        source: 'cerebras-oracle',
+      });
+      expect(fetchImpl).toHaveBeenCalledOnce();
+
+      env.cerebrasApiKey = prev;
+    });
+
+    it('devuelve null sin API key', async () => {
+      const prev = env.cerebrasApiKey;
+      env.cerebrasApiKey = '';
+      const result = await callCerebrasOracleViaFetch('x', {
+        fetchImpl: vi.fn(),
+      });
+      expect(result).toBeNull();
+      env.cerebrasApiKey = prev;
+    });
+  });
+
+  describe('buildOraclePromptFromFrozenContext', () => {
+    it('incluye equipos del contexto congelado', () => {
+      const prompt = buildOraclePromptFromFrozenContext({
+        homeTeam: { name: 'Francia', code: 'FRA' },
+        awayTeam: { name: 'Irak', code: 'IRQ' },
+        match: { group: 'A' },
+      });
+      expect(prompt).toContain('Francia');
+      expect(prompt).toContain('Irak');
     });
   });
 });

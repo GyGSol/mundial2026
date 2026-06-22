@@ -1,4 +1,3 @@
-import Cerebras from '@cerebras/cerebras_cloud_sdk';
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { env } from '../config/env.js';
@@ -7,6 +6,7 @@ import {
   AI_COMPETITOR_SCORING_INSTRUCTIONS,
   WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
   clampGoals,
+  createFetchWithTimeout,
   getAiUser,
   parseGeminiJsonResponse,
 } from './aiPredictionService.js';
@@ -17,6 +17,8 @@ import {
 } from './aiPromptHumanizer.js';
 
 const SOURCE = 'cerebras-oracle';
+const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
+const ORACLE_FETCH_TIMEOUT_MS = 120_000;
 const liveAdjustmentCache = new Map();
 
 /** Instrucciones exclusivas del esquema Oracle (razonamiento largo + jerarquía de señales). */
@@ -30,16 +32,6 @@ export const ORACLE_REASONING_INSTRUCTIONS = `RAZONAMIENTO ORACLE (campos reason
 - El ranking FIFA NO puede ser el factor principal ni la única justificación. Usalo solo como desempate fino.
 - "key_variable_impact": UNA frase con el factor más determinante que NO sea solo "ranking FIFA".
 - El marcador debe seguir guiaPrioridadContexto; con PJ=0 priorizá pre-torneo y clasificación, no inventes puntos o posiciones en tabla 2026.`;
-
-let cerebrasClient = null;
-
-function getCerebrasClient() {
-  if (!env.cerebrasApiKey) return null;
-  if (!cerebrasClient) {
-    cerebrasClient = new Cerebras({ apiKey: env.cerebrasApiKey });
-  }
-  return cerebrasClient;
-}
 
 function buildOracleCompetitorPrompt(context, { liveState = null } = {}) {
   const liveBlock = liveState
@@ -70,6 +62,36 @@ Contexto del partido:
 ${JSON.stringify(humanizeCompetitorPromptContext(context), null, 2)}`;
 }
 
+/** Replay de aprendizaje con contexto congelado del audit log (pre-partido). */
+export function buildOraclePromptFromFrozenContext(promptContext, { liveState = null } = {}) {
+  const liveBlock = liveState
+    ? `\nESTADO EN VIVO:
+Marcador actual: ${liveState.homeScore}-${liveState.awayScore}
+Minuto: ${liveState.minute ?? 'desconocido'}
+`
+    : '';
+
+  return `Sos Predictive Modeling (Oracle), competidor oficial del Mundial 2026. Predecí el marcador final que maximice puntos y minimice error (Gdif → 0).
+
+${WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS}
+
+${AI_COMPETITOR_SCORING_INSTRUCTIONS}
+
+${WORLD_CUP_USER_FACING_LANGUAGE_RULES}
+
+${ORACLE_REASONING_INSTRUCTIONS}
+${liveBlock}
+Respondé con el esquema JSON estricto:
+- home_goals / away_goals: enteros 0-10
+- confidence_interval: 0-1 (certeza del marcador)
+- reasoning: explicación completa en español (3-6 oraciones o lista; ver reglas arriba)
+- key_variable_impact: factor más determinante en una frase (no solo ranking FIFA)
+- error_reduction_factor: 0-1 estimación de reducción de error vs baseline
+
+Contexto del partido (snapshot pre-partido):
+${JSON.stringify(promptContext, null, 2)}`;
+}
+
 export function parseOracleStructuredResponse(raw) {
   const parsed = typeof raw === 'string' ? parseGeminiJsonResponse(raw) : raw;
   if (!parsed || typeof parsed !== 'object') return null;
@@ -90,9 +112,7 @@ export function parseOracleStructuredResponse(raw) {
 
   const keyImpact = String(parsed.key_variable_impact ?? '').trim();
   const reasoningRaw = String(parsed.reasoning ?? '').trim();
-  const reasoning = sanitizeAiUserFacingText(
-    reasoningRaw || keyImpact
-  );
+  const reasoning = sanitizeAiUserFacingText(reasoningRaw || keyImpact);
   const keyVariable = sanitizeAiUserFacingText(keyImpact || reasoningRaw);
 
   return {
@@ -125,43 +145,90 @@ function oracleToLegacyScore(oracleResult) {
   };
 }
 
-async function callCerebrasOracle(context, { liveState = null, client = getCerebrasClient() } = {}) {
-  if (!client) return null;
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  const useStructured = env.oracleStructuredOutput !== false;
-  const messages = [{ role: 'user', content: buildOracleCompetitorPrompt(context, { liveState }) }];
+/**
+ * Inferencia Oracle vía fetch (compatible Node 24 / Heroku).
+ * El SDK @cerebras/cerebras_cloud_sdk falla con "Premature close" en Node 24.
+ */
+export async function callCerebrasOracleViaFetch(
+  prompt,
+  { fetchImpl = fetch, maxAttempts = 2, useStructured = env.oracleStructuredOutput !== false } = {}
+) {
+  if (!env.cerebrasApiKey) return null;
 
-  const request = {
+  const body = {
     model: env.aiCerebrasModel,
-    messages,
+    messages: [{ role: 'user', content: prompt }],
     temperature: 0.35,
   };
 
   if (useStructured) {
-    request.response_format = ORACLE_RESPONSE_FORMAT;
+    body.response_format = ORACLE_RESPONSE_FORMAT;
   } else {
-    request.response_format = { type: 'json_object' };
+    body.response_format = { type: 'json_object' };
   }
 
-  const completion = await client.chat.completions.create(request);
-  const text = String(completion?.choices?.[0]?.message?.content ?? '').trim();
-  if (!text) return null;
+  let lastError = null;
+  const attempts = Math.max(1, Math.min(maxAttempts, 3));
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetchImpl(CEREBRAS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.cerebrasApiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
 
-  const oracleParsed = parseOracleStructuredResponse(text);
-  if (oracleParsed) return oracleParsed;
+      if (response.status === 429 && attempt < attempts - 1) {
+        await sleep(1000 * (attempt + 1));
+        continue;
+      }
 
-  const legacy = parseGeminiJsonResponse(text);
-  if (legacy?.homeGoals != null && legacy?.awayGoals != null) {
-    return {
-      homeGoals: clampGoals(legacy.homeGoals) ?? 1,
-      awayGoals: clampGoals(legacy.awayGoals) ?? 1,
-      reasoning: sanitizeAiUserFacingText(String(legacy.reasoning ?? '').trim()),
-      source: SOURCE,
-      oracle: null,
-    };
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        throw new Error(`Cerebras HTTP ${response.status}: ${errText.slice(0, 200)}`);
+      }
+
+      const data = await response.json();
+      const text = String(data?.choices?.[0]?.message?.content ?? '').trim();
+      if (!text) return null;
+
+      const oracleParsed = parseOracleStructuredResponse(text);
+      if (oracleParsed) return oracleParsed;
+
+      const legacy = parseGeminiJsonResponse(text);
+      if (legacy?.homeGoals != null && legacy?.awayGoals != null) {
+        return {
+          homeGoals: clampGoals(legacy.homeGoals) ?? 1,
+          awayGoals: clampGoals(legacy.awayGoals) ?? 1,
+          reasoning: sanitizeAiUserFacingText(String(legacy.reasoning ?? '').trim()),
+          source: SOURCE,
+          oracle: null,
+        };
+      }
+
+      return null;
+    } catch (err) {
+      lastError = err;
+      if (attempt < attempts - 1) {
+        await sleep(800 * (attempt + 1));
+      }
+    }
   }
 
+  console.warn('Oracle Cerebras fetch failed:', lastError?.message ?? lastError);
   return null;
+}
+
+async function callCerebrasOracle(context, { liveState = null, fetchImpl, maxAttempts } = {}) {
+  const prompt = buildOracleCompetitorPrompt(context, { liveState });
+  const timedFetch = fetchImpl ?? createFetchWithTimeout(ORACLE_FETCH_TIMEOUT_MS);
+  return callCerebrasOracleViaFetch(prompt, { fetchImpl: timedFetch, maxAttempts });
 }
 
 /** Único punto de inferencia Oracle para marcadores del competidor IA. */
@@ -173,6 +240,28 @@ export async function predictScore(context, options = {}) {
     if (result) return oracleToLegacyScore(result);
   } catch (err) {
     console.warn('Oracle predictScore failed:', err?.message ?? err);
+  }
+
+  return null;
+}
+
+/** Replay Oracle sobre contexto guardado en audit log (no altera predicciones publicadas). */
+export async function predictScoreFromAuditContext(promptContext, options = {}) {
+  if (!promptContext || !env.cerebrasApiKey) return null;
+
+  const prompt = buildOraclePromptFromFrozenContext(promptContext, {
+    liveState: options.liveState ?? null,
+  });
+  const timedFetch = options.fetchImpl ?? createFetchWithTimeout(ORACLE_FETCH_TIMEOUT_MS);
+
+  try {
+    const result = await callCerebrasOracleViaFetch(prompt, {
+      fetchImpl: timedFetch,
+      maxAttempts: options.maxAttempts ?? 2,
+    });
+    if (result) return oracleToLegacyScore(result);
+  } catch (err) {
+    console.warn('Oracle replay failed:', err?.message ?? err);
   }
 
   return null;

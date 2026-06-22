@@ -27,6 +27,7 @@
     "ai:backfill-missing": "node src/scripts/backfillMissingAiPredictions.js",
     "ai:evaluate": "node src/scripts/evaluateAiPredictions.js",
     "ai:backfill-calibration-hints": "node src/scripts/backfillPostMatchCalibrationHints.js",
+    "ai:backfill-learning": "node src/scripts/backfillAiLearningFromHistory.js",
     "oracle:export": "node src/scripts/exportTrainingBuffer.js",
     "backup:db": "node src/scripts/backupDatabase.js",
     "backup:push": "node src/scripts/pushDatabaseBackup.js",
