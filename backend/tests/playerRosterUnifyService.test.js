@@ -64,6 +64,12 @@ describe('playerRosterUnifyService', () => {
         { fullName: 'Firas Al-Buraikan', fifaCode: 'KSA' }
       )
     ).toBe(true);
+    expect(
+      areSamePlayer(
+        { fullName: 'Mohanad Lashin', fifaCode: 'EGY' },
+        { fullName: 'Mohanad Lasheen', fifaCode: 'EGY' }
+      )
+    ).toBe(true);
   });
 
   it('pickCanonicalPlayer prefiere plantel oficial con foto', () => {

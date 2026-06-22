@@ -6,7 +6,7 @@ import {
 } from './footballDataApiClient.js';
 import { enrichClubFields } from './clubMetaService.js';
 import { buildCompactPerformanceContext } from './playerPerformanceContextService.js';
-import { resolvePlayerPhotoUrl } from './playerPhotoService.js';
+import { resolvePlayerPhotoKey, resolvePlayerPhotoUrl } from './playerPhotoService.js';
 
 const POSITION_LABELS = {
   GK: 'Portero',
@@ -25,13 +25,20 @@ function serializePlayer(player, teamMap) {
   const team = teamMap.get(player.teamExternalId);
   const club = enrichClubFields(player);
 
+  const fifaCode = player.fifaCode || team?.fifaCode || '';
+  const photoKey = resolvePlayerPhotoKey({
+    photoKey: player.photoKey,
+    fifaCode,
+    fullName: player.fullName,
+  });
+
   return {
     id: player._id.toString(),
     externalId: player.externalId,
     fullName: player.fullName,
     teamExternalId: player.teamExternalId,
     teamName: team?.nameEn ?? '',
-    fifaCode: player.fifaCode || team?.fifaCode || '',
+    fifaCode,
     flag: team?.flag ?? '',
     position: player.position,
     positionLabel: POSITION_LABELS[player.position] || player.position,
@@ -49,7 +56,7 @@ function serializePlayer(player, teamMap) {
     isStarter: player.lineupStatus === 'starter',
     recentMatches: player.recentMatches ?? [],
     stats: buildCompactPerformanceContext(player),
-    photoUrl: resolvePlayerPhotoUrl(player.photoKey) || null,
+    photoUrl: resolvePlayerPhotoUrl(photoKey) || null,
   };
 }
 
