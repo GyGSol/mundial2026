@@ -76,9 +76,15 @@ async function main() {
     stdio: 'inherit',
   });
   if (merge.status !== 0) {
-    console.error('\nMerge falló. Revisá divergencia entre origin/main y heroku/main.\n');
-    cleanup(originalBranch);
-    process.exit(1);
+    console.log('→ Resolviendo conflicto de imagenes-jugadores/ (modify/delete en deploy)…');
+    spawnSync('git', ['rm', '-rf', '--cached', '--ignore-unmatch', IMAGES_DIR], { stdio: 'inherit' });
+    spawnSync('rm', ['-rf', IMAGES_DIR]);
+    const addCode = spawnSync('git', ['add', '-u'], { stdio: 'inherit' });
+    if (addCode.status !== 0) {
+      console.error('\nNo se pudo resolver el merge para deploy.\n');
+      cleanup(originalBranch);
+      process.exit(1);
+    }
   }
 
   console.log(`→ Quitando ${IMAGES_DIR}/ del árbol de deploy…`);
