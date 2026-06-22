@@ -83,6 +83,7 @@ export const FIFA_TO_PHOTO_FOLDER = {
   EGY: 'egipto',
   ESP: 'espana',
   FRA: 'francia',
+  ENG: 'inglaterra',
   GHA: 'ghana',
   HAI: 'haiti',
   IRN: 'iran',
