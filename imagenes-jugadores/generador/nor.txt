@@ -30,6 +30,7 @@ nor-jens-petter-hauge.png | #23 | Jens Petter Hauge | MF | 15 pj | 1 goles
 nor-sondre-langas.png | #24 | Sondre Langås | DF | 3 pj | 0 goles
 nor-henrik-falchener.png | #25 | Henrik Falchener | DF | 1 pj | 0 goles
 nor-julian-ryerson.png | #26 | Julian Ryerson | DF | 43 pj | 1 goles
+nor-stale-solbakken.png | — | Ståle Solbakken | DT
 
 # Solo nombres (pegar en generador):
 

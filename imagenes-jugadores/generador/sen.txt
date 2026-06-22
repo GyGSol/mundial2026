@@ -30,6 +30,7 @@ sen-mory-diaw.png | #23 | Mory Diaw | GK | 5 pj | 0 goles
 sen-antoine-mendy.png | #24 | Antoine Mendy | DF | 7 pj | 0 goles
 sen-el-hadji-malick-diouf.png | #25 | El Hadji Malick Diouf | DF | 20 pj | 1 goles
 sen-pape-gueye.png | #26 | Pape Gueye | MF | 41 pj | 5 goles
+sen-pape-thiaw.png | — | Pape Thiaw | DT
 
 # Solo nombres (pegar en generador):
 
