@@ -31,6 +31,10 @@ aut-paul-wanner.png | #24 | Paul Wanner | MF | 3 pj | 0 goles
 aut-michael-svoboda.png | #25 | Michael Svoboda | DF | 4 pj | 0 goles
 aut-alessandro-schopf.png | #26 | Alessandro Schöpf | MF | 35 pj | 6 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+aut-ralf-rangnick.png | — | Ralf Rangnick | DT
+
 # Solo nombres (pegar en generador):
 
 Alexander Schlager

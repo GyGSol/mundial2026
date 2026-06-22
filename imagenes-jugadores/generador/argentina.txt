@@ -31,6 +31,10 @@ arg-enzo-fernandez.png | #24 | Enzo Fernández | MF | 42 pj | 6 goles
 arg-facundo-medina.png | #25 | Facundo Medina | DF | 9 pj | 0 goles
 arg-nahuel-molina.png | #26 | Nahuel Molina | DF | 58 pj | 1 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+arg-lionel-scaloni.png | — | Lionel Scaloni | DT
+
 # Solo nombres (pegar en generador):
 
 Juan Musso

@@ -7,6 +7,7 @@ import {
 import { enrichClubFields } from './clubMetaService.js';
 import { buildCompactPerformanceContext } from './playerPerformanceContextService.js';
 import { resolvePlayerPhotoKey, resolvePlayerPhotoUrl } from './playerPhotoService.js';
+import { unifyTeamPlayerDocuments } from './playerRosterUnifyService.js';
 
 const POSITION_LABELS = {
   GK: 'Portero',
@@ -96,6 +97,25 @@ function buildListPipeline(filter, { status, skip, limit }) {
   return pipeline;
 }
 
+function sortUnifiedPlayers(players, status) {
+  if (status === 'priority') {
+    const healthOrder = { injured: 0, doubt: 1 };
+    return [...players].sort((a, b) => {
+      const healthA = healthOrder[a.healthStatus] ?? 2;
+      const healthB = healthOrder[b.healthStatus] ?? 2;
+      if (healthA !== healthB) return healthA - healthB;
+      const starterA = a.lineupStatus === 'starter' ? 0 : 1;
+      const starterB = b.lineupStatus === 'starter' ? 0 : 1;
+      if (starterA !== starterB) return starterA - starterB;
+      return String(a.fullName).localeCompare(String(b.fullName), 'es');
+    });
+  }
+
+  return [...players].sort((a, b) =>
+    String(a.fullName).localeCompare(String(b.fullName), 'es')
+  );
+}
+
 export async function listPlayers({
   page = 1,
   limit = 24,
@@ -134,6 +154,23 @@ export async function listPlayers({
   }
 
   const skip = (safePage - 1) * safeLimit;
+
+  if (team) {
+    const all = await Player.find(filter).lean();
+    const unified = sortUnifiedPlayers(unifyTeamPlayerDocuments(all), safeStatus);
+    const items = unified.slice(skip, skip + safeLimit);
+    const teamMap = await buildTeamMap();
+
+    return {
+      players: items.map((p) => serializePlayer(p, teamMap)),
+      total: unified.length,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.max(1, Math.ceil(unified.length / safeLimit)),
+      status: safeStatus,
+    };
+  }
+
   const pipeline = buildListPipeline(filter, { status: safeStatus, skip, limit: safeLimit });
 
   const [items, total] = await Promise.all([

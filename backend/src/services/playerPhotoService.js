@@ -13,7 +13,7 @@ export const PLAYER_PHOTOS_DIR = join(REPO_ROOT, 'imagenes-jugadores');
 export const GENERATOR_TXT_DIR = join(PLAYER_PHOTOS_DIR, 'generador');
 
 const GENERATOR_LINE =
-  /^([a-z0-9-]+\.png)\s+\|\s+#\d+\s+\|\s+([^|]+?)(?:\s+\([^)]*\))?\s+\|/i;
+  /^([a-z0-9-]+\.png)\s+\|\s+(?:#\d+|—|-)\s+\|\s+([^|]+?)(?:\s+\([^)]*\))?\s+\|/i;
 
 /** Carpetas en imagenes-jugadores → código FIFA */
 export const TEAM_FOLDER_TO_FIFA = {
@@ -84,6 +84,35 @@ export function buildPhotoKey(folder, filename) {
   return `${folder}/${filename}`;
 }
 
+/** PNG publicados en origin/main — evita URLs 404 en prod sin imagenes-jugadores/. */
+let photoManifest = null;
+
+function loadPhotoManifest() {
+  if (photoManifest) return photoManifest;
+
+  photoManifest = new Set();
+  try {
+    const manifestPath = join(__dirname, '../data/playerPhotoManifest.json');
+    const keys = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    for (const key of keys) {
+      if (key) photoManifest.add(String(key));
+    }
+  } catch {
+    photoManifest = new Set();
+  }
+
+  return photoManifest;
+}
+
+export function isPhotoKeyPublished(photoKey) {
+  if (!photoKey) return false;
+
+  const localPath = join(PLAYER_PHOTOS_DIR, photoKey);
+  if (existsSync(localPath)) return true;
+
+  return loadPhotoManifest().has(photoKey);
+}
+
 export function resolvePlayerPhotoUrl(photoKey) {
   if (!photoKey) return '';
 
@@ -91,6 +120,8 @@ export function resolvePlayerPhotoUrl(photoKey) {
   if (existsSync(localPath)) {
     return `/player-photos/${photoKey.split('/').map(encodeURIComponent).join('/')}`;
   }
+
+  if (!loadPhotoManifest().has(photoKey)) return '';
 
   const base = env.playerPhotosGithubBase?.replace(/\/$/, '');
   return base ? `${base}/${photoKey}` : '';
