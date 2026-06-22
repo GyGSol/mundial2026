@@ -9,6 +9,7 @@ import {
   spreadMidCenterClusters,
   spreadMidfieldLineOverlaps,
   spreadOverlappingGridPositions,
+  spreadCoLocatedPlayers,
   spreadSamePositionOverlaps,
 } from './formationLayout.js';
 
@@ -51,8 +52,8 @@ describe('formationLayout center forwards', () => {
     ];
 
     const next = spreadOverlappingGridPositions(players);
-    expect(next[0].gridY).toBe(40);
-    expect(next[1].gridY).toBe(60);
+    expect(next[0].gridY).not.toBe(next[1].gridY);
+    expect(Math.abs(next[0].gridY - next[1].gridY)).toBeGreaterThanOrEqual(14);
   });
 
   it('spreadSamePositionOverlaps abre dos MI o dos MC en línea horizontal', () => {
@@ -69,6 +70,26 @@ describe('formationLayout center forwards', () => {
     ];
     const mcNext = spreadSamePositionOverlaps(twoMc);
     expect(Math.abs(mcNext[0].gridY - mcNext[1].gridY)).toBeGreaterThanOrEqual(16);
+  });
+
+  it('spreadCoLocatedPlayers separa MD y MCO en la misma celda', () => {
+    const players = [
+      { name: 'Araujo', shirtNumber: 20, position: 'MID', positionDetail: 'MD', gridX: 64, gridY: 50 },
+      { name: 'Sanabria', shirtNumber: 25, position: 'MID', positionDetail: 'MCO', gridX: 64, gridY: 50 },
+    ];
+
+    const next = spreadCoLocatedPlayers(players);
+    expect(Math.abs(next[0].gridY - next[1].gridY)).toBeGreaterThanOrEqual(16);
+  });
+
+  it('spreadOverlappingGridPositions separa MD y MCO superpuestos', () => {
+    const players = [
+      { name: 'Araujo', shirtNumber: 20, position: 'MID', positionDetail: 'MD', gridX: 64, gridY: 50 },
+      { name: 'Sanabria', shirtNumber: 25, position: 'MID', positionDetail: 'MCO', gridX: 64, gridY: 50 },
+    ];
+
+    const next = spreadOverlappingGridPositions(players);
+    expect(Math.abs(next[0].gridY - next[1].gridY)).toBeGreaterThanOrEqual(16);
   });
 });
 

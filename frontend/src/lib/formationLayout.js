@@ -1,5 +1,7 @@
 /** Posiciones en cancha (0–100) según formación táctica — espejo de backend/src/utils/formationLayout.js */
 
+import { inferTacticalPosition } from './playerPositionLabel.js';
+
 const DEFAULT_FORMATION = '4-3-3';
 const LINE_POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
 
@@ -274,6 +276,100 @@ function slotsForSamePositionToken(count, token, anchorY) {
   return anchoredLateralSlots(count, anchorY, { minStep: count === 2 ? 18 : 14 });
 }
 
+const TACTICAL_POSITION_TOKENS = new Set([
+  'POR',
+  'GK',
+  'LI',
+  'LD',
+  'DFC',
+  'MI',
+  'MD',
+  'MCD',
+  'MCO',
+  'MC',
+  'EI',
+  'ED',
+  'DC',
+  'CF',
+  'ST',
+]);
+
+/** Misma lógica que la etiqueta en cancha (MD, MCO, MI…) a partir de rol + coords. */
+function tacticalLateralSortKey(player) {
+  const token = positionToken(player);
+  if (TACTICAL_POSITION_TOKENS.has(token)) {
+    return lateralSortKey({ position: token, positionDetail: token });
+  }
+
+  const inferred = inferTacticalPosition({
+    position: player?.position,
+    positionX: player?.gridX,
+    positionY: player?.gridY,
+  });
+  if (inferred) {
+    return lateralSortKey({ position: inferred, positionDetail: inferred });
+  }
+  return lateralSortKey(player);
+}
+
+function pitchCellKey(player, cellSize = 8) {
+  const x = Number(player?.gridX ?? 50);
+  const y = Number(player?.gridY ?? 50);
+  return `${Math.round(x / cellSize)}:${Math.round(y / cellSize)}`;
+}
+
+function slotsForCoLocatedGroup(sortedEntries) {
+  const count = sortedEntries.length;
+  if (count <= 1) {
+    return [Number(sortedEntries[0]?.player.gridY ?? 50)];
+  }
+
+  const keys = sortedEntries.map(({ player }) => tacticalLateralSortKey(player));
+  const keySpread = Math.max(...keys) - Math.min(...keys);
+  const uniqueKeys = new Set(keys);
+
+  if (keySpread >= 14 && uniqueKeys.size === keys.length) {
+    return keys.map((key) => Number(key.toFixed(1)));
+  }
+
+  const anchor = keys.reduce((sum, key) => sum + key, 0) / keys.length;
+  if (count >= 3) {
+    return Array.from({ length: count }, (_, slotIndex) => lateralForSlot(slotIndex, count));
+  }
+  return anchoredLateralSlots(count, anchor, { minStep: 20 });
+}
+
+/** Separa jugadores en la misma celda de cancha aunque el rol guardado difiera (MD vs MCO). */
+export function spreadCoLocatedPlayers(players, { cellSize = 8 } = {}) {
+  if (!players?.length) return players ?? [];
+
+  const buckets = new Map();
+  for (const entry of players.map((player, index) => ({ player, index }))) {
+    const token = positionToken(entry.player);
+    if (token === 'POR' || token === 'GK') continue;
+    const key = pitchCellKey(entry.player, cellSize);
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(entry);
+  }
+
+  let result = [...players];
+  for (const group of buckets.values()) {
+    if (group.length < 2) continue;
+
+    const sorted = [...group].sort(
+      (a, b) =>
+        tacticalLateralSortKey(a.player) - tacticalLateralSortKey(b.player) ||
+        (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+    );
+    const slots = slotsForCoLocatedGroup(sorted);
+    sorted.forEach(({ index }, slot) => {
+      result[index] = { ...result[index], gridY: slots[slot] };
+    });
+  }
+
+  return result;
+}
+
 /** @deprecated alias */
 function centerForwardLateralSlots(count) {
   return centerClusterLateralSlots(count);
@@ -452,9 +548,7 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
   const entries = players.map((player, index) => ({
     player,
     index,
-    gridX: Number(player.gridX ?? 50),
-    gridY: Number(player.gridY ?? 50),
-    gridKey: `${positionToken(player)}:${Math.round(Number(player.gridX ?? 50) / 8)}`,
+    gridKey: pitchCellKey(player),
   }));
 
   const byGrid = new Map();
@@ -474,10 +568,7 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
       (a, b) => (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
     );
     const baseX = Number(group[0].player.gridX ?? 50);
-    const anchorY =
-      group.reduce((sum, entry) => sum + Number(entry.player.gridY ?? 50), 0) / group.length;
-    const token = positionToken(group[0].player);
-    const slots = slotsForSamePositionToken(group.length, token, anchorY);
+    const slots = slotsForCoLocatedGroup(group);
 
     group.forEach((entry, slot) => {
       adjusted[entry.index] = {
@@ -588,6 +679,7 @@ export function spreadMidfieldLineOverlaps(players) {
     pool: 'MID',
     minDepth: 38,
     maxDepth: 72,
+    depthBucket: 12,
   });
 }
 
@@ -625,17 +717,17 @@ function spreadLineByTacticalRole(
 
     const sorted = [...group].sort(
       (a, b) =>
-        lateralSortKey(a.player) - lateralSortKey(b.player) ||
+        tacticalLateralSortKey(a.player) - tacticalLateralSortKey(b.player) ||
         (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
     );
-    const keys = sorted.map(({ player }) => lateralSortKey(player));
+    const keys = sorted.map(({ player }) => tacticalLateralSortKey(player));
     const keySpread = Math.max(...keys) - Math.min(...keys);
 
     if (keySpread >= minKeySpread) {
       sorted.forEach(({ player, index }) => {
         result[index] = {
           ...result[index],
-          gridY: Number(lateralSortKey(player).toFixed(1)),
+          gridY: Number(tacticalLateralSortKey(player).toFixed(1)),
         };
       });
       continue;
@@ -683,5 +775,6 @@ export function spreadTacticalLineClusters(players) {
   next = spreadMidCenterClusters(next);
   next = spreadForwardCenterClusters(next);
   next = spreadSamePositionOverlaps(next);
+  next = spreadCoLocatedPlayers(next);
   return next;
 }
