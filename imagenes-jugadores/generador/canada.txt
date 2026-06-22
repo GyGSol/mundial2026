@@ -30,6 +30,7 @@ can-niko-sigur.png | #23 | Niko Sigur | DF | 19 pj | 2 goles
 can-promise-david.png | #24 | Promise David | FW | 10 pj | 3 goles
 can-nathan-saliba.png | #25 | Nathan Saliba | MF | 15 pj | 2 goles
 can-jayden-nelson.png | #26 | Jayden Nelson | FW | 14 pj | 3 goles
+can-jesse-marsch.png | — | Jesse Marsch | DT
 
 # Solo nombres (pegar en generador):
 
