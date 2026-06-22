@@ -111,7 +111,7 @@ function PitchPlayerHoverCard({ player, position, teamCode, side }) {
 function teamDotStyle(player, side) {
   const depth = Math.min(100, Math.max(0, Number(player.gridX ?? 50)));
   const lateral = Math.min(100, Math.max(0, Number(player.gridY ?? 50)));
-  const top = `${8 + lateral * 0.84}%`;
+  const top = `${6 + lateral * 0.88}%`;
   const alongHalf = DEPTH_EDGE + (depth / 100) * DEPTH_SPAN;
   const horizontal = side === 'home' ? alongHalf : 100 - alongHalf;
 
