@@ -30,6 +30,18 @@ import {
   sanitizeAiUserFacingText,
   WORLD_CUP_USER_FACING_LANGUAGE_RULES,
 } from './aiPromptHumanizer.js';
+import {
+  serializeContextForPrompt,
+  stripRedundantFieldsFromRawContext,
+} from './oraclePromptContextService.js';
+import {
+  acquireCerebrasSlot,
+  CEREBRAS_PRIORITIES,
+  estimateCerebrasRequestTokens,
+  noteCerebrasResponse,
+  waitAfterCerebras429,
+} from './cerebrasQuotaManager.js';
+import { consumeHumanAiSlot } from './aiHumanLimitsService.js';
 import { buildMatchHistoryContext } from './aiMatchHistoryContextService.js';
 import {
   buildMatchStakesContext,
@@ -79,6 +91,30 @@ export function getAiProviderOrder({ singleProvider = false } = {}) {
 
   if (singleProvider) {
     return available.includes(preferred) ? [preferred] : [available[0]];
+  }
+
+  return [preferred, ...available.filter((provider) => provider !== preferred)];
+}
+
+/**
+ * Proveedores para consultas humanas: no Oracle; por defecto Gemini/Groq antes que Cerebras.
+ */
+export function getAiProviderOrderForHuman({ singleProvider = false } = {}) {
+  const humanPreferred = AI_PROVIDER_IDS.includes(env.aiHumanDefaultProvider)
+    ? env.aiHumanDefaultProvider
+    : 'gemini';
+
+  let available = AI_PROVIDER_IDS.filter(isAiProviderConfigured);
+  if (!env.aiHumanCerebrasEnabled) {
+    available = available.filter((provider) => provider !== 'cerebras');
+  }
+
+  if (!available.length) return [];
+
+  const preferred = available.includes(humanPreferred) ? humanPreferred : available[0];
+
+  if (singleProvider) {
+    return [preferred];
   }
 
   return [preferred, ...available.filter((provider) => provider !== preferred)];
@@ -600,7 +636,7 @@ export async function buildAiCompetitorPredictionContext(
       match,
     }),
     buildMatchStakesContext(match, aiUserId, { userPredictedCtx }),
-    buildCrowdContextForCompetitor(match, aiUserId),
+    buildCrowdContextForCompetitor(match, aiUserId, { includeAllGroups: false }),
     buildPrizeRaceContext(aiUserId, focusGroupId),
     loadAiCalibrationStats(aiUserId),
     adminOnDemand
@@ -619,8 +655,9 @@ export async function buildAiCompetitorPredictionContext(
   );
 
   const formacionConfirmada = await buildConfirmedLineupContext(match);
+  const microEventos = await buildMicroEventsContextBlock(match._id);
 
-  return {
+  return stripRedundantFieldsFromRawContext({
     ...base,
     nationContext: enriched.nationContext,
     squadAnalysis: applyOracleAvailabilityFilter(enriched.squadAnalysis),
@@ -633,10 +670,9 @@ export async function buildAiCompetitorPredictionContext(
     carreraPremios: prizeContext.carreraPremios,
     calibracionReciente: buildCalibrationPromptBlock(calibrationStats),
     mercadoYxG: formatExternalIntelForPrompt(externalIntel),
-    externalIntel,
-    microEventos: await buildMicroEventsContextBlock(match._id),
+    microEventos,
     _calibrationStats: calibrationStats,
-  };
+  });
 }
 
 function buildAiCompetitorPredictionPrompt(context) {
@@ -654,7 +690,7 @@ Respondé ÚNICAMENTE con JSON válido (sin markdown fuera del campo reasoning):
 {"homeGoals": <entero 0-10>, "awayGoals": <entero 0-10>, "reasoning": "<explicación en español; markdown ligero permitido>"}
 
 Contexto del partido (ordenado por prioridad; leé guiaPrioridadContexto primero):
-${JSON.stringify(humanizeCompetitorPromptContext(context), null, 2)}`;
+${serializeContextForPrompt(context, 'live')}`;
 }
 
 function buildAiPredictionPrompt(context) {
@@ -714,9 +750,24 @@ export function createFetchWithTimeout(ms = 12_000, baseFetch = fetch) {
 
 async function callOpenAiChatCompletions(
   { apiKey, url, model, messages, temperature = 0.4, responseFormat, providerLabel },
-  { fetchImpl = fetch, maxAttempts = 3 } = {}
+  {
+    fetchImpl = fetch,
+    maxAttempts = 3,
+    cerebrasPriority = CEREBRAS_PRIORITIES.postMatchReview,
+    cerebrasLabel = 'cerebras-text',
+  } = {}
 ) {
   if (!apiKey) return null;
+
+  const isCerebras = String(providerLabel ?? '').toLowerCase().includes('cerebras');
+  if (isCerebras) {
+    const estimatedTokens = estimateCerebrasRequestTokens(messages);
+    await acquireCerebrasSlot({
+      estimatedTokens,
+      priority: cerebrasPriority,
+      label: cerebrasLabel,
+    });
+  }
 
   const body = { model, messages, temperature };
   if (responseFormat) {
@@ -736,9 +787,21 @@ async function callOpenAiChatCompletions(
         body: JSON.stringify(body),
       });
 
+      if (response.status === 429 && isCerebras) {
+        noteCerebrasResponse(response);
+        if (attempt < attempts - 1) {
+          await waitAfterCerebras429(response);
+          continue;
+        }
+      }
+
       if (response.status === 429 && attempt < attempts - 1) {
         await sleep(1000 * (attempt + 1));
         continue;
+      }
+
+      if (isCerebras) {
+        noteCerebrasResponse(response);
       }
 
       if (!response.ok) {
@@ -779,6 +842,26 @@ async function callOpenAiProviderForScore(context, { apiKey, url, model, source,
 }
 
 export async function callCerebrasForScore(context, options = {}) {
+  return callOpenAiProviderForScore(
+    context,
+    {
+      apiKey: env.cerebrasApiKey,
+      url: CEREBRAS_API_URL,
+      model: env.aiCerebrasModel,
+      source: 'cerebras',
+      providerLabel: 'Cerebras',
+      promptBuilder: options.promptBuilder ?? buildAiPredictionPrompt,
+    },
+    {
+      ...options,
+      cerebrasPriority: options.cerebrasPriority ?? CEREBRAS_PRIORITIES.humanConsultation,
+      cerebrasLabel: options.cerebrasLabel ?? 'cerebras-human-score',
+    }
+  );
+}
+
+/** Solo competidor IA (Oracle estructurado). */
+export async function callCerebrasOracleForScore(context, options = {}) {
   const { predictScore: oraclePredictScore } = await import('./predictiveModelingService.js');
   const oracleResult = await oraclePredictScore(context, options);
   if (oracleResult) {
@@ -786,7 +869,7 @@ export async function callCerebrasForScore(context, options = {}) {
       homeGoals: oracleResult.homeGoals,
       awayGoals: oracleResult.awayGoals,
       reasoning: oracleResult.reasoning,
-      source: oracleResult.source ?? 'cerebras',
+      source: oracleResult.source ?? 'cerebras-oracle',
       oracle: oracleResult.oracle ?? null,
     };
   }
@@ -861,7 +944,12 @@ async function callGeminiProviderForScore(
 }
 
 async function callAiProviderForScore(provider, context, providerOpts) {
-  if (provider === 'cerebras') return callCerebrasForScore(context, providerOpts);
+  if (provider === 'cerebras') {
+    if (providerOpts.useOracle) {
+      return callCerebrasOracleForScore(context, providerOpts);
+    }
+    return callCerebrasForScore(context, providerOpts);
+  }
   if (provider === 'gemini') return callGeminiProviderForScore(context, providerOpts);
   if (provider === 'groq') return callGroqForScore(context, providerOpts);
   return null;
@@ -869,10 +957,32 @@ async function callAiProviderForScore(provider, context, providerOpts) {
 
 export async function callAiForScore(
   context,
-  { fetchImpl = fetch, promptBuilder, maxAttempts = 3, singleProvider = false, skipNilNilOracle = false } = {}
+  {
+    fetchImpl = fetch,
+    promptBuilder,
+    maxAttempts = 3,
+    singleProvider = false,
+    skipNilNilOracle = false,
+    audience = 'human',
+    providerOrder,
+  } = {}
 ) {
-  const providerOpts = { promptBuilder, fetchImpl, maxAttempts };
-  const order = getAiProviderOrder({ singleProvider });
+  const providerOpts = {
+    promptBuilder,
+    fetchImpl,
+    maxAttempts,
+    useOracle: audience === 'competitor',
+    cerebrasPriority:
+      audience === 'competitor'
+        ? CEREBRAS_PRIORITIES.preMatchOracle
+        : CEREBRAS_PRIORITIES.humanConsultation,
+    cerebrasLabel: audience === 'competitor' ? 'oracle-predict' : 'human-score',
+  };
+  const order =
+    providerOrder ??
+    (audience === 'competitor'
+      ? getAiProviderOrder({ singleProvider })
+      : getAiProviderOrderForHuman({ singleProvider }));
 
   for (const provider of order) {
     const score = await callAiProviderForScore(provider, context, providerOpts);
@@ -896,6 +1006,7 @@ export async function callAiForScore(
 export async function callAiForCompetitorScore(context, options = {}) {
   return callAiForScore(context, {
     ...options,
+    audience: 'competitor',
     promptBuilder: buildAiCompetitorPredictionPrompt,
     skipNilNilOracle: options.skipNilNilOracle ?? true,
   });
@@ -960,7 +1071,7 @@ Respondé en español, de forma clara y completa. Usá markdown ligero cuando ay
 async function callOpenAiProviderForText(
   prompt,
   { apiKey, url, model, source, providerLabel },
-  { fetchImpl = fetch } = {}
+  { fetchImpl = fetch, cerebrasPriority, cerebrasLabel } = {}
 ) {
   const text = await callOpenAiChatCompletions(
     {
@@ -971,7 +1082,7 @@ async function callOpenAiProviderForText(
       temperature: 0.5,
       providerLabel,
     },
-    { fetchImpl }
+    { fetchImpl, cerebrasPriority, cerebrasLabel }
   );
   if (!text) {
     throw new Error(`${providerLabel} devolvió respuesta vacía`);
@@ -1096,20 +1207,32 @@ function finalizeAiTextResponse(result) {
   return { ...result, text: sanitizeAiUserFacingText(result.text) };
 }
 
-async function callAiProviderForText(provider, prompt, { fetchImpl = fetch } = {}) {
-  if (provider === 'cerebras') return callCerebrasForText(prompt, { fetchImpl });
-  if (provider === 'gemini') return callGeminiForText(prompt, { fetchImpl });
-  if (provider === 'groq') return callGroqForText(prompt, { fetchImpl });
+async function callAiProviderForText(provider, prompt, options = {}) {
+  if (provider === 'cerebras') return callCerebrasForText(prompt, options);
+  if (provider === 'gemini') return callGeminiForText(prompt, options);
+  if (provider === 'groq') return callGroqForText(prompt, options);
   return null;
 }
 
-export async function callAiForText(prompt, { fetchImpl = fetch } = {}) {
-  const order = getAiProviderOrder();
+export async function callAiForText(
+  prompt,
+  {
+    fetchImpl = fetch,
+    cerebrasPriority,
+    cerebrasLabel,
+    providerOrder,
+  } = {}
+) {
+  const order = providerOrder ?? getAiProviderOrder();
   let lastError = null;
 
   for (const provider of order) {
     try {
-      const result = await callAiProviderForText(provider, prompt, { fetchImpl });
+      const result = await callAiProviderForText(provider, prompt, {
+        fetchImpl,
+        cerebrasPriority,
+        cerebrasLabel,
+      });
       if (result) return finalizeAiTextResponse(result);
     } catch (err) {
       lastError = err;
@@ -1144,8 +1267,10 @@ export async function getMatchAiInsightForUser(matchId, userId, { fetchImpl = fe
     throw new Error('La consulta IA solo está disponible para partidos próximos');
   }
 
+  await consumeHumanAiSlot(userId, 'insight');
+
   const context = await buildPromptContext(match, userId);
-  const score = await callAiForScore(context, { fetchImpl });
+  const score = await callAiForScore(context, { fetchImpl, audience: 'human' });
   return formatMatchAiInsight(score);
 }
 
@@ -1182,6 +1307,8 @@ export async function askMatchAiFollowUp(
     throw new Error('La consulta IA solo está disponible para partidos próximos');
   }
 
+  await consumeHumanAiSlot(userId, 'question');
+
   const context = await buildPromptContext(match, userId);
   const prompt = buildFollowUpPrompt(
     context,
@@ -1190,7 +1317,12 @@ export async function askMatchAiFollowUp(
     normalizeFollowUpHistory(history)
   );
 
-  const result = await callAiForText(prompt, { fetchImpl });
+  const result = await callAiForText(prompt, {
+    fetchImpl,
+    cerebrasPriority: CEREBRAS_PRIORITIES.humanConsultation,
+    cerebrasLabel: 'human-follow-up',
+    providerOrder: getAiProviderOrderForHuman(),
+  });
   return {
     answer: result.text,
     source: result.source,

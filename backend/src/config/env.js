@@ -51,6 +51,14 @@ export const env = {
   googleAiApiKey: process.env.GOOGLE_AI_API_KEY || '',
   groqApiKey: process.env.GROQ_API_KEY || '',
   aiDefaultProvider: (process.env.AI_DEFAULT_PROVIDER || 'cerebras').toLowerCase().trim(),
+  /** Consultas humanas: preferir Gemini/Groq y reservar Cerebras/Oracle para el bot. */
+  aiHumanDefaultProvider: (process.env.AI_HUMAN_DEFAULT_PROVIDER || 'gemini').toLowerCase().trim(),
+  aiHumanCerebrasEnabled: process.env.AI_HUMAN_CEREBRAS_ENABLED === 'true',
+  aiHumanLimitsEnabled: process.env.AI_HUMAN_LIMITS_ENABLED !== 'false',
+  aiHumanInsightDailyLimit: Number(process.env.AI_HUMAN_INSIGHT_DAILY_LIMIT || 5),
+  aiHumanQuestionDailyLimit: Number(process.env.AI_HUMAN_QUESTION_DAILY_LIMIT || 30),
+  aiHumanPlayerIntelDailyLimit: Number(process.env.AI_HUMAN_PLAYER_INTEL_DAILY_LIMIT || 10),
+  aiHumanHourlyLimit: Number(process.env.AI_HUMAN_HOURLY_LIMIT || 15),
   /** Bot IA: predice ~5 min antes del kickoff (formación confirmada si está disponible). */
   aiPredictLeadMs: Number(process.env.AI_PREDICT_LEAD_MS || 5 * 60 * 1000),
   aiPredictWindowMs: Number(process.env.AI_PREDICT_WINDOW_MS || 2 * 60 * 1000),
@@ -64,6 +72,12 @@ export const env = {
   openfootballCacheDir: process.env.OPENFOOTBALL_CACHE_DIR || 'training/data/openfootball',
   trainingBufferExportCron: process.env.TRAINING_BUFFER_EXPORT_CRON || '0 3 * * 0',
   trainingBufferAlwaysRecord: process.env.TRAINING_BUFFER_ALWAYS_RECORD === 'true',
+  /** Cuota Cerebras (defaults conservadores — trial ~30K TPM). */
+  cerebrasMaxTpm: Number(process.env.CEREBRAS_MAX_TPM || 25_000),
+  cerebrasMaxRpm: Number(process.env.CEREBRAS_MAX_RPM || 4),
+  cerebrasMinGapMs: Number(process.env.CEREBRAS_MIN_GAP_MS || 2000),
+  aiLearningJobCron: process.env.AI_LEARNING_JOB_CRON || '*/5 * * * *',
+  aiLearningJobBatchSize: Number(process.env.AI_LEARNING_JOB_BATCH_SIZE || 1),
   oddsApiKey: process.env.ODDS_API_KEY || '',
   oddsApiSport: process.env.ODDS_API_SPORT || 'soccer_fifa_world_cup',
   apiFootballKey: process.env.API_FOOTBALL_KEY || '',

@@ -11,6 +11,8 @@ import {
 } from './aiPredictionCalibrationService.js';
 import { goalDiffScore } from './goalDiffStats.js';
 import { sanitizeAiUserFacingText, briefAiReasoning } from './aiPromptHumanizer.js';
+import { prepareOracleContextPayload } from './oraclePromptContextService.js';
+import { CEREBRAS_PRIORITIES } from './cerebrasQuotaManager.js';
 
 export function matchResultScoreKey(match) {
   if (match?.homeScore == null || match?.awayScore == null) return null;
@@ -76,7 +78,7 @@ Tu tarea es auditar UN partido ya finalizado: comparar la predicción guardada c
 ${prediction.aiReasoning?.trim() || 'No quedó guardado el razonamiento original.'}
 
 ## Contexto usado en la predicción (resumen)
-${JSON.stringify(promptContext ?? {}, null, 2)}
+${JSON.stringify(prepareOracleContextPayload(promptContext ?? {}, 'learning'))}
 
 ## Calibración rolling del bot (antes de este partido)
 ${JSON.stringify(buildCalibrationPromptBlock(calibrationStats) ?? { nota: 'Sin historial' }, null, 2)}
@@ -196,7 +198,10 @@ export async function getOrGenerateAiPostMatchReview(matchId, { refresh = false 
     vsHumans,
   });
 
-  const { text, source } = await callAiForText(prompt);
+  const { text, source } = await callAiForText(prompt, {
+    cerebrasPriority: CEREBRAS_PRIORITIES.postMatchReview,
+    cerebrasLabel: 'post-match-review',
+  });
   const analysis = sanitizeAiUserFacingText(String(text ?? '').trim());
   if (!analysis) {
     const error = new Error('La IA no devolvió análisis');

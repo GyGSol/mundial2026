@@ -14,6 +14,7 @@
  *   node src/scripts/backfillAiLearningFromHistory.js --match 42 --match 38
  *   node src/scripts/backfillAiLearningFromHistory.js --skip-replay
  *   node src/scripts/backfillAiLearningFromHistory.js --skip-post-match
+ *   node src/scripts/backfillAiLearningFromHistory.js --delay-ms 90000 --max-per-run 3
  */
 import { connectDb } from '../config/db.js';
 import { env } from '../config/env.js';
@@ -25,6 +26,7 @@ import {
 import { getOrGenerateAiPostMatchReview } from '../services/aiPostMatchLearningService.js';
 import { Prediction } from '../models/Prediction.js';
 import { getAiUser } from '../services/aiPredictionService.js';
+import { CEREBRAS_PRIORITIES } from '../services/cerebrasQuotaManager.js';
 
 function parseMatchIds(argv) {
   const ids = [];
@@ -36,11 +38,25 @@ function parseMatchIds(argv) {
   return ids;
 }
 
-const dryRun = process.argv.includes('--dry-run');
-const force = process.argv.includes('--force');
-const skipReplay = process.argv.includes('--skip-replay');
-const skipPostMatch = process.argv.includes('--skip-post-match');
-const externalIds = parseMatchIds(process.argv);
+function parseNumberFlag(argv, flag, fallback) {
+  const idx = argv.indexOf(flag);
+  if (idx === -1 || !argv[idx + 1]) return fallback;
+  const n = Number(argv[idx + 1]);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const argv = process.argv.slice(2);
+const dryRun = argv.includes('--dry-run');
+const force = argv.includes('--force');
+const skipReplay = argv.includes('--skip-replay');
+const skipPostMatch = argv.includes('--skip-post-match');
+const externalIds = parseMatchIds(argv);
+const delayMs = parseNumberFlag(argv, '--delay-ms', env.cerebrasMinGapMs * 2);
+const maxPerRun = parseNumberFlag(argv, '--max-per-run', 0);
 
 async function main() {
   if (!env.mongodbUri) {
@@ -56,7 +72,11 @@ async function main() {
     process.exit(1);
   }
 
-  const matches = await listFinishedMatchesForAiLearning({ externalIds });
+  let matches = await listFinishedMatchesForAiLearning({ externalIds });
+  if (maxPerRun > 0) {
+    matches = matches.slice(0, maxPerRun);
+  }
+
   if (!matches.length) {
     console.log('No hay partidos finalizados con predicción IA para procesar.');
     process.exit(0);
@@ -65,7 +85,8 @@ async function main() {
   console.log(
     `Aprendizaje histórico: ${matches.length} partido(s)` +
       (dryRun ? ' [DRY RUN]' : '') +
-      (force ? ' [FORCE]' : '')
+      (force ? ' [FORCE]' : '') +
+      (delayMs > 0 ? ` delay=${delayMs}ms` : '')
   );
 
   const stats = {
@@ -110,13 +131,17 @@ async function main() {
           await getOrGenerateAiPostMatchReview(match._id, { refresh: force && hasReview });
           stats.postMatchGenerated += 1;
           console.log(`[post-match] ${label}`);
+          if (delayMs > 0) await sleep(delayMs);
         } else {
           stats.postMatchSkipped += 1;
         }
       }
 
       if (!skipReplay) {
-        const replayResult = await replayOracleLearningForMatch(match._id, { force });
+        const replayResult = await replayOracleLearningForMatch(match._id, {
+          force,
+          cerebrasPriority: CEREBRAS_PRIORITIES.backfill,
+        });
         if (replayResult.replayed) {
           stats.replayOk += 1;
           const src = replayResult.source ?? (replayResult.fromLog ? 'log' : 'replay');
@@ -130,6 +155,7 @@ async function main() {
           stats.replayFailed += 1;
           console.warn(`[replay-skip] ${label}: ${replayResult.reason}`);
         }
+        if (delayMs > 0) await sleep(delayMs);
       }
     } catch (err) {
       stats.failed += 1;

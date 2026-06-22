@@ -71,7 +71,9 @@ describe('predictiveModelingService', () => {
   describe('callCerebrasOracleViaFetch', () => {
     it('parsea respuesta Oracle vía fetch mock', async () => {
       const prev = env.cerebrasApiKey;
+      const prevGap = env.cerebrasMinGapMs;
       env.cerebrasApiKey = 'test-key';
+      env.cerebrasMinGapMs = 0;
 
       const oracleJson = JSON.stringify({
         home_goals: 2,
@@ -85,6 +87,7 @@ describe('predictiveModelingService', () => {
       const fetchImpl = vi.fn(async () => ({
         ok: true,
         status: 200,
+        headers: { get: () => null },
         json: async () => ({
           choices: [{ message: { content: oracleJson } }],
         }),
@@ -99,6 +102,7 @@ describe('predictiveModelingService', () => {
       expect(fetchImpl).toHaveBeenCalledOnce();
 
       env.cerebrasApiKey = prev;
+      env.cerebrasMinGapMs = prevGap;
     });
 
     it('devuelve null sin API key', async () => {
@@ -113,14 +117,14 @@ describe('predictiveModelingService', () => {
   });
 
   describe('buildOraclePromptFromFrozenContext', () => {
-    it('incluye equipos del contexto congelado', () => {
+    it('incluye datos del contexto congelado humanizado', () => {
       const prompt = buildOraclePromptFromFrozenContext({
-        homeTeam: { name: 'Francia', code: 'FRA' },
-        awayTeam: { name: 'Irak', code: 'IRQ' },
-        match: { group: 'A' },
+        guiaPrioridadContexto: {},
+        partido: { matchExternalId: '42', group: 'A' },
+        mundial2026: { lecturaTorneo2026: 'Grupo A' },
       });
-      expect(prompt).toContain('Francia');
-      expect(prompt).toContain('Irak');
+      expect(prompt).toContain('42');
+      expect(prompt).toContain('snapshot pre-partido');
     });
   });
 });

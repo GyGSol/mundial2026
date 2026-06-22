@@ -6,9 +6,11 @@ import {
   clampGoals,
   computeHeuristicScore,
   callAiForScore,
+  callAiForCompetitorScore,
   callGeminiForScore,
   callAiForText,
   getAiProviderOrder,
+  getAiProviderOrderForHuman,
   hasAiProvider,
   askMatchAiFollowUp,
   buildVenueContextForPrompt,
@@ -163,7 +165,46 @@ describe('aiPredictionService', () => {
       groupStandings: [],
     };
 
-    it('usa Cerebras como proveedor principal', async () => {
+    it('consultas humanas no usan Oracle por defecto', async () => {
+      const previousCerebrasKey = env.cerebrasApiKey;
+      const previousGeminiKey = env.googleAiApiKey;
+      const previousHumanCerebras = env.aiHumanCerebrasEnabled;
+      const previousHumanProvider = env.aiHumanDefaultProvider;
+      env.cerebrasApiKey = 'cerebras-test-key';
+      env.googleAiApiKey = 'test-key';
+      env.aiHumanCerebrasEnabled = false;
+      env.aiHumanDefaultProvider = 'gemini';
+      env.cerebrasMinGapMs = 0;
+
+      const predictSpy = vi.spyOn(predictiveModelingService, 'predictScore');
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: '{"homeGoals":2,"awayGoals":1,"reasoning":"Analista humano"}' }],
+              },
+            },
+          ],
+        }),
+      });
+
+      const result = await callAiForScore(context, { fetchImpl: mockFetch, audience: 'human' });
+
+      expect(result.source).toBe('gemini');
+      expect(predictSpy).not.toHaveBeenCalled();
+
+      predictSpy.mockRestore();
+      env.cerebrasApiKey = previousCerebrasKey;
+      env.googleAiApiKey = previousGeminiKey;
+      env.aiHumanCerebrasEnabled = previousHumanCerebras;
+      env.aiHumanDefaultProvider = previousHumanProvider;
+    });
+
+    it('competidor IA usa Oracle Cerebras', async () => {
       const previousCerebrasKey = env.cerebrasApiKey;
       env.cerebrasApiKey = 'cerebras-test-key';
 
@@ -180,12 +221,11 @@ describe('aiPredictionService', () => {
         },
       });
 
-      const result = await callAiForScore(context);
+      const result = await callAiForCompetitorScore(context);
 
       expect(result).toMatchObject({
         homeGoals: 3,
         awayGoals: 1,
-        reasoning: 'Cerebras favorito local',
         source: 'cerebras-oracle',
       });
       expect(predictSpy).toHaveBeenCalledOnce();
@@ -320,6 +360,33 @@ describe('aiPredictionService', () => {
       expect(getAiProviderOrder({ singleProvider: true })).toEqual(['gemini']);
 
       env.aiDefaultProvider = prevDefault;
+      env.cerebrasApiKey = prevCerebras;
+      env.googleAiApiKey = prevGemini;
+      env.groqApiKey = prevGroq;
+    });
+  });
+
+  describe('getAiProviderOrderForHuman', () => {
+    it('prefiere gemini y excluye cerebras por defecto', () => {
+      const prevHumanProvider = env.aiHumanDefaultProvider;
+      const prevHumanCerebras = env.aiHumanCerebrasEnabled;
+      const prevCerebras = env.cerebrasApiKey;
+      const prevGemini = env.googleAiApiKey;
+      const prevGroq = env.groqApiKey;
+
+      env.aiHumanDefaultProvider = 'gemini';
+      env.aiHumanCerebrasEnabled = false;
+      env.cerebrasApiKey = 'cerebras';
+      env.googleAiApiKey = 'gemini';
+      env.groqApiKey = 'groq';
+
+      expect(getAiProviderOrderForHuman()).toEqual(['gemini', 'groq']);
+
+      env.aiHumanCerebrasEnabled = true;
+      expect(getAiProviderOrderForHuman()).toEqual(['gemini', 'cerebras', 'groq']);
+
+      env.aiHumanDefaultProvider = prevHumanProvider;
+      env.aiHumanCerebrasEnabled = prevHumanCerebras;
       env.cerebrasApiKey = prevCerebras;
       env.googleAiApiKey = prevGemini;
       env.groqApiKey = prevGroq;

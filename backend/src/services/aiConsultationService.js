@@ -13,6 +13,7 @@ import {
   callAiForText,
   enrichVenueWithWeather,
   formatMatchAiInsight,
+  getAiProviderOrderForHuman,
   hasAiProvider,
   WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS,
 } from './aiPredictionService.js';
@@ -32,6 +33,7 @@ import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 import { getLockAt, isPredictionOpen } from './predictionLockService.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
 import { chargeAiConsultationFee } from './fubolService.js';
+import { consumeHumanAiSlot } from './aiHumanLimitsService.js';
 
 const AI_HISTORY_FOR_PROMPT = 20;
 const AI_MESSAGES_STORED_MAX = 80;
@@ -360,8 +362,10 @@ export async function generateMatchInsight(userId, matchId, { fetchImpl = fetch 
   const thread = await getOrCreateThread(userId, 'match', matchId);
   const isUpdate = Boolean(thread.initialInsight?.reasoning);
 
+  await consumeHumanAiSlot(userId, 'insight');
+
   const context = await buildPromptContext(match, userId);
-  const score = await callAiForScore(context, { fetchImpl });
+  const score = await callAiForScore(context, { fetchImpl, audience: 'human' });
   const insight = formatMatchAiInsight(score);
 
   thread.initialInsight = {
@@ -416,8 +420,12 @@ export async function askConsultation(
   const prompt = buildConsultationPrompt(topicType, context, thread, trimmedQuestion);
 
   const billing = await ensureAiConsultationPaid(userId);
+  await consumeHumanAiSlot(userId, 'question');
 
-  const result = await callAiForText(prompt, { fetchImpl });
+  const result = await callAiForText(prompt, {
+    fetchImpl,
+    providerOrder: getAiProviderOrderForHuman(),
+  });
 
   await appendExchange(thread, trimmedQuestion, {
     text: result.text,

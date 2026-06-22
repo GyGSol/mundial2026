@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { aiConsultationBurstLimiter } from '../middleware/aiRateLimit.middleware.js';
 import { notifyMatchesUpdated } from '../services/websocketService.js';
 import { isPredictionLocked } from '../services/predictionLockService.js';
 import { backfillLegacyUserSubmittedPredictions, ensureLegacyUserSubmittedBackfillOnce } from '../services/predictionMigrationService.js';
@@ -74,7 +75,7 @@ router.get('/group-standings', authMiddleware, async (req, res, next) => {
   }
 });
 
-router.post('/:matchId/ai-insight', authMiddleware, async (req, res, next) => {
+router.post('/:matchId/ai-insight', authMiddleware, aiConsultationBurstLimiter, async (req, res, next) => {
   try {
     if (!hasAiProvider()) {
       return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
@@ -89,11 +90,18 @@ router.post('/:matchId/ai-insight', authMiddleware, async (req, res, next) => {
     if (err.message === 'La consulta IA solo está disponible para partidos próximos') {
       return res.status(400).json({ error: err.message });
     }
+    if (err.status === 429 || err.code === 'ai_rate_limit') {
+      return res.status(429).json({
+        error: err.message,
+        code: err.code ?? 'ai_rate_limit',
+        retryAfterSec: err.retryAfterSec ?? 3600,
+      });
+    }
     next(err);
   }
 });
 
-router.post('/:matchId/ai-follow-up', authMiddleware, async (req, res, next) => {
+router.post('/:matchId/ai-follow-up', authMiddleware, aiConsultationBurstLimiter, async (req, res, next) => {
   try {
     if (!hasAiProvider()) {
       return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
@@ -116,6 +124,13 @@ router.post('/:matchId/ai-follow-up', authMiddleware, async (req, res, next) => 
       err.message === 'La consulta IA solo está disponible para partidos próximos'
     ) {
       return res.status(400).json({ error: err.message });
+    }
+    if (err.status === 429 || err.code === 'ai_rate_limit') {
+      return res.status(429).json({
+        error: err.message,
+        code: err.code ?? 'ai_rate_limit',
+        retryAfterSec: err.retryAfterSec ?? 3600,
+      });
     }
     next(err);
   }

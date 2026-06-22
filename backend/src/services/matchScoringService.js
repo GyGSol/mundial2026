@@ -6,7 +6,7 @@ import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { ensurePredictionsForMatch } from './predictionLockService.js';
 import { notifyLeaderboardUpdated } from './websocketService.js';
 import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
-import { queueAiPostMatchReview } from './aiPostMatchLearningService.js';
+import { enqueueAiLearningForMatch } from './aiLearningQueueService.js';
 import { recordValidationError } from './trainingBufferService.js';
 
 async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickoffSnapshot = false } = {}) {
@@ -79,11 +79,11 @@ export async function recalculateMatchScores(matchId) {
   const result = await applyScoresForMatch(match, actualHome, actualAway);
 
   if (match.status === 'finished') {
-    void queueAiPostMatchReview(match._id).catch((err) => {
-      console.warn(`AI post-match review failed (${match.externalId}):`, err.message);
-    });
     void recordValidationError(match._id).catch((err) => {
       console.warn(`Training buffer validation failed (${match.externalId}):`, err.message);
+    });
+    void enqueueAiLearningForMatch(match._id).catch((err) => {
+      console.warn(`AI learning enqueue failed (${match.externalId}):`, err.message);
     });
   }
 

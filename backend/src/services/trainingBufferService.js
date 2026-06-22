@@ -114,7 +114,10 @@ export async function recordValidationError(matchId) {
  * Replay Oracle sobre contexto pre-partido guardado y enriquece TrainingBuffer.
  * No modifica la predicción publicada ni el leaderboard.
  */
-export async function replayOracleLearningForMatch(matchId, { fetchImpl, force = false } = {}) {
+export async function replayOracleLearningForMatch(
+  matchId,
+  { fetchImpl, force = false, cerebrasPriority } = {}
+) {
   const aiUser = await getAiUser();
   if (!aiUser) return { replayed: false, reason: 'no_ai_user' };
 
@@ -190,7 +193,10 @@ export async function replayOracleLearningForMatch(matchId, { fetchImpl, force =
   }
 
   const { predictScoreFromAuditContext } = await import('./predictiveModelingService.js');
-  const oracleResult = await predictScoreFromAuditContext(promptContext, { fetchImpl });
+  const oracleResult = await predictScoreFromAuditContext(promptContext, {
+    fetchImpl,
+    cerebrasPriority,
+  });
   if (!oracleResult) {
     return { replayed: false, reason: 'oracle_empty' };
   }
