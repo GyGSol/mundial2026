@@ -4,6 +4,8 @@ import {
   assessNwsAlerts,
   assessOpenMeteoRisk,
   mergeRiskLevels,
+  shouldClearInPlaySuspension,
+  shouldSuggestInPlaySuspension,
 } from '../src/services/weatherRiskService.js';
 import {
   resolveLightningProtocolCopy,
@@ -71,5 +73,44 @@ describe('weatherRiskService', () => {
     const profile = resolveStadiumWeatherProfile({ externalId: '1', country: 'México' });
     expect(profile.lightningProtocolRegion).toBe('mexico');
     expect(resolveLightningProtocolCopy(profile)?.badgeLabel).toBe('Riesgo climático');
+  });
+
+  it('shouldSuggestInPlaySuspension para live en curso con riesgo stop', () => {
+    const match = {
+      status: 'live',
+      weatherOps: { phase: 'normal' },
+      raw: { time_elapsed: "23'" },
+    };
+    const risk = { available: true, riskLevel: 'stop' };
+    expect(shouldSuggestInPlaySuspension(risk, match)).toBe(true);
+    expect(shouldSuggestInPlaySuspension(risk, { ...match, status: 'upcoming' })).toBe(false);
+    expect(
+      shouldSuggestInPlaySuspension(risk, {
+        ...match,
+        raw: { time_elapsed: 'notstarted' },
+      })
+    ).toBe(false);
+  });
+
+  it('shouldClearInPlaySuspension cuando el riesgo baja y venció resumeEarliestAt', () => {
+    const match = {
+      status: 'live',
+      weatherOps: {
+        phase: 'suspended',
+        source: 'nws',
+        resumeEarliestAt: new Date(Date.now() - 60_000),
+      },
+    };
+    expect(shouldClearInPlaySuspension({ available: true, riskLevel: 'low' }, match)).toBe(true);
+    expect(shouldClearInPlaySuspension({ available: true, riskLevel: 'stop' }, match)).toBe(false);
+    expect(
+      shouldClearInPlaySuspension(
+        { available: true, riskLevel: 'low' },
+        {
+          ...match,
+          weatherOps: { ...match.weatherOps, source: 'admin' },
+        }
+      )
+    ).toBe(false);
   });
 });

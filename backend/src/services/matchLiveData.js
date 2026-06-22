@@ -13,6 +13,11 @@ import {
   applyShirtNumbersToTimeline,
   attachTimelinePlayerIds,
 } from '../utils/fifaSquadShirtMap.js';
+import {
+  resolveMatchPlayState,
+  serializeMatchPlayStateForClient,
+  resolvePausedDisplayClock,
+} from './matchPlayStateService.js';
 
 /** Máximo goles plausibles en un partido (incluye prórroga). */
 export const MAX_PLAUSIBLE_MATCH_GOALS = 15;
@@ -582,14 +587,23 @@ function pickMaxClockLabel(...labels) {
 }
 
 /**
- * @param {Array<{ type?: string, side?: string, minute?: number | null, sortKey?: number }>} timeline
- * @param {Record<string, unknown>} raw
+ * @param {Record<string, unknown>} match
+ * @param {Array<{ minute?: number | null, extraMinute?: number | null, sortKey?: number }>} timeline
+ * @param {Record<string, unknown>} [raw]
  */
-export function resolveLiveMatchDisplayClock(_match, timeline = [], raw = {}) {
-  const fromResolved = resolveLiveTimeElapsed(raw, timeline);
+export function resolveLiveMatchDisplayClock(match, timeline = [], raw = {}) {
+  const effectiveRaw = raw && Object.keys(raw).length ? raw : match?.raw ?? {};
+  const playState = match?.matchPlayState ?? resolveMatchPlayState(match, { timeline, raw: effectiveRaw });
+  const pausedClock = resolvePausedDisplayClock(playState);
+  if (playState.phase === 'halftime') return 'Entretiempo';
+  if (pausedClock && playState.phase !== 'in_play') {
+    return pausedClock;
+  }
+
+  const fromResolved = resolveLiveTimeElapsed(effectiveRaw, timeline);
   const fromScorers = latestMinuteFromScorerLists(
-    parseScorersField(raw.home_scorers ?? raw.homeScorers),
-    parseScorersField(raw.away_scorers ?? raw.awayScorers)
+    parseScorersField(effectiveRaw.home_scorers ?? effectiveRaw.homeScorers),
+    parseScorersField(effectiveRaw.away_scorers ?? effectiveRaw.awayScorers)
   );
 
   return pickMaxClockLabel(fromResolved, fromScorers) ?? fromResolved;
@@ -1404,15 +1418,20 @@ export function enrichMatchLiveFields(match, options = {}) {
       )
     : [];
 
+  const matchPlayState = serializeMatchPlayStateForClient(
+    resolveMatchPlayState(match, { timeline: matchTimeline, raw })
+  );
+
   let timeElapsed =
     match.status === 'live'
-      ? resolveLiveMatchDisplayClock(match, matchTimeline, raw)
+      ? resolveLiveMatchDisplayClock({ ...match, matchPlayState }, matchTimeline, raw)
       : match.status === 'finished'
         ? 'Final'
         : null;
 
   return {
     timeElapsed,
+    matchPlayState,
     homeScore: effectiveScores.homeScore,
     awayScore: effectiveScores.awayScore,
     homeScorers,

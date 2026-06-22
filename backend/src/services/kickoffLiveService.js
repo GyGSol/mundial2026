@@ -6,11 +6,17 @@ import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesCache.js';
 import { invalidateTournamentGoalsFinishedMatchesCache } from './tournamentGoalsFinishedMatchesCache.js';
 import { notifyMatchesLiveStarted } from './pushNotificationService.js';
-import { blocksKickoffPromotion, clearWeatherOpsToNormal, isPreKickoffDelayExpired } from './matchWeatherOpsRules.js';
+import { blocksKickoffPromotion, clearWeatherOpsToNormal, isPreKickoffDelayExpired, normalizeWeatherOps } from './matchWeatherOpsRules.js';
 import {
+  applyInPlayWeatherSuspension,
   applyWeatherOpsSuggestion,
+  refreshInPlayWeatherSuspension,
 } from './matchWeatherEnrichmentService.js';
-import { assessVenueWeatherRisk, shouldSuggestPreKickoffDelay } from './weatherRiskService.js';
+import {
+  assessVenueWeatherRisk,
+  shouldClearInPlaySuspension,
+  shouldSuggestPreKickoffDelay,
+} from './weatherRiskService.js';
 import { getVenueWeatherForStadium } from './weatherService.js';
 import {
   fetchAllCalendarMatches,
@@ -110,6 +116,86 @@ async function maybeApplyNwsPreKickoffDelay(match, stadium) {
   match.lastSyncedAt = new Date();
   await match.save();
   return true;
+}
+
+function weatherOpsChanged(previous, next) {
+  if (!next) return false;
+  return (
+    previous.phase !== next.phase ||
+    previous.nwsAlertId !== next.nwsAlertId ||
+    previous.lastAlertAt?.getTime?.() !== next.lastAlertAt?.getTime?.() ||
+    previous.resumeEarliestAt?.getTime?.() !== next.resumeEarliestAt?.getTime?.()
+  );
+}
+
+/** Escenario B — suspende partidos `live` cuando NOAA/MSC/Open-Meteo reportan riesgo `stop`. */
+export async function syncLiveWeatherOps() {
+  const liveMatches = await Match.find({ status: 'live' });
+  if (!liveMatches.length) {
+    return { suspended: [], cleared: [], refreshed: [] };
+  }
+
+  const stadiumIds = [...new Set(liveMatches.map((m) => m.stadiumId).filter(Boolean))];
+  const stadiums = await Stadium.find({ externalId: { $in: stadiumIds } }).lean();
+  const stadiumMap = Object.fromEntries(stadiums.map((s) => [s.externalId, s]));
+
+  const suspendedIds = [];
+  const clearedIds = [];
+  const refreshedIds = [];
+
+  for (const match of liveMatches) {
+    const stadium = stadiumMap[match.stadiumId];
+    if (!stadium) continue;
+
+    const weather = await getVenueWeatherForStadium(stadium, { kickoffAt: match.kickoffAt });
+    const risk = await assessVenueWeatherRisk(stadium, {
+      weather,
+      kickoffAt: match.kickoffAt,
+      urgent: true,
+    });
+
+    const previousOps = normalizeWeatherOps(match.weatherOps);
+
+    if (shouldClearInPlaySuspension(risk, match)) {
+      match.weatherOps = clearWeatherOpsToNormal();
+      match.lastSyncedAt = new Date();
+      await match.save();
+      clearedIds.push(match._id);
+      continue;
+    }
+
+    const refresh = refreshInPlayWeatherSuspension(match, risk, stadium);
+    if (refresh && weatherOpsChanged(previousOps, refresh)) {
+      match.weatherOps = refresh;
+      match.lastSyncedAt = new Date();
+      await match.save();
+      refreshedIds.push(match._id);
+      continue;
+    }
+
+    const suggestion = applyInPlayWeatherSuspension(match, risk, stadium);
+    if (!suggestion) continue;
+
+    match.weatherOps = suggestion;
+    match.lastSyncedAt = new Date();
+    await match.save();
+    suspendedIds.push(match._id);
+  }
+
+  const changedIds = [...suspendedIds, ...clearedIds, ...refreshedIds];
+  if (changedIds.length) {
+    notifyMatchesUpdated({
+      reason: suspendedIds.length
+        ? 'weather_in_play_suspended'
+        : clearedIds.length
+          ? 'weather_in_play_resumed'
+          : 'weather_in_play_updated',
+      matchIds: changedIds.map((id) => id.toString()),
+    });
+    invalidateMatchRelatedCaches();
+  }
+
+  return { suspended: suspendedIds, cleared: clearedIds, refreshed: refreshedIds };
 }
 
 /** Pasa a live los upcoming cuyo kickoff ya empezó (si el sync externo aún no lo hizo). */
@@ -476,6 +562,7 @@ export async function syncLiveMatchScoring() {
   const liveFifaRefresh = await syncStaleLiveFifaMatchEvents();
   const fifaRefresh = await refreshRecentlyFinishedFifaEvents();
   const promoted = await promoteMatchesAtKickoff();
+  const weatherOpsSync = await syncLiveWeatherOps();
 
   for (const matchId of liveFifaRefresh.scoringIds ?? []) {
     await recalculateMatchScores(matchId);
@@ -509,7 +596,7 @@ export async function syncLiveMatchScoring() {
     }
   }
 
-  if (matches > 0 || liveFifaRefresh.events > 0 || finalized.length > 0) {
+  if (matches > 0 || liveFifaRefresh.events > 0 || finalized.length > 0 || weatherOpsSync.suspended.length || weatherOpsSync.cleared.length) {
     invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'live_scoring_sync',
@@ -524,6 +611,7 @@ export async function syncLiveMatchScoring() {
     liveFifaRefresh,
     fifaRefresh,
     promoted: promoted.length,
+    weatherOpsSync,
     liveMatches: matches,
     users,
   };

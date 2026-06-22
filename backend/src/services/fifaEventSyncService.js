@@ -28,6 +28,7 @@ import { wallClockAllowsMatchFinished } from './matchStatusRules.js';
 import { env } from '../config/env.js';
 import { buildFifaLineupSides } from './fifaLineupService.js';
 import { buildLineupSnapshotFromSources } from './matchLineupService.js';
+import { extractFifaLiveState } from './matchPlayStateService.js';
 
 /** Máxima antigüedad de raw.fifaEvents.syncedAt antes de refrescar en el loop en vivo. */
 export const LIVE_FIFA_EVENTS_MAX_AGE_MS = env.liveFifaRefreshMs;
@@ -185,6 +186,7 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
   }
 
   if (liveMatch) {
+    rawUpdate['raw.fifaLiveState'] = extractFifaLiveState(liveMatch, fifaEntry);
     const sides = buildFifaLineupSides(liveMatch);
     if (sides.home?.players?.length || sides.away?.players?.length) {
       rawUpdate['raw.lineupSnapshot'] = buildLineupSnapshotFromSources({

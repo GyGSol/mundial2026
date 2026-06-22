@@ -227,11 +227,12 @@ export async function enrichMatchesLight(matches, userId) {
 
 /** Ranking dashboard: timeline completo en live/recién finalizado. */
 export async function enrichMatchesForRankingDashboard(matches, userId) {
+  const hasLive = matches.some((m) => m.status === 'live');
   return enrichMatches(matches, userId, {
     includePlayers: false,
     includeKnockoutContext: false,
     ensureUserDefaults: false,
-    includeWeather: false,
+    includeWeather: hasLive,
     includeLiveFields: true,
     includeTimelineTournamentGoals: true,
   });

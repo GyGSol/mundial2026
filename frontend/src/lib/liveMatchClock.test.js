@@ -55,4 +55,15 @@ describe('liveMatchClock', () => {
     expect(latestMinuteFromScorerLists(match.homeScorers, match.awayScorers)).toBe("59'");
     expect(resolveLiveMatchDisplayClock(match)).toBe("59'");
   });
+
+  it('muestra entretiempo con period_end aunque goleadores marquen 45+4', () => {
+    const match = {
+      status: 'live',
+      timeElapsed: "45+4'",
+      homeScorers: [{ name: 'Mbappe', minute: 45 }],
+      matchTimeline: [{ type: 'period_end', minute: 45, phase: 'first', sortKey: 45 }],
+      weatherOps: { phase: 'normal' },
+    };
+    expect(resolveLiveMatchDisplayClock(match)).toBe('Entretiempo');
+  });
 });

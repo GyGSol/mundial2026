@@ -6,6 +6,8 @@ import {
 import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
+  sortLiveMatchesForFeaturedBar,
+  liveMatchFeaturedSortTier,
 } from '../src/services/liveMatchPartitionService.js';
 import { buildLiveScheduleContext } from '../src/services/liveScheduleOverlapService.js';
 
@@ -60,6 +62,29 @@ describe('liveMatchPartitionService', () => {
     expect(activeLiveRaw).toHaveLength(1);
     expect(staleLiveRaw).toHaveLength(1);
     expect(buildFeaturedRecentFinishedRaw([], staleLiveRaw, now)).toHaveLength(1);
+  });
+
+  it('ordena activos arriba y suspendidos abajo en partidos en curso', () => {
+    const active = {
+      id: 'nor-sen',
+      status: 'live',
+      kickoffAt: new Date('2026-06-21T00:00:00.000Z'),
+      weatherOps: { phase: 'normal' },
+      raw: { time_elapsed: "12'", finished: 'FALSE' },
+    };
+    const suspended = {
+      id: 'fra-irq',
+      status: 'live',
+      kickoffAt: new Date('2026-06-20T21:00:00.000Z'),
+      weatherOps: { phase: 'suspended' },
+      raw: { time_elapsed: "45+4'", finished: 'FALSE' },
+    };
+
+    expect(liveMatchFeaturedSortTier(active)).toBe(0);
+    expect(liveMatchFeaturedSortTier(suspended)).toBe(1);
+
+    const sorted = sortLiveMatchesForFeaturedBar([suspended, active]);
+    expect(sorted.map((m) => m.id)).toEqual(['nor-sen', 'fra-irq']);
   });
 });
 

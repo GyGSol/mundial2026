@@ -1,3 +1,5 @@
+import { getEffectiveMatchPlayState, resolvePausedDisplayClock } from './matchPlayState.js';
+
 /** @param {Record<string, unknown> | string | null | undefined} rawOrElapsed */
 export function formatTimeElapsed(rawOrElapsed) {
   const value =
@@ -191,6 +193,13 @@ export function pickLiveDisplayClock(...sources) {
 }
 
 export function resolveLiveMatchDisplayClock(match, timeline = match?.matchTimeline ?? []) {
+  const playState = getEffectiveMatchPlayState(match);
+  if (playState.phase === 'halftime') return 'Entretiempo';
+  const pausedClock = resolvePausedDisplayClock(playState);
+  if (pausedClock && playState.phase !== 'in_play') {
+    return pausedClock;
+  }
+
   const raw = match?.raw ?? {};
   return (
     pickLiveDisplayClock(

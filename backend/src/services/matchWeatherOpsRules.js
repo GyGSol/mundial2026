@@ -93,6 +93,14 @@ export function isPreKickoffDelayExpired(ops, now = Date.now()) {
   return normalized.resumeEarliestAt.getTime() <= now;
 }
 
+/** Ventana de reanudación cumplida tras suspensión en vivo (Escenario B). */
+export function isWeatherSuspensionExpired(ops, now = Date.now()) {
+  const normalized = normalizeWeatherOps(ops);
+  if (normalized.phase !== 'suspended') return false;
+  if (!normalized.resumeEarliestAt) return false;
+  return normalized.resumeEarliestAt.getTime() <= now;
+}
+
 export function clearWeatherOpsToNormal() {
   return { ...DEFAULT_WEATHER_OPS };
 }

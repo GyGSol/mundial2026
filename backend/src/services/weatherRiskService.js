@@ -3,7 +3,11 @@ import {
   resolveLightningProtocolCopy,
   resolveStadiumWeatherProfile,
 } from '../data/stadiumWeatherProfile.js';
-import { NOAA_RESUME_WAIT_MS } from './matchWeatherOpsRules.js';
+import {
+  isWeatherSuspensionExpired,
+  normalizeWeatherOps,
+  NOAA_RESUME_WAIT_MS,
+} from './matchWeatherOpsRules.js';
 
 const AUTHORITY_ALERTS_CACHE_TTL_LIVE_MS = 3 * 60 * 1000;
 const AUTHORITY_ALERTS_CACHE_TTL_DEFAULT_MS = 30 * 60 * 1000;
@@ -332,11 +336,46 @@ export function formatWeatherRiskForClient(risk) {
   };
 }
 
+export function matchEvidentlyStartedOnField(match) {
+  const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
+  const normalized = String(elapsed ?? '').toLowerCase();
+  if (!normalized || normalized === 'notstarted' || normalized === '0') return false;
+  return true;
+}
+
 export function shouldSuggestPreKickoffDelay(risk, match) {
   if (!risk?.available || risk.riskLevel !== 'stop') return false;
   if (match?.status !== 'upcoming') return false;
-  const elapsed = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
-  const notStarted =
-    !elapsed || elapsed === 'notstarted' || elapsed === '0' || String(elapsed).toLowerCase() === '0';
-  return notStarted;
+  return !matchEvidentlyStartedOnField(match);
+}
+
+/** Escenario B — partido ya `live` con riesgo `stop` (rayos / tormenta severa). */
+export function shouldSuggestInPlaySuspension(risk, match) {
+  if (!risk?.available || risk.riskLevel !== 'stop') return false;
+  if (match?.status !== 'live') return false;
+  if (!matchEvidentlyStartedOnField(match)) return false;
+
+  const phase = normalizeWeatherOps(match.weatherOps).phase;
+  if (phase === 'suspended' || phase === 'pre_kickoff_delay' || phase === 'postponed') {
+    return false;
+  }
+  return true;
+}
+
+/** Renueva lastAlertAt / resumeEarliestAt mientras sigue el riesgo `stop`. */
+export function shouldRefreshInPlaySuspension(risk, match) {
+  if (!risk?.available || risk.riskLevel !== 'stop') return false;
+  if (match?.status !== 'live') return false;
+  const ops = normalizeWeatherOps(match.weatherOps);
+  if (ops.phase !== 'suspended' || ops.source === 'admin') return false;
+  return true;
+}
+
+/** Limpia suspensión automática cuando el riesgo baja y venció la ventana NOAA. */
+export function shouldClearInPlaySuspension(risk, match, now = Date.now()) {
+  const ops = normalizeWeatherOps(match.weatherOps);
+  if (match?.status !== 'live' || ops.phase !== 'suspended') return false;
+  if (ops.source === 'admin') return false;
+  if (risk?.riskLevel === 'stop') return false;
+  return isWeatherSuspensionExpired(ops, now);
 }

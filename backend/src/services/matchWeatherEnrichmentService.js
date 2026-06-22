@@ -2,6 +2,8 @@ import { getVenueWeatherForStadium } from './weatherService.js';
 import {
   assessVenueWeatherRisk,
   formatWeatherRiskForClient,
+  shouldRefreshInPlaySuspension,
+  shouldSuggestInPlaySuspension,
   shouldSuggestPreKickoffDelay,
 } from './weatherRiskService.js';
 import {
@@ -109,12 +111,8 @@ export async function attachWeatherAndScheduleToEnrichedMatches(
   });
 }
 
-export function applyWeatherOpsSuggestion(match, risk, stadium = {}) {
-  if (!shouldSuggestPreKickoffDelay(risk, match)) return null;
-
+function buildWeatherOpsFromRisk(match, risk, stadium, phase) {
   const ops = normalizeWeatherOps(match.weatherOps);
-  if (ops.phase !== 'normal') return null;
-
   const profile = resolveStadiumWeatherProfile(stadium);
   const region = profile.lightningProtocolRegion;
   const lastAlertAt = risk.lastAlertAt ? new Date(risk.lastAlertAt) : new Date();
@@ -123,18 +121,34 @@ export function applyWeatherOpsSuggestion(match, risk, stadium = {}) {
     (region === 'usa-noaa' ? 'nws' : region === 'canada' ? 'msc' : 'open-meteo');
 
   return {
-    phase: 'pre_kickoff_delay',
+    phase,
     reason: 'lightning',
     protocol: resolveWeatherOpsProtocolKey(region),
-    since: new Date(),
+    since: ops.phase === phase ? (ops.since ?? new Date()) : new Date(),
     resumeEarliestAt: computeResumeEarliestAt(lastAlertAt),
     originalKickoffAt: ops.originalKickoffAt ?? match.kickoffAt ?? null,
-    delayedKickoffAt: null,
+    delayedKickoffAt: ops.delayedKickoffAt ?? null,
     lastAlertAt,
     nwsAlertId: risk.authorityAlertId ?? risk.nwsAlertId ?? null,
     source,
     overlapGroupKey: ops.overlapGroupKey ?? null,
   };
+}
+
+export function applyWeatherOpsSuggestion(match, risk, stadium = {}) {
+  if (!shouldSuggestPreKickoffDelay(risk, match)) return null;
+  if (normalizeWeatherOps(match.weatherOps).phase !== 'normal') return null;
+  return buildWeatherOpsFromRisk(match, risk, stadium, 'pre_kickoff_delay');
+}
+
+export function applyInPlayWeatherSuspension(match, risk, stadium = {}) {
+  if (!shouldSuggestInPlaySuspension(risk, match)) return null;
+  return buildWeatherOpsFromRisk(match, risk, stadium, 'suspended');
+}
+
+export function refreshInPlayWeatherSuspension(match, risk, stadium = {}) {
+  if (!shouldRefreshInPlaySuspension(risk, match)) return null;
+  return buildWeatherOpsFromRisk(match, risk, stadium, 'suspended');
 }
 
 /** @deprecated Usar applyWeatherOpsSuggestion */

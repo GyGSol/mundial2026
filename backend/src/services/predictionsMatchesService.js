@@ -11,6 +11,7 @@ import {
 import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
+  sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
 
 const BAR_MATCH_PROJECTION =
@@ -57,9 +58,9 @@ export async function listPredictionsMatches({ status, group }, userId) {
   const enriched = matches
     .map((m) => enrichedById.get(m._id.toString()))
     .filter(Boolean);
-  const liveMatches = activeLiveRaw
-    .map((m) => enrichedById.get(m._id.toString()))
-    .filter(Boolean);
+  const liveMatches = sortLiveMatchesForFeaturedBar(
+    activeLiveRaw.map((m) => enrichedById.get(m._id.toString())).filter(Boolean)
+  );
   const recentFinishedMatches = recentFeaturedRaw
     .map((m) => enrichedById.get(m._id.toString()))
     .filter(Boolean);

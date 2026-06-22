@@ -145,10 +145,23 @@ export function isLiveCardFinalizing(match) {
   return elapsedTokenIndicatesFinished(elapsed) || matchTimelineHasMatchEnd(match);
 }
 
+import { getEffectiveMatchPlayState, isMatchPlayPaused } from './matchPlayState.js';
+
 export function liveCardBadgeLabel(match, { displayClock } = {}) {
   if (match?.status === 'finished') return 'Final';
   if (isLiveCardFinalizing(match)) return 'Finalizando…';
   if (match?.status === 'live') {
+    const playState = getEffectiveMatchPlayState(match);
+    if (isMatchPlayPaused(playState)) {
+      const clock =
+        playState.phase === 'halftime'
+          ? null
+          : playState.frozenClock && playState.frozenClock !== playState.label
+            ? playState.frozenClock
+            : displayClock ?? match?.timeElapsed;
+      const label = playState.label ?? 'En pausa';
+      return clock && playState.phase !== 'halftime' ? `${label} · ${clock}` : label;
+    }
     const clock = displayClock ?? match?.timeElapsed;
     return clock ? `En vivo · ${clock}` : 'En vivo';
   }

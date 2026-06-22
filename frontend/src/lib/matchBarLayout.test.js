@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchBarGridClass } from './matchBarLayout.js';
+import { matchBarGridClass, liveMatchesBarGridClass } from './matchBarLayout.js';
 
 describe('matchBarGridClass', () => {
   it('1 partido: una columna', () => {
@@ -13,5 +13,11 @@ describe('matchBarGridClass', () => {
   it('3 o más: tres columnas en lg+', () => {
     expect(matchBarGridClass(3)).toBe('grid-cols-1 sm:grid-cols-2 lg:grid-cols-3');
     expect(matchBarGridClass(5)).toBe('grid-cols-1 sm:grid-cols-2 lg:grid-cols-3');
+  });
+});
+
+describe('liveMatchesBarGridClass', () => {
+  it('apila partidos en curso en una sola columna', () => {
+    expect(liveMatchesBarGridClass()).toBe('grid-cols-1');
   });
 });

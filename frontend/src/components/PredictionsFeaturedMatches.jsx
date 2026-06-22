@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import MatchCard from '@/components/MatchCard.jsx';
 import { cn } from '@/lib/utils';
+import { sortLiveMatchesForFeaturedBar } from '@/lib/liveMatchFeaturedSort.js';
 
 function FeaturedMatchItems({
   matches,
@@ -59,7 +61,11 @@ export default function PredictionsFeaturedMatches({
   isScheduled,
   onScheduled,
 }) {
-  const hasLive = liveMatches.length > 0;
+  const sortedLiveMatches = useMemo(
+    () => sortLiveMatchesForFeaturedBar(liveMatches),
+    [liveMatches]
+  );
+  const hasLive = sortedLiveMatches.length > 0;
   const recentForDisplay = hasLive ? [] : recentFinishedMatches;
 
   if (!hasLive && !recentForDisplay.length) return null;
@@ -75,8 +81,8 @@ export default function PredictionsFeaturedMatches({
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-8 md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
       <FeaturedSection
-        title={liveMatches.length > 1 ? 'Partidos en curso' : 'Partido en curso'}
-        matches={liveMatches}
+        title={sortedLiveMatches.length > 1 ? 'Partidos en curso' : 'Partido en curso'}
+        matches={sortedLiveMatches}
         {...itemProps}
       />
       <FeaturedSection

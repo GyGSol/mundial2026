@@ -10,6 +10,7 @@ import {
 import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
+  sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
 import { buildMatchLineupPayload } from './matchLineupService.js';
 
@@ -43,9 +44,9 @@ async function computeLiveMatchSnapshot(userId) {
   const enriched = await enrichMatchesForRankingDashboard(barMatches, userId);
   const byMongoId = new Map(enriched.map((m) => [m.id, m]));
 
-  const liveMatches = activeLiveRaw
-    .map((m) => byMongoId.get(m._id.toString()))
-    .filter(Boolean);
+  const liveMatches = sortLiveMatchesForFeaturedBar(
+    activeLiveRaw.map((m) => byMongoId.get(m._id.toString())).filter(Boolean)
+  );
   const recentFinishedMatches = recentFeaturedRaw
     .map((m) => byMongoId.get(m._id.toString()))
     .filter(Boolean);

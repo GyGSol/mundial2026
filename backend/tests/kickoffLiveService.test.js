@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Match } from '../src/models/Match.js';
 import { Team } from '../src/models/Team.js';
 import { Stadium } from '../src/models/Stadium.js';
-import { promoteMatchesAtKickoff, finalizeStaleLiveMatches } from '../src/services/kickoffLiveService.js';
+import { promoteMatchesAtKickoff, finalizeStaleLiveMatches, syncLiveWeatherOps } from '../src/services/kickoffLiveService.js';
 import { recalculateMatchScores } from '../src/services/matchScoringService.js';
+import { applyInPlayWeatherSuspension } from '../src/services/matchWeatherEnrichmentService.js';
+import { notifyMatchesUpdated } from '../src/services/websocketService.js';
 
 vi.mock('../src/models/Match.js', () => ({
   Match: {
@@ -52,8 +54,15 @@ vi.mock('../src/services/weatherService.js', () => ({
 }));
 
 vi.mock('../src/services/weatherRiskService.js', () => ({
-  assessVenueWeatherRisk: vi.fn().mockResolvedValue({ riskLevel: 'low' }),
+  assessVenueWeatherRisk: vi.fn().mockResolvedValue({ riskLevel: 'low', available: true }),
   shouldSuggestPreKickoffDelay: vi.fn().mockReturnValue(false),
+  shouldClearInPlaySuspension: vi.fn().mockReturnValue(false),
+}));
+
+vi.mock('../src/services/matchWeatherEnrichmentService.js', () => ({
+  applyWeatherOpsSuggestion: vi.fn().mockReturnValue(null),
+  applyInPlayWeatherSuspension: vi.fn().mockReturnValue(null),
+  refreshInPlayWeatherSuspension: vi.fn().mockReturnValue(null),
 }));
 
 vi.mock('../src/services/fifaEventSyncService.js', () => ({
@@ -240,5 +249,41 @@ describe('kickoffLiveService', () => {
       { new: true }
     );
     expect(recalculateMatchScores).toHaveBeenCalledWith('live-final');
+  });
+
+  it('syncLiveWeatherOps persiste suspensión climática en partidos live', async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const liveMatch = {
+      _id: 'live-storm',
+      stadiumId: '5',
+      kickoffAt: new Date(Date.now() - 60 * 60 * 1000),
+      status: 'live',
+      weatherOps: { phase: 'normal' },
+      raw: { time_elapsed: "34'" },
+      save,
+    };
+
+    Match.find.mockResolvedValue([liveMatch]);
+    Stadium.find.mockReturnValue({
+      lean: vi.fn().mockResolvedValue([{ externalId: '5', country: 'USA' }]),
+    });
+
+    applyInPlayWeatherSuspension.mockReturnValue({
+      phase: 'suspended',
+      reason: 'lightning',
+      source: 'nws',
+      since: new Date(),
+      resumeEarliestAt: new Date(Date.now() + 30 * 60 * 1000),
+      lastAlertAt: new Date(),
+    });
+
+    const result = await syncLiveWeatherOps();
+
+    expect(result.suspended).toEqual(['live-storm']);
+    expect(save).toHaveBeenCalled();
+    expect(liveMatch.weatherOps.phase).toBe('suspended');
+    expect(notifyMatchesUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'weather_in_play_suspended' })
+    );
   });
 });

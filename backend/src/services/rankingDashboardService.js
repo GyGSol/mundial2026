@@ -24,6 +24,7 @@ import { buildMatchLineupPayload } from './matchLineupService.js';
 import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
+  sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
@@ -99,7 +100,9 @@ export async function getRankingDashboard(groupId, userId) {
     [...enrichedFeatured, ...enrichedUpcoming].map((m) => [m.id, m])
   );
 
-  const liveMatches = activeLiveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean);
+  const liveMatches = sortLiveMatchesForFeaturedBar(
+    activeLiveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
+  );
   const recentFinishedMatches = recentFeaturedRaw
     .map((m) => byId.get(m._id.toString()))
     .filter(Boolean);

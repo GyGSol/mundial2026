@@ -44,4 +44,28 @@ describe('matchStatus viewer policy', () => {
     };
     expect(shouldKeepLiveViewerOpen(match, now)).toBe(true);
   });
+
+  it('muestra entretiempo en badge cuando la cronología cerró el 1.er tiempo', () => {
+    const match = {
+      status: 'live',
+      timeElapsed: "45+4'",
+      matchTimeline: [{ type: 'period_end', minute: 45, phase: 'first', sortKey: 45 }],
+      weatherOps: { phase: 'normal' },
+    };
+    expect(liveCardBadgeLabel(match)).toBe('Entretiempo');
+  });
+
+  it('muestra suspendido oficial cuando matchPlayState lo indica', () => {
+    const match = {
+      status: 'live',
+      matchPlayState: {
+        phase: 'suspended',
+        label: 'Suspendido',
+        frozenClock: "45+4'",
+        reason: 'official',
+      },
+      timeElapsed: "45+4'",
+    };
+    expect(liveCardBadgeLabel(match)).toBe("Suspendido · 45+4'");
+  });
 });

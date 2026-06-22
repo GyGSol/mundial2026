@@ -46,8 +46,11 @@ import { playerKeyFromTimelineEvent } from '@/lib/lineupLiveState.js';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import { liveCardBadgeLabel, isLiveCardFinalizing } from '@/lib/matchStatus.js';
 import { useLiveMatchDisplayClock } from '@/hooks/useLiveMatchDisplayClock.js';
+import { getEffectiveMatchPlayState, isMatchPlayPaused } from '@/lib/matchPlayState.js';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
-import { matchBarGridClass } from '@/lib/matchBarLayout.js';
+import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchPlayStateBadge.jsx';
+import { matchBarGridClass, liveMatchesBarGridClass } from '@/lib/matchBarLayout.js';
+import { sortLiveMatchesForFeaturedBar } from '@/lib/liveMatchFeaturedSort.js';
 
 const matchDateLabel = (match) =>
   formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
@@ -858,10 +861,29 @@ function FinishedTeamsHeader({
   );
 }
 
-function LiveStatusBadge({ match, isLive, weatherLabel }) {
+function LiveStatusBadge({ match, isLive, weatherLabel, playStateLabel }) {
   const displayClock = useLiveMatchDisplayClock(isLive ? match : null);
   const finalizingLive = isLive && isLiveCardFinalizing(match);
-  const showLiveBadge = isLive && !weatherLabel && !finalizingLive;
+  const playState = getEffectiveMatchPlayState(match);
+  const paused = isLive && isMatchPlayPaused(playState);
+  const showLiveBadge = isLive && !weatherLabel && !playStateLabel && !finalizingLive && !paused;
+
+  if (paused) {
+    if (playStateLabel) return null;
+
+    const clockSuffix =
+      playState.frozenClock &&
+      playState.phase !== 'halftime' &&
+      playState.frozenClock !== playStateLabel?.text
+        ? ` · ${playState.frozenClock}`
+        : '';
+    return (
+      <Badge variant="outline" className="border-amber-300/70 bg-amber-50 text-amber-900">
+        {playStateLabel?.text ?? playState.label ?? 'En pausa'}
+        {clockSuffix}
+      </Badge>
+    );
+  }
 
   if (showLiveBadge) {
     const label = liveCardBadgeLabel(match, { displayClock });
@@ -903,9 +925,11 @@ function ResultMatchCard({ match, variant = 'live' }) {
   const isArgentina = matchInvolvesArgentina(match);
   const isLive = variant === 'live';
   const weatherLabel = getWeatherOpsLabel(match.weatherOps);
+  const playStateLabel = getMatchPlayStateLabel(match);
   const showWeatherLayer =
     isLive ||
     weatherLabel ||
+    playStateLabel ||
     match.weatherRisk?.riskLevel === 'stop' ||
     match.weatherRisk?.riskLevel === 'high' ||
     match.liveScheduleContext?.integrityWarning;
@@ -915,11 +939,19 @@ function ResultMatchCard({ match, variant = 'live' }) {
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
         {showWeatherLayer ? (
           <>
-            <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+            <MatchPlayStateBadge match={match} />
+            {!playStateLabel ? (
+              <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+            ) : null}
             <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
           </>
         ) : null}
-        <LiveStatusBadge match={match} isLive={isLive} weatherLabel={weatherLabel} />
+        <LiveStatusBadge
+          match={match}
+          isLive={isLive}
+          weatherLabel={weatherLabel}
+          playStateLabel={playStateLabel}
+        />
 
         <MatchTeamsLayout
           homeName={homeName}
@@ -964,9 +996,11 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
   const isArgentina = matchInvolvesArgentina(match);
   const isLive = variant === 'live';
   const weatherLabel = getWeatherOpsLabel(match.weatherOps);
+  const playStateLabel = getMatchPlayStateLabel(match);
   const showWeatherLayer =
     isLive ||
     weatherLabel ||
+    playStateLabel ||
     match.weatherRisk?.riskLevel === 'stop' ||
     match.weatherRisk?.riskLevel === 'high' ||
     match.liveScheduleContext?.integrityWarning;
@@ -982,11 +1016,19 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
         {showWeatherLayer ? (
           <>
-            <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+            <MatchPlayStateBadge match={match} />
+            {!playStateLabel ? (
+              <WeatherOpsBadge weatherOps={match.weatherOps} weatherRisk={match.weatherRisk} />
+            ) : null}
             <LiveScheduleAlert liveScheduleContext={match.liveScheduleContext} className="w-full" />
           </>
         ) : null}
-        <LiveStatusBadge match={match} isLive={isLive} weatherLabel={weatherLabel} />
+        <LiveStatusBadge
+          match={match}
+          isLive={isLive}
+          weatherLabel={weatherLabel}
+          playStateLabel={playStateLabel}
+        />
 
         <div className="flex w-full flex-col gap-1.5">
           <FinishedTeamsHeader
@@ -1061,11 +1103,14 @@ function FeaturedMatchCard({ match }) {
   return <LiveMatchCard match={match} />;
 }
 
-function FeaturedMatchesGrid({ liveMatches, recentFinishedMatches }) {
+function FeaturedMatchesGrid({ liveMatches, recentFinishedMatches, stackLiveVertically = false }) {
   const featured = [...liveMatches, ...recentFinishedMatches];
   if (!featured.length) return null;
+  const gridClass = stackLiveVertically
+    ? liveMatchesBarGridClass()
+    : matchBarGridClass(featured.length);
   return (
-    <div className={cn('grid w-full gap-4', matchBarGridClass(featured.length))}>
+    <div className={cn('grid w-full gap-4', gridClass)}>
       {featured.map((match) => (
         <div key={match.id} className="min-w-0">
           <FeaturedMatchCard match={match} />
@@ -1278,17 +1323,18 @@ export default function LiveMatchesBar({
   nextMatches = [],
   finishedMatches = [],
 }) {
-  const hasLive = matches.length > 0;
+  const sortedLiveMatches = useMemo(() => sortLiveMatchesForFeaturedBar(matches), [matches]);
+  const hasLive = sortedLiveMatches.length > 0;
   const hasRecentFinished = recentFinishedMatches.length > 0;
   const showRecentFinishedBar = hasRecentFinished;
   const hasNext = nextMatches.length > 0;
   const archiveMatches = useMemo(() => {
     const featuredIds = new Set([
-      ...matches.map((match) => match.id),
+      ...sortedLiveMatches.map((match) => match.id),
       ...recentFinishedMatches.map((match) => match.id),
     ]);
     return finishedMatches.filter((match) => !featuredIds.has(match.id));
-  }, [finishedMatches, matches, recentFinishedMatches]);
+  }, [finishedMatches, sortedLiveMatches, recentFinishedMatches]);
   const hasArchive = archiveMatches.length > 0;
 
   if (!hasLive && !showRecentFinishedBar && !hasNext && !hasArchive) {
@@ -1299,9 +1345,13 @@ export default function LiveMatchesBar({
     <div className="mx-auto flex w-full flex-col gap-6">
       {hasLive ? (
         <MatchColumn
-          title={matches.length > 1 ? 'Partidos en curso' : 'Partido en curso'}
+          title={sortedLiveMatches.length > 1 ? 'Partidos en curso' : 'Partido en curso'}
         >
-          <FeaturedMatchesGrid liveMatches={matches} recentFinishedMatches={[]} />
+          <FeaturedMatchesGrid
+            liveMatches={sortedLiveMatches}
+            recentFinishedMatches={[]}
+            stackLiveVertically
+          />
         </MatchColumn>
       ) : null}
 

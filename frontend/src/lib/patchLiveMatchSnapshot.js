@@ -12,6 +12,7 @@ const LIVE_SCALAR_FIELDS = [
   'minute',
   'weatherOps',
   'weatherOpsLabel',
+  'matchPlayState',
   'predictionOpen',
   'finishedAt',
   'liveStartedPushSentAt',

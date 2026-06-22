@@ -3,6 +3,7 @@ import {
   blocksKickoffPromotion,
   computeResumeEarliestAt,
   isWeatherSuspendedLive,
+  isWeatherSuspensionExpired,
   normalizeWeatherOps,
 } from '../src/services/matchWeatherOpsRules.js';
 
@@ -27,6 +28,20 @@ describe('matchWeatherOpsRules', () => {
     const last = new Date('2026-06-15T20:00:00.000Z');
     const resume = computeResumeEarliestAt(last, last.getTime());
     expect(resume.getTime() - last.getTime()).toBe(30 * 60 * 1000);
+  });
+
+  it('isWeatherSuspensionExpired cuando resumeEarliestAt venció', () => {
+    const ops = {
+      phase: 'suspended',
+      resumeEarliestAt: new Date(Date.now() - 60_000),
+    };
+    expect(isWeatherSuspensionExpired(ops)).toBe(true);
+    expect(
+      isWeatherSuspensionExpired({
+        phase: 'suspended',
+        resumeEarliestAt: new Date(Date.now() + 30 * 60 * 1000),
+      })
+    ).toBe(false);
   });
 
   it('normalizeWeatherOps devuelve defaults seguros', () => {

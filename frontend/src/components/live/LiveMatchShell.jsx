@@ -20,6 +20,8 @@ import {
   matchHasCreibleFinishEvidence,
   shouldKeepLiveViewerOpen,
 } from '@/lib/matchStatus.js';
+import { getEffectiveMatchPlayState, isMatchPlayPaused } from '@/lib/matchPlayState.js';
+import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchPlayStateBadge.jsx';
 import TeamFlag from '../TeamFlag.jsx';
 import LiveMatchPanel from './LiveMatchPanel.jsx';
 import LiveMatchSwitcher from './LiveMatchSwitcher.jsx';
@@ -44,9 +46,13 @@ function LiveMatchSummary({ match }) {
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
   const displayClock = useLiveMatchDisplayClock(match);
   const badge = liveCardBadgeLabel(match, { displayClock });
+  const playState = getEffectiveMatchPlayState(match);
+  const paused = isMatchPlayPaused(playState);
+  const playStateLabel = getMatchPlayStateLabel(match);
 
   return (
     <div className="flex flex-col gap-3">
+      <MatchPlayStateBadge match={match} className="w-full items-start" />
       <div className="flex items-center justify-between gap-2 text-sm">
         <span className="flex min-w-0 items-center gap-1.5 truncate">
           <FlagInline team={match?.homeTeam} />
@@ -61,13 +67,15 @@ function LiveMatchSummary({ match }) {
         </span>
       </div>
 
-      {badge ? (
+      {badge && !playStateLabel ? (
         <p
           className={cn(
             'text-xs',
-            match?.status === 'live' && !badge.startsWith('Final')
+            match?.status === 'live' && !badge.startsWith('Final') && !paused
               ? 'text-red-600 dark:text-red-400'
-              : 'text-muted-foreground'
+              : paused
+                ? 'text-amber-700 dark:text-amber-300'
+                : 'text-muted-foreground'
           )}
         >
           {badge}
