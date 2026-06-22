@@ -31,6 +31,10 @@ cod-gedeon-kalulu.png | #24 | Gédéon Kalulu | DF | 28 pj | 0 goles
 cod-edo-kayembe.png | #25 | Edo Kayembe | MF | 43 pj | 2 goles
 cod-arthur-masuaku.png | #26 | Arthur Masuaku | DF | 45 pj | 4 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+cod-sebastien-desabre.png | — | Sébastien Desabre | DT
+
 # Solo nombres (pegar en generador):
 
 Lionel Mpasi

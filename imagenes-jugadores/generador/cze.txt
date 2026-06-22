@@ -31,6 +31,10 @@ cze-alexandr-sojka.png | #24 | Alexandr Sojka | MF | 2 pj | 0 goles
 cze-hugo-sochurek.png | #25 | Hugo Sochůrek | MF | 1 pj | 0 goles
 cze-denis-visinsky.png | #26 | Denis Višinský | FW | 2 pj | 1 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+cze-miroslav-koubek.png | — | Miroslav Koubek | DT
+
 # Solo nombres (pegar en generador):
 
 Matěj Kovář
