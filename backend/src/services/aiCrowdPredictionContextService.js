@@ -144,7 +144,7 @@ export async function buildCrowdProjectedStandings(groupId, groupLetter) {
   return annotateGroupQualification(raw);
 }
 
-export async function buildCrowdContextForCompetitor(match, aiUserId) {
+export async function buildCrowdContextForCompetitor(match, aiUserId, { includeAllGroups = false } = {}) {
   const memberships = await UserGroupMembership.find({ userId: aiUserId })
     .select('groupId')
     .lean();
@@ -187,22 +187,40 @@ export async function buildCrowdContextForCompetitor(match, aiUserId) {
   return {
     grupoFoco: focus?.grupoNombre ?? null,
     consensoPartido: focus?.consensoPartido ?? null,
-    tablasConsenso: consensoByGroup
-      .filter((c) => c.tablaProyectadaConsenso)
-      .map((c) => ({
-        grupo: c.grupoNombre,
-        standings: c.tablaProyectadaConsenso?.[0]?.standings?.map((row) => ({
-          rank: row.rank,
-          team: row.nameEn ?? row.teamId,
-          points: row.points,
-          qualificationZone: row.qualificationZone ?? null,
-        })),
-      })),
-    todosLosGrupos: consensoByGroup.map((c) => ({
-      grupo: c.grupoNombre,
-      muestras: c.consensoPartido?.muestras ?? 0,
-      mediana: c.consensoPartido?.mediana ?? null,
-    })),
+    tablasConsenso: includeAllGroups
+      ? consensoByGroup
+          .filter((c) => c.tablaProyectadaConsenso)
+          .map((c) => ({
+            grupo: c.grupoNombre,
+            standings: c.tablaProyectadaConsenso?.[0]?.standings?.map((row) => ({
+              rank: row.rank,
+              team: row.nameEn ?? row.teamId,
+              points: row.points,
+              qualificationZone: row.qualificationZone ?? null,
+            })),
+          }))
+      : focus?.tablaProyectadaConsenso
+        ? [
+            {
+              grupo: focus.grupoNombre,
+              standings: focus.tablaProyectadaConsenso?.[0]?.standings?.map((row) => ({
+                rank: row.rank,
+                team: row.nameEn ?? row.teamId,
+                points: row.points,
+                qualificationZone: row.qualificationZone ?? null,
+              })),
+            },
+          ]
+        : [],
+    ...(includeAllGroups
+      ? {
+          todosLosGrupos: consensoByGroup.map((c) => ({
+            grupo: c.grupoNombre,
+            muestras: c.consensoPartido?.muestras ?? 0,
+            mediana: c.consensoPartido?.mediana ?? null,
+          })),
+        }
+      : {}),
   };
 }
 

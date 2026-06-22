@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { aiConsultationBurstLimiter } from '../middleware/aiRateLimit.middleware.js';
 import { AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE } from '../config/economy.js';
 import { User } from '../models/User.js';
 import { buildAiCreditsPayload } from '../services/fubolService.js';
@@ -21,6 +22,7 @@ async function loadAiCredits(userId) {
 }
 
 router.use(authMiddleware);
+router.use(aiConsultationBurstLimiter);
 
 router.get('/', async (req, res, next) => {
   try {
@@ -80,6 +82,13 @@ router.post('/insight', async (req, res, next) => {
     if (err.message === 'IA no configurada') {
       return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
     }
+    if (err.status === 429 || err.code === 'ai_rate_limit') {
+      return res.status(429).json({
+        error: err.message,
+        code: err.code ?? 'ai_rate_limit',
+        retryAfterSec: err.retryAfterSec ?? 3600,
+      });
+    }
     next(err);
   }
 });
@@ -117,6 +126,13 @@ router.post('/ask', async (req, res, next) => {
     }
     if (err.message === 'IA no configurada') {
       return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
+    }
+    if (err.status === 429 || err.code === 'ai_rate_limit') {
+      return res.status(429).json({
+        error: err.message,
+        code: err.code ?? 'ai_rate_limit',
+        retryAfterSec: err.retryAfterSec ?? 3600,
+      });
     }
     next(err);
   }

@@ -11,10 +11,20 @@ import {
   parseGeminiJsonResponse,
 } from './aiPredictionService.js';
 import {
-  humanizeCompetitorPromptContext,
   sanitizeAiUserFacingText,
   WORLD_CUP_USER_FACING_LANGUAGE_RULES,
 } from './aiPromptHumanizer.js';
+import {
+  serializeContextForPrompt,
+  prepareOracleContextPayload,
+} from './oraclePromptContextService.js';
+import {
+  acquireCerebrasSlot,
+  CEREBRAS_PRIORITIES,
+  estimateCerebrasRequestTokens,
+  noteCerebrasResponse,
+  waitAfterCerebras429,
+} from './cerebrasQuotaManager.js';
 
 const SOURCE = 'cerebras-oracle';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
@@ -33,7 +43,7 @@ export const ORACLE_REASONING_INSTRUCTIONS = `RAZONAMIENTO ORACLE (campos reason
 - "key_variable_impact": UNA frase con el factor más determinante que NO sea solo "ranking FIFA".
 - El marcador debe seguir guiaPrioridadContexto; con PJ=0 priorizá pre-torneo y clasificación, no inventes puntos o posiciones en tabla 2026.`;
 
-function buildOracleCompetitorPrompt(context, { liveState = null } = {}) {
+function buildOracleCompetitorPrompt(context, { liveState = null, profile = 'live' } = {}) {
   const liveBlock = liveState
     ? `\nESTADO EN VIVO (ajustá la predicción restante del partido, no el resultado a 90 min desde cero sin contexto):
 Marcador actual: ${liveState.homeScore}-${liveState.awayScore}
@@ -59,11 +69,14 @@ Respondé con el esquema JSON estricto:
 - error_reduction_factor: 0-1 estimación de reducción de error vs baseline
 
 Contexto del partido:
-${JSON.stringify(humanizeCompetitorPromptContext(context), null, 2)}`;
+${serializeContextForPrompt(context, profile)}`;
 }
 
 /** Replay de aprendizaje con contexto congelado del audit log (pre-partido). */
-export function buildOraclePromptFromFrozenContext(promptContext, { liveState = null } = {}) {
+export function buildOraclePromptFromFrozenContext(
+  promptContext,
+  { liveState = null, profile = 'replay' } = {}
+) {
   const liveBlock = liveState
     ? `\nESTADO EN VIVO:
 Marcador actual: ${liveState.homeScore}-${liveState.awayScore}
@@ -89,7 +102,7 @@ Respondé con el esquema JSON estricto:
 - error_reduction_factor: 0-1 estimación de reducción de error vs baseline
 
 Contexto del partido (snapshot pre-partido):
-${JSON.stringify(promptContext, null, 2)}`;
+${JSON.stringify(prepareOracleContextPayload(promptContext, profile))}`;
 }
 
 export function parseOracleStructuredResponse(raw) {
@@ -155,9 +168,22 @@ async function sleep(ms) {
  */
 export async function callCerebrasOracleViaFetch(
   prompt,
-  { fetchImpl = fetch, maxAttempts = 2, useStructured = env.oracleStructuredOutput !== false } = {}
+  {
+    fetchImpl = fetch,
+    maxAttempts = 2,
+    useStructured = env.oracleStructuredOutput !== false,
+    cerebrasPriority = CEREBRAS_PRIORITIES.preMatchOracle,
+    cerebrasLabel = 'oracle',
+  } = {}
 ) {
   if (!env.cerebrasApiKey) return null;
+
+  const estimatedTokens = estimateCerebrasRequestTokens(prompt);
+  await acquireCerebrasSlot({
+    estimatedTokens,
+    priority: cerebrasPriority,
+    label: cerebrasLabel,
+  });
 
   const body = {
     model: env.aiCerebrasModel,
@@ -184,10 +210,15 @@ export async function callCerebrasOracleViaFetch(
         body: JSON.stringify(body),
       });
 
-      if (response.status === 429 && attempt < attempts - 1) {
-        await sleep(1000 * (attempt + 1));
-        continue;
+      if (response.status === 429) {
+        noteCerebrasResponse(response);
+        if (attempt < attempts - 1) {
+          await waitAfterCerebras429(response);
+          continue;
+        }
       }
+
+      noteCerebrasResponse(response);
 
       if (!response.ok) {
         const errText = await response.text().catch(() => '');
@@ -225,10 +256,15 @@ export async function callCerebrasOracleViaFetch(
   return null;
 }
 
-async function callCerebrasOracle(context, { liveState = null, fetchImpl, maxAttempts } = {}) {
-  const prompt = buildOracleCompetitorPrompt(context, { liveState });
+async function callCerebrasOracle(context, { liveState = null, fetchImpl, maxAttempts, cerebrasPriority } = {}) {
+  const prompt = buildOracleCompetitorPrompt(context, { liveState, profile: 'live' });
   const timedFetch = fetchImpl ?? createFetchWithTimeout(ORACLE_FETCH_TIMEOUT_MS);
-  return callCerebrasOracleViaFetch(prompt, { fetchImpl: timedFetch, maxAttempts });
+  return callCerebrasOracleViaFetch(prompt, {
+    fetchImpl: timedFetch,
+    maxAttempts,
+    cerebrasPriority: cerebrasPriority ?? (liveState ? CEREBRAS_PRIORITIES.liveAdjustment : CEREBRAS_PRIORITIES.preMatchOracle),
+    cerebrasLabel: liveState ? 'oracle-live' : 'oracle-predict',
+  });
 }
 
 /** Único punto de inferencia Oracle para marcadores del competidor IA. */
@@ -258,6 +294,8 @@ export async function predictScoreFromAuditContext(promptContext, options = {}) 
     const result = await callCerebrasOracleViaFetch(prompt, {
       fetchImpl: timedFetch,
       maxAttempts: options.maxAttempts ?? 2,
+      cerebrasPriority: options.cerebrasPriority ?? CEREBRAS_PRIORITIES.shadowReplay,
+      cerebrasLabel: 'oracle-replay',
     });
     if (result) return oracleToLegacyScore(result);
   } catch (err) {

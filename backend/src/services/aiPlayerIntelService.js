@@ -6,8 +6,11 @@ import {
   AI_QUESTION_MAX_LEN,
   callAiForJson,
   callAiForText,
+  getAiProviderOrderForHuman,
   hasAiProvider,
 } from './aiPredictionService.js';
+import { consumeHumanAiSlot } from './aiHumanLimitsService.js';
+import { CEREBRAS_PRIORITIES } from './cerebrasQuotaManager.js';
 import { listPlayers, getPlayerById } from './playerService.js';
 import { matchNameToRosterPlayer } from '../utils/playerNameMatch.js';
 import {
@@ -500,8 +503,15 @@ export async function refreshPlayerIntel(playerId, { fetchImpl = fetch } = {}) {
   return mergePlayerWithWiki(mergePlayerWithIntel(base, intel), wikiDoc);
 }
 
-export async function askPlayerIntelFollowUp(playerId, question, { fetchImpl = fetch } = {}) {
+export async function askPlayerIntelFollowUp(
+  playerId,
+  question,
+  { userId, fetchImpl = fetch } = {}
+) {
   if (!hasAiProvider()) throw new Error('IA no configurada');
+  if (userId) {
+    await consumeHumanAiSlot(userId, 'playerIntel');
+  }
 
   const trimmed = String(question ?? '').trim();
   if (!trimmed) throw new Error('Escribí una pregunta');
@@ -531,7 +541,12 @@ Pregunta: ${trimmed}
 
 Respondé en español, breve y concreto (máximo 3 párrafos). Usá las estadísticas provistas cuando respondas sobre forma, minutos o goles. Usá markdown ligero cuando ayude (negritas, listas). No uses HTML ni bloques de código. No cites nombres técnicos de campos ni valores en inglés del sistema (healthStatus, unknown, etc.).`;
 
-  const result = await callAiForText(prompt, { fetchImpl });
+  const result = await callAiForText(prompt, {
+    fetchImpl,
+    providerOrder: getAiProviderOrderForHuman(),
+    cerebrasPriority: CEREBRAS_PRIORITIES.humanConsultation,
+    cerebrasLabel: 'player-intel',
+  });
   return {
     answer: result.text,
     source: result.source,

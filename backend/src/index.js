@@ -7,6 +7,7 @@ import { startKickoffWatchJob } from './jobs/kickoffWatch.job.js';
 import { startPredictionLockReminderJob } from './jobs/predictionLockReminder.job.js';
 import { startAiPredictionsJob } from './jobs/aiPredictions.job.js';
 import { startTrainingBufferExportJob } from './jobs/trainingBufferExport.job.js';
+import { startAiLearningJob } from './jobs/aiLearning.job.js';
 import { initWebSocket } from './services/websocketService.js';
 import { ensureLegacyUserSubmittedBackfillOnce, ensurePredictionGoalDiffBackfillOnce } from './services/predictionMigrationService.js';
 
@@ -23,6 +24,7 @@ async function main() {
   startPredictionLockReminderJob();
   startAiPredictionsJob();
   startTrainingBufferExportJob();
+  startAiLearningJob();
 
   server.listen(env.port, () => {
     console.log(`Server listening on port ${env.port} (HTTP + WS /ws)`);

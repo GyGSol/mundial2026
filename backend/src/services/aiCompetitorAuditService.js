@@ -5,6 +5,7 @@ import { Prediction } from '../models/Prediction.js';
 import { Team } from '../models/Team.js';
 import { User } from '../models/User.js';
 import { humanizePromptContext, briefAiReasoning } from './aiPromptHumanizer.js';
+import { compactCompetitorContext } from './oraclePromptContextService.js';
 import { formatPostMatchReviewRowMeta } from './aiPostMatchLearningService.js';
 import { env } from '../config/env.js';
 import { goalDiffScore } from './goalDiffStats.js';
@@ -32,12 +33,12 @@ function stripInternalContextFields(context) {
 
 export function buildAuditPromptContext(context) {
   const stripped = stripInternalContextFields(context);
-  const humanized = humanizePromptContext(stripped);
-  const json = JSON.stringify(humanized);
-  if (json.length <= MAX_CONTEXT_BYTES) return humanized;
+  const compact = compactCompetitorContext(stripped, 'replay');
+  const json = JSON.stringify(compact);
+  if (json.length <= MAX_CONTEXT_BYTES) return compact;
 
   return {
-    ...humanized,
+    ...compact,
     _truncated: true,
     _originalBytes: json.length,
     _note: 'Contexto recortado por tamaño; revisá logs del servidor si necesitás el payload completo.',

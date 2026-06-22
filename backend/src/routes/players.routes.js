@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { aiConsultationBurstLimiter } from '../middleware/aiRateLimit.middleware.js';
 import { getPlayerSyncMeta } from '../services/playerSyncService.js';
 import { getPlayerWikiSyncMeta } from '../services/playerWikiService.js';
 import {
@@ -130,13 +131,15 @@ router.post('/:id/ai/refresh', authMiddleware, async (req, res, next) => {
   }
 });
 
-router.post('/:id/ai/ask', authMiddleware, async (req, res, next) => {
+router.post('/:id/ai/ask', authMiddleware, aiConsultationBurstLimiter, async (req, res, next) => {
   try {
     if (!hasAiProvider()) {
       return res.status(503).json({ error: 'La IA no está configurada en el servidor' });
     }
 
-    const reply = await askPlayerIntelFollowUp(req.params.id, req.body?.question);
+    const reply = await askPlayerIntelFollowUp(req.params.id, req.body?.question, {
+      userId: req.user._id,
+    });
     res.json({ reply });
   } catch (err) {
     if (
@@ -145,6 +148,13 @@ router.post('/:id/ai/ask', authMiddleware, async (req, res, next) => {
       err.message === 'La pregunta es demasiado larga'
     ) {
       return res.status(400).json({ error: err.message });
+    }
+    if (err.status === 429 || err.code === 'ai_rate_limit') {
+      return res.status(429).json({
+        error: err.message,
+        code: err.code ?? 'ai_rate_limit',
+        retryAfterSec: err.retryAfterSec ?? 3600,
+      });
     }
     next(err);
   }
