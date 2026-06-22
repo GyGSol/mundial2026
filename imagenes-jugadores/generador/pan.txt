@@ -31,6 +31,10 @@ pan-azarias-londono.png | #24 | Azarias Londoño | FW | 11 pj | 0 goles
 pan-roderick-miller.png | #25 | Roderick Miller | DF | 50 pj | 2 goles
 pan-jorge-gutierrez.png | #26 | Jorge Gutiérrez | DF | 18 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+pan-thomas-christiansen.png | — | Thomas Christiansen | DT
+
 # Solo nombres (pegar en generador):
 
 Luis Mejía
