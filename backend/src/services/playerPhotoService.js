@@ -45,6 +45,7 @@ export const TEAM_FOLDER_TO_FIFA = {
   ghana: 'GHA',
   haiti: 'HAI',
   iran: 'IRN',
+  irak: 'IRQ',
   japon: 'JPN',
   jordania: 'JOR',
   marruecos: 'MAR',

@@ -31,6 +31,10 @@ irq-zaid-ismail.png | #24 | Zaid Ismail | MF | 6 pj | 0 goles
 irq-mustafa-saadoon.png | #25 | Mustafa Saadoon | DF | 17 pj | 0 goles
 irq-frans-putros.png | #26 | Frans Putros | DF | 28 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+irq-graham-arnold.png | — | Graham Arnold | DT
+
 # Solo nombres (pegar en generador):
 
 Fahad Talib
