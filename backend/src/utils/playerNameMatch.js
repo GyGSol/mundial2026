@@ -46,6 +46,8 @@ const TRANSLITERATION_TOKEN_ALIASES = {
   firas: ['feras'],
   brikan: ['buraikan'],
   buraikan: ['brikan'],
+  lasheen: ['lashin'],
+  lashin: ['lasheen'],
 };
 
 function tokenAliasSet(token) {
@@ -161,6 +163,7 @@ function scoreNameMatch(target, player) {
   if (rosterTokens.length && targetNorm === [...rosterTokens].reverse().join(' ')) return 95;
   if (compactNameKey(target) === compactNameKey(player?.fullName)) return 93;
   if (tokensMatchAnyOrder(target, player.fullName)) return 90;
+  if (tokensMatchWithTransliterationAliases(target, player.fullName)) return 91;
 
   const initialsScore = scoreInitialsSurnameMatch(target, player);
   if (initialsScore > 0) return initialsScore;

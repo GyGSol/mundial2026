@@ -8,7 +8,9 @@ import {
   parsePhotoFilename,
   photoSlugVariants,
   resolveCoachForLineup,
+  resolvePlayerPhotoKey,
   resolvePlayerPhotoUrl,
+  mapPlayerToTimelineRosterEntry,
   slugifyPlayerName,
 } from '../src/services/playerPhotoService.js';
 
@@ -135,5 +137,23 @@ describe('playerPhotoService', () => {
     expect(buildCoachPhotoKey('ECU', 'Sebastián Beccacece')).toBe(
       'ecuador/ecu-sebastian-beccacece.png'
     );
+  });
+
+  it('resolvePlayerPhotoKey une Mohanad Lashin (FD) con archivo Lasheen (Wikipedia)', () => {
+    expect(
+      resolvePlayerPhotoKey({
+        photoKey: '',
+        fifaCode: 'EGY',
+        fullName: 'Mohanad Lashin',
+      })
+    ).toBe('egipto/egy-mohanad-lasheen.png');
+
+    const entry = mapPlayerToTimelineRosterEntry({
+      externalId: 'fd-245550',
+      fullName: 'Mohanad Lashin',
+      fifaCode: 'EGY',
+      photoKey: '',
+    });
+    expect(entry.photoUrl).toMatch(/egy-mohanad-lasheen\.png/);
   });
 });

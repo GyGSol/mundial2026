@@ -2,7 +2,8 @@ import { fetchMatchDetails, fetchTeamWithSquad, hasToken } from './footballDataA
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
 import { Match } from '../models/Match.js';
-import { mapPlayerToTimelineRosterEntry, resolveCoachForLineup } from './playerPhotoService.js';
+import { resolveCoachForLineup } from './playerPhotoService.js';
+import { unifyRawTeamPlayers } from './playerRosterUnifyService.js';
 import { enrichNameFromRoster, normalizeName } from '../utils/playerNameMatch.js';
 import {
   fetchFixtureLineups,
@@ -340,8 +341,8 @@ async function enrichLineupPayloadWithRoster(payload, match, options = {}) {
     awaySquadMap = await loadFootballDataSquadShirtMap(teams.awayTeam);
   }
 
-  const homeRoster = homePlayers.map(mapPlayerToTimelineRosterEntry);
-  const awayRoster = awayPlayers.map(mapPlayerToTimelineRosterEntry);
+  const homeRoster = unifyRawTeamPlayers(homePlayers);
+  const awayRoster = unifyRawTeamPlayers(awayPlayers);
 
   const homeSide = enrichSidePlayersWithRoster(
     payload.home,

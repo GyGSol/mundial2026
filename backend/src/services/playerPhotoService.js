@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { readdir, readFile, stat } from 'fs/promises';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -94,6 +94,59 @@ export function resolvePlayerPhotoUrl(photoKey) {
   return base ? `${base}/${photoKey}` : '';
 }
 
+/** Índice Wikipedia (photoFilename) — disponible en Heroku sin imagenes-jugadores/. */
+let wikiPhotoIndex = null;
+
+function loadWikiPhotoIndex() {
+  if (wikiPhotoIndex) return wikiPhotoIndex;
+
+  wikiPhotoIndex = new Map();
+  try {
+    const squadsPath = join(__dirname, '../data/wikipediaSquads.json');
+    const doc = JSON.parse(readFileSync(squadsPath, 'utf8'));
+    for (const team of doc.teams ?? []) {
+      const folder = FIFA_TO_PHOTO_FOLDER[team.fifaCode];
+      if (!folder) continue;
+      const entries = (team.players ?? [])
+        .filter((p) => p.photoFilename)
+        .map((p) => ({
+          fullName: p.fullName,
+          photoKey: buildPhotoKey(folder, p.photoFilename),
+        }));
+      if (entries.length) wikiPhotoIndex.set(String(team.fifaCode).toUpperCase(), entries);
+    }
+  } catch {
+    wikiPhotoIndex = new Map();
+  }
+
+  return wikiPhotoIndex;
+}
+
+/** Resuelve photoKey: Mongo → Wikipedia (transliteración) → slug del nombre. */
+export function resolvePlayerPhotoKey({ photoKey, fifaCode, fullName }) {
+  if (photoKey) return String(photoKey);
+  if (!fifaCode || !fullName) return '';
+
+  const code = String(fifaCode).toUpperCase();
+  const roster = loadWikiPhotoIndex().get(code) ?? [];
+  for (const entry of roster) {
+    if (areSamePlayer({ fullName }, { fullName: entry.fullName })) {
+      return entry.photoKey;
+    }
+  }
+
+  const folder = FIFA_TO_PHOTO_FOLDER[code];
+  const prefix = code.slice(0, 3).toLowerCase();
+  if (folder) {
+    for (const slug of photoSlugVariants(fullName)) {
+      const key = buildPhotoKey(folder, `${prefix}-${slug}.png`);
+      if (existsSync(join(PLAYER_PHOTOS_DIR, key))) return key;
+    }
+  }
+
+  return buildPlayerPhotoKey(fifaCode, fullName);
+}
+
 /** Misma convención que jugadores: `{carpeta}/{fifa3}-{slug-dt}.png`. */
 export function buildCoachPhotoKey(fifaCode, coachName) {
   const folder = FIFA_TO_PHOTO_FOLDER[fifaCode];
@@ -143,11 +196,11 @@ export function resolveCoachForLineup(coachField, team) {
 
 /** @param {{ fullName: string, position?: string, shirtNumber?: number | null, photoKey?: string | null, _id?: { toString(): string }, externalId?: string }} player */
 export function mapPlayerToTimelineRosterEntry(player) {
-  const photoKey =
-    player.photoKey ||
-    (player.fifaCode && player.fullName
-      ? buildPlayerPhotoKey(player.fifaCode, player.fullName)
-      : '');
+  const photoKey = resolvePlayerPhotoKey({
+    photoKey: player.photoKey,
+    fifaCode: player.fifaCode,
+    fullName: player.fullName,
+  });
   const photoUrl = resolvePlayerPhotoUrl(photoKey) || player.photoUrl || null;
   return {
     mongoId: player.mongoId ?? player._id?.toString?.() ?? null,
