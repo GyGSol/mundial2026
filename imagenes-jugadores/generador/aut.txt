@@ -1,0 +1,65 @@
+# Austria (AUT)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Ralf Rangnick
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+aut-alexander-schlager.png | #1 | Alexander Schlager | GK | 26 pj | 0 goles
+aut-david-affengruber.png | #2 | David Affengruber | DF | 1 pj | 0 goles
+aut-kevin-danso.png | #3 | Kevin Danso | DF | 32 pj | 0 goles
+aut-xaver-schlager.png | #4 | Xaver Schlager | MF | 51 pj | 4 goles
+aut-stefan-posch.png | #5 | Stefan Posch | DF | 52 pj | 5 goles
+aut-nicolas-seiwald.png | #6 | Nicolas Seiwald | MF | 47 pj | 1 goles
+aut-marko-arnautovic.png | #7 | Marko Arnautović | FW | 133 pj | 47 goles
+aut-david-alaba.png | #8 | David Alaba (C) | DF | 113 pj | 15 goles
+aut-marcel-sabitzer.png | #9 | Marcel Sabitzer | MF | 98 pj | 26 goles
+aut-florian-grillitsch.png | #10 | Florian Grillitsch | MF | 58 pj | 1 goles
+aut-michael-gregoritsch.png | #11 | Michael Gregoritsch | FW | 75 pj | 24 goles
+aut-florian-wiegele.png | #12 | Florian Wiegele | GK | 1 pj | 0 goles
+aut-patrick-pentz.png | #13 | Patrick Pentz | GK | 18 pj | 0 goles
+aut-sasa-kalajdzic.png | #14 | Saša Kalajdžić | FW | 22 pj | 4 goles
+aut-philipp-lienhart.png | #15 | Philipp Lienhart | DF | 41 pj | 3 goles
+aut-phillipp-mwene.png | #16 | Phillipp Mwene | DF | 30 pj | 0 goles
+aut-carney-chukwuemeka.png | #17 | Carney Chukwuemeka | MF | 3 pj | 1 goles
+aut-romano-schmid.png | #18 | Romano Schmid | MF | 34 pj | 3 goles
+aut-dejan-ljubicic.png | #19 | Dejan Ljubičić | MF | 9 pj | 1 goles
+aut-konrad-laimer.png | #20 | Konrad Laimer | MF | 57 pj | 7 goles
+aut-patrick-wimmer.png | #21 | Patrick Wimmer | FW | 30 pj | 1 goles
+aut-alexander-prass.png | #22 | Alexander Prass | MF | 19 pj | 0 goles
+aut-marco-friedl.png | #23 | Marco Friedl | DF | 11 pj | 0 goles
+aut-paul-wanner.png | #24 | Paul Wanner | MF | 3 pj | 0 goles
+aut-michael-svoboda.png | #25 | Michael Svoboda | DF | 4 pj | 0 goles
+aut-alessandro-schopf.png | #26 | Alessandro Schöpf | MF | 35 pj | 6 goles
+
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+aut-ralf-rangnick.png | — | Ralf Rangnick | DT
+
+# Solo nombres (pegar en generador):
+
+Alexander Schlager
+David Affengruber
+Kevin Danso
+Xaver Schlager
+Stefan Posch
+Nicolas Seiwald
+Marko Arnautović
+David Alaba
+Marcel Sabitzer
+Florian Grillitsch
+Michael Gregoritsch
+Florian Wiegele
+Patrick Pentz
+Saša Kalajdžić
+Philipp Lienhart
+Phillipp Mwene
+Carney Chukwuemeka
+Romano Schmid
+Dejan Ljubičić
+Konrad Laimer
+Patrick Wimmer
+Alexander Prass
+Marco Friedl
+Paul Wanner
+Michael Svoboda
+Alessandro Schöpf

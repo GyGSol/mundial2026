@@ -1,0 +1,61 @@
+# Belgium (BEL)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Rudi Garcia
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+bel-thibaut-courtois.png | #1 | Thibaut Courtois | GK | 109 pj | 0 goles
+bel-zeno-debast.png | #2 | Zeno Debast | DF | 26 pj | 1 goles
+bel-arthur-theate.png | #3 | Arthur Theate | DF | 33 pj | 1 goles
+bel-brandon-mechele.png | #4 | Brandon Mechele | DF | 9 pj | 1 goles
+bel-maxim-de-cuyper.png | #5 | Maxim De Cuyper | DF | 19 pj | 4 goles
+bel-axel-witsel.png | #6 | Axel Witsel | MF | 138 pj | 12 goles
+bel-kevin-de-bruyne.png | #7 | Kevin De Bruyne | MF | 119 pj | 37 goles
+bel-youri-tielemans.png | #8 | Youri Tielemans (C) | MF | 85 pj | 13 goles
+bel-romelu-lukaku.png | #9 | Romelu Lukaku | FW | 126 pj | 90 goles
+bel-leandro-trossard.png | #10 | Leandro Trossard | FW | 51 pj | 12 goles
+bel-jeremy-doku.png | #11 | Jérémy Doku | FW | 43 pj | 7 goles
+bel-senne-lammens.png | #12 | Senne Lammens | GK | 2 pj | 0 goles
+bel-mike-penders.png | #13 | Mike Penders | GK | 0 pj | 0 goles
+bel-dodi-lukebakio.png | #14 | Dodi Lukébakio | FW | 30 pj | 6 goles
+bel-thomas-meunier.png | #15 | Thomas Meunier | DF | 80 pj | 10 goles
+bel-koni-de-winter.png | #16 | Koni De Winter | DF | 8 pj | 0 goles
+bel-charles-de-ketelaere.png | #17 | Charles De Ketelaere | FW | 30 pj | 6 goles
+bel-joaquin-seys.png | #18 | Joaquin Seys | DF | 5 pj | 0 goles
+bel-diego-moreira.png | #19 | Diego Moreira | MF | 3 pj | 0 goles
+bel-hans-vanaken.png | #20 | Hans Vanaken | MF | 34 pj | 7 goles
+bel-timothy-castagne.png | #21 | Timothy Castagne | DF | 63 pj | 2 goles
+bel-alexis-saelemaekers.png | #22 | Alexis Saelemaekers | MF | 24 pj | 2 goles
+bel-nicolas-raskin.png | #23 | Nicolas Raskin | MF | 13 pj | 2 goles
+bel-amadou-onana.png | #24 | Amadou Onana | MF | 29 pj | 1 goles
+bel-nathan-ngoy.png | #25 | Nathan Ngoy | DF | 4 pj | 0 goles
+bel-matias-fernandez-pardo.png | #26 | Matias Fernandez-Pardo | FW | 2 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Thibaut Courtois
+Zeno Debast
+Arthur Theate
+Brandon Mechele
+Maxim De Cuyper
+Axel Witsel
+Kevin De Bruyne
+Youri Tielemans
+Romelu Lukaku
+Leandro Trossard
+Jérémy Doku
+Senne Lammens
+Mike Penders
+Dodi Lukébakio
+Thomas Meunier
+Koni De Winter
+Charles De Ketelaere
+Joaquin Seys
+Diego Moreira
+Hans Vanaken
+Timothy Castagne
+Alexis Saelemaekers
+Nicolas Raskin
+Amadou Onana
+Nathan Ngoy
+Matias Fernandez-Pardo

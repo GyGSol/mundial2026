@@ -1,0 +1,61 @@
+# Brazil (BRA)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Carlo Ancelotti
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+bra-alisson.png | #1 | Alisson | GK | 78 pj | 0 goles
+bra-ederson-silva.png | #2 | Éderson Silva | MF | 3 pj | 0 goles
+bra-gabriel-magalhaes.png | #3 | Gabriel Magalhães | DF | 17 pj | 1 goles
+bra-marquinhos.png | #4 | Marquinhos (C) | DF | 105 pj | 7 goles
+bra-casemiro.png | #5 | Casemiro | MF | 86 pj | 9 goles
+bra-alex-sandro.png | #6 | Alex Sandro | DF | 45 pj | 2 goles
+bra-vinicius-junior.png | #7 | Vinícius Júnior | FW | 49 pj | 9 goles
+bra-bruno-guimaraes.png | #8 | Bruno Guimarães | MF | 43 pj | 3 goles
+bra-matheus-cunha.png | #9 | Matheus Cunha | FW | 23 pj | 1 goles
+bra-neymar.png | #10 | Neymar | FW | 128 pj | 79 goles
+bra-raphinha.png | #11 | Raphinha | FW | 39 pj | 11 goles
+bra-weverton.png | #12 | Weverton | GK | 11 pj | 0 goles
+bra-danilo-luiz.png | #13 | Danilo Luiz | DF | 70 pj | 1 goles
+bra-bremer.png | #14 | Bremer | DF | 8 pj | 1 goles
+bra-leo-pereira.png | #15 | Léo Pereira | DF | 4 pj | 0 goles
+bra-douglas-santos.png | #16 | Douglas Santos | DF | 7 pj | 0 goles
+bra-fabinho.png | #17 | Fabinho | MF | 33 pj | 0 goles
+bra-danilo-santos.png | #18 | Danilo Santos | MF | 4 pj | 2 goles
+bra-endrick.png | #19 | Endrick | FW | 17 pj | 4 goles
+bra-lucas-paqueta.png | #20 | Lucas Paquetá | MF | 63 pj | 13 goles
+bra-luiz-henrique.png | #21 | Luiz Henrique | FW | 15 pj | 2 goles
+bra-gabriel-martinelli.png | #22 | Gabriel Martinelli | FW | 23 pj | 4 goles
+bra-ederson-moraes.png | #23 | Ederson Moraes | GK | 32 pj | 0 goles
+bra-roger-ibanez.png | #24 | Roger Ibañez | DF | 7 pj | 0 goles
+bra-igor-thiago.png | #25 | Igor Thiago | FW | 4 pj | 2 goles
+bra-rayan.png | #26 | Rayan | FW | 2 pj | 1 goles
+
+# Solo nombres (pegar en generador):
+
+Alisson
+Éderson Silva
+Gabriel Magalhães
+Marquinhos
+Casemiro
+Alex Sandro
+Vinícius Júnior
+Bruno Guimarães
+Matheus Cunha
+Neymar
+Raphinha
+Weverton
+Danilo Luiz
+Bremer
+Léo Pereira
+Douglas Santos
+Fabinho
+Danilo Santos
+Endrick
+Lucas Paquetá
+Luiz Henrique
+Gabriel Martinelli
+Ederson Moraes
+Roger Ibañez
+Igor Thiago
+Rayan

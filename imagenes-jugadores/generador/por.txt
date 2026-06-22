@@ -1,0 +1,61 @@
+# Portugal (POR)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Roberto Martínez
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+por-diogo-costa.png | #1 | Diogo Costa | GK | 43 pj | 0 goles
+por-nelson-semedo.png | #2 | Nélson Semedo | DF | 50 pj | 0 goles
+por-ruben-dias.png | #3 | Rúben Dias | DF | 76 pj | 3 goles
+por-tomas-araujo.png | #4 | Tomás Araújo | DF | 5 pj | 0 goles
+por-diogo-dalot.png | #5 | Diogo Dalot | DF | 35 pj | 3 goles
+por-matheus-nunes.png | #6 | Matheus Nunes | MF | 20 pj | 2 goles
+por-cristiano-ronaldo.png | #7 | Cristiano Ronaldo (C) | FW | 228 pj | 143 goles
+por-bruno-fernandes.png | #8 | Bruno Fernandes | MF | 89 pj | 29 goles
+por-goncalo-ramos.png | #9 | Gonçalo Ramos | FW | 25 pj | 10 goles
+por-bernardo-silva.png | #10 | Bernardo Silva | MF | 109 pj | 14 goles
+por-joao-felix.png | #11 | João Félix | FW | 54 pj | 12 goles
+por-jose-sa.png | #12 | José Sá | GK | 5 pj | 0 goles
+por-renato-veiga.png | #13 | Renato Veiga | DF | 13 pj | 1 goles
+por-goncalo-inacio.png | #14 | Gonçalo Inácio | DF | 22 pj | 2 goles
+por-joao-neves.png | #15 | João Neves | MF | 22 pj | 3 goles
+por-francisco-trincao.png | #16 | Francisco Trincão | FW | 18 pj | 3 goles
+por-rafael-leao.png | #17 | Rafael Leão | FW | 44 pj | 5 goles
+por-pedro-neto.png | #18 | Pedro Neto | FW | 25 pj | 3 goles
+por-goncalo-guedes.png | #19 | Gonçalo Guedes | FW | 34 pj | 8 goles
+por-joao-cancelo.png | #20 | João Cancelo | DF | 68 pj | 12 goles
+por-ruben-neves.png | #21 | Rúben Neves | MF | 67 pj | 1 goles
+por-rui-silva.png | #22 | Rui Silva | GK | 3 pj | 0 goles
+por-vitinha.png | #23 | Vitinha | MF | 38 pj | 0 goles
+por-samu-costa.png | #24 | Samú Costa | DF | 6 pj | 0 goles
+por-nuno-mendes.png | #25 | Nuno Mendes | DF | 44 pj | 1 goles
+por-francisco-conceicao.png | #26 | Francisco Conceição | FW | 17 pj | 4 goles
+
+# Solo nombres (pegar en generador):
+
+Diogo Costa
+Nélson Semedo
+Rúben Dias
+Tomás Araújo
+Diogo Dalot
+Matheus Nunes
+Cristiano Ronaldo
+Bruno Fernandes
+Gonçalo Ramos
+Bernardo Silva
+João Félix
+José Sá
+Renato Veiga
+Gonçalo Inácio
+João Neves
+Francisco Trincão
+Rafael Leão
+Pedro Neto
+Gonçalo Guedes
+João Cancelo
+Rúben Neves
+Rui Silva
+Vitinha
+Samú Costa
+Nuno Mendes
+Francisco Conceição

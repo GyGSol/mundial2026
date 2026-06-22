@@ -1,0 +1,61 @@
+# South Korea (KOR)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Hong Myung-bo
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+kor-kim-seung-gyu.png | #1 | Kim Seung-gyu | GK | 87 pj | 0 goles
+kor-lee-han-beom.png | #2 | Lee Han-beom | DF | 8 pj | 0 goles
+kor-lee-gi-hyuk.png | #3 | Lee Gi-hyuk | MF | 3 pj | 0 goles
+kor-kim-min-jae.png | #4 | Kim Min-jae | DF | 79 pj | 4 goles
+kor-kim-tae-hyeon.png | #5 | Kim Tae-hyeon | DF | 7 pj | 0 goles
+kor-hwang-in-beom.png | #6 | Hwang In-beom | MF | 73 pj | 6 goles
+kor-son-heung-min.png | #7 | Son Heung-min (C) | FW | 144 pj | 56 goles
+kor-paik-seung-ho.png | #8 | Paik Seung-ho | MF | 27 pj | 3 goles
+kor-cho-gue-sung.png | #9 | Cho Gue-sung | FW | 44 pj | 12 goles
+kor-lee-jae-sung.png | #10 | Lee Jae-sung | MF | 105 pj | 15 goles
+kor-hwang-hee-chan.png | #11 | Hwang Hee-chan | MF | 79 pj | 17 goles
+kor-song-bum-keun.png | #12 | Song Bum-keun | GK | 3 pj | 0 goles
+kor-lee-tae-seok.png | #13 | Lee Tae-seok | DF | 15 pj | 1 goles
+kor-cho-wi-je.png | #14 | Cho Wi-je | DF | 1 pj | 0 goles
+kor-kim-moon-hwan.png | #15 | Kim Moon-hwan | DF | 35 pj | 0 goles
+kor-park-jin-seob.png | #16 | Park Jin-seob | DF | 14 pj | 1 goles
+kor-bae-jun-ho.png | #17 | Bae Jun-ho | MF | 13 pj | 2 goles
+kor-oh-hyeon-gyu.png | #18 | Oh Hyeon-gyu | FW | 27 pj | 6 goles
+kor-lee-kang-in.png | #19 | Lee Kang-in | MF | 47 pj | 11 goles
+kor-yang-hyun-jun.png | #20 | Yang Hyun-jun | MF | 9 pj | 0 goles
+kor-jo-hyeon-woo.png | #21 | Jo Hyeon-woo | GK | 48 pj | 0 goles
+kor-seol-young-woo.png | #22 | Seol Young-woo | DF | 34 pj | 0 goles
+kor-jens-castrop.png | #23 | Jens Castrop | DF | 7 pj | 0 goles
+kor-kim-jin-gyu.png | #24 | Kim Jin-gyu | MF | 22 pj | 3 goles
+kor-eom-ji-sung.png | #25 | Eom Ji-sung | MF | 9 pj | 2 goles
+kor-lee-dong-gyeong.png | #26 | Lee Dong-gyeong | MF | 18 pj | 4 goles
+
+# Solo nombres (pegar en generador):
+
+Kim Seung-gyu
+Lee Han-beom
+Lee Gi-hyuk
+Kim Min-jae
+Kim Tae-hyeon
+Hwang In-beom
+Son Heung-min
+Paik Seung-ho
+Cho Gue-sung
+Lee Jae-sung
+Hwang Hee-chan
+Song Bum-keun
+Lee Tae-seok
+Cho Wi-je
+Kim Moon-hwan
+Park Jin-seob
+Bae Jun-ho
+Oh Hyeon-gyu
+Lee Kang-in
+Yang Hyun-jun
+Jo Hyeon-woo
+Seol Young-woo
+Jens Castrop
+Kim Jin-gyu
+Eom Ji-sung
+Lee Dong-gyeong

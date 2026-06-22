@@ -1,0 +1,61 @@
+# United States (USA)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Mauricio Pochettino
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+usa-matt-turner.png | #1 | Matt Turner | GK | 54 pj | 0 goles
+usa-sergino-dest.png | #2 | Sergiño Dest | DF | 39 pj | 3 goles
+usa-chris-richards.png | #3 | Chris Richards | DF | 36 pj | 3 goles
+usa-tyler-adams.png | #4 | Tyler Adams | MF | 54 pj | 2 goles
+usa-antonee-robinson.png | #5 | Antonee Robinson | DF | 54 pj | 5 goles
+usa-auston-trusty.png | #6 | Auston Trusty | DF | 8 pj | 0 goles
+usa-giovanni-reyna.png | #7 | Giovanni Reyna | MF | 38 pj | 9 goles
+usa-weston-mckennie.png | #8 | Weston McKennie | MF | 66 pj | 12 goles
+usa-ricardo-pepi.png | #9 | Ricardo Pepi | FW | 37 pj | 13 goles
+usa-christian-pulisic.png | #10 | Christian Pulisic | FW | 86 pj | 33 goles
+usa-brenden-aaronson.png | #11 | Brenden Aaronson | FW | 58 pj | 9 goles
+usa-miles-robinson.png | #12 | Miles Robinson | DF | 40 pj | 3 goles
+usa-tim-ream.png | #13 | Tim Ream (C) | DF | 82 pj | 1 goles
+usa-sebastian-berhalter.png | #14 | Sebastian Berhalter | MF | 13 pj | 1 goles
+usa-cristian-roldan.png | #15 | Cristian Roldan | MF | 47 pj | 0 goles
+usa-alex-freeman.png | #16 | Alex Freeman | DF | 17 pj | 2 goles
+usa-malik-tillman.png | #17 | Malik Tillman | MF | 30 pj | 3 goles
+usa-max-arfsten.png | #18 | Max Arfsten | DF | 20 pj | 1 goles
+usa-haji-wright.png | #19 | Haji Wright | FW | 20 pj | 7 goles
+usa-folarin-balogun.png | #20 | Folarin Balogun | FW | 27 pj | 9 goles
+usa-timothy-weah.png | #21 | Timothy Weah | FW | 51 pj | 7 goles
+usa-mark-mckenzie.png | #22 | Mark McKenzie | DF | 29 pj | 0 goles
+usa-joe-scally.png | #23 | Joe Scally | DF | 26 pj | 0 goles
+usa-matt-freese.png | #24 | Matt Freese | GK | 15 pj | 0 goles
+usa-chris-brady.png | #25 | Chris Brady | GK | 1 pj | 0 goles
+usa-alejandro-zendejas.png | #26 | Alejandro Zendejas | FW | 14 pj | 2 goles
+
+# Solo nombres (pegar en generador):
+
+Matt Turner
+Sergiño Dest
+Chris Richards
+Tyler Adams
+Antonee Robinson
+Auston Trusty
+Giovanni Reyna
+Weston McKennie
+Ricardo Pepi
+Christian Pulisic
+Brenden Aaronson
+Miles Robinson
+Tim Ream
+Sebastian Berhalter
+Cristian Roldan
+Alex Freeman
+Malik Tillman
+Max Arfsten
+Haji Wright
+Folarin Balogun
+Timothy Weah
+Mark McKenzie
+Joe Scally
+Matt Freese
+Chris Brady
+Alejandro Zendejas

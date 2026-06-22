@@ -1,0 +1,61 @@
+# Iran (IRN)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Amir Ghalenoei
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+irn-alireza-beiranvand.png | #1 | Alireza Beiranvand | GK | 86 pj | 0 goles
+irn-saleh-hardani.png | #2 | Saleh Hardani | DF | 18 pj | 1 goles
+irn-ehsan-hajsafi.png | #3 | Ehsan Hajsafi (C) | DF | 146 pj | 7 goles
+irn-shojae-khalilzadeh.png | #4 | Shojae Khalilzadeh | DF | 58 pj | 2 goles
+irn-milad-mohammadi.png | #5 | Milad Mohammadi | DF | 76 pj | 1 goles
+irn-saeid-ezatolahi.png | #6 | Saeid Ezatolahi | MF | 83 pj | 2 goles
+irn-alireza-jahanbakhsh.png | #7 | Alireza Jahanbakhsh | MF | 98 pj | 17 goles
+irn-mohammad-mohebi.png | #8 | Mohammad Mohebi | MF | 37 pj | 14 goles
+irn-mehdi-taremi.png | #9 | Mehdi Taremi | FW | 105 pj | 60 goles
+irn-mehdi-ghayedi.png | #10 | Mehdi Ghayedi | FW | 30 pj | 10 goles
+irn-ali-alipour.png | #11 | Ali Alipour | FW | 14 pj | 1 goles
+irn-payam-niazmand.png | #12 | Payam Niazmand | GK | 15 pj | 0 goles
+irn-hossein-kanaanizadegan.png | #13 | Hossein Kanaanizadegan | DF | 65 pj | 6 goles
+irn-saman-ghoddos.png | #14 | Saman Ghoddos | MF | 68 pj | 3 goles
+irn-rouzbeh-cheshmi.png | #15 | Rouzbeh Cheshmi | MF | 40 pj | 3 goles
+irn-mahdi-torabi.png | #16 | Mahdi Torabi | MF | 52 pj | 7 goles
+irn-arya-yousefi.png | #17 | Arya Yousefi | DF | 14 pj | 1 goles
+irn-amirhossein-hosseinzadeh.png | #18 | Amirhossein Hosseinzadeh | FW | 18 pj | 5 goles
+irn-ali-nemati.png | #19 | Ali Nemati | DF | 18 pj | 0 goles
+irn-shahriyar-moghanlou.png | #20 | Shahriyar Moghanlou | FW | 21 pj | 2 goles
+irn-mohammad-ghorbani.png | #21 | Mohammad Ghorbani | MF | 16 pj | 0 goles
+irn-hossein-hosseini.png | #22 | Hossein Hosseini | GK | 13 pj | 0 goles
+irn-ramin-rezaeian.png | #23 | Ramin Rezaeian | DF | 74 pj | 8 goles
+irn-dennis-eckert.png | #24 | Dennis Eckert | FW | 0 pj | 0 goles
+irn-danial-eiri.png | #25 | Danial Eiri | DF | 0 pj | 0 goles
+irn-amirmohammad-razzaghinia.png | #26 | Amirmohammad Razzaghinia | MF | 4 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Alireza Beiranvand
+Saleh Hardani
+Ehsan Hajsafi
+Shojae Khalilzadeh
+Milad Mohammadi
+Saeid Ezatolahi
+Alireza Jahanbakhsh
+Mohammad Mohebi
+Mehdi Taremi
+Mehdi Ghayedi
+Ali Alipour
+Payam Niazmand
+Hossein Kanaanizadegan
+Saman Ghoddos
+Rouzbeh Cheshmi
+Mahdi Torabi
+Arya Yousefi
+Amirhossein Hosseinzadeh
+Ali Nemati
+Shahriyar Moghanlou
+Mohammad Ghorbani
+Hossein Hosseini
+Ramin Rezaeian
+Dennis Eckert
+Danial Eiri
+Amirmohammad Razzaghinia

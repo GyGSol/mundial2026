@@ -1,0 +1,61 @@
+# England (ENG)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Thomas Tuchel
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+eng-jordan-pickford.png | #1 | Jordan Pickford | GK | 84 pj | 0 goles
+eng-ezri-konsa.png | #2 | Ezri Konsa | DF | 20 pj | 1 goles
+eng-nico-o-reilly.png | #3 | Nico O'Reilly | DF | 5 pj | 0 goles
+eng-declan-rice.png | #4 | Declan Rice | MF | 73 pj | 7 goles
+eng-john-stones.png | #5 | John Stones | DF | 89 pj | 3 goles
+eng-marc-guehi.png | #6 | Marc Guéhi | DF | 29 pj | 1 goles
+eng-bukayo-saka.png | #7 | Bukayo Saka | FW | 49 pj | 14 goles
+eng-elliot-anderson.png | #8 | Elliot Anderson | MF | 9 pj | 0 goles
+eng-harry-kane.png | #9 | Harry Kane (C) | FW | 114 pj | 79 goles
+eng-jude-bellingham.png | #10 | Jude Bellingham | MF | 48 pj | 6 goles
+eng-marcus-rashford.png | #11 | Marcus Rashford | FW | 72 pj | 18 goles
+eng-trevoh-chalobah.png | #12 | Trevoh Chalobah | DF | 1 pj | 0 goles
+eng-dean-henderson.png | #13 | Dean Henderson | GK | 5 pj | 0 goles
+eng-jordan-henderson.png | #14 | Jordan Henderson | MF | 90 pj | 3 goles
+eng-dan-burn.png | #15 | Dan Burn | DF | 8 pj | 0 goles
+eng-kobbie-mainoo.png | #16 | Kobbie Mainoo | MF | 14 pj | 0 goles
+eng-morgan-rogers.png | #17 | Morgan Rogers | MF | 15 pj | 1 goles
+eng-anthony-gordon.png | #18 | Anthony Gordon | FW | 19 pj | 3 goles
+eng-ollie-watkins.png | #19 | Ollie Watkins | FW | 22 pj | 7 goles
+eng-noni-madueke.png | #20 | Noni Madueke | FW | 11 pj | 1 goles
+eng-eberechi-eze.png | #21 | Eberechi Eze | MF | 17 pj | 3 goles
+eng-ivan-toney.png | #22 | Ivan Toney | FW | 8 pj | 1 goles
+eng-james-trafford.png | #23 | James Trafford | GK | 2 pj | 0 goles
+eng-reece-james.png | #24 | Reece James | DF | 24 pj | 1 goles
+eng-djed-spence.png | #25 | Djed Spence | DF | 6 pj | 0 goles
+eng-jarell-quansah.png | #26 | Jarell Quansah | DF | 3 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Jordan Pickford
+Ezri Konsa
+Nico O'Reilly
+Declan Rice
+John Stones
+Marc Guéhi
+Bukayo Saka
+Elliot Anderson
+Harry Kane
+Jude Bellingham
+Marcus Rashford
+Trevoh Chalobah
+Dean Henderson
+Jordan Henderson
+Dan Burn
+Kobbie Mainoo
+Morgan Rogers
+Anthony Gordon
+Ollie Watkins
+Noni Madueke
+Eberechi Eze
+Ivan Toney
+James Trafford
+Reece James
+Djed Spence
+Jarell Quansah

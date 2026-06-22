@@ -1,0 +1,65 @@
+# Argentina (ARG)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Lionel Scaloni
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+arg-juan-musso.png | #1 | Juan Musso | GK | 4 pj | 0 goles
+arg-marcos-senesi.png | #2 | Marcos Senesi | DF | 3 pj | 0 goles
+arg-nicolas-tagliafico.png | #3 | Nicolás Tagliafico | DF | 76 pj | 1 goles
+arg-gonzalo-montiel.png | #4 | Gonzalo Montiel | DF | 39 pj | 2 goles
+arg-leandro-paredes.png | #5 | Leandro Paredes | MF | 77 pj | 5 goles
+arg-lisandro-martinez.png | #6 | Lisandro Martínez | DF | 28 pj | 1 goles
+arg-rodrigo-de-paul.png | #7 | Rodrigo De Paul | MF | 87 pj | 2 goles
+arg-valentin-barco.png | #8 | Valentín Barco | MF | 4 pj | 2 goles
+arg-julian-alvarez.png | #9 | Julián Alvarez | FW | 51 pj | 14 goles
+arg-lionel-messi.png | #10 | Lionel Messi (C) | FW | 199 pj | 117 goles
+arg-giovani-lo-celso.png | #11 | Giovani Lo Celso | MF | 67 pj | 4 goles
+arg-geronimo-rulli.png | #12 | Gerónimo Rulli | GK | 8 pj | 0 goles
+arg-cristian-romero.png | #13 | Cristian Romero | DF | 51 pj | 3 goles
+arg-exequiel-palacios.png | #14 | Exequiel Palacios | MF | 40 pj | 0 goles
+arg-nicolas-gonzalez.png | #15 | Nicolás González | MF | 51 pj | 6 goles
+arg-thiago-almada.png | #16 | Thiago Almada | FW | 16 pj | 5 goles
+arg-giuliano-simeone.png | #17 | Giuliano Simeone | FW | 13 pj | 2 goles
+arg-nico-paz.png | #18 | Nico Paz | FW | 9 pj | 1 goles
+arg-nicolas-otamendi.png | #19 | Nicolás Otamendi | DF | 132 pj | 8 goles
+arg-alexis-mac-allister.png | #20 | Alexis Mac Allister | MF | 46 pj | 6 goles
+arg-jose-manuel-lopez.png | #21 | José Manuel López | FW | 5 pj | 0 goles
+arg-lautaro-martinez.png | #22 | Lautaro Martínez | FW | 77 pj | 37 goles
+arg-emiliano-martinez.png | #23 | Emiliano Martínez | GK | 59 pj | 0 goles
+arg-enzo-fernandez.png | #24 | Enzo Fernández | MF | 42 pj | 6 goles
+arg-facundo-medina.png | #25 | Facundo Medina | DF | 9 pj | 0 goles
+arg-nahuel-molina.png | #26 | Nahuel Molina | DF | 58 pj | 1 goles
+
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+arg-lionel-scaloni.png | — | Lionel Scaloni | DT
+
+# Solo nombres (pegar en generador):
+
+Juan Musso
+Marcos Senesi
+Nicolás Tagliafico
+Gonzalo Montiel
+Leandro Paredes
+Lisandro Martínez
+Rodrigo De Paul
+Valentín Barco
+Julián Alvarez
+Lionel Messi
+Giovani Lo Celso
+Gerónimo Rulli
+Cristian Romero
+Exequiel Palacios
+Nicolás González
+Thiago Almada
+Giuliano Simeone
+Nico Paz
+Nicolás Otamendi
+Alexis Mac Allister
+José Manuel López
+Lautaro Martínez
+Emiliano Martínez
+Enzo Fernández
+Facundo Medina
+Nahuel Molina

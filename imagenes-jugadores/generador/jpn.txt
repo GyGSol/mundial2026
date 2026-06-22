@@ -1,0 +1,61 @@
+# Japan (JPN)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Hajime Moriyasu
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+jpn-zion-suzuki.png | #1 | Zion Suzuki | GK | 24 pj | 0 goles
+jpn-yukinari-sugawara.png | #2 | Yukinari Sugawara | DF | 21 pj | 2 goles
+jpn-shogo-taniguchi.png | #3 | Shōgo Taniguchi | DF | 38 pj | 1 goles
+jpn-ko-itakura.png | #4 | Kō Itakura (C) | DF | 40 pj | 2 goles
+jpn-yuto-nagatomo.png | #5 | Yūto Nagatomo | DF | 145 pj | 4 goles
+jpn-shuto-machino.png | #6 | Shūto Machino | FW | 14 pj | 5 goles
+jpn-ao-tanaka.png | #7 | Ao Tanaka | MF | 38 pj | 8 goles
+jpn-takefusa-kubo.png | #8 | Takefusa Kubo | MF | 49 pj | 7 goles
+jpn-keisuke-goto.png | #9 | Keisuke Gotō | FW | 4 pj | 0 goles
+jpn-ritsu-doan.png | #10 | Ritsu Dōan | MF | 65 pj | 11 goles
+jpn-daizen-maeda.png | #11 | Daizen Maeda | MF | 27 pj | 4 goles
+jpn-keisuke-osako.png | #12 | Keisuke Ōsako | GK | 11 pj | 0 goles
+jpn-keito-nakamura.png | #13 | Keito Nakamura | MF | 25 pj | 10 goles
+jpn-junya-ito.png | #14 | Junya Itō | MF | 69 pj | 15 goles
+jpn-daichi-kamada.png | #15 | Daichi Kamada | MF | 49 pj | 12 goles
+jpn-tsuyoshi-watanabe.png | #16 | Tsuyoshi Watanabe | DF | 11 pj | 0 goles
+jpn-yuito-suzuki.png | #17 | Yuito Suzuki | MF | 6 pj | 0 goles
+jpn-ayase-ueda.png | #18 | Ayase Ueda | FW | 39 pj | 16 goles
+jpn-koki-ogawa.png | #19 | Kōki Ogawa | FW | 15 pj | 11 goles
+jpn-ayumu-seko.png | #20 | Ayumu Seko | DF | 14 pj | 0 goles
+jpn-hiroki-ito.png | #21 | Hiroki Itō | DF | 24 pj | 1 goles
+jpn-takehiro-tomiyasu.png | #22 | Takehiro Tomiyasu | DF | 43 pj | 1 goles
+jpn-tomoki-hayakawa.png | #23 | Tomoki Hayakawa | GK | 4 pj | 0 goles
+jpn-kaishu-sano.png | #24 | Kaishū Sano | MF | 13 pj | 0 goles
+jpn-junnosuke-suzuki.png | #25 | Junnosuke Suzuki | DF | 6 pj | 0 goles
+jpn-kento-shiogai.png | #26 | Kento Shiogai | FW | 2 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Zion Suzuki
+Yukinari Sugawara
+Shōgo Taniguchi
+Kō Itakura
+Yūto Nagatomo
+Shūto Machino
+Ao Tanaka
+Takefusa Kubo
+Keisuke Gotō
+Ritsu Dōan
+Daizen Maeda
+Keisuke Ōsako
+Keito Nakamura
+Junya Itō
+Daichi Kamada
+Tsuyoshi Watanabe
+Yuito Suzuki
+Ayase Ueda
+Kōki Ogawa
+Ayumu Seko
+Hiroki Itō
+Takehiro Tomiyasu
+Tomoki Hayakawa
+Kaishū Sano
+Junnosuke Suzuki
+Kento Shiogai

@@ -1,0 +1,62 @@
+# Norway (NOR)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Ståle Solbakken
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+nor-rjan-nyland.png | #1 | Ørjan Nyland | GK | 71 pj | 0 goles
+nor-morten-thorsby.png | #2 | Morten Thorsby | MF | 31 pj | 0 goles
+nor-kristoffer-ajer.png | #3 | Kristoffer Ajer | DF | 52 pj | 2 goles
+nor-leo-stigard.png | #4 | Leo Østigård | DF | 38 pj | 1 goles
+nor-david-m-ller-wolfe.png | #5 | David Møller Wolfe | DF | 22 pj | 1 goles
+nor-patrick-berg.png | #6 | Patrick Berg | MF | 43 pj | 0 goles
+nor-alexander-s-rloth.png | #7 | Alexander Sørloth | FW | 72 pj | 26 goles
+nor-sander-berge.png | #8 | Sander Berge | MF | 66 pj | 1 goles
+nor-erling-haaland.png | #9 | Erling Haaland | FW | 50 pj | 55 goles
+nor-martin-degaard.png | #10 | Martin Ødegaard (C) | MF | 68 pj | 5 goles
+nor-j-rgen-strand-larsen.png | #11 | Jørgen Strand Larsen | FW | 28 pj | 6 goles
+nor-sander-tangvik.png | #12 | Sander Tangvik | GK | 0 pj | 0 goles
+nor-egil-selvik.png | #13 | Egil Selvik | GK | 7 pj | 0 goles
+nor-fredrik-aursnes.png | #14 | Fredrik Aursnes | MF | 22 pj | 1 goles
+nor-fredrik-andre-bj-rkan.png | #15 | Fredrik André Bjørkan | DF | 21 pj | 1 goles
+nor-marcus-holmgren-pedersen.png | #16 | Marcus Holmgren Pedersen | DF | 32 pj | 0 goles
+nor-torbj-rn-heggem.png | #17 | Torbjørn Heggem | DF | 15 pj | 0 goles
+nor-kristian-thorstvedt.png | #18 | Kristian Thorstvedt | MF | 37 pj | 4 goles
+nor-thelo-aasgaard.png | #19 | Thelo Aasgaard | MF | 8 pj | 5 goles
+nor-antonio-nusa.png | #20 | Antonio Nusa | MF | 24 pj | 8 goles
+nor-andreas-schjelderup.png | #21 | Andreas Schjelderup | MF | 12 pj | 1 goles
+nor-oscar-bobb.png | #22 | Oscar Bobb | MF | 20 pj | 2 goles
+nor-jens-petter-hauge.png | #23 | Jens Petter Hauge | MF | 15 pj | 1 goles
+nor-sondre-langas.png | #24 | Sondre Langås | DF | 3 pj | 0 goles
+nor-henrik-falchener.png | #25 | Henrik Falchener | DF | 1 pj | 0 goles
+nor-julian-ryerson.png | #26 | Julian Ryerson | DF | 43 pj | 1 goles
+nor-stale-solbakken.png | — | Ståle Solbakken | DT
+
+# Solo nombres (pegar en generador):
+
+Ørjan Nyland
+Morten Thorsby
+Kristoffer Ajer
+Leo Østigård
+David Møller Wolfe
+Patrick Berg
+Alexander Sørloth
+Sander Berge
+Erling Haaland
+Martin Ødegaard
+Jørgen Strand Larsen
+Sander Tangvik
+Egil Selvik
+Fredrik Aursnes
+Fredrik André Bjørkan
+Marcus Holmgren Pedersen
+Torbjørn Heggem
+Kristian Thorstvedt
+Thelo Aasgaard
+Antonio Nusa
+Andreas Schjelderup
+Oscar Bobb
+Jens Petter Hauge
+Sondre Langås
+Henrik Falchener
+Julian Ryerson

@@ -1,0 +1,61 @@
+# Morocco (MAR)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Mohamed Ouahbi
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+mar-yassine-bounou.png | #1 | Yassine Bounou | GK | 90 pj | 0 goles
+mar-achraf-hakimi.png | #2 | Achraf Hakimi (C) | DF | 96 pj | 11 goles
+mar-noussair-mazraoui.png | #3 | Noussair Mazraoui | DF | 45 pj | 2 goles
+mar-sofyan-amrabat.png | #4 | Sofyan Amrabat | MF | 75 pj | 0 goles
+mar-marwane-saadane.png | #5 | Marwane Saâdane | DF | 8 pj | 0 goles
+mar-ayyoub-bouaddi.png | #6 | Ayyoub Bouaddi | MF | 3 pj | 0 goles
+mar-chemsdine-talbi.png | #7 | Chemsdine Talbi | MF | 5 pj | 0 goles
+mar-azzedine-ounahi.png | #8 | Azzedine Ounahi | MF | 49 pj | 9 goles
+mar-soufiane-rahimi.png | #9 | Soufiane Rahimi | FW | 37 pj | 12 goles
+mar-brahim-diaz.png | #10 | Brahim Díaz | FW | 26 pj | 14 goles
+mar-ismael-saibari.png | #11 | Ismael Saibari | MF | 30 pj | 9 goles
+mar-munir-mohamedi.png | #12 | Munir Mohamedi | GK | 52 pj | 0 goles
+mar-zakaria-el-ouahdi.png | #13 | Zakaria El Ouahdi | DF | 3 pj | 0 goles
+mar-issa-diop.png | #14 | Issa Diop | DF | 4 pj | 0 goles
+mar-samir-el-mourabet.png | #15 | Samir El Mourabet | MF | 4 pj | 0 goles
+mar-gessime-yassine.png | #16 | Gessime Yassine | MF | 4 pj | 0 goles
+mar-amine-sbai.png | #17 | Amine Sbaï | FW | 2 pj | 0 goles
+mar-chadi-riad.png | #18 | Chadi Riad | DF | 6 pj | 1 goles
+mar-youssef-belammari.png | #19 | Youssef Belammari | DF | 18 pj | 0 goles
+mar-ayoub-el-kaabi.png | #20 | Ayoub El Kaabi | FW | 71 pj | 35 goles
+mar-ayoube-amaimouni.png | #21 | Ayoube Amaimouni | FW | 2 pj | 0 goles
+mar-ahmed-reda-tagnaouti.png | #22 | Ahmed Reda Tagnaouti | GK | 3 pj | 0 goles
+mar-bilal-el-khannouss.png | #23 | Bilal El Khannouss | MF | 37 pj | 3 goles
+mar-neil-el-aynaoui.png | #24 | Neil El Aynaoui | MF | 16 pj | 2 goles
+mar-redouane-halhal.png | #25 | Redouane Halhal | DF | 3 pj | 0 goles
+mar-anass-salah-eddine.png | #26 | Anass Salah-Eddine | DF | 9 pj | 0 goles
+
+# Solo nombres (pegar en generador):
+
+Yassine Bounou
+Achraf Hakimi
+Noussair Mazraoui
+Sofyan Amrabat
+Marwane Saâdane
+Ayyoub Bouaddi
+Chemsdine Talbi
+Azzedine Ounahi
+Soufiane Rahimi
+Brahim Díaz
+Ismael Saibari
+Munir Mohamedi
+Zakaria El Ouahdi
+Issa Diop
+Samir El Mourabet
+Gessime Yassine
+Amine Sbaï
+Chadi Riad
+Youssef Belammari
+Ayoub El Kaabi
+Ayoube Amaimouni
+Ahmed Reda Tagnaouti
+Bilal El Khannouss
+Neil El Aynaoui
+Redouane Halhal
+Anass Salah-Eddine

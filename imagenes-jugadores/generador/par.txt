@@ -1,0 +1,61 @@
+# Paraguay (PAR)
+# Fuente: Wikipedia — 2026 FIFA World Cup squads
+# DT: Gustavo Alfaro
+
+# Formato: archivo | dorsal | nombre | pos | partidos | goles
+
+par-gatito-fernandez.png | #1 | Gatito Fernández | GK | 31 pj | 0 goles
+par-gustavo-velazquez.png | #2 | Gustavo Velázquez | DF | 13 pj | 1 goles
+par-omar-alderete.png | #3 | Omar Alderete | DF | 36 pj | 3 goles
+par-juan-jose-caceres.png | #4 | Juan José Cáceres | DF | 17 pj | 0 goles
+par-fabian-balbuena.png | #5 | Fabián Balbuena | DF | 48 pj | 2 goles
+par-junior-alonso.png | #6 | Júnior Alonso | DF | 71 pj | 3 goles
+par-ramon-sosa.png | #7 | Ramón Sosa | MF | 29 pj | 1 goles
+par-diego-gomez.png | #8 | Diego Gómez | MF | 24 pj | 3 goles
+par-antonio-sanabria.png | #9 | Antonio Sanabria | FW | 48 pj | 7 goles
+par-miguel-almiron.png | #10 | Miguel Almirón | MF | 76 pj | 10 goles
+par-mauricio.png | #11 | Maurício | MF | 3 pj | 0 goles
+par-orlando-gill.png | #12 | Orlando Gill | GK | 6 pj | 0 goles
+par-jose-canale.png | #13 | José Canale | DF | 2 pj | 0 goles
+par-andres-cubas.png | #14 | Andrés Cubas | MF | 33 pj | 0 goles
+par-gustavo-gomez.png | #15 | Gustavo Gómez (C) | DF | 89 pj | 4 goles
+par-damian-bobadilla.png | #16 | Damián Bobadilla | MF | 19 pj | 1 goles
+par-kaku.png | #17 | Kaku | FW | 33 pj | 6 goles
+par-alex-arce.png | #18 | Álex Arce | FW | 15 pj | 1 goles
+par-julio-enciso.png | #19 | Julio Enciso | FW | 32 pj | 4 goles
+par-braian-ojeda.png | #20 | Braian Ojeda | MF | 17 pj | 0 goles
+par-gabriel-avalos.png | #21 | Gabriel Ávalos | FW | 23 pj | 2 goles
+par-gaston-olveira.png | #22 | Gastón Olveira | GK | 1 pj | 0 goles
+par-matias-galarza.png | #23 | Matías Galarza | MF | 15 pj | 3 goles
+par-gustavo-caballero.png | #24 | Gustavo Caballero | MF | 2 pj | 1 goles
+par-isidro-pitta.png | #25 | Isidro Pitta | FW | 5 pj | 0 goles
+par-alexandro-maidana.png | #26 | Alexandro Maidana | DF | 2 pj | 1 goles
+
+# Solo nombres (pegar en generador):
+
+Gatito Fernández
+Gustavo Velázquez
+Omar Alderete
+Juan José Cáceres
+Fabián Balbuena
+Júnior Alonso
+Ramón Sosa
+Diego Gómez
+Antonio Sanabria
+Miguel Almirón
+Maurício
+Orlando Gill
+José Canale
+Andrés Cubas
+Gustavo Gómez
+Damián Bobadilla
+Kaku
+Álex Arce
+Julio Enciso
+Braian Ojeda
+Gabriel Ávalos
+Gastón Olveira
+Matías Galarza
+Gustavo Caballero
+Isidro Pitta
+Alexandro Maidana
