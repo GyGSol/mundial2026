@@ -1,8 +1,18 @@
-/** Normaliza para matching: NFD + minúsculas + turco (ı/İ → i). */
+/** Normaliza para matching: NFD + minúsculas + turco (ı/İ → i) + nórdicos (ø/æ/å → o/ae/a). */
 export function normalizeName(value) {
   return String(value || '')
     .replace(/ı/g, 'i')
     .replace(/İ/g, 'i')
+    .replace(/ø/g, 'o')
+    .replace(/Ø/g, 'o')
+    .replace(/æ/g, 'ae')
+    .replace(/Æ/g, 'ae')
+    .replace(/å/g, 'a')
+    .replace(/Å/g, 'a')
+    .replace(/ö/g, 'o')
+    .replace(/Ö/g, 'o')
+    .replace(/ä/g, 'a')
+    .replace(/Ä/g, 'a')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -203,7 +213,12 @@ export function matchNameToRosterPlayer(name, rosterPlayers = []) {
 
   for (const player of rosterPlayers) {
     const score = scoreNameMatch(target, player);
-    if (score > bestScore) {
+    const playerHasPhoto = Boolean(player?.photoUrl || player?.photoKey);
+    const bestHasPhoto = Boolean(best?.photoUrl || best?.photoKey);
+    if (
+      score > bestScore ||
+      (score === bestScore && score >= 70 && playerHasPhoto && !bestHasPhoto)
+    ) {
       bestScore = score;
       best = player;
     }

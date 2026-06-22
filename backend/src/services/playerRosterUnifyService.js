@@ -131,6 +131,7 @@ export function unifyRawTeamPlayers(players = []) {
 
   return groups.map((group) => {
     const canonical = pickCanonicalPlayer(group);
+    const merged = mergeGroupFields(group, canonical);
     const lookupKeys = new Set();
     const aliasNames = new Set();
     const aliasExternalIds = new Set();
@@ -142,7 +143,7 @@ export function unifyRawTeamPlayers(players = []) {
     }
 
     return {
-      ...mapPlayerToTimelineRosterEntry(canonical),
+      ...mapPlayerToTimelineRosterEntry(merged),
       aliasNames: [...aliasNames],
       aliasExternalIds: [...aliasExternalIds],
       nameLookupKeys: [...lookupKeys],

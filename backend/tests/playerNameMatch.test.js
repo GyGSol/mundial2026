@@ -72,4 +72,39 @@ describe('playerNameMatch', () => {
     expect(compactNameKey('Seol Young-woo')).toBe('seolyoungwoo');
     expect(compactNameKey('SEOL Youngwoo')).toBe('seolyoungwoo');
   });
+
+  it('normaliza letras nórdicas para matching (ø/æ/å)', () => {
+    expect(tokensMatchAnyOrder('Orjan Nyland', 'Ørjan Nyland')).toBe(true);
+    expect(tokensMatchAnyOrder('Martin Odegaard', 'Martin Ødegaard')).toBe(true);
+    expect(tokensMatchAnyOrder('Alexander Sorloth', 'Alexander Sørloth')).toBe(true);
+  });
+
+  it('enrichNameFromRoster prefiere jugador con foto entre duplicados nórdicos', () => {
+    const norRoster = [
+      {
+        mongoId: 'a',
+        externalId: 'NOR-orjan-nyland',
+        fullName: 'Orjan Nyland',
+        position: 'GK',
+        shirtNumber: 1,
+        photoUrl: null,
+        photoKey: null,
+        aliasNames: ['Ørjan Nyland'],
+        nameLookupKeys: nameVariantKeys('Orjan Nyland'),
+      },
+      {
+        mongoId: 'b',
+        externalId: 'fd-6843',
+        fullName: 'Ørjan Nyland',
+        position: 'GK',
+        shirtNumber: 1,
+        photoUrl: 'https://example.com/nor-rjan-nyland.png',
+        photoKey: 'noruega/nor-rjan-nyland.png',
+        aliasNames: ['Orjan Nyland'],
+        nameLookupKeys: nameVariantKeys('Ørjan Nyland'),
+      },
+    ];
+    const enriched = enrichNameFromRoster('Nyland', norRoster, { shirtNumber: 1 });
+    expect(enriched.photoUrl).toContain('nor-rjan-nyland');
+  });
 });
