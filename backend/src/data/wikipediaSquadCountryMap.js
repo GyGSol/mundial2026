@@ -77,6 +77,8 @@ export const FIFA_TO_PHOTO_FOLDER = {
   CAN: 'canada',
   CIV: 'costa-de-marfil',
   COL: 'colombia',
+  COD: 'rd-congo',
+  CZE: 'republica-checa',
   CPV: 'cabo-verde',
   CUW: 'curacao',
   ECU: 'ecuador',
