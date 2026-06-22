@@ -20,11 +20,15 @@ const DEPTH_BY_POOL = {
 
 const LATERAL_SLOTS = {
   1: [50],
-  2: [26, 74],
-  3: [14, 50, 86],
-  4: [10, 32, 68, 90],
-  5: [6, 22, 50, 78, 94],
+  2: [20, 80],
+  3: [8, 50, 92],
+  4: [4, 26, 74, 96],
+  5: [2, 18, 50, 82, 98],
 };
+
+const PITCH_LATERAL_MIN = 2;
+const PITCH_LATERAL_MAX = 98;
+const PITCH_LATERAL_EXPAND = 1.14;
 
 export function parseFormationString(formation) {
   const raw = String(formation ?? DEFAULT_FORMATION).trim();
@@ -125,17 +129,17 @@ export function lateralSortKey(player) {
   const text = raw.toLowerCase();
 
   if (token === 'POR' || token === 'GK' || text.includes('goalkeeper') || text === 'gk') return 50;
-  if (token === 'LI') return 6;
-  if (token === 'LD') return 94;
-  if (token === 'MI') return 14;
-  if (token === 'MD') return 86;
-  if (token === 'MCD') return 38;
-  if (token === 'MCO') return 54;
+  if (token === 'LI') return 4;
+  if (token === 'LD') return 96;
+  if (token === 'MI') return 8;
+  if (token === 'MD') return 92;
+  if (token === 'MCD') return 36;
+  if (token === 'MCO') return 64;
   if (token === 'MC' || token === 'DFC' || token === 'DC') return 50;
-  if (text.includes('left') && !text.includes('centre') && !text.includes('center')) return 5;
-  if (text.includes('right') && !text.includes('centre') && !text.includes('center')) return 95;
-  if (text.includes('left wing') || (text.includes('winger') && text.includes('left'))) return 12;
-  if (text.includes('right wing') || (text.includes('winger') && text.includes('right'))) return 88;
+  if (text.includes('left') && !text.includes('centre') && !text.includes('center')) return 2;
+  if (text.includes('right') && !text.includes('centre') && !text.includes('center')) return 98;
+  if (text.includes('left wing') || (text.includes('winger') && text.includes('left'))) return 8;
+  if (text.includes('right wing') || (text.includes('winger') && text.includes('right'))) return 92;
   if (text.includes('defensive mid')) return 42;
   if (text.includes('attacking mid')) return 58;
   if (text.includes('centre-forward') || text.includes('center forward') || text === 'st') return 50;
@@ -181,6 +185,78 @@ function poolForLine(rowIndex, totalRows) {
 
 function isForwardLike(player) {
   return mapFootballDataPositionText(player.positionDetail ?? player.position) === 'FWD';
+}
+
+function isNaturalForward(player) {
+  return isForwardLike(player);
+}
+
+/** Mayor score = más apto como segundo delantero desde el mediocampo (4-4-2, etc.). */
+export function attackingMidPromotionScore(player) {
+  const token = positionToken(player);
+  const raw = `${player.positionDetail ?? ''} ${player.position ?? ''}`.trim();
+  const text = raw.toLowerCase();
+
+  if (isForwardLike(player)) return 120;
+  if (token === 'MCO' || text.includes('attacking mid')) return 100;
+  if (text.includes('attacking')) return 90;
+  if (token === 'MC') return 75;
+  if (token === 'MD') return 55;
+  if (token === 'MI') return 45;
+  if (token === 'MCD' || text.includes('defensive') || text.includes('holding')) return 10;
+  return 35;
+}
+
+/** Completa el pool de delanteros con medios ofensivos cuando la formación pide más FWD que jugadores netos. */
+function balanceForwardPoolFromMidfield(pools, rows) {
+  const fwdNeeded = rows[rows.length - 1] ?? 0;
+  let deficit = fwdNeeded - pools.FWD.length;
+  if (deficit <= 0 || !pools.MID.length) return;
+
+  const rowCount = rows.length;
+  const midNeeded = rows.reduce(
+    (sum, count, rowIndex) => (poolForLine(rowIndex, rowCount) === 'MID' ? sum + count : sum),
+    0
+  );
+  const maxPromote = Math.max(0, pools.MID.length - midNeeded);
+
+  const promoteFromMid = () => {
+    if (!pools.MID.length) return null;
+    const sorted = [...pools.MID].sort(
+      (a, b) =>
+        attackingMidPromotionScore(b) - attackingMidPromotionScore(a) ||
+        (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
+    );
+    const picked = sorted[0];
+    pools.MID = pools.MID.filter((p) => p !== picked);
+    pools.FWD.push(picked);
+    return picked;
+  };
+
+  let promoted = 0;
+  while (deficit > 0 && promoted < maxPromote) {
+    if (!promoteFromMid()) break;
+    deficit -= 1;
+    promoted += 1;
+  }
+}
+
+function depthForPromotedForward(rowIndex, rowCount) {
+  if (rowIndex <= 0) return depthForRow(rowIndex, rowCount);
+  const midDepth = depthForRow(rowIndex - 1, rowCount);
+  const fwdDepth = depthForRow(rowIndex, rowCount);
+  return Number((midDepth + (fwdDepth - midDepth) * 0.55).toFixed(1));
+}
+
+function gridDepthForLine(player, spec, rowCount) {
+  const depth = depthForRow(spec.rowIndex, rowCount);
+  if (spec.pool === 'FWD') {
+    return isNaturalForward(player) ? depth : depthForPromotedForward(spec.rowIndex, rowCount);
+  }
+  if (spec.pool === 'MID') {
+    return Number(Math.min(88, Math.max(4, depth + midfieldDepthBias(player))).toFixed(1));
+  }
+  return depth;
 }
 
 export function mapFootballDataPositionText(text) {
@@ -242,30 +318,30 @@ export function isCenterForwardLike(player) {
 /** Varios jugadores en el eje central: cerca del centro pero sin superponer avatares. */
 export function centerClusterLateralSlots(count) {
   if (count <= 1) return [50];
-  if (count === 2) return [42, 58];
-  if (count === 3) return [36, 50, 64];
-  const step = Math.min(14, Math.max(8, 36 / (count - 1)));
+  if (count === 2) return [38, 62];
+  if (count === 3) return [28, 50, 72];
+  const step = Math.min(16, Math.max(10, 44 / (count - 1)));
   const start = 50 - (step * (count - 1)) / 2;
   return Array.from({ length: count }, (_, index) =>
-    Number(Math.min(92, Math.max(8, start + step * index)).toFixed(1))
+    Number(Math.min(PITCH_LATERAL_MAX, Math.max(PITCH_LATERAL_MIN, start + step * index)).toFixed(1))
   );
 }
 
 /** Delanteros centros: más apertura lateral que el resto de líneas. */
 function forwardCenterClusterLateralSlots(count) {
   if (count <= 1) return [50];
-  if (count === 2) return [36, 64];
-  if (count === 3) return [32, 50, 68];
+  if (count === 2) return [28, 72];
+  if (count === 3) return [22, 50, 78];
   return centerClusterLateralSlots(count);
 }
 
 /** Abre jugadores en línea (gridY) alrededor de un ancla lateral. */
-function anchoredLateralSlots(count, anchorY, { minStep = 16 } = {}) {
+function anchoredLateralSlots(count, anchorY, { minStep = 18 } = {}) {
   if (count <= 1) return [Number(anchorY.toFixed(1))];
-  const step = Math.max(minStep, Math.min(28, 48 / Math.max(1, count - 1)));
+  const step = Math.max(minStep, Math.min(32, 56 / Math.max(1, count - 1)));
   const start = anchorY - (step * (count - 1)) / 2;
   return Array.from({ length: count }, (_, index) =>
-    Number(Math.min(92, Math.max(8, start + step * index)).toFixed(1))
+    Number(Math.min(PITCH_LATERAL_MAX, Math.max(PITCH_LATERAL_MIN, start + step * index)).toFixed(1))
   );
 }
 
@@ -273,7 +349,7 @@ function slotsForSamePositionToken(count, token, anchorY) {
   if (token === 'DC' || token === 'CF' || token === 'ST') {
     return forwardCenterClusterLateralSlots(count);
   }
-  return anchoredLateralSlots(count, anchorY, { minStep: count === 2 ? 22 : 16 });
+  return anchoredLateralSlots(count, anchorY, { minStep: count === 2 ? 26 : 18 });
 }
 
 const TACTICAL_POSITION_TOKENS = new Set([
@@ -336,7 +412,7 @@ function slotsForCoLocatedGroup(sortedEntries) {
   if (count >= 3) {
     return Array.from({ length: count }, (_, slotIndex) => lateralForSlot(slotIndex, count));
   }
-  return anchoredLateralSlots(count, anchor, { minStep: 26 });
+  return anchoredLateralSlots(count, anchor, { minStep: 30 });
 }
 
 /** Separa jugadores en la misma celda de cancha aunque el rol guardado difiera (MD vs MCO). */
@@ -487,15 +563,10 @@ export function assignPlayersToFormation(
     pool: poolForLine(rowIndex, rowCount),
   }));
 
+  balanceForwardPoolFromMidfield(pools, rows);
+
   for (const spec of lineSpecs) {
     const available = pools[spec.pool];
-
-    if (spec.pool === 'FWD' && available.length < spec.count && pools.MID.length) {
-      const forwardLike = pools.MID.filter(isForwardLike);
-      const rest = pools.MID.filter((p) => !isForwardLike(p));
-      pools.MID = rest;
-      available.push(...forwardLike);
-    }
 
     const picked = sortPlayersInLine(available.splice(0, spec.count), {
       pool: spec.pool,
@@ -503,14 +574,12 @@ export function assignPlayersToFormation(
       totalRows: rowCount,
     });
 
-    const depth = depthForRow(spec.rowIndex, rowCount);
     const lateralSlots = lateralPositionsForLine(picked, picked.length, spec.pool);
     picked.forEach((player, slotIndex) => {
-      const midBias = spec.pool === 'MID' ? midfieldDepthBias(player) : 0;
       const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = player;
       assigned.push({
         ...rest,
-        gridX: Number(Math.min(88, Math.max(4, depth + midBias)).toFixed(1)),
+        gridX: Number(gridDepthForLine(player, spec, rowCount).toFixed(1)),
         gridY: Number((lateralSlots[slotIndex] ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)),
       });
     });
@@ -767,6 +836,64 @@ export function spreadDefCenterClusters(players) {
   });
 }
 
+/** Empuja gridY hacia las bandas para usar más ancho de cancha (portero queda centrado). */
+export function expandPitchLateralSpread(players, { factor = PITCH_LATERAL_EXPAND } = {}) {
+  if (!players?.length) return players ?? [];
+
+  const expanded = players.map((player) => {
+    const token = positionToken(player);
+    if (token === 'POR' || token === 'GK') return player;
+
+    const y = Number(player.gridY ?? 50);
+    if (!Number.isFinite(y)) return player;
+
+    const nextY = 50 + (y - 50) * factor;
+    return {
+      ...player,
+      gridY: Number(
+        Math.min(PITCH_LATERAL_MAX, Math.max(PITCH_LATERAL_MIN, nextY)).toFixed(1)
+      ),
+    };
+  });
+
+  return resolveExactGridCollisions(expanded);
+}
+
+/** Separa jugadores con la misma coordenada exacta (p. ej. tras clamp en bandas). */
+function resolveExactGridCollisions(players) {
+  if (!players?.length) return players ?? [];
+
+  const buckets = new Map();
+  for (const entry of players.map((player, index) => ({ player, index }))) {
+    const token = positionToken(entry.player);
+    if (token === 'POR' || token === 'GK') continue;
+
+    const x = Number(entry.player.gridX ?? 50).toFixed(1);
+    const y = Number(entry.player.gridY ?? 50).toFixed(1);
+    const key = `${x}:${y}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(entry);
+  }
+
+  let result = [...players];
+  for (const group of buckets.values()) {
+    if (group.length < 2) continue;
+
+    const sorted = [...group].sort(
+      (a, b) =>
+        tacticalLateralSortKey(a.player) - tacticalLateralSortKey(b.player) ||
+        (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+    );
+    const anchorY = Number(sorted[0].player.gridY ?? 50);
+    const slots = anchoredLateralSlots(sorted.length, anchorY, { minStep: 14 });
+    sorted.forEach(({ index }, slot) => {
+      result[index] = { ...result[index], gridY: slots[slot] };
+    });
+  }
+
+  return result;
+}
+
 /** Separa solapes tácticos en defensa, mediocampo y ataque. */
 export function spreadTacticalLineClusters(players) {
   let next = spreadDefenseLineOverlaps(players);
@@ -776,5 +903,5 @@ export function spreadTacticalLineClusters(players) {
   next = spreadForwardCenterClusters(next);
   next = spreadSamePositionOverlaps(next);
   next = spreadCoLocatedPlayers(next);
-  return next;
+  return expandPitchLateralSpread(next);
 }

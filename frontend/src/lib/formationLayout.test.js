@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   assignPlayersToFormation,
+  attackingMidPromotionScore,
   isCenterBackLike,
   isCenterForwardLike,
   isCenterMidLike,
@@ -28,8 +29,8 @@ describe('formationLayout center forwards', () => {
     const laidOut = assignPlayersToFormation(players, '1-2-2', { includeLeftovers: true });
     const ys = laidOut.map((p) => p.gridY);
     expect(ys).toHaveLength(2);
-    expect(Math.abs(ys[0] - ys[1])).toBeGreaterThanOrEqual(20);
-    expect(ys.every((y) => y >= 34 && y <= 66)).toBe(true);
+    expect(Math.abs(ys[0] - ys[1])).toBeGreaterThanOrEqual(24);
+    expect(ys.every((y) => y >= 20 && y <= 80)).toBe(true);
   });
 
   it('spreadForwardCenterClusters abre dos DC amontonados en ataque', () => {
@@ -40,8 +41,8 @@ describe('formationLayout center forwards', () => {
     ];
 
     const next = spreadForwardCenterClusters(players);
-    expect(next[0].gridY).toBe(36);
-    expect(next[1].gridY).toBe(64);
+    expect(next[0].gridY).toBe(28);
+    expect(next[1].gridY).toBe(72);
     expect(next[2].gridY).toBe(50);
   });
 
@@ -113,8 +114,8 @@ describe('formationLayout midfield and defense', () => {
     ];
 
     const next = spreadMidfieldLineOverlaps(players);
-    expect(next.find((p) => p.shirtNumber === 25)?.gridY).toBe(54);
-    expect(next.find((p) => p.shirtNumber === 20)?.gridY).toBe(86);
+    expect(next.find((p) => p.shirtNumber === 25)?.gridY).toBe(64);
+    expect(next.find((p) => p.shirtNumber === 20)?.gridY).toBe(92);
     expect(next[0].gridY).not.toBe(next[1].gridY);
   });
 
@@ -126,8 +127,8 @@ describe('formationLayout midfield and defense', () => {
     ];
 
     const next = spreadMidCenterClusters(players);
-    expect(next.find((p) => p.shirtNumber === 20)?.gridY).toBe(42);
-    expect(next.find((p) => p.shirtNumber === 25)?.gridY).toBe(58);
+    expect(next.find((p) => p.shirtNumber === 20)?.gridY).toBe(38);
+    expect(next.find((p) => p.shirtNumber === 25)?.gridY).toBe(62);
     expect(next.find((p) => p.shirtNumber === 8)?.gridY).toBe(18);
   });
 
@@ -139,8 +140,8 @@ describe('formationLayout midfield and defense', () => {
     ];
 
     const next = spreadDefCenterClusters(players);
-    expect(next.find((p) => p.shirtNumber === 4)?.gridY).toBe(42);
-    expect(next.find((p) => p.shirtNumber === 13)?.gridY).toBe(58);
+    expect(next.find((p) => p.shirtNumber === 4)?.gridY).toBe(38);
+    expect(next.find((p) => p.shirtNumber === 13)?.gridY).toBe(62);
     expect(next.find((p) => p.shirtNumber === 3)?.gridY).toBe(12);
   });
 
@@ -162,12 +163,57 @@ describe('formationLayout midfield and defense', () => {
     const laidOut = assignPlayersToFormation(players, '4-2-3-1', { includeLeftovers: true });
     const sanabria = laidOut.find((p) => p.shirtNumber === 25);
     const araujo = laidOut.find((p) => p.shirtNumber === 20);
-    expect(sanabria?.gridY).toBe(54);
-    expect(araujo?.gridY).toBe(86);
+    expect(sanabria?.gridY).toBe(64);
+    expect(araujo?.gridY).toBe(92);
     expect(Math.abs(sanabria.gridY - araujo.gridY)).toBeGreaterThanOrEqual(16);
 
     const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
     expect(defenders).toHaveLength(4);
     expect(new Set(defenders.map((p) => p.gridY)).size).toBe(4);
+  });
+});
+
+describe('formationLayout 4-4-2 forward promotion', () => {
+  it('attackingMidPromotionScore prioriza MC sobre MD y MI', () => {
+    expect(attackingMidPromotionScore({ position: 'MC' })).toBeGreaterThan(
+      attackingMidPromotionScore({ position: 'MD' })
+    );
+    expect(attackingMidPromotionScore({ position: 'MD' })).toBeGreaterThan(
+      attackingMidPromotionScore({ position: 'MI' })
+    );
+  });
+
+  it('promueve el mediocampista más ofensivo cuando solo hay un delantero neto', () => {
+    const players = [
+      { name: 'Crocombe', shirtNumber: 1, position: 'POR' },
+      { name: 'Payne', shirtNumber: 2, position: 'LI' },
+      { name: 'Boxall', shirtNumber: 5, position: 'DFC' },
+      { name: 'Cacace', shirtNumber: 13, position: 'LD' },
+      { name: 'Surman', shirtNumber: 16, position: 'DEF' },
+      { name: 'Bell', shirtNumber: 6, position: 'MI' },
+      { name: 'Stamenic', shirtNumber: 8, position: 'MD' },
+      { name: 'McCowatt', shirtNumber: 20, position: 'MD' },
+      { name: 'Singh', shirtNumber: 10, position: 'MC' },
+      { name: 'Just', shirtNumber: 11, position: 'MC' },
+      { name: 'Wood', shirtNumber: 9, position: 'DC' },
+    ];
+
+    const laidOut = assignPlayersToFormation(players, '4-4-2', { includeLeftovers: false });
+    const wood = laidOut.find((p) => p.shirtNumber === 9);
+    const singh = laidOut.find((p) => p.shirtNumber === 10);
+
+    expect(wood.gridX).toBe(85);
+    expect(singh.gridX).toBeGreaterThan(68);
+    expect(singh.gridX).toBeLessThan(85);
+    expect(singh.position).toBe('MID');
+
+    const mids = laidOut.filter((p) => [6, 8, 20, 11].includes(p.shirtNumber));
+    expect(mids).toHaveLength(4);
+    mids.forEach((p) => {
+      expect(p.gridX).toBeGreaterThanOrEqual(52);
+      expect(p.gridX).toBeLessThanOrEqual(64);
+    });
+
+    expect(laidOut).toHaveLength(11);
   });
 });
