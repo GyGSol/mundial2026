@@ -31,6 +31,10 @@ fra-rayan-cherki.png | #24 | Rayan Cherki | MF | 7 pj | 2 goles
 fra-maghnes-akliouche.png | #25 | Maghnes Akliouche | MF | 9 pj | 1 goles
 fra-maxence-lacroix.png | #26 | Maxence Lacroix | DF | 4 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+fra-didier-deschamps.png | — | Didier Deschamps | DT
+
 # Solo nombres (pegar en generador):
 
 Brice Samba
