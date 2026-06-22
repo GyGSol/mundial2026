@@ -22,6 +22,17 @@ const trainingBufferSchema = new mongoose.Schema(
       error_reduction_factor: { type: Number, default: null },
       key_variable_impact: { type: String, default: null },
     },
+    /** Replay Oracle sobre contexto pre-partido guardado (no cambia predicción publicada). */
+    shadowOracle: {
+      predictedScore: {
+        home: { type: Number, default: null },
+        away: { type: Number, default: null },
+      },
+      mseError: { type: Number, default: null },
+      source: { type: String, default: null },
+      replayedAt: { type: Date, default: null },
+      usedStoredContext: { type: Boolean, default: false },
+    },
     exportedAt: { type: Date, default: null },
     weekBucket: { type: String, default: null, index: true },
   },

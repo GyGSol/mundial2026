@@ -78,7 +78,12 @@ export async function syncMatchLineupsFromFootballData(match, { applyStarters = 
 
   let fdMatchId = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
   if (!fdMatchId) {
-    fdMatchId = await resolveFootballDataMatchId(match, homeTeam, awayTeam);
+    try {
+      fdMatchId = await resolveFootballDataMatchId(match, homeTeam, awayTeam);
+    } catch (err) {
+      console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
+      return { updated: 0, starterIds: 0, synced: false, error: err.message };
+    }
   }
   if (!fdMatchId) return { updated: 0, starterIds: 0, synced: false };
 

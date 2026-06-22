@@ -1282,9 +1282,13 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
     return { processed: 0, skipped: 0, errors: ['AI user not found or not marked isAiUser'] };
   }
 
-  await syncUpcomingKickoffLineups({
-    withinMs: env.aiPredictLeadMs + env.aiPredictWindowMs + 15 * 60 * 1000,
-  });
+  try {
+    await syncUpcomingKickoffLineups({
+      withinMs: env.aiPredictLeadMs + env.aiPredictWindowMs + 15 * 60 * 1000,
+    });
+  } catch (err) {
+    console.warn('AI predictions: lineup pre-sync skipped:', err.message);
+  }
 
   const dueMatches = await findMatchesDueForAiPrediction(aiUser._id, now);
   let processed = 0;
