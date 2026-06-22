@@ -89,6 +89,7 @@ export const FIFA_TO_PHOTO_FOLDER = {
   GHA: 'ghana',
   HAI: 'haiti',
   IRN: 'iran',
+  IRQ: 'irak',
   JOR: 'jordania',
   JPN: 'japon',
   KOR: 'corea',
