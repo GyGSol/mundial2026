@@ -19,6 +19,9 @@ import { getTeamPitchPalette } from '@/lib/teamPitchColors.js';
 /** Margen desde el arco dentro de cada mitad (0–100 de profundidad). */
 const DEPTH_EDGE = 6;
 const DEPTH_SPAN = 88;
+/** gridY → posición vertical en pantalla (bandas de la cancha). */
+const LATERAL_EDGE = 2;
+const LATERAL_SPAN = 96;
 
 function shortName(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean);
@@ -111,7 +114,7 @@ function PitchPlayerHoverCard({ player, position, teamCode, side }) {
 function teamDotStyle(player, side) {
   const depth = Math.min(100, Math.max(0, Number(player.gridX ?? 50)));
   const lateral = Math.min(100, Math.max(0, Number(player.gridY ?? 50)));
-  const top = `${6 + lateral * 0.88}%`;
+  const top = `${LATERAL_EDGE + (lateral / 100) * LATERAL_SPAN}%`;
   const alongHalf = DEPTH_EDGE + (depth / 100) * DEPTH_SPAN;
   const horizontal = side === 'home' ? alongHalf : 100 - alongHalf;
 

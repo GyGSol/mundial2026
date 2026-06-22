@@ -4,6 +4,7 @@ import {
   parseApiFootballGrid,
   assignFormationGrid,
   assignPlayersToFormation,
+  attackingMidPromotionScore,
   assignPlayersWithFormationLayout,
   inferFormationFromGridRows,
   inferFormationFromPositionPools,
@@ -177,5 +178,35 @@ describe('formationLayout', () => {
     expect(mapFootballDataPositionText('DF')).toBe('DEF');
     expect(mapFootballDataPositionText('MF')).toBe('MID');
     expect(mapFootballDataPositionText('FW')).toBe('FWD');
+  });
+
+  it('promueve MC como segundo delantero en 4-4-2 con un solo DC', () => {
+    const players = [
+      { name: 'Crocombe', shirtNumber: 1, position: 'POR' },
+      { name: 'Payne', shirtNumber: 2, position: 'LI' },
+      { name: 'Boxall', shirtNumber: 5, position: 'DFC' },
+      { name: 'Cacace', shirtNumber: 13, position: 'LD' },
+      { name: 'Surman', shirtNumber: 16, position: 'DEF' },
+      { name: 'Bell', shirtNumber: 6, position: 'MI' },
+      { name: 'Stamenic', shirtNumber: 8, position: 'MD' },
+      { name: 'McCowatt', shirtNumber: 20, position: 'MD' },
+      { name: 'Singh', shirtNumber: 10, position: 'MC' },
+      { name: 'Just', shirtNumber: 11, position: 'MC' },
+      { name: 'Wood', shirtNumber: 9, position: 'DC' },
+    ];
+
+    expect(attackingMidPromotionScore({ position: 'MC' })).toBeGreaterThan(
+      attackingMidPromotionScore({ position: 'MD' })
+    );
+
+    const assigned = assignPlayersToFormation(players, '4-4-2');
+    const wood = assigned.find((p) => p.shirtNumber === 9);
+    const singh = assigned.find((p) => p.shirtNumber === 10);
+
+    expect(wood.gridX).toBe(85);
+    expect(singh.gridX).toBeGreaterThan(68);
+    expect(singh.gridX).toBeLessThan(85);
+    expect(assigned.filter((p) => p.gridX >= 52 && p.gridX <= 64)).toHaveLength(4);
+    expect(assigned).toHaveLength(11);
   });
 });
