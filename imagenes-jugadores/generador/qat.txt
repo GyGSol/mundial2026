@@ -31,6 +31,10 @@ qat-tahsin-jamshid.png | #24 | Tahsin Jamshid | FW | 3 pj | 0 goles
 qat-al-hashmi-al-hussain.png | #25 | Al-Hashmi Al-Hussain | DF | 8 pj | 0 goles
 qat-mohamed-manai.png | #26 | Mohamed Manai | FW | 10 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+qat-julen-lopetegui.png | — | Julen Lopetegui | DT
+
 # Solo nombres (pegar en generador):
 
 Mahmud Abunada

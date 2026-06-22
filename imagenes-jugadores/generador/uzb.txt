@@ -31,6 +31,10 @@ uzb-bekhruz-karimov.png | #24 | Bekhruz Karimov | DF | 2 pj | 0 goles
 uzb-avazbek-ulmasaliev.png | #25 | Avazbek Ulmasaliev | DF | 0 pj | 0 goles
 uzb-jakhongir-urozov.png | #26 | Jakhongir Urozov | DF | 4 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+uzb-fabio-cannavaro.png | — | Fabio Cannavaro | DT
+
 # Solo nombres (pegar en generador):
 
 Utkir Yusupov
