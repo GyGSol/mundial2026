@@ -31,6 +31,10 @@ bih-arjan-malic.png | #24 | Arjan Malić | DF | 8 pj | 0 goles
 bih-jovo-lukic.png | #25 | Jovo Lukić | FW | 3 pj | 0 goles
 bih-ermin-mahmic.png | #26 | Ermin Mahmić | MF | 2 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+bih-sergej-barbarez.png | — | Sergej Barbarez | DT
+
 # Solo nombres (pegar en generador):
 
 Nikola Vasilj

@@ -31,6 +31,10 @@ alg-yacine-titraoui.png | #24 | Yacine Titraoui | MF | 5 pj | 0 goles
 alg-fares-ghedjemis.png | #25 | Farès Ghedjemis | FW | 1 pj | 1 goles
 alg-samir-chergui.png | #26 | Samir Chergui | DF | 6 pj | 0 goles
 
+# DT (caricatura — sin dorsal en plantel FIFA)
+
+alg-vladimir-petkovic.png | — | Vladimir Petković | DT
+
 # Solo nombres (pegar en generador):
 
 Melvin Mastil
