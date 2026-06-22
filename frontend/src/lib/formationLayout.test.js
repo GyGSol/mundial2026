@@ -9,6 +9,7 @@ import {
   spreadMidCenterClusters,
   spreadMidfieldLineOverlaps,
   spreadOverlappingGridPositions,
+  spreadSamePositionOverlaps,
 } from './formationLayout.js';
 
 describe('formationLayout center forwards', () => {
@@ -27,7 +28,7 @@ describe('formationLayout center forwards', () => {
     const ys = laidOut.map((p) => p.gridY);
     expect(ys).toHaveLength(2);
     expect(Math.abs(ys[0] - ys[1])).toBeGreaterThanOrEqual(6);
-    expect(ys.every((y) => y >= 40 && y <= 60)).toBe(true);
+    expect(ys.every((y) => y >= 38 && y <= 62)).toBe(true);
   });
 
   it('spreadForwardCenterClusters abre dos DC amontonados en ataque', () => {
@@ -50,7 +51,24 @@ describe('formationLayout center forwards', () => {
     ];
 
     const next = spreadOverlappingGridPositions(players);
-    expect(next[0].gridY).not.toBe(next[1].gridY);
+    expect(next[0].gridY).toBe(40);
+    expect(next[1].gridY).toBe(60);
+  });
+
+  it('spreadSamePositionOverlaps abre dos MI o dos MC en línea horizontal', () => {
+    const twoMi = [
+      { name: 'Canobbio', shirtNumber: 14, position: 'MI', gridX: 64, gridY: 18 },
+      { name: 'Wing', shirtNumber: 7, position: 'MI', gridX: 64, gridY: 18 },
+    ];
+    const miNext = spreadSamePositionOverlaps(twoMi);
+    expect(Math.abs(miNext[0].gridY - miNext[1].gridY)).toBeGreaterThanOrEqual(16);
+
+    const twoMc = [
+      { name: 'Sanabria', shirtNumber: 25, position: 'MC', gridX: 64, gridY: 82 },
+      { name: 'Valverde', shirtNumber: 15, position: 'MC', gridX: 64, gridY: 82 },
+    ];
+    const mcNext = spreadSamePositionOverlaps(twoMc);
+    expect(Math.abs(mcNext[0].gridY - mcNext[1].gridY)).toBeGreaterThanOrEqual(16);
   });
 });
 

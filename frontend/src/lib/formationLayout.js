@@ -257,6 +257,23 @@ function forwardCenterClusterLateralSlots(count) {
   return centerClusterLateralSlots(count);
 }
 
+/** Abre jugadores en línea (gridY) alrededor de un ancla lateral. */
+function anchoredLateralSlots(count, anchorY, { minStep = 14 } = {}) {
+  if (count <= 1) return [Number(anchorY.toFixed(1))];
+  const step = Math.max(minStep, Math.min(22, 40 / Math.max(1, count - 1)));
+  const start = anchorY - (step * (count - 1)) / 2;
+  return Array.from({ length: count }, (_, index) =>
+    Number(Math.min(92, Math.max(8, start + step * index)).toFixed(1))
+  );
+}
+
+function slotsForSamePositionToken(count, token, anchorY) {
+  if (token === 'DC' || token === 'CF' || token === 'ST') {
+    return forwardCenterClusterLateralSlots(count);
+  }
+  return anchoredLateralSlots(count, anchorY, { minStep: count === 2 ? 18 : 14 });
+}
+
 /** @deprecated alias */
 function centerForwardLateralSlots(count) {
   return centerClusterLateralSlots(count);
@@ -291,8 +308,13 @@ export function isCenterMidLike(player) {
 function lateralPositionsForLine(players, count, pool) {
   if (count <= 0) return [];
 
+  const keys = players.map((player) => lateralSortKey(player));
+  if (count >= 2 && new Set(keys).size < keys.length) {
+    const anchor = keys.reduce((sum, key) => sum + key, 0) / keys.length;
+    return anchoredLateralSlots(count, anchor, { minStep: count === 2 ? 18 : 14 });
+  }
+
   if (pool === 'MID' || pool === 'DEF') {
-    const keys = players.map((player) => lateralSortKey(player));
     const keySpread = Math.max(...keys) - Math.min(...keys);
     const uniqueKeys = new Set(keys);
     if (keySpread >= 16 && uniqueKeys.size === keys.length) {
@@ -432,7 +454,7 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
     index,
     gridX: Number(player.gridX ?? 50),
     gridY: Number(player.gridY ?? 50),
-    gridKey: `${Math.round(Number(player.gridX ?? 50))}:${Math.round(Number(player.gridY ?? 50))}`,
+    gridKey: `${positionToken(player)}:${Math.round(Number(player.gridX ?? 50) / 8)}`,
   }));
 
   const byGrid = new Map();
@@ -451,25 +473,56 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
     group.sort(
       (a, b) => (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
     );
-    const baseY = Number(group[0].player.gridY ?? 50);
     const baseX = Number(group[0].player.gridX ?? 50);
-    const allCenterForwards = group.every(({ player }) => isCenterForwardLike(player));
-    const step =
-      allCenterForwards && group.length === 2
-        ? 14
-        : Math.max(lateralStep, 12 / Math.max(1, group.length - 1));
+    const anchorY =
+      group.reduce((sum, entry) => sum + Number(entry.player.gridY ?? 50), 0) / group.length;
+    const token = positionToken(group[0].player);
+    const slots = slotsForSamePositionToken(group.length, token, anchorY);
 
     group.forEach((entry, slot) => {
-      const offset = (slot - (group.length - 1) / 2) * step;
       adjusted[entry.index] = {
         ...entry.player,
         gridX: baseX,
-        gridY: Number(Math.min(98, Math.max(2, baseY + offset)).toFixed(1)),
+        gridY: slots[slot],
       };
     });
   }
 
   return spreadTacticalLineClusters(adjusted.filter(Boolean));
+}
+
+/** Dos+ jugadores con la misma posición táctica y profundidad → línea horizontal (gridY). */
+export function spreadSamePositionOverlaps(players, { depthBucket = 10, yTolerance = 14 } = {}) {
+  if (!players?.length) return players ?? [];
+
+  const buckets = new Map();
+  for (const entry of players.map((player, index) => ({ player, index }))) {
+    const token = positionToken(entry.player);
+    if (!token || token === 'POR' || token === 'GK') continue;
+    const depth = Number(entry.player.gridX ?? 50);
+    const key = `${token}:${Math.round(depth / depthBucket)}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(entry);
+  }
+
+  let result = [...players];
+  for (const group of buckets.values()) {
+    if (group.length < 2) continue;
+    const ys = group.map(({ player }) => Number(player.gridY ?? 50));
+    if (Math.max(...ys) - Math.min(...ys) > yTolerance) continue;
+
+    const sorted = [...group].sort(
+      (a, b) => (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+    );
+    const anchorY = ys.reduce((sum, y) => sum + y, 0) / ys.length;
+    const token = positionToken(sorted[0].player);
+    const slots = slotsForSamePositionToken(sorted.length, token, anchorY);
+    sorted.forEach(({ index }, slot) => {
+      result[index] = { ...result[index], gridY: slots[slot] };
+    });
+  }
+
+  return result;
 }
 
 function spreadPoolCenterClusters(
@@ -629,5 +682,6 @@ export function spreadTacticalLineClusters(players) {
   next = spreadMidfieldLineOverlaps(next);
   next = spreadMidCenterClusters(next);
   next = spreadForwardCenterClusters(next);
+  next = spreadSamePositionOverlaps(next);
   return next;
 }
