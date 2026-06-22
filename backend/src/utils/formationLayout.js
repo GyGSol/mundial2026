@@ -26,10 +26,10 @@ const DEPTH_BY_POOL = {
 /** Distribución lateral por cantidad de jugadores en la línea. */
 const LATERAL_SLOTS = {
   1: [50],
-  2: [30, 70],
-  3: [18, 50, 82],
-  4: [12, 35, 65, 88],
-  5: [8, 26, 50, 74, 92],
+  2: [26, 74],
+  3: [14, 50, 86],
+  4: [10, 32, 68, 90],
+  5: [6, 22, 50, 78, 94],
 };
 
 /** @returns {number[]} filas desde portero hacia delante, ej. [1,4,3,3] */
@@ -139,12 +139,12 @@ export function lateralSortKey(player) {
   const text = raw.toLowerCase();
 
   if (token === 'POR' || token === 'GK' || text.includes('goalkeeper') || text === 'gk') return 50;
-  if (token === 'LI') return 8;
-  if (token === 'LD') return 92;
-  if (token === 'MI') return 18;
-  if (token === 'MD') return 82;
-  if (token === 'MCD') return 42;
-  if (token === 'MCO') return 58;
+  if (token === 'LI') return 6;
+  if (token === 'LD') return 94;
+  if (token === 'MI') return 14;
+  if (token === 'MD') return 86;
+  if (token === 'MCD') return 38;
+  if (token === 'MCO') return 54;
   if (token === 'MC' || token === 'DFC' || token === 'DC') return 50;
   if (text.includes('left') && !text.includes('centre') && !text.includes('center')) return 5;
   if (text.includes('right') && !text.includes('centre') && !text.includes('center')) return 95;
@@ -433,8 +433,8 @@ export function isCenterMidLike(player) {
 
 function centerClusterLateralSlots(count) {
   if (count <= 1) return [50];
-  if (count === 2) return [46, 54];
-  if (count === 3) return [40, 50, 60];
+  if (count === 2) return [42, 58];
+  if (count === 3) return [36, 50, 64];
   const step = Math.min(14, Math.max(8, 36 / (count - 1)));
   const start = 50 - (step * (count - 1)) / 2;
   return Array.from({ length: count }, (_, index) =>
@@ -444,8 +444,8 @@ function centerClusterLateralSlots(count) {
 
 function forwardCenterClusterLateralSlots(count) {
   if (count <= 1) return [50];
-  if (count === 2) return [40, 60];
-  if (count === 3) return [38, 50, 62];
+  if (count === 2) return [36, 64];
+  if (count === 3) return [32, 50, 68];
   return centerClusterLateralSlots(count);
 }
 
@@ -458,9 +458,9 @@ function positionToken(player) {
     .toUpperCase();
 }
 
-function anchoredLateralSlots(count, anchorY, { minStep = 14 } = {}) {
+function anchoredLateralSlots(count, anchorY, { minStep = 16 } = {}) {
   if (count <= 1) return [Number(anchorY.toFixed(1))];
-  const step = Math.max(minStep, Math.min(22, 40 / Math.max(1, count - 1)));
+  const step = Math.max(minStep, Math.min(28, 48 / Math.max(1, count - 1)));
   const start = anchorY - (step * (count - 1)) / 2;
   return Array.from({ length: count }, (_, index) =>
     Number(Math.min(92, Math.max(8, start + step * index)).toFixed(1))
@@ -471,7 +471,7 @@ function slotsForSamePositionToken(count, token, anchorY) {
   if (token === 'DC' || token === 'CF' || token === 'ST') {
     return forwardCenterClusterLateralSlots(count);
   }
-  return anchoredLateralSlots(count, anchorY, { minStep: count === 2 ? 18 : 14 });
+  return anchoredLateralSlots(count, anchorY, { minStep: count === 2 ? 22 : 16 });
 }
 
 const TACTICAL_POSITION_TOKENS = new Set([
@@ -533,7 +533,7 @@ function slotsForCoLocatedGroup(sortedEntries) {
   if (count >= 3) {
     return Array.from({ length: count }, (_, slotIndex) => lateralForSlot(slotIndex, count));
   }
-  return anchoredLateralSlots(count, anchor, { minStep: 20 });
+  return anchoredLateralSlots(count, anchor, { minStep: 26 });
 }
 
 export function spreadCoLocatedPlayers(players, { cellSize = 8 } = {}) {
