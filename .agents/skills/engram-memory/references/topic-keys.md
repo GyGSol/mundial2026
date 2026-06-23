@@ -14,6 +14,7 @@ Convención: `mundial2026/<dominio>/<slug>`. Un slug por tema; re-guardar actual
 | `mundial2026/ai/` | cerebras, consultations, prediction-* | IA predicciones |
 | `mundial2026/economy/` | fubols, prizes | Premios proporcionales por puesto |
 | `mundial2026/deploy/` | heroku | App `mundial2026-pred` |
+| `mundial2026/ops/` | jira-workflow, jira-ticket-authoring, jira-judge-rubric, jira-backfill | Jira FBL + MCP Atlassian + flujo AGNT |
 | `mundial2026/architecture/` | ranking-predictions-separation | Decisiones estructurales |
 | `engram/` | judge-workflow, chat-guide, local-store | Meta-memoria |
 
@@ -24,6 +25,7 @@ Migración dejó claves heterogéneas. Al actualizar un tema legacy, **renombrar
 | Legacy | Canónico sugerido |
 |--------|-------------------|
 | `sync/knockout-bracket` | `mundial2026/sync/knockout-bracket` |
+| `mundial2026/ops/jira-backfill` (solo backfill) | `mundial2026/ops/jira-workflow` |
 | `streams/la18hd-*` | `mundial2026/streams/la18hd-*` |
 | `stream/la18hd-*` | `mundial2026/streams/la18hd-*` |
 | `ui/match-*` | `mundial2026/ui/match-*` |
@@ -39,4 +41,18 @@ Ejemplos:
   mundial2026/streams/la18hd-mapping
   mundial2026/ui/group-colors
   mundial2026/data-safety/test-db-guard
+  mundial2026/ops/jira-workflow
 ```
+
+## ops/jira — claves Engram (jun-2026)
+
+Proyecto Jira **FBL** (Nexus-Fubols). Buscar con `mem_search "jira workflow FBL"`.
+
+| topic_key | Uso | Memoria ref. |
+|-----------|-----|--------------|
+| `mundial2026/ops/jira-workflow` | Procedimiento completo agente↔Jira (MCP, estados, backfill, AGNT) | #804 supersedes #803 |
+| `mundial2026/ops/jira-ticket-authoring` | Plantilla ticket desde análisis de código (ej. FBL-12) | #806 |
+| `mundial2026/ops/jira-judge-rubric` | Rúbrica calidad + mejoras pendientes del proceso | #805 |
+| `mundial2026/ops/jira-backfill` | Resumen puntual backfill FBL-1…11 (legacy; preferir jira-workflow) | #803 |
+
+Docs repo: `docs/JIRA_SETUP.md`, `docs/jira-backfill-inventory.md`. Skills: `.cursor/skills/jira-*`.

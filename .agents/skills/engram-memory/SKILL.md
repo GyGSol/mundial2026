@@ -63,6 +63,7 @@ mundial2026/<dominio>/<slug-kebab>
 | `economy` | `fubols-prizes` |
 | `ai` | `cerebras`, `consultations` |
 | `auth` | `password-reset` |
+| `ops` | `jira-workflow`, `jira-ticket-authoring`, `jira-backfill` |
 | `engram` | `judge-workflow`, `local-store` |
 
 - **Un tema = una clave.** Re-guardar con el mismo `topic_key` actualiza la observación.
