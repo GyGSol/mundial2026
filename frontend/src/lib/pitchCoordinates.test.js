@@ -8,7 +8,10 @@ import {
   LINEUP_LATERAL_EDGE,
   LINEUP_LATERAL_SPAN,
   PITCH_MARGIN_X,
+  PITCH_MARGIN_Y,
   PITCH_SPAN_X,
+  PITCH_SPAN_Y,
+  teamLateralToStadiumY,
 } from './pitchCoordinates.js';
 
 function lateralTopPercent(gridY, side) {
@@ -41,18 +44,23 @@ describe('pitchCoordinates', () => {
     });
   });
 
-  it('fifaEventToPitchPercent mapea esquina superior izquierda', () => {
-    const point = fifaEventToPitchPercent({ type: 'foul', positionX: 0, positionY: 0 });
+  it('fifaEventToPitchPercent mapea esquina superior izquierda (local)', () => {
+    const point = fifaEventToPitchPercent({ type: 'foul', side: 'home', positionX: 0, positionY: 0 });
     expect(point).toEqual({
       left: `${PITCH_MARGIN_X}%`,
-      top: '8%',
+      top: `${PITCH_MARGIN_Y}%`,
     });
   });
 
-  it('fifaEventToPitchPercent mapea esquina inferior derecha', () => {
-    const point = fifaEventToPitchPercent({ type: 'foul', positionX: 100, positionY: 100 });
+  it('fifaEventToPitchPercent mapea esquina inferior derecha (local)', () => {
+    const point = fifaEventToPitchPercent({
+      type: 'foul',
+      side: 'home',
+      positionX: 100,
+      positionY: 100,
+    });
     expect(point?.left).toBe(`${PITCH_MARGIN_X + PITCH_SPAN_X}%`);
-    expect(point?.top).toBe('92%');
+    expect(point?.top).toBe(`${PITCH_MARGIN_Y + PITCH_SPAN_Y}%`);
   });
 
   it('eventHasPitchCoords rechaza eventos sin coords', () => {
@@ -106,7 +114,7 @@ describe('pitchCoordinates', () => {
     ).toEqual({ x: 2, y: 50 });
   });
 
-  it('conserva posición absoluta de faltas (no orientación de ataque)', () => {
+  it('normaliza faltas con Y en perspectiva del equipo', () => {
     expect(
       getPitchEventFifaCoords({
         type: 'foul',
@@ -133,6 +141,35 @@ describe('pitchCoordinates', () => {
         positionY: 50,
       })
     ).toEqual({ x: 30, y: 50 });
+
+    expect(
+      getPitchEventFifaCoords({
+        type: 'foul',
+        side: 'away',
+        positionX: 30,
+        positionY: 10,
+      })
+    ).toEqual({ x: 30, y: 90 });
+  });
+
+  it('evento visitante comparte espejo lateral con alineación', () => {
+    const gridY = 4;
+    const eventY = teamLateralToStadiumY(gridY, 'away');
+    const lineupTop = Number.parseFloat(lateralTopPercent(gridY, 'away'));
+    const eventTop = Number.parseFloat(
+      fifaEventToPitchPercent({
+        type: 'foul',
+        side: 'away',
+        positionX: 50,
+        positionY: gridY,
+      }).top
+    );
+    expect(eventY).toBe(96);
+    expect(lineupTop).toBeCloseTo(
+      LINEUP_LATERAL_EDGE + (eventY / 100) * LINEUP_LATERAL_SPAN,
+      0
+    );
+    expect(eventTop).toBeCloseTo(PITCH_MARGIN_Y + (eventY / 100) * PITCH_SPAN_Y, 0);
   });
 
   it('isInAttackingThird delimita zona ofensiva por equipo', () => {
@@ -142,11 +179,10 @@ describe('pitchCoordinates', () => {
     expect(isInAttackingThird('away', 70)).toBe(false);
   });
 
-  it('deja coords sin transformar para sustituciones', () => {
+  it('deja coords sin transformar lateral para sustituciones sin side', () => {
     expect(
       getPitchEventFifaCoords({
         type: 'substitution',
-        side: 'home',
         positionX: 20,
         positionY: 40,
       })

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
 import { getTeamPitchPalette } from '@/lib/teamPitchColors.js';
 import { lineupGridToHalfPitchPercent } from '@/lib/pitchCoordinates.js';
+import { resolvePitchFormationLayers } from '@/lib/pitchFormationDisplay.js';
 
 function shortName(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean);
@@ -367,6 +368,8 @@ export default function PitchFormation({
   highlightKey = null,
   onHighlightKeyChange,
   showEventLayer = false,
+  homeScore = 0,
+  awayScore = 0,
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailPreview, setDetailPreview] = useState(null);
@@ -379,13 +382,21 @@ export default function PitchFormation({
   const awayPlayers = lineup?.away?.players ?? [];
   const hasPlayers = homePlayers.length > 0 || awayPlayers.length > 0;
 
-  const isNormalView = !heatmapMode || heatmapMode === 'normal';
-  const isHeatmapView = heatmapMode === 'shots' || heatmapMode === 'fouls' || heatmapMode === 'goals';
-  const showAttackHeatmapLayer = showEventLayer && isNormalView;
-  const showHeatmapLayer = showEventLayer && isHeatmapView;
-  const showPlayerLayer = hasPlayers && isNormalView;
-  const showEventPins = showEventLayer && isHeatmapView;
-  const showTeamLabels = showPlayerLayer || showHeatmapLayer || showAttackHeatmapLayer;
+  const {
+    showAttackHeatmapLayer,
+    showHeatmapLayer,
+    showPlayerLayer,
+    showEventPins,
+    showGoalPinsOnNormal,
+    showTeamLabels,
+    shouldRenderPitch,
+  } = resolvePitchFormationLayers({
+    hasPlayers,
+    showEventLayer,
+    heatmapMode,
+    homeScore,
+    awayScore,
+  });
 
   const homeEventSummaries = useMemo(
     () => (showPlayerLayer && showEventLayer ? buildPlayerEventSummary(events, 'home') : null),
@@ -396,8 +407,7 @@ export default function PitchFormation({
     [events, showEventLayer, showPlayerLayer]
   );
 
-  const hasEvents = showEventLayer && (events?.length ?? 0) > 0;
-  if (!hasPlayers && !hasEvents) return null;
+  if (!shouldRenderPitch) return null;
 
   const handlePlayerClick = (player) => {
     setDetailPreview({
@@ -454,6 +464,15 @@ export default function PitchFormation({
           ) : null}
           {showHeatmapLayer ? (
             <PitchHeatmapLayer events={events} heatmapMode={heatmapMode} />
+          ) : null}
+          {showGoalPinsOnNormal ? (
+            <PitchEventPinVisuals
+              events={events}
+              highlightKey={highlightKey}
+              heatmapMode="goals"
+              homeTeamCode={homeTeamCode}
+              awayTeamCode={awayTeamCode}
+            />
           ) : null}
           {showEventPins ? (
             <PitchEventPinVisuals
@@ -518,6 +537,19 @@ export default function PitchFormation({
               timelineEvents={events}
             />
           </>
+        ) : null}
+
+        {showGoalPinsOnNormal ? (
+          <PitchEventPinInteractions
+            events={events}
+            highlightKey={highlightKey}
+            heatmapMode="goals"
+            homeTeamCode={homeTeamCode}
+            awayTeamCode={awayTeamCode}
+            onEventSelect={(nextKey) => {
+              onHighlightKeyChange?.(highlightKey === nextKey ? null : nextKey);
+            }}
+          />
         ) : null}
 
         {showEventPins ? (
