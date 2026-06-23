@@ -206,6 +206,8 @@ export const leaderboardApi = {
   },
   dashboard: (groupId) =>
     request(`/leaderboard/dashboard?groupId=${encodeURIComponent(groupId)}`),
+  pointsEvolution: (groupId) =>
+    request(`/leaderboard/${encodeURIComponent(groupId)}/points-evolution`),
   finishedArchive: () => request('/leaderboard/finished-archive'),
 };
 

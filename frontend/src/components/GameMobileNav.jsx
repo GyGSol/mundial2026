@@ -5,6 +5,7 @@ import {
   Coins,
   ClipboardList,
   Globe,
+  LineChart,
   LogOut,
   MoreHorizontal,
   Pencil,
@@ -27,7 +28,7 @@ const primaryTabs = [
   { to: '/groups', label: 'Grupos', icon: Users, end: false, showBadge: true },
 ];
 
-const morePaths = ['/simulation', '/rules', '/ai-predictions', '/transmissions', '/economy'];
+const morePaths = ['/simulation', '/rules', '/ai-predictions', '/transmissions', '/economy', '/graficos'];
 
 function TabItem({ to, label, icon: Icon, end, badge }) {
   return (
@@ -109,6 +110,16 @@ export default function GameMobileNav({ onEditPlayer }) {
             ) : null}
 
             <nav className="game-mobile-more__links">
+              <NavLink
+                to="/graficos"
+                className={({ isActive }) =>
+                  cn('game-mobile-more__link', isActive && 'game-mobile-more__link--active')
+                }
+                onClick={() => setMoreOpen(false)}
+              >
+                <LineChart className="size-5 shrink-0" strokeWidth={1.75} />
+                Gráficos
+              </NavLink>
               <NavLink
                 to="/economy"
                 className={({ isActive }) =>

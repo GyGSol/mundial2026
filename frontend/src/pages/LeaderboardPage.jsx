@@ -1,3 +1,4 @@
+import { LineChart } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
@@ -440,6 +441,14 @@ export default function LeaderboardPage() {
                 ))}
               </ul>
             )}
+            {selectedGroupId && selectedGroupId !== '__nogroup' ? (
+              <Button asChild variant="outline" className="mt-4 w-full sm:w-auto">
+                <Link to={`/graficos?grupo=${encodeURIComponent(selectedGroupId)}`}>
+                  <LineChart className="mr-2 size-4" aria-hidden />
+                  Ver evolución de posiciones
+                </Link>
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}

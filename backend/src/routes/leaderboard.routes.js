@@ -3,6 +3,7 @@ import { getLeaderboard } from '../services/leaderboardService.js';
 import { getLastSyncAt } from '../services/syncService.js';
 import { getCompetitionGroupById } from '../services/competitionGroupService.js';
 import { getCachedRankingDashboard } from '../services/rankingDashboardCache.js';
+import { getCachedLeaderboardPointsEvolution } from '../services/leaderboardPointsEvolutionCache.js';
 import { getRankingFinishedArchive } from '../services/rankingDashboardService.js';
 import { optionalAuth } from '../middleware/auth.middleware.js';
 
@@ -29,6 +30,24 @@ router.get('/dashboard', optionalAuth, async (req, res, next) => {
 router.get('/finished-archive', optionalAuth, async (req, res, next) => {
   try {
     res.json(await getRankingFinishedArchive());
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:groupId/points-evolution', optionalAuth, async (req, res, next) => {
+  try {
+    const { groupId } = req.params;
+    if (!groupId) {
+      return res.status(400).json({ error: 'groupId es obligatorio' });
+    }
+
+    const payload = await getCachedLeaderboardPointsEvolution(groupId);
+    if (payload.notFound) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
+    res.json(payload);
   } catch (err) {
     next(err);
   }

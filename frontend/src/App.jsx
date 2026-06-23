@@ -42,6 +42,7 @@ const CreateGroupPage = lazy(() => import('./pages/CreateGroupPage.jsx'));
 const GroupsPage = lazy(() => import('./pages/GroupsPage.jsx'));
 const InviteJoinPage = lazy(() => import('./pages/InviteJoinPage.jsx'));
 const EconomyPage = lazy(() => import('./pages/EconomyPage.jsx'));
+const ChartsPage = lazy(() => import('./pages/ChartsPage.jsx'));
 
 function RouteFallback() {
   return <LoadingSpinner variant="fullscreen" label="Cargando…" />;
@@ -101,6 +102,7 @@ export default function App() {
                       <Route path="simulation" element={<SimulationPage />} />
                       <Route path="rules" element={<RulesPage />} />
                       <Route path="economy" element={<EconomyPage />} />
+                      <Route path="graficos" element={<ChartsPage />} />
                       <Route path="*" element={<Navigate to="/ranking" replace />} />
                     </Route>
                   </Route>

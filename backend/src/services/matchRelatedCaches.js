@@ -1,6 +1,7 @@
 import { invalidateWorldCupOverviewCache } from './worldCupOverviewCache.js';
 import { invalidateLeaderboardCache } from './leaderboardCache.js';
 import { invalidateRankingDashboardCache } from './rankingDashboardCache.js';
+import { invalidateLeaderboardPointsEvolutionCache } from './leaderboardPointsEvolutionCache.js';
 import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesCache.js';
 import { invalidateTournamentGoalsFinishedMatchesCache } from './tournamentGoalsFinishedMatchesCache.js';
 import { invalidatePlayerTournamentActivityCache } from './playerTournamentActivityService.js';
@@ -12,6 +13,7 @@ export function invalidateMatchRelatedCaches(groupId) {
   invalidateWorldCupOverviewCache();
   invalidateLeaderboardCache(groupId);
   invalidateRankingDashboardCache(groupId);
+  invalidateLeaderboardPointsEvolutionCache(groupId);
   invalidateAdminMatchesCache();
   invalidateLiveMatchSnapshotCache();
 }
@@ -22,6 +24,7 @@ export function invalidateFinishedMatchArchiveCaches(groupId) {
   invalidateTournamentGoalsFinishedMatchesCache();
   invalidatePlayerTournamentActivityCache();
   invalidateRankingDashboardCache(groupId);
+  invalidateLeaderboardPointsEvolutionCache(groupId);
   invalidateWorldCupOverviewCache();
   invalidateLiveMatchSnapshotCache();
 }

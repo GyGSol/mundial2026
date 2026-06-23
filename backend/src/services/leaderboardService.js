@@ -40,7 +40,11 @@ function emptyStats() {
   return { pj: 0, pa: 0, gl: 0, gv: 0, gt: 0, pb: 0, difGl: 0, difGv: 0, totalPoints: 0 };
 }
 
-function accumulateStats(stats, breakdown, pointsEarned, bonusPoint = 0, goalDiff = null) {
+export function createEmptyLeaderboardStats() {
+  return emptyStats();
+}
+
+export function accumulateLeaderboardStats(stats, breakdown, pointsEarned, bonusPoint = 0, goalDiff = null) {
   stats.pj += 1;
   if ((breakdown?.winner ?? 0) > 0) stats.pa += 1;
   if ((breakdown?.homeGoals ?? 0) > 0) stats.gl += 1;
@@ -307,7 +311,7 @@ async function getPredictionStatsByUserAtLiveKickoff(userIds, liveKickoffBaselin
     const breakdown = breakdownForLiveKickoffIndicators(fullBreakdown);
     const pointsEarned = pointsEarnedForLiveKickoffIndicators(fullBreakdown);
 
-    accumulateStats(stats, breakdown, pointsEarned, prediction.bonusPoint ?? 0, goalDiff);
+    accumulateLeaderboardStats(stats, breakdown, pointsEarned, prediction.bonusPoint ?? 0, goalDiff);
   }
 
   return statsMap;
