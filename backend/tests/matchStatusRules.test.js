@@ -141,6 +141,25 @@ describe('matchStatusRules', () => {
     expect(wallClockAllowsMatchFinished({ ...match, status: 'finished' }, now)).toBe(false);
   });
 
+  it('cierra live en 90+ con reloj de pared creíble aunque falte match_end', () => {
+    const match = {
+      status: 'live',
+      kickoffAt: kickoff,
+      raw: {
+        finished: 'FALSE',
+        time_elapsed: '90+9',
+        fifaEvents: {
+          timeline: [
+            { type: 'hydration_break', minute: 90, extraMinute: 9, sortKey: 90.09 },
+            { type: 'shot_attempt', minute: 90, extraMinute: 9, sortKey: 90.09 },
+          ],
+        },
+      },
+    };
+    const now = kickoff.getTime() + 105 * 60 * 1000;
+    expect(shouldFinalizeStaleLiveMatch(match, now)).toBe(true);
+  });
+
   it('prioriza liveStartedPushSentAt sobre kickoff programado temprano', () => {
     const officialKickoff = new Date('2026-06-18T16:00:00.000Z');
     const liveStarted = new Date('2026-06-18T19:00:00.000Z');

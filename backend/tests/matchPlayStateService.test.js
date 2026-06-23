@@ -77,6 +77,43 @@ describe('matchPlayStateService', () => {
     expect(timelineIndicatesHalftime(timeline)).toBe(false);
   });
 
+  it('no marca pausa de hidratación si hubo juego después en el mismo minuto', () => {
+    const timeline = [
+      { type: 'hydration_break', minute: 90, extraMinute: 9, sortKey: 90.09 },
+      { type: 'shot_attempt', minute: 90, extraMinute: 9, sortKey: 90.09 },
+    ];
+    const playState = resolveMatchPlayState(
+      { status: 'live', weatherOps: { phase: 'normal' }, raw: {} },
+      { timeline }
+    );
+    expect(playState.phase).toBe('in_play');
+  });
+
+  it('no marca pausa de hidratación si la timeline ya tiene match_end', () => {
+    const timeline = [
+      { type: 'hydration_break', minute: 90, extraMinute: 9, sortKey: 90.09 },
+      { type: 'match_end', minute: 90, extraMinute: 9, sortKey: 90.09 },
+    ];
+    const playState = resolveMatchPlayState(
+      { status: 'live', weatherOps: { phase: 'normal' }, raw: {} },
+      { timeline }
+    );
+    expect(playState.phase).toBe('in_play');
+  });
+
+  it('ignora pausa de hidratación cuando FIFA reporta FullTime', () => {
+    const timeline = [{ type: 'hydration_break', minute: 90, extraMinute: 9, sortKey: 90.09 }];
+    const playState = resolveMatchPlayState(
+      {
+        status: 'live',
+        weatherOps: { phase: 'normal' },
+        raw: { fifaLiveState: { period: 'FullTime', matchStatus: 'Ended' } },
+      },
+      { timeline }
+    );
+    expect(playState.phase).toBe('in_play');
+  });
+
   it('serializa in_play como estado neutro', () => {
     expect(serializeMatchPlayStateForClient({ phase: 'in_play' }).phase).toBe('in_play');
     expect(serializeMatchPlayStateForClient({ phase: 'halftime', label: 'Entretiempo' }).label).toBe(

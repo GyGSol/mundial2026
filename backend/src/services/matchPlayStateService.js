@@ -1,4 +1,5 @@
 import { normalizeWeatherOps } from './matchWeatherOpsRules.js';
+import { parsedTimelineHasMatchEnd } from './fifaTimelineParser.js';
 import {
   clockSortKeyFromParts,
   formatTimeElapsed,
@@ -59,6 +60,21 @@ export function fifaTokenIndicatesDelayed(token) {
     .toLowerCase();
   if (!normalized) return false;
   return normalized.includes('delay') || normalized.includes('postpon');
+}
+
+export function fifaTokenIndicatesFinished(token) {
+  const normalized = String(token ?? '')
+    .trim()
+    .toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes('full') ||
+    normalized.includes('ended') ||
+    normalized.includes('finished') ||
+    normalized.includes('afterpenalt') ||
+    normalized.includes('afterextra') ||
+    normalized === 'ft'
+  );
 }
 
 /** @param {Record<string, unknown> | null | undefined} liveMatch @param {Record<string, unknown> | null | undefined} fifaEntry */
@@ -153,8 +169,23 @@ export function timelineIndicatesHalftime(timeline = []) {
 
 /** @param {Array<Record<string, unknown>>} timeline */
 export function timelineIndicatesActiveHydrationBreak(timeline = []) {
+  if (parsedTimelineHasMatchEnd(timeline)) return false;
+
   const latest = latestStructuralTimelineEvent(timeline);
-  return latest?.type === 'hydration_break';
+  if (latest?.type !== 'hydration_break') return false;
+
+  const hydrationKey = timelineEventSortKey(latest);
+  const playKey = maxPlaySortKey(timeline);
+
+  // Si hubo eventos de juego en o después del minuto de la pausa, el partido ya reanudó.
+  if (playKey >= hydrationKey && playKey > Number.NEGATIVE_INFINITY) {
+    for (const event of timeline) {
+      if (STRUCTURAL_TIMELINE_TYPES.has(event?.type)) continue;
+      if (timelineEventSortKey(event) >= hydrationKey) return false;
+    }
+  }
+
+  return true;
 }
 
 function pickMaxClockLabel(...labels) {
@@ -312,6 +343,10 @@ export function resolveMatchPlayState(match, options = {}) {
       timeline,
       raw,
     });
+  }
+
+  if (fifaTokenIndicatesFinished(periodToken) || fifaTokenIndicatesFinished(statusToken)) {
+    return { ...IN_PLAY_PLAY_STATE };
   }
 
   if (timelineIndicatesActiveHydrationBreak(timeline)) {

@@ -212,6 +212,15 @@ export function isMatchActivelyLive(match, now = Date.now()) {
   return !shouldFinalizeStaleLiveMatch(match, now);
 }
 
+function elapsedIndicatesStoppageTime(elapsed) {
+  const normalized = String(elapsed ?? '').trim().toLowerCase();
+  const extraMatch = normalized.match(/^(\d+)\+(\d+)/);
+  if (!extraMatch) return false;
+  const base = Number(extraMatch[1]);
+  const extra = Number(extraMatch[2]);
+  return Number.isFinite(base) && base >= 90 && Number.isFinite(extra) && extra > 0;
+}
+
 /** Cierra partidos `live` cuando la API quedó en live/finished=FALSE tras el pitido final. */
 export function shouldFinalizeStaleLiveMatch(match, now = Date.now()) {
   if (match?.status !== 'live') return false;
@@ -233,6 +242,18 @@ export function shouldFinalizeStaleLiveMatch(match, now = Date.now()) {
 
   if (matchFifaTimelineIndicatesFinished(match)) {
     if (!wallClockAllowsMatchFinished(match, now)) return false;
+    return true;
+  }
+
+  const playMinute = maxEffectivePlayMinute(match);
+  const kickoffMs = resolveKickoffMs(match);
+  const inLateStoppage =
+    (playMinute != null && playMinute > 90) || elapsedIndicatesStoppageTime(elapsed);
+  if (
+    inLateStoppage &&
+    kickoffMs != null &&
+    now - kickoffMs >= minWallClockMsForTimelineMinute(90) * 0.85
+  ) {
     return true;
   }
 
