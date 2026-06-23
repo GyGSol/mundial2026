@@ -123,7 +123,104 @@ function positionToken(player) {
     .toUpperCase();
 }
 
-export function lateralSortKey(player) {
+/** Dos+ MD en la misma línea → pivotes centrales; un solo MD con MI suele ser banda derecha. */
+export function mdMeansCenterInMidLine(linePlayers = []) {
+  const mdCount = linePlayers.filter((p) => positionToken(p) === 'MD').length;
+  if (mdCount >= 2) return true;
+
+  const textOf = (p) => `${p?.positionDetail ?? ''} ${p?.position ?? ''}`.toLowerCase();
+  return linePlayers.some((p) => {
+    if (positionToken(p) !== 'MD') return false;
+    return (
+      textOf(p).includes('defensive') ||
+      textOf(p).includes('holding') ||
+      textOf(p).includes('defensa') ||
+      textOf(p).includes('pivote')
+    );
+  });
+}
+
+function isLeftWingMid(player) {
+  const token = positionToken(player);
+  if (token === 'MI') return true;
+  const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
+  return (
+    text.includes('left mid') ||
+    text.includes('left midfield') ||
+    text.includes('left wing') ||
+    (text.includes('left') && text.includes('mid'))
+  );
+}
+
+function isRightWingMid(player, linePlayers = []) {
+  const token = positionToken(player);
+  if (token === 'MI') return false;
+  if (token === 'MD' && !mdMeansCenterInMidLine(linePlayers)) return true;
+  const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
+  return (
+    text.includes('right mid') ||
+    text.includes('right midfield') ||
+    text.includes('right wing') ||
+    (text.includes('right') && text.includes('mid'))
+  );
+}
+
+function isCentralMid(player, linePlayers = []) {
+  if (isLeftWingMid(player) || isRightWingMid(player, linePlayers)) return false;
+  const token = positionToken(player);
+  if (token === 'MC' || token === 'MCD' || token === 'MCO') return true;
+  if (token === 'MD' && mdMeansCenterInMidLine(linePlayers)) return true;
+
+  const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
+  if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'MID') return false;
+  if (text.includes('left') || text.includes('right') || text.includes('wing')) return false;
+  return text.includes('defensive') || text.includes('attacking') || text.includes('central');
+}
+
+function midfieldLateralSlots(players) {
+  if (!players?.length) return [];
+  if (players.length === 1) return [Number(lateralSortKey(players[0], players).toFixed(1))];
+
+  const leftWings = players.filter((p) => isLeftWingMid(p));
+  const rightWings = players.filter((p) => isRightWingMid(p, players));
+  const centerMids = players.filter((p) => isCentralMid(p, players));
+  const unassigned = players.filter(
+    (p) => !leftWings.includes(p) && !rightWings.includes(p) && !centerMids.includes(p)
+  );
+
+  const slotsByPlayer = new Map();
+
+  if (leftWings.length === 1) {
+    slotsByPlayer.set(leftWings[0], 8);
+  } else if (leftWings.length > 1) {
+    anchoredLateralSlots(leftWings.length, 8, { minStep: 14 }).forEach((y, index) => {
+      slotsByPlayer.set(leftWings[index], y);
+    });
+  }
+
+  if (rightWings.length === 1) {
+    slotsByPlayer.set(rightWings[0], 92);
+  } else if (rightWings.length > 1) {
+    anchoredLateralSlots(rightWings.length, 92, { minStep: 14 }).forEach((y, index) => {
+      slotsByPlayer.set(rightWings[index], y);
+    });
+  }
+
+  const centerSorted = [...centerMids, ...unassigned].sort(
+    (a, b) =>
+      midfieldDepthBias(a) - midfieldDepthBias(b) ||
+      lateralSortKey(a, players) - lateralSortKey(b, players) ||
+      (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
+  );
+  const centerSlots = centerClusterLateralSlots(centerSorted.length);
+  centerSorted.forEach((player, index) => {
+    slotsByPlayer.set(player, centerSlots[index]);
+  });
+
+  return players.map((player) => Number((slotsByPlayer.get(player) ?? 50).toFixed(1)));
+}
+
+export function lateralSortKey(player, linePlayers) {
   const token = positionToken(player);
   const raw = `${player.positionDetail ?? ''} ${player.position ?? ''}`.trim();
   const text = raw.toLowerCase();
@@ -132,7 +229,10 @@ export function lateralSortKey(player) {
   if (token === 'LI') return 4;
   if (token === 'LD') return 96;
   if (token === 'MI') return 8;
-  if (token === 'MD') return 92;
+  if (token === 'MD') {
+    if (linePlayers && mdMeansCenterInMidLine(linePlayers)) return 42;
+    return 92;
+  }
   if (token === 'MCD') return 36;
   if (token === 'MCO') return 64;
   if (token === 'MC' || token === 'DFC' || token === 'DC') return 50;
@@ -165,13 +265,13 @@ function sortPlayersInLine(players, { pool, lineIndex, totalRows } = {}) {
     return sorted.sort(
       (a, b) =>
         midfieldDepthBias(a) - midfieldDepthBias(b) ||
-        lateralSortKey(a) - lateralSortKey(b) ||
+        lateralSortKey(a, players) - lateralSortKey(b, players) ||
         (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
     );
   }
   return sorted.sort(
     (a, b) =>
-      lateralSortKey(a) - lateralSortKey(b) ||
+      lateralSortKey(a, players) - lateralSortKey(b, players) ||
       (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
   );
 }
@@ -371,10 +471,10 @@ const TACTICAL_POSITION_TOKENS = new Set([
 ]);
 
 /** Misma lógica que la etiqueta en cancha (MD, MCO, MI…) a partir de rol + coords. */
-function tacticalLateralSortKey(player) {
+function tacticalLateralSortKey(player, linePlayers) {
   const token = positionToken(player);
   if (TACTICAL_POSITION_TOKENS.has(token)) {
-    return lateralSortKey({ position: token, positionDetail: token });
+    return lateralSortKey({ position: token, positionDetail: token }, linePlayers);
   }
 
   const inferred = inferTacticalPosition({
@@ -383,9 +483,9 @@ function tacticalLateralSortKey(player) {
     positionY: player?.gridY,
   });
   if (inferred) {
-    return lateralSortKey({ position: inferred, positionDetail: inferred });
+    return lateralSortKey({ position: inferred, positionDetail: inferred }, linePlayers);
   }
-  return lateralSortKey(player);
+  return lateralSortKey(player, linePlayers);
 }
 
 function pitchCellKey(player, cellSize = 8) {
@@ -463,10 +563,11 @@ export function isCenterBackLike(player) {
   return lateralSortKey(player) >= 38 && lateralSortKey(player) <= 62;
 }
 
-/** Mediocampista central (MC / MCO / pivote), no bandas MI/MD. */
-export function isCenterMidLike(player) {
+/** Mediocampista central (MC / MCO / pivote / MD doble pivote), no bandas MI/MD derecho. */
+export function isCenterMidLike(player, linePlayers) {
   const token = positionToken(player);
-  if (token === 'MI' || token === 'MD') return false;
+  if (token === 'MI') return false;
+  if (token === 'MD') return mdMeansCenterInMidLine(linePlayers ?? [player]);
   if (token === 'MC' || token === 'MCO' || token === 'MCD') return true;
   if (token === 'MID' || token === 'MF' || !token) return false;
 
@@ -480,7 +581,11 @@ export function isCenterMidLike(player) {
 function lateralPositionsForLine(players, count, pool) {
   if (count <= 0) return [];
 
-  const keys = players.map((player) => lateralSortKey(player));
+  if (pool === 'MID' && count >= 2) {
+    return midfieldLateralSlots(players);
+  }
+
+  const keys = players.map((player) => lateralSortKey(player, players));
   if (count >= 2 && new Set(keys).size < keys.length) {
     const anchor = keys.reduce((sum, key) => sum + key, 0) / keys.length;
     return anchoredLateralSlots(count, anchor, { minStep: count === 2 ? 22 : 16 });
@@ -786,10 +891,23 @@ function spreadLineByTacticalRole(
 
     const sorted = [...group].sort(
       (a, b) =>
-        tacticalLateralSortKey(a.player) - tacticalLateralSortKey(b.player) ||
+        tacticalLateralSortKey(a.player, group.map((e) => e.player)) -
+          tacticalLateralSortKey(b.player, group.map((e) => e.player)) ||
         (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
     );
-    const keys = sorted.map(({ player }) => tacticalLateralSortKey(player));
+
+    if (pool === 'MID') {
+      const orderedPlayers = sorted.map((entry) => entry.player);
+      const slots = midfieldLateralSlots(orderedPlayers);
+      sorted.forEach(({ index }, slot) => {
+        result[index] = { ...result[index], gridY: slots[slot] };
+      });
+      continue;
+    }
+
+    const keys = sorted.map(({ player }) =>
+      tacticalLateralSortKey(player, group.map((e) => e.player))
+    );
     const keySpread = Math.max(...keys) - Math.min(...keys);
 
     if (keySpread >= minKeySpread) {
@@ -822,7 +940,7 @@ export function spreadMidCenterClusters(players) {
     pool: 'MID',
     minDepth: 38,
     maxDepth: 72,
-    isCenterLike: isCenterMidLike,
+    isCenterLike: (player) => isCenterMidLike(player, players),
   });
 }
 

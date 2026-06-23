@@ -137,7 +137,29 @@ function lateralFromApiGrid(grid, lineCount) {
 }
 
 /** Orden lateral izq→der según texto de posición (estilo diagrama táctico). */
-export function lateralSortKey(player) {
+export function mdMeansCenterInMidLine(linePlayers = []) {
+  const tokenOf = (p) =>
+    String(p?.positionDetail ?? p?.position ?? '')
+      .trim()
+      .split(/\s+/)[0]
+      ?.toUpperCase() ?? '';
+  const mdCount = linePlayers.filter((p) => tokenOf(p) === 'MD').length;
+  if (mdCount >= 2) return true;
+
+  const textOf = (p) => `${p?.positionDetail ?? ''} ${p?.position ?? ''}`.toLowerCase();
+  return linePlayers.some((p) => {
+    if (tokenOf(p) !== 'MD') return false;
+    return (
+      textOf(p).includes('defensive') ||
+      textOf(p).includes('holding') ||
+      textOf(p).includes('defensa') ||
+      textOf(p).includes('pivote')
+    );
+  });
+}
+
+/** Orden lateral izq→der según texto de posición (estilo diagrama táctico). */
+export function lateralSortKey(player, linePlayers) {
   const raw = `${player.positionDetail ?? ''} ${player.position ?? ''}`.trim();
   const token = raw.split(/\s+/)[0]?.toUpperCase() ?? '';
   const text = raw.toLowerCase();
@@ -146,7 +168,10 @@ export function lateralSortKey(player) {
   if (token === 'LI') return 4;
   if (token === 'LD') return 96;
   if (token === 'MI') return 8;
-  if (token === 'MD') return 92;
+  if (token === 'MD') {
+    if (linePlayers && mdMeansCenterInMidLine(linePlayers)) return 42;
+    return 92;
+  }
   if (token === 'MCD') return 36;
   if (token === 'MCO') return 64;
   if (token === 'MC' || token === 'DFC' || token === 'DC') return 50;
@@ -497,10 +522,11 @@ export function isCenterBackLike(player) {
   return lateralSortKey(player) >= 38 && lateralSortKey(player) <= 62;
 }
 
-export function isCenterMidLike(player) {
+export function isCenterMidLike(player, linePlayers) {
   const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.trim().toUpperCase();
   const token = text.split(/\s+/)[0] ?? '';
-  if (token === 'MI' || token === 'MD') return false;
+  if (token === 'MI') return false;
+  if (token === 'MD') return mdMeansCenterInMidLine(linePlayers ?? [player]);
   if (token === 'MC' || token === 'MCO' || token === 'MCD') return true;
   if (mapFootballDataPositionText(text) !== 'MID') return false;
   const lower = text.toLowerCase();
