@@ -1,0 +1,30 @@
+---
+description: Jira FBL (Nexus-Fubols) — trazabilidad, flujo AGNT y skills del agente
+globs:
+alwaysApply: true
+---
+
+# Jira — Mundial 2026 (proyecto FBL)
+
+- **Proyecto:** Nexus-Fubols · clave **FBL** (`FBL-1`, `FBL-2`, …) en [feelibizaproperties.atlassian.net](https://feelibizaproperties.atlassian.net/jira/software/projects/FBL).
+- **Repo:** `GyGSol/mundial2026` · Heroku `mundial2026-pred`.
+- **Commits/PR:** prefijo `FBL-NN:` en la primera línea cuando haya ticket asociado.
+- **Ramas:** `feature/FBL-NN-descripcion-corta`.
+
+## Flujo AGNT
+
+| Estado | Rol |
+|--------|-----|
+| **Listo para AGNT** | Humano dispara al agente |
+| **Respuesta AGNT** | Agente respondió en comentario |
+| **Listo** | Cierre |
+
+JQL: `project = FBL AND status = "Listo para AGNT" ORDER BY updated DESC`.
+
+Skills: `.cursor/skills/jira-agnt-ticket-unico`, `jira-agnt-bloque-descripcion`, `jira-ticket-intake`. Detalle: [docs/JIRA_SETUP.md](../../docs/JIRA_SETUP.md).
+
+**Regla:** resultado del agente en el **comentario del issue** (`addCommentToJiraIssue`), no solo en el chat. Cambios en repo: aprobación de **@Gonzalo Lopolito** en el hilo (puerta de código).
+
+## MCP
+
+Plugin **Atlassian** en Cursor (OAuth). No duplicar en `.cursor/mcp.json` si el plugin global ya expone el servidor.

@@ -9,6 +9,7 @@ Resumen operativo para humanos y agentes de Cursor. Detalle de setup: [README.md
 | Ruta local | `/home/magnetico/Nexus/Mundial2026` |
 | App Heroku | `mundial2026-pred` |
 | Repo GitHub | `GyGSol/mundial2026` |
+| Jira | **FBL** (Nexus-Fubols) — [tablero](https://feelibizaproperties.atlassian.net/jira/software/projects/FBL) |
 | Engram (memoria) | proyecto `mundial2026`, datos en `.engram/` |
 
 ## Stack
@@ -29,6 +30,7 @@ Instaladas en `.agents/skills/` (ver también `skills-lock.json`). Las más usad
 - `diagnose` — bugs y regresiones
 - `engram-memory` — cuándo/cómo memorizar con Engram (topic_key, juez, secretos)
 - `heroku-deploy` — QA local primero, prod solo con confirmación ([docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md))
+- `jira-ticket-intake` / `jira-agnt-ticket-unico` / `jira-agnt-bloque-descripcion` — flujo **FBL** y AGNT ([docs/JIRA_SETUP.md](./docs/JIRA_SETUP.md))
 
 Reglas embebidas de skills Vercel (React, composition, view transitions, RN) se cargan vía `AGENTS.md` en cada skill.
 
@@ -39,6 +41,7 @@ Reglas embebidas de skills Vercel (React, composition, view transitions, RN) se 
 | `engram` | Memoria persistente del proyecto (sin secretos ni PII) |
 | `heroku` | Deploy, logs, config vars de `mundial2026-pred` |
 | `context7` | Documentación de librerías |
+| `plugin-atlassian-atlassian` | Jira FBL: issues, comentarios, transiciones (OAuth en Cursor) |
 
 Tras editar `mcp.json`: **MCP Reload** en Cursor.
 
@@ -50,6 +53,7 @@ Tras editar `mcp.json`: **MCP Reload** en Cursor.
 - Tests: `npm test` (backend, puntuación y rutas críticas). **Nunca** con `MONGODB_URI` de prod exportada — ver [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md).
 - **Caricaturas:** siempre `npm run photos:compress` antes de `git push` de PNG — ver [docs/PLAYER_PHOTOS.md](./docs/PLAYER_PHOTOS.md).
 - **Deploy:** QA local primero → confirmación del usuario → prod. Ver [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md). **No** hacer `git push heroku main` sin que el usuario lo pida explícitamente.
+- **Jira:** commits/PR con prefijo `FBL-NN:`; estados AGNT **Listo para AGNT** → **Respuesta AGNT** → **Listo**. Inventario backfill: [docs/jira-backfill-inventory.md](./docs/jira-backfill-inventory.md).
 - **Base local:** antes de `backup:push` o `db:clone-from-prod`, **preguntar** al usuario si quiere actualizar `mundial2026_local` con los datos actuales de prod. No refrescar sin un sí explícito.
 
 ## Base de datos y backups

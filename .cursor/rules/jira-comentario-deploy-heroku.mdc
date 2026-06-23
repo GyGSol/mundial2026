@@ -1,0 +1,42 @@
+---
+description: Tras cada deploy Heroku en Mundial 2026, comentario detallado en el ticket Jira activo
+globs:
+alwaysApply: true
+---
+
+# Jira — comentario obligatorio tras deploy Heroku
+
+Cuando el agente **despliegue** (o confirme despliegue) en **mundial2026-pred** vía `deploy:production` o push Heroku, **siempre** publicar un comentario en el **ticket Jira en contexto** (p. ej. `FBL-5`) con `addCommentToJiraIssue` (MCP Atlassian). No sustituir por solo chat ni solo Engram.
+
+**Producción solo con confirmación explícita del usuario** (`CONFIRM_PRODUCTION=1`); ver [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md).
+
+## Cuándo
+
+- Tras `CONFIRM_PRODUCTION=1 npm run deploy:production` o `git push heroku main` cuando el usuario lo pida.
+- Tras release/migraciones en Heroku que acompañen ese deploy.
+- QA local (`npm run dev:local-qa`) **no** requiere este comentario salvo que el ticket lo pida explícitamente.
+
+## Contenido mínimo del comentario (markdown)
+
+Encabezado: **Despliegue Heroku — Mundial 2026 Predicciones**
+
+Incluir:
+
+1. **Fecha/hora** (indicar zona).
+2. **Ticket** y rama/commit (enlace GitHub si existe).
+3. App **mundial2026-pred**: URL web, release Heroku (vN), hash (7 caracteres).
+4. **Commits incluidos** (hash corto — asunto).
+5. **Smoke:** `/api/health` (`databaseName` si aplica), ruta UI relevante al ticket.
+6. **Qué probar** (3–5 bullets para QA).
+
+No pegar `MONGODB_URI`, JWT, tokens ni secretos.
+
+## Ticket por defecto
+
+- Clave del mensaje del usuario, branch o commits (`FBL-NN`).
+- Si no hay ticket claro, pedir la clave antes de cerrar la tarea de deploy.
+
+## Herramientas
+
+- Jira: MCP `plugin-atlassian-atlassian` → `addCommentToJiraIssue`, `contentFormat: markdown`.
+- Heroku: MCP `user-heroku` y/o CLI. Complementa [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md).
