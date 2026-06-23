@@ -3,39 +3,33 @@ export function resolvePitchFormationLayers({
   hasPlayers = false,
   showEventLayer = false,
   heatmapMode = 'normal',
-  homeScore = 0,
-  awayScore = 0,
 } = {}) {
   const isNormalView = !heatmapMode || heatmapMode === 'normal';
+  const isGoalsView = heatmapMode === 'goals';
   const isHeatmapView =
     heatmapMode === 'shots' || heatmapMode === 'fouls' || heatmapMode === 'goals';
-  const isScoreless = (homeScore ?? 0) === 0 && (awayScore ?? 0) === 0;
-  const hasGoals = !isScoreless;
 
-  const showAttackHeatmapLayer = showEventLayer && isNormalView;
-  const showHeatmapLayer = showEventLayer && isHeatmapView;
-  const showPlayerLayer =
-    hasPlayers && isNormalView && !(showEventLayer && isScoreless);
+  /** Calor de ataque semitransparente: vista Normal y Calor goles. */
+  const showAttackHeatmapLayer =
+    showEventLayer && (isNormalView || isGoalsView);
+  /** Mapa denso por tipo: solo tiros y faltas (goles usa overlay + pins). */
+  const showHeatmapLayer =
+    showEventLayer && (heatmapMode === 'shots' || heatmapMode === 'fouls');
+  const showPlayerLayer = hasPlayers && isNormalView;
   const showEventPins = showEventLayer && isHeatmapView;
-  const showGoalPinsOnNormal = showEventLayer && isNormalView && hasGoals;
   const showTeamLabels =
-    showPlayerLayer ||
-    showHeatmapLayer ||
-    showAttackHeatmapLayer ||
-    (showEventLayer && isNormalView);
+    showPlayerLayer || showHeatmapLayer || showAttackHeatmapLayer;
 
   const shouldRenderPitch = hasPlayers || showEventLayer;
 
   return {
     isNormalView,
+    isGoalsView,
     isHeatmapView,
-    isScoreless,
-    hasGoals,
     showAttackHeatmapLayer,
     showHeatmapLayer,
     showPlayerLayer,
     showEventPins,
-    showGoalPinsOnNormal,
     showTeamLabels,
     shouldRenderPitch,
   };

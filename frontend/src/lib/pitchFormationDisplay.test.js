@@ -8,27 +8,34 @@ describe('resolvePitchFormationLayers', () => {
     heatmapMode: 'normal',
   };
 
-  it('a 0-0 oculta jugadores y pins de gol pero muestra calor', () => {
-    const layers = resolvePitchFormationLayers({
-      ...base,
-      homeScore: 0,
-      awayScore: 0,
-    });
-    expect(layers.showPlayerLayer).toBe(false);
-    expect(layers.showGoalPinsOnNormal).toBe(false);
+  it('vista Normal mantiene jugadores y calor de ataque', () => {
+    const layers = resolvePitchFormationLayers(base);
+    expect(layers.showPlayerLayer).toBe(true);
     expect(layers.showAttackHeatmapLayer).toBe(true);
-    expect(layers.showTeamLabels).toBe(true);
+    expect(layers.showEventPins).toBe(false);
+    expect(layers.showHeatmapLayer).toBe(false);
   });
 
-  it('con goles muestra pins sobre el calor en vista Normal', () => {
+  it('Calor goles usa overlay semitransparente sin jugadores', () => {
     const layers = resolvePitchFormationLayers({
       ...base,
-      homeScore: 1,
-      awayScore: 0,
+      heatmapMode: 'goals',
     });
-    expect(layers.showGoalPinsOnNormal).toBe(true);
     expect(layers.showAttackHeatmapLayer).toBe(true);
-    expect(layers.showPlayerLayer).toBe(true);
+    expect(layers.showPlayerLayer).toBe(false);
+    expect(layers.showEventPins).toBe(true);
+    expect(layers.showHeatmapLayer).toBe(false);
+  });
+
+  it('Calor tiros usa mapa denso sin overlay Normal', () => {
+    const layers = resolvePitchFormationLayers({
+      ...base,
+      heatmapMode: 'shots',
+    });
+    expect(layers.showAttackHeatmapLayer).toBe(false);
+    expect(layers.showHeatmapLayer).toBe(true);
+    expect(layers.showPlayerLayer).toBe(false);
+    expect(layers.showEventPins).toBe(true);
   });
 
   it('renderiza cancha interactiva sin jugadores (pre-kickoff)', () => {
@@ -36,21 +43,7 @@ describe('resolvePitchFormationLayers', () => {
       resolvePitchFormationLayers({
         hasPlayers: false,
         showEventLayer: true,
-        homeScore: 0,
-        awayScore: 0,
       }).shouldRenderPitch
     ).toBe(true);
-  });
-
-  it('modo Tiros no usa overlay Normal de goles', () => {
-    const layers = resolvePitchFormationLayers({
-      ...base,
-      heatmapMode: 'shots',
-      homeScore: 2,
-      awayScore: 1,
-    });
-    expect(layers.showGoalPinsOnNormal).toBe(false);
-    expect(layers.showEventPins).toBe(true);
-    expect(layers.showPlayerLayer).toBe(false);
   });
 });

@@ -368,8 +368,6 @@ export default function PitchFormation({
   highlightKey = null,
   onHighlightKeyChange,
   showEventLayer = false,
-  homeScore = 0,
-  awayScore = 0,
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailPreview, setDetailPreview] = useState(null);
@@ -387,15 +385,12 @@ export default function PitchFormation({
     showHeatmapLayer,
     showPlayerLayer,
     showEventPins,
-    showGoalPinsOnNormal,
     showTeamLabels,
     shouldRenderPitch,
   } = resolvePitchFormationLayers({
     hasPlayers,
     showEventLayer,
     heatmapMode,
-    homeScore,
-    awayScore,
   });
 
   const homeEventSummaries = useMemo(
@@ -465,15 +460,6 @@ export default function PitchFormation({
           {showHeatmapLayer ? (
             <PitchHeatmapLayer events={events} heatmapMode={heatmapMode} />
           ) : null}
-          {showGoalPinsOnNormal ? (
-            <PitchEventPinVisuals
-              events={events}
-              highlightKey={highlightKey}
-              heatmapMode="goals"
-              homeTeamCode={homeTeamCode}
-              awayTeamCode={awayTeamCode}
-            />
-          ) : null}
           {showEventPins ? (
             <PitchEventPinVisuals
               events={events}
@@ -537,19 +523,6 @@ export default function PitchFormation({
               timelineEvents={events}
             />
           </>
-        ) : null}
-
-        {showGoalPinsOnNormal ? (
-          <PitchEventPinInteractions
-            events={events}
-            highlightKey={highlightKey}
-            heatmapMode="goals"
-            homeTeamCode={homeTeamCode}
-            awayTeamCode={awayTeamCode}
-            onEventSelect={(nextKey) => {
-              onHighlightKeyChange?.(highlightKey === nextKey ? null : nextKey);
-            }}
-          />
         ) : null}
 
         {showEventPins ? (

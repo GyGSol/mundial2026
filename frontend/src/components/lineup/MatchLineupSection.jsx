@@ -478,8 +478,6 @@ export default function MatchLineupSection({
           awayLabel={awayName}
           homeTeamCode={match?.homeTeam?.fifaCode}
           awayTeamCode={match?.awayTeam?.fifaCode}
-          homeScore={match?.homeScore ?? 0}
-          awayScore={match?.awayScore ?? 0}
           events={timelineEvents}
           heatmapMode={isInteractivePitch ? heatmapMode : 'normal'}
           highlightKey={highlightKey}
