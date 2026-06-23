@@ -29,6 +29,24 @@ describe('matchWeatherEnrichmentService', () => {
     expect(ops?.resumeEarliestAt).toBeInstanceOf(Date);
   });
 
+  it('applyInPlayWeatherSuspension no suspende con Open-Meteo en estadio con techo retráctil', () => {
+    const match = {
+      status: 'live',
+      kickoffAt: new Date('2026-06-20T21:00:00Z'),
+      weatherOps: { phase: 'normal' },
+      raw: { time_elapsed: "34'" },
+    };
+    const risk = {
+      available: true,
+      riskLevel: 'stop',
+      lastAlertAt: '2026-06-20T21:34:00Z',
+      authorityAlertSource: 'open-meteo',
+    };
+    const stadium = { externalId: '5', country: 'USA' };
+
+    expect(applyInPlayWeatherSuspension(match, risk, stadium)).toBeNull();
+  });
+
   it('applyWeatherOpsSuggestion sigue devolviendo pre_kickoff_delay para upcoming', () => {
     const match = {
       status: 'upcoming',

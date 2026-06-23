@@ -8,6 +8,8 @@ import {
   normalizeWeatherOps,
   NOAA_RESUME_WAIT_MS,
 } from './matchWeatherOpsRules.js';
+import { maxEffectivePlayMinute } from './matchStatusRules.js';
+import { parseElapsedClockToSortKey } from './matchLiveData.js';
 import { localizeAuthorityAlertsBlock } from '../../../shared/weatherAlertI18n.js';
 
 const AUTHORITY_ALERTS_CACHE_TTL_LIVE_MS = 3 * 60 * 1000;
@@ -350,8 +352,29 @@ export function shouldSuggestPreKickoffDelay(risk, match) {
   return !matchEvidentlyStartedOnField(match);
 }
 
+function isOpenMeteoOnlyWeatherAuthority(risk) {
+  return risk?.authorityAlertSource === 'open-meteo';
+}
+
+/** Open-Meteo solo no suspende en canchas con techo retráctil; hace falta alerta NWS/MSC. */
+export function shouldAllowOpenMeteoInPlaySuspension(risk, stadium = {}) {
+  void risk;
+  const profile = resolveStadiumWeatherProfile(stadium);
+  return !profile.hasRetractableRoof;
+}
+
+function playMinuteForWeatherOps(match) {
+  const fromEvidence = maxEffectivePlayMinute(match);
+  if (fromEvidence != null) return fromEvidence;
+
+  const token = match?.raw?.time_elapsed ?? match?.raw?.timeElapsed;
+  if (!token) return null;
+  const key = parseElapsedClockToSortKey(String(token));
+  return key > Number.NEGATIVE_INFINITY ? key : null;
+}
+
 /** Escenario B — partido ya `live` con riesgo `stop` (rayos / tormenta severa). */
-export function shouldSuggestInPlaySuspension(risk, match) {
+export function shouldSuggestInPlaySuspension(risk, match, stadium = {}) {
   if (!risk?.available || risk.riskLevel !== 'stop') return false;
   if (match?.status !== 'live') return false;
   if (!matchEvidentlyStartedOnField(match)) return false;
@@ -360,16 +383,51 @@ export function shouldSuggestInPlaySuspension(risk, match) {
   if (phase === 'suspended' || phase === 'pre_kickoff_delay' || phase === 'postponed') {
     return false;
   }
+
+  if (
+    isOpenMeteoOnlyWeatherAuthority(risk) &&
+    !shouldAllowOpenMeteoInPlaySuspension(risk, stadium)
+  ) {
+    return false;
+  }
+
   return true;
 }
 
 /** Renueva lastAlertAt / resumeEarliestAt mientras sigue el riesgo `stop`. */
-export function shouldRefreshInPlaySuspension(risk, match) {
+export function shouldRefreshInPlaySuspension(risk, match, stadium = {}) {
   if (!risk?.available || risk.riskLevel !== 'stop') return false;
   if (match?.status !== 'live') return false;
   const ops = normalizeWeatherOps(match.weatherOps);
   if (ops.phase !== 'suspended' || ops.source === 'admin') return false;
+  if (ops.source === 'open-meteo' && !shouldAllowOpenMeteoInPlaySuspension(risk, stadium)) {
+    return false;
+  }
+  if (shouldClearContradictedInPlaySuspension(match, risk, stadium)) return false;
   return true;
+}
+
+/**
+ * Limpia suspensión automática de Open-Meteo cuando el partido sigue avanzando
+ * (goles / minuto) o el estadio tiene techo retráctil.
+ */
+export function shouldClearContradictedInPlaySuspension(match, risk, stadium = {}) {
+  const ops = normalizeWeatherOps(match.weatherOps);
+  if (match?.status !== 'live' || ops.phase !== 'suspended') return false;
+  if (ops.source === 'admin' || ops.source === 'nws' || ops.source === 'msc') return false;
+
+  const openMeteoSuspension =
+    ops.source === 'open-meteo' || isOpenMeteoOnlyWeatherAuthority(risk);
+  if (!openMeteoSuspension) return false;
+
+  const profile = resolveStadiumWeatherProfile(stadium);
+  if (profile.hasRetractableRoof) return true;
+
+  const playMinute = playMinuteForWeatherOps(match);
+  const totalGoals = (Number(match.homeScore) || 0) + (Number(match.awayScore) || 0);
+  if (playMinute != null && playMinute >= 10 && totalGoals > 0) return true;
+
+  return false;
 }
 
 /** Limpia suspensión automática cuando el riesgo baja y venció la ventana NOAA. */

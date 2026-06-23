@@ -58,6 +58,7 @@ vi.mock('../src/services/weatherRiskService.js', () => ({
   assessVenueWeatherRisk: vi.fn().mockResolvedValue({ riskLevel: 'low', available: true }),
   shouldSuggestPreKickoffDelay: vi.fn().mockReturnValue(false),
   shouldClearInPlaySuspension: vi.fn().mockReturnValue(false),
+  shouldClearContradictedInPlaySuspension: vi.fn().mockReturnValue(false),
 }));
 
 vi.mock('../src/services/matchWeatherEnrichmentService.js', () => ({

@@ -142,12 +142,12 @@ export function applyWeatherOpsSuggestion(match, risk, stadium = {}) {
 }
 
 export function applyInPlayWeatherSuspension(match, risk, stadium = {}) {
-  if (!shouldSuggestInPlaySuspension(risk, match)) return null;
+  if (!shouldSuggestInPlaySuspension(risk, match, stadium)) return null;
   return buildWeatherOpsFromRisk(match, risk, stadium, 'suspended');
 }
 
 export function refreshInPlayWeatherSuspension(match, risk, stadium = {}) {
-  if (!shouldRefreshInPlaySuspension(risk, match)) return null;
+  if (!shouldRefreshInPlaySuspension(risk, match, stadium)) return null;
   return buildWeatherOpsFromRisk(match, risk, stadium, 'suspended');
 }
 

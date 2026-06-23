@@ -46,7 +46,7 @@ import { playerKeyFromTimelineEvent } from '@/lib/lineupLiveState.js';
 import LiveMatchTrigger from '@/components/live/LiveMatchTrigger.jsx';
 import { liveCardBadgeLabel, isLiveCardFinalizing } from '@/lib/matchStatus.js';
 import { useLiveMatchDisplayClock } from '@/hooks/useLiveMatchDisplayClock.js';
-import { getEffectiveMatchPlayState, isMatchPlayPaused } from '@/lib/matchPlayState.js';
+import { getEffectiveMatchPlayState, isMatchPlayPaused, resolveLiveMatchesColumnTitle } from '@/lib/matchPlayState.js';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchPlayStateBadge.jsx';
 import { matchBarGridClass, liveMatchesBarGridClass } from '@/lib/matchBarLayout.js';
@@ -1337,6 +1337,11 @@ export default function LiveMatchesBar({
   }, [finishedMatches, sortedLiveMatches, recentFinishedMatches]);
   const hasArchive = archiveMatches.length > 0;
 
+  const liveColumnTitle = useMemo(
+    () => resolveLiveMatchesColumnTitle(sortedLiveMatches),
+    [sortedLiveMatches]
+  );
+
   if (!hasLive && !showRecentFinishedBar && !hasNext && !hasArchive) {
     return <EmptyMatchesState />;
   }
@@ -1344,9 +1349,7 @@ export default function LiveMatchesBar({
   return (
     <div className="mx-auto flex w-full flex-col gap-6">
       {hasLive ? (
-        <MatchColumn
-          title={sortedLiveMatches.length > 1 ? 'Partidos en curso' : 'Partido en curso'}
-        >
+        <MatchColumn title={liveColumnTitle}>
           <FeaturedMatchesGrid
             liveMatches={sortedLiveMatches}
             recentFinishedMatches={[]}

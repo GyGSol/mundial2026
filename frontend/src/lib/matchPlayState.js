@@ -11,7 +11,11 @@ export function isMatchPlayPaused(playState) {
 
 export function getEffectiveMatchPlayState(match) {
   if (match?.matchPlayState?.phase && match.matchPlayState.phase !== 'in_play') {
-    return match.matchPlayState;
+    const playState = match.matchPlayState;
+    if (!playState.frozenClock && match?.timeElapsed) {
+      return { ...playState, frozenClock: match.timeElapsed };
+    }
+    return playState;
   }
 
   if (match?.status !== 'live') {
@@ -111,7 +115,23 @@ export function timelineIndicatesHalftime(timeline = []) {
 export function resolvePausedDisplayClock(playState) {
   if (!isMatchPlayPaused(playState)) return null;
   if (playState.phase === 'halftime') return 'Entretiempo';
-  return playState.frozenClock ?? playState.label ?? null;
+  return playState.frozenClock ?? null;
+}
+
+export function resolveLiveMatchesColumnTitle(matches = []) {
+  if (!matches.length) return 'Partido en curso';
+
+  const states = matches.map((match) => getEffectiveMatchPlayState(match));
+  const allPaused = states.every((state) => isMatchPlayPaused(state));
+  const suspendedCount = states.filter((state) => state.phase === 'suspended').length;
+
+  if (allPaused && suspendedCount > 0) {
+    return matches.length > 1 ? 'Partidos suspendidos' : 'Partido suspendido';
+  }
+  if (allPaused) {
+    return matches.length > 1 ? 'Partidos en pausa' : 'Partido en pausa';
+  }
+  return matches.length > 1 ? 'Partidos en curso' : 'Partido en curso';
 }
 
 export function getMatchPlayStateBadgeText(playState) {

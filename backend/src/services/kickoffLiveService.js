@@ -15,6 +15,7 @@ import {
 } from './matchWeatherEnrichmentService.js';
 import {
   assessVenueWeatherRisk,
+  shouldClearContradictedInPlaySuspension,
   shouldClearInPlaySuspension,
   shouldSuggestPreKickoffDelay,
 } from './weatherRiskService.js';
@@ -157,7 +158,10 @@ export async function syncLiveWeatherOps() {
 
     const previousOps = normalizeWeatherOps(match.weatherOps);
 
-    if (shouldClearInPlaySuspension(risk, match)) {
+    if (
+      shouldClearInPlaySuspension(risk, match) ||
+      shouldClearContradictedInPlaySuspension(match, risk, stadium)
+    ) {
       match.weatherOps = clearWeatherOpsToNormal();
       match.lastSyncedAt = new Date();
       await match.save();

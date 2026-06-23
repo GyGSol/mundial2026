@@ -211,8 +211,12 @@ function computeFrozenClock(match, timeline, raw) {
       resolveLiveTimeElapsed(raw, timeline),
       latestClockFromTimeline(timeline),
       latestMinuteFromScorerLists(
-        parseScorersField(raw.home_scorers ?? raw.homeScorers),
-        parseScorersField(raw.away_scorers ?? raw.awayScorers)
+        parseScorersField(
+          match?.homeScorers ?? raw.home_scorers ?? raw.homeScorers
+        ),
+        parseScorersField(
+          match?.awayScorers ?? raw.away_scorers ?? raw.awayScorers
+        )
       )
     ) ?? null
   );
@@ -389,8 +393,5 @@ export function isMatchPlayPaused(playState) {
 export function resolvePausedDisplayClock(playState) {
   if (!isMatchPlayPaused(playState)) return null;
   if (playState.phase === 'halftime') return 'Entretiempo';
-  if (playState.label && playState.phase === 'suspended') {
-    return playState.frozenClock ?? null;
-  }
-  return playState.frozenClock ?? playState.label ?? null;
+  return playState.frozenClock ?? null;
 }

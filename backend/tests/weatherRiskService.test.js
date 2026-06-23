@@ -4,6 +4,8 @@ import {
   assessNwsAlerts,
   assessOpenMeteoRisk,
   mergeRiskLevels,
+  shouldAllowOpenMeteoInPlaySuspension,
+  shouldClearContradictedInPlaySuspension,
   shouldClearInPlaySuspension,
   shouldSuggestInPlaySuspension,
 } from '../src/services/weatherRiskService.js';
@@ -81,14 +83,71 @@ describe('weatherRiskService', () => {
       weatherOps: { phase: 'normal' },
       raw: { time_elapsed: "23'" },
     };
-    const risk = { available: true, riskLevel: 'stop' };
-    expect(shouldSuggestInPlaySuspension(risk, match)).toBe(true);
-    expect(shouldSuggestInPlaySuspension(risk, { ...match, status: 'upcoming' })).toBe(false);
+    const risk = { available: true, riskLevel: 'stop', authorityAlertSource: 'nws' };
+    const openMeteoRisk = { available: true, riskLevel: 'stop', authorityAlertSource: 'open-meteo' };
+    const stadiumOpen = { externalId: '6', country: 'USA' };
+    const stadiumRoof = { externalId: '5', country: 'USA' };
+
+    expect(shouldSuggestInPlaySuspension(risk, match, stadiumOpen)).toBe(true);
+    expect(shouldSuggestInPlaySuspension(openMeteoRisk, match, stadiumOpen)).toBe(true);
+    expect(shouldSuggestInPlaySuspension(openMeteoRisk, match, stadiumRoof)).toBe(false);
+    expect(shouldSuggestInPlaySuspension(risk, { ...match, status: 'upcoming' }, stadiumOpen)).toBe(
+      false
+    );
     expect(
       shouldSuggestInPlaySuspension(risk, {
         ...match,
         raw: { time_elapsed: 'notstarted' },
+      }, stadiumOpen)
+    ).toBe(false);
+  });
+
+  it('shouldAllowOpenMeteoInPlaySuspension respeta techo retráctil', () => {
+    const risk = { authorityAlertSource: 'open-meteo' };
+    expect(shouldAllowOpenMeteoInPlaySuspension(risk, { externalId: '5', country: 'USA' })).toBe(
+      false
+    );
+    expect(shouldAllowOpenMeteoInPlaySuspension(risk, { externalId: '6', country: 'USA' })).toBe(
+      true
+    );
+  });
+
+  it('shouldClearContradictedInPlaySuspension limpia Open-Meteo en techo retráctil o con juego avanzado', () => {
+    const stadiumRoof = { externalId: '5', country: 'USA' };
+    const openMeteoRisk = { authorityAlertSource: 'open-meteo', riskLevel: 'stop' };
+    const suspended = {
+      status: 'live',
+      homeScore: 2,
+      awayScore: 0,
+      weatherOps: { phase: 'suspended', source: 'open-meteo' },
+      raw: { time_elapsed: "22'" },
+    };
+
+    expect(shouldClearContradictedInPlaySuspension(suspended, openMeteoRisk, stadiumRoof)).toBe(
+      true
+    );
+    expect(
+      shouldClearContradictedInPlaySuspension(
+        { ...suspended, homeScore: 0, awayScore: 0 },
+        openMeteoRisk,
+        { externalId: '6', country: 'USA' }
+      )
+    ).toBe(false);
+    expect(
+      shouldClearContradictedInPlaySuspension(suspended, openMeteoRisk, {
+        externalId: '6',
+        country: 'USA',
       })
+    ).toBe(true);
+    expect(
+      shouldClearContradictedInPlaySuspension(
+        {
+          ...suspended,
+          weatherOps: { phase: 'suspended', source: 'nws' },
+        },
+        { authorityAlertSource: 'nws', riskLevel: 'stop' },
+        stadiumRoof
+      )
     ).toBe(false);
   });
 
