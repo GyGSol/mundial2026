@@ -53,13 +53,106 @@ function accumulateStats(stats, breakdown, pointsEarned, bonusPoint = 0, goalDif
 }
 
 /** En baseline de flechas: al kickoff 0-0 solo cuenta PA; GL/GV/GT se marcan al cambiar el marcador. */
-function breakdownForLiveKickoffIndicators(breakdown) {
+export function breakdownForLiveKickoffIndicators(breakdown) {
   return {
     winner: breakdown?.winner ?? 0,
     homeGoals: 0,
     awayGoals: 0,
     totalGoals: 0,
   };
+}
+
+const LIVE_INDICATOR_STAT_KEYS = ['pa', 'gl', 'gv', 'gt', 'pb'];
+
+function statCreditFromBreakdown(key, breakdown, bonusPoint = 0) {
+  switch (key) {
+    case 'pa':
+      return (breakdown?.winner ?? 0) > 0 ? 1 : 0;
+    case 'gl':
+      return (breakdown?.homeGoals ?? 0) > 0 ? 1 : 0;
+    case 'gv':
+      return (breakdown?.awayGoals ?? 0) > 0 ? 1 : 0;
+    case 'gt':
+      return (breakdown?.totalGoals ?? 0) > 0 ? 1 : 0;
+    case 'pb':
+      return (bonusPoint ?? 0) > 0 ? 1 : 0;
+    default:
+      return 0;
+  }
+}
+
+function resolveKickoffIndicatorBreakdown(prediction) {
+  if (prediction.liveKickoffBreakdown) {
+    return breakdownForLiveKickoffIndicators(prediction.liveKickoffBreakdown);
+  }
+  const kickoff = calculatePoints(
+    { home: prediction.homeGoals, away: prediction.awayGoals },
+    { home: 0, away: 0 }
+  );
+  return breakdownForLiveKickoffIndicators(kickoff.breakdown);
+}
+
+/** Una entrada por partido en vivo (mismo orden): true = flecha verde para esa stat. */
+export async function getLiveMatchStatIndicatorsByUser(userIds, liveMatchIds = []) {
+  const orderedMatchIds = [...new Set(liveMatchIds.map((id) => id.toString()))];
+  if (!userIds.length || !orderedMatchIds.length) {
+    return { liveMatchIds: orderedMatchIds, byUser: {} };
+  }
+
+  const userObjectIds = userIds.map((id) =>
+    typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id
+  );
+  const liveMatchObjectIds = orderedMatchIds.map((id) => new mongoose.Types.ObjectId(id));
+
+  const predictions = await Prediction.find({
+    userId: { $in: userObjectIds },
+    matchId: { $in: liveMatchObjectIds },
+    pointsEarned: { $ne: null },
+  })
+    .select(
+      'userId matchId homeGoals awayGoals pointsBreakdown bonusPoint liveKickoffBreakdown'
+    )
+    .lean();
+
+  const predictionByUserMatch = new Map(
+    predictions.map((prediction) => [
+      `${prediction.userId.toString()}:${prediction.matchId.toString()}`,
+      prediction,
+    ])
+  );
+
+  const byUser = {};
+  for (const userId of userIds) {
+    const userKey = userId.toString();
+    const rowIndicators = Object.fromEntries(
+      LIVE_INDICATOR_STAT_KEYS.map((key) => [key, []])
+    );
+
+    for (const matchId of orderedMatchIds) {
+      const prediction = predictionByUserMatch.get(`${userKey}:${matchId}`);
+      if (!prediction) {
+        for (const key of LIVE_INDICATOR_STAT_KEYS) {
+          rowIndicators[key].push(false);
+        }
+        continue;
+      }
+
+      const kickoffBreakdown = resolveKickoffIndicatorBreakdown(prediction);
+      const currentBreakdown = prediction.pointsBreakdown ?? {};
+      const kickoffBonus = 0;
+
+      for (const key of LIVE_INDICATOR_STAT_KEYS) {
+        const gained =
+          statCreditFromBreakdown(key, currentBreakdown, prediction.bonusPoint ?? 0) >
+          statCreditFromBreakdown(key, kickoffBreakdown, kickoffBonus);
+        rowIndicators[key].push(gained);
+      }
+    }
+
+    byUser[userKey] = rowIndicators;
+  }
+
+  return { liveMatchIds: orderedMatchIds, byUser };
 }
 
 function pointsEarnedForLiveKickoffIndicators(breakdown) {

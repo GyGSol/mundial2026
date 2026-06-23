@@ -17,11 +17,34 @@ describe('computeLeaderboardBaselineIndicators', () => {
     });
 
     expect(indicators.a.rank).toEqual({ direction: 'up', amount: 2 });
-    expect(indicators.a.pa).toEqual({ direction: 'up' });
-    expect(indicators.a.gv).toEqual({ direction: 'up' });
+    expect(indicators.a.pa).toEqual({ direction: 'up', count: 1 });
+    expect(indicators.a.gv).toEqual({ direction: 'up', count: 1 });
 
     expect(indicators.b.rank).toEqual({ direction: 'down', amount: 4 });
     expect(indicators.b.pa).toBeUndefined();
     expect(indicators.b.gv).toBeUndefined();
+  });
+
+  it('muestra una flecha por partido en vivo que aporta a cada stat', () => {
+    const indicators = computeLeaderboardBaselineIndicators(leaderboard, baseline, {
+      hasLiveMatches: true,
+      leaderboardLiveStatIndicators: {
+        liveMatchIds: ['m1', 'm2'],
+        byUser: {
+          a: {
+            pa: [true, true],
+            gl: [true, false],
+            gv: [false, true],
+            gt: [true, true],
+            pb: [false, false],
+          },
+        },
+      },
+    });
+
+    expect(indicators.a.pa).toEqual({ direction: 'up', count: 2 });
+    expect(indicators.a.gl).toEqual({ direction: 'up', count: 1 });
+    expect(indicators.a.gv).toEqual({ direction: 'up', count: 1 });
+    expect(indicators.a.gt).toEqual({ direction: 'up', count: 2 });
   });
 });

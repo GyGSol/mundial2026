@@ -32,13 +32,13 @@ export function statDeltaForKey(key, previous, next, { upOnly = false } = {}) {
   const delta = INVERT_DELTA_KEYS.has(key) ? -rawDelta : rawDelta;
 
   if (upOnly) {
-    return delta > 0 ? { direction: 'up' } : null;
+    return delta > 0 ? { direction: 'up', count: delta } : null;
   }
 
   if (delta > 0) {
     return {
       direction: 'up',
-      ...(key === RANK_KEY ? { amount: Math.abs(rawDelta) } : {}),
+      ...(key === RANK_KEY ? { amount: Math.abs(rawDelta) } : { count: delta }),
     };
   }
   if (delta < 0) {
@@ -50,17 +50,24 @@ export function statDeltaForKey(key, previous, next, { upOnly = false } = {}) {
   return null;
 }
 
+function liveStatDeltaFromPerMatchFlags(flags) {
+  if (!Array.isArray(flags) || flags.length === 0) return null;
+  const count = flags.filter(Boolean).length;
+  return count > 0 ? { direction: 'up', count } : null;
+}
+
 /** Indicadores vs baseline: rank ↑↓ junto al nombre; PA/GL/GV/GT/PB solo subidas verdes en vivo. */
 export function computeLeaderboardBaselineIndicators(
   leaderboard,
   leaderboardKickoffBaseline,
-  { hasLiveMatches = false } = {}
+  { hasLiveMatches = false, leaderboardLiveStatIndicators = null } = {}
 ) {
   if (!leaderboard?.length || !leaderboardKickoffBaseline?.length) return {};
 
   const baselineById = Object.fromEntries(
     leaderboardKickoffBaseline.map((row) => [row.id, snapshotRow(row)])
   );
+  const perMatchByUser = leaderboardLiveStatIndicators?.byUser ?? {};
   const indicators = {};
 
   for (const row of leaderboard) {
@@ -74,9 +81,17 @@ export function computeLeaderboardBaselineIndicators(
     if (rankChange) rowIndicators.rank = rankChange;
 
     if (hasLiveMatches) {
-      for (const key of LIVE_STAT_KEYS) {
-        const change = statDeltaForKey(key, baseline[key], current[key], { upOnly: true });
-        if (change) rowIndicators[key] = change;
+      const perMatch = perMatchByUser[row.id];
+      if (perMatch) {
+        for (const key of LIVE_STAT_KEYS) {
+          const change = liveStatDeltaFromPerMatchFlags(perMatch[key]);
+          if (change) rowIndicators[key] = change;
+        }
+      } else {
+        for (const key of LIVE_STAT_KEYS) {
+          const change = statDeltaForKey(key, baseline[key], current[key], { upOnly: true });
+          if (change) rowIndicators[key] = change;
+        }
       }
     }
 
@@ -91,17 +106,29 @@ export function computeLeaderboardBaselineIndicators(
 export function useLeaderboardStatDeltas(
   leaderboard,
   leaderboardKickoffBaseline,
-  { hasLiveMatches = false } = {}
+  { hasLiveMatches = false, leaderboardLiveStatIndicators = null } = {}
 ) {
+  const liveIndicatorsFingerprint = leaderboardLiveStatIndicators?.liveMatchIds?.join(',') ?? '';
+  const liveIndicatorsUserFingerprint = leaderboardLiveStatIndicators?.byUser
+    ? Object.entries(leaderboardLiveStatIndicators.byUser)
+        .map(([userId, stats]) =>
+          LIVE_STAT_KEYS.map((key) => `${userId}:${key}:${(stats[key] ?? []).map(Number).join('')}`).join(',')
+        )
+        .join('|')
+    : '';
+
   return useMemo(
     () =>
       computeLeaderboardBaselineIndicators(leaderboard, leaderboardKickoffBaseline, {
         hasLiveMatches,
+        leaderboardLiveStatIndicators,
       }),
     [
       leaderboardFingerprint(leaderboard),
       leaderboardFingerprint(leaderboardKickoffBaseline),
       hasLiveMatches,
+      liveIndicatorsFingerprint,
+      liveIndicatorsUserFingerprint,
     ]
   );
 }

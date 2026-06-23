@@ -217,6 +217,9 @@ export default function LeaderboardPage() {
   const dashboardKickoffBaseline = dashboardMatchesGroup
     ? data?.leaderboardKickoffBaseline
     : null;
+  const dashboardLiveStatIndicators = dashboardMatchesGroup
+    ? data?.leaderboardLiveStatIndicators
+    : null;
   const hasLiveMatches = dashboardMatchesGroup && (
     (data?.liveMatches?.length ?? 0) > 0 ||
     (data?.leaderboardKickoffBaseline?.length ?? 0) > 0
@@ -462,14 +465,16 @@ export default function LeaderboardPage() {
           </div>
           {hasLiveMatches && isCommonTournament ? (
             <p className="mb-2 text-xs text-muted-foreground">
-              Partido en vivo: las flechas marcan cambios desde el 0-0 inicial (PA = acierto
-              ganador/empate; GL/GV/GT = goles exactos ganados con el marcador en vivo).
+              Partidos en vivo: cada flecha verde corresponde a un partido (de izquierda a
+              derecha) y marca cambios desde el 0-0 inicial (PA = acierto ganador/empate;
+              GL/GV/GT = goles exactos ganados con el marcador en vivo).
             </p>
           ) : null}
           {isCommonTournament ? (
             <LeaderboardTable
               leaderboard={dashboardLeaderboard}
               leaderboardKickoffBaseline={dashboardKickoffBaseline}
+              leaderboardLiveStatIndicators={dashboardLiveStatIndicators}
               hasLiveMatches={hasLiveMatches}
               showGroupName={false}
               prizesWinnersCount={prizesWinnersCount}

@@ -83,11 +83,19 @@ function normalizeStatDelta(delta) {
   return delta;
 }
 
-function StatDeltaIndicator({ direction, amount, showDown = true }) {
+function StatDeltaIndicator({ direction, amount, count = 1, showDown = true }) {
   if (direction === 'up') {
+    const arrowCount = Math.max(1, count ?? 1);
     return (
       <span className="inline-flex shrink-0 items-center gap-0.5 text-emerald-400">
-        <ArrowUp className="size-3.5" strokeWidth={2.75} aria-hidden="true" />
+        {Array.from({ length: arrowCount }, (_, index) => (
+          <ArrowUp
+            key={index}
+            className="size-3.5"
+            strokeWidth={2.75}
+            aria-hidden="true"
+          />
+        ))}
         {amount != null && amount > 0 ? (
           <span className="text-[10px] font-semibold tabular-nums leading-none">{amount}</span>
         ) : null}
@@ -122,6 +130,7 @@ function StatValue({ value, delta, align = 'center' }) {
       <StatDeltaIndicator
         direction={normalized?.direction}
         amount={normalized?.amount}
+        count={normalized?.count}
         showDown={false}
       />
     </span>
@@ -143,12 +152,14 @@ function renderStatCell(row, col, { hasLiveMatches, rowDeltas }) {
 export default function LeaderboardTable({
   leaderboard,
   leaderboardKickoffBaseline = null,
+  leaderboardLiveStatIndicators = null,
   hasLiveMatches = false,
   showGroupName = false,
   prizesWinnersCount = 0,
 }) {
   const statDeltas = useLeaderboardStatDeltas(leaderboard, leaderboardKickoffBaseline, {
     hasLiveMatches,
+    leaderboardLiveStatIndicators,
   });
 
   if (!leaderboard?.length) {

@@ -5,7 +5,7 @@ import { Prediction } from '../src/models/Prediction.js';
 import { User } from '../src/models/User.js';
 import { UserGroupMembership } from '../src/models/UserGroupMembership.js';
 import { CompetitionGroup } from '../src/models/CompetitionGroup.js';
-import { getLeaderboard } from '../src/services/leaderboardService.js';
+import { getLeaderboard, getLiveMatchStatIndicatorsByUser } from '../src/services/leaderboardService.js';
 import { getTestMongoUri } from '../src/config/testDbGuard.js';
 
 const mongoUri = getTestMongoUri();
@@ -316,6 +316,66 @@ describe('leaderboard kickoff baseline', () => {
     expect(baselineRow.gv).toBe(0);
     expect(currentRow.gt).toBe(2);
     expect(baselineRow.gt).toBe(0);
+  });
+
+  it('genera una flecha por partido en vivo que aporta a cada stat', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST08' });
+    const user = await User.create({
+      name: 'Multi live',
+      email: 'multi@example.com',
+      passwordHash: 'hash',
+      totalPoints: 16,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: user._id, groupId: group._id, role: 'member' });
+
+    const liveA = await Match.create({
+      externalId: 'live-ind-a',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 0,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-16T19:00:00.000Z'),
+    });
+    const liveB = await Match.create({
+      externalId: 'live-ind-b',
+      homeTeamId: '3',
+      awayTeamId: '4',
+      homeScore: 1,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-16T19:05:00.000Z'),
+    });
+
+    await Prediction.create({
+      userId: user._id,
+      matchId: liveA._id,
+      homeGoals: 0,
+      awayGoals: 0,
+      pointsEarned: 3,
+      pointsBreakdown: { winner: 3, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: liveB._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 4,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+    });
+
+    const liveIds = [liveA._id.toString(), liveB._id.toString()];
+    const indicators = await getLiveMatchStatIndicatorsByUser([user._id.toString()], liveIds);
+    const row = indicators.byUser[user._id.toString()];
+
+    expect(indicators.liveMatchIds).toEqual(liveIds);
+    expect(row.pa).toEqual([false, true]);
+    expect(row.gl).toEqual([false, true]);
+    expect(row.gv).toEqual([false, false]);
+    expect(row.gt).toEqual([false, false]);
   });
 
   it('con 0-1 en vivo las flechas GL/GV/GT no se pre-creditan al kickoff 0-0', async () => {

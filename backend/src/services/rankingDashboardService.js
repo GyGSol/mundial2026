@@ -1,5 +1,6 @@
 import { Match } from '../models/Match.js';
 import { getCachedLeaderboard } from './leaderboardCache.js';
+import { getLiveMatchStatIndicatorsByUser } from './leaderboardService.js';
 import { getLastSyncAt } from './syncService.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import {
@@ -114,14 +115,22 @@ export async function getRankingDashboard(groupId, userId) {
   const liveMatchIds = liveMatches.map((match) => match.id);
   const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
   const hasLive = indicatorBaselineMatchIds.length > 0;
-  const [leaderboard, leaderboardKickoffBaseline] = await Promise.all([
-    getCachedLeaderboard(groupId || null, 100, {}, { hasLiveMatches: hasLive }),
+  const leaderboard = await getCachedLeaderboard(groupId || null, 100, {}, {
+    hasLiveMatches: hasLive,
+  });
+  const [leaderboardKickoffBaseline, leaderboardLiveStatIndicators] = await Promise.all([
     hasLive
       ? getCachedLeaderboard(
           groupId || null,
           100,
           { liveKickoffBaselineMatchIds: indicatorBaselineMatchIds },
           { hasLiveMatches: true }
+        )
+      : Promise.resolve(null),
+    hasLive
+      ? getLiveMatchStatIndicatorsByUser(
+          leaderboard.map((row) => row.id),
+          liveMatchIds
         )
       : Promise.resolve(null),
   ]);
@@ -185,6 +194,7 @@ export async function getRankingDashboard(groupId, userId) {
   return {
     leaderboard: enrichedLeaderboard,
     leaderboardKickoffBaseline,
+    leaderboardLiveStatIndicators,
     group: groupResult.group,
     prizePool,
     lastSyncAt,
