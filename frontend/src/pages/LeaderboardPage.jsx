@@ -222,7 +222,7 @@ export default function LeaderboardPage() {
     : null;
   const hasLiveMatches = dashboardMatchesGroup && (
     (data?.liveMatches?.length ?? 0) > 0 ||
-    (data?.leaderboardKickoffBaseline?.length ?? 0) > 0
+    (data?.recentFinishedMatches?.length ?? 0) > 0
   );
   const rankingReady = canLoadRanking ? dashboardMatchesGroup : true;
   const rankingLoadFailed = canLoadRanking && !loading && Boolean(error) && !dashboardMatchesGroup;
@@ -465,9 +465,9 @@ export default function LeaderboardPage() {
           </div>
           {hasLiveMatches && isCommonTournament ? (
             <p className="mb-2 text-xs text-muted-foreground">
-              Partidos en vivo: cada flecha verde corresponde a un partido (de izquierda a
-              derecha) y marca cambios desde el 0-0 inicial (PA = acierto ganador/empate;
-              GL/GV/GT = goles exactos ganados con el marcador en vivo).
+              Partidos en vivo o recién finalizados: cada flecha verde corresponde a un partido
+              (de izquierda a derecha) y marca cambios desde el 0-0 inicial (PA = acierto
+              ganador/empate; GL/GV/GT = goles exactos ganados con el marcador en vivo).
             </p>
           ) : null}
           {isCommonTournament ? (

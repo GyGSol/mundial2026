@@ -45,6 +45,22 @@ export function liveMatchIdsForStatIndicators(liveMatchIds) {
   return [...new Set(liveMatchIds)];
 }
 
+/**
+ * IDs para flechas del ranking: en vivo primero, luego recién finalizados en gracia
+ * (mismo orden que la barra destacada — una flecha verde por partido).
+ */
+export function buildStatIndicatorMatchIds(liveMatchIds = [], recentFinishedMatchIds = []) {
+  const seen = new Set();
+  const ordered = [];
+  for (const id of [...liveMatchIds, ...recentFinishedMatchIds]) {
+    const key = id?.toString?.() ?? id;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    ordered.push(key);
+  }
+  return ordered;
+}
+
 function findNextUpcomingMatches(matches) {
   const upcoming = [...matches]
     .filter((m) => m.status === 'upcoming' && (m.scheduleKickoffAt || m.kickoffAt))
@@ -113,13 +129,14 @@ export async function getRankingDashboard(groupId, userId) {
   }
 
   const liveMatchIds = liveMatches.map((match) => match.id);
-  const indicatorBaselineMatchIds = liveMatchIdsForStatIndicators(liveMatchIds);
-  const hasLive = indicatorBaselineMatchIds.length > 0;
+  const recentFinishedIds = recentFinishedMatches.map((match) => match.id);
+  const indicatorBaselineMatchIds = buildStatIndicatorMatchIds(liveMatchIds, recentFinishedIds);
+  const hasStatIndicators = indicatorBaselineMatchIds.length > 0;
   const leaderboard = await getCachedLeaderboard(groupId || null, 100, {}, {
-    hasLiveMatches: hasLive,
+    hasLiveMatches: hasStatIndicators,
   });
   const [leaderboardKickoffBaseline, leaderboardLiveStatIndicators] = await Promise.all([
-    hasLive
+    hasStatIndicators
       ? getCachedLeaderboard(
           groupId || null,
           100,
@@ -127,10 +144,10 @@ export async function getRankingDashboard(groupId, userId) {
           { hasLiveMatches: true }
         )
       : Promise.resolve(null),
-    hasLive
+    hasStatIndicators
       ? getLiveMatchStatIndicatorsByUser(
           leaderboard.map((row) => row.id),
-          liveMatchIds
+          indicatorBaselineMatchIds
         )
       : Promise.resolve(null),
   ]);
