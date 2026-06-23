@@ -30,6 +30,7 @@ jor-ihsan-haddad.png | #23 | Ihsan Haddad (C) | DF | 92 pj | 2 goles
 jor-ali-azaizeh.png | #24 | Ali Azaizeh | FW | 4 pj | 0 goles
 jor-mohammad-al-dawoud.png | #25 | Mohammad Al-Dawoud | MF | 13 pj | 1 goles
 jor-anas-badawi.png | #26 | Anas Badawi | DF | 1 pj | 0 goles
+jor-jamal-sellami.png | — | Jamal Sellami | DT
 
 # Solo nombres (pegar en generador):
 
