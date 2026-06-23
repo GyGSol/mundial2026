@@ -30,6 +30,7 @@ gha-derrick-luckassen.png | #23 | Derrick Luckassen | DF | 1 pj | 0 goles
 gha-ernest-nuamah.png | #24 | Ernest Nuamah | FW | 18 pj | 4 goles
 gha-prince-kwabena-adu.png | #25 | Prince Kwabena Adu | FW | 5 pj | 0 goles
 gha-marvin-senaya.png | #26 | Marvin Senaya | DF | 2 pj | 0 goles
+gha-carlos-queiroz.png | — | Carlos Queiroz | DT
 
 # Solo nombres (pegar en generador):
 
