@@ -30,6 +30,7 @@ rsa-jayden-adams.png | #23 | Jayden Adams | MF | 5 pj | 0 goles
 rsa-olwethu-makhanya.png | #24 | Olwethu Makhanya | DF | 1 pj | 0 goles
 rsa-kamogelo-sebelebele.png | #25 | Kamogelo Sebelebele | FW | 3 pj | 0 goles
 rsa-bradley-cross.png | #26 | Bradley Cross | DF | 1 pj | 0 goles
+rsa-hugo-broos.png | — | Hugo Broos | DT
 
 # Solo nombres (pegar en generador):
 

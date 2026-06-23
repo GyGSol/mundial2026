@@ -30,6 +30,7 @@ cro-dominik-kotarski.png | #23 | Dominik Kotarski | GK | 4 pj | 0 goles
 cro-marco-pasalic.png | #24 | Marco Pašalić | FW | 15 pj | 1 goles
 cro-martin-erlic.png | #25 | Martin Erlić | DF | 13 pj | 1 goles
 cro-petar-musa.png | #26 | Petar Musa | FW | 11 pj | 1 goles
+cro-zlatko-dalic.png | — | Zlatko Dalić | DT
 
 # Solo nombres (pegar en generador):
 
