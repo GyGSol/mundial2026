@@ -306,6 +306,12 @@ export const simulationApi = {
 
 export const pushApi = {
   getVapidPublicKey: () => request('/push/vapid-public-key'),
+  getPreferences: () => request('/push/preferences'),
+  updatePreferences: (preferences) =>
+    request('/push/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(preferences),
+    }),
   subscribe: (subscription) =>
     request('/push/subscribe', {
       method: 'POST',

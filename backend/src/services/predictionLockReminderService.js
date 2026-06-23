@@ -30,8 +30,11 @@ export async function findMatchesDueForLockReminder(now = Date.now()) {
 
 export async function findUsersNeedingLockReminder(matchId) {
   const [usersWithPush, predictions] = await Promise.all([
-    User.find({ 'pushSubscriptions.0': { $exists: true } })
-      .select('_id pushSubscriptions')
+    User.find({
+      'pushSubscriptions.0': { $exists: true },
+      'notificationPreferences.predictionLockReminder': { $ne: false },
+    })
+      .select('_id pushSubscriptions notificationPreferences')
       .lean(),
     Prediction.find({ matchId }).select('userId homeGoals awayGoals userSubmitted').lean(),
   ]);

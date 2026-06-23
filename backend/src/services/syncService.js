@@ -401,6 +401,7 @@ async function upsertWorldCup26GameItems(list, { stadiumTimezones = null } = {})
   const scoringIds = [];
   const newlyFinishedIds = [];
   const clearedScoreIds = [];
+  const newlyLiveIds = [];
   let finishedArchiveDirty = false;
   const worldcup26Warnings = [];
 
@@ -457,6 +458,10 @@ async function upsertWorldCup26GameItems(list, { stadiumTimezones = null } = {})
     const reopenedToLive = match.status === 'live' && wasFinished;
     const scoreChanged = needsRescore(existing, match);
 
+    if (becameLive) {
+      newlyLiveIds.push(match._id);
+    }
+
     if (match.status === 'finished' && !wasFinished) {
       newlyFinishedIds.push(match._id);
       finishedArchiveDirty = true;
@@ -486,6 +491,7 @@ async function upsertWorldCup26GameItems(list, { stadiumTimezones = null } = {})
     clearedScoreIds,
     finishedArchiveDirty,
     worldcup26Warnings,
+    newlyLiveIds,
   };
 }
 
@@ -633,8 +639,15 @@ export async function runSync({ includeMetadata = true } = {}) {
       stadiumsCount = await upsertStadiums();
     }
 
-    const { count, scoringIds, newlyFinishedIds, clearedScoreIds, finishedArchiveDirty, worldcup26Warnings } =
+    const { count, scoringIds, newlyFinishedIds, clearedScoreIds, finishedArchiveDirty, worldcup26Warnings, newlyLiveIds } =
       await upsertMatches();
+
+    if (newlyLiveIds?.length) {
+      const { notifyLiveStartForMatchIds } = await import('./liveStartPushService.js');
+      notifyLiveStartForMatchIds(newlyLiveIds).catch((err) => {
+        console.warn('Live start push after sync skipped:', err.message);
+      });
+    }
 
     let fixtureAlignment = {
       aligned: 0,

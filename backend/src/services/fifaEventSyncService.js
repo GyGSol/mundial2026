@@ -18,6 +18,7 @@ import {
   isPlausibleMatchGoalCount,
   mergeFifaApiScoreWithTimeline,
   mergePlausibleGoalCounts,
+  findNewTimelineGoals,
 } from './matchLiveData.js';
 import {
   applyShirtNumbersToTimeline,
@@ -158,8 +159,18 @@ export async function syncFifaReportsForMatchIds(matchIds = []) {
 
 async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
   if (!fifaEntry?.IdMatch || !fifaEntry?.IdStage) {
-    return { events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [], updated: false };
+    return {
+      events: 0,
+      reports: 0,
+      scoringIds: [],
+      newlyFinishedIds: [],
+      newlyLiveIds: [],
+      goalUpdates: [],
+      updated: false,
+    };
   }
+
+  const previousTimeline = match.raw?.fifaEvents?.timeline ?? [];
 
   const rawUpdate = {};
   let matchUpdated = false;
@@ -214,9 +225,25 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
         syncedAt: new Date().toISOString(),
       };
       await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
-      return { events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [], updated: true };
+      return {
+        events: 0,
+        reports: 0,
+        scoringIds: [],
+        newlyFinishedIds: [],
+        newlyLiveIds: [],
+        goalUpdates: [],
+        updated: true,
+      };
     }
-    return { events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [], updated: false };
+    return {
+      events: 0,
+      reports: 0,
+      scoringIds: [],
+      newlyFinishedIds: [],
+      newlyLiveIds: [],
+      goalUpdates: [],
+      updated: false,
+    };
   }
 
   const scoringIds = [];
@@ -359,11 +386,36 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
     await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
   }
 
+  const becameLive = match.status === 'upcoming' && effectiveStatus === 'live';
+  const resolvedHome = rawUpdate.homeScore ?? match.homeScore ?? 0;
+  const resolvedAway = rawUpdate.awayScore ?? match.awayScore ?? 0;
+  const newGoals =
+    effectiveStatus === 'live' ? findNewTimelineGoals(previousTimeline, timeline) : [];
+  const goalUpdates =
+    newGoals.length > 0
+      ? [
+          {
+            match: {
+              ...match,
+              ...rawUpdate,
+              status: effectiveStatus,
+              homeScore: resolvedHome,
+              awayScore: resolvedAway,
+            },
+            newGoals,
+            homeScore: resolvedHome,
+            awayScore: resolvedAway,
+          },
+        ]
+      : [];
+
   return {
     events: matchUpdated ? 1 : 0,
     reports: reportsSynced,
     scoringIds,
     newlyFinishedIds,
+    newlyLiveIds: becameLive ? [match._id] : [],
+    goalUpdates,
     updated: matchUpdated,
   };
 }
@@ -376,7 +428,15 @@ export async function syncStaleLiveFifaMatchEvents({
   const liveMatches = await Match.find({ status: 'live' }).lean();
   const staleMatches = liveMatches.filter((match) => isLiveFifaEventsStale(match, maxAgeMs, now));
   if (!staleMatches.length) {
-    return { matches: 0, events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [] };
+    return {
+      matches: 0,
+      events: 0,
+      reports: 0,
+      scoringIds: [],
+      newlyFinishedIds: [],
+      newlyLiveIds: [],
+      goalUpdates: [],
+    };
   }
 
   let calendar = [];
@@ -390,6 +450,8 @@ export async function syncStaleLiveFifaMatchEvents({
   let reportsSynced = 0;
   const scoringIds = [];
   const newlyFinishedIds = [];
+  const newlyLiveIds = [];
+  const goalUpdates = [];
 
   for (const match of staleMatches) {
     const { homeTeam, awayTeam } = await loadMatchTeams(match);
@@ -406,6 +468,8 @@ export async function syncStaleLiveFifaMatchEvents({
       reportsSynced += result.reports;
       scoringIds.push(...result.scoringIds);
       newlyFinishedIds.push(...result.newlyFinishedIds);
+      newlyLiveIds.push(...(result.newlyLiveIds ?? []));
+      goalUpdates.push(...(result.goalUpdates ?? []));
     } catch (err) {
       console.warn(`FIFA live refresh skip match ${match.externalId}:`, err.message);
     }
@@ -417,6 +481,8 @@ export async function syncStaleLiveFifaMatchEvents({
     reports: reportsSynced,
     scoringIds,
     newlyFinishedIds,
+    newlyLiveIds,
+    goalUpdates,
   };
 }
 
@@ -449,7 +515,15 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
   }
 
   if (!matchesToSync.length) {
-    return { matches: 0, events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [] };
+    return {
+      matches: 0,
+      events: 0,
+      reports: 0,
+      scoringIds: [],
+      newlyFinishedIds: [],
+      newlyLiveIds: [],
+      goalUpdates: [],
+    };
   }
 
   let calendar = [];
@@ -457,13 +531,23 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
     calendar = await fetchAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar sync skipped:', err.message);
-    return { matches: 0, events: 0, reports: 0, scoringIds: [], newlyFinishedIds: [] };
+    return {
+      matches: 0,
+      events: 0,
+      reports: 0,
+      scoringIds: [],
+      newlyFinishedIds: [],
+      newlyLiveIds: [],
+      goalUpdates: [],
+    };
   }
 
   let eventsSynced = 0;
   let reportsSynced = 0;
   const scoringIds = [];
   const newlyFinishedIds = [];
+  const newlyLiveIds = [];
+  const goalUpdates = [];
 
   for (const match of matchesToSync) {
     const { homeTeam, awayTeam } = await loadMatchTeams(match);
@@ -476,6 +560,8 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
       reportsSynced += result.reports;
       scoringIds.push(...result.scoringIds);
       newlyFinishedIds.push(...result.newlyFinishedIds);
+      newlyLiveIds.push(...(result.newlyLiveIds ?? []));
+      goalUpdates.push(...(result.goalUpdates ?? []));
     } catch (err) {
       console.warn(`FIFA events sync skip match ${match.externalId}:`, err.message);
     }
@@ -487,5 +573,7 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
     reports: reportsSynced,
     scoringIds,
     newlyFinishedIds,
+    newlyLiveIds,
+    goalUpdates,
   };
 }

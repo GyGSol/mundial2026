@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
-import PushOptInBanner from '@/components/PushOptInBanner.jsx';
+import PushNotificationSettings from '@/components/PushNotificationSettings.jsx';
 import { predictionsListExcludeIds, predictionsPollIntervalMs, shouldPollPredictionsBar } from '../lib/predictionsBarPolling.js';
 import {
   findMatchInPredictionsPayload,
@@ -288,7 +288,10 @@ export default function PredictionsPage() {
       ) : null}
 
       {activeView === 'matches' && isAuthenticated ? (
-        <PushOptInBanner enabled={isAuthenticated} />
+        <PushNotificationSettings
+          enabled={isAuthenticated}
+          initialPreferences={user?.notificationPreferences}
+        />
       ) : null}
 
       {message ? <p className="text-sm text-foreground">{message}</p> : null}

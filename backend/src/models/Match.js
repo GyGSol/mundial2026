@@ -18,10 +18,12 @@ const matchSchema = new mongoose.Schema(
     /** Puntaje provisional inicializado en 0-0 al pasar a live. */
     liveScoringInitialized: { type: Boolean, default: false },
     kickoffAt: Date,
-    /** Push enviado ~15 min antes del cierre de predicciones (lockAt). */
+    /** Push enviado ~30 min antes del cierre de predicciones (lockAt). */
     predictionLockReminderSentAt: Date,
     /** Push "Partido en vivo" enviado una sola vez al pasar a live. */
     liveStartedPushSentAt: Date,
+    /** Claves de goles ya notificados por push (dedup). */
+    notifiedGoalKeys: { type: [String], default: [] },
     /** IANA zone used to derive kickoffAt from localDate (stadium local time). */
     kickoffTimezone: String,
     /** Overlay operacional de clima (suspensión NOAA, demora pre-kickoff). Ver matchWeatherOpsRules.js */

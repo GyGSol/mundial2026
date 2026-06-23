@@ -8,15 +8,25 @@ self.addEventListener('push', (event) => {
 
   const title = payload.title || 'Mundial 2026';
   const kind = payload.notificationKind || 'live';
-  const tag = payload.matchId ? `match-${kind}-${payload.matchId}` : 'mundial2026';
+  const goalKey = payload.goalKey ? `-${payload.goalKey}` : '';
+  const tag = payload.matchId
+    ? `match-${kind}-${payload.matchId}${goalKey}`
+    : 'mundial2026';
   const options = {
     body: payload.body || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     tag,
-    renotify: false,
+    renotify: kind === 'goal',
     data: {
       url: payload.url || '/predictions',
+      notificationKind: kind,
+      matchId: payload.matchId ?? null,
+      scorer: payload.scorer ?? null,
+      country: payload.country ?? null,
+      tournamentGoalNumber: payload.tournamentGoalNumber ?? null,
+      score: payload.score ?? null,
+      pointsEarned: payload.pointsEarned ?? null,
     },
   };
 

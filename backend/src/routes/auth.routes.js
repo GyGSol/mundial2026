@@ -55,6 +55,12 @@ async function serializeUser(user) {
     avatarUrl: user.isAiUser ? AI_USER_AVATAR_URL : user.avatarDataUrl || null,
     competitionGroup: group,
     competitionGroups: groups,
+    notificationPreferences: {
+      predictionLockReminder: user.notificationPreferences?.predictionLockReminder ?? true,
+      matchLiveStart: user.notificationPreferences?.matchLiveStart ?? true,
+      goals: user.notificationPreferences?.goals ?? true,
+    },
+    pushSubscribed: Boolean(user.pushSubscriptions?.length),
   };
 }
 

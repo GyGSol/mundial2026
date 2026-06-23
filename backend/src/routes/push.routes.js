@@ -3,6 +3,8 @@ import { authMiddleware } from '../middleware/auth.middleware.js';
 import {
   getVapidPublicKey,
   savePushSubscription,
+  getPushPreferencesForUser,
+  updatePushPreferencesForUser,
 } from '../services/pushNotificationService.js';
 
 const router = Router();
@@ -13,6 +15,27 @@ router.get('/vapid-public-key', (_req, res) => {
     enabled: Boolean(publicKey),
     publicKey,
   });
+});
+
+router.get('/preferences', authMiddleware, async (req, res, next) => {
+  try {
+    const data = await getPushPreferencesForUser(req.user._id);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/preferences', authMiddleware, async (req, res, next) => {
+  try {
+    const data = await updatePushPreferencesForUser(req.user._id, req.body ?? {});
+    res.json(data);
+  } catch (err) {
+    if (err.status) {
+      return res.status(err.status).json({ error: err.message });
+    }
+    next(err);
+  }
 });
 
 router.post('/subscribe', authMiddleware, async (req, res, next) => {

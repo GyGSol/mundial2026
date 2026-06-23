@@ -1226,6 +1226,27 @@ export function buildPriorTournamentGoalCounts(finishedMatches = [], excludeExte
   return counts;
 }
 
+/** Clave estable para deduplicar goles en timeline y push. */
+export function buildTimelineGoalKey(event = {}) {
+  return [
+    event.type ?? 'goal',
+    event.side ?? '',
+    event.minute ?? '',
+    event.extraMinute ?? '',
+    event.player ?? '',
+  ].join(':');
+}
+
+/** Goles presentes en `newTimeline` que no estaban en `oldTimeline`. */
+export function findNewTimelineGoals(oldTimeline = [], newTimeline = []) {
+  const oldKeys = new Set(
+    oldTimeline.filter((event) => event.type === 'goal').map((event) => buildTimelineGoalKey(event))
+  );
+  return newTimeline.filter(
+    (event) => event.type === 'goal' && !oldKeys.has(buildTimelineGoalKey(event))
+  );
+}
+
 /**
  * Adjunta goles acumulados del torneo a cada evento con jugador.
  * @param {Array<Record<string, unknown>>} timeline

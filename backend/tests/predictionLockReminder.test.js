@@ -48,18 +48,18 @@ describe('predictionLockReminderService', () => {
     vi.useRealTimers();
   });
 
-  it('getLockReminderAt es 15 min antes del cierre', () => {
+  it('getLockReminderAt es 30 min antes del cierre', () => {
     const reminderAt = getLockReminderAt(kickoff);
-    expect(reminderAt.toISOString()).toBe('2026-06-15T14:45:00.000Z');
+    expect(reminderAt.toISOString()).toBe('2026-06-15T14:30:00.000Z');
   });
 
-  it('isLockReminderDue solo en la ventana de 15 min previa al cierre', () => {
+  it('isLockReminderDue solo en la ventana de 30 min previa al cierre', () => {
     const match = { status: 'upcoming', kickoffAt: kickoff };
 
-    vi.setSystemTime(new Date('2026-06-15T14:44:00Z'));
+    vi.setSystemTime(new Date('2026-06-15T14:29:00Z'));
     expect(isLockReminderDue(match)).toBe(false);
 
-    vi.setSystemTime(new Date('2026-06-15T14:45:00Z'));
+    vi.setSystemTime(new Date('2026-06-15T14:30:00Z'));
     expect(isLockReminderDue(match)).toBe(true);
 
     vi.setSystemTime(new Date('2026-06-15T14:59:00Z'));
@@ -69,12 +69,12 @@ describe('predictionLockReminderService', () => {
     expect(isLockReminderDue(match)).toBe(false);
   });
 
-  it('getKickoffRangeForLockReminder acota kickoff entre +60 y +75 min', () => {
+  it('getKickoffRangeForLockReminder acota kickoff entre +60 y +90 min', () => {
     const now = Date.parse('2026-06-15T12:00:00Z');
     const range = getKickoffRangeForLockReminder(now);
     expect(range.$gt.toISOString()).toBe('2026-06-15T13:00:00.000Z');
-    expect(range.$lte.toISOString()).toBe('2026-06-15T13:15:00.000Z');
-    expect(LOCK_MS + LOCK_REMINDER_BEFORE_LOCK_MS).toBe(75 * 60 * 1000);
+    expect(range.$lte.toISOString()).toBe('2026-06-15T13:30:00.000Z');
+    expect(LOCK_MS + LOCK_REMINDER_BEFORE_LOCK_MS).toBe(90 * 60 * 1000);
   });
 
   it('findUsersNeedingLockReminder excluye quienes ya cargaron predicción', async () => {
@@ -100,7 +100,7 @@ describe('predictionLockReminderService', () => {
   });
 
   it('runPredictionLockReminderTick reclama el partido y envía push', async () => {
-    const now = Date.parse('2026-06-15T14:50:00Z');
+    const now = Date.parse('2026-06-15T14:45:00Z');
     const dueMatch = {
       _id: 'match-1',
       externalId: '19',
@@ -138,7 +138,7 @@ describe('predictionLockReminderService', () => {
   });
 
   it('findMatchesDueForLockReminder consulta partidos en ventana y sin aviso previo', async () => {
-    const now = Date.parse('2026-06-15T14:50:00Z');
+    const now = Date.parse('2026-06-15T14:45:00Z');
     Match.find.mockImplementation(() => ({
       lean: vi.fn().mockResolvedValue([]),
     }));

@@ -25,7 +25,7 @@ export function startPredictionLockReminderJob() {
   tick();
   intervalId = setInterval(tick, env.predictionLockReminderIntervalMs);
   const seconds = env.predictionLockReminderIntervalMs / 1000;
-  console.log(`Prediction lock reminder job started (every ${seconds}s, 15 min before close)`);
+  console.log(`Prediction lock reminder job started (every ${seconds}s, 30 min before close)`);
 }
 
 export function stopPredictionLockReminderJob() {

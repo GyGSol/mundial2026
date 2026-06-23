@@ -1,6 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { env } from '../src/config/env.js';
-import { getVapidPublicKey, notifyMatchesLiveStarted, notifyPredictionLockClosing, pickLatestPushSubscription } from '../src/services/pushNotificationService.js';
+import {
+  getVapidPublicKey,
+  notifyMatchesLiveStarted,
+  notifyPredictionLockClosing,
+  notifyGoalScored,
+  pickLatestPushSubscription,
+  filterUsersByNotificationPreference,
+  normalizeNotificationPreferences,
+  formatTournamentGoalOrdinal,
+} from '../src/services/pushNotificationService.js';
 
 describe('pushNotificationService', () => {
   const originalPushEnabled = env.pushNotificationsEnabled;
@@ -27,6 +36,28 @@ describe('pushNotificationService', () => {
     expect(picked?.endpoint).toBe('b');
   });
 
+  it('normalizeNotificationPreferences aplica defaults', () => {
+    expect(normalizeNotificationPreferences({ goals: false })).toEqual({
+      predictionLockReminder: true,
+      matchLiveStart: true,
+      goals: false,
+    });
+  });
+
+  it('filterUsersByNotificationPreference respeta toggles', () => {
+    const users = [
+      { notificationPreferences: { goals: false } },
+      { notificationPreferences: { goals: true } },
+      {},
+    ];
+    expect(filterUsersByNotificationPreference(users, 'goals')).toHaveLength(2);
+  });
+
+  it('formatTournamentGoalOrdinal usa ordinales en castellano', () => {
+    expect(formatTournamentGoalOrdinal(1)).toBe('1.er gol en el torneo');
+    expect(formatTournamentGoalOrdinal(3)).toBe('3.er gol en el torneo');
+  });
+
   it('notifyMatchesLiveStarted se omite si push está deshabilitado', async () => {
     env.pushNotificationsEnabled = false;
     const result = await notifyMatchesLiveStarted([{ _id: '1', externalId: '19' }]);
@@ -48,5 +79,35 @@ describe('pushNotificationService', () => {
       [{ _id: 'u1', pushSubscriptions: [{ endpoint: 'x', keys: {} }] }]
     );
     expect(result).toMatchObject({ sent: 0, skipped: true });
+  });
+
+  it('notifyPredictionLockClosing filtra usuarios con toggle desactivado', async () => {
+    env.pushNotificationsEnabled = false;
+    const result = await notifyPredictionLockClosing(
+      { _id: '1', externalId: '19', homeTeamId: 'a', awayTeamId: 'b' },
+      [
+        {
+          _id: 'u1',
+          pushSubscriptions: [{ endpoint: 'x', keys: {} }],
+          notificationPreferences: { predictionLockReminder: false },
+        },
+      ]
+    );
+    expect(result).toMatchObject({ sent: 0, skipped: true });
+  });
+
+  it('notifyGoalScored se omite si push está deshabilitado', async () => {
+    env.pushNotificationsEnabled = false;
+    const result = await notifyGoalScored({
+      match: { _id: '1', externalId: '19' },
+      goalEvent: { player: 'Messi', goalKey: 'g1' },
+      scoringTeam: { nameEn: 'Argentina', fifaCode: 'ARG' },
+      opponentTeam: { nameEn: 'Mexico', fifaCode: 'MEX' },
+      homeScore: 1,
+      awayScore: 0,
+      tournamentGoalNumber: 3,
+      pointsBeforeByUserId: new Map(),
+    });
+    expect(result).toMatchObject({ sent: 0, skipped: true, reason: 'push_disabled' });
   });
 });

@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema(
         updatedAt: { type: Date, default: Date.now },
       },
     ],
+    notificationPreferences: {
+      predictionLockReminder: { type: Boolean, default: true },
+      matchLiveStart: { type: Boolean, default: true },
+      goals: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

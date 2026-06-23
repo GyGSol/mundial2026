@@ -4,7 +4,7 @@ import { User } from '../models/User.js';
 
 export const LOCK_MS = 60 * 60 * 1000;
 /** Aviso push esta cantidad de ms antes del cierre (lockAt). */
-export const LOCK_REMINDER_BEFORE_LOCK_MS = 15 * 60 * 1000;
+export const LOCK_REMINDER_BEFORE_LOCK_MS = 30 * 60 * 1000;
 
 export function getLockAt(kickoffAt) {
   if (!kickoffAt) return null;

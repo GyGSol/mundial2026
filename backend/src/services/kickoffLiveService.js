@@ -5,7 +5,8 @@ import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketServi
 import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesCache.js';
 import { invalidateTournamentGoalsFinishedMatchesCache } from './tournamentGoalsFinishedMatchesCache.js';
-import { notifyMatchesLiveStarted } from './pushNotificationService.js';
+import { processGoalUpdates } from './goalPushService.js';
+import { notifyLiveStartForMatchIds } from './liveStartPushService.js';
 import { blocksKickoffPromotion, clearWeatherOpsToNormal, isPreKickoffDelayExpired, normalizeWeatherOps } from './matchWeatherOpsRules.js';
 import {
   applyInPlayWeatherSuspension,
@@ -264,7 +265,6 @@ export async function promoteMatchesAtKickoff() {
     const promotionUpdate = {
       status: 'live',
       lastSyncedAt: new Date(),
-      liveStartedPushSentAt: match.liveStartedPushSentAt ?? new Date(),
       homeScore: fifaScores?.homeScore ?? (match.homeScore == null ? 0 : match.homeScore),
       awayScore: fifaScores?.awayScore ?? (match.awayScore == null ? 0 : match.awayScore),
     };
@@ -293,21 +293,9 @@ export async function promoteMatchesAtKickoff() {
     invalidateMatchRelatedCaches();
     notifyLeaderboardUpdated({ reason: 'kickoff_live' });
 
-    const matchesToNotify = [];
-    for (const matchId of promotedIds) {
-      const claimedForPush = await Match.findOneAndUpdate(
-        { _id: matchId, liveStartedPushSentAt: { $exists: false } },
-        { liveStartedPushSentAt: new Date() },
-        { new: true }
-      );
-      if (claimedForPush) matchesToNotify.push(claimedForPush);
-    }
-
-    if (matchesToNotify.length) {
-      notifyMatchesLiveStarted(matchesToNotify).catch((err) => {
-        console.error('[push] notifyMatchesLiveStarted failed:', err.message);
-      });
-    }
+    notifyLiveStartForMatchIds(promotedIds).catch((err) => {
+      console.error('[push] notifyLiveStartForMatchIds failed:', err.message);
+    });
   }
 
   return promotedIds;
@@ -565,7 +553,27 @@ export async function syncLiveMatchScoring() {
   const weatherOpsSync = await syncLiveWeatherOps();
 
   for (const matchId of liveFifaRefresh.scoringIds ?? []) {
-    await recalculateMatchScores(matchId);
+    const handledByGoalPush = (liveFifaRefresh.goalUpdates ?? []).some(
+      (update) => String(update.match?._id) === String(matchId)
+    );
+    if (!handledByGoalPush) {
+      await recalculateMatchScores(matchId);
+    }
+  }
+
+  if (liveFifaRefresh.goalUpdates?.length) {
+    processGoalUpdates(liveFifaRefresh.goalUpdates).catch((err) => {
+      console.error('[push] processGoalUpdates failed:', err.message);
+    });
+  }
+
+  const liveStartIds = [
+    ...(liveFifaRefresh.newlyLiveIds ?? []),
+  ];
+  if (liveStartIds.length) {
+    notifyLiveStartForMatchIds(liveStartIds).catch((err) => {
+      console.error('[push] notifyLiveStartForMatchIds (fifa) failed:', err.message);
+    });
   }
 
   if (liveFifaRefresh.newlyFinishedIds?.length) {

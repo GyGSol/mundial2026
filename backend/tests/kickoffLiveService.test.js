@@ -6,6 +6,7 @@ import { promoteMatchesAtKickoff, finalizeStaleLiveMatches, syncLiveWeatherOps }
 import { recalculateMatchScores } from '../src/services/matchScoringService.js';
 import { applyInPlayWeatherSuspension } from '../src/services/matchWeatherEnrichmentService.js';
 import { notifyMatchesUpdated } from '../src/services/websocketService.js';
+import { notifyLiveStartForMatchIds } from '../src/services/liveStartPushService.js';
 
 vi.mock('../src/models/Match.js', () => ({
   Match: {
@@ -34,8 +35,8 @@ vi.mock('../src/services/matchRelatedCaches.js', () => ({
   invalidateMatchRelatedCaches: vi.fn(),
 }));
 
-vi.mock('../src/services/pushNotificationService.js', () => ({
-  notifyMatchesLiveStarted: vi.fn().mockResolvedValue(undefined),
+vi.mock('../src/services/liveStartPushService.js', () => ({
+  notifyLiveStartForMatchIds: vi.fn().mockResolvedValue({ sent: 0, claimed: 0 }),
 }));
 
 vi.mock('../src/models/Team.js', () => ({
@@ -141,6 +142,7 @@ describe('kickoffLiveService', () => {
 
     const promoted = await promoteMatchesAtKickoff();
     expect(promoted).toHaveLength(1);
+    expect(notifyLiveStartForMatchIds).toHaveBeenCalledWith(['id3']);
     expect(Match.findOneAndUpdate).toHaveBeenCalledWith(
       { _id: 'id3', status: 'upcoming' },
       expect.objectContaining({ $set: expect.objectContaining({ status: 'live' }) }),
