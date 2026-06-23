@@ -4,11 +4,43 @@ import {
   fifaEventToPitchPercent,
   getPitchEventFifaCoords,
   isInAttackingThird,
+  lineupGridToHalfPitchPercent,
+  LINEUP_LATERAL_EDGE,
+  LINEUP_LATERAL_SPAN,
   PITCH_MARGIN_X,
   PITCH_SPAN_X,
 } from './pitchCoordinates.js';
 
+function lateralTopPercent(gridY, side) {
+  return lineupGridToHalfPitchPercent(50, gridY, side).top;
+}
+
 describe('pitchCoordinates', () => {
+  describe('lineupGridToHalfPitchPercent', () => {
+    it('local: LI arriba y LD abajo', () => {
+      const liTop = Number.parseFloat(lateralTopPercent(4, 'home'));
+      const ldTop = Number.parseFloat(lateralTopPercent(96, 'home'));
+      expect(liTop).toBeLessThan(ldTop);
+      expect(liTop).toBeCloseTo(LINEUP_LATERAL_EDGE + (4 / 100) * LINEUP_LATERAL_SPAN, 1);
+      expect(ldTop).toBeCloseTo(LINEUP_LATERAL_EDGE + (96 / 100) * LINEUP_LATERAL_SPAN, 1);
+    });
+
+    it('visitante: espeja lateral (LD arriba, LI abajo)', () => {
+      const liTop = Number.parseFloat(lateralTopPercent(4, 'away'));
+      const ldTop = Number.parseFloat(lateralTopPercent(96, 'away'));
+      expect(ldTop).toBeLessThan(liTop);
+      expect(liTop).toBeCloseTo(LINEUP_LATERAL_EDGE + (96 / 100) * LINEUP_LATERAL_SPAN, 1);
+      expect(ldTop).toBeCloseTo(LINEUP_LATERAL_EDGE + (4 / 100) * LINEUP_LATERAL_SPAN, 1);
+    });
+
+    it('espeja profundidad del visitante hacia el centro', () => {
+      const home = lineupGridToHalfPitchPercent(85, 50, 'home');
+      const away = lineupGridToHalfPitchPercent(85, 50, 'away');
+      expect(home.left).not.toBe(away.left);
+      expect(Number.parseFloat(home.left)).toBeGreaterThan(Number.parseFloat(away.left));
+    });
+  });
+
   it('fifaEventToPitchPercent mapea esquina superior izquierda', () => {
     const point = fifaEventToPitchPercent({ type: 'foul', positionX: 0, positionY: 0 });
     expect(point).toEqual({
@@ -47,7 +79,7 @@ describe('pitchCoordinates', () => {
         positionX: 98,
         positionY: 48,
       })
-    ).toEqual({ x: 2, y: 48 });
+    ).toEqual({ x: 2, y: 52 });
   });
 
   it('coloca gol del local en la derecha aunque sea 2.º tiempo', () => {

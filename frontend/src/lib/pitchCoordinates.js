@@ -4,8 +4,32 @@ export const PITCH_SPAN_X = 92;
 export const PITCH_MARGIN_Y = 8;
 export const PITCH_SPAN_Y = 84;
 
+/** Mitad de cancha para alineaciones (gridX/gridY por equipo). */
+export const LINEUP_DEPTH_EDGE = 6;
+export const LINEUP_DEPTH_SPAN = 88;
+export const LINEUP_LATERAL_EDGE = 2;
+export const LINEUP_LATERAL_SPAN = 96;
+
 function clampFifaCoord(value) {
   return Math.min(100, Math.max(0, Number(value)));
+}
+
+/**
+ * gridX/gridY tácticos (perspectiva del equipo) → posición % dentro de su mitad.
+ * gridX: 0 = arco propio, 100 = línea de medio campo.
+ * gridY: 0 = banda izquierda del equipo, 100 = banda derecha.
+ * El visitante invierte gridY en pantalla (derecha arriba, izquierda abajo).
+ */
+export function lineupGridToHalfPitchPercent(gridX, gridY, side) {
+  const depth = clampFifaCoord(gridX ?? 50);
+  let lateral = clampFifaCoord(gridY ?? 50);
+  if (side === 'away') lateral = 100 - lateral;
+
+  const top = LINEUP_LATERAL_EDGE + (lateral / 100) * LINEUP_LATERAL_SPAN;
+  const alongHalf = LINEUP_DEPTH_EDGE + (depth / 100) * LINEUP_DEPTH_SPAN;
+  const left = side === 'home' ? alongHalf : 100 - alongHalf;
+
+  return { left: `${left}%`, top: `${top}%` };
 }
 
 /** Goles y tiros: coords FIFA relativas al ataque → orientación fija local/visitante. */
@@ -28,7 +52,8 @@ export function normalizeTeamEventToStadiumPitch(x, y, side) {
     return x >= 50 ? { x, y } : { x: 100 - x, y };
   }
   if (side === 'away') {
-    return x >= 50 ? { x: 100 - x, y } : { x, y };
+    const mirroredY = 100 - y;
+    return x >= 50 ? { x: 100 - x, y: mirroredY } : { x, y: mirroredY };
   }
   return { x, y };
 }

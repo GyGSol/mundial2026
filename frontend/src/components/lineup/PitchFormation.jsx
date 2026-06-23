@@ -15,13 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
 import { getTeamPitchPalette } from '@/lib/teamPitchColors.js';
-
-/** Margen desde el arco dentro de cada mitad (0–100 de profundidad). */
-const DEPTH_EDGE = 6;
-const DEPTH_SPAN = 88;
-/** gridY → posición vertical en pantalla (bandas de la cancha). */
-const LATERAL_EDGE = 2;
-const LATERAL_SPAN = 96;
+import { lineupGridToHalfPitchPercent } from '@/lib/pitchCoordinates.js';
 
 function shortName(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean);
@@ -107,18 +101,8 @@ function PitchPlayerHoverCard({ player, position, teamCode, side }) {
   );
 }
 
-/**
- * gridX: 0 = arco propio, 100 = línea de medio campo (dentro de la mitad del equipo).
- * gridY: 0 = banda superior, 100 = banda inferior.
- */
 function teamDotStyle(player, side) {
-  const depth = Math.min(100, Math.max(0, Number(player.gridX ?? 50)));
-  const lateral = Math.min(100, Math.max(0, Number(player.gridY ?? 50)));
-  const top = `${LATERAL_EDGE + (lateral / 100) * LATERAL_SPAN}%`;
-  const alongHalf = DEPTH_EDGE + (depth / 100) * DEPTH_SPAN;
-  const horizontal = side === 'home' ? alongHalf : 100 - alongHalf;
-
-  return { left: `${horizontal}%`, top };
+  return lineupGridToHalfPitchPercent(player.gridX, player.gridY, side);
 }
 
 function PlayerBadges({ summary, hideSubstitutionBadge = false }) {
