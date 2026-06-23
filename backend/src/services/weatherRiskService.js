@@ -8,6 +8,7 @@ import {
   normalizeWeatherOps,
   NOAA_RESUME_WAIT_MS,
 } from './matchWeatherOpsRules.js';
+import { localizeAuthorityAlertsBlock } from '../../../shared/weatherAlertI18n.js';
 
 const AUTHORITY_ALERTS_CACHE_TTL_LIVE_MS = 3 * 60 * 1000;
 const AUTHORITY_ALERTS_CACHE_TTL_DEFAULT_MS = 30 * 60 * 1000;
@@ -328,8 +329,8 @@ export function formatWeatherRiskForClient(risk) {
     protocol: risk.protocol ?? null,
     openMeteo: risk.openMeteo ?? [],
     authorityAlertSource: risk.authorityAlertSource ?? null,
-    nws: risk.nws ?? null,
-    msc: risk.msc ?? null,
+    nws: localizeAuthorityAlertsBlock(risk.nws),
+    msc: localizeAuthorityAlertsBlock(risk.msc),
     resumeEarliestAt: risk.resumeEarliestAt ?? null,
     lastAlertAt: risk.lastAlertAt ?? null,
     fetchedAt: risk.fetchedAt ?? null,

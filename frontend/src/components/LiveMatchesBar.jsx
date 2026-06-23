@@ -1169,7 +1169,7 @@ function PredictionClosedDialog({ match, open, onOpenChange }) {
           </p>
           {match.kickoffAt ? (
             <p className="text-foreground">
-              Kickoff: <span className="font-medium">{matchDateLabel(match)}</span>
+              Inicio: <span className="font-medium">{matchDateLabel(match)}</span>
             </p>
           ) : null}
         </CardContent>

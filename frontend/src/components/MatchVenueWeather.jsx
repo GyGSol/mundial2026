@@ -64,7 +64,7 @@ export default function MatchVenueWeather({ matchVenue, className }) {
         <div className="min-w-0 flex-1">
           <p className="font-medium text-foreground">{locationParts.join(' · ')}</p>
           {kickoffLabel ? (
-            <p className="text-xs text-muted-foreground">Kickoff: {kickoffLabel}</p>
+            <p className="text-xs text-muted-foreground">Inicio: {kickoffLabel}</p>
           ) : null}
         </div>
       </div>
@@ -110,7 +110,7 @@ export default function MatchVenueWeather({ matchVenue, className }) {
           {forecast ? (
             <div className="flex flex-col gap-1">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Pronóstico al kickoff{forecastTime ? ` · ${forecastTime}` : ''}
+                Pronóstico al inicio{forecastTime ? ` · ${forecastTime}` : ''}
               </p>
               <div className="flex flex-wrap gap-x-3 gap-y-1">
                 {forecast.description ? (

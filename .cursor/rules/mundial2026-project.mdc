@@ -63,6 +63,13 @@ Tras completar cambios que el usuario pidió (features, fixes, UI):
 - Backups automáticos a `GyGSol/mundial2026-db-backups` al finalizar partido. Manual: `heroku run "npm run backup:push -w backend" -a mundial2026-pred`.
 - Procedimientos completos: [docs/DATABASE_BACKUP_AND_RECOVERY.md](../../docs/DATABASE_BACKUP_AND_RECOVERY.md).
 
+## Idioma de la UI (castellano)
+
+- **Hasta habilitar selector de idioma:** toda la UI y los datos mostrados al usuario van en **castellano (es-AR)**.
+- **No exponer** textos crudos en inglés de APIs externas (NOAA/NWS, MSC, Open-Meteo, etc.): traducir en el backend al serializar (`formatWeatherRiskForClient`) y/o en frontend con `shared/weatherAlertI18n.js`.
+- Mantener claves internas, logs y código en inglés; solo el **copy visible** debe estar en castellano.
+- Nuevas alertas o labels: agregar entrada en `shared/weatherAlertI18n.js` con `label` + `detail` cuando haya contexto útil.
+
 ## Caricaturas de jugadores
 
 - **Siempre comprimir** antes de subir: `npm run photos:compress -- {carpeta}` — ver [docs/PLAYER_PHOTOS.md](../../docs/PLAYER_PHOTOS.md).

@@ -1,6 +1,7 @@
 import { AlertTriangle, CloudLightning, Timer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge.jsx';
 import { cn } from '@/lib/utils';
+import { localizeAuthorityAlert } from '../../../shared/weatherAlertI18n.js';
 
 function formatResumeCountdown(resumeEarliestAt) {
   if (!resumeEarliestAt) return null;
@@ -38,8 +39,9 @@ export function getWeatherRiskBadgeLabel(weatherRisk) {
 export default function WeatherOpsBadge({ weatherOps, weatherRisk, className }) {
   const opsLabel = getWeatherOpsLabel(weatherOps);
   const resumeLabel = formatResumeCountdown(weatherOps?.resumeEarliestAt);
-  const authorityAlert =
-    weatherRisk?.nws?.primaryAlert?.event ?? weatherRisk?.msc?.primaryAlert?.event ?? null;
+  const authorityAlert = localizeAuthorityAlert(
+    weatherRisk?.nws?.primaryAlert ?? weatherRisk?.msc?.primaryAlert ?? null
+  );
   const riskLevel = weatherRisk?.riskLevel;
   const riskBadgeLabel = getWeatherRiskBadgeLabel(weatherRisk);
 
@@ -73,7 +75,10 @@ export default function WeatherOpsBadge({ weatherOps, weatherRisk, className }) 
         </span>
       ) : null}
       {authorityAlert ? (
-        <span className="text-[10px] text-muted-foreground">{authorityAlert}</span>
+        <span className="flex flex-col items-center gap-0.5 text-center text-[10px] text-muted-foreground">
+          <span className="font-medium text-foreground/90">{authorityAlert.event}</span>
+          {authorityAlert.detail ? <span>{authorityAlert.detail}</span> : null}
+        </span>
       ) : null}
     </div>
   );
