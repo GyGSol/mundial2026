@@ -4,12 +4,13 @@
  * gridY: lateral 0=banda izq. del equipo, 100=banda der.
  */
 
+/** Alineado con LATERAL_SLOTS de formationLayout (línea de 4: 12–28–72–88). */
 export const LATERAL = {
-  WING_L: 8,
-  INNER_L: 35,
+  WING_L: 12,
+  INNER_L: 28,
   CENTER: 50,
-  INNER_R: 65,
-  WING_R: 92,
+  INNER_R: 72,
+  WING_R: 88,
 };
 
 export const DEPTH = {
@@ -91,6 +92,19 @@ export const FORMATION_GRID_TEMPLATES = {
     { id: 'm5', role: 'MD', gridX: DEPTH.MID_HIGH, gridY: LATERAL.WING_R },
     { id: 'f1', role: 'DC', gridX: DEPTH.ATT, gridY: LATERAL.CENTER },
   ],
+  '4-1-2-3': [
+    { id: 'gk', role: 'POR', gridX: DEPTH.GK, gridY: LATERAL.CENTER },
+    { id: 'd1', role: 'LI', gridX: DEPTH.DEF, gridY: LATERAL.WING_L },
+    { id: 'd2', role: 'DFC', gridX: DEPTH.DEF, gridY: LATERAL.INNER_L },
+    { id: 'd3', role: 'DFC', gridX: DEPTH.DEF, gridY: LATERAL.INNER_R },
+    { id: 'd4', role: 'LD', gridX: DEPTH.DEF, gridY: LATERAL.WING_R },
+    { id: 'm1', role: 'MCD', gridX: DEPTH.MID_LOW, gridY: LATERAL.CENTER },
+    { id: 'm2', role: 'MC', gridX: DEPTH.MID, gridY: LATERAL.INNER_L },
+    { id: 'm3', role: 'MC', gridX: DEPTH.MID, gridY: LATERAL.INNER_R },
+    { id: 'f1', role: 'EI', gridX: DEPTH.ATT, gridY: LATERAL.WING_L },
+    { id: 'f2', role: 'DC', gridX: DEPTH.ATT, gridY: LATERAL.CENTER },
+    { id: 'f3', role: 'ED', gridX: DEPTH.ATT, gridY: LATERAL.WING_R },
+  ],
 };
 
 const DEF_ROLES_BY_COUNT = {
@@ -120,7 +134,7 @@ function lateralForCount(count, index) {
     2: [LATERAL.INNER_L, LATERAL.INNER_R],
     3: [LATERAL.WING_L, LATERAL.CENTER, LATERAL.WING_R],
     4: [LATERAL.WING_L, LATERAL.INNER_L, LATERAL.INNER_R, LATERAL.WING_R],
-    5: [LATERAL.WING_L, LATERAL.INNER_L, LATERAL.CENTER, LATERAL.INNER_R, LATERAL.WING_R],
+    5: [10, 24, LATERAL.CENTER, 76, 90],
   };
   const row = slots[count] ?? slots[3];
   return row[Math.min(index, row.length - 1)];

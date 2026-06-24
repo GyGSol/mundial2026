@@ -9,7 +9,7 @@ import {
 import { normalizeLineupSideForPitch } from './lineupLiveState.js';
 
 describe('formationGridTemplates', () => {
-  for (const key of ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '4-2-3']) {
+  for (const key of ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '4-2-3', '4-1-2-3']) {
     it(`${key} tiene 11 celdas únicas`, () => {
       const cells = getGridTemplate(key);
       expect(cells).toHaveLength(11);
@@ -26,6 +26,16 @@ describe('formationGridTemplates', () => {
     expect(fwd).toHaveLength(3);
     const ys = fwd.map((c) => c.gridY);
     expect(new Set(ys).size).toBe(3);
+  });
+
+  it('línea de 4 defensores tiene separación lateral mínima entre LI y DFC', () => {
+    const cells = FORMATION_GRID_TEMPLATES['4-4-2'];
+    const def = cells.filter((c) => c.gridX === 30);
+    expect(def).toHaveLength(4);
+    const ys = def.map((c) => c.gridY).sort((a, b) => a - b);
+    for (let i = 1; i < ys.length; i += 1) {
+      expect(ys[i] - ys[i - 1]).toBeGreaterThanOrEqual(16);
+    }
   });
 
   it('4-4-2 separa dos DC en ataque', () => {

@@ -180,7 +180,7 @@ describe('formationLayout midfield and defense', () => {
     const sanabria = laidOut.find((p) => p.shirtNumber === 25);
     const araujo = laidOut.find((p) => p.shirtNumber === 20);
     expect(sanabria?.gridY).toBe(50);
-    expect(araujo?.gridY).toBe(92);
+    expect(araujo?.gridY).toBe(88);
     expect(Math.abs(sanabria.gridY - araujo.gridY)).toBeGreaterThanOrEqual(16);
 
     const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);

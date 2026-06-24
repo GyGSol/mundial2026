@@ -254,10 +254,37 @@ function nearestEmptyFineCell(gridX, gridY, occupiedKeys) {
 /**
  * Garantiza una celda fina por jugador y separación lateral mínima en la misma profundidad.
  */
+function normalizeGridCoords(players) {
+  return players.map((p) => {
+    if (poolForPlayer(p) === 'GK') {
+      return {
+        ...p,
+        gridX: Number((p.gridX ?? 6).toFixed(1)),
+        gridY: LATERAL.CENTER,
+      };
+    }
+    return {
+      ...p,
+      gridX: Number(Number(p.gridX ?? 50).toFixed(1)),
+      gridY: Number(Number(p.gridY ?? 50).toFixed(1)),
+    };
+  });
+}
+
 export function enforceUniquePitchCells(players, { minLateralSep = MIN_LATERAL_SEP } = {}) {
   if (!players?.length) return players ?? [];
 
-  let result = players.map((p) => ({ ...p }));
+  const incoming = players.map((p) => ({ ...p }));
+  const gridPlaced = incoming.filter((p) => p.pitchGridCellId);
+  if (gridPlaced.length === incoming.length) {
+    const normalized = normalizeGridCoords(incoming);
+    const uniqueCells = new Set(normalized.map((p) => p.pitchGridCellId)).size === normalized.length;
+    if (uniqueCells && assertNoPitchOverlaps(normalized, { minLateralSep }).length === 0) {
+      return normalized;
+    }
+  }
+
+  let result = incoming;
 
   const placeGk = () => {
     for (let i = 0; i < result.length; i += 1) {
