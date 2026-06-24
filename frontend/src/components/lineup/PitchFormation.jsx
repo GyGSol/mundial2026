@@ -6,7 +6,7 @@ import PitchEventPinInteractions, {
   PitchEventPinVisuals,
 } from '@/components/lineup/PitchEventLayer.jsx';
 import PitchHeatmapLayer from '@/components/lineup/PitchHeatmapLayer.jsx';
-import { inferTacticalPosition } from '@/lib/playerPositionLabel.js';
+import { displayLineupPosition } from '@/lib/playerPositionLabel.js';
 import {
   buildPlayerEventSummary,
   playerKeyFromLineupPlayer,
@@ -26,13 +26,7 @@ function shortName(fullName) {
 }
 
 function lineupPositionLabel(player) {
-  return (
-    inferTacticalPosition({
-      position: player.position,
-      positionX: player.gridX,
-      positionY: player.gridY,
-    }) ?? player.position
-  );
+  return displayLineupPosition(player) ?? player.position;
 }
 
 function formatHoverDetail(player, position) {

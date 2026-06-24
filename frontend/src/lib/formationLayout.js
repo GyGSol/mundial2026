@@ -604,6 +604,31 @@ function lateralPositionsForLine(players, count, pool) {
 
   if (pool === 'FWD') {
     const centerLike = players.filter(isCenterForwardLike);
+    if (centerLike.length >= 2) {
+      const centerSorted = [...centerLike].sort(
+        (a, b) => (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
+      );
+      const centerSlots = forwardCenterClusterLateralSlots(centerSorted.length);
+      const wings = players.filter((player) => !centerLike.includes(player));
+      const slotsByPlayer = new Map();
+      centerSorted.forEach((player, index) => {
+        slotsByPlayer.set(player, centerSlots[index]);
+      });
+      if (wings.length === 1) {
+        slotsByPlayer.set(wings[0], lateralSortKey(wings[0], players) <= 50 ? 8 : 92);
+      } else if (wings.length > 1) {
+        const wingSlots =
+          wings.length === 2
+            ? [8, 92]
+            : Array.from({ length: wings.length }, (_, slotIndex) =>
+                lateralForSlot(slotIndex, wings.length)
+              );
+        wings.forEach((player, index) => {
+          slotsByPlayer.set(player, wingSlots[index]);
+        });
+      }
+      return players.map((player) => Number((slotsByPlayer.get(player) ?? 50).toFixed(1)));
+    }
     if (centerLike.length === count) return centerClusterLateralSlots(count);
   }
 

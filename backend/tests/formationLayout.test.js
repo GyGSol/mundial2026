@@ -85,6 +85,19 @@ describe('formationLayout', () => {
     expect(placed.find((p) => p.name === 'ST').gridX).toBeGreaterThan(75);
   });
 
+  it('assignPlayersToFormation separa dos CF con el mismo gridRaw de API', () => {
+    const forwards = [
+      { shirtNumber: 9, position: 'Forward', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
+      { shirtNumber: 17, position: 'Forward', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
+      { shirtNumber: 20, position: 'Forward', positionDetail: 'Right Winger', gridRaw: '4:4' },
+    ];
+
+    const laidOut = assignPlayersToFormation(forwards, '1-0-3');
+    const ys = laidOut.map((p) => p.gridY);
+    expect(new Set(ys.map((y) => y.toFixed(1))).size).toBe(3);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThanOrEqual(20);
+  });
+
   it('parseApiFootballGrid normaliza row:col según formación', () => {
     const gk = parseApiFootballGrid('1:1', '4-3-3');
     const def = parseApiFootballGrid('2:2', '4-3-3');

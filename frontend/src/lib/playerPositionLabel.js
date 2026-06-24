@@ -7,6 +7,62 @@ const COARSE_FALLBACK = {
   FWD: 'DC',
 };
 
+/** Etiqueta táctica en cancha: prioriza positionDetail (MCO, EI…) sobre inferencia por coords. */
+export function displayLineupPosition(player) {
+  const detail = String(player?.positionDetail ?? '').trim();
+  const detailLower = detail.toLowerCase();
+  if (detail) {
+    const first = detail.split(/\s+/)[0].toUpperCase();
+    const shortTokens = new Set([
+      'POR',
+      'GK',
+      'LI',
+      'LD',
+      'DFC',
+      'MI',
+      'MD',
+      'MCD',
+      'MCO',
+      'MC',
+      'EI',
+      'ED',
+      'DC',
+      'CF',
+      'ST',
+    ]);
+    if (shortTokens.has(first)) return first === 'GK' ? 'POR' : first;
+    if (detailLower.includes('goalkeeper')) return 'POR';
+    if (
+      detailLower.includes('centre-forward') ||
+      detailLower.includes('center forward') ||
+      detailLower.includes('striker')
+    ) {
+      return 'DC';
+    }
+    if (detailLower.includes('right wing') || (detailLower.includes('winger') && detailLower.includes('right'))) {
+      return 'ED';
+    }
+    if (detailLower.includes('left wing') || (detailLower.includes('winger') && detailLower.includes('left'))) {
+      return 'EI';
+    }
+    if (detailLower.includes('left back')) return 'LI';
+    if (detailLower.includes('right back')) return 'LD';
+    if (detailLower.includes('centre-back') || detailLower.includes('center back')) return 'DFC';
+    if (detailLower.includes('attacking mid')) return 'MCO';
+    if (detailLower.includes('defensive mid')) return 'MCD';
+    if (detailLower.includes('central mid')) return 'MC';
+  }
+
+  return (
+    inferTacticalPosition({
+      position: player?.position,
+      positionX: player?.gridX,
+      positionY: player?.gridY,
+    }) ?? player?.position ??
+    null
+  );
+}
+
 export function inferTacticalPosition({ position, positionX, positionY }) {
   const coarse = String(position ?? '')
     .trim()

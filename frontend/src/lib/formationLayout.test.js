@@ -92,6 +92,19 @@ describe('formationLayout center forwards', () => {
     const next = spreadOverlappingGridPositions(players);
     expect(Math.abs(next[0].gridY - next[1].gridY)).toBeGreaterThanOrEqual(16);
   });
+
+  it('assignPlayersToFormation separa dos CF con el mismo gridRaw de API', () => {
+    const forwards = [
+      { shirtNumber: 9, position: 'Forward', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
+      { shirtNumber: 17, position: 'Forward', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
+      { shirtNumber: 20, position: 'Forward', positionDetail: 'Right Winger', gridRaw: '4:4' },
+    ];
+
+    const laidOut = assignPlayersToFormation(forwards, '1-0-3', { includeLeftovers: true });
+    const ys = laidOut.map((p) => p.gridY);
+    expect(new Set(ys.map((y) => y.toFixed(1))).size).toBe(3);
+    expect(Math.abs(ys[0] - ys[1])).toBeGreaterThanOrEqual(20);
+  });
 });
 
 describe('formationLayout midfield and defense', () => {
