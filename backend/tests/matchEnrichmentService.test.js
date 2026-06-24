@@ -58,7 +58,10 @@ vi.mock('../src/services/stadiumPayload.js', () => ({
 }));
 
 vi.mock('../src/services/tournamentGoalsFinishedMatchesCache.js', () => ({
-  getCachedFinishedMatchesForTournamentGoals: vi.fn().mockResolvedValue([]),
+  getCachedTournamentGoalCountsBundle: vi.fn().mockResolvedValue({
+    globalCounts: new Map(),
+    goalsByExternalId: new Map(),
+  }),
 }));
 
 import { Player } from '../src/models/Player.js';

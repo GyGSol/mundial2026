@@ -27,6 +27,10 @@ export async function getCachedWorldCupOverview({ includePlayerStats = false } =
     return entry.value;
   }
 
+  if (entry?.expiresAt !== undefined && entry.expiresAt <= now) {
+    cacheByKey.delete(key);
+  }
+
   if (entry?.promise) {
     return entry.promise;
   }

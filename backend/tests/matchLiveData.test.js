@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   attachTimelineTournamentGoals,
   createPriorTournamentGoalCountsResolver,
+  createPriorTournamentGoalCountsResolverFromBundle,
+  buildTournamentGoalCountsBundle,
   buildPriorTournamentGoalCounts,
   completeTimelineEvents,
   deduplicateTimelineGoals,
@@ -717,6 +719,37 @@ describe('matchLiveData', () => {
 
       const prior = buildPriorTournamentGoalCounts(finished, 'current-match');
       expect(prior.get('name:jonathan david')).toBe(2);
+    });
+
+    it('buildTournamentGoalCountsBundle y resolver compacto excluyen el partido actual', () => {
+      const finished = [
+        {
+          externalId: 'prev-match',
+          raw: {
+            fifaEvents: {
+              timeline: [
+                { type: 'goal', side: 'home', minute: 12, player: 'Jonathan DAVID', sortKey: 12 },
+                { type: 'goal', side: 'home', minute: 55, player: 'Jonathan DAVID', sortKey: 55 },
+              ],
+            },
+          },
+        },
+        {
+          externalId: 'current-match',
+          raw: {
+            fifaEvents: {
+              timeline: [
+                { type: 'goal', side: 'home', minute: 10, player: 'Jonathan DAVID', sortKey: 10 },
+              ],
+            },
+          },
+        },
+      ];
+
+      const bundle = buildTournamentGoalCountsBundle(finished);
+      const resolve = createPriorTournamentGoalCountsResolverFromBundle(bundle);
+      expect(resolve('current-match', 'finished').get('name:jonathan david')).toBe(2);
+      expect(resolve('live-a', 'live').get('name:jonathan david')).toBe(3);
     });
 
     it('createPriorTournamentGoalCountsResolver reutiliza counts para partidos live', () => {

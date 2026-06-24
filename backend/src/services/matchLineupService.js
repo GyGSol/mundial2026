@@ -225,10 +225,19 @@ function sideNeedsShirtNumbers(side) {
 }
 
 const SQUAD_SHIRT_CACHE_MS = 6 * 60 * 60 * 1000;
+const SQUAD_SHIRT_CACHE_MAX_ENTRIES = 48;
 /** @type {Map<string, { map: Record<string, number>, fetchedAt: number, blockedUntil?: number }>} */
 const squadShirtCache = new Map();
 /** @type {Map<string, Promise<Record<string, number>>>} */
 const squadShirtInflight = new Map();
+
+function trimSquadShirtCache() {
+  while (squadShirtCache.size > SQUAD_SHIRT_CACHE_MAX_ENTRIES) {
+    const oldestKey = squadShirtCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    squadShirtCache.delete(oldestKey);
+  }
+}
 
 function shirtFromLookupMap(name, lookup = {}) {
   if (!name || !lookup) return null;
@@ -268,6 +277,7 @@ async function loadFootballDataSquadShirtMap(team) {
         if (last && map[last] == null) map[last] = shirt;
       }
       squadShirtCache.set(cacheKey, { map, fetchedAt: Date.now() });
+      trimSquadShirtCache();
       return map;
     } catch (err) {
       const waitMatch = /Wait (\d+) seconds/i.exec(String(err.message));

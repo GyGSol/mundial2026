@@ -10,6 +10,9 @@ export function createInMemoryCache({ defaultTtlMs = 30_000 } = {}) {
     if (entry?.value !== undefined && entry.expiresAt > now) {
       return entry;
     }
+    if (entry?.expiresAt !== undefined && entry.expiresAt <= now) {
+      cacheByKey.delete(key);
+    }
     return null;
   }
 

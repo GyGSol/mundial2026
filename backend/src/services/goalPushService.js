@@ -3,11 +3,11 @@ import { Prediction } from '../models/Prediction.js';
 import { Team } from '../models/Team.js';
 import {
   attachTimelineTournamentGoals,
-  buildPriorTournamentGoalCounts,
   buildTimelineGoalKey,
   findNewTimelineGoals,
+  priorTournamentGoalCountsForMatch,
 } from './matchLiveData.js';
-import { getCachedFinishedMatchesForTournamentGoals } from './tournamentGoalsFinishedMatchesCache.js';
+import { getCachedTournamentGoalCountsBundle } from './tournamentGoalsFinishedMatchesCache.js';
 import { notifyGoalScored } from './pushNotificationService.js';
 import { recalculateMatchScores } from './matchScoringService.js';
 
@@ -53,8 +53,8 @@ export async function processNewGoalsForMatch({
   const pointsBeforeByUserId = await snapshotPredictionPoints(match._id);
   await recalculateMatchScores(match._id);
 
-  const finishedMatches = await getCachedFinishedMatchesForTournamentGoals();
-  const priorCounts = buildPriorTournamentGoalCounts(finishedMatches, match.externalId);
+  const goalCountsBundle = await getCachedTournamentGoalCountsBundle();
+  const priorCounts = priorTournamentGoalCountsForMatch(goalCountsBundle, match.externalId);
 
   let sent = 0;
   let goalsNotified = 0;

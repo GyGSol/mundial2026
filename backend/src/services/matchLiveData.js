@@ -1186,6 +1186,70 @@ export function playerGoalCountKey(event, role = 'player') {
  * @param {Array<{ externalId?: string, raw?: Record<string, unknown> | null }>} finishedMatches
  * @param {string | null | undefined} excludeExternalId
  */
+/**
+ * Agrega goles por jugador desde partidos finalizados sin retener documentos Mongo completos.
+ * @returns {{ globalCounts: Map<string, number>, goalsByExternalId: Map<string, Map<string, number>> }}
+ */
+export function buildTournamentGoalCountsBundle(finishedMatches = []) {
+  const globalCounts = new Map();
+  const goalsByExternalId = new Map();
+
+  for (const match of finishedMatches) {
+    const matchGoals = new Map();
+    const timeline = readMatchTimeline(match.raw ?? {});
+    for (const event of timeline) {
+      if (event.type !== 'goal' || !event.player) continue;
+      const key = playerGoalCountKey(event, 'player');
+      if (!key) continue;
+      matchGoals.set(key, (matchGoals.get(key) ?? 0) + 1);
+      globalCounts.set(key, (globalCounts.get(key) ?? 0) + 1);
+    }
+    if (match.externalId) {
+      goalsByExternalId.set(match.externalId, matchGoals);
+    }
+  }
+
+  return { globalCounts, goalsByExternalId };
+}
+
+/** Prior counts desde bundle compacto (menos RAM que arrays de partidos con raw completo). */
+export function createPriorTournamentGoalCountsResolverFromBundle(bundle) {
+  const { globalCounts, goalsByExternalId } = bundle ?? {
+    globalCounts: new Map(),
+    goalsByExternalId: new Map(),
+  };
+  const byExcludeExternalId = new Map();
+
+  return function resolvePriorTournamentGoalCounts(excludeExternalId, status) {
+    if (status === 'live') {
+      return globalCounts;
+    }
+    const key = excludeExternalId ?? '';
+    if (!byExcludeExternalId.has(key)) {
+      const excludeGoals = goalsByExternalId.get(key);
+      if (!excludeGoals?.size) {
+        byExcludeExternalId.set(key, globalCounts);
+      } else {
+        const counts = new Map(globalCounts);
+        for (const [playerKey, n] of excludeGoals) {
+          const next = (counts.get(playerKey) ?? 0) - n;
+          if (next <= 0) counts.delete(playerKey);
+          else counts.set(playerKey, next);
+        }
+        byExcludeExternalId.set(key, counts);
+      }
+    }
+    return byExcludeExternalId.get(key);
+  };
+}
+
+export function priorTournamentGoalCountsForMatch(bundle, excludeExternalId) {
+  return createPriorTournamentGoalCountsResolverFromBundle(bundle)(
+    excludeExternalId,
+    'finished'
+  );
+}
+
 /** Memoiza prior counts por partido en un mismo enrich (live comparte un mapa). */
 export function createPriorTournamentGoalCountsResolver(finishedMatches = []) {
   let liveCounts = null;

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   clearTournamentGoalsFinishedMatchesCache,
-  getCachedFinishedMatchesForTournamentGoals,
+  getCachedTournamentGoalCountsBundle,
   invalidateTournamentGoalsFinishedMatchesCache,
   TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS,
 } from '../src/services/tournamentGoalsFinishedMatchesCache.js';
@@ -10,7 +10,12 @@ vi.mock('../src/models/Match.js', () => ({
   Match: {
     find: vi.fn(() => ({
       select: vi.fn(() => ({
-        lean: vi.fn(async () => [{ externalId: 'm1', raw: {} }]),
+        lean: vi.fn(async () => [
+          {
+            externalId: 'm1',
+            raw: { fifaEvents: { timeline: [{ type: 'goal', player: 'A', side: 'home' }] } },
+          },
+        ]),
       })),
     })),
   },
@@ -22,19 +27,19 @@ describe('tournamentGoalsFinishedMatchesCache', () => {
     vi.clearAllMocks();
   });
 
-  it('reutiliza partidos finalizados dentro del TTL', async () => {
-    const first = await getCachedFinishedMatchesForTournamentGoals();
-    const second = await getCachedFinishedMatchesForTournamentGoals();
+  it('reutiliza bundle de goles dentro del TTL', async () => {
+    const first = await getCachedTournamentGoalCountsBundle();
+    const second = await getCachedTournamentGoalCountsBundle();
 
     expect(first).toBe(second);
-    expect(first).toHaveLength(1);
+    expect(first.globalCounts.get('name:a')).toBe(1);
     expect(TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS).toBe(60_000);
   });
 
   it('recarga tras invalidación', async () => {
-    const first = await getCachedFinishedMatchesForTournamentGoals();
+    const first = await getCachedTournamentGoalCountsBundle();
     invalidateTournamentGoalsFinishedMatchesCache();
-    const second = await getCachedFinishedMatchesForTournamentGoals();
+    const second = await getCachedTournamentGoalCountsBundle();
 
     expect(first).not.toBe(second);
   });

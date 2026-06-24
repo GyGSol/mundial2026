@@ -14,9 +14,9 @@ import { getCachedUserPredictedMatchContext } from './userPredictedMatchContextC
 import { enrichMatchPhaseFields } from './matchPhaseUtils.js';
 import {
   enrichMatchLiveFields,
-  createPriorTournamentGoalCountsResolver,
+  createPriorTournamentGoalCountsResolverFromBundle,
 } from './matchLiveData.js';
-import { getCachedFinishedMatchesForTournamentGoals } from './tournamentGoalsFinishedMatchesCache.js';
+import { getCachedTournamentGoalCountsBundle } from './tournamentGoalsFinishedMatchesCache.js';
 import { RECENTLY_FINISHED_GRACE_MS } from './matchDisplayVisibilityService.js';
 import { ensureFifaShirtMaps } from './fifaShirtMapService.js';
 import { formatStadiumForClient } from './stadiumPayload.js';
@@ -138,8 +138,8 @@ export async function enrichMatches(matches, userId, options = {}) {
   }
 
   const resolvePriorTournamentGoalCounts = needsTournamentGoals
-    ? createPriorTournamentGoalCountsResolver(
-        await getCachedFinishedMatchesForTournamentGoals()
+    ? createPriorTournamentGoalCountsResolverFromBundle(
+        await getCachedTournamentGoalCountsBundle()
       )
     : null;
 
