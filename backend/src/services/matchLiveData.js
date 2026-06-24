@@ -1450,7 +1450,6 @@ export function enrichMatchLiveFields(match, options = {}) {
       baseTimeline = enrichTimelineRosterFields(baseTimeline, mappedHomePlayers, mappedAwayPlayers);
     }
   }
-  const baseTimelineScorers = scorersFromTimeline(baseTimeline);
   const parsedHomeScorers = parseScorersField(raw.home_scorers ?? raw.homeScorers);
   const parsedAwayScorers = parseScorersField(raw.away_scorers ?? raw.awayScorers);
   const scoreSeed = showResults
@@ -1459,8 +1458,8 @@ export function enrichMatchLiveFields(match, options = {}) {
 
   let matchTimeline = showResults
     ? completeTimelineEvents(baseTimeline, {
-        homeScorers: pickNonEmptyList(parsedHomeScorers, baseTimelineScorers.home),
-        awayScorers: pickNonEmptyList(parsedAwayScorers, baseTimelineScorers.away),
+        homeScorers: parsedHomeScorers,
+        awayScorers: parsedAwayScorers,
         homeScore: scoreSeed.homeScore,
         awayScore: scoreSeed.awayScore,
       })

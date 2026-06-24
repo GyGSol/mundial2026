@@ -13,20 +13,18 @@ import {
   sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
 import { buildMatchLineupPayload } from './matchLineupService.js';
+import { LIVE_BAR_MATCH_PROJECTION } from './liveBarMatchProjection.js';
 
 const RECENT_FINISHED_QUERY_LIMIT = Math.max(RECENT_FINISHED_FEATURED_MAX + 2, 3);
-
-const BAR_PROJECTION =
-  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.finished raw.time_elapsed raw.home_scorers raw.away_scorers raw.fifaMeta raw.fifaEvents.timeline raw.fifaEvents.rawEvents';
 
 async function computeLiveMatchSnapshot(userId) {
   const [liveRaw, recentFinishedRaw] = await Promise.all([
     Match.find({ status: 'live' })
-      .select(BAR_PROJECTION)
+      .select(LIVE_BAR_MATCH_PROJECTION)
       .sort({ kickoffAt: 1, externalId: 1 })
       .lean(),
     Match.find(findRecentlyFinishedMatchesQuery())
-      .select(BAR_PROJECTION)
+      .select(LIVE_BAR_MATCH_PROJECTION)
       .sort({ finishedAt: -1, kickoffAt: -1 })
       .limit(RECENT_FINISHED_QUERY_LIMIT)
       .lean(),

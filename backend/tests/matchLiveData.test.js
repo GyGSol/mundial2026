@@ -666,6 +666,25 @@ describe('matchLiveData', () => {
       expect(enriched.homeScore).toBe(1);
       expect(enriched.awayScore).toBe(1);
     });
+
+    it('proyección parcial sin away_scorers no infla marcador (regresión predicciones en vivo)', () => {
+      const timeline = [
+        { type: 'goal', side: 'away', minute: 7, player: 'VINICIUS JUNIOR', sortKey: 7 },
+        { type: 'goal', side: 'away', minute: 45, player: 'VINICIUS JUNIOR', sortKey: 45 },
+        { type: 'goal', side: 'away', minute: 60, player: 'MATHEUS CUNHA', sortKey: 60 },
+      ];
+      const enriched = enrichMatchLiveFields({
+        status: 'live',
+        homeScore: 0,
+        awayScore: 3,
+        raw: {
+          fifaEvents: { timeline },
+        },
+      });
+
+      expect(enriched.homeScore).toBe(0);
+      expect(enriched.awayScore).toBe(3);
+    });
   });
 
   describe('readFifaAuthoritativeScores', () => {

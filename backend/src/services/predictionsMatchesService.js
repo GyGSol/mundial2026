@@ -13,9 +13,7 @@ import {
   buildFeaturedRecentFinishedRaw,
   sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
-
-const BAR_MATCH_PROJECTION =
-  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.finished raw.time_elapsed raw.fifaEvents.timeline';
+import { LIVE_BAR_MATCH_PROJECTION } from './liveBarMatchProjection.js';
 
 export async function listPredictionsMatches({ status, group }, userId) {
   const filter = {};
@@ -29,11 +27,11 @@ export async function listPredictionsMatches({ status, group }, userId) {
       await Match.find(filter).select('-raw').lean()
     ),
     Match.find(findLiveMatchesQueryWithGroup(barGroup))
-      .select(BAR_MATCH_PROJECTION)
+      .select(LIVE_BAR_MATCH_PROJECTION)
       .sort({ kickoffAt: 1, externalId: 1 })
       .lean(),
     Match.find(findRecentlyFinishedMatchesQueryWithGroup(barGroup))
-      .select(BAR_MATCH_PROJECTION)
+      .select(LIVE_BAR_MATCH_PROJECTION)
       .sort({ finishedAt: -1, kickoffAt: -1 })
       .lean(),
   ]);
