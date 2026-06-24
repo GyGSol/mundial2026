@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { User } from '../models/User.js';
+import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { resolvePublicAvatarUrl } from './userAvatarService.js';
@@ -101,8 +102,34 @@ function resolveKickoffIndicatorBreakdown(prediction) {
   return breakdownForLiveKickoffIndicators(resolveKickoffBreakdownSnapshot(prediction));
 }
 
-function resolveKickoffStatCreditForIndicator(key, prediction, kickoffBonus = 0) {
+function goalStatCreditsCredited(breakdown) {
+  return (
+    statCreditFromBreakdown('gl', breakdown) > 0 &&
+    statCreditFromBreakdown('gv', breakdown) > 0 &&
+    statCreditFromBreakdown('gt', breakdown) > 0
+  );
+}
+
+function isScoreStillNil(match) {
+  return (match?.homeScore ?? 0) === 0 && (match?.awayScore ?? 0) === 0;
+}
+
+/**
+ * Crédito de kickoff para flechas por partido.
+ * GL siempre contra baseline sin goles; GV/GT en 0-0 muestran flecha si hay crédito,
+ * pero no si el visitante/total ya estaba acertado al kickoff y el marcador avanzó (1-0).
+ */
+function resolveKickoffStatCreditForIndicator(key, prediction, kickoffBonus = 0, match = null) {
   const kickoffBreakdown = resolveKickoffBreakdownSnapshot(prediction);
+  const currentBreakdown = prediction.pointsBreakdown ?? {};
+  const rawCredit = statCreditFromBreakdown(key, kickoffBreakdown, kickoffBonus);
+  const currentCredit = statCreditFromBreakdown(
+    key,
+    currentBreakdown,
+    prediction.bonusPoint ?? 0
+  );
+  const scoreUnchanged = isScoreStillNil(match);
+
   if (key === 'gl') {
     return statCreditFromBreakdown(
       key,
@@ -110,7 +137,22 @@ function resolveKickoffStatCreditForIndicator(key, prediction, kickoffBonus = 0)
       kickoffBonus
     );
   }
-  return statCreditFromBreakdown(key, kickoffBreakdown, kickoffBonus);
+
+  if (key === 'gv' || key === 'gt') {
+    if (!scoreUnchanged && rawCredit > 0 && currentCredit <= rawCredit) {
+      return rawCredit;
+    }
+    return 0;
+  }
+
+  if (key === 'pa') {
+    if (scoreUnchanged && goalStatCreditsCredited(currentBreakdown) && currentCredit > 0) {
+      return 0;
+    }
+    return rawCredit;
+  }
+
+  return rawCredit;
 }
 
 /** Una entrada por partido en vivo (mismo orden): true = flecha verde para esa stat. */
@@ -125,15 +167,22 @@ export async function getLiveMatchStatIndicatorsByUser(userIds, liveMatchIds = [
   );
   const liveMatchObjectIds = orderedMatchIds.map((id) => new mongoose.Types.ObjectId(id));
 
-  const predictions = await Prediction.find({
-    userId: { $in: userObjectIds },
-    matchId: { $in: liveMatchObjectIds },
-    pointsEarned: { $ne: null },
-  })
-    .select(
-      'userId matchId homeGoals awayGoals pointsBreakdown bonusPoint liveKickoffBreakdown'
-    )
-    .lean();
+  const [predictions, matches] = await Promise.all([
+    Prediction.find({
+      userId: { $in: userObjectIds },
+      matchId: { $in: liveMatchObjectIds },
+      pointsEarned: { $ne: null },
+    })
+      .select(
+        'userId matchId homeGoals awayGoals pointsBreakdown bonusPoint liveKickoffBreakdown'
+      )
+      .lean(),
+    Match.find({ _id: { $in: liveMatchObjectIds } })
+      .select('homeScore awayScore')
+      .lean(),
+  ]);
+
+  const matchById = Object.fromEntries(matches.map((match) => [match._id.toString(), match]));
 
   const predictionByUserMatch = new Map(
     predictions.map((prediction) => [
@@ -160,11 +209,12 @@ export async function getLiveMatchStatIndicatorsByUser(userIds, liveMatchIds = [
 
       const currentBreakdown = prediction.pointsBreakdown ?? {};
       const kickoffBonus = 0;
+      const match = matchById[matchId] ?? null;
 
       for (const key of LIVE_INDICATOR_STAT_KEYS) {
         const gained =
           statCreditFromBreakdown(key, currentBreakdown, prediction.bonusPoint ?? 0) >
-          resolveKickoffStatCreditForIndicator(key, prediction, kickoffBonus);
+          resolveKickoffStatCreditForIndicator(key, prediction, kickoffBonus, match);
         rowIndicators[key].push(gained);
       }
     }
