@@ -75,46 +75,14 @@ describe('formationLayout', () => {
     expect(inferFormationFromPositionPools(players)).toBe('5-4-1');
   });
 
-  it('assignPlayersWithFormationLayout usa profundidad del grid API con XI completo', () => {
+  it('assignPlayersWithFormationLayout usa profundidad del grid API', () => {
     const players = [
-      { name: 'GK', position: 'GK', gridRaw: '1:1', shirtNumber: 1 },
-      { name: 'LB', position: 'DEF', gridRaw: '2:1', shirtNumber: 2 },
-      { name: 'CB1', position: 'DEF', gridRaw: '2:2', shirtNumber: 3 },
-      { name: 'CB2', position: 'DEF', gridRaw: '2:3', shirtNumber: 4 },
-      { name: 'RB', position: 'DEF', gridRaw: '2:4', shirtNumber: 5 },
-      { name: 'DM', position: 'MID', gridRaw: '3:2', shirtNumber: 6 },
-      { name: 'LM', position: 'MID', gridRaw: '4:1', shirtNumber: 7 },
-      { name: 'CM', position: 'MID', gridRaw: '4:2', shirtNumber: 8 },
-      { name: 'RM', position: 'MID', gridRaw: '4:3', shirtNumber: 9 },
-      { name: 'AM', position: 'MID', gridRaw: '4:4', shirtNumber: 10 },
-      { name: 'ST', position: 'FWD', gridRaw: '5:2', shirtNumber: 11 },
+      { name: 'GK', position: 'GK', gridRaw: '1:1' },
+      { name: 'ST', position: 'FWD', gridRaw: '5:2' },
     ];
     const placed = assignPlayersWithFormationLayout(players, '3-1-4-2');
     expect(placed.find((p) => p.name === 'GK').gridX).toBe(6);
     expect(placed.find((p) => p.name === 'ST').gridX).toBeGreaterThan(75);
-    expect(placed).toHaveLength(11);
-  });
-
-  it('assignPlayersToFormation separa dos CF en 4-4-2 (cuadrícula)', () => {
-    const players = [
-      { shirtNumber: 1, position: 'GK', positionDetail: 'Goalkeeper' },
-      { shirtNumber: 2, position: 'DEF', positionDetail: 'Left Back' },
-      { shirtNumber: 3, position: 'DEF', positionDetail: 'Centre-Back' },
-      { shirtNumber: 4, position: 'DEF', positionDetail: 'Centre-Back' },
-      { shirtNumber: 5, position: 'DEF', positionDetail: 'Right Back' },
-      { shirtNumber: 6, position: 'MID', positionDetail: 'Left Midfield' },
-      { shirtNumber: 7, position: 'MID', positionDetail: 'Central Midfield' },
-      { shirtNumber: 8, position: 'MID', positionDetail: 'Central Midfield' },
-      { shirtNumber: 11, position: 'MID', positionDetail: 'Right Midfield' },
-      { shirtNumber: 9, position: 'FW', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
-      { shirtNumber: 17, position: 'FW', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
-    ];
-
-    const laidOut = assignPlayersToFormation(players, '4-4-2');
-    const cfs = laidOut.filter((p) => p.pitchGridRole === 'DC');
-    expect(cfs).toHaveLength(2);
-    expect(Math.abs(cfs[0].gridY - cfs[1].gridY)).toBeGreaterThanOrEqual(20);
-    expect(new Set(cfs.map((p) => p.pitchGridCellId)).size).toBe(2);
   });
 
   it('parseApiFootballGrid normaliza row:col según formación', () => {
@@ -138,21 +106,11 @@ describe('formationLayout', () => {
 
   it('prioriza positionDetail sobre position cacheado incorrecto', () => {
     const players = [
-      { name: 'GK', shirtNumber: 1, position: 'GK', positionDetail: 'Goalkeeper' },
-      { name: 'LB', shirtNumber: 2, position: 'DEF', positionDetail: 'Left Back' },
-      { name: 'CB1', shirtNumber: 3, position: 'DEF', positionDetail: 'Centre-Back' },
-      { name: 'CB2', shirtNumber: 4, position: 'DEF', positionDetail: 'Centre-Back' },
-      { name: 'RB', shirtNumber: 5, position: 'DEF', positionDetail: 'Right Back' },
       { name: 'Adams', position: 'DEF', positionDetail: 'Defensive Midfield', shirtNumber: 6 },
-      { name: 'CM1', shirtNumber: 7, position: 'MID', positionDetail: 'Central Midfield' },
-      { name: 'CM2', shirtNumber: 8, position: 'MID', positionDetail: 'Central Midfield' },
       { name: 'Pulisic', position: 'MID', positionDetail: 'Left Winger', shirtNumber: 10 },
-      { name: 'ST', shirtNumber: 9, position: 'FWD', positionDetail: 'Centre-Forward' },
-      { name: 'RW', shirtNumber: 11, position: 'FWD', positionDetail: 'Right Winger' },
     ];
     const assigned = assignPlayersToFormation(players, '4-3-3');
-    expect(assigned.find((p) => p.name === 'Adams').pitchGridRole).toBe('MCD');
-    expect(assigned.find((p) => p.name === 'Pulisic').pitchGridRole).toBe('EI');
+    expect(assigned.find((p) => p.name === 'Adams').gridX).toBe(52);
     expect(assigned.find((p) => p.name === 'Pulisic').gridX).toBe(85);
   });
 
@@ -192,26 +150,18 @@ describe('formationLayout', () => {
     expect(mapFootballDataPositionText('Right Wing')).toBe('FWD');
   });
 
-  it('mergePlayerGrids usa grid API para profundidad y lateral con XI completo', () => {
+  it('mergePlayerGrids usa grid API para profundidad y lateral', () => {
     const players = [
-      { name: 'A', position: 'GK', gridRaw: '1:1', shirtNumber: 1 },
-      { name: 'B', position: 'DEF', gridRaw: '2:2', shirtNumber: 2 },
-      { name: 'C', position: 'DEF', gridRaw: '2:3', shirtNumber: 3 },
-      { name: 'D', position: 'DEF', gridRaw: '2:4', shirtNumber: 4 },
-      { name: 'E', position: 'DEF', gridRaw: '2:5', shirtNumber: 5 },
-      { name: 'F', position: 'MID', gridRaw: '3:2', shirtNumber: 6 },
-      { name: 'G', position: 'MID', gridRaw: '4:1', shirtNumber: 7 },
-      { name: 'H', position: 'MID', gridRaw: '4:2', shirtNumber: 8 },
-      { name: 'I', position: 'MID', gridRaw: '4:3', shirtNumber: 9 },
-      { name: 'J', position: 'MID', gridRaw: '4:4', shirtNumber: 10 },
-      { name: 'K', position: 'FWD', gridRaw: '5:2', shirtNumber: 11 },
+      { name: 'A', position: 'GK', gridRaw: '1:1' },
+      { name: 'B', position: 'DEF', gridRaw: '2:2' },
+      { name: 'C', position: 'FWD', gridRaw: '5:2' },
     ];
     const merged = mergePlayerGrids(players, '3-1-4-2');
-    expect(merged.find((p) => p.name === 'A').gridX).toBe(6);
-    expect(merged.find((p) => p.name === 'B').gridX).toBeGreaterThan(20);
-    expect(merged.find((p) => p.name === 'B').gridX).toBeLessThan(40);
-    expect(merged.find((p) => p.name === 'K').gridX).toBeGreaterThan(75);
-    expect(merged.every((p) => p.gridRaw === undefined)).toBe(true);
+    expect(merged[0].gridX).toBe(6);
+    expect(merged[1].gridX).toBeGreaterThan(20);
+    expect(merged[1].gridX).toBeLessThan(40);
+    expect(merged[2].gridX).toBeGreaterThan(75);
+    expect(merged[0].gridRaw).toBeUndefined();
   });
 
   it('lateralSortKey ordena laterales izq→der', () => {
@@ -230,13 +180,13 @@ describe('formationLayout', () => {
     expect(mapFootballDataPositionText('FW')).toBe('FWD');
   });
 
-  it('coloca MC en mediocampo y DC en ataque en 4-4-2 (cuadrícula)', () => {
+  it('promueve MC como segundo delantero en 4-4-2 con un solo DC', () => {
     const players = [
       { name: 'Crocombe', shirtNumber: 1, position: 'POR' },
       { name: 'Payne', shirtNumber: 2, position: 'LI' },
       { name: 'Boxall', shirtNumber: 5, position: 'DFC' },
       { name: 'Cacace', shirtNumber: 13, position: 'LD' },
-      { name: 'Surman', shirtNumber: 16, position: 'DFC' },
+      { name: 'Surman', shirtNumber: 16, position: 'DEF' },
       { name: 'Bell', shirtNumber: 6, position: 'MI' },
       { name: 'Stamenic', shirtNumber: 8, position: 'MD' },
       { name: 'McCowatt', shirtNumber: 20, position: 'MD' },
@@ -254,10 +204,9 @@ describe('formationLayout', () => {
     const singh = assigned.find((p) => p.shirtNumber === 10);
 
     expect(wood.gridX).toBe(85);
-    expect(wood.pitchGridRole).toBe('DC');
-    expect(singh.gridX).toBe(58);
-    expect(singh.pitchGridRole).toBe('MC');
+    expect(singh.gridX).toBeGreaterThan(68);
+    expect(singh.gridX).toBeLessThan(85);
+    expect(assigned.filter((p) => p.gridX >= 52 && p.gridX <= 64)).toHaveLength(4);
     expect(assigned).toHaveLength(11);
-    expect(new Set(assigned.map((p) => p.pitchGridCellId)).size).toBe(11);
   });
 });

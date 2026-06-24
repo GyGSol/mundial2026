@@ -7,8 +7,8 @@ export const PITCH_SPAN_Y = 84;
 /** Mitad de cancha para alineaciones (gridX/gridY por equipo). */
 export const LINEUP_DEPTH_EDGE = 6;
 export const LINEUP_DEPTH_SPAN = 88;
-export const LINEUP_LATERAL_EDGE = 10;
-export const LINEUP_LATERAL_SPAN = 80;
+export const LINEUP_LATERAL_EDGE = 2;
+export const LINEUP_LATERAL_SPAN = 96;
 
 function clampFifaCoord(value) {
   return Math.min(100, Math.max(0, Number(value)));

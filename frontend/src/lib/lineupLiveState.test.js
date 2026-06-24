@@ -88,10 +88,11 @@ describe('lineupLiveState', () => {
 
     expect(next.players).toHaveLength(2);
     expect(next.players.find((p) => p.name === 'Kimmich')).toBeUndefined();
-    const sane = next.players.find((p) => p.name === 'Sané');
-    expect(sane).toMatchObject({ shirtNumber: 19, subbedIn: true });
-    expect(sane.gridX).toBeGreaterThanOrEqual(38);
-    expect(sane.gridX).toBeLessThanOrEqual(45);
+    expect(next.players.find((p) => p.name === 'Sané')).toMatchObject({
+      shirtNumber: 19,
+      gridX: 40,
+      subbedIn: true,
+    });
   });
 
   it('applySubstitutionsToLineup recalcula formación si entra otra línea táctica', () => {
@@ -345,10 +346,8 @@ describe('lineupLiveState', () => {
     expect(araujo).toBeTruthy();
     expect(Math.abs(sanabria.gridY - araujo.gridY)).toBeGreaterThanOrEqual(16);
 
-    const defenders = next.home.players.filter((p) =>
-      ['LI', 'LD', 'DFC'].includes(p.pitchGridRole)
-    );
+    const defenders = next.home.players.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
     expect(defenders).toHaveLength(4);
-    expect(new Set(defenders.map((p) => p.pitchGridCellId)).size).toBe(4);
+    expect(new Set(defenders.map((p) => p.gridY)).size).toBe(4);
   });
 });

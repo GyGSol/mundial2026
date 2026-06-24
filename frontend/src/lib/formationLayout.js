@@ -1,7 +1,6 @@
 /** Posiciones en cancha (0–100) según formación táctica — espejo de backend/src/utils/formationLayout.js */
 
 import { inferTacticalPosition } from './playerPositionLabel.js';
-import { assignPlayersToPitchGrid, enforceUniquePitchCells } from './formationPitchGrid.js';
 
 const DEFAULT_FORMATION = '4-3-3';
 const LINE_POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
@@ -605,31 +604,6 @@ function lateralPositionsForLine(players, count, pool) {
 
   if (pool === 'FWD') {
     const centerLike = players.filter(isCenterForwardLike);
-    if (centerLike.length >= 2) {
-      const centerSorted = [...centerLike].sort(
-        (a, b) => (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
-      );
-      const centerSlots = forwardCenterClusterLateralSlots(centerSorted.length);
-      const wings = players.filter((player) => !centerLike.includes(player));
-      const slotsByPlayer = new Map();
-      centerSorted.forEach((player, index) => {
-        slotsByPlayer.set(player, centerSlots[index]);
-      });
-      if (wings.length === 1) {
-        slotsByPlayer.set(wings[0], lateralSortKey(wings[0], players) <= 50 ? 8 : 92);
-      } else if (wings.length > 1) {
-        const wingSlots =
-          wings.length === 2
-            ? [8, 92]
-            : Array.from({ length: wings.length }, (_, slotIndex) =>
-                lateralForSlot(slotIndex, wings.length)
-              );
-        wings.forEach((player, index) => {
-          slotsByPlayer.set(player, wingSlots[index]);
-        });
-      }
-      return players.map((player) => Number((slotsByPlayer.get(player) ?? 50).toFixed(1)));
-    }
     if (centerLike.length === count) return centerClusterLateralSlots(count);
   }
 
@@ -673,9 +647,72 @@ export function assignPlayersToFormation(
   formation = DEFAULT_FORMATION,
   { includeLeftovers = true } = {}
 ) {
-  const resolved = String(formation ?? DEFAULT_FORMATION).trim() || DEFAULT_FORMATION;
-  const roster = includeLeftovers ? players : (players ?? []).slice(0, 11);
-  return assignPlayersToPitchGrid(roster ?? [], resolved);
+  const rows = parseFormationString(formation);
+  const rowCount = rows.length;
+
+  const pools = Object.fromEntries(LINE_POSITIONS.map((p) => [p, []]));
+  for (const player of players) {
+    const detail = player.positionDetail ?? player.position;
+    const pool = mapFootballDataPositionText(detail);
+    pools[pool].push({
+      ...player,
+      position: pool,
+      positionDetail: player.positionDetail ?? player.position,
+    });
+  }
+
+  const assigned = [];
+  const lineSpecs = rows.map((count, rowIndex) => ({
+    count,
+    rowIndex,
+    pool: poolForLine(rowIndex, rowCount),
+  }));
+
+  balanceForwardPoolFromMidfield(pools, rows);
+
+  for (const spec of lineSpecs) {
+    const available = pools[spec.pool];
+
+    const picked = sortPlayersInLine(available.splice(0, spec.count), {
+      pool: spec.pool,
+      lineIndex: spec.rowIndex,
+      totalRows: rowCount,
+    });
+
+    const lateralSlots = lateralPositionsForLine(picked, picked.length, spec.pool);
+    picked.forEach((player, slotIndex) => {
+      const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = player;
+      assigned.push({
+        ...rest,
+        gridX: Number(gridDepthForLine(player, spec, rowCount).toFixed(1)),
+        gridY: Number((lateralSlots[slotIndex] ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)),
+      });
+    });
+  }
+
+  if (includeLeftovers) {
+    for (const pool of LINE_POSITIONS) {
+      const leftovers = pools[pool];
+      if (!leftovers.length) continue;
+
+      const fallbackDepth = DEPTH_BY_POOL[pool] ?? DEPTH_BY_POOL.MID;
+      const lateralSlots = lateralPositionsForLine(leftovers, leftovers.length, pool);
+      leftovers.forEach((leftover, slotIndex) => {
+        const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = leftover;
+        assigned.push({
+          ...rest,
+          gridX: fallbackDepth,
+          gridY: Number(
+            (lateralSlots[slotIndex] ??
+              lateralSortKey(leftover) ??
+              lateralForSlot(slotIndex, leftovers.length)).toFixed(1)
+          ),
+        });
+      });
+    }
+  }
+
+  return assigned;
 }
 
 /** Separa jugadores que comparten gridX/gridY para que no se oculten en la cancha. */
@@ -716,7 +753,7 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
     });
   }
 
-  return enforceUniquePitchCells(spreadTacticalLineClusters(adjusted.filter(Boolean)));
+  return spreadTacticalLineClusters(adjusted.filter(Boolean));
 }
 
 /** Dos+ jugadores con la misma posición táctica y profundidad → línea horizontal (gridY). */

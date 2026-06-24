@@ -5,7 +5,6 @@ import {
   resolvePlayerPool,
   spreadOverlappingGridPositions,
 } from '@/lib/formationLayout.js';
-import { assignPlayersToPitchGrid, enforceUniquePitchCells } from '@/lib/formationPitchGrid.js';
 import { namesLikelyMatch } from '@/lib/substitutionPhotos.js';
 
 const MAX_XI = 11;
@@ -477,8 +476,8 @@ export function normalizeLineupSideForPitch(lineupSide, side = 'home') {
 
   const tagged = lineupSide.players.map((player) => ({ ...player, side }));
   const formation = resolveFormation(tagged, lineupSide.formation);
-  const laidOut = assignPlayersToPitchGrid(tagged, formation);
-  const players = enforceUniquePitchCells(mergePlayerMeta(laidOut, tagged, side));
+  const laidOut = assignPlayersToFormation(tagged, formation, { includeLeftovers: true });
+  const players = spreadOverlappingGridPositions(mergePlayerMeta(laidOut, tagged, side));
 
   return { ...lineupSide, formation, players };
 }

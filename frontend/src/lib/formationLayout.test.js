@@ -20,6 +20,19 @@ describe('formationLayout center forwards', () => {
     expect(isCenterForwardLike({ position: 'MD' })).toBe(false);
   });
 
+  it('assignPlayersToFormation separa dos DC en la misma línea', () => {
+    const players = [
+      { name: 'Trossard', shirtNumber: 10, position: 'DC' },
+      { name: 'Fernandes', shirtNumber: 26, position: 'DC' },
+    ];
+
+    const laidOut = assignPlayersToFormation(players, '1-2-2', { includeLeftovers: true });
+    const ys = laidOut.map((p) => p.gridY);
+    expect(ys).toHaveLength(2);
+    expect(Math.abs(ys[0] - ys[1])).toBeGreaterThanOrEqual(24);
+    expect(ys.every((y) => y >= 20 && y <= 80)).toBe(true);
+  });
+
   it('spreadForwardCenterClusters abre dos DC amontonados en ataque', () => {
     const players = [
       { name: 'A', shirtNumber: 10, position: 'DC', gridX: 85, gridY: 50 },
@@ -78,28 +91,6 @@ describe('formationLayout center forwards', () => {
 
     const next = spreadOverlappingGridPositions(players);
     expect(Math.abs(next[0].gridY - next[1].gridY)).toBeGreaterThanOrEqual(16);
-  });
-
-  it('assignPlayersToFormation separa dos CF en 4-4-2 (cuadrícula)', () => {
-    const players = [
-      { shirtNumber: 1, position: 'GK', positionDetail: 'Goalkeeper' },
-      { shirtNumber: 2, position: 'DEF', positionDetail: 'Left Back' },
-      { shirtNumber: 3, position: 'DEF', positionDetail: 'Centre-Back' },
-      { shirtNumber: 4, position: 'DEF', positionDetail: 'Centre-Back' },
-      { shirtNumber: 5, position: 'DEF', positionDetail: 'Right Back' },
-      { shirtNumber: 6, position: 'MID', positionDetail: 'Left Midfield' },
-      { shirtNumber: 7, position: 'MID', positionDetail: 'Central Midfield' },
-      { shirtNumber: 8, position: 'MID', positionDetail: 'Central Midfield' },
-      { shirtNumber: 11, position: 'MID', positionDetail: 'Right Midfield' },
-      { shirtNumber: 9, position: 'FW', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
-      { shirtNumber: 17, position: 'FW', positionDetail: 'Centre-Forward', gridRaw: '4:2' },
-    ];
-
-    const laidOut = assignPlayersToFormation(players, '4-4-2');
-    const cfs = laidOut.filter((p) => p.pitchGridRole === 'DC');
-    expect(cfs).toHaveLength(2);
-    expect(Math.abs(cfs[0].gridY - cfs[1].gridY)).toBeGreaterThanOrEqual(20);
-    expect(new Set(cfs.map((p) => p.pitchGridCellId)).size).toBe(2);
   });
 });
 
@@ -180,7 +171,7 @@ describe('formationLayout midfield and defense', () => {
     const sanabria = laidOut.find((p) => p.shirtNumber === 25);
     const araujo = laidOut.find((p) => p.shirtNumber === 20);
     expect(sanabria?.gridY).toBe(50);
-    expect(araujo?.gridY).toBe(88);
+    expect(araujo?.gridY).toBe(92);
     expect(Math.abs(sanabria.gridY - araujo.gridY)).toBeGreaterThanOrEqual(16);
 
     const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
@@ -199,13 +190,13 @@ describe('formationLayout 4-4-2 forward promotion', () => {
     );
   });
 
-  it('assignPlayersToFormation coloca MC en mediocampo y DC en ataque en 4-4-2', () => {
+  it('promueve el mediocampista más ofensivo cuando solo hay un delantero neto', () => {
     const players = [
       { name: 'Crocombe', shirtNumber: 1, position: 'POR' },
       { name: 'Payne', shirtNumber: 2, position: 'LI' },
       { name: 'Boxall', shirtNumber: 5, position: 'DFC' },
       { name: 'Cacace', shirtNumber: 13, position: 'LD' },
-      { name: 'Surman', shirtNumber: 16, position: 'DFC' },
+      { name: 'Surman', shirtNumber: 16, position: 'DEF' },
       { name: 'Bell', shirtNumber: 6, position: 'MI' },
       { name: 'Stamenic', shirtNumber: 8, position: 'MD' },
       { name: 'McCowatt', shirtNumber: 20, position: 'MD' },
@@ -214,20 +205,26 @@ describe('formationLayout 4-4-2 forward promotion', () => {
       { name: 'Wood', shirtNumber: 9, position: 'DC' },
     ];
 
-    const laidOut = assignPlayersToFormation(players, '4-4-2');
+    const laidOut = assignPlayersToFormation(players, '4-4-2', { includeLeftovers: false });
     const wood = laidOut.find((p) => p.shirtNumber === 9);
     const singh = laidOut.find((p) => p.shirtNumber === 10);
 
     expect(wood.gridX).toBe(85);
-    expect(wood.pitchGridRole).toBe('DC');
-    expect(singh.gridX).toBe(58);
-    expect(singh.pitchGridRole).toBe('MC');
+    expect(singh.gridX).toBeGreaterThan(68);
+    expect(singh.gridX).toBeLessThan(85);
+    expect(singh.position).toBe('MID');
+
+    const mids = laidOut.filter((p) => [6, 8, 20, 11].includes(p.shirtNumber));
+    expect(mids).toHaveLength(4);
+    mids.forEach((p) => {
+      expect(p.gridX).toBeGreaterThanOrEqual(52);
+      expect(p.gridX).toBeLessThanOrEqual(64);
+    });
 
     expect(laidOut).toHaveLength(11);
-    expect(new Set(laidOut.map((p) => p.pitchGridCellId)).size).toBe(11);
   });
 
-  it('assignPlayersToFormation asigna celdas únicas en 5-4-1', () => {
+  it('assignPlayersToFormation agrupa MC y dos MD en el centro en 5-4-1', () => {
     const players = [
       { name: 'Asare', shirtNumber: 16, position: 'POR' },
       { name: 'Adjetey', shirtNumber: 4, position: 'LI' },
@@ -242,17 +239,20 @@ describe('formationLayout 4-4-2 forward promotion', () => {
       { name: 'Ayew', shirtNumber: 9, position: 'DC' },
     ];
 
-    const laidOut = assignPlayersToFormation(players, '5-4-1');
-    expect(laidOut).toHaveLength(11);
-    expect(new Set(laidOut.map((p) => p.pitchGridCellId)).size).toBe(11);
-
+    const laidOut = assignPlayersToFormation(players, '5-4-1', { includeLeftovers: true });
     const yirenkyi = laidOut.find((p) => p.shirtNumber === 3);
     const semenyo = laidOut.find((p) => p.shirtNumber === 11);
     const sibo = laidOut.find((p) => p.shirtNumber === 8);
     const partey = laidOut.find((p) => p.shirtNumber === 5);
 
-    expect(yirenkyi?.pitchGridRole).toBe('MI');
-    expect(semenyo?.pitchGridRole).toBe('MC');
+    expect(yirenkyi?.gridY).toBeLessThanOrEqual(12);
+    expect(semenyo?.gridY).toBeGreaterThanOrEqual(28);
+    expect(semenyo?.gridY).toBeLessThanOrEqual(72);
+    expect(sibo?.gridY).toBeGreaterThanOrEqual(28);
+    expect(sibo?.gridY).toBeLessThanOrEqual(72);
+    expect(partey?.gridY).toBeGreaterThanOrEqual(28);
+    expect(partey?.gridY).toBeLessThanOrEqual(72);
     expect(new Set([semenyo?.gridY, sibo?.gridY, partey?.gridY]).size).toBe(3);
+    expect(semenyo?.gridY).not.toBe(92);
   });
 });
