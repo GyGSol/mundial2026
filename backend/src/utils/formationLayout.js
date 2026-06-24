@@ -382,6 +382,7 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
     pool: poolForLine(rowIndex, rowCount),
   }));
 
+  rebalancePoolsForThreeAtBack(pools, rows);
   balanceForwardPoolFromMidfield(pools, rows);
 
   for (const spec of lineSpecs) {
@@ -513,6 +514,57 @@ export function isCenterForwardLike(player) {
   if (text.includes('CENTRE-FORWARD') || text.includes('CENTER FORWARD')) return true;
   if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'FWD') return false;
   return lateralSortKey(player) >= 38 && lateralSortKey(player) <= 62;
+}
+
+/** Lateral / carrilero que en 3-4-3 juega en el mediocampo, no en la línea de 3. */
+export function isWingbackLike(player) {
+  const token = positionToken(player);
+  if (token === 'LI' || token === 'LD') return true;
+
+  const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
+  if (text.includes('wing-back') || text.includes('wingback')) return true;
+  return (
+    (text.includes('left') || text.includes('right')) &&
+    text.includes('back') &&
+    !text.includes('centre') &&
+    !text.includes('center')
+  );
+}
+
+/** Elige 3 centrales (izq–centro–der) y manda el resto al mediocampo. */
+function pickThreeBackLine(defPlayers) {
+  const remaining = [...defPlayers];
+  const picked = [];
+
+  const takeFirst = (predicate) => {
+    const idx = remaining.findIndex(predicate);
+    if (idx < 0) return;
+    picked.push(remaining.splice(idx, 1)[0]);
+  };
+
+  takeFirst(
+    (p) => positionToken(p) === 'LI' || lateralSortKey(p, remaining) <= 20
+  );
+  takeFirst(isCenterBackLike);
+  takeFirst(
+    (p) => positionToken(p) === 'LD' || lateralSortKey(p, remaining) >= 80
+  );
+
+  const sortedRest = sortPlayersInLine(remaining, { pool: 'DEF' });
+  while (picked.length < 3 && sortedRest.length) {
+    picked.push(sortedRest.shift());
+  }
+
+  return { picked, excess: [...sortedRest, ...remaining] };
+}
+
+/** En formaciones de 3 atrás, solo 3 en DEF; laterales sobrantes pasan a MID. */
+function rebalancePoolsForThreeAtBack(pools, rows) {
+  if (rows[1] !== 3 || pools.DEF.length <= 3) return;
+
+  const { picked, excess } = pickThreeBackLine(pools.DEF);
+  pools.DEF = picked;
+  if (excess.length) pools.MID.push(...excess);
 }
 
 export function isCenterBackLike(player) {
