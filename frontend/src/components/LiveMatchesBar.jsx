@@ -49,7 +49,7 @@ import { useLiveMatchDisplayClock } from '@/hooks/useLiveMatchDisplayClock.js';
 import { getEffectiveMatchPlayState, isMatchPlayPaused, resolveLiveMatchesColumnTitle } from '@/lib/matchPlayState.js';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
 import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchPlayStateBadge.jsx';
-import { matchBarGridClass, liveMatchesBarGridClass } from '@/lib/matchBarLayout.js';
+import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 import { sortLiveMatchesForFeaturedBar } from '@/lib/liveMatchFeaturedSort.js';
 
 const matchDateLabel = (match) =>
@@ -1103,14 +1103,11 @@ function FeaturedMatchCard({ match }) {
   return <LiveMatchCard match={match} />;
 }
 
-function FeaturedMatchesGrid({ liveMatches, recentFinishedMatches, stackLiveVertically = false }) {
+function FeaturedMatchesGrid({ liveMatches, recentFinishedMatches }) {
   const featured = [...liveMatches, ...recentFinishedMatches];
   if (!featured.length) return null;
-  const gridClass = stackLiveVertically
-    ? liveMatchesBarGridClass()
-    : matchBarGridClass(featured.length);
   return (
-    <div className={cn('grid w-full gap-4', gridClass)}>
+    <div className={cn('grid w-full gap-4', matchBarGridClass())}>
       {featured.map((match) => (
         <div key={match.id} className="min-w-0">
           <FeaturedMatchCard match={match} />
@@ -1353,7 +1350,6 @@ export default function LiveMatchesBar({
           <FeaturedMatchesGrid
             liveMatches={sortedLiveMatches}
             recentFinishedMatches={[]}
-            stackLiveVertically
           />
         </MatchColumn>
       ) : null}
