@@ -101,6 +101,18 @@ function resolveKickoffIndicatorBreakdown(prediction) {
   return breakdownForLiveKickoffIndicators(resolveKickoffBreakdownSnapshot(prediction));
 }
 
+function resolveKickoffStatCreditForIndicator(key, prediction, kickoffBonus = 0) {
+  const kickoffBreakdown = resolveKickoffBreakdownSnapshot(prediction);
+  if (key === 'gl') {
+    return statCreditFromBreakdown(
+      key,
+      breakdownForLiveKickoffIndicators(kickoffBreakdown),
+      kickoffBonus
+    );
+  }
+  return statCreditFromBreakdown(key, kickoffBreakdown, kickoffBonus);
+}
+
 /** Una entrada por partido en vivo (mismo orden): true = flecha verde para esa stat. */
 export async function getLiveMatchStatIndicatorsByUser(userIds, liveMatchIds = []) {
   const orderedMatchIds = [...new Set(liveMatchIds.map((id) => id.toString()))];
@@ -146,14 +158,13 @@ export async function getLiveMatchStatIndicatorsByUser(userIds, liveMatchIds = [
         continue;
       }
 
-      const kickoffBreakdown = resolveKickoffBreakdownSnapshot(prediction);
       const currentBreakdown = prediction.pointsBreakdown ?? {};
       const kickoffBonus = 0;
 
       for (const key of LIVE_INDICATOR_STAT_KEYS) {
         const gained =
           statCreditFromBreakdown(key, currentBreakdown, prediction.bonusPoint ?? 0) >
-          statCreditFromBreakdown(key, kickoffBreakdown, kickoffBonus);
+          resolveKickoffStatCreditForIndicator(key, prediction, kickoffBonus);
         rowIndicators[key].push(gained);
       }
     }

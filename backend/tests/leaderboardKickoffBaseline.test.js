@@ -494,8 +494,9 @@ describe('leaderboard kickoff baseline', () => {
     const row = indicators.byUser[exact._id.toString()];
 
     expect(row.gv).toEqual([true]);
-    expect(row.gl).toEqual([false]);
+    expect(row.gl).toEqual([true]);
     expect(row.pa).toEqual([true]);
+    expect(row.gt).toEqual([true]);
   });
 
   it('no marca flecha GV en 1-0 si visitante=0 ya estaba acertado al kickoff 0-0', async () => {
@@ -539,6 +540,50 @@ describe('leaderboard kickoff baseline', () => {
 
     expect(row.gl).toEqual([true]);
     expect(row.gv).toEqual([false]);
+    expect(row.pa).toEqual([true]);
+  });
+
+  it('marca flecha GL en 0-1 exacto aunque local=0 ya coincidía al kickoff 0-0', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST11' });
+    const exact = await User.create({
+      name: 'Gisela',
+      email: 'gisela-gl@example.com',
+      passwordHash: 'hash',
+      totalPoints: 10,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: exact._id, groupId: group._id, role: 'member' });
+
+    const live = await Match.create({
+      externalId: 'live-gl-ind',
+      homeTeamId: 'pan',
+      awayTeamId: 'cro',
+      homeScore: 0,
+      awayScore: 1,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-24T01:00:00.000Z'),
+    });
+
+    await Prediction.create({
+      userId: exact._id,
+      matchId: live._id,
+      homeGoals: 0,
+      awayGoals: 1,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+      liveKickoffBreakdown: { winner: 0, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+      liveKickoffPointsEarned: 1,
+    });
+
+    const indicators = await getLiveMatchStatIndicatorsByUser(
+      [exact._id.toString()],
+      [live._id.toString()]
+    );
+    const row = indicators.byUser[exact._id.toString()];
+
+    expect(row.gl).toEqual([true]);
+    expect(row.gv).toEqual([true]);
     expect(row.pa).toEqual([true]);
   });
 
