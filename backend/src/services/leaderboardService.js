@@ -85,15 +85,20 @@ function statCreditFromBreakdown(key, breakdown, bonusPoint = 0) {
   }
 }
 
-function resolveKickoffIndicatorBreakdown(prediction) {
+function resolveKickoffBreakdownSnapshot(prediction) {
   if (prediction.liveKickoffBreakdown) {
-    return breakdownForLiveKickoffIndicators(prediction.liveKickoffBreakdown);
+    return prediction.liveKickoffBreakdown;
   }
   const kickoff = calculatePoints(
     { home: prediction.homeGoals, away: prediction.awayGoals },
     { home: 0, away: 0 }
   );
-  return breakdownForLiveKickoffIndicators(kickoff.breakdown);
+  return kickoff.breakdown;
+}
+
+/** Baseline agregado del ranking: al kickoff 0-0 solo PA; GL/GV/GT cuentan al cambiar el marcador. */
+function resolveKickoffIndicatorBreakdown(prediction) {
+  return breakdownForLiveKickoffIndicators(resolveKickoffBreakdownSnapshot(prediction));
 }
 
 /** Una entrada por partido en vivo (mismo orden): true = flecha verde para esa stat. */
@@ -141,7 +146,7 @@ export async function getLiveMatchStatIndicatorsByUser(userIds, liveMatchIds = [
         continue;
       }
 
-      const kickoffBreakdown = resolveKickoffIndicatorBreakdown(prediction);
+      const kickoffBreakdown = resolveKickoffBreakdownSnapshot(prediction);
       const currentBreakdown = prediction.pointsBreakdown ?? {};
       const kickoffBonus = 0;
 
