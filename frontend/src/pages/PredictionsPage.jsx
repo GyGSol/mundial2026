@@ -100,6 +100,7 @@ export default function PredictionsPage() {
       handleLiveSnapshotRealtime(msg, {
         patchData: ctx.patchData,
         fetchSnapshot: matchesApi.liveSnapshot,
+        getData: ctx.getData,
       }),
   });
 

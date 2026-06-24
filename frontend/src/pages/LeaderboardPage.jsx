@@ -208,6 +208,7 @@ export default function LeaderboardPage() {
         handleLiveSnapshotRealtime(msg, {
           patchData: ctx.patchData,
           fetchSnapshot: matchesApi.liveSnapshot,
+          getData: ctx.getData,
         }),
     }
   );
@@ -221,10 +222,12 @@ export default function LeaderboardPage() {
   const dashboardLiveStatIndicators = dashboardMatchesGroup
     ? data?.leaderboardLiveStatIndicators
     : null;
-  const hasLiveMatches = dashboardMatchesGroup && (
-    (data?.liveMatches?.length ?? 0) > 0 ||
-    (data?.recentFinishedMatches?.length ?? 0) > 0
-  );
+  const hasLiveMatches =
+    dashboardMatchesGroup &&
+    ((data?.liveMatches?.length ?? 0) > 0 ||
+      (data?.recentFinishedMatches?.length ?? 0) > 0 ||
+      (data?.leaderboardLiveStatIndicators?.liveMatchIds?.length ?? 0) > 0 ||
+      (data?.leaderboardKickoffBaseline?.length ?? 0) > 0);
   const rankingReady = canLoadRanking ? dashboardMatchesGroup : true;
   const rankingLoadFailed = canLoadRanking && !loading && Boolean(error) && !dashboardMatchesGroup;
   const pageReady = !canLoadRanking || dashboardMatchesGroup;
