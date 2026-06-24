@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { cn } from '@/lib/utils';
 
 const KIT_FRAME =
-  'relative mx-auto w-14 shrink-0 overflow-hidden rounded-xl border-2 border-amber-400 bg-neutral-950/80 p-1 shadow-[0_0_8px_rgba(251,191,36,0.35)] sm:mx-0 sm:w-16';
+  'relative mx-auto w-14 shrink-0 overflow-hidden rounded-xl border-2 border-amber-400 bg-white p-1 shadow-[0_0_8px_rgba(251,191,36,0.35)] sm:mx-0 sm:w-16';
 
 /** @param {{ fifaCode?: string | null, shirtNumber?: number | null, className?: string }} props */
 export default function PlayerKitBack({ fifaCode, shirtNumber, className }) {
@@ -64,7 +64,7 @@ export default function PlayerKitBack({ fifaCode, shirtNumber, className }) {
       style={{ aspectRatio: '5 / 7' }}
       aria-label={`Camiseta de ${code}, dorsal ${numberLabel}`}
     >
-      <div className="relative h-full w-full overflow-hidden rounded-lg">
+      <div className="relative h-full w-full overflow-hidden rounded-lg bg-white">
         <div className="absolute inset-0 grid scale-x-[-1] [&>img]:col-start-1 [&>img]:row-start-1 [&>img]:h-full [&>img]:w-full [&>img]:max-w-none">
           {layers.map((src) => (
             <img
@@ -78,7 +78,7 @@ export default function PlayerKitBack({ fifaCode, shirtNumber, className }) {
           ))}
         </div>
         <span
-          className="pointer-events-none absolute inset-x-0 top-[14%] z-10 text-center text-lg font-bold tabular-nums leading-none text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.95),0_0_6px_rgba(0,0,0,0.65)] sm:text-xl"
+          className="pointer-events-none absolute inset-x-0 top-[24%] z-10 text-center text-lg font-bold tabular-nums leading-none text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.95),0_0_6px_rgba(0,0,0,0.65)] sm:text-xl"
           aria-hidden
         >
           {numberLabel}
