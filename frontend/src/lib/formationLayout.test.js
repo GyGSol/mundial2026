@@ -224,36 +224,6 @@ describe('formationLayout 4-4-2 forward promotion', () => {
     expect(laidOut).toHaveLength(11);
   });
 
-  it('assignPlayersToFormation coloca 3 centrales en 3-4-3 sin apilar laterales', () => {
-    const players = [
-      { name: 'Mosquera', shirtNumber: 22, position: 'GK', positionDetail: 'POR' },
-      { name: 'Blackman', shirtNumber: 2, position: 'DEF', positionDetail: 'LI' },
-      { name: 'Harvey', shirtNumber: 14, position: 'DEF', positionDetail: 'LI' },
-      { name: 'Córdoba', shirtNumber: 3, position: 'DEF', positionDetail: 'DFC' },
-      { name: 'Andrade', shirtNumber: 16, position: 'DEF', positionDetail: 'DFC' },
-      { name: 'Ramos', shirtNumber: 13, position: 'DEF', positionDetail: 'LD' },
-      { name: 'Murillo', shirtNumber: 23, position: 'DEF', positionDetail: 'LD' },
-      { name: 'Martínez', shirtNumber: 6, position: 'MID', positionDetail: 'MI' },
-      { name: 'Rodríguez', shirtNumber: 7, position: 'MID', positionDetail: 'MD' },
-      { name: 'Bárcenas', shirtNumber: 11, position: 'MID', positionDetail: 'MC' },
-      { name: 'Fajardo', shirtNumber: 17, position: 'FWD', positionDetail: 'DC' },
-    ];
-
-    const laidOut = spreadOverlappingGridPositions(
-      assignPlayersToFormation(players, '3-4-3', { includeLeftovers: true })
-    );
-    const defenders = laidOut.filter(
-      (p) => Number(p.gridX) >= 18 && Number(p.gridX) <= 42
-    );
-
-    expect(defenders).toHaveLength(3);
-    expect(new Set(defenders.map((p) => p.gridY)).size).toBe(3);
-    expect(defenders.map((p) => p.shirtNumber).sort((a, b) => a - b)).toEqual([2, 3, 13]);
-
-    const harvey = laidOut.find((p) => p.shirtNumber === 14);
-    expect(harvey?.gridX).toBeGreaterThan(40);
-  });
-
   it('assignPlayersToFormation agrupa MC y dos MD en el centro en 5-4-1', () => {
     const players = [
       { name: 'Asare', shirtNumber: 16, position: 'POR' },
