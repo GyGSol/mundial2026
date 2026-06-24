@@ -7,8 +7,11 @@ const COARSE_FALLBACK = {
   FWD: 'DC',
 };
 
-/** Etiqueta táctica en cancha: prioriza positionDetail (MCO, EI…) sobre inferencia por coords. */
+/** Etiqueta táctica en cancha: prioriza celda de cuadrícula, luego positionDetail. */
 export function displayLineupPosition(player) {
+  const gridRole = String(player?.pitchGridRole ?? '').trim().toUpperCase();
+  if (gridRole) return gridRole === 'GK' ? 'POR' : gridRole;
+
   const detail = String(player?.positionDetail ?? '').trim();
   const detailLower = detail.toLowerCase();
   if (detail) {

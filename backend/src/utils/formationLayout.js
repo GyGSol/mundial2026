@@ -1,6 +1,7 @@
 /** Posiciones en cancha (0–100) según formación táctica estilo diagrama Wikipedia. */
 
 import { inferTacticalPosition } from './playerPositionLabel.js';
+import { assignPlayersToPitchGrid, enforceUniquePitchCells } from './formationPitchGrid.js';
 
 const DEFAULT_FORMATION = '4-3-3';
 const LINE_POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
@@ -421,72 +422,8 @@ function lateralPositionsForLine(players, count, pool) {
  * La profundidad (gridX) siempre sale de la formación; el grid API no fija el eje lateral.
  */
 export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION) {
-  const rows = parseFormationString(formation);
-  const rowCount = rows.length;
-
-  const pools = Object.fromEntries(LINE_POSITIONS.map((p) => [p, []]));
-  for (const player of players) {
-    const detail = player.positionDetail ?? player.position;
-    const pool = mapFootballDataPositionText(detail);
-    pools[pool].push({
-      ...player,
-      position: pool,
-      positionDetail: player.positionDetail ?? player.position,
-    });
-  }
-
-  const assigned = [];
-  const lineSpecs = rows.map((count, rowIndex) => ({
-    count,
-    rowIndex,
-    pool: poolForLine(rowIndex, rowCount),
-  }));
-
-  balanceForwardPoolFromMidfield(pools, rows);
-
-  for (const spec of lineSpecs) {
-    const available = pools[spec.pool];
-
-    const picked = sortPlayersInLine(available.splice(0, spec.count), {
-      pool: spec.pool,
-      lineIndex: spec.rowIndex,
-      totalRows: rowCount,
-    });
-
-    const lateralSlots = lateralPositionsForLine(picked, picked.length, spec.pool);
-    picked.forEach((player, slotIndex) => {
-      const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = player;
-      assigned.push({
-        ...rest,
-        gridX: Number(gridDepthForLine(player, spec, rowCount).toFixed(1)),
-        gridY: Number(
-          (lateralSlots[slotIndex] ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)
-        ),
-      });
-    });
-  }
-
-  for (const pool of LINE_POSITIONS) {
-    const leftovers = pools[pool];
-    if (!leftovers.length) continue;
-
-    const fallbackDepth = DEPTH_BY_POOL[pool] ?? DEPTH_BY_POOL.MID;
-    const lateralSlots = lateralPositionsForLine(leftovers, leftovers.length, pool);
-    leftovers.forEach((leftover, slotIndex) => {
-      const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = leftover;
-      assigned.push({
-        ...rest,
-        gridX: fallbackDepth,
-        gridY: Number(
-          (lateralSlots[slotIndex] ??
-            lateralSortKey(leftover) ??
-            lateralForSlot(slotIndex, leftovers.length)).toFixed(1)
-        ),
-      });
-    });
-  }
-
-  return assigned;
+  const resolved = String(formation ?? DEFAULT_FORMATION).trim() || DEFAULT_FORMATION;
+  return assignPlayersToPitchGrid(players ?? [], resolved);
 }
 
 /**
@@ -931,5 +868,5 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
     });
   }
 
-  return spreadTacticalLineClusters(adjusted.filter(Boolean));
+  return enforceUniquePitchCells(spreadTacticalLineClusters(adjusted.filter(Boolean)));
 }
