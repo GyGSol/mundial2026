@@ -78,7 +78,7 @@ export default function PlayerKitBack({ fifaCode, shirtNumber, className }) {
           ))}
         </div>
         <span
-          className="pointer-events-none absolute inset-x-0 top-[24%] z-10 text-center text-lg font-bold tabular-nums leading-none text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.95),0_0_6px_rgba(0,0,0,0.65)] sm:text-xl"
+          className="pointer-events-none absolute inset-x-0 top-[24%] z-10 text-center text-base font-bold tabular-nums leading-none text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.95),0_0_6px_rgba(0,0,0,0.65)] sm:text-lg"
           aria-hidden
         >
           {numberLabel}
