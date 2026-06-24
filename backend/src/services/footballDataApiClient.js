@@ -6,23 +6,104 @@ import { env } from '../config/env.js';
 // Lesiones y posición habitual: ver playerInjuriesSeed.json (referencia Transfermarkt).
 
 const MIN_REQUEST_INTERVAL_MS = 6500;
+const CIRCUIT_DISABLED_MS = 24 * 60 * 60 * 1000;
+const CIRCUIT_DEFAULT_MS = 15 * 60 * 1000;
+
 let lastRequestAt = 0;
+let throttleChain = Promise.resolve();
+let circuitBlockedUntil = 0;
+let circuitReason = '';
+let circuitLoggedAt = 0;
 
 function hasToken() {
   return Boolean(env.footballDataApiToken);
 }
 
-async function throttle() {
-  const elapsed = Date.now() - lastRequestAt;
-  if (elapsed < MIN_REQUEST_INTERVAL_MS) {
-    await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL_MS - elapsed));
+export function isFootballDataCircuitOpen(now = Date.now()) {
+  return circuitBlockedUntil > now;
+}
+
+/** Token presente y la API no está en circuit-breaker (403 cuenta deshabilitada, etc.). */
+export function isFootballDataRequestAllowed(now = Date.now()) {
+  return hasToken() && !isFootballDataCircuitOpen(now);
+}
+
+export function isFootballDataUnavailableError(err) {
+  const message = String(err?.message ?? err ?? '');
+  return (
+    message.includes('FOOTBALL_DATA_API_TOKEN no configurado') ||
+    message.includes('Football-Data unavailable:') ||
+    /Football-Data 40[13]:/.test(message)
+  );
+}
+
+function parseCircuitFromResponse(status, bodyText = '') {
+  const body = String(bodyText);
+  if (status === 403 && /account has been disabled/i.test(body)) {
+    return { ms: CIRCUIT_DISABLED_MS, reason: 'account disabled' };
   }
-  lastRequestAt = Date.now();
+  if (status === 401) {
+    return { ms: CIRCUIT_DISABLED_MS, reason: 'unauthorized token' };
+  }
+  if (status === 429) {
+    const waitMatch = /Wait (\d+) seconds/i.exec(body);
+    const waitMs = waitMatch ? Number(waitMatch[1]) * 1000 : CIRCUIT_DEFAULT_MS;
+    return { ms: Math.max(waitMs, 60_000), reason: 'rate limited' };
+  }
+  return null;
+}
+
+function openFootballDataCircuit(status, bodyText = '') {
+  const trip = parseCircuitFromResponse(status, bodyText);
+  if (!trip) return;
+
+  const until = Date.now() + trip.ms;
+  if (until <= circuitBlockedUntil) return;
+
+  circuitBlockedUntil = until;
+  circuitReason = trip.reason;
+
+  const shouldLog = Date.now() - circuitLoggedAt > 60_000;
+  if (shouldLog) {
+    circuitLoggedAt = Date.now();
+    const resumeAt = new Date(circuitBlockedUntil).toISOString();
+    console.warn(
+      `Football-Data circuit open (${circuitReason}, HTTP ${status}): skipping API calls until ${resumeAt}`
+    );
+  }
+}
+
+export function resetFootballDataClientStateForTests() {
+  lastRequestAt = 0;
+  throttleChain = Promise.resolve();
+  circuitBlockedUntil = 0;
+  circuitReason = '';
+  circuitLoggedAt = 0;
+}
+
+/** Solo tests: simula respuesta HTTP fatal sin llamar a la API. */
+export function tripFootballDataCircuitForTests(status, bodyText = '') {
+  openFootballDataCircuit(status, bodyText);
+}
+
+async function throttle() {
+  const run = throttleChain.then(async () => {
+    const elapsed = Date.now() - lastRequestAt;
+    if (elapsed < MIN_REQUEST_INTERVAL_MS) {
+      await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL_MS - elapsed));
+    }
+    lastRequestAt = Date.now();
+  });
+  throttleChain = run.catch(() => {});
+  await run;
 }
 
 async function request(path, options = {}) {
   if (!hasToken()) {
     throw new Error('FOOTBALL_DATA_API_TOKEN no configurado');
+  }
+  if (isFootballDataCircuitOpen()) {
+    throw new Error(`Football-Data unavailable: ${circuitReason || 'circuit open'}`);
   }
 
   await throttle();
@@ -36,6 +117,7 @@ async function request(path, options = {}) {
 
   if (!res.ok) {
     const text = await res.text();
+    openFootballDataCircuit(res.status, text);
     throw new Error(`Football-Data ${res.status}: ${text.slice(0, 200)}`);
   }
 

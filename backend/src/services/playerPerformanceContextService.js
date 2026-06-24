@@ -1,5 +1,9 @@
 import { Player } from '../models/Player.js';
-import { fetchPersonPerformance, hasToken } from './footballDataApiClient.js';
+import {
+  fetchPersonPerformance,
+  isFootballDataRequestAllowed,
+  isFootballDataUnavailableError,
+} from './footballDataApiClient.js';
 
 const SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_MAX_FETCHES = 10;
@@ -110,7 +114,7 @@ export function buildCompactPerformanceContext(player) {
 }
 
 export async function refreshPlayerPerformanceSnapshot(player, { fetchImpl = fetch } = {}) {
-  if (!hasToken() || !player?.footballDataPersonId) return null;
+  if (!isFootballDataRequestAllowed() || !player?.footballDataPersonId) return null;
 
   try {
     const performance = await fetchPersonPerformance(player.footballDataPersonId);
@@ -122,7 +126,9 @@ export async function refreshPlayerPerformanceSnapshot(player, { fetchImpl = fet
     });
     return performance;
   } catch (err) {
-    console.warn(`Performance snapshot skip ${player.externalId}:`, err.message);
+    if (!isFootballDataUnavailableError(err)) {
+      console.warn(`Performance snapshot skip ${player.externalId}:`, err.message);
+    }
     return null;
   }
 }
@@ -131,8 +137,8 @@ export async function hydrateRosterPerformanceSnapshots(
   rosterPlayers = [],
   { maxFetches = DEFAULT_MAX_FETCHES, force = false } = {}
 ) {
-  if (!hasToken()) {
-    return { fetched: 0, skipped: rosterPlayers.length, reason: 'no_token' };
+  if (!isFootballDataRequestAllowed()) {
+    return { fetched: 0, skipped: rosterPlayers.length, reason: 'football_data_unavailable' };
   }
 
   const now = Date.now();

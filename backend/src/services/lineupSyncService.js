@@ -3,7 +3,8 @@ import { Player } from '../models/Player.js';
 import { Team } from '../models/Team.js';
 import {
   fetchMatchDetails,
-  hasToken,
+  isFootballDataRequestAllowed,
+  isFootballDataUnavailableError,
   resolveFootballDataMatchId,
 } from './footballDataApiClient.js';
 import { countStoredEvents, splitFootballDataEvents } from './matchLiveData.js';
@@ -71,7 +72,9 @@ function buildSnapshotFromMatchData(matchData, homeTeam, awayTeam) {
 
 /** Sincroniza titulares y eventos FD para un partido. */
 export async function syncMatchLineupsFromFootballData(match, { applyStarters = true } = {}) {
-  if (!hasToken()) return { updated: 0, starterIds: 0, synced: false };
+  if (!isFootballDataRequestAllowed()) {
+    return { updated: 0, starterIds: 0, synced: false, skipped: 'football_data_unavailable' };
+  }
 
   const { homeTeam, awayTeam } = await loadMatchTeams(match);
   if (!homeTeam || !awayTeam) return { updated: 0, starterIds: 0, synced: false };
@@ -81,7 +84,9 @@ export async function syncMatchLineupsFromFootballData(match, { applyStarters = 
     try {
       fdMatchId = await resolveFootballDataMatchId(match, homeTeam, awayTeam);
     } catch (err) {
-      console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
+      if (!isFootballDataUnavailableError(err)) {
+        console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
+      }
       return { updated: 0, starterIds: 0, synced: false, error: err.message };
     }
   }
@@ -127,14 +132,16 @@ export async function syncMatchLineupsFromFootballData(match, { applyStarters = 
 
     return { updated, starterIds: starterIds.size, synced: true };
   } catch (err) {
-    console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
+    if (!isFootballDataUnavailableError(err)) {
+      console.warn(`Lineup/events sync skip match ${match.externalId}:`, err.message);
+    }
     return { updated: 0, starterIds: 0, synced: false, error: err.message };
   }
 }
 
 /** Partidos upcoming con kickoff próximo: intenta traer formación (T-120). */
 export async function syncUpcomingKickoffLineups({ withinMs = 120 * 60 * 1000 } = {}) {
-  if (!hasToken()) return { updated: 0, matches: 0 };
+  if (!isFootballDataRequestAllowed()) return { updated: 0, matches: 0 };
 
   const now = Date.now();
   const matches = await Match.find({
@@ -212,7 +219,7 @@ export async function syncUpcomingLineupGrids({
 }
 
 export async function syncLiveLineups() {
-  if (!hasToken()) return { updated: 0, matches: 0, events: 0 };
+  if (!isFootballDataRequestAllowed()) return { updated: 0, matches: 0, events: 0 };
 
   const recentCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [liveMatches, recentFinishedMatches] = await Promise.all([

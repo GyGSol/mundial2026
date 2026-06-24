@@ -2,7 +2,8 @@ import { Player, POSITIONS, HEALTH_STATUSES } from '../models/Player.js';
 import { Team } from '../models/Team.js';
 import {
   fetchPersonMatches,
-  hasToken,
+  isFootballDataRequestAllowed,
+  isFootballDataUnavailableError,
 } from './footballDataApiClient.js';
 import { enrichClubFields } from './clubMetaService.js';
 import { buildCompactPerformanceContext } from './playerPerformanceContextService.js';
@@ -196,7 +197,7 @@ export async function getPlayerById(id, { skipExternalMatches = false } = {}) {
 
   if (
     !skipExternalMatches &&
-    hasToken() &&
+    isFootballDataRequestAllowed() &&
     player.footballDataPersonId &&
     (!player.recentMatches || player.recentMatches.length === 0)
   ) {
@@ -207,7 +208,9 @@ export async function getPlayerById(id, { skipExternalMatches = false } = {}) {
         player.recentMatches = recentMatches;
       }
     } catch (err) {
-      console.warn(`Person matches skip ${player.externalId}:`, err.message);
+      if (!isFootballDataUnavailableError(err)) {
+        console.warn(`Person matches skip ${player.externalId}:`, err.message);
+      }
     }
   }
 

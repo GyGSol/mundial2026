@@ -1,4 +1,9 @@
-import { fetchMatchDetails, fetchTeamWithSquad, hasToken } from './footballDataApiClient.js';
+import {
+  fetchMatchDetails,
+  fetchTeamWithSquad,
+  isFootballDataRequestAllowed,
+  isFootballDataUnavailableError,
+} from './footballDataApiClient.js';
 import { Team } from '../models/Team.js';
 import { Player } from '../models/Player.js';
 import { Match } from '../models/Match.js';
@@ -237,7 +242,7 @@ function shirtFromLookupMap(name, lookup = {}) {
 }
 
 async function loadFootballDataSquadShirtMap(team) {
-  if (!team?.footballDataTeamId || !hasToken()) return {};
+  if (!team?.footballDataTeamId || !isFootballDataRequestAllowed()) return {};
 
   const cacheKey = String(team.externalId || team.footballDataTeamId);
   const cached = squadShirtCache.get(cacheKey);
@@ -268,7 +273,9 @@ async function loadFootballDataSquadShirtMap(team) {
       const waitMatch = /Wait (\d+) seconds/i.exec(String(err.message));
       const blockedUntil = Date.now() + (waitMatch ? Number(waitMatch[1]) * 1000 : 60_000);
       squadShirtCache.set(cacheKey, { map: {}, fetchedAt: Date.now(), blockedUntil });
-      console.warn(`FD squad shirt map skip ${team.externalId}:`, err.message);
+      if (!isFootballDataUnavailableError(err)) {
+        console.warn(`FD squad shirt map skip ${team.externalId}:`, err.message);
+      }
       return {};
     } finally {
       squadShirtInflight.delete(cacheKey);
@@ -434,7 +441,7 @@ function sideNeedsPositionDetailRefresh(side) {
 
 async function refreshLineupSnapshotFromFootballData(match) {
   const fdMatchId = match.raw?.footballDataMatchId ?? match.raw?.fdMatchId;
-  if (!fdMatchId || !hasToken()) return null;
+  if (!fdMatchId || !isFootballDataRequestAllowed()) return null;
 
   const { homeTeam, awayTeam } = await loadMatchTeams(match);
   if (!homeTeam || !awayTeam) return null;
@@ -489,7 +496,9 @@ export async function buildMatchLineupPayload(match, options = {}) {
           }
         }
       } catch (err) {
-        console.warn(`Lineup snapshot refresh skip ${match.externalId}:`, err.message);
+        if (!isFootballDataUnavailableError(err)) {
+          console.warn(`Lineup snapshot refresh skip ${match.externalId}:`, err.message);
+        }
       }
     }
 
@@ -504,7 +513,9 @@ export async function buildMatchLineupPayload(match, options = {}) {
           if (merged) snapshot = merged;
         }
       } catch (err) {
-        console.warn(`Lineup shirt merge skip ${match.externalId}:`, err.message);
+        if (!isFootballDataUnavailableError(err)) {
+          console.warn(`Lineup shirt merge skip ${match.externalId}:`, err.message);
+        }
       }
     }
 
