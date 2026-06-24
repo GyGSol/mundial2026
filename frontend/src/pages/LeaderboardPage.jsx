@@ -477,9 +477,9 @@ export default function LeaderboardPage() {
           </div>
           {hasLiveMatches && isCommonTournament ? (
             <p className="mb-2 text-xs text-muted-foreground">
-              Partidos en vivo o recién finalizados: cada flecha verde corresponde a un partido
-              (de izquierda a derecha) y marca cambios desde el 0-0 inicial (PA = acierto
-              ganador/empate; GL/GV/GT = goles exactos ganados con el marcador en vivo).
+              Partidos en vivo o recién finalizados: en cada columna (PA, GL, GV, GT), cada flecha
+              verde extra indica un partido distinto que aportó esa stat desde el 0-0 del kickoff
+              (pueden sumarse varias si hay más de un partido en la ventana).
             </p>
           ) : null}
           {isCommonTournament ? (

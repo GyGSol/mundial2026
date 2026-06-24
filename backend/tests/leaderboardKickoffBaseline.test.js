@@ -587,6 +587,83 @@ describe('leaderboard kickoff baseline', () => {
     expect(row.pa).toEqual([true]);
   });
 
+  it('dos partidos en vivo simultáneos acumulan flechas por stat (orden estable)', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST12' });
+    const user = await User.create({
+      name: 'Doble slot',
+      email: 'doble-slot@example.com',
+      passwordHash: 'hash',
+      totalPoints: 20,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: user._id, groupId: group._id, role: 'member' });
+
+    const kickoffAt = new Date('2026-06-24T19:00:00.000Z');
+
+    const liveA = await Match.create({
+      externalId: 'simul-a',
+      homeTeamId: 'pan',
+      awayTeamId: 'cro',
+      homeScore: 0,
+      awayScore: 1,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt,
+    });
+    const liveB = await Match.create({
+      externalId: 'simul-b',
+      homeTeamId: 'eng',
+      awayTeamId: 'fra',
+      homeScore: 1,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt,
+    });
+
+    await Prediction.create({
+      userId: user._id,
+      matchId: liveA._id,
+      homeGoals: 0,
+      awayGoals: 1,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+      liveKickoffBreakdown: { winner: 0, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+      liveKickoffPointsEarned: 1,
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: liveB._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 5,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+      liveKickoffBreakdown: { winner: 0, homeGoals: 0, awayGoals: 1, totalGoals: 0 },
+      liveKickoffPointsEarned: 1,
+    });
+
+    const liveIds = [liveA._id.toString(), liveB._id.toString()];
+    const indicators = await getLiveMatchStatIndicatorsByUser([user._id.toString()], liveIds);
+    const row = indicators.byUser[user._id.toString()];
+
+    expect(indicators.liveMatchIds).toEqual(liveIds);
+    expect(row.pa).toEqual([true, true]);
+    expect(row.gl).toEqual([true, true]);
+    expect(row.gv).toEqual([true, false]);
+    expect(row.gt).toEqual([true, true]);
+
+    const [current, baseline] = await Promise.all([
+      getLeaderboard(group._id.toString()),
+      getLeaderboard(group._id.toString(), 100, { liveKickoffBaselineMatchIds: liveIds }),
+    ]);
+    const currentRow = current.find((r) => r.id === user._id.toString());
+    const baselineRow = baseline.find((r) => r.id === user._id.toString());
+    expect(currentRow.pa - baselineRow.pa).toBe(2);
+    expect(currentRow.gl - baselineRow.gl).toBe(2);
+    expect(currentRow.gv - baselineRow.gv).toBe(1);
+    expect(currentRow.gt - baselineRow.gt).toBe(2);
+  });
+
   it('ranking actual usa puntos agregados de predicciones, no user.totalPoints desactualizado', async () => {
     const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST06' });
     const user = await User.create({
