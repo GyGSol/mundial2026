@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  buildPersonMatchesQueryParams,
   isFootballDataCircuitOpen,
   isFootballDataRequestAllowed,
   isFootballDataUnavailableError,
@@ -20,6 +21,13 @@ describe('footballDataApiClient circuit breaker', () => {
     expect(isFootballDataUnavailableError(new Error('Football-Data unavailable: account disabled'))).toBe(
       true
     );
+  });
+
+  it('incluye dateTo junto con dateFrom en query de partidos por persona', () => {
+    const query = buildPersonMatchesQueryParams({ dateFrom: '2026-01-01', dateTo: '2026-06-24' });
+    expect(query.get('dateFrom')).toBe('2026-01-01');
+    expect(query.get('dateTo')).toBe('2026-06-24');
+    expect(query.get('status')).toBe('FINISHED');
   });
 
   it('abre circuit y bloquea requests hasta expirar', () => {

@@ -226,8 +226,8 @@ export async function resolveFootballDataMatchId(match, homeTeam, awayTeam) {
   return found?.id ?? null;
 }
 
-export async function fetchPersonMatches(personId, { limit = 8, dateFrom } = {}) {
-  const performance = await fetchPersonPerformance(personId, { limit, dateFrom });
+export async function fetchPersonMatches(personId, { limit = 8, dateFrom, dateTo } = {}) {
+  const performance = await fetchPersonPerformance(personId, { limit, dateFrom, dateTo });
   return performance.recentMatches;
 }
 
@@ -316,14 +316,21 @@ function aggregationsToTotals(aggregations = {}) {
   };
 }
 
-export async function fetchPersonPerformance(personId, { limit = 12, dateFrom } = {}) {
+export function buildPersonMatchesQueryParams({ limit = 12, dateFrom, dateTo } = {}) {
   const year = new Date().getFullYear();
   const from = dateFrom || `${year}-01-01`;
-  const query = new URLSearchParams({
+  const to = dateTo || new Date().toISOString().slice(0, 10);
+  return new URLSearchParams({
     dateFrom: from,
+    dateTo: to,
     status: 'FINISHED',
     limit: String(Math.min(Math.max(limit, 1), 30)),
   });
+}
+
+export async function fetchPersonPerformance(personId, { limit = 12, dateFrom, dateTo } = {}) {
+  const year = new Date().getFullYear();
+  const query = buildPersonMatchesQueryParams({ limit, dateFrom, dateTo });
 
   const data = await request(`/persons/${personId}/matches?${query.toString()}`);
   const matches = data?.matches ?? [];
