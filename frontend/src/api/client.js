@@ -216,6 +216,28 @@ export const teamsApi = {
     const query = new URLSearchParams(params).toString();
     return request(`/teams${query ? `?${query}` : ''}`);
   },
+  getKit: async (fifaCode) => {
+    const code = String(fifaCode ?? '').trim().toUpperCase();
+    if (!code) return null;
+
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/teams/${encodeURIComponent(code)}/kit`, { headers });
+    } catch {
+      return null;
+    }
+
+    if (res.status === 404) return null;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return null;
+    return data;
+  },
   coachWiki: ({ name, fifaCode, teamName } = {}) => {
     const params = new URLSearchParams();
     if (name) params.set('name', name);

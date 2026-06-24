@@ -14,6 +14,7 @@
     "build:players-seed": "node src/scripts/buildPlayersSeed.js",
     "build:wikipedia-squads": "node src/scripts/buildWikipediaSquads.js",
     "sync:wikipedia-squads": "node src/scripts/syncWikipediaSquads.js",
+    "sync:team-kits": "node src/scripts/syncTeamKitsFromWiki.js",
     "fix-kickoffs": "node src/scripts/fixKickoffTimes.js",
     "audit:live-matches": "node src/scripts/auditLiveMatchState.js",
     "audit-predictions": "node src/scripts/auditPredictionMatchLinks.js",

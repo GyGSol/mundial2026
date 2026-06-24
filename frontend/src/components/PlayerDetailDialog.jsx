@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { ClubCell } from './ClubDisplay.jsx';
 import MarkdownContent from './MarkdownContent.jsx';
 import PlayerAvatar from './PlayerAvatar.jsx';
+import PlayerKitBack from './PlayerKitBack.jsx';
 import PlayerSeasonStatsPanel from './PlayerSeasonStatsPanel.jsx';
 
 function healthBadgeClass(status) {
@@ -363,33 +364,39 @@ export default function PlayerDetailDialog({
                   </p>
                 )}
               </div>
-              <div className="flex w-full shrink-0 gap-2 sm:w-auto">
-                {resolvedPlayerId ? (
+              <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+                <div className="flex w-full gap-2 sm:w-auto">
+                  {resolvedPlayerId ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={refreshing || loadingPlayer}
+                      onClick={handleRefreshIntel}
+                      className="flex-1 gap-1.5 sm:flex-none"
+                    >
+                      {refreshing ? (
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
+                      ) : (
+                        <RefreshCw className="size-4" aria-hidden />
+                      )}
+                      IA
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={refreshing || loadingPlayer}
-                    onClick={handleRefreshIntel}
-                    className="flex-1 gap-1.5 sm:flex-none"
+                    onClick={handleClose}
+                    className="flex-1 sm:flex-none"
                   >
-                    {refreshing ? (
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
-                    ) : (
-                      <RefreshCw className="size-4" aria-hidden />
-                    )}
-                    IA
+                    Cerrar
                   </Button>
-                ) : null}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClose}
-                  className="flex-1 sm:flex-none"
-                >
-                  Cerrar
-                </Button>
+                </div>
+                <PlayerKitBack
+                  fifaCode={player?.fifaCode ?? preview?.teamFifaCode}
+                  shirtNumber={displayShirt}
+                />
               </div>
             </div>
           </div>

@@ -1,0 +1,433 @@
+{
+  "source": "wikipedia",
+  "sourceLang": "en",
+  "fetchedAt": "2026-06-24T22:28:40.564Z",
+  "teamCount": 48,
+  "kitCount": 36,
+  "kits": {
+    "ARG": {
+      "fifaCode": "ARG",
+      "wikiPage": "Argentina national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/4/48/Kit_body_arg26hA.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/f/fe/Kit_left_arm_arg26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Kit_right_arm_arg26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Kit_shorts_arg26h2.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:27.962Z"
+    },
+    "AUT": {
+      "fifaCode": "AUT",
+      "wikiPage": "Austria national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/9/95/Kit_body_aut26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/6/62/Kit_left_arm_aut26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/9/90/Kit_right_arm_aut26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/3/33/Kit_shorts_aut26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:30.648Z"
+    },
+    "BIH": {
+      "fifaCode": "BIH",
+      "wikiPage": "Bosnia and Herzegovina national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Kit_body_bih26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/5/51/Kit_left_arm_bih26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/a/af/Kit_right_arm_bih26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:34.355Z"
+    },
+    "BRA": {
+      "fifaCode": "BRA",
+      "wikiPage": "Brazil national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Kit_body_bra26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Kit_left_arm_bra26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Kit_right_arm_bra26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Kit_shorts_bra26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:35.824Z"
+    },
+    "CIV": {
+      "fifaCode": "CIV",
+      "wikiPage": "Ivory Coast national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Kit_body_civ26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/a/a3/Kit_left_arm_civ26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/0/04/Kit_right_arm_civ26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/8/80/Kit_shorts_civ26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:38.360Z"
+    },
+    "COD": {
+      "fifaCode": "COD",
+      "wikiPage": "DR Congo national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/2/29/Kit_body_cod2526h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Kit_left_arm_cod2526h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Kit_right_arm_cod2526h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Kit_shorts_cod2526h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:40.110Z"
+    },
+    "COL": {
+      "fifaCode": "COL",
+      "wikiPage": "Colombia national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Kit_body_col26hA.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Kit_left_arm_col26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Kit_right_arm_col26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/7/73/Kit_shorts_col26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:41.516Z"
+    },
+    "CPV": {
+      "fifaCode": "CPV",
+      "wikiPage": "Cape Verde national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/0/00/Kit_body_cpv26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Kit_left_arm_cpv26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Kit_right_arm_cpv26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Kit_shorts_cpv26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:43.083Z"
+    },
+    "CRO": {
+      "fifaCode": "CRO",
+      "wikiPage": "Croatia national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Kit_body_cro26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Kit_left_arm_cro26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/7/72/Kit_right_arm_cro26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Kit_shorts_cro26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:44.741Z"
+    },
+    "CZE": {
+      "fifaCode": "CZE",
+      "wikiPage": "Czech Republic national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/5/59/Kit_body_cze26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/9/90/Kit_left_arm_cze26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/5/56/Kit_right_arm_cze26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Kit_shorts_cze26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:48.242Z"
+    },
+    "ECU": {
+      "fifaCode": "ECU",
+      "wikiPage": "Ecuador national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/1/16/Kit_body_ecu26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/5/50/Kit_left_arm_ecu26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Kit_right_arm_ecu26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:49.698Z"
+    },
+    "EGY": {
+      "fifaCode": "EGY",
+      "wikiPage": "Egypt national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/8/84/Kit_body_egy26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Kit_left_arm_egy26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/f/f6/Kit_right_arm_egy26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:51.441Z"
+    },
+    "ENG": {
+      "fifaCode": "ENG",
+      "wikiPage": "England national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Kit_body_eng26H.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/1/19/Kit_left_arm_eng26H.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Kit_right_arm_eng26H.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Kit_shorts_eng26H.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:52.863Z"
+    },
+    "FRA": {
+      "fifaCode": "FRA",
+      "wikiPage": "France national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Kit_body_fra26H.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/0/01/Kit_left_arm_fra26H.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/4/46/Kit_right_arm_fra26H.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/3/37/Kit_shorts_fra26H2.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:56.314Z"
+    },
+    "GER": {
+      "fifaCode": "GER",
+      "wikiPage": "Germany national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Kit_body_ger26hA.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/9/93/Kit_left_arm_ger26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/6/64/Kit_right_arm_ger26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/0/08/Kit_shorts_ger26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:57.581Z"
+    },
+    "GHA": {
+      "fifaCode": "GHA",
+      "wikiPage": "Ghana national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Kit_body_gha26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/f/f4/Kit_left_arm_gha26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Kit_right_arm_gha26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Kit_shorts_gha26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:27:59.169Z"
+    },
+    "HAI": {
+      "fifaCode": "HAI",
+      "wikiPage": "Haiti national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/4/47/Kit_body_hai26H.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Kit_left_arm_hai26H.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Kit_right_arm_hai26H.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:00.747Z"
+    },
+    "IRN": {
+      "fifaCode": "IRN",
+      "wikiPage": "Iran national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Kit_body_irn26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Kit_left_arm_irn26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Kit_right_arm_irn26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:02.420Z"
+    },
+    "IRQ": {
+      "fifaCode": "IRQ",
+      "wikiPage": "Iraq national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Kit_body_iraq26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/f/fc/Kit_left_arm_iraq26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/d/da/Kit_right_arm_iraq26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Kit_shorts_iraq26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:04.035Z"
+    },
+    "JOR": {
+      "fifaCode": "JOR",
+      "wikiPage": "Jordan national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/3/35/Kit_body_jor26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/6/64/Kit_left_arm_jor26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Kit_right_arm_jor26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/c/c4/Kit_shorts_jor26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:05.446Z"
+    },
+    "KOR": {
+      "fifaCode": "KOR",
+      "wikiPage": "South Korea national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Kit_body_kor26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Kit_left_arm_kor26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/9/97/Kit_right_arm_kor26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/6/69/Kit_shorts_kor26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:09.255Z"
+    },
+    "KSA": {
+      "fifaCode": "KSA",
+      "wikiPage": "Saudi Arabia national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/c/c4/Kit_body_ksa26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Kit_left_arm_ksa26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Kit_right_arm_ksa26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/5/57/Kit_shorts_ksa26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:10.676Z"
+    },
+    "MAR": {
+      "fifaCode": "MAR",
+      "wikiPage": "Morocco national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Kit_body_mrc26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Kit_left_arm_mrc26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Kit_right_arm_mrc26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Kit_shorts_mrc26h2.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:12.355Z"
+    },
+    "MEX": {
+      "fifaCode": "MEX",
+      "wikiPage": "Mexico national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Kit_body_mex26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Kit_left_arm_mex26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Kit_right_arm_mex26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Kit_shorts_mex26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:13.961Z"
+    },
+    "NED": {
+      "fifaCode": "NED",
+      "wikiPage": "Netherlands national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Kit_body_ned26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/d/da/Kit_left_arm_ned26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/9/93/Kit_right_arm_ned26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/8/85/Kit_shorts_ned26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:15.463Z"
+    },
+    "NOR": {
+      "fifaCode": "NOR",
+      "wikiPage": "Norway national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/1/18/Kit_body_nor26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Kit_left_arm_nor26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Kit_right_arm_nor26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/7/72/Kit_shorts_nor26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:17.057Z"
+    },
+    "PAN": {
+      "fifaCode": "PAN",
+      "wikiPage": "Panama national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Kit_body_pan26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/0/02/Kit_left_arm_pan26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Kit_right_arm_pan26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:19.894Z"
+    },
+    "PAR": {
+      "fifaCode": "PAR",
+      "wikiPage": "Paraguay national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Kit_body_par26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/9/97/Kit_left_arm_par26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Kit_right_arm_par26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Kit_shorts_par26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:21.702Z"
+    },
+    "POR": {
+      "fifaCode": "POR",
+      "wikiPage": "Portugal national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/c/c0/Kit_body_por26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Kit_left_arm_por26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Kit_right_arm_por26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Kit_shorts_por26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:23.396Z"
+    },
+    "SCO": {
+      "fifaCode": "SCO",
+      "wikiPage": "Scotland national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/7/78/Kit_body_sco96h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Kit_left_arm_sco96h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Kit_right_arm_sco96h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Kit_shorts_sco96h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:28.010Z"
+    },
+    "SEN": {
+      "fifaCode": "SEN",
+      "wikiPage": "Senegal national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/8/88/Kit_body_sen26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Kit_left_arm_sen26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Kit_right_arm_sen26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Kit_shorts_sen26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:29.664Z"
+    },
+    "SUI": {
+      "fifaCode": "SUI",
+      "wikiPage": "Switzerland national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Kit_body_sui26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/4/42/Kit_left_arm_sui26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/1/10/Kit_right_arm_sui26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Kit_shorts_sui26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:31.248Z"
+    },
+    "TUN": {
+      "fifaCode": "TUN",
+      "wikiPage": "Tunisia national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/1/15/Kit_body_tun26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/b/b0/Kit_left_arm_tun26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/d/d9/Kit_right_arm_tun26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/1/17/Kit_shorts_tun26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:33.904Z"
+    },
+    "TUR": {
+      "fifaCode": "TUR",
+      "wikiPage": "Turkey national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/3/31/Kit_body_tur26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Kit_left_arm_tur26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/3/37/Kit_right_arm_tur26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/3/36/Kit_shorts_tur26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:35.759Z"
+    },
+    "URU": {
+      "fifaCode": "URU",
+      "wikiPage": "Uruguay national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/9/93/Kit_body_uru26h.png",
+        "leftArm": "https://upload.wikimedia.org/wikipedia/commons/f/f8/Kit_left_arm_uru26h.png",
+        "rightArm": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Kit_right_arm_uru26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Kit_shorts_uru26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:37.320Z"
+    },
+    "UZB": {
+      "fifaCode": "UZB",
+      "wikiPage": "Uzbekistan national football team",
+      "variant": "home",
+      "parts": {
+        "body": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Kit_body_uzb26h.png",
+        "shorts": "https://upload.wikimedia.org/wikipedia/commons/4/41/Kit_shorts_uzb26h.png"
+      },
+      "fetchedAt": "2026-06-24T22:28:39.964Z"
+    }
+  }
+}

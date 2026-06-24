@@ -25,6 +25,7 @@
     "sync:player-wiki": "npm run sync:player-wiki -w backend",
     "build:wikipedia-squads": "npm run build:wikipedia-squads -w backend",
     "sync:wikipedia-squads": "npm run sync:wikipedia-squads -w backend",
+    "sync:team-kits": "npm run sync:team-kits -w backend",
     "sync:history": "node scripts/sync-wikipedia-history.mjs",
     "sync:wiki-nations": "node scripts/sync-wikipedia-nation-records.mjs",
     "build:players-seed": "npm run build:players-seed -w backend",

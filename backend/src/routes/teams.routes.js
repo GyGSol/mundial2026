@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Team } from '../models/Team.js';
 import { fetchCoachWiki } from '../services/coachWikiService.js';
+import { getTeamKit } from '../services/teamKitWikiService.js';
 
 const router = Router();
 
@@ -21,6 +22,24 @@ router.get('/teams', async (req, res, next) => {
       })),
       total: teams.length,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/teams/:fifaCode/kit', async (req, res, next) => {
+  try {
+    const fifaCode = String(req.params.fifaCode ?? '').trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(fifaCode)) {
+      return res.status(400).json({ error: 'Código FIFA inválido' });
+    }
+
+    const kit = await getTeamKit(fifaCode);
+    if (!kit?.parts?.body) {
+      return res.status(404).json({ error: 'Indumentaria no disponible para esta selección' });
+    }
+
+    res.json({ kit });
   } catch (err) {
     next(err);
   }
