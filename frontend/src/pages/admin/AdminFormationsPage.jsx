@@ -50,9 +50,13 @@ export default function AdminFormationsPage() {
 
   const liveMatches = liveListData?.matches ?? [];
 
-  const fetchMatchDetail = useCallback(() => {
-    if (!selectedMatchId) return Promise.resolve({ match: null });
-    return matchesApi.getById(selectedMatchId);
+  const fetchMatchDetail = useCallback(async () => {
+    if (!selectedMatchId) return { match: null };
+    const snapshot = await matchesApi.liveSnapshot({ detailMatchId: selectedMatchId });
+    const match =
+      (snapshot?.liveMatches ?? []).find((item) => String(item.id) === String(selectedMatchId)) ??
+      null;
+    return { match };
   }, [selectedMatchId]);
 
   const {
@@ -194,6 +198,13 @@ export default function AdminFormationsPage() {
                 Arrastrá las miniaturas en la cancha. Abrí la consola del navegador (F12) para ver entradas{' '}
                 <code className="text-emerald-300">[admin-formations]</code>.
               </p>
+
+              {match && !(match.lineup?.home?.players?.length || match.lineup?.away?.players?.length) ? (
+                <p className="text-xs text-amber-300/90">
+                  Este partido no trae jugadores en la alineación. Probá «Refrescar partido»; si persiste,
+                  el sync FIFA puede estar incompleto.
+                </p>
+              ) : null}
 
               <div className="rounded-xl border border-slate-700/80 bg-slate-950/40 p-3">
                 <MatchLineupSection
