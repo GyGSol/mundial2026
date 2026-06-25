@@ -32,13 +32,17 @@ export default function VenueCurrentWeatherCorner({ weather, className }) {
   return (
     <div
       className={cn(
-        'pointer-events-none absolute right-2 top-2 z-10 max-w-[min(100%-1rem,14rem)] rounded-md border border-border/70 bg-background/95 px-2 py-1.5 text-right shadow-sm backdrop-blur-sm sm:right-3 sm:top-3 sm:max-w-[16rem]',
+        'pointer-events-none z-10 w-[calc(100%-2rem)] rounded-md border border-border/70 bg-background/95 px-2 py-1.5 text-center shadow-sm backdrop-blur-sm',
+        // Mobile: en flujo arriba de la tarjeta para no tapar bandera/nombre visitante
+        'mx-4 mt-3',
+        // Desktop: esquina superior derecha (comportamiento original)
+        'sm:absolute sm:right-3 sm:top-3 sm:mx-0 sm:mt-0 sm:w-auto sm:max-w-[16rem] sm:text-right',
         className
       )}
       aria-label={ariaLabel}
       title={ariaLabel}
     >
-      <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
+      <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 sm:justify-end">
         {current.description ? (
           <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-foreground sm:text-xs">
             <Sun className="size-3 shrink-0" aria-hidden />
