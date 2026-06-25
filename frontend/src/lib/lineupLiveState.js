@@ -476,7 +476,7 @@ export function normalizeLineupSideForPitch(lineupSide, side = 'home') {
 
   const tagged = lineupSide.players.map((player) => ({ ...player, side }));
   const formation = resolveFormation(tagged, lineupSide.formation);
-  const laidOut = assignPlayersToFormation(tagged, formation, { includeLeftovers: true });
+  const laidOut = assignPlayersToFormation(tagged, formation, { includeLeftovers: false });
   const players = spreadOverlappingGridPositions(mergePlayerMeta(laidOut, tagged, side));
 
   return { ...lineupSide, formation, players };
