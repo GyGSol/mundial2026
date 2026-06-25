@@ -6,7 +6,7 @@ Convención: `mundial2026/<dominio>/<slug>`. Un slug por tema; re-guardar actual
 
 | Dominio | Temas memorizados | Notas |
 |---------|-------------------|--------|
-| `mundial2026/ui/` | ranking, predictions, live-match, group-colors, match-timeline | Separar ranking vs predicciones |
+| `mundial2026/ui/` | ranking, predictions, live-match, group-colors, match-timeline, ranking-dashboard-live | FBL-17/19: acordeón, caché shell, live-snapshot |
 | `mundial2026/streams/` o `mundial2026/stream/` | la18hd-* | **Unificar** en `mundial2026/streams/` |
 | `mundial2026/sync/` | knockout-bracket, worldcup26 | Sync worldcup26.ir |
 | `mundial2026/backup/` | github, heroku, push-models | Post-partido → GyGSol/mundial2026-db-backups |

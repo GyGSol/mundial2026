@@ -50,6 +50,7 @@ Tras editar `mcp.json`: **MCP Reload** en Cursor.
 - Variables sensibles solo en `.env` (nunca en git ni Engram).
 - Commits en español o inglés claro; mensaje con el *por qué*.
 - **UI en castellano (es-AR)** hasta habilitar i18n: no mostrar textos de APIs externas en inglés; usar `shared/weatherAlertI18n.js` para alertas climáticas.
+- **Ranking en vivo (perf):** acordeón, caché en capas y `live-snapshot` — ver [docs/RANKING_DASHBOARD_LIVE_PERFORMANCE.md](./docs/RANKING_DASHBOARD_LIVE_PERFORMANCE.md) (FBL-17/18/19).
 - Tests: `npm test` (backend, puntuación y rutas críticas). **Nunca** con `MONGODB_URI` de prod exportada — ver [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md).
 - **Caricaturas:** siempre `npm run photos:compress` antes de `git push` de PNG — ver [docs/PLAYER_PHOTOS.md](./docs/PLAYER_PHOTOS.md).
 - **Deploy:** QA local primero → confirmación del usuario → prod. Ver [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md). **No** hacer `git push heroku main` sin que el usuario lo pida explícitamente.
