@@ -48,6 +48,7 @@ import { liveCardBadgeLabel, isLiveCardFinalizing } from '@/lib/matchStatus.js';
 import { useLiveMatchDisplayClock } from '@/hooks/useLiveMatchDisplayClock.js';
 import { getEffectiveMatchPlayState, isMatchPlayPaused, resolveLiveMatchesColumnTitle } from '@/lib/matchPlayState.js';
 import WeatherOpsBadge, { getWeatherOpsLabel, LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
+import VenueCurrentWeatherCorner from '@/components/VenueCurrentWeatherCorner.jsx';
 import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchPlayStateBadge.jsx';
 import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 import { sortLiveMatchesForFeaturedBar } from '@/lib/liveMatchFeaturedSort.js';
@@ -935,7 +936,8 @@ function ResultMatchCard({ match, variant = 'live' }) {
     match.liveScheduleContext?.integrityWarning;
 
   return (
-    <Card className={liveCardClassName(isArgentina)}>
+    <Card className={cn(liveCardClassName(isArgentina), 'relative')}>
+      {isLive ? <VenueCurrentWeatherCorner weather={match.weather} /> : null}
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
         {showWeatherLayer ? (
           <>
@@ -1012,7 +1014,8 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
   }
 
   return (
-    <Card className={liveCardClassName(isArgentina)}>
+    <Card className={cn(liveCardClassName(isArgentina), 'relative')}>
+      {isLive ? <VenueCurrentWeatherCorner weather={match.weather} /> : null}
       <CardContent className="match-live-ui flex w-full flex-col items-center gap-2 p-4 text-center">
         {showWeatherLayer ? (
           <>

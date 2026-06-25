@@ -2,6 +2,7 @@ import { Cloud, CloudLightning, CloudRain, MapPin, Sun, Thermometer, Wind } from
 import { cn } from '@/lib/utils';
 import { formatMatchDate } from '@/lib/dateFormat.js';
 import WeatherOpsBadge, { LiveScheduleAlert } from '@/components/WeatherOpsBadge.jsx';
+import { formatWeatherSnapshot } from '@/lib/venueWeatherFormat.js';
 
 function WeatherMetric({ icon: Icon, label, value }) {
   if (!value) return null;
@@ -12,20 +13,6 @@ function WeatherMetric({ icon: Icon, label, value }) {
       <span>{label}</span>
     </span>
   );
-}
-
-function formatSnapshot(snapshot) {
-  if (!snapshot || snapshot.available === false) return null;
-  const temp =
-    snapshot.temperatureC != null ? `${Math.round(snapshot.temperatureC)}°C` : null;
-  const humidity =
-    snapshot.humidityPct != null ? `${Math.round(snapshot.humidityPct)}% hum.` : null;
-  const wind = snapshot.windKmh != null ? `${Math.round(snapshot.windKmh)} km/h` : null;
-  const rain =
-    snapshot.precipitationPct != null ? `${Math.round(snapshot.precipitationPct)}% lluvia` : null;
-  const description = snapshot.description ?? null;
-
-  return { temp, humidity, wind, rain, description };
 }
 
 export default function MatchVenueWeather({ matchVenue, className }) {
@@ -48,8 +35,8 @@ export default function MatchVenueWeather({ matchVenue, className }) {
     weather?.locationLine ?? [stadium?.city, stadium?.country].filter(Boolean).join(', '),
   ].filter(Boolean);
 
-  const current = formatSnapshot(weather?.current);
-  const forecast = formatSnapshot(weather?.kickoffForecast);
+  const current = formatWeatherSnapshot(weather?.current);
+  const forecast = formatWeatherSnapshot(weather?.kickoffForecast);
   const forecastTime = weather?.kickoffForecast?.atLocal ?? null;
 
   return (

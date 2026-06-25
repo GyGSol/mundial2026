@@ -1,4 +1,4 @@
-import { getVenueWeatherForStadium } from './weatherService.js';
+import { getVenueWeatherForStadium, formatWeatherForClient } from './weatherService.js';
 import {
   assessVenueWeatherRisk,
   formatWeatherRiskForClient,
@@ -37,6 +37,7 @@ export async function enrichMatchWeatherFields(match, stadium, { fetchImpl = fet
     return {
       weatherRisk: null,
       weatherOps: serializeWeatherOpsForClient(match.weatherOps),
+      weather: null,
     };
   }
 
@@ -54,6 +55,7 @@ export async function enrichMatchWeatherFields(match, stadium, { fetchImpl = fet
   return {
     weatherRisk: formatWeatherRiskForClient(risk),
     weatherOps: serializeWeatherOpsForClient(match.weatherOps),
+    weather: formatWeatherForClient(weather),
     weatherRiskSuggestion: shouldSuggestPreKickoffDelay(risk, match)
       ? 'pre_kickoff_delay_recommended'
       : null,
@@ -94,10 +96,12 @@ export async function attachWeatherAndScheduleToEnrichedMatches(
       ? (weatherById.get(id) ?? {
           weatherRisk: null,
           weatherOps: serializeWeatherOpsForClient(null),
+          weather: null,
         })
       : {
           weatherRisk: null,
           weatherOps: enriched.weatherOps ?? serializeWeatherOpsForClient(null),
+          weather: null,
         };
     const liveScheduleContext = overlapById.get(id) ?? null;
     const pair = pairMap.get(id);
