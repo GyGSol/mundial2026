@@ -195,8 +195,8 @@ export default function AdminFormationsPage() {
               </div>
 
               <p className={cn(adminMuted, 'text-xs')}>
-                Arrastrá las miniaturas en la cancha. Abrí la consola del navegador (F12) para ver entradas{' '}
-                <code className="text-emerald-300">[admin-formations]</code>.
+                Arrastrá las miniaturas sobre la cuadrícula (snap cada 10 en gridX/gridY). Abrí F12 para
+                ver entradas <code className="text-emerald-300">[admin-formations]</code>.
               </p>
 
               {match && !(match.lineup?.home?.players?.length || match.lineup?.away?.players?.length) ? (

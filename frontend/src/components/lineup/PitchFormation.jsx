@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import PlayerAvatar from '@/components/PlayerAvatar.jsx';
 import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
 import CoachDetailDialog from '@/components/lineup/CoachDetailDialog.jsx';
@@ -6,6 +6,7 @@ import PitchEventPinInteractions, {
   PitchEventPinVisuals,
 } from '@/components/lineup/PitchEventLayer.jsx';
 import PitchHeatmapLayer from '@/components/lineup/PitchHeatmapLayer.jsx';
+import PitchLineupGridOverlay from '@/components/lineup/PitchLineupGridOverlay.jsx';
 import { inferTacticalPosition } from '@/lib/playerPositionLabel.js';
 import {
   buildPlayerEventSummary,
@@ -15,7 +16,11 @@ import {
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
 import { getTeamPitchPalette } from '@/lib/teamPitchColors.js';
-import { lineupGridToHalfPitchPercent, halfPitchPercentToLineupGrid } from '@/lib/pitchCoordinates.js';
+import {
+  lineupGridToHalfPitchPercent,
+  halfPitchPercentToLineupGrid,
+  snapLineupGridPosition,
+} from '@/lib/pitchCoordinates.js';
 import { resolvePitchFormationLayers } from '@/lib/pitchFormationDisplay.js';
 
 function shortName(fullName) {
@@ -146,6 +151,7 @@ function PlayerMarker({
   onPlayerHighlight,
   timelineEvents = [],
   draggable = false,
+  snapToGrid = false,
   halfRef,
   onPlayerDragEnd,
 }) {
@@ -154,10 +160,13 @@ function PlayerMarker({
   const position = lineupPositionLabel(player);
   const baseStyle = teamDotStyle(player, side);
   const [dragStyle, setDragStyle] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const didDragRef = useRef(false);
+  const draggingRef = useRef(false);
+  const activePointerIdRef = useRef(null);
+  const pendingGridRef = useRef(null);
   const style = dragStyle ?? baseStyle;
   const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
-  const hoverDetail = formatHoverDetail(player, position);
   const playerKey = playerKeyFromLineupPlayer(player, side);
   const isHighlighted = playerMatchesPitchHighlight(player, side, highlightKey, timelineEvents);
 
@@ -171,66 +180,112 @@ function PlayerMarker({
     return { leftPct, topPct };
   }
 
-  function handlePointerDown(event) {
-    if (!draggable) return;
-    didDragRef.current = false;
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function handlePointerMove(event) {
-    if (!draggable || !event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    const coords = pointerToHalfPercent(event);
-    if (!coords) return;
-    didDragRef.current = true;
-    setDragStyle({
-      left: `${coords.leftPct}%`,
-      top: `${coords.topPct}%`,
-    });
-  }
-
-  function handlePointerUp(event) {
-    if (!draggable) return;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+  useEffect(() => {
+    if (!pendingGridRef.current) return;
+    const { gridX, gridY } = pendingGridRef.current;
+    if (
+      Math.abs(Number(player.gridX) - gridX) < 0.05 &&
+      Math.abs(Number(player.gridY) - gridY) < 0.05
+    ) {
+      pendingGridRef.current = null;
+      setDragStyle(null);
     }
-    if (didDragRef.current) {
+  }, [player.gridX, player.gridY]);
+
+  useEffect(() => {
+    if (!draggable) return undefined;
+
+    function onPointerMove(event) {
+      if (!draggingRef.current) return;
+      if (activePointerIdRef.current != null && event.pointerId !== activePointerIdRef.current) {
+        return;
+      }
       const coords = pointerToHalfPercent(event);
-      if (coords) {
-        const { gridX, gridY } = halfPitchPercentToLineupGrid(coords.leftPct, coords.topPct, side);
-        onPlayerDragEnd?.({
-          player,
-          side,
-          shirtNumber: player.shirtNumber,
-          name: player.name,
-          position,
-          from: { gridX: player.gridX, gridY: player.gridY },
-          to: { gridX, gridY },
-          screenPercent: { left: coords.leftPct, top: coords.topPct },
-        });
+      if (!coords) return;
+      didDragRef.current = true;
+      setIsDragging(true);
+      setDragStyle({
+        left: `${coords.leftPct}%`,
+        top: `${coords.topPct}%`,
+      });
+    }
+
+    function finishDrag(event) {
+      if (!draggingRef.current) return;
+      if (activePointerIdRef.current != null && event.pointerId !== activePointerIdRef.current) {
+        return;
+      }
+
+      draggingRef.current = false;
+      activePointerIdRef.current = null;
+      setIsDragging(false);
+
+      if (didDragRef.current) {
+        const coords = pointerToHalfPercent(event);
+        if (coords) {
+          let { gridX, gridY } = halfPitchPercentToLineupGrid(coords.leftPct, coords.topPct, side);
+          if (snapToGrid) {
+            ({ gridX, gridY } = snapLineupGridPosition(gridX, gridY));
+          }
+          const snappedPct = lineupGridToHalfPitchPercent(gridX, gridY, side);
+          pendingGridRef.current = { gridX, gridY };
+          setDragStyle({ left: snappedPct.left, top: snappedPct.top });
+          onPlayerDragEnd?.({
+            player,
+            side,
+            shirtNumber: player.shirtNumber,
+            name: player.name,
+            position,
+            from: { gridX: player.gridX, gridY: player.gridY },
+            to: { gridX, gridY },
+            screenPercent: {
+              left: Number.parseFloat(snappedPct.left),
+              top: Number.parseFloat(snappedPct.top),
+            },
+          });
+        }
+      } else {
+        setDragStyle(null);
       }
     }
-    setDragStyle(null);
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', finishDrag);
+    document.addEventListener('pointercancel', finishDrag);
+    return () => {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', finishDrag);
+      document.removeEventListener('pointercancel', finishDrag);
+    };
+  }, [draggable, snapToGrid, side, player, position, onPlayerDragEnd]);
+
+  function handlePointerDown(event) {
+    if (!draggable) return;
+    event.preventDefault();
+    event.stopPropagation();
+    didDragRef.current = false;
+    draggingRef.current = true;
+    activePointerIdRef.current = event.pointerId;
   }
 
   return (
     <div
       key={player.playerId ?? `${side}-${index}`}
       className={cn(
-        'group/marker pointer-events-auto absolute z-20 -translate-x-1/2 -translate-y-1/2 group-hover/marker:z-[60] group-focus-within/marker:z-[60]',
-        draggable && 'cursor-grab active:cursor-grabbing'
+        'group/marker pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2',
+        isDragging ? 'z-[70]' : 'z-20 group-hover/marker:z-[60] group-focus-within/marker:z-[60]',
+        draggable && 'cursor-grab touch-none select-none active:cursor-grabbing'
       )}
       style={style}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
     >
       <button
         type="button"
+        tabIndex={draggable ? -1 : 0}
         className={cn(
           'relative flex flex-col items-center gap-px rounded-md p-px transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
           isHighlighted && 'ring-2 ring-white/90 ring-offset-1 ring-offset-emerald-900',
-          draggable && 'touch-none'
+          draggable && 'pointer-events-none'
         )}
         onClick={(event) => {
           event.stopPropagation();
@@ -323,6 +378,8 @@ function PitchHalf({
   onPlayerHighlight,
   timelineEvents = [],
   draggable = false,
+  snapToGrid = false,
+  showPositionGrid = false,
   onPlayerDragEnd,
 }) {
   const halfRef = useRef(null);
@@ -331,12 +388,14 @@ function PitchHalf({
     <div
       ref={halfRef}
       className={cn(
-        'pointer-events-none absolute inset-y-0 w-1/2',
-        side === 'home' ? 'left-0' : 'right-0'
+        'absolute inset-y-0 w-1/2',
+        side === 'home' ? 'left-0' : 'right-0',
+        draggable ? 'z-30' : 'pointer-events-none z-20'
       )}
       aria-label={teamLabel}
     >
       <div className="relative h-full w-full">
+        {showPositionGrid ? <PitchLineupGridOverlay side={side} /> : null}
         {players.map((player, index) => (
           <PlayerMarker
             key={player.playerId ?? `${side}-${index}`}
@@ -354,6 +413,7 @@ function PitchHalf({
             onPlayerHighlight={onPlayerHighlight}
             timelineEvents={timelineEvents}
             draggable={draggable}
+            snapToGrid={snapToGrid}
             halfRef={halfRef}
             onPlayerDragEnd={onPlayerDragEnd}
           />
@@ -446,6 +506,7 @@ export default function PitchFormation({
   onHighlightKeyChange,
   showEventLayer = false,
   draggablePlayers = false,
+  showPositionGrid = false,
   onPlayerDragEnd,
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
@@ -455,12 +516,13 @@ export default function PitchFormation({
   const [coachDetailOpen, setCoachDetailOpen] = useState(false);
   const [coachDetail, setCoachDetail] = useState(null);
 
+  const editPitchMode = draggablePlayers || showPositionGrid;
   const homePlayers = lineup?.home?.players ?? [];
   const awayPlayers = lineup?.away?.players ?? [];
   const hasPlayers = homePlayers.length > 0 || awayPlayers.length > 0;
 
   const {
-    showAttackHeatmapLayer,
+    showAttackHeatmapLayer: attackHeatmapLayer,
     showHeatmapLayer,
     showPlayerLayer,
     showEventPins,
@@ -471,6 +533,7 @@ export default function PitchFormation({
     showEventLayer,
     heatmapMode,
   });
+  const showAttackHeatmapLayer = editPitchMode ? false : attackHeatmapLayer;
 
   const homeEventSummaries = useMemo(
     () => (showPlayerLayer && showEventLayer ? buildPlayerEventSummary(events, 'home') : null),
@@ -590,6 +653,8 @@ export default function PitchFormation({
               onPlayerHighlight={onHighlightKeyChange}
               timelineEvents={events}
               draggable={draggablePlayers}
+              snapToGrid={showPositionGrid}
+              showPositionGrid={showPositionGrid}
               onPlayerDragEnd={onPlayerDragEnd}
             />
             <PitchHalf
@@ -603,6 +668,8 @@ export default function PitchFormation({
               onPlayerHighlight={onHighlightKeyChange}
               timelineEvents={events}
               draggable={draggablePlayers}
+              snapToGrid={showPositionGrid}
+              showPositionGrid={showPositionGrid}
               onPlayerDragEnd={onPlayerDragEnd}
             />
           </>

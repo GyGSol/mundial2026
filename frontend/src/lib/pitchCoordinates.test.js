@@ -12,6 +12,7 @@ import {
   PITCH_MARGIN_Y,
   PITCH_SPAN_X,
   PITCH_SPAN_Y,
+  snapLineupGridPosition,
   teamLateralToStadiumY,
 } from './pitchCoordinates.js';
 
@@ -204,5 +205,10 @@ describe('pitchCoordinates', () => {
         positionY: 40,
       })
     ).toEqual({ x: 20, y: 40 });
+  });
+
+  it('snapLineupGridPosition alinea a pasos de 10', () => {
+    expect(snapLineupGridPosition(44.3, 36.7)).toEqual({ gridX: 40, gridY: 40 });
+    expect(snapLineupGridPosition(85, 4)).toEqual({ gridX: 90, gridY: 0 });
   });
 });

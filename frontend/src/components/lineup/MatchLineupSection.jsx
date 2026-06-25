@@ -493,6 +493,7 @@ export default function MatchLineupSection({
           showEventLayer={isInteractivePitch}
           className="w-full min-w-0 max-w-lg md:flex-1"
           draggablePlayers={editablePitch}
+          showPositionGrid={editablePitch}
           onPlayerDragEnd={(payload) => {
             onPlayerGridChange?.(payload);
           }}
@@ -515,7 +516,7 @@ export default function MatchLineupSection({
         ) : null}
       </div>
 
-      {isInteractivePitch ? (
+      {isInteractivePitch && !editablePitch ? (
         <div className="flex flex-wrap items-center justify-center gap-1">
           {HEATMAP_OPTIONS.map((option) => (
             <button

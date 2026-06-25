@@ -10,6 +10,21 @@ export const LINEUP_DEPTH_SPAN = 88;
 export const LINEUP_LATERAL_EDGE = 2;
 export const LINEUP_LATERAL_SPAN = 96;
 
+/** Paso de snap para admin Formaciones (alineado a la cuadrícula visible). */
+export const LINEUP_GRID_SNAP_STEP = 10;
+
+export function snapLineupGridCoord(value, step = LINEUP_GRID_SNAP_STEP) {
+  const clamped = clampFifaCoord(value);
+  return Math.round(clamped / step) * step;
+}
+
+export function snapLineupGridPosition(gridX, gridY, step = LINEUP_GRID_SNAP_STEP) {
+  return {
+    gridX: snapLineupGridCoord(gridX, step),
+    gridY: snapLineupGridCoord(gridY, step),
+  };
+}
+
 function clampFifaCoord(value) {
   return Math.min(100, Math.max(0, Number(value)));
 }
