@@ -5,6 +5,35 @@ import {
 } from './matchEnrichmentService.js';
 import { buildMatchLineupPayload } from './matchLineupService.js';
 import { sortLiveMatchesForFeaturedBar } from './liveMatchPartitionService.js';
+import { createInMemoryCache } from './inMemoryCache.js';
+import { matchEnrichmentRevision } from './matchEnrichmentRevision.js';
+
+const MATCH_ENRICHMENT_TTL_MS = 10_000;
+const matchEnrichmentCache = createInMemoryCache({ defaultTtlMs: MATCH_ENRICHMENT_TTL_MS });
+
+function matchEnrichmentCacheKey(raw, userId, tier) {
+  const userKey = userId ? String(userId) : 'anon';
+  return `${raw._id}:${userKey}:${tier}:${matchEnrichmentRevision(raw)}`;
+}
+
+async function enrichSingleMatchCached(raw, userId, tier) {
+  const key = matchEnrichmentCacheKey(raw, userId, tier);
+  return matchEnrichmentCache.getOrCompute(
+    key,
+    async () => {
+      const enricher =
+        tier === 'full' ? enrichMatchesForRankingDashboard : enrichMatchesForLiveBarSummary;
+      const [match] = await enricher([raw], userId);
+      return match ?? null;
+    },
+    MATCH_ENRICHMENT_TTL_MS
+  );
+}
+
+/** Test helper */
+export function clearLiveFeaturedBarMatchEnrichmentCache() {
+  matchEnrichmentCache.clear();
+}
 
 /**
  * @param {import('mongoose').LeanDocument[]} activeLiveRaw
@@ -38,20 +67,28 @@ export async function enrichFeaturedBarPayload({
 
   await prepareFifaShirtMapsForMatches([...activeLiveRaw, ...recentFeaturedRaw]);
 
-  const [detailEnriched, summaryEnriched, recentEnriched] = await Promise.all([
+  const [detailEnriched, summaryEnrichedList, recentEnrichedList] = await Promise.all([
     detailLiveRaw.length
-      ? enrichMatchesForRankingDashboard(detailLiveRaw, userId)
-      : Promise.resolve([]),
+      ? enrichSingleMatchCached(detailLiveRaw[0], userId, 'full')
+      : Promise.resolve(null),
     summaryLiveRaw.length
-      ? enrichMatchesForLiveBarSummary(summaryLiveRaw, userId)
+      ? Promise.all(summaryLiveRaw.map((raw) => enrichSingleMatchCached(raw, userId, 'summary')))
       : Promise.resolve([]),
     recentFeaturedRaw.length
-      ? enrichMatchesForRankingDashboard(recentFeaturedRaw, userId)
+      ? Promise.all(
+          recentFeaturedRaw.map((raw) => enrichSingleMatchCached(raw, userId, 'full'))
+        )
       : Promise.resolve([]),
   ]);
 
   const enrichedById = new Map(
-    [...detailEnriched, ...summaryEnriched, ...recentEnriched].map((m) => [m.id, m])
+    [
+      detailEnriched,
+      ...summaryEnrichedList.filter(Boolean),
+      ...recentEnrichedList.filter(Boolean),
+    ]
+      .filter(Boolean)
+      .map((m) => [m.id, m])
   );
 
   const liveMatches = sortLiveMatchesForFeaturedBar(

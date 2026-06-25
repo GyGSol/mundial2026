@@ -25,7 +25,9 @@ import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
 } from './liveMatchPartitionService.js';
-import { enrichFeaturedBarPayload } from './liveFeaturedBarService.js';
+import { getCachedFeaturedBarPayload } from './liveFeaturedBarCache.js';
+import { getCachedRankingDashboardShell } from './rankingDashboardShellCache.js';
+import { featuredBarInputsSignature } from './matchEnrichmentRevision.js';
 import { LIVE_BAR_MATCH_PROJECTION } from './liveBarMatchProjection.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
@@ -84,12 +86,7 @@ async function resolveGroup(groupId) {
   return { group };
 }
 
-export async function getRankingDashboard(groupId, userId, detailMatchId) {
-  const groupResult = await resolveGroup(groupId);
-  if (groupResult.notFound) {
-    return { notFound: true };
-  }
-
+async function fetchRankingDashboardMatchInputs() {
   const [lastSyncAt, liveRaw, upcomingRaw, recentFinishedRaw] = await Promise.all([
     getLastSyncAt(),
     Match.find({ status: 'live' })
@@ -109,14 +106,19 @@ export async function getRankingDashboard(groupId, userId, detailMatchId) {
 
   const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
   const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
-
   const nextSlotRaw = findNextUpcomingMatches(upcomingRaw);
-  const { liveMatches, recentFinishedMatches } = await enrichFeaturedBarPayload({
+
+  return {
+    lastSyncAt,
     activeLiveRaw,
     recentFeaturedRaw,
-    userId,
-    detailMatchId,
-  });
+    upcomingRaw,
+    nextSlotRaw,
+  };
+}
+
+async function buildRankingDashboardShell(groupId, userId, inputs, groupResult) {
+  const { lastSyncAt, activeLiveRaw, recentFeaturedRaw, upcomingRaw, nextSlotRaw } = inputs;
 
   if (groupId && groupId !== '__nogroup') {
     await ensureAiCompetitorInGroup(groupId);
@@ -125,8 +127,8 @@ export async function getRankingDashboard(groupId, userId, detailMatchId) {
   await prepareFifaShirtMapsForMatches(nextSlotRaw);
   const enrichedUpcoming = await enrichMatchesForRankingUpcoming(nextSlotRaw, userId);
 
-  const liveMatchIds = liveMatches.map((match) => match.id);
-  const recentFinishedIds = recentFinishedMatches.map((match) => match.id);
+  const liveMatchIds = activeLiveRaw.map((m) => m._id.toString());
+  const recentFinishedIds = recentFeaturedRaw.map((m) => m._id.toString());
   const indicatorBaselineMatchIds = buildStatIndicatorMatchIds(liveMatchIds, recentFinishedIds);
   const hasStatIndicators = indicatorBaselineMatchIds.length > 0;
   const leaderboard = await getCachedLeaderboard(groupId || null, 100, {}, {
@@ -160,11 +162,7 @@ export async function getRankingDashboard(groupId, userId, detailMatchId) {
     })
   );
 
-  const [liveWithStream, nextWithStream, recentFinishedWithStream] = await Promise.all([
-    attachStreamMetaToMatches(liveMatches),
-    attachStreamMetaToMatches(nextUpcomingMatches),
-    attachStreamMetaToMatches(recentFinishedMatches),
-  ]);
+  const nextWithStream = await attachStreamMetaToMatches(nextUpcomingMatches);
 
   let enrichedLeaderboard = leaderboard;
   let prizePool = null;
@@ -198,9 +196,44 @@ export async function getRankingDashboard(groupId, userId, detailMatchId) {
     group: groupResult.group,
     prizePool,
     lastSyncAt,
-    liveMatches: liveWithStream,
-    recentFinishedMatches: recentFinishedWithStream,
     nextUpcomingMatches: nextWithStream,
+  };
+}
+
+export async function getRankingDashboard(groupId, userId, detailMatchId) {
+  const groupResult = await resolveGroup(groupId);
+  if (groupResult.notFound) {
+    return { notFound: true };
+  }
+
+  const inputs = await fetchRankingDashboardMatchInputs();
+  const inputsSignature = featuredBarInputsSignature(
+    inputs.activeLiveRaw,
+    inputs.recentFeaturedRaw
+  );
+  const hasLiveOrRecent =
+    inputs.activeLiveRaw.length > 0 || inputs.recentFeaturedRaw.length > 0;
+
+  const [featuredBar, shell] = await Promise.all([
+    getCachedFeaturedBarPayload({
+      activeLiveRaw: inputs.activeLiveRaw,
+      recentFeaturedRaw: inputs.recentFeaturedRaw,
+      userId,
+      detailMatchId,
+    }),
+    getCachedRankingDashboardShell(
+      groupId,
+      userId,
+      inputsSignature,
+      () => buildRankingDashboardShell(groupId, userId, inputs, groupResult),
+      { hasLiveOrRecent }
+    ),
+  ]);
+
+  return {
+    ...shell,
+    liveMatches: featuredBar.liveMatches,
+    recentFinishedMatches: featuredBar.recentFinishedMatches,
   };
 }
 

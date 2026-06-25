@@ -46,12 +46,12 @@ describe('rankingDashboardCache', () => {
     expect(getRankingDashboard).toHaveBeenCalledTimes(2);
   });
 
-  it('usa TTL corto con partidos en vivo', () => {
+  it('usa TTL alineado al poll con partidos en vivo', () => {
     expect(
       dashboardCacheTtlMs({
         liveMatches: [{ id: '1' }],
       })
-    ).toBe(2_500);
+    ).toBe(10_000);
     expect(
       dashboardCacheTtlMs({
         liveMatches: [],
@@ -65,6 +65,6 @@ describe('rankingDashboardCache', () => {
         liveMatches: [],
         recentFinishedMatches: [{ id: '1' }],
       })
-    ).toBe(2_500);
+    ).toBe(10_000);
   });
 });

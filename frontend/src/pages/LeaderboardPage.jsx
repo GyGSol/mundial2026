@@ -1,5 +1,5 @@
 import { LineChart } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { competitionGroupsApi, leaderboardApi, matchesApi } from '../api/client.js';
 import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/leaderboardPolling.js';
 import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
-import { mergeLiveDashboard } from '../lib/patchLiveMatchSnapshot.js';
+import { mergeLiveDashboard, mergeLiveSnapshot } from '../lib/patchLiveMatchSnapshot.js';
 import { sortLiveMatchesForFeaturedBar } from '../lib/liveMatchFeaturedSort.js';
 import { writeStoredExpandedId } from '../hooks/useFeaturedLiveExpansion.js';
 import {
@@ -190,33 +190,35 @@ export default function LeaderboardPage() {
       return null;
     }
   });
+  const expandedLiveMatchIdRef = useRef(expandedLiveMatchId);
+  expandedLiveMatchIdRef.current = expandedLiveMatchId;
 
   const fetchLeaderboard = useCallback(
     () =>
       leaderboardApi.dashboard(effectiveGroupId, {
-        detailMatchId: expandedLiveMatchId ?? undefined,
+        detailMatchId: expandedLiveMatchIdRef.current ?? undefined,
       }),
-    [effectiveGroupId, expandedLiveMatchId]
+    [effectiveGroupId]
   );
 
   const fetchLiveSnapshot = useCallback(
     () =>
       matchesApi.liveSnapshot({
-        detailMatchId: expandedLiveMatchId ?? undefined,
+        detailMatchId: expandedLiveMatchIdRef.current ?? undefined,
       }),
-    [expandedLiveMatchId]
+    []
   );
 
   const fetchFinishedArchive = useCallback(() => leaderboardApi.finishedArchive(), []);
 
   const { data, loading, error, lastUpdated, patchData } = useLiveData(
     fetchLeaderboard,
-    [effectiveGroupId, expandedLiveMatchId],
+    [effectiveGroupId],
     {
       enabled: canLoadRanking,
       getPollIntervalMs: leaderboardPollIntervalMs,
       pollWhen: shouldPollLeaderboardLive,
-      memoryCacheKey: `ranking:dashboard:${effectiveGroupId}:${expandedLiveMatchId ?? 'auto'}`,
+      memoryCacheKey: `ranking:dashboard:${effectiveGroupId}`,
       memoryCacheTtlMs: 5_000,
       mergeOnRefresh: mergeLiveDashboard,
       realtimeDebounceMs: 750,
@@ -249,10 +251,21 @@ export default function LeaderboardPage() {
     });
   }, [sortedLiveMatches]);
 
-  const handleExpandedLiveMatchChange = useCallback((matchId) => {
-    setExpandedLiveMatchId(matchId);
-    writeStoredExpandedId(matchId);
-  }, []);
+  const handleExpandedLiveMatchChange = useCallback(
+    (matchId) => {
+      setExpandedLiveMatchId(matchId);
+      writeStoredExpandedId(matchId);
+      expandedLiveMatchIdRef.current = matchId;
+      void matchesApi
+        .liveSnapshot({ detailMatchId: matchId ?? undefined })
+        .then((snapshot) => {
+          if (!snapshot) return;
+          patchData((prev) => mergeLiveSnapshot(prev, snapshot));
+        })
+        .catch(() => {});
+    },
+    [patchData]
+  );
 
   const dashboardMatchesGroup =
     Boolean(data) && String(data.group?.id ?? '') === String(effectiveGroupId);
