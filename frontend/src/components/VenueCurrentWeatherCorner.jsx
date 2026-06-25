@@ -38,10 +38,7 @@ export default function VenueCurrentWeatherCorner({ weather, className }) {
       aria-label={ariaLabel}
       title={ariaLabel}
     >
-      <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-[10px]">
-        Clima actual en la sede
-      </p>
-      <div className="mt-0.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
+      <div className="flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
         {current.description ? (
           <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-foreground sm:text-xs">
             <Sun className="size-3 shrink-0" aria-hidden />
