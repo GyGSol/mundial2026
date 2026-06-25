@@ -641,6 +641,50 @@ describe('matchLiveData', () => {
       expect(timeline[0].player).toBe('Eli Just');
       expect(timeline[0].playerShirtNumber).toBe(11);
     });
+
+    it('no duplica gol cuando goleadores y FIFA difieren en descuento (match 49)', () => {
+      const baseTimeline = [
+        { type: 'goal', side: 'away', minute: 7, player: 'VINICIUS JUNIOR', sortKey: 7 },
+        {
+          type: 'goal',
+          side: 'away',
+          minute: 45,
+          extraMinute: 1,
+          player: 'VINICIUS JUNIOR',
+          sortKey: 45.01,
+        },
+        { type: 'goal', side: 'away', minute: 60, player: 'MATHEUS CUNHA', sortKey: 60 },
+      ];
+      const { away: awayScorers } = scorersFromTimeline(baseTimeline);
+
+      const timeline = completeTimelineEvents(baseTimeline, {
+        homeScorers: [],
+        awayScorers,
+        homeScore: 0,
+        awayScore: 3,
+      });
+
+      expect(goalCountsFromTimeline(timeline)).toEqual({ home: 0, away: 3 });
+      expect(timeline.filter((event) => event.type === 'goal')).toHaveLength(3);
+    });
+
+    it('deduplicateTimelineGoals fusiona mismo jugador en minuto base con distinto descuento', () => {
+      const timeline = deduplicateTimelineGoals([
+        { type: 'goal', side: 'away', minute: 45, player: 'VINICIUS JUNIOR', sortKey: 45 },
+        {
+          type: 'goal',
+          side: 'away',
+          minute: 45,
+          extraMinute: 1,
+          player: 'VINICIUS JUNIOR',
+          playerShirtNumber: 7,
+          sortKey: 45.01,
+        },
+      ]);
+
+      expect(timeline.filter((event) => event.type === 'goal')).toHaveLength(1);
+      expect(timeline[0].playerShirtNumber).toBe(7);
+    });
   });
 
   describe('enrichMatchLiveFields', () => {

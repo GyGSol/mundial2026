@@ -662,13 +662,13 @@ export function deduplicateTimelineGoals(timeline = []) {
       continue;
     }
 
-    const key = [
-      event.side ?? '',
-      event.minute ?? 'x',
-      event.extraMinute ?? 0,
-    ].join(':');
+    const key = deduplicateGoalKey(event);
 
-    const existingIdx = goalIndexByKey.get(key);
+    let existingIdx = goalIndexByKey.get(key);
+    if (existingIdx == null) {
+      const mergeIdx = findGoalIndexForMerge(result, event);
+      if (mergeIdx >= 0) existingIdx = mergeIdx;
+    }
     if (existingIdx == null) {
       goalIndexByKey.set(key, result.length);
       result.push(normalizeGoalEvent({ ...event }));
@@ -701,20 +701,43 @@ function timelineIncludesGoal(timeline, { side, minute, extraMinute = null, play
   return timeline.some((event) => {
     if (event.type !== 'goal' || event.side !== side) return false;
 
+    const playerMatch =
+      !player ||
+      !event.player ||
+      goalPlayerNamesMatch(event.player, player);
+
     if (minute != null && event.minute != null) {
       if (Number(event.minute) !== Number(minute)) return false;
       const exA = Number(event.extraMinute ?? 0);
       const exB = Number(extraMinute ?? 0);
-      return exA === exB;
+      if (exA === exB) return true;
+      // Mismo jugador y minuto base: FIFA vs goleadores suelen diferir en descuento (+1).
+      return playerMatch;
     }
 
-    if (minute != null || event.minute != null) return false;
+    if (minute != null || event.minute != null) {
+      return playerMatch;
+    }
 
-    return (
-      !player ||
-      !event.player ||
-      goalPlayerNamesMatch(event.player, player)
-    );
+    return playerMatch;
+  });
+}
+
+function deduplicateGoalKey(event) {
+  return [event.side ?? '', event.minute ?? 'x', event.extraMinute ?? 0].join(':');
+}
+
+function findGoalIndexForMerge(result, event) {
+  if (event.type !== 'goal' || event.minute == null || !event.player) return -1;
+
+  return result.findIndex((existing) => {
+    if (existing.type !== 'goal' || existing.side !== event.side) return false;
+    if (existing.minute == null || Number(existing.minute) !== Number(event.minute)) return false;
+    if (!existing.player || !goalPlayerNamesMatch(existing.player, event.player)) return false;
+
+    const exA = Number(existing.extraMinute ?? 0);
+    const exB = Number(event.extraMinute ?? 0);
+    return exA !== exB;
   });
 }
 
