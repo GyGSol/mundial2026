@@ -5,7 +5,7 @@ import { formatWeatherSnapshot, hasCurrentVenueWeather } from '@/lib/venueWeathe
 function WeatherMetric({ icon: Icon, value }) {
   if (!value) return null;
   return (
-    <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground sm:text-[11px]">
+    <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-muted-foreground sm:text-[11px]">
       <Icon className="size-3 shrink-0" aria-hidden />
       <span className="text-foreground">{value}</span>
     </span>
@@ -35,16 +35,16 @@ export default function VenueCurrentWeatherCorner({ weather, className }) {
         'pointer-events-none z-10 w-[calc(100%-2rem)] rounded-md border border-border/70 bg-background/95 px-2 py-1.5 text-center shadow-sm backdrop-blur-sm',
         // Mobile: en flujo arriba de la tarjeta para no tapar bandera/nombre visitante
         'mx-4 mt-3',
-        // Desktop: esquina superior derecha (comportamiento original)
-        'sm:absolute sm:right-3 sm:top-3 sm:mx-0 sm:mt-0 sm:w-auto sm:max-w-[16rem] sm:text-right',
+        // Desktop: esquina superior derecha, una sola línea
+        'sm:absolute sm:right-3 sm:top-3 sm:mx-0 sm:mt-0 sm:w-auto sm:max-w-none sm:text-right',
         className
       )}
       aria-label={ariaLabel}
       title={ariaLabel}
     >
-      <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 sm:justify-end">
+      <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 sm:flex-nowrap sm:justify-end sm:gap-x-1.5">
         {current.description ? (
-          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-foreground sm:text-xs">
+          <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-foreground sm:text-xs">
             <Sun className="size-3 shrink-0" aria-hidden />
             {current.description}
           </span>
