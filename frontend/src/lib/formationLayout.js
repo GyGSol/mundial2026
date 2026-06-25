@@ -555,12 +555,12 @@ function centerForwardLateralSlots(count) {
 export function isCenterBackLike(player) {
   const token = positionToken(player);
   if (token === 'DFC') return true;
-  if (token === 'LI' || token === 'LD' || token === 'DEF' || token === 'DF') return false;
+  if (token === 'LI' || token === 'LD') return false;
 
   const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.trim().toUpperCase();
   if (text.includes('CENTRE-BACK') || text.includes('CENTER BACK')) return true;
-  if (mapFootballDataPositionText(text) !== 'DEF') return false;
-  return lateralSortKey(player) >= 38 && lateralSortKey(player) <= 62;
+  if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'DEF') return false;
+  return lateralSortKey(player) >= 28 && lateralSortKey(player) <= 62;
 }
 
 /** Mediocampista central (MC / MCO / pivote / MD doble pivote), no bandas MI/MD derecho. */
@@ -716,7 +716,7 @@ export function assignPlayersToFormation(
 }
 
 /** Separa jugadores que comparten gridX/gridY para que no se oculten en la cancha. */
-export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {}) {
+export function spreadOverlappingGridPositions(players, { lateralStep = 12, formation } = {}) {
   if (!players?.length) return players ?? [];
 
   const entries = players.map((player, index) => ({
@@ -753,7 +753,7 @@ export function spreadOverlappingGridPositions(players, { lateralStep = 12 } = {
     });
   }
 
-  return spreadTacticalLineClusters(adjusted.filter(Boolean));
+  return spreadTacticalLineClusters(adjusted.filter(Boolean), { formation });
 }
 
 /** Dos+ jugadores con la misma posición táctica y profundidad → línea horizontal (gridY). */
@@ -944,6 +944,11 @@ export function spreadMidCenterClusters(players) {
   });
 }
 
+function defCenterClusterLateralSlots(count) {
+  if (count === 2) return [40, 60];
+  return centerClusterLateralSlots(count);
+}
+
 /** Dos+ centrales (DFC) amontonados en la línea defensiva. */
 export function spreadDefCenterClusters(players) {
   return spreadPoolCenterClusters(players, {
@@ -951,6 +956,7 @@ export function spreadDefCenterClusters(players) {
     minDepth: 18,
     maxDepth: 42,
     isCenterLike: isCenterBackLike,
+    slotFn: defCenterClusterLateralSlots,
   });
 }
 
@@ -1013,16 +1019,27 @@ function resolveExactGridCollisions(players) {
 }
 
 const DEFENSE_BACK_LINE_LATERALS = {
-  4: [20, 30, 70, 80],
+  4: [20, 40, 60, 80],
   5: [20, 30, 50, 60, 80],
 };
+
+const DEFENSE_FIVE_BACK_LATERALS = [20, 30, 50, 70, 80];
+const DEFENSE_FIVE_BACK_DEPTHS = [40, 30, 20, 30, 40];
 
 function isDefenseLinePlayer(player) {
   return mapFootballDataPositionText(player.positionDetail ?? player.position) === 'DEF';
 }
 
+function isFiveBackFormation(formation) {
+  return typeof formation === 'string' && /^5-/.test(formation.trim());
+}
+
+function isFourTwoThreeOneFormation(formation) {
+  return typeof formation === 'string' && /^4-2-3-1/.test(formation.trim());
+}
+
 /** Arco defensivo: laterales adelantados (gridX +10) y eje lateral equilibrado. */
-export function spreadDefenseBackLineShape(players) {
+export function spreadDefenseBackLineShape(players, { formation } = {}) {
   if (!players?.length) return players ?? [];
 
   const entries = players
@@ -1038,34 +1055,66 @@ export function spreadDefenseBackLineShape(players) {
   const sorted = [...entries].sort(
     (a, b) => Number(a.player.gridY ?? 50) - Number(b.player.gridY ?? 50)
   );
-  const laterals =
-    DEFENSE_BACK_LINE_LATERALS[sorted.length] ??
-    Array.from({ length: sorted.length }, (_, slot) => lateralForSlot(slot, sorted.length));
   const inner = sorted.length > 2 ? sorted.slice(1, -1) : sorted;
   const baseDepth = Number(inner[Math.floor(inner.length / 2)]?.player.gridX ?? 30);
 
   let result = [...players];
-  sorted.forEach(({ index }, slot) => {
+
+  if (sorted.length === 5 && isFiveBackFormation(formation)) {
+    sorted.forEach(({ index }, slot) => {
+      result[index] = {
+        ...result[index],
+        gridX: DEFENSE_FIVE_BACK_DEPTHS[slot],
+        gridY: DEFENSE_FIVE_BACK_LATERALS[slot],
+      };
+    });
+    return result;
+  }
+
+  const laterals =
+    DEFENSE_BACK_LINE_LATERALS[sorted.length] ??
+    Array.from({ length: sorted.length }, (_, slot) => lateralForSlot(slot, sorted.length));
+
+  sorted.forEach(({ index, player }, slot) => {
     const isOuter = slot === 0 || slot === sorted.length - 1;
+    let depth = isOuter ? Math.min(44, baseDepth + 10) : baseDepth;
+    if (!isOuter && sorted.length === 4 && isFourTwoThreeOneFormation(formation)) {
+      const innerEntries = sorted.slice(1, -1);
+      const allInnerCenterBacks =
+        innerEntries.length === 2 &&
+        innerEntries.every(({ player: innerPlayer }) => isCenterBackLike(innerPlayer));
+      const detailToken = String(player?.positionDetail ?? '')
+        .trim()
+        .toUpperCase();
+
+      if (slot === 2 && detailToken === 'DF') {
+        depth = Math.max(30, baseDepth);
+      } else if (allInnerCenterBacks && isCenterBackLike(player)) {
+        depth = Math.max(20, baseDepth - 10);
+      } else if (slot === 1 && isCenterBackLike(player)) {
+        depth = Math.max(20, baseDepth - 10);
+      }
+    }
     result[index] = {
       ...result[index],
-      gridX: Number((isOuter ? Math.min(44, baseDepth + 10) : baseDepth).toFixed(1)),
+      gridX: Number(depth.toFixed(1)),
       gridY: laterals[slot],
     };
   });
   return result;
 }
 
-/** Dos delanteros en línea de ataque → profundidad 90 y eje 40/60. */
-export function spreadForwardStrikerPair(players) {
+/** Doble pivote: dos MC/MCD en la misma línea → profundidad 50 y eje 30/60. */
+export function spreadDoublePivotPair(players) {
   if (!players?.length) return players ?? [];
 
   const entries = players
     .map((player, index) => ({ player, index }))
     .filter(({ player }) => {
-      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'FWD') return false;
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'MID') return false;
+      if (isLeftWingMid(player) || isRightWingMid(player, players)) return false;
       const depth = Number(player.gridX ?? 0);
-      return depth >= 78;
+      return depth >= 38 && depth <= 54;
     });
 
   if (entries.length !== 2) return players;
@@ -1080,11 +1129,73 @@ export function spreadForwardStrikerPair(players) {
   sorted.forEach(({ index }, slot) => {
     result[index] = {
       ...result[index],
+      gridX: 50,
+      gridY: slot === 0 ? 30 : 60,
+    };
+  });
+  return result;
+}
+
+function pickForwardStrikerPairEntries(entries) {
+  if (entries.length <= 2) return entries;
+
+  const centerForwards = entries.filter(({ player }) => isCenterForwardLike(player));
+  if (centerForwards.length >= 2) {
+    return [...centerForwards]
+      .sort(
+        (a, b) =>
+          Math.abs(Number(a.player.gridY ?? 50) - 50) -
+          Math.abs(Number(b.player.gridY ?? 50) - 50)
+      )
+      .slice(0, 2);
+  }
+
+  return [...entries]
+    .sort(
+      (a, b) =>
+        Math.abs(Number(a.player.gridY ?? 50) - 50) -
+        Math.abs(Number(b.player.gridY ?? 50) - 50)
+    )
+    .slice(0, 2);
+}
+
+/** Dos delanteros en línea de ataque → profundidad 90 y eje 40/60. */
+export function spreadForwardStrikerPair(players) {
+  if (!players?.length) return players ?? [];
+
+  const entries = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'FWD') return false;
+      const depth = Number(player.gridX ?? 0);
+      return depth >= 78;
+    });
+
+  const picked = pickForwardStrikerPairEntries(entries);
+  if (picked.length !== 2) return players;
+
+  const sorted = [...picked].sort(
+    (a, b) =>
+      lateralSortKey(a.player) - lateralSortKey(b.player) ||
+      (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+  );
+
+  let result = [...players];
+  sorted.forEach(({ index }, slot) => {
+    result[index] = {
+      ...result[index],
       gridX: 90,
       gridY: slot === 0 ? 40 : 60,
     };
   });
   return result;
+}
+
+function isWideAttackingMid(player) {
+  const detail = String(player?.positionDetail ?? player?.position ?? '')
+    .trim()
+    .toUpperCase();
+  return detail === 'MF' || detail === 'FW' || detail.includes('WING');
 }
 
 /** Par ofensivo en mediocampo alto (p. ej. MI + MD en 4-2-3-1). */
@@ -1112,14 +1223,27 @@ export function spreadAttackingMidWingBand(players) {
       (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
   );
 
+  const ys = sorted.map(({ player }) => Number(player.gridY ?? 50));
+  const wideBand =
+    sorted.some(({ player }) => isWideAttackingMid(player)) ||
+    (isLeftWingMid(sorted[0].player) && isRightWingMid(sorted[1].player, linePlayers));
+
   let result = [...players];
-  result[sorted[0].index] = { ...result[sorted[0].index], gridX: 50, gridY: 20 };
-  result[sorted[1].index] = { ...result[sorted[1].index], gridX: 60, gridY: 70 };
+  result[sorted[0].index] = {
+    ...result[sorted[0].index],
+    gridX: wideBand ? 70 : 50,
+    gridY: 20,
+  };
+  result[sorted[1].index] = {
+    ...result[sorted[1].index],
+    gridX: wideBand ? 70 : 60,
+    gridY: wideBand ? 90 : 70,
+  };
   return result;
 }
 
 /** Separa solapes tácticos en defensa, mediocampo y ataque. */
-export function spreadTacticalLineClusters(players) {
+export function spreadTacticalLineClusters(players, { formation } = {}) {
   let next = spreadDefenseLineOverlaps(players);
   next = spreadDefCenterClusters(next);
   next = spreadMidfieldLineOverlaps(next);
@@ -1128,7 +1252,8 @@ export function spreadTacticalLineClusters(players) {
   next = spreadSamePositionOverlaps(next);
   next = spreadCoLocatedPlayers(next);
   next = expandPitchLateralSpread(next);
-  next = spreadDefenseBackLineShape(next);
+  next = spreadDoublePivotPair(next);
+  next = spreadDefenseBackLineShape(next, { formation });
   next = spreadAttackingMidWingBand(next);
   return spreadForwardStrikerPair(next);
 }

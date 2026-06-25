@@ -150,8 +150,8 @@ describe('formationLayout midfield and defense', () => {
     ];
 
     const next = spreadDefCenterClusters(players);
-    expect(next.find((p) => p.shirtNumber === 4)?.gridY).toBe(38);
-    expect(next.find((p) => p.shirtNumber === 13)?.gridY).toBe(62);
+    expect(next.find((p) => p.shirtNumber === 4)?.gridY).toBe(40);
+    expect(next.find((p) => p.shirtNumber === 13)?.gridY).toBe(60);
     expect(next.find((p) => p.shirtNumber === 3)?.gridY).toBe(12);
   });
 

@@ -95,7 +95,7 @@ export function parseFootballDataMatchLineups(matchData, homeFdId, awayFdId) {
   return { home, away };
 }
 
-export const LINEUP_LAYOUT_VERSION = 7;
+export const LINEUP_LAYOUT_VERSION = 8;
 
 function normalizePlayerForFormation(player) {
   const detail = player.positionDetail ?? player.position;
@@ -112,7 +112,7 @@ function applyGridsToSide(side) {
   const players = side.players.map(normalizePlayerForFormation);
   const formation = resolveFormation(players, side.formation);
   const laidOut = assignPlayersToFormation(players, formation);
-  const withGrids = spreadOverlappingGridPositions(laidOut);
+  const withGrids = spreadOverlappingGridPositions(laidOut, { formation });
   return { ...side, formation, players: withGrids };
 }
 
