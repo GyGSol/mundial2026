@@ -89,7 +89,7 @@ describe('weatherRiskService', () => {
     const stadiumRoof = { externalId: '5', country: 'USA' };
 
     expect(shouldSuggestInPlaySuspension(risk, match, stadiumOpen)).toBe(true);
-    expect(shouldSuggestInPlaySuspension(openMeteoRisk, match, stadiumOpen)).toBe(true);
+    expect(shouldSuggestInPlaySuspension(openMeteoRisk, match, stadiumOpen)).toBe(false);
     expect(shouldSuggestInPlaySuspension(openMeteoRisk, match, stadiumRoof)).toBe(false);
     expect(shouldSuggestInPlaySuspension(risk, { ...match, status: 'upcoming' }, stadiumOpen)).toBe(
       false
@@ -133,6 +133,24 @@ describe('weatherRiskService', () => {
         { externalId: '6', country: 'USA' }
       )
     ).toBe(false);
+    expect(
+      shouldClearContradictedInPlaySuspension(
+        {
+          status: 'live',
+          homeScore: 0,
+          awayScore: 0,
+          weatherOps: { phase: 'suspended', source: 'open-meteo' },
+          raw: {
+            time_elapsed: "46'",
+            fifaEvents: {
+              timeline: [{ type: 'shot_attempt', minute: 44, sortKey: 44 }],
+            },
+          },
+        },
+        openMeteoRisk,
+        { externalId: '1', country: 'México' }
+      )
+    ).toBe(true);
     expect(
       shouldClearContradictedInPlaySuspension(suspended, openMeteoRisk, {
         externalId: '6',

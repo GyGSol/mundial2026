@@ -29,7 +29,7 @@ describe('matchWeatherEnrichmentService', () => {
     expect(ops?.resumeEarliestAt).toBeInstanceOf(Date);
   });
 
-  it('applyInPlayWeatherSuspension no suspende con Open-Meteo en estadio con techo retráctil', () => {
+  it('applyInPlayWeatherSuspension no suspende solo con Open-Meteo (pronóstico)', () => {
     const match = {
       status: 'live',
       kickoffAt: new Date('2026-06-20T21:00:00Z'),
@@ -42,9 +42,13 @@ describe('matchWeatherEnrichmentService', () => {
       lastAlertAt: '2026-06-20T21:34:00Z',
       authorityAlertSource: 'open-meteo',
     };
-    const stadium = { externalId: '5', country: 'USA' };
+    const stadiumOpen = { externalId: '6', country: 'USA' };
+    const stadiumRoof = { externalId: '5', country: 'USA' };
+    const stadiumMexico = { externalId: '1', country: 'México' };
 
-    expect(applyInPlayWeatherSuspension(match, risk, stadium)).toBeNull();
+    expect(applyInPlayWeatherSuspension(match, risk, stadiumOpen)).toBeNull();
+    expect(applyInPlayWeatherSuspension(match, risk, stadiumRoof)).toBeNull();
+    expect(applyInPlayWeatherSuspension(match, risk, stadiumMexico)).toBeNull();
   });
 
   it('applyWeatherOpsSuggestion sigue devolviendo pre_kickoff_delay para upcoming', () => {

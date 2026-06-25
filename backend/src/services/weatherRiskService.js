@@ -8,7 +8,7 @@ import {
   normalizeWeatherOps,
   NOAA_RESUME_WAIT_MS,
 } from './matchWeatherOpsRules.js';
-import { maxEffectivePlayMinute } from './matchStatusRules.js';
+import { matchEvidenceShowsInProgress, maxEffectivePlayMinute } from './matchStatusRules.js';
 import { parseElapsedClockToSortKey } from './matchLiveData.js';
 import { localizeAuthorityAlertsBlock } from '../../../shared/weatherAlertI18n.js';
 
@@ -384,12 +384,8 @@ export function shouldSuggestInPlaySuspension(risk, match, stadium = {}) {
     return false;
   }
 
-  if (
-    isOpenMeteoOnlyWeatherAuthority(risk) &&
-    !shouldAllowOpenMeteoInPlaySuspension(risk, stadium)
-  ) {
-    return false;
-  }
+  // Open-Meteo es pronóstico, no autoridad en tiempo real: no suspende partidos en curso.
+  if (isOpenMeteoOnlyWeatherAuthority(risk)) return false;
 
   return true;
 }
@@ -408,8 +404,8 @@ export function shouldRefreshInPlaySuspension(risk, match, stadium = {}) {
 }
 
 /**
- * Limpia suspensión automática de Open-Meteo cuando el partido sigue avanzando
- * (goles / minuto) o el estadio tiene techo retráctil.
+ * Limpia suspensión automática de Open-Meteo cuando el partido sigue en juego
+ * (timeline/minuto, con o sin goles) o el estadio tiene techo retráctil.
  */
 export function shouldClearContradictedInPlaySuspension(match, risk, stadium = {}) {
   const ops = normalizeWeatherOps(match.weatherOps);
@@ -425,7 +421,14 @@ export function shouldClearContradictedInPlaySuspension(match, risk, stadium = {
 
   const playMinute = playMinuteForWeatherOps(match);
   const totalGoals = (Number(match.homeScore) || 0) + (Number(match.awayScore) || 0);
+
   if (playMinute != null && playMinute >= 10 && totalGoals > 0) return true;
+  if (playMinute != null && playMinute >= 5 && totalGoals > 0) return true;
+
+  if (matchEvidenceShowsInProgress(match)) {
+    const evidenceMinute = maxEffectivePlayMinute(match) ?? playMinute;
+    if (evidenceMinute != null && evidenceMinute >= 10) return true;
+  }
 
   return false;
 }
