@@ -14,6 +14,7 @@ import { compareMatchesBySchedule, sortMatchesByScheduleDesc } from './matchSort
 import { recalculateMatchScores } from './syncService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { getAiUser } from './aiUserService.js';
+import { getAiAutoPredictionSchedule } from './aiPredictionSchedule.js';
 
 const MAX_CONTEXT_BYTES = 512_000;
 
@@ -318,6 +319,7 @@ export async function getAiCompetitorOverview({
       latestOfficialLogId: officialLog?._id?.toString() ?? null,
       latestSimulationLogId: simulationLog?._id?.toString() ?? null,
       predictedAt: predictedAt ? new Date(predictedAt).toISOString() : null,
+      autoPredictSchedule: getAiAutoPredictionSchedule(match.kickoffAt),
       simulationAt: simulationLog?.createdAt
         ? new Date(simulationLog.createdAt).toISOString()
         : null,

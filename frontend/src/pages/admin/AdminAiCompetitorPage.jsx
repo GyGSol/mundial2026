@@ -106,6 +106,26 @@ function formatKickoff(iso) {
   }).format(new Date(iso));
 }
 
+function formatAutoPredictSchedule(schedule) {
+  if (!schedule?.targetAt) return { main: '—', detail: null, phase: null };
+  const timeFmt = new Intl.DateTimeFormat('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: ARGENTINA_TIMEZONE,
+  });
+  const main = formatKickoff(schedule.targetAt);
+  const detail = `T−${schedule.leadMinutes} h · ventana ${timeFmt.format(new Date(schedule.windowStartAt))}–${timeFmt.format(new Date(schedule.windowEndAt))}`;
+  return { main, detail, phase: schedule.phase };
+}
+
+const autoPredictPhaseLabels = {
+  scheduled: 'Programado',
+  in_window: 'En ventana',
+  catchup: 'Catch-up',
+  past_kickoff: 'Post kickoff',
+};
+
 function matchHasFinalScore(match) {
   return match?.status === 'finished' || match?.status === 'live';
 }
@@ -131,7 +151,7 @@ function MatchAiInsightRow({
 
   return (
     <TableRow className="hover:bg-transparent" onClick={(event) => event.stopPropagation()}>
-      <TableCell colSpan={7} className="border-t-0 pt-0 pb-3">
+      <TableCell colSpan={8} className="border-t-0 pt-0 pb-3">
         <button
           type="button"
           className="flex w-full items-start gap-2 text-left text-xs text-slate-300"
@@ -681,6 +701,7 @@ export default function AdminAiCompetitorPage() {
                     <TableHead>Fecha</TableHead>
                     <TableHead>Partido</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead>Inicio auto IA</TableHead>
                     <TableHead>Predicho</TableHead>
                     <TableHead>Predicción</TableHead>
                     <TableHead>Pts / Gdif</TableHead>
@@ -691,6 +712,7 @@ export default function AdminAiCompetitorPage() {
                   {matches.map((row) => {
                     const active = row.matchId === selectedMatchId;
                     const pred = row.prediction;
+                    const autoSchedule = formatAutoPredictSchedule(row.autoPredictSchedule);
                     return (
                       <Fragment key={row.matchId}>
                       <TableRow
@@ -716,6 +738,25 @@ export default function AdminAiCompetitorPage() {
                               {statusLabels[row.match?.status] ?? row.match?.status ?? ''}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs">
+                          <div className="text-slate-300">{autoSchedule.main}</div>
+                          {autoSchedule.detail ? (
+                            <div className="text-slate-500">{autoSchedule.detail}</div>
+                          ) : null}
+                          {autoSchedule.phase === 'in_window' ? (
+                            <Badge variant="default" className="mt-1 bg-emerald-600/90 text-[10px]">
+                              {autoPredictPhaseLabels.in_window}
+                            </Badge>
+                          ) : autoSchedule.phase === 'catchup' ? (
+                            <Badge variant="outline" className="mt-1 text-[10px] text-amber-300">
+                              {autoPredictPhaseLabels.catchup}
+                            </Badge>
+                          ) : autoSchedule.phase && row.match?.status === 'upcoming' ? (
+                            <span className="mt-1 block text-[10px] text-slate-600">
+                              {autoPredictPhaseLabels[autoSchedule.phase] ?? autoSchedule.phase}
+                            </span>
+                          ) : null}
                         </TableCell>
                         <TableCell className="whitespace-nowrap text-xs text-slate-400">
                           {row.predictedAt ? (
