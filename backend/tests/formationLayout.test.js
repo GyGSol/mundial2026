@@ -252,34 +252,6 @@ describe('formationLayout 4-4-2 Ecuador (EI/ED en mediocampo)', () => {
     expect(valencia.gridX).toBe(85);
     expect(Math.abs(plata.gridY - valencia.gridY)).toBeGreaterThanOrEqual(14);
   });
-
-  it('coloca 4-4-2 con posiciones genéricas FIFA (DEF/MID/FWD)', () => {
-    const players = [
-      { name: 'Galíndez', shirtNumber: 1, position: 'GK', positionDetail: 'GK' },
-      { name: 'Hincapié', shirtNumber: 3, position: 'DEF', positionDetail: 'DEF' },
-      { name: 'Ordóñez', shirtNumber: 4, position: 'DEF', positionDetail: 'DEF' },
-      { name: 'Pacho', shirtNumber: 6, position: 'DEF', positionDetail: 'DEF' },
-      { name: 'Vite', shirtNumber: 15, position: 'MID', positionDetail: 'MID' },
-      { name: 'Franco', shirtNumber: 21, position: 'MID', positionDetail: 'MID' },
-      { name: 'Caicedo', shirtNumber: 23, position: 'MID', positionDetail: 'MID' },
-      { name: 'Yeboah', shirtNumber: 9, position: 'FWD', positionDetail: 'FWD' },
-      { name: 'Valencia', shirtNumber: 13, position: 'FWD', positionDetail: 'FWD' },
-      { name: 'Plata', shirtNumber: 19, position: 'FWD', positionDetail: 'FWD' },
-      { name: 'Angulo', shirtNumber: 20, position: 'FWD', positionDetail: 'FWD' },
-    ];
-
-    const laidOut = spreadOverlappingGridPositions(assignPlayersToFormation(players, '4-4-2'));
-
-    expect(laidOut).toHaveLength(11);
-    expect(laidOut.filter((p) => p.gridX >= 20 && p.gridX <= 32)).toHaveLength(4);
-    expect(laidOut.filter((p) => p.gridX >= 52 && p.gridX <= 64)).toHaveLength(4);
-    expect(laidOut.filter((p) => p.gridX >= 80 && p.gridX <= 90)).toHaveLength(2);
-
-    expect(laidOut.find((p) => p.shirtNumber === 9).gridX).toBeGreaterThanOrEqual(52);
-    expect(laidOut.find((p) => p.shirtNumber === 20).gridX).toBeGreaterThanOrEqual(52);
-    expect(laidOut.find((p) => p.shirtNumber === 13).gridX).toBe(85);
-    expect(laidOut.find((p) => p.shirtNumber === 19).gridX).toBe(85);
-  });
 });
 
 describe('formationLayout 4-2-3-1 Alemania sin regresión', () => {

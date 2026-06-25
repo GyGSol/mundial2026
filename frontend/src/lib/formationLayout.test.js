@@ -301,47 +301,6 @@ describe('formationLayout 4-4-2 Ecuador (EI/ED en mediocampo)', () => {
 
     expect(new Set(laidOut.map((p) => `${p.gridX},${p.gridY}`)).size).toBe(11);
   });
-
-  it('coloca 4-4-2 con posiciones genéricas FIFA (DEF/MID/FWD)', () => {
-    const players = [
-      { name: 'Galíndez', shirtNumber: 1, position: 'GK', positionDetail: 'GK' },
-      { name: 'Hincapié', shirtNumber: 3, position: 'DEF', positionDetail: 'DEF' },
-      { name: 'Ordóñez', shirtNumber: 4, position: 'DEF', positionDetail: 'DEF' },
-      { name: 'Pacho', shirtNumber: 6, position: 'DEF', positionDetail: 'DEF' },
-      { name: 'Vite', shirtNumber: 15, position: 'MID', positionDetail: 'MID' },
-      { name: 'Franco', shirtNumber: 21, position: 'MID', positionDetail: 'MID' },
-      { name: 'Caicedo', shirtNumber: 23, position: 'MID', positionDetail: 'MID' },
-      { name: 'Yeboah', shirtNumber: 9, position: 'FWD', positionDetail: 'FWD' },
-      { name: 'Valencia', shirtNumber: 13, position: 'FWD', positionDetail: 'FWD' },
-      { name: 'Plata', shirtNumber: 19, position: 'FWD', positionDetail: 'FWD' },
-      { name: 'Angulo', shirtNumber: 20, position: 'FWD', positionDetail: 'FWD' },
-    ];
-
-    const laidOut = spreadOverlappingGridPositions(
-      assignPlayersToFormation(players, '4-4-2', { includeLeftovers: false })
-    );
-
-    expect(laidOut).toHaveLength(11);
-
-    const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
-    const mids = laidOut.filter((p) => Number(p.gridX) >= 52 && Number(p.gridX) <= 64);
-    const fwds = laidOut.filter((p) => Number(p.gridX) >= 80 && Number(p.gridX) <= 90);
-
-    expect(defenders).toHaveLength(4);
-    expect(mids).toHaveLength(4);
-    expect(fwds).toHaveLength(2);
-
-    const yeboah = laidOut.find((p) => p.shirtNumber === 9);
-    const angulo = laidOut.find((p) => p.shirtNumber === 20);
-    expect(yeboah.gridX).toBeGreaterThanOrEqual(52);
-    expect(angulo.gridX).toBeGreaterThanOrEqual(52);
-
-    const plata = laidOut.find((p) => p.shirtNumber === 19);
-    const valencia = laidOut.find((p) => p.shirtNumber === 13);
-    expect(plata.gridX).toBe(85);
-    expect(valencia.gridX).toBe(85);
-    expect(Math.abs(plata.gridY - valencia.gridY)).toBeGreaterThanOrEqual(14);
-  });
 });
 
 describe('formationLayout 4-2-3-1 Alemania sin regresión', () => {

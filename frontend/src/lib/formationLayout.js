@@ -323,115 +323,6 @@ function isWideForwardToken(player) {
   return token === 'EI' || token === 'ED';
 }
 
-function isCoarseLinePosition(player) {
-  const token = positionToken(player);
-  return (
-    token === 'GK' ||
-    token === 'DEF' ||
-    token === 'MID' ||
-    token === 'FWD' ||
-    token === 'DF' ||
-    token === 'MF' ||
-    token === 'FW'
-  );
-}
-
-function enrichTacticalPositionDetail(player) {
-  if (!isCoarseLinePosition(player)) return player;
-  const hasPitch =
-    player.positionX != null &&
-    Number.isFinite(Number(player.positionX)) &&
-    player.positionY != null &&
-    Number.isFinite(Number(player.positionY));
-  if (!hasPitch) return player;
-  const tactical = inferTacticalPosition({
-    position: player.position ?? player.positionDetail,
-    positionX: player.positionX,
-    positionY: player.positionY,
-  });
-  if (!tactical || tactical === positionToken(player)) return player;
-  return { ...player, positionDetail: tactical };
-}
-
-function isExplicitCenterForward(player) {
-  const token = positionToken(player);
-  return token === 'DC' || token === 'ST' || token === 'CF';
-}
-
-function inferTacticalToken(player) {
-  if (!isCoarseLinePosition(player)) return positionToken(player);
-  return (
-    inferTacticalPosition({
-      position: player.position ?? player.positionDetail,
-      positionX: player.positionX,
-      positionY: player.positionY,
-    }) ?? positionToken(player)
-  );
-}
-
-function isWideForwardLike(player) {
-  if (isWideForwardToken(player)) return true;
-  const tactical = inferTacticalToken(player);
-  return tactical === 'EI' || tactical === 'ED';
-}
-
-function forwardWingDemotionScore(player) {
-  if (isWideForwardLike(player)) return 100;
-  if (isExplicitCenterForward(player)) return 0;
-  if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'FWD') return 0;
-  return 50;
-}
-
-function pickGenericForwardsToDemote(fwdPlayers, count) {
-  if (count <= 0 || !fwdPlayers.length) return [];
-  const sorted = [...fwdPlayers].sort(
-    (a, b) => (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
-  );
-  const picks = [];
-  let left = 0;
-  let right = sorted.length - 1;
-  while (picks.length < count && left <= right) {
-    if (picks.length % 2 === 0) picks.push(sorted[left++]);
-    else picks.push(sorted[right--]);
-  }
-  return picks;
-}
-
-function pickForwardToDemote(fwdPool) {
-  const scored = [...fwdPool].sort(
-    (a, b) =>
-      forwardWingDemotionScore(b) - forwardWingDemotionScore(a) ||
-      (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
-  );
-  const topScore = forwardWingDemotionScore(scored[0]);
-  const topCandidates = scored.filter((p) => forwardWingDemotionScore(p) === topScore);
-  if (topCandidates.length === 1) return topCandidates[0];
-  return pickGenericForwardsToDemote(topCandidates, 1)[0];
-}
-
-function defensiveLinePromotionScore(player) {
-  const token = positionToken(player);
-  if (token === 'LI' || token === 'LD') return 100;
-  if (token === 'MCD') return 95;
-  if (token === 'MI' || token === 'MD') return 80;
-  if (token === 'MC') return 35;
-  const tactical = inferTacticalToken(player);
-  if (tactical === 'LI' || tactical === 'LD') return 98;
-  if (tactical === 'MCD') return 90;
-  if (tactical === 'MI' || tactical === 'MD') return 75;
-  return 20;
-}
-
-function pickMidfielderToPromoteDef(pools) {
-  const eligible = pools.MID.filter((p) => !p.demotedFromForward);
-  const source = eligible.length ? eligible : pools.MID;
-  return [...source].sort(
-    (a, b) =>
-      defensiveLinePromotionScore(b) - defensiveLinePromotionScore(a) ||
-      (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
-  )[0];
-}
-
 function isWideFullbackToken(player) {
   const token = positionToken(player);
   return token === 'LI' || token === 'LD';
@@ -441,13 +332,9 @@ function isThreeAtBack(rows) {
   return rows.length >= 2 && rows[1] === 3;
 }
 
-function movePlayerToPool(pools, player, fromPool, toPool, { demotedFromForward = false } = {}) {
+function movePlayerToPool(pools, player, fromPool, toPool) {
   pools[fromPool] = pools[fromPool].filter((p) => p !== player);
-  pools[toPool].push({
-    ...player,
-    position: toPool,
-    ...(demotedFromForward ? { demotedFromForward: true } : {}),
-  });
+  pools[toPool].push({ ...player, position: toPool });
 }
 
 /** Ajusta pools según filas de la formación (EI/ED en 4-4-2 → MID; sobrantes DEF en 4-at-back). */
@@ -461,37 +348,18 @@ export function rebalancePoolsForFormation(pools, rows) {
   );
 
   if (needsWideMidLine || midNeeded >= 4) {
-    for (const winger of [...pools.FWD].filter(isWideForwardLike)) {
-      movePlayerToPool(pools, winger, 'FWD', 'MID', { demotedFromForward: true });
+    for (const winger of [...pools.FWD].filter(isWideForwardToken)) {
+      movePlayerToPool(pools, winger, 'FWD', 'MID');
     }
   }
 
   while (pools.FWD.length > fwdNeeded) {
-    const surplus = pools.FWD.length - fwdNeeded;
-    const wingers = pools.FWD.filter(isWideForwardLike);
-    if (wingers.length) {
-      for (const toDemote of pickGenericForwardsToDemote(
-        wingers,
-        Math.min(surplus, wingers.length)
-      )) {
-        movePlayerToPool(pools, toDemote, 'FWD', 'MID', { demotedFromForward: true });
-      }
-      continue;
-    }
-    const generic = pools.FWD.filter((p) => !isExplicitCenterForward(p));
-    if (generic.length >= surplus) {
-      for (const toDemote of pickGenericForwardsToDemote(generic, surplus)) {
-        movePlayerToPool(pools, toDemote, 'FWD', 'MID', { demotedFromForward: true });
-      }
-      continue;
-    }
-    break;
-  }
-
-  while (pools.DEF.length < defNeeded && pools.MID.length > midNeeded) {
-    const toPromote = pickMidfielderToPromoteDef(pools);
-    if (!toPromote) break;
-    movePlayerToPool(pools, toPromote, 'MID', 'DEF');
+    const wingers = pools.FWD.filter(isWideForwardToken);
+    if (!wingers.length) break;
+    const toDemote = [...wingers].sort(
+      (a, b) => (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
+    )[0];
+    movePlayerToPool(pools, toDemote, 'FWD', 'MID');
   }
 
   if (!isThreeAtBack(rows) && pools.DEF.length > defNeeded) {
@@ -851,12 +719,12 @@ export function assignPlayersToFormation(
 
   const pools = Object.fromEntries(LINE_POSITIONS.map((p) => [p, []]));
   for (const player of players) {
-    const enriched = enrichTacticalPositionDetail(player);
-    const pool = resolvePlayerPool(enriched);
+    const detail = player.positionDetail ?? player.position;
+    const pool = mapFootballDataPositionText(detail);
     pools[pool].push({
-      ...enriched,
+      ...player,
       position: pool,
-      positionDetail: enriched.positionDetail ?? enriched.position,
+      positionDetail: player.positionDetail ?? player.position,
     });
   }
 
