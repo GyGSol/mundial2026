@@ -30,7 +30,7 @@ export function indexResolvedKnockoutPhases(phases = []) {
   return map;
 }
 
-export async function buildUserPredictedMatchContext(userId) {
+export async function buildUserPredictedMatchContext(userId, { excludeMatchIds = null } = {}) {
   const [teams, allMatches, stadiums] = await Promise.all([
     Team.find({ group: { $exists: true, $ne: '' } }).lean(),
     Match.find().select('-raw').sort({ kickoffAt: 1 }).lean(),
@@ -49,15 +49,21 @@ export async function buildUserPredictedMatchContext(userId) {
     matchId: { $in: relevantMatchIds },
   }).lean();
 
+  const excludeSet = excludeMatchIds
+    ? new Set([...excludeMatchIds].map(String))
+    : null;
+
   const predictionsByMatchId = new Map(
-    predictions.map((p) => [
-      p.matchId.toString(),
-      {
-        homeGoals: p.homeGoals,
-        awayGoals: p.awayGoals,
-        userSubmitted: Boolean(p.userSubmitted),
-      },
-    ])
+    predictions
+      .filter((p) => !excludeSet?.has(p.matchId.toString()))
+      .map((p) => [
+        p.matchId.toString(),
+        {
+          homeGoals: p.homeGoals,
+          awayGoals: p.awayGoals,
+          userSubmitted: Boolean(p.userSubmitted),
+        },
+      ])
   );
 
   const rawGroups = computePredictedGroupStandings(teams, groupMatches, predictionsByMatchId);

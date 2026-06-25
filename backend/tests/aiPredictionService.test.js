@@ -30,13 +30,13 @@ describe('aiPredictionService', () => {
   });
 
   describe('isInAiPredictionWindow', () => {
-    it('incluye partido ~5 min antes del kickoff (19:55 para kickoff 20:00)', () => {
-      vi.setSystemTime(new Date('2026-06-15T19:55:00.000Z'));
+    it('incluye partido ~1 h antes del kickoff (19:00 para kickoff 20:00)', () => {
+      vi.setSystemTime(new Date('2026-06-15T19:00:00.000Z'));
       expect(isInAiPredictionWindow(match)).toBe(true);
     });
 
-    it('excluye demasiado pronto (19:45)', () => {
-      vi.setSystemTime(new Date('2026-06-15T19:45:00.000Z'));
+    it('excluye demasiado pronto (18:50)', () => {
+      vi.setSystemTime(new Date('2026-06-15T18:50:00.000Z'));
       expect(isInAiPredictionWindow(match)).toBe(false);
     });
 
@@ -52,8 +52,8 @@ describe('aiPredictionService', () => {
   });
 
   describe('isDueForAiPrediction', () => {
-    it('incluye ventana principal T-5', () => {
-      vi.setSystemTime(new Date('2026-06-15T19:55:00.000Z'));
+    it('incluye ventana principal T-1 h', () => {
+      vi.setSystemTime(new Date('2026-06-15T19:00:00.000Z'));
       expect(isDueForAiPrediction(match)).toBe(true);
     });
 
@@ -479,6 +479,7 @@ describe('aiPredictionService', () => {
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/Gdif/i);
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/mundial2026/i);
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/calibracionReciente/i);
+      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/parejaSimultaneaGrupo/i);
     });
   });
 

@@ -20,6 +20,54 @@ function groupPairKey(match) {
   return `group-${match.group}-md-${match.matchday}-slot-${slot}`;
 }
 
+export function matchIdKey(match) {
+  return match?._id?.toString?.() ?? match?.id ?? null;
+}
+
+/** IDs del par de grupo con mismo kickoff que aún no finalizó (incluye el partido actual). */
+export function getSimultaneousUnfinishedPairMatchIds(match, allMatches = []) {
+  const targetId = matchIdKey(match);
+  if (!targetId) return [];
+
+  const pairMap = buildSimultaneousGroupPairs(allMatches);
+  const pairInfo = pairMap.get(targetId);
+  if (!pairInfo) return [];
+
+  const pairIds = new Set([targetId, ...pairInfo.partnerMatchIds]);
+  return allMatches
+    .filter((m) => pairIds.has(matchIdKey(m)) && m.status !== 'finished')
+    .map((m) => matchIdKey(m))
+    .filter(Boolean);
+}
+
+/** Resumen para prompts IA: cierre de grupo con dos partidos al mismo tiempo. */
+export function buildSimultaneousGroupPairContext(match, allMatches = []) {
+  const targetId = matchIdKey(match);
+  if (!targetId) return null;
+
+  const pairMap = buildSimultaneousGroupPairs(allMatches);
+  const pairInfo = pairMap.get(targetId);
+  if (!pairInfo) return null;
+
+  const partners = allMatches.filter((m) =>
+    pairInfo.partnerMatchIds.includes(matchIdKey(m))
+  );
+
+  return {
+    simultaneo: true,
+    overlapGroupKey: pairInfo.overlapGroupKey,
+    partidosPar: partners.map((m) => ({
+      matchExternalId: m.externalId ?? null,
+      homeTeamId: m.homeTeamId,
+      awayTeamId: m.awayTeamId,
+      status: m.status,
+      kickoffAt: m.kickoffAt?.toISOString?.() ?? m.kickoffAt ?? null,
+    })),
+    nota:
+      'Este partido cierra el grupo al mismo kickoff que el otro encuentro del par. Al arrancar, ningún resultado del par estaba disponible: analizá stakes y tabla sin asumir el marcador del partido hermano.',
+  };
+}
+
 export function buildSimultaneousGroupPairs(matches) {
   const byKey = new Map();
   for (const match of matches) {

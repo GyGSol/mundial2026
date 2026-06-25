@@ -22,7 +22,11 @@ import {
 import { notifyMatchesUpdated } from './websocketService.js';
 import { getVenueWeatherForStadium, formatWeatherForPrompt, buildMatchWeatherPredictionContext, buildVenueWeatherContextForPrediction } from './weatherService.js';
 import { assessVenueWeatherRisk, formatWeatherRiskForClient } from './weatherRiskService.js';
-import { buildLiveScheduleContext } from './liveScheduleOverlapService.js';
+import {
+  buildLiveScheduleContext,
+  buildSimultaneousGroupPairContext,
+  getSimultaneousUnfinishedPairMatchIds,
+} from './liveScheduleOverlapService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 import {
   humanizePromptContext,
@@ -156,7 +160,8 @@ SEÑALES ADICIONALES:
 5. Usá mercadoYxG como señal fuerte solo si no contradice el rendimiento en mundial2026.
 6. Usá inteligenciaGrupo.consensoPartido como señal secundaria (no copies al grupo).
 7. Si carreraPremios.diferenciaAlCorte ≤ 6 pts y no estás en zona de premio: priorizá PA sobre marcador exacto.
-8. Nunca cites nombres de otros jugadores ni sus predicciones individuales; solo agregados del grupo.`;
+8. Nunca cites nombres de otros jugadores ni sus predicciones individuales; solo agregados del grupo.
+9. Si stakesClasificacion.parejaSimultaneaGrupo.simultaneo o partido.liveScheduleContext.simultaneousGroupPair: el otro partido del grupo arranca al mismo tiempo. La tabla proyectada NO incluye ningún marcador del par; analizá necesidades de puntos/goles sabiendo que ambos resultados se definen en paralelo (como en la jornada final real).`;
 
 export function formatKickoffLocalDescription(kickoffAt, timezone) {
   if (!kickoffAt || !timezone) return null;
@@ -251,7 +256,7 @@ export function augmentAiReasoningWithVenueWeather(venue, reasoning) {
   return `${prefix}\n\n${text}`;
 }
 
-/** Partido en ventana T-lead ± window (default T-5 min) si kickoff cae en [now+lead-window, now+lead+window]. */
+/** Partido en ventana T-lead ± window (default T-1 h) si kickoff cae en [now+lead-window, now+lead+window]. */
 export function isInAiPredictionWindow(match, now = Date.now()) {
   if (!match?.kickoffAt || match.status !== 'upcoming') return false;
   const kickoffMs = new Date(match.kickoffAt).getTime();
@@ -619,7 +624,15 @@ export async function buildAiCompetitorPredictionContext(
     enrichPerformance: true,
   });
 
-  const userPredictedCtx = await buildUserPredictedMatchContext(aiUserId);
+  const excludeFromProjectionMatchIds = getSimultaneousUnfinishedPairMatchIds(match, allMatches);
+  const simultaneousPairContext =
+    excludeFromProjectionMatchIds.length > 1
+      ? buildSimultaneousGroupPairContext(match, allMatches)
+      : null;
+
+  const userPredictedCtx = await buildUserPredictedMatchContext(aiUserId, {
+    excludeMatchIds: excludeFromProjectionMatchIds,
+  });
   const focusGroupId = await pickFocusGroupId(aiUserId);
 
   const [
@@ -635,7 +648,11 @@ export async function buildAiCompetitorPredictionContext(
       teamById,
       match,
     }),
-    buildMatchStakesContext(match, aiUserId, { userPredictedCtx }),
+    buildMatchStakesContext(match, aiUserId, {
+      userPredictedCtx,
+      excludeMatchIds: excludeFromProjectionMatchIds,
+      simultaneousPairContext,
+    }),
     buildCrowdContextForCompetitor(match, aiUserId, { includeAllGroups: false }),
     buildPrizeRaceContext(aiUserId, focusGroupId),
     loadAiCalibrationStats(aiUserId),
@@ -651,7 +668,11 @@ export async function buildAiCompetitorPredictionContext(
   const tablaYClasificacion = await buildTablaYClasificacionContext(
     match,
     aiUserId,
-    crowdStandings
+    crowdStandings,
+    {
+      userPredictedCtx,
+      excludeMatchIds: excludeFromProjectionMatchIds,
+    }
   );
 
   const formacionConfirmada = await buildConfirmedLineupContext(match);
@@ -1423,6 +1444,14 @@ export async function runAiPredictionTick({ now = Date.now(), fetchImpl = fetch 
   }
 
   const dueMatches = await findMatchesDueForAiPrediction(aiUser._id, now);
+  dueMatches.sort((a, b) => {
+    const kickoffDiff =
+      new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime();
+    if (kickoffDiff !== 0) return kickoffDiff;
+    return String(a.externalId).localeCompare(String(b.externalId), undefined, {
+      numeric: true,
+    });
+  });
   let processed = 0;
   let skipped = 0;
   const errors = [];

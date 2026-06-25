@@ -59,8 +59,8 @@ export const env = {
   aiHumanQuestionDailyLimit: Number(process.env.AI_HUMAN_QUESTION_DAILY_LIMIT || 30),
   aiHumanPlayerIntelDailyLimit: Number(process.env.AI_HUMAN_PLAYER_INTEL_DAILY_LIMIT || 10),
   aiHumanHourlyLimit: Number(process.env.AI_HUMAN_HOURLY_LIMIT || 15),
-  /** Bot IA: predice ~5 min antes del kickoff (formación confirmada si está disponible). */
-  aiPredictLeadMs: Number(process.env.AI_PREDICT_LEAD_MS || 5 * 60 * 1000),
+  /** Bot IA: predice ~1 h antes del kickoff (alineado al cierre humano T-1 h). */
+  aiPredictLeadMs: Number(process.env.AI_PREDICT_LEAD_MS || 60 * 60 * 1000),
   aiPredictWindowMs: Number(process.env.AI_PREDICT_WINDOW_MS || 2 * 60 * 1000),
   aiPredictJobIntervalMs: Number(process.env.AI_PREDICT_JOB_INTERVAL_MS || 60 * 1000),
   aiCerebrasModel: process.env.AI_CEREBRAS_MODEL || 'gpt-oss-120b',

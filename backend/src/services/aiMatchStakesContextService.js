@@ -48,8 +48,14 @@ function countRemainingGroupMatches(groupLetter, allMatches, beforeKickoffMs) {
   }).length;
 }
 
-export async function buildMatchStakesContext(match, aiUserId, { userPredictedCtx = null } = {}) {
-  const ctx = userPredictedCtx ?? (await buildUserPredictedMatchContext(aiUserId));
+export async function buildMatchStakesContext(
+  match,
+  aiUserId,
+  { userPredictedCtx = null, excludeMatchIds = null, simultaneousPairContext = null } = {}
+) {
+  const ctx =
+    userPredictedCtx ??
+    (await buildUserPredictedMatchContext(aiUserId, { excludeMatchIds }));
   const groupLetter = match.group ? String(match.group).toUpperCase() : null;
   const beforeKickoffMs = match.kickoffAt ? new Date(match.kickoffAt).getTime() : undefined;
 
@@ -97,13 +103,21 @@ export async function buildMatchStakesContext(match, aiUserId, { userPredictedCt
     stakesLocal: homeStakes,
     stakesVisitante: awayStakes,
     tablaProyectadaIA: groupProjected,
+    parejaSimultaneaGrupo: simultaneousPairContext,
     mejoresTerceros: thirdPlace,
     knockoutProgress: ctx.knockout?.progress ?? null,
   };
 }
 
-export async function buildTablaYClasificacionContext(match, aiUserId, crowdStandings = null) {
-  const ctx = await buildUserPredictedMatchContext(aiUserId);
+export async function buildTablaYClasificacionContext(
+  match,
+  aiUserId,
+  crowdStandings = null,
+  { userPredictedCtx = null, excludeMatchIds = null } = {}
+) {
+  const ctx =
+    userPredictedCtx ??
+    (await buildUserPredictedMatchContext(aiUserId, { excludeMatchIds }));
   const groupLetter = match.group ? String(match.group).toUpperCase() : null;
   if (!groupLetter) return null;
 
