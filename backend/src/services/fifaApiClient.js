@@ -180,6 +180,41 @@ export async function fetchAllCalendarMatches() {
   return matches;
 }
 
+const FIFA_CALENDAR_CACHE_MS = Number(process.env.FIFA_CALENDAR_CACHE_MS || 90_000);
+/** @type {{ matches: unknown[] | null, expiresAt: number, promise: Promise<unknown[]> | null }} */
+const fifaCalendarCache = { matches: null, expiresAt: 0, promise: null };
+
+/** Calendario FIFA compartido (TTL ~90s) para evitar descargas repetidas en el loop en vivo. */
+export async function getCachedAllCalendarMatches(now = Date.now()) {
+  if (fifaCalendarCache.matches && fifaCalendarCache.expiresAt > now) {
+    return fifaCalendarCache.matches;
+  }
+
+  if (fifaCalendarCache.promise) {
+    return fifaCalendarCache.promise;
+  }
+
+  fifaCalendarCache.promise = fetchAllCalendarMatches()
+    .then((matches) => {
+      fifaCalendarCache.matches = matches;
+      fifaCalendarCache.expiresAt = Date.now() + FIFA_CALENDAR_CACHE_MS;
+      fifaCalendarCache.promise = null;
+      return matches;
+    })
+    .catch((err) => {
+      fifaCalendarCache.promise = null;
+      throw err;
+    });
+
+  return fifaCalendarCache.promise;
+}
+
+export function clearFifaCalendarCacheForTests() {
+  fifaCalendarCache.matches = null;
+  fifaCalendarCache.expiresAt = 0;
+  fifaCalendarCache.promise = null;
+}
+
 export function findCalendarMatch(calendar, { matchNumber, homeFifaCode, awayFifaCode, kickoffAt }) {
   const number = Number(matchNumber);
   const homeCode = String(homeFifaCode ?? '').toUpperCase();

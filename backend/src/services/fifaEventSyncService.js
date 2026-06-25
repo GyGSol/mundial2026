@@ -3,6 +3,7 @@ import { Team } from '../models/Team.js';
 import {
   extractTeamAbbreviation,
   fetchAllCalendarMatches,
+  getCachedAllCalendarMatches,
   fetchLiveMatchFootball,
   fetchMatchTimeline,
   resolveFifaMatchEntry,
@@ -441,7 +442,7 @@ export async function syncStaleLiveFifaMatchEvents({
 
   let calendar = [];
   try {
-    calendar = await fetchAllCalendarMatches();
+    calendar = await getCachedAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar unavailable for live refresh:', err.message);
   }
@@ -528,7 +529,7 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
 
   let calendar = [];
   try {
-    calendar = await fetchAllCalendarMatches();
+    calendar = await getCachedAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar sync skipped:', err.message);
     return {

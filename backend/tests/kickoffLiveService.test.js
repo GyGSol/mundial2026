@@ -47,6 +47,7 @@ vi.mock('../src/models/Team.js', () => ({
 
 vi.mock('../src/services/fifaApiClient.js', () => ({
   fetchAllCalendarMatches: vi.fn().mockResolvedValue([]),
+  getCachedAllCalendarMatches: vi.fn().mockResolvedValue([]),
   resolveFifaMatchEntry: vi.fn().mockResolvedValue(null),
 }));
 

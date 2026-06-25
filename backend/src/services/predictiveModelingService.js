@@ -30,6 +30,15 @@ const SOURCE = 'cerebras-oracle';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 const ORACLE_FETCH_TIMEOUT_MS = 120_000;
 const liveAdjustmentCache = new Map();
+const LIVE_ADJUSTMENT_CACHE_MAX = 64;
+
+function trimLiveAdjustmentCache() {
+  while (liveAdjustmentCache.size > LIVE_ADJUSTMENT_CACHE_MAX) {
+    const oldestKey = liveAdjustmentCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    liveAdjustmentCache.delete(oldestKey);
+  }
+}
 
 /** Instrucciones exclusivas del esquema Oracle (razonamiento largo + jerarquía de señales). */
 export const ORACLE_REASONING_INSTRUCTIONS = `RAZONAMIENTO ORACLE (campos reasoning y key_variable_impact):
@@ -362,6 +371,7 @@ export async function predictLiveAdjustment(matchId, liveState = {}) {
 
   const payload = oracleToLegacyScore(result);
   liveAdjustmentCache.set(cacheKey, { at: now, result: payload });
+  trimLiveAdjustmentCache();
 
   return {
     adjusted: true,

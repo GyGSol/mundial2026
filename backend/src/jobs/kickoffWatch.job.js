@@ -3,7 +3,7 @@ import { syncLiveMatchScoring } from '../services/kickoffLiveService.js';
 import { env } from '../config/env.js';
 import { findRecentlyFinishedMatchesQuery } from '../services/matchDisplayVisibilityService.js';
 
-const LIVE_INTERVAL_MS = 5_000;
+const LIVE_INTERVAL_MS = Number(process.env.KICKOFF_WATCH_LIVE_MS || 10_000);
 
 let timeoutId = null;
 let running = false;

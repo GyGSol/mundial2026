@@ -22,6 +22,7 @@ import {
 import { getVenueWeatherForStadium } from './weatherService.js';
 import {
   fetchAllCalendarMatches,
+  getCachedAllCalendarMatches,
   resolveFifaMatchEntry,
 } from './fifaApiClient.js';
 import { Team } from '../models/Team.js';
@@ -225,7 +226,7 @@ export async function promoteMatchesAtKickoff() {
 
   let fifaCalendar = [];
   try {
-    fifaCalendar = await fetchAllCalendarMatches();
+    fifaCalendar = await getCachedAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar unavailable for kickoff promotion:', err.message);
   }
@@ -317,7 +318,7 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
 
   let fifaCalendar = [];
   try {
-    fifaCalendar = await fetchAllCalendarMatches();
+    fifaCalendar = await getCachedAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar unavailable for premature finish reopen:', err.message);
   }
@@ -426,7 +427,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
 
   let fifaCalendar = [];
   try {
-    fifaCalendar = await fetchAllCalendarMatches();
+    fifaCalendar = await getCachedAllCalendarMatches();
   } catch (err) {
     console.warn('FIFA calendar unavailable for stale live finalize:', err.message);
   }

@@ -33,7 +33,7 @@ async function loadFinishedArchiveMatches() {
     enriched.map(async (featured) => {
       const raw = rawById.get(featured.id);
       if (!raw) return;
-      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: false });
     })
   );
   return attachStreamMetaToMatches(enriched);
