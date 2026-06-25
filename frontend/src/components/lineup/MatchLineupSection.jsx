@@ -9,6 +9,7 @@ import {
 } from '@/components/lineup/PitchEventLayer.jsx';
 import { eventHasPitchCoords } from '@/lib/pitchCoordinates.js';
 import { applyLiveLineupState, normalizeLineupForPitch } from '@/lib/lineupLiveState.js';
+import { applyGridOverridesToLineup } from '@/lib/adminFormationDebug.js';
 import { formatSummaryPlayer } from '@/lib/playerPositionLabel.js';
 import {
   resolveSubstitutionsForSide,
@@ -309,6 +310,10 @@ export default function MatchLineupSection({
   events,
   highlightKey = null,
   onHighlightKeyChange,
+  showLineupMeta = true,
+  editablePitch = false,
+  gridOverrides = null,
+  onPlayerGridChange,
 }) {
   const [heatmapMode, setHeatmapMode] = useState('normal');
   const pitchSectionRef = useRef(null);
@@ -348,10 +353,11 @@ export default function MatchLineupSection({
     return applyLiveLineupState(lineup, hydratedHomeSubs, hydratedAwaySubs, timelineEvents);
   }, [isInteractivePitch, lineup, status, hydratedHomeSubs, hydratedAwaySubs, timelineEvents]);
 
-  const pitchLineup = useMemo(
-    () => normalizeLineupForPitch(liveLineup ?? lineup),
-    [liveLineup, lineup]
-  );
+  const pitchLineup = useMemo(() => {
+    const base = normalizeLineupForPitch(liveLineup ?? lineup);
+    if (!gridOverrides || !Object.keys(gridOverrides).length) return base;
+    return applyGridOverridesToLineup(base, gridOverrides);
+  }, [liveLineup, lineup, gridOverrides]);
 
   const homeExpulsions = liveLineup?.home?.expelledPlayers ?? [];
   const awayExpulsions = liveLineup?.away?.expelledPlayers ?? [];
@@ -422,23 +428,25 @@ export default function MatchLineupSection({
       onKeyDown={(event) => event.stopPropagation()}
     >
       <div className="flex flex-wrap items-center justify-center gap-2">
-        {showUnavailableBadge ? (
-          <Badge variant="outline" className="border-muted-foreground/40 bg-muted/40 text-muted-foreground">
-            Sin alineación · solo eventos
-          </Badge>
-        ) : (
-          <Badge
-            variant="outline"
-            className={cn(
-              isConfirmed
-                ? 'border-emerald-300/70 bg-emerald-50 text-emerald-900'
-                : 'border-violet-300/70 bg-violet-50 text-violet-900'
-            )}
-          >
-            {isConfirmed ? 'Alineación confirmada' : 'Alineación probable'}
-          </Badge>
-        )}
-        {timeLabel ? (
+        {showLineupMeta ? (
+          showUnavailableBadge ? (
+            <Badge variant="outline" className="border-muted-foreground/40 bg-muted/40 text-muted-foreground">
+              Sin alineación · solo eventos
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className={cn(
+                isConfirmed
+                  ? 'border-emerald-300/70 bg-emerald-50 text-emerald-900'
+                  : 'border-violet-300/70 bg-violet-50 text-violet-900'
+              )}
+            >
+              {isConfirmed ? 'Alineación confirmada' : 'Alineación probable'}
+            </Badge>
+          )
+        ) : null}
+        {showLineupMeta && timeLabel ? (
           <span className="match-live-text-meta text-[10px] text-muted-foreground">
             Actualizada {timeLabel}
           </span>
@@ -484,6 +492,10 @@ export default function MatchLineupSection({
           onHighlightKeyChange={onHighlightKeyChange}
           showEventLayer={isInteractivePitch}
           className="w-full min-w-0 max-w-lg md:flex-1"
+          draggablePlayers={editablePitch}
+          onPlayerDragEnd={(payload) => {
+            onPlayerGridChange?.(payload);
+          }}
         />
 
         {showSidePanel ? (

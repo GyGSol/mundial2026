@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import PlayerAvatar from '@/components/PlayerAvatar.jsx';
 import PlayerDetailDialog from '@/components/PlayerDetailDialog.jsx';
 import CoachDetailDialog from '@/components/lineup/CoachDetailDialog.jsx';
@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getTeamFlag } from '@/lib/teamMeta.js';
 import { getTeamPitchPalette } from '@/lib/teamPitchColors.js';
-import { lineupGridToHalfPitchPercent } from '@/lib/pitchCoordinates.js';
+import { lineupGridToHalfPitchPercent, halfPitchPercentToLineupGrid } from '@/lib/pitchCoordinates.js';
 import { resolvePitchFormationLayers } from '@/lib/pitchFormationDisplay.js';
 
 function shortName(fullName) {
@@ -145,31 +145,100 @@ function PlayerMarker({
   highlightKey,
   onPlayerHighlight,
   timelineEvents = [],
+  draggable = false,
+  halfRef,
+  onPlayerDragEnd,
 }) {
   const label = shortName(player.name);
   const number = player.shirtNumber;
   const position = lineupPositionLabel(player);
-  const style = teamDotStyle(player, side);
+  const baseStyle = teamDotStyle(player, side);
+  const [dragStyle, setDragStyle] = useState(null);
+  const didDragRef = useRef(false);
+  const style = dragStyle ?? baseStyle;
   const ringClass = side === 'home' ? 'ring-sky-400/80' : 'ring-rose-400/80';
   const hoverDetail = formatHoverDetail(player, position);
   const playerKey = playerKeyFromLineupPlayer(player, side);
   const isHighlighted = playerMatchesPitchHighlight(player, side, highlightKey, timelineEvents);
 
+  function pointerToHalfPercent(event) {
+    const half = halfRef?.current;
+    if (!half) return null;
+    const rect = half.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    const leftPct = Math.min(100, Math.max(0, ((event.clientX - rect.left) / rect.width) * 100));
+    const topPct = Math.min(100, Math.max(0, ((event.clientY - rect.top) / rect.height) * 100));
+    return { leftPct, topPct };
+  }
+
+  function handlePointerDown(event) {
+    if (!draggable) return;
+    didDragRef.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerMove(event) {
+    if (!draggable || !event.currentTarget.hasPointerCapture(event.pointerId)) return;
+    const coords = pointerToHalfPercent(event);
+    if (!coords) return;
+    didDragRef.current = true;
+    setDragStyle({
+      left: `${coords.leftPct}%`,
+      top: `${coords.topPct}%`,
+    });
+  }
+
+  function handlePointerUp(event) {
+    if (!draggable) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (didDragRef.current) {
+      const coords = pointerToHalfPercent(event);
+      if (coords) {
+        const { gridX, gridY } = halfPitchPercentToLineupGrid(coords.leftPct, coords.topPct, side);
+        onPlayerDragEnd?.({
+          player,
+          side,
+          shirtNumber: player.shirtNumber,
+          name: player.name,
+          position,
+          from: { gridX: player.gridX, gridY: player.gridY },
+          to: { gridX, gridY },
+          screenPercent: { left: coords.leftPct, top: coords.topPct },
+        });
+      }
+    }
+    setDragStyle(null);
+  }
+
   return (
     <div
       key={player.playerId ?? `${side}-${index}`}
-      className="group/marker pointer-events-auto absolute z-20 -translate-x-1/2 -translate-y-1/2 group-hover/marker:z-[60] group-focus-within/marker:z-[60]"
+      className={cn(
+        'group/marker pointer-events-auto absolute z-20 -translate-x-1/2 -translate-y-1/2 group-hover/marker:z-[60] group-focus-within/marker:z-[60]',
+        draggable && 'cursor-grab active:cursor-grabbing'
+      )}
       style={style}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
     >
       <button
         type="button"
         className={cn(
           'relative flex flex-col items-center gap-px rounded-md p-px transition hover:bg-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
-          isHighlighted && 'ring-2 ring-white/90 ring-offset-1 ring-offset-emerald-900'
+          isHighlighted && 'ring-2 ring-white/90 ring-offset-1 ring-offset-emerald-900',
+          draggable && 'touch-none'
         )}
         onClick={(event) => {
           event.stopPropagation();
+          const wasDrag = didDragRef.current;
+          if (draggable) didDragRef.current = false;
+          if (draggable && wasDrag) return;
           onPlayerHighlight?.(isHighlighted ? null : playerKey);
+          if (draggable) return;
           onPlayerClick?.({
             ...player,
             position,
@@ -177,7 +246,7 @@ function PlayerMarker({
             teamFifaCode: teamCode,
           });
         }}
-        aria-label={`Ver ficha de ${player.name}`}
+        aria-label={draggable ? `Arrastrar ${player.name}` : `Ver ficha de ${player.name}`}
       >
         <PlayerBadges summary={eventSummary} hideSubstitutionBadge={player.subbedIn} />
 
@@ -253,9 +322,14 @@ function PitchHalf({
   highlightKey,
   onPlayerHighlight,
   timelineEvents = [],
+  draggable = false,
+  onPlayerDragEnd,
 }) {
+  const halfRef = useRef(null);
+
   return (
     <div
+      ref={halfRef}
       className={cn(
         'pointer-events-none absolute inset-y-0 w-1/2',
         side === 'home' ? 'left-0' : 'right-0'
@@ -279,6 +353,9 @@ function PitchHalf({
             highlightKey={highlightKey}
             onPlayerHighlight={onPlayerHighlight}
             timelineEvents={timelineEvents}
+            draggable={draggable}
+            halfRef={halfRef}
+            onPlayerDragEnd={onPlayerDragEnd}
           />
         ))}
       </div>
@@ -368,6 +445,8 @@ export default function PitchFormation({
   highlightKey = null,
   onHighlightKeyChange,
   showEventLayer = false,
+  draggablePlayers = false,
+  onPlayerDragEnd,
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailPreview, setDetailPreview] = useState(null);
@@ -510,6 +589,8 @@ export default function PitchFormation({
               highlightKey={highlightKey}
               onPlayerHighlight={onHighlightKeyChange}
               timelineEvents={events}
+              draggable={draggablePlayers}
+              onPlayerDragEnd={onPlayerDragEnd}
             />
             <PitchHalf
               players={awayPlayers}
@@ -521,6 +602,8 @@ export default function PitchFormation({
               highlightKey={highlightKey}
               onPlayerHighlight={onHighlightKeyChange}
               timelineEvents={events}
+              draggable={draggablePlayers}
+              onPlayerDragEnd={onPlayerDragEnd}
             />
           </>
         ) : null}

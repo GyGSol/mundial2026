@@ -25,6 +25,7 @@ const AdminPredictionsPage = lazy(() => import('./pages/admin/AdminPredictionsPa
 const AdminAiCompetitorPage = lazy(() => import('./pages/admin/AdminAiCompetitorPage.jsx'));
 const AdminSimulationPage = lazy(() => import('./pages/admin/AdminSimulationPage.jsx'));
 const AdminEconomyPage = lazy(() => import('./pages/admin/AdminEconomyPage.jsx'));
+const AdminFormationsPage = lazy(() => import('./pages/admin/AdminFormationsPage.jsx'));
 
 const PredictionsPage = lazy(() => import('./pages/PredictionsPage.jsx'));
 const AiPredictionsPage = lazy(() => import('./pages/AiPredictionsPage.jsx'));
@@ -65,6 +66,7 @@ export default function App() {
                         <Route index element={<AdminDashboardPage />} />
                         <Route path="sync" element={<AdminSyncPage />} />
                         <Route path="matches" element={<AdminMatchesPage />} />
+                        <Route path="formaciones" element={<AdminFormationsPage />} />
                         <Route path="stream-links" element={<AdminStreamLinksPage />} />
                         <Route path="users" element={<AdminUsersPage />} />
                         <Route path="groups" element={<AdminGroupsPage />} />

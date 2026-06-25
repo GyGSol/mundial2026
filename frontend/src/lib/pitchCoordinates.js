@@ -38,6 +38,20 @@ export function lineupGridToHalfPitchPercent(gridX, gridY, side) {
   return { left: `${left}%`, top: `${top}%` };
 }
 
+/** Inverso de lineupGridToHalfPitchPercent (p. ej. arrastre en admin Formaciones). */
+export function halfPitchPercentToLineupGrid(leftPercent, topPercent, side) {
+  const left = clampFifaCoord(Number(String(leftPercent).replace('%', '')));
+  const top = clampFifaCoord(Number(String(topPercent).replace('%', '')));
+  const alongHalf = side === 'home' ? left : 100 - left;
+  const gridX = ((alongHalf - LINEUP_DEPTH_EDGE) / LINEUP_DEPTH_SPAN) * 100;
+  const lateral = ((top - LINEUP_LATERAL_EDGE) / LINEUP_LATERAL_SPAN) * 100;
+  const gridY = side === 'away' ? 100 - lateral : lateral;
+  return {
+    gridX: Math.round(clampFifaCoord(gridX) * 10) / 10,
+    gridY: Math.round(clampFifaCoord(gridY) * 10) / 10,
+  };
+}
+
 /** Goles y tiros: coords FIFA relativas al ataque → orientación fija local/visitante. */
 const ATTACK_RELATIVE_EVENT_TYPES = new Set(['shot_attempt', 'goal']);
 

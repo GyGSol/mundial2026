@@ -3,6 +3,7 @@ import {
   eventHasPitchCoords,
   fifaEventToPitchPercent,
   getPitchEventFifaCoords,
+  halfPitchPercentToLineupGrid,
   isInAttackingThird,
   lineupGridToHalfPitchPercent,
   LINEUP_LATERAL_EDGE,
@@ -41,6 +42,22 @@ describe('pitchCoordinates', () => {
       const away = lineupGridToHalfPitchPercent(85, 50, 'away');
       expect(home.left).not.toBe(away.left);
       expect(Number.parseFloat(home.left)).toBeGreaterThan(Number.parseFloat(away.left));
+    });
+
+    it('halfPitchPercentToLineupGrid revierte lineupGridToHalfPitchPercent', () => {
+      for (const side of ['home', 'away']) {
+        for (const [gridX, gridY] of [
+          [12, 50],
+          [85, 4],
+          [85, 96],
+          [44, 36],
+        ]) {
+          const pct = lineupGridToHalfPitchPercent(gridX, gridY, side);
+          const back = halfPitchPercentToLineupGrid(pct.left, pct.top, side);
+          expect(back.gridX).toBeCloseTo(gridX, 0);
+          expect(back.gridY).toBeCloseTo(gridY, 0);
+        }
+      }
     });
   });
 
