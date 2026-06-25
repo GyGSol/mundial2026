@@ -1012,6 +1012,112 @@ function resolveExactGridCollisions(players) {
   return result;
 }
 
+const DEFENSE_BACK_LINE_LATERALS = {
+  4: [20, 30, 70, 80],
+  5: [20, 30, 50, 60, 80],
+};
+
+function isDefenseLinePlayer(player) {
+  return mapFootballDataPositionText(player.positionDetail ?? player.position) === 'DEF';
+}
+
+/** Arco defensivo: laterales adelantados (gridX +10) y eje lateral equilibrado. */
+export function spreadDefenseBackLineShape(players) {
+  if (!players?.length) return players ?? [];
+
+  const entries = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (!isDefenseLinePlayer(player)) return false;
+      const depth = Number(player.gridX ?? 0);
+      return depth >= 18 && depth <= 44;
+    });
+
+  if (entries.length < 4) return players;
+
+  const sorted = [...entries].sort(
+    (a, b) => Number(a.player.gridY ?? 50) - Number(b.player.gridY ?? 50)
+  );
+  const laterals =
+    DEFENSE_BACK_LINE_LATERALS[sorted.length] ??
+    Array.from({ length: sorted.length }, (_, slot) => lateralForSlot(slot, sorted.length));
+  const inner = sorted.length > 2 ? sorted.slice(1, -1) : sorted;
+  const baseDepth = Number(inner[Math.floor(inner.length / 2)]?.player.gridX ?? 30);
+
+  let result = [...players];
+  sorted.forEach(({ index }, slot) => {
+    const isOuter = slot === 0 || slot === sorted.length - 1;
+    result[index] = {
+      ...result[index],
+      gridX: Number((isOuter ? Math.min(44, baseDepth + 10) : baseDepth).toFixed(1)),
+      gridY: laterals[slot],
+    };
+  });
+  return result;
+}
+
+/** Dos delanteros en línea de ataque → profundidad 90 y eje 40/60. */
+export function spreadForwardStrikerPair(players) {
+  if (!players?.length) return players ?? [];
+
+  const entries = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'FWD') return false;
+      const depth = Number(player.gridX ?? 0);
+      return depth >= 78;
+    });
+
+  if (entries.length !== 2) return players;
+
+  const sorted = [...entries].sort(
+    (a, b) =>
+      lateralSortKey(a.player) - lateralSortKey(b.player) ||
+      (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+  );
+
+  let result = [...players];
+  sorted.forEach(({ index }, slot) => {
+    result[index] = {
+      ...result[index],
+      gridX: 90,
+      gridY: slot === 0 ? 40 : 60,
+    };
+  });
+  return result;
+}
+
+/** Par ofensivo en mediocampo alto (p. ej. MI + MD en 4-2-3-1). */
+export function spreadAttackingMidWingBand(players) {
+  if (!players?.length) return players ?? [];
+
+  const entries = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'MID') return false;
+      const depth = Number(player.gridX ?? 0);
+      return depth >= 58 && depth <= 68;
+    });
+
+  if (entries.length !== 2) return players;
+
+  const avgDepth =
+    entries.reduce((sum, { player }) => sum + Number(player.gridX ?? 0), 0) / entries.length;
+  if (avgDepth < 62) return players;
+
+  const linePlayers = entries.map(({ player }) => player);
+  const sorted = [...entries].sort(
+    (a, b) =>
+      lateralSortKey(a.player, linePlayers) - lateralSortKey(b.player, linePlayers) ||
+      (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+  );
+
+  let result = [...players];
+  result[sorted[0].index] = { ...result[sorted[0].index], gridX: 50, gridY: 20 };
+  result[sorted[1].index] = { ...result[sorted[1].index], gridX: 60, gridY: 70 };
+  return result;
+}
+
 /** Separa solapes tácticos en defensa, mediocampo y ataque. */
 export function spreadTacticalLineClusters(players) {
   let next = spreadDefenseLineOverlaps(players);
@@ -1021,5 +1127,8 @@ export function spreadTacticalLineClusters(players) {
   next = spreadForwardCenterClusters(next);
   next = spreadSamePositionOverlaps(next);
   next = spreadCoLocatedPlayers(next);
-  return expandPitchLateralSpread(next);
+  next = expandPitchLateralSpread(next);
+  next = spreadDefenseBackLineShape(next);
+  next = spreadAttackingMidWingBand(next);
+  return spreadForwardStrikerPair(next);
 }

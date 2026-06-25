@@ -6,6 +6,9 @@ import {
   isCenterForwardLike,
   isCenterMidLike,
   spreadDefCenterClusters,
+  spreadDefenseBackLineShape,
+  spreadAttackingMidWingBand,
+  spreadForwardStrikerPair,
   spreadForwardCenterClusters,
   spreadMidCenterClusters,
   spreadMidfieldLineOverlaps,
@@ -254,5 +257,49 @@ describe('formationLayout 4-4-2 forward promotion', () => {
     expect(partey?.gridY).toBeLessThanOrEqual(72);
     expect(new Set([semenyo?.gridY, sibo?.gridY, partey?.gridY]).size).toBe(3);
     expect(semenyo?.gridY).not.toBe(92);
+  });
+});
+
+describe('formationLayout ECU vs GER manual grid (FBL-9)', () => {
+  it('spreadDefenseBackLineShape arca 5 defensores', () => {
+    const players = [
+      { shirtNumber: 4, position: 'DEF', gridX: 30, gridY: 18 },
+      { shirtNumber: 6, position: 'DEF', gridX: 30, gridY: 40 },
+      { shirtNumber: 2, position: 'DEF', gridX: 30, gridY: 50 },
+      { shirtNumber: 7, position: 'DEF', gridX: 30, gridY: 60 },
+      { shirtNumber: 17, position: 'DEF', gridX: 30, gridY: 82 },
+    ];
+    const next = spreadDefenseBackLineShape(players);
+    expect(next.find((p) => p.shirtNumber === 4)).toMatchObject({ gridX: 40, gridY: 20 });
+    expect(next.find((p) => p.shirtNumber === 6)).toMatchObject({ gridX: 30, gridY: 30 });
+    expect(next.find((p) => p.shirtNumber === 2)).toMatchObject({ gridX: 30, gridY: 50 });
+    expect(next.find((p) => p.shirtNumber === 7)).toMatchObject({ gridX: 30, gridY: 60 });
+    expect(next.find((p) => p.shirtNumber === 17)).toMatchObject({ gridX: 40, gridY: 80 });
+  });
+
+  it('spreadForwardStrikerPair coloca dos FW en 90 / 40-60', () => {
+    const players = [
+      { shirtNumber: 14, position: 'FW', gridX: 85, gridY: 32 },
+      { shirtNumber: 26, position: 'FW', gridX: 85, gridY: 68 },
+    ];
+    const next = spreadForwardStrikerPair(players);
+    expect(next[0]).toMatchObject({ gridX: 90, gridY: 40 });
+    expect(next[1]).toMatchObject({ gridX: 90, gridY: 60 });
+  });
+
+  it('spreadAttackingMidWingBand solo en línea alta (>62 profundidad)', () => {
+    const lowMid = [
+      { shirtNumber: 15, position: 'MID', gridX: 58, gridY: 36 },
+      { shirtNumber: 23, position: 'MID', gridX: 58, gridY: 64 },
+    ];
+    expect(spreadAttackingMidWingBand(lowMid)).toEqual(lowMid);
+
+    const highMid = [
+      { shirtNumber: 13, position: 'MID', gridX: 64, gridY: 36 },
+      { shirtNumber: 19, position: 'MID', gridX: 64, gridY: 64 },
+    ];
+    const next = spreadAttackingMidWingBand(highMid);
+    expect(next.find((p) => p.shirtNumber === 13)).toMatchObject({ gridX: 50, gridY: 20 });
+    expect(next.find((p) => p.shirtNumber === 19)).toMatchObject({ gridX: 60, gridY: 70 });
   });
 });
