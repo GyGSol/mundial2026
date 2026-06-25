@@ -142,7 +142,7 @@ export function mdMeansCenterInMidLine(linePlayers = []) {
 
 function isLeftWingMid(player) {
   const token = positionToken(player);
-  if (token === 'MI' || token === 'EI') return true;
+  if (token === 'MI') return true;
   const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
   return (
     text.includes('left mid') ||
@@ -155,7 +155,6 @@ function isLeftWingMid(player) {
 function isRightWingMid(player, linePlayers = []) {
   const token = positionToken(player);
   if (token === 'MI') return false;
-  if (token === 'ED') return true;
   if (token === 'MD' && !mdMeansCenterInMidLine(linePlayers)) return true;
   const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
   return (
@@ -229,8 +228,6 @@ export function lateralSortKey(player, linePlayers) {
   if (token === 'POR' || token === 'GK' || text.includes('goalkeeper') || text === 'gk') return 50;
   if (token === 'LI') return 4;
   if (token === 'LD') return 96;
-  if (token === 'EI') return 8;
-  if (token === 'ED') return 92;
   if (token === 'MI') return 8;
   if (token === 'MD') {
     if (linePlayers && mdMeansCenterInMidLine(linePlayers)) return 42;
@@ -308,70 +305,6 @@ export function attackingMidPromotionScore(player) {
   if (token === 'MI') return 45;
   if (token === 'MCD' || text.includes('defensive') || text.includes('holding')) return 10;
   return 35;
-}
-
-function midSlotsNeeded(rows) {
-  const rowCount = rows.length;
-  return rows.reduce(
-    (sum, count, rowIndex) => (poolForLine(rowIndex, rowCount) === 'MID' ? sum + count : sum),
-    0
-  );
-}
-
-function isWideForwardToken(player) {
-  const token = positionToken(player);
-  return token === 'EI' || token === 'ED';
-}
-
-function isWideFullbackToken(player) {
-  const token = positionToken(player);
-  return token === 'LI' || token === 'LD';
-}
-
-function isThreeAtBack(rows) {
-  return rows.length >= 2 && rows[1] === 3;
-}
-
-function movePlayerToPool(pools, player, fromPool, toPool) {
-  pools[fromPool] = pools[fromPool].filter((p) => p !== player);
-  pools[toPool].push({ ...player, position: toPool });
-}
-
-/** Ajusta pools según filas de la formación (EI/ED en 4-4-2 → MID; sobrantes DEF en 4-at-back). */
-export function rebalancePoolsForFormation(pools, rows) {
-  const rowCount = rows.length;
-  const defNeeded = rows[1] ?? 0;
-  const fwdNeeded = rows[rowCount - 1] ?? 0;
-  const midNeeded = midSlotsNeeded(rows);
-  const needsWideMidLine = rows.some(
-    (count, rowIndex) => poolForLine(rowIndex, rowCount) === 'MID' && count >= 4
-  );
-
-  if (needsWideMidLine || midNeeded >= 4) {
-    for (const winger of [...pools.FWD].filter(isWideForwardToken)) {
-      movePlayerToPool(pools, winger, 'FWD', 'MID');
-    }
-  }
-
-  while (pools.FWD.length > fwdNeeded) {
-    const wingers = pools.FWD.filter(isWideForwardToken);
-    if (!wingers.length) break;
-    const toDemote = [...wingers].sort(
-      (a, b) => (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
-    )[0];
-    movePlayerToPool(pools, toDemote, 'FWD', 'MID');
-  }
-
-  if (!isThreeAtBack(rows) && pools.DEF.length > defNeeded) {
-    while (pools.DEF.length > defNeeded) {
-      const laterals = pools.DEF.filter(isWideFullbackToken);
-      if (!laterals.length) break;
-      const toDemote = [...laterals].sort(
-        (a, b) => (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
-      )[laterals.length - 1];
-      movePlayerToPool(pools, toDemote, 'DEF', 'MID');
-    }
-  }
 }
 
 /** Completa el pool de delanteros con medios ofensivos cuando la formación pide más FWD que jugadores netos. */
@@ -735,7 +668,6 @@ export function assignPlayersToFormation(
     pool: poolForLine(rowIndex, rowCount),
   }));
 
-  rebalancePoolsForFormation(pools, rows);
   balanceForwardPoolFromMidfield(pools, rows);
 
   for (const spec of lineSpecs) {

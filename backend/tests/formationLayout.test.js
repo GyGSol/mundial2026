@@ -12,7 +12,6 @@ import {
   mergePlayerGrids,
   lateralSortKey,
   mapFootballDataPositionText,
-  spreadOverlappingGridPositions,
 } from '../src/utils/formationLayout.js';
 
 describe('formationLayout', () => {
@@ -209,80 +208,5 @@ describe('formationLayout', () => {
     expect(singh.gridX).toBeLessThan(85);
     expect(assigned.filter((p) => p.gridX >= 52 && p.gridX <= 64)).toHaveLength(4);
     expect(assigned).toHaveLength(11);
-  });
-});
-
-describe('formationLayout 4-4-2 Ecuador (EI/ED en mediocampo)', () => {
-  it('coloca 4 defensores, 4 medios con extremos y 2 DC separados', () => {
-    const players = [
-      { name: 'Galíndez', shirtNumber: 1, position: 'POR' },
-      { name: 'Hincapié', shirtNumber: 3, position: 'LI' },
-      { name: 'Ordóñez', shirtNumber: 4, position: 'DFC' },
-      { name: 'Torres', shirtNumber: 2, position: 'DFC' },
-      { name: 'Pacho', shirtNumber: 6, position: 'LD' },
-      { name: 'Vite', shirtNumber: 15, position: 'MI' },
-      { name: 'Yeboah', shirtNumber: 9, position: 'EI' },
-      { name: 'Caicedo', shirtNumber: 23, position: 'MC' },
-      { name: 'Angulo', shirtNumber: 20, position: 'ED' },
-      { name: 'Plata', shirtNumber: 19, position: 'DC' },
-      { name: 'Valencia', shirtNumber: 13, position: 'DC' },
-    ];
-
-    const laidOut = spreadOverlappingGridPositions(assignPlayersToFormation(players, '4-4-2'));
-
-    expect(laidOut).toHaveLength(11);
-
-    const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
-    expect(defenders).toHaveLength(4);
-    expect(new Set(defenders.map((p) => p.gridY)).size).toBe(4);
-
-    const mids = laidOut.filter((p) => Number(p.gridX) >= 52 && Number(p.gridX) <= 64);
-    expect(mids).toHaveLength(4);
-
-    const yeboah = laidOut.find((p) => p.shirtNumber === 9);
-    const angulo = laidOut.find((p) => p.shirtNumber === 20);
-    expect(yeboah.gridX).toBeGreaterThanOrEqual(52);
-    expect(yeboah.gridX).toBeLessThanOrEqual(64);
-    expect(angulo.gridX).toBeGreaterThanOrEqual(52);
-    expect(angulo.gridX).toBeLessThanOrEqual(64);
-
-    const plata = laidOut.find((p) => p.shirtNumber === 19);
-    const valencia = laidOut.find((p) => p.shirtNumber === 13);
-    expect(plata.gridX).toBe(85);
-    expect(valencia.gridX).toBe(85);
-    expect(Math.abs(plata.gridY - valencia.gridY)).toBeGreaterThanOrEqual(14);
-  });
-});
-
-describe('formationLayout 4-2-3-1 Alemania sin regresión', () => {
-  it('mantiene 4 defensores, doble pivote, línea de 3 y punta', () => {
-    const players = [
-      { name: 'Neuer', shirtNumber: 1, position: 'POR' },
-      { name: 'Raum', shirtNumber: 22, position: 'LD' },
-      { name: 'Kimmich', shirtNumber: 6, position: 'DFC' },
-      { name: 'Tah', shirtNumber: 4, position: 'DFC' },
-      { name: 'Rüdiger', shirtNumber: 2, position: 'LI' },
-      { name: 'Nmecha', shirtNumber: 23, position: 'MC' },
-      { name: 'Pavlović', shirtNumber: 5, position: 'MD' },
-      { name: 'Musiala', shirtNumber: 10, position: 'MD' },
-      { name: 'Sané', shirtNumber: 19, position: 'MCO' },
-      { name: 'Wirtz', shirtNumber: 17, position: 'MI' },
-      { name: 'Havertz', shirtNumber: 7, position: 'DC' },
-    ];
-
-    const laidOut = spreadOverlappingGridPositions(assignPlayersToFormation(players, '4-2-3-1'));
-
-    expect(laidOut).toHaveLength(11);
-
-    const defenders = laidOut.filter((p) => Number(p.gridX) >= 20 && Number(p.gridX) <= 32);
-    expect(defenders).toHaveLength(4);
-
-    const doublePivot = laidOut.filter((p) => [23, 5].includes(p.shirtNumber));
-    expect(doublePivot).toHaveLength(2);
-
-    const attackingMid = laidOut.filter((p) => [10, 19, 17].includes(p.shirtNumber));
-    expect(attackingMid).toHaveLength(3);
-
-    expect(laidOut.find((p) => p.shirtNumber === 7)?.gridX).toBe(85);
   });
 });
