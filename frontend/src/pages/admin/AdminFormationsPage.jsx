@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { matchesApi } from '@/api/client.js';
+import { leaderboardApi, matchesApi } from '@/api/client.js';
 import AdminCard from '@/components/admin/AdminCard.jsx';
 import AdminPageHeader from '@/components/admin/AdminPageHeader.jsx';
 import MatchLineupSection, { shouldShowMatchLineup } from '@/components/lineup/MatchLineupSection.jsx';
@@ -11,18 +11,66 @@ import { Button } from '@/components/ui/button.jsx';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select.jsx';
 import { cn } from '@/lib/utils';
 
+function matchId(match) {
+  return String(match?.id ?? match?._id ?? '');
+}
+
 function matchLabel(match) {
   const home = match?.homeTeam?.nameEn ?? match?.homeTeamName ?? 'Local';
   const away = match?.awayTeam?.nameEn ?? match?.awayTeamName ?? 'Visitante';
+  if (match?.status === 'finished') {
+    const homeScore = match.homeScore ?? '–';
+    const awayScore = match.awayScore ?? '–';
+    return `${home} vs ${away} · Final ${homeScore}–${awayScore}`;
+  }
   const minute = match?.timeElapsed ?? match?.minute;
   const clock = minute ? ` · ${minute}'` : '';
-  return `${home} vs ${away}${clock}`;
+  return `${home} vs ${away}${clock} · En vivo`;
+}
+
+async function fetchFormationMatchList() {
+  const [snapshot, archive] = await Promise.all([
+    matchesApi.liveSnapshot(),
+    leaderboardApi.finishedArchive(),
+  ]);
+  const liveMatches = snapshot?.liveMatches ?? [];
+  const liveIds = new Set(liveMatches.map(matchId));
+  const recentFinished = (snapshot?.recentFinishedMatches ?? []).filter(
+    (item) => !liveIds.has(matchId(item))
+  );
+  const finishedById = new Map(recentFinished.map((item) => [matchId(item), item]));
+  for (const item of archive?.finishedMatches ?? []) {
+    const id = matchId(item);
+    if (!liveIds.has(id)) finishedById.set(id, item);
+  }
+  return {
+    liveMatches,
+    finishedMatches: [...finishedById.values()],
+  };
+}
+
+async function fetchFormationMatchDetail(selectedMatchId) {
+  const id = String(selectedMatchId);
+  const snapshot = await matchesApi.liveSnapshot({ detailMatchId: selectedMatchId });
+  const fromSnapshot =
+    (snapshot?.liveMatches ?? []).find((item) => matchId(item) === id) ??
+    (snapshot?.recentFinishedMatches ?? []).find((item) => matchId(item) === id);
+  if (
+    fromSnapshot?.lineup?.home?.players?.length ||
+    fromSnapshot?.lineup?.away?.players?.length
+  ) {
+    return { match: fromSnapshot };
+  }
+  const archive = await leaderboardApi.finishedArchive();
+  const fromArchive = (archive?.finishedMatches ?? []).find((item) => matchId(item) === id);
+  return { match: fromArchive ?? fromSnapshot ?? null };
 }
 
 function overrideKey(side, shirtNumber, name) {
@@ -34,29 +82,27 @@ export default function AdminFormationsPage() {
   const [gridOverrides, setGridOverrides] = useState({});
   const [moveLog, setMoveLog] = useState([]);
 
-  const fetchLiveMatches = useCallback(() => matchesApi.list({ status: 'live' }), []);
+  const fetchMatchList = useCallback(() => fetchFormationMatchList(), []);
 
   const {
-    data: liveListData,
-    loading: liveListLoading,
-    error: liveListError,
-    refresh: refreshLiveList,
-  } = useLiveData(fetchLiveMatches, [], {
-    memoryCacheKey: 'admin-formations:live-list',
+    data: matchListData,
+    loading: matchListLoading,
+    error: matchListError,
+    refresh: refreshMatchList,
+  } = useLiveData(fetchMatchList, [], {
+    memoryCacheKey: 'admin-formations:match-list',
     memoryCacheTtlMs: 15_000,
     pollIntervalMs: 15_000,
     realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
   });
 
-  const liveMatches = liveListData?.matches ?? [];
+  const liveMatches = matchListData?.liveMatches ?? [];
+  const finishedMatches = matchListData?.finishedMatches ?? [];
+  const hasSelectableMatches = liveMatches.length > 0 || finishedMatches.length > 0;
 
   const fetchMatchDetail = useCallback(async () => {
     if (!selectedMatchId) return { match: null };
-    const snapshot = await matchesApi.liveSnapshot({ detailMatchId: selectedMatchId });
-    const match =
-      (snapshot?.liveMatches ?? []).find((item) => String(item.id) === String(selectedMatchId)) ??
-      null;
-    return { match };
+    return fetchFormationMatchDetail(selectedMatchId);
   }, [selectedMatchId]);
 
   const {
@@ -132,27 +178,40 @@ export default function AdminFormationsPage() {
     <div className={adminPage}>
       <AdminPageHeader
         title="Formaciones"
-        description="Réplica de la cancha del ranking en vivo. Arrastrá jugadores para marcar la posición correcta; cada movimiento se registra en consola (F12) y abajo."
+        description="Réplica de la cancha del ranking. Elegí un partido en vivo o finalizado, arrastrá jugadores para marcar la posición correcta; cada movimiento se registra en consola (F12) y abajo."
       />
 
       <AdminCard className="space-y-4">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-[14rem] flex-1">
-            <label className={cn(adminMuted, 'mb-1 block text-xs')}>Partido en vivo</label>
+            <label className={cn(adminMuted, 'mb-1 block text-xs')}>Partido</label>
             <Select value={selectedMatchId || undefined} onValueChange={handleSelectMatch}>
               <SelectTrigger className={adminInput}>
-                <SelectValue placeholder={liveListLoading ? 'Cargando…' : 'Elegí un partido'} />
+                <SelectValue placeholder={matchListLoading ? 'Cargando…' : 'Elegí un partido'} />
               </SelectTrigger>
               <SelectContent>
-                {liveMatches.map((item) => (
-                  <SelectItem key={item.id ?? item._id} value={String(item.id ?? item._id)}>
-                    {matchLabel(item)}
-                  </SelectItem>
-                ))}
+                {liveMatches.length > 0 ? (
+                  <SelectGroup>
+                    {liveMatches.map((item) => (
+                      <SelectItem key={matchId(item)} value={matchId(item)}>
+                        {matchLabel(item)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ) : null}
+                {finishedMatches.length > 0 ? (
+                  <SelectGroup>
+                    {finishedMatches.map((item) => (
+                      <SelectItem key={matchId(item)} value={matchId(item)}>
+                        {matchLabel(item)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ) : null}
               </SelectContent>
             </Select>
           </div>
-          <Button type="button" variant="outline" size="sm" className={adminInput} onClick={() => refreshLiveList()}>
+          <Button type="button" variant="outline" size="sm" className={adminInput} onClick={() => refreshMatchList()}>
             Actualizar lista
           </Button>
           {selectedMatchId ? (
@@ -162,9 +221,14 @@ export default function AdminFormationsPage() {
           ) : null}
         </div>
 
-        {liveListError ? <p className="text-sm text-red-400">{liveListError.message}</p> : null}
-        {!liveListLoading && liveMatches.length === 0 ? (
-          <p className={adminMuted}>No hay partidos en vivo ahora.</p>
+        {matchListError ? <p className="text-sm text-red-400">{matchListError.message}</p> : null}
+        {!matchListLoading && !hasSelectableMatches ? (
+          <p className={adminMuted}>No hay partidos en vivo ni finalizados disponibles.</p>
+        ) : null}
+        {!matchListLoading && liveMatches.length === 0 && finishedMatches.length > 0 ? (
+          <p className={cn(adminMuted, 'text-xs')}>
+            No hay partidos en vivo; podés elegir uno finalizado del listado.
+          </p>
         ) : null}
       </AdminCard>
 
