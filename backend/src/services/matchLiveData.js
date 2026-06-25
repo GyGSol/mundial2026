@@ -1422,10 +1422,49 @@ export function enrichTimelineRosterFields(timeline, homePlayers = [], awayPlaye
 export function enrichMatchLiveFields(match, options = {}) {
   const raw = match.raw ?? {};
   const showResults = match.status === 'live' || match.status === 'finished';
+  const includeFullTimeline = options.includeFullTimeline !== false;
   const events = readStoredMatchEvents(raw);
   const { homePlayers = [], awayPlayers = [], priorTournamentGoalCounts } = options;
   const mappedHomePlayers = homePlayers.map(mapPlayerToTimelineRosterEntry);
   const mappedAwayPlayers = awayPlayers.map(mapPlayerToTimelineRosterEntry);
+
+  const parsedHomeScorers = parseScorersField(raw.home_scorers ?? raw.homeScorers);
+  const parsedAwayScorers = parseScorersField(raw.away_scorers ?? raw.awayScorers);
+
+  if (showResults && !includeFullTimeline) {
+    const scoreSeed = resolveEffectiveLiveScores(match, [], raw);
+    const matchPlayState = serializeMatchPlayStateForClient(
+      resolveMatchPlayState(match, { timeline: [], raw })
+    );
+    const timeElapsed =
+      match.status === 'live'
+        ? resolveLiveMatchDisplayClock({ ...match, matchPlayState }, [], raw)
+        : match.status === 'finished'
+          ? 'Final'
+          : null;
+
+    return {
+      timeElapsed,
+      matchPlayState,
+      homeScore: scoreSeed.homeScore,
+      awayScore: scoreSeed.awayScore,
+      homeScorers: parsedHomeScorers,
+      awayScorers: parsedAwayScorers,
+      homeBookings: events.homeBookings ?? [],
+      awayBookings: events.awayBookings ?? [],
+      homeSubstitutions: enrichSubstitutionsFromRoster(
+        events.homeSubstitutions ?? [],
+        mappedHomePlayers
+      ),
+      awaySubstitutions: enrichSubstitutionsFromRoster(
+        events.awaySubstitutions ?? [],
+        mappedAwayPlayers
+      ),
+      matchTimeline: [],
+      fifaReportStats: null,
+    };
+  }
+
   let baseTimeline = showResults ? readMatchTimeline(raw) : [];
 
   if (showResults && baseTimeline.length > 0) {
@@ -1450,8 +1489,6 @@ export function enrichMatchLiveFields(match, options = {}) {
       baseTimeline = enrichTimelineRosterFields(baseTimeline, mappedHomePlayers, mappedAwayPlayers);
     }
   }
-  const parsedHomeScorers = parseScorersField(raw.home_scorers ?? raw.homeScorers);
-  const parsedAwayScorers = parseScorersField(raw.away_scorers ?? raw.awayScorers);
   const scoreSeed = showResults
     ? resolveEffectiveLiveScores(match, baseTimeline, raw)
     : { homeScore: match.homeScore ?? 0, awayScore: match.awayScore ?? 0 };

@@ -4,7 +4,6 @@ import { getLiveMatchStatIndicatorsByUser } from './leaderboardService.js';
 import { getLastSyncAt } from './syncService.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import {
-  enrichMatchesForRankingDashboard,
   enrichMatchesForRankingUpcoming,
   prepareFifaShirtMapsForMatches,
 } from './matchEnrichmentService.js';
@@ -25,8 +24,9 @@ import { buildMatchLineupPayload } from './matchLineupService.js';
 import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
-  sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
+import { enrichFeaturedBarPayload } from './liveFeaturedBarService.js';
+import { LIVE_BAR_MATCH_PROJECTION } from './liveBarMatchProjection.js';
 
 const UPCOMING_MATCH_LIMIT = 30;
 /** Solo hace falta enriquecer candidatos a la barra destacada (máx. 1 visible). */
@@ -84,7 +84,7 @@ async function resolveGroup(groupId) {
   return { group };
 }
 
-export async function getRankingDashboard(groupId, userId) {
+export async function getRankingDashboard(groupId, userId, detailMatchId) {
   const groupResult = await resolveGroup(groupId);
   if (groupResult.notFound) {
     return { notFound: true };
@@ -92,12 +92,16 @@ export async function getRankingDashboard(groupId, userId) {
 
   const [lastSyncAt, liveRaw, upcomingRaw, recentFinishedRaw] = await Promise.all([
     getLastSyncAt(),
-    Match.find({ status: 'live' }).sort({ kickoffAt: 1, externalId: 1 }).lean(),
+    Match.find({ status: 'live' })
+      .select(LIVE_BAR_MATCH_PROJECTION)
+      .sort({ kickoffAt: 1, externalId: 1 })
+      .lean(),
     Match.find({ status: 'upcoming' })
       .sort({ kickoffAt: 1 })
       .limit(UPCOMING_MATCH_LIMIT)
       .lean(),
     Match.find(findRecentlyFinishedMatchesQuery())
+      .select(LIVE_BAR_MATCH_PROJECTION)
       .sort({ finishedAt: -1, kickoffAt: -1 })
       .limit(RECENT_FINISHED_QUERY_LIMIT)
       .lean(),
@@ -106,27 +110,20 @@ export async function getRankingDashboard(groupId, userId) {
   const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
   const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
 
-  const matchesToEnrichFeatured = [...activeLiveRaw, ...recentFeaturedRaw];
   const nextSlotRaw = findNextUpcomingMatches(upcomingRaw);
-  await prepareFifaShirtMapsForMatches([...matchesToEnrichFeatured, ...nextSlotRaw]);
-  const [enrichedFeatured, enrichedUpcoming] = await Promise.all([
-    enrichMatchesForRankingDashboard(matchesToEnrichFeatured, userId),
-    enrichMatchesForRankingUpcoming(nextSlotRaw, userId),
-  ]);
-  const byId = new Map(
-    [...enrichedFeatured, ...enrichedUpcoming].map((m) => [m.id, m])
-  );
-
-  const liveMatches = sortLiveMatchesForFeaturedBar(
-    activeLiveRaw.map((m) => byId.get(m._id.toString())).filter(Boolean)
-  );
-  const recentFinishedMatches = recentFeaturedRaw
-    .map((m) => byId.get(m._id.toString()))
-    .filter(Boolean);
+  const { liveMatches, recentFinishedMatches } = await enrichFeaturedBarPayload({
+    activeLiveRaw,
+    recentFeaturedRaw,
+    userId,
+    detailMatchId,
+  });
 
   if (groupId && groupId !== '__nogroup') {
     await ensureAiCompetitorInGroup(groupId);
   }
+
+  await prepareFifaShirtMapsForMatches(nextSlotRaw);
+  const enrichedUpcoming = await enrichMatchesForRankingUpcoming(nextSlotRaw, userId);
 
   const liveMatchIds = liveMatches.map((match) => match.id);
   const recentFinishedIds = recentFinishedMatches.map((match) => match.id);
@@ -152,30 +149,16 @@ export async function getRankingDashboard(groupId, userId) {
       : Promise.resolve(null),
   ]);
 
-  const nextUpcomingMatches = findNextUpcomingMatches(
-    enrichedUpcoming
-  );
+  const nextUpcomingMatches = findNextUpcomingMatches(enrichedUpcoming);
 
-  const liveRawById = new Map(activeLiveRaw.map((m) => [m._id.toString(), m]));
   const upcomingRawById = new Map(upcomingRaw.map((m) => [m._id.toString(), m]));
-  const recentRawById = new Map(recentFeaturedRaw.map((m) => [m._id.toString(), m]));
-  await Promise.all([
-    ...liveMatches.map(async (featured) => {
-      const raw = liveRawById.get(featured.id);
-      if (!raw) return;
-      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
-    }),
-    ...recentFinishedMatches.map(async (featured) => {
-      const raw = recentRawById.get(featured.id);
-      if (!raw) return;
-      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
-    }),
-    ...nextUpcomingMatches.map(async (featured) => {
+  await Promise.all(
+    nextUpcomingMatches.map(async (featured) => {
       const raw = upcomingRawById.get(featured.id);
       if (!raw) return;
       featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
-    }),
-  ]);
+    })
+  );
 
   const [liveWithStream, nextWithStream, recentFinishedWithStream] = await Promise.all([
     attachStreamMetaToMatches(liveMatches),

@@ -16,7 +16,10 @@ const router = Router();
 
 router.get('/live-snapshot', optionalAuth, async (req, res, next) => {
   try {
-    const payload = await getCachedLiveMatchSnapshot(req.user?._id);
+    const detailMatchId = req.query.detailMatchId
+      ? String(req.query.detailMatchId)
+      : undefined;
+    const payload = await getCachedLiveMatchSnapshot(req.user?._id, detailMatchId);
     res.json(payload);
   } catch (err) {
     next(err);

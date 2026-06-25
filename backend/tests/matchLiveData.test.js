@@ -154,6 +154,31 @@ describe('matchLiveData', () => {
       expect(live.awayScorers).toEqual([]);
     });
 
+    it('modo resumen omite cronología y reporte FIFA', () => {
+      const live = enrichMatchLiveFields(
+        {
+          status: 'live',
+          homeScore: 1,
+          awayScore: 0,
+          raw: {
+            time_elapsed: '34',
+            home_scorers: "Lozano 12'",
+            away_scorers: 'null',
+            fifaEvents: {
+              timeline: [{ type: 'goal', minute: 12, side: 'home', playerName: 'Lozano' }],
+            },
+            fifaReportStats: { possession: { home: 55, away: 45 } },
+          },
+        },
+        { includeFullTimeline: false }
+      );
+
+      expect(live.homeScore).toBe(1);
+      expect(live.matchTimeline).toEqual([]);
+      expect(live.fifaReportStats).toBeNull();
+      expect(live.homeScorers).toEqual([{ name: 'Lozano', minute: 12 }]);
+    });
+
     it('marca Final en partidos terminados', () => {
       const finished = enrichMatchLiveFields({
         status: 'finished',

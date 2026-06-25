@@ -148,7 +148,12 @@ export const matchesApi = {
     return request(`/matches?${query}`);
   },
   getById: (matchId) => request(`/matches/${encodeURIComponent(matchId)}`),
-  liveSnapshot: () => request('/matches/live-snapshot'),
+  liveSnapshot: ({ detailMatchId } = {}) => {
+    const query = detailMatchId
+      ? `?detailMatchId=${encodeURIComponent(detailMatchId)}`
+      : '';
+    return request(`/matches/live-snapshot${query}`);
+  },
 };
 
 export const aiConsultationsApi = {
@@ -204,8 +209,11 @@ export const leaderboardApi = {
     const query = groupId ? `?groupId=${encodeURIComponent(groupId)}` : '';
     return request(`/leaderboard${query}`);
   },
-  dashboard: (groupId) =>
-    request(`/leaderboard/dashboard?groupId=${encodeURIComponent(groupId)}`),
+  dashboard: (groupId, { detailMatchId } = {}) => {
+    const params = new URLSearchParams({ groupId: String(groupId) });
+    if (detailMatchId) params.set('detailMatchId', String(detailMatchId));
+    return request(`/leaderboard/dashboard?${params.toString()}`);
+  },
   pointsEvolution: (groupId) =>
     request(`/leaderboard/${encodeURIComponent(groupId)}/points-evolution`),
   finishedArchive: () => request('/leaderboard/finished-archive'),

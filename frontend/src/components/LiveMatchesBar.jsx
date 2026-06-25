@@ -1103,16 +1103,62 @@ function FeaturedMatchCard({ match }) {
   return <LiveMatchCard match={match} />;
 }
 
-function FeaturedMatchesGrid({ liveMatches, recentFinishedMatches }) {
+function CollapsedLiveMatchCard({ match, onExpand }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onExpand}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onExpand();
+          }
+        }}
+        className="rounded-xl transition-shadow hover:ring-2 hover:ring-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-expanded="false"
+        title="Expandir cronología y cancha"
+      >
+        <ResultMatchCard match={match} variant="live" />
+      </div>
+      <Button type="button" variant="outline" size="sm" className="w-full" onClick={onExpand}>
+        <ChevronDown className="mr-1.5 size-4" aria-hidden />
+        Ver cronología y cancha
+      </Button>
+    </div>
+  );
+}
+
+function FeaturedMatchesGrid({
+  liveMatches,
+  recentFinishedMatches,
+  expandedLiveMatchId,
+  onExpandedLiveMatchChange,
+}) {
   const featured = [...liveMatches, ...recentFinishedMatches];
+  const hasMultipleLive = liveMatches.length > 1;
   if (!featured.length) return null;
   return (
     <div className={cn('grid w-full gap-4', matchBarGridClass())}>
-      {featured.map((match) => (
-        <div key={match.id} className="min-w-0">
-          <FeaturedMatchCard match={match} />
-        </div>
-      ))}
+      {featured.map((match) => {
+        const isLive = match.status !== 'finished';
+        const isCollapsedLive =
+          isLive && hasMultipleLive && expandedLiveMatchId && match.id !== expandedLiveMatchId;
+
+        return (
+          <div key={match.id} className="min-w-0">
+            {isCollapsedLive ? (
+              <CollapsedLiveMatchCard
+                match={match}
+                onExpand={() => onExpandedLiveMatchChange?.(match.id)}
+              />
+            ) : (
+              <FeaturedMatchCard match={match} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1319,6 +1365,8 @@ export default function LiveMatchesBar({
   recentFinishedMatches = [],
   nextMatches = [],
   finishedMatches = [],
+  expandedLiveMatchId,
+  onExpandedLiveMatchChange,
 }) {
   const sortedLiveMatches = useMemo(() => sortLiveMatchesForFeaturedBar(matches), [matches]);
   const hasLive = sortedLiveMatches.length > 0;
@@ -1350,6 +1398,8 @@ export default function LiveMatchesBar({
           <FeaturedMatchesGrid
             liveMatches={sortedLiveMatches}
             recentFinishedMatches={[]}
+            expandedLiveMatchId={expandedLiveMatchId}
+            onExpandedLiveMatchChange={onExpandedLiveMatchChange}
           />
         </MatchColumn>
       ) : null}

@@ -16,7 +16,10 @@ router.get('/dashboard', optionalAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'groupId es obligatorio' });
     }
 
-    const payload = await getCachedRankingDashboard(groupId, req.user?._id);
+    const detailMatchId = req.query.detailMatchId
+      ? String(req.query.detailMatchId)
+      : undefined;
+    const payload = await getCachedRankingDashboard(groupId, req.user?._id, detailMatchId);
     if (payload.notFound) {
       return res.status(404).json({ error: 'Grupo no encontrado' });
     }

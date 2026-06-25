@@ -8,9 +8,10 @@ const RECENT_FINISHED_TTL_MS = LIVE_TTL_MS;
 
 const cache = createInMemoryCache({ defaultTtlMs: DEFAULT_TTL_MS });
 
-function dashboardCacheKey(groupId, userId) {
+function dashboardCacheKey(groupId, userId, detailMatchId) {
   const userKey = userId ? String(userId) : 'anon';
-  return `${groupId}:${userKey}`;
+  const detailKey = detailMatchId ? String(detailMatchId) : 'auto';
+  return `${groupId}:${userKey}:${detailKey}`;
 }
 
 export function dashboardCacheTtlMs(payload) {
@@ -27,11 +28,11 @@ export function invalidateRankingDashboardCache(groupId) {
   cache.invalidatePrefix(`${groupId}:`);
 }
 
-export async function getCachedRankingDashboard(groupId, userId) {
-  const key = dashboardCacheKey(groupId, userId);
+export async function getCachedRankingDashboard(groupId, userId, detailMatchId) {
+  const key = dashboardCacheKey(groupId, userId, detailMatchId);
   return cache.getOrCompute(
     key,
-    () => getRankingDashboard(groupId, userId),
+    () => getRankingDashboard(groupId, userId, detailMatchId),
     dashboardCacheTtlMs
   );
 }

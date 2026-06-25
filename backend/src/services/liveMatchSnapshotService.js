@@ -1,23 +1,18 @@
 import { Match } from '../models/Match.js';
 import {
-  enrichMatchesForRankingDashboard,
-  prepareFifaShirtMapsForMatches,
-} from './matchEnrichmentService.js';
-import {
   findRecentlyFinishedMatchesQuery,
   RECENT_FINISHED_FEATURED_MAX,
 } from './matchDisplayVisibilityService.js';
 import {
   partitionLiveMatchesByActivity,
   buildFeaturedRecentFinishedRaw,
-  sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
-import { buildMatchLineupPayload } from './matchLineupService.js';
+import { enrichFeaturedBarPayload } from './liveFeaturedBarService.js';
 import { LIVE_BAR_MATCH_PROJECTION } from './liveBarMatchProjection.js';
 
 const RECENT_FINISHED_QUERY_LIMIT = Math.max(RECENT_FINISHED_FEATURED_MAX + 2, 3);
 
-async function computeLiveMatchSnapshot(userId) {
+async function computeLiveMatchSnapshot(userId, detailMatchId) {
   const [liveRaw, recentFinishedRaw] = await Promise.all([
     Match.find({ status: 'live' })
       .select(LIVE_BAR_MATCH_PROJECTION)
@@ -32,44 +27,18 @@ async function computeLiveMatchSnapshot(userId) {
 
   const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
   const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
-  const barMatches = [...activeLiveRaw, ...recentFeaturedRaw];
 
-  if (!barMatches.length) {
-    return { liveMatches: [], recentFinishedMatches: [] };
-  }
-
-  await prepareFifaShirtMapsForMatches(barMatches);
-  const enriched = await enrichMatchesForRankingDashboard(barMatches, userId);
-  const byMongoId = new Map(enriched.map((m) => [m.id, m]));
-
-  const liveMatches = sortLiveMatchesForFeaturedBar(
-    activeLiveRaw.map((m) => byMongoId.get(m._id.toString())).filter(Boolean)
-  );
-  const recentFinishedMatches = recentFeaturedRaw
-    .map((m) => byMongoId.get(m._id.toString()))
-    .filter(Boolean);
-
-  const liveRawById = new Map(activeLiveRaw.map((m) => [m._id.toString(), m]));
-  const recentRawById = new Map(recentFeaturedRaw.map((m) => [m._id.toString(), m]));
-  await Promise.all([
-    ...liveMatches.map(async (featured) => {
-      const raw = liveRawById.get(featured.id);
-      if (!raw) return;
-      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
-    }),
-    ...recentFinishedMatches.map(async (featured) => {
-      const raw = recentRawById.get(featured.id);
-      if (!raw) return;
-      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
-    }),
-  ]);
-
-  return { liveMatches, recentFinishedMatches };
+  return enrichFeaturedBarPayload({
+    activeLiveRaw,
+    recentFeaturedRaw,
+    userId,
+    detailMatchId,
+  });
 }
 
 /** Sin TTL: alimenta parches WS en vivo; cachearlo devolvía cronologías atrasadas. */
-export async function getCachedLiveMatchSnapshot(userId) {
-  return computeLiveMatchSnapshot(userId);
+export async function getCachedLiveMatchSnapshot(userId, detailMatchId) {
+  return computeLiveMatchSnapshot(userId, detailMatchId);
 }
 
 /** No-op (cache eliminado); se mantiene para compatibilidad con invalidadores. */

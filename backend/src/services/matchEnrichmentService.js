@@ -42,6 +42,7 @@ import { buildMatchLineupPayload } from './matchLineupService.js';
  *   includeLiveFields?: boolean,
  *   includeTimelineTournamentGoals?: boolean,
  *   includeLineup?: boolean,
+ *   includeFullTimeline?: boolean,
  *   fetchExternalShirtNumbers?: boolean,
  * }} options
  */
@@ -54,6 +55,7 @@ export async function enrichMatches(matches, userId, options = {}) {
     includeLiveFields = true,
     includeTimelineTournamentGoals = includeLiveFields,
     includeLineup = false,
+    includeFullTimeline = true,
   } = options;
 
   if (userId && ensureUserDefaults) {
@@ -80,7 +82,7 @@ export async function enrichMatches(matches, userId, options = {}) {
 
   /** Fotos de cronología/cambios requieren plantel aunque no calculemos goles del torneo. */
   const needsLiveRosterForEnrichment =
-    includeLiveFields && !includePlayers && hasLiveOrFinished;
+    includeLiveFields && includeFullTimeline && !includePlayers && hasLiveOrFinished;
 
   let playersByTeamId = {};
   if (includePlayers || needsTournamentGoals || needsLiveRosterForEnrichment) {
@@ -158,6 +160,7 @@ export async function enrichMatches(matches, userId, options = {}) {
           homePlayers: playersByTeamId[m.homeTeamId] ?? [],
           awayPlayers: playersByTeamId[m.awayTeamId] ?? [],
           priorTournamentGoalCounts,
+          includeFullTimeline,
         })
       : {};
 
@@ -235,6 +238,21 @@ export async function enrichMatchesForRankingDashboard(matches, userId) {
     includeWeather: hasLive,
     includeLiveFields: true,
     includeTimelineTournamentGoals: true,
+    includeFullTimeline: true,
+  });
+}
+
+/** Barra en vivo colapsada: marcador y listas derivadas sin cronología ni reporte FIFA. */
+export async function enrichMatchesForLiveBarSummary(matches, userId) {
+  const hasLive = matches.some((m) => m.status === 'live');
+  return enrichMatches(matches, userId, {
+    includePlayers: false,
+    includeKnockoutContext: false,
+    ensureUserDefaults: false,
+    includeWeather: hasLive,
+    includeLiveFields: true,
+    includeTimelineTournamentGoals: false,
+    includeFullTimeline: false,
   });
 }
 

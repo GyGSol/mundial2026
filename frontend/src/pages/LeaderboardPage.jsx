@@ -13,6 +13,8 @@ import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/lea
 import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
 import { mergeLiveDashboard } from '../lib/patchLiveMatchSnapshot.js';
+import { sortLiveMatchesForFeaturedBar } from '../lib/liveMatchFeaturedSort.js';
+import { writeStoredExpandedId } from '../hooks/useFeaturedLiveExpansion.js';
 import {
   DEFAULT_TOURNAMENT_TYPE,
   TOURNAMENT_TYPE_COMMON,
@@ -181,21 +183,40 @@ export default function LeaderboardPage() {
 
   const isEnrolledInSelectedTournament = enrolledTournamentTypes.includes(selectedTournamentType);
 
+  const [expandedLiveMatchId, setExpandedLiveMatchId] = useState(() => {
+    try {
+      return sessionStorage.getItem('mundial2026:expandedLiveMatchId');
+    } catch {
+      return null;
+    }
+  });
+
   const fetchLeaderboard = useCallback(
-    () => leaderboardApi.dashboard(effectiveGroupId),
-    [effectiveGroupId]
+    () =>
+      leaderboardApi.dashboard(effectiveGroupId, {
+        detailMatchId: expandedLiveMatchId ?? undefined,
+      }),
+    [effectiveGroupId, expandedLiveMatchId]
+  );
+
+  const fetchLiveSnapshot = useCallback(
+    () =>
+      matchesApi.liveSnapshot({
+        detailMatchId: expandedLiveMatchId ?? undefined,
+      }),
+    [expandedLiveMatchId]
   );
 
   const fetchFinishedArchive = useCallback(() => leaderboardApi.finishedArchive(), []);
 
   const { data, loading, error, lastUpdated, patchData } = useLiveData(
     fetchLeaderboard,
-    [effectiveGroupId],
+    [effectiveGroupId, expandedLiveMatchId],
     {
       enabled: canLoadRanking,
       getPollIntervalMs: leaderboardPollIntervalMs,
       pollWhen: shouldPollLeaderboardLive,
-      memoryCacheKey: `ranking:dashboard:${effectiveGroupId}`,
+      memoryCacheKey: `ranking:dashboard:${effectiveGroupId}:${expandedLiveMatchId ?? 'auto'}`,
       memoryCacheTtlMs: 5_000,
       mergeOnRefresh: mergeLiveDashboard,
       realtimeDebounceMs: 750,
@@ -207,11 +228,31 @@ export default function LeaderboardPage() {
       onRealtimeMessage: (msg, ctx) =>
         handleLiveSnapshotRealtime(msg, {
           patchData: ctx.patchData,
-          fetchSnapshot: matchesApi.liveSnapshot,
+          fetchSnapshot: fetchLiveSnapshot,
           getData: ctx.getData,
         }),
     }
   );
+
+  const sortedLiveMatches = useMemo(
+    () => sortLiveMatchesForFeaturedBar(data?.liveMatches ?? []),
+    [data?.liveMatches]
+  );
+
+  useEffect(() => {
+    if (!sortedLiveMatches.length) return;
+    setExpandedLiveMatchId((prev) => {
+      if (prev && sortedLiveMatches.some((match) => match.id === prev)) return prev;
+      const next = sortedLiveMatches[0]?.id ?? null;
+      writeStoredExpandedId(next);
+      return next;
+    });
+  }, [sortedLiveMatches]);
+
+  const handleExpandedLiveMatchChange = useCallback((matchId) => {
+    setExpandedLiveMatchId(matchId);
+    writeStoredExpandedId(matchId);
+  }, []);
 
   const dashboardMatchesGroup =
     Boolean(data) && String(data.group?.id ?? '') === String(effectiveGroupId);
@@ -331,6 +372,8 @@ export default function LeaderboardPage() {
               recentFinishedMatches={data?.recentFinishedMatches ?? []}
               nextMatches={data?.nextUpcomingMatches ?? []}
               finishedMatches={finishedArchiveMatches}
+              expandedLiveMatchId={expandedLiveMatchId}
+              onExpandedLiveMatchChange={handleExpandedLiveMatchChange}
             />
           </Suspense>
         </>
