@@ -874,6 +874,120 @@ function isFourTwoThreeOneFormation(formation) {
   return typeof formation === 'string' && /^4-2-3-1/.test(formation.trim());
 }
 
+function isFourOneTwoThreeFormation(formation) {
+  return typeof formation === 'string' && /^4-1-2-3/.test(formation.trim());
+}
+
+function isFiveFourOneFormation(formation) {
+  return typeof formation === 'string' && /^5-4-1/.test(formation.trim());
+}
+
+function isHoldingMid(player, linePlayers = []) {
+  const token = positionToken(player);
+  if (token === 'MCD') return true;
+  if (token === 'MD' && mdMeansCenterInMidLine(linePlayers)) return true;
+  const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
+  return (
+    text.includes('defensive') ||
+    text.includes('holding') ||
+    text.includes('pivote') ||
+    text.includes('defensa')
+  );
+}
+
+/** 4-1-2-3: pivote único más atrás (30/50). */
+export function spreadSingleHoldingPivot(players, { formation } = {}) {
+  if (!isFourOneTwoThreeFormation(formation) || !players?.length) return players ?? [];
+
+  const entries = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'MID') return false;
+      const depth = Number(player.gridX ?? 0);
+      return depth >= 36 && depth <= 54;
+    });
+
+  if (entries.length !== 1) return players;
+
+  const linePlayers = entries.map(({ player }) => player);
+  const { index, player } = entries[0];
+  if (!isHoldingMid(player, linePlayers) && positionToken(player) !== 'MD') return players;
+
+  const result = [...players];
+  result[index] = { ...result[index], gridX: 30, gridY: 50 };
+  return result;
+}
+
+/** 4-1-2-3: par interior adelantado (70/20 + 70/70). */
+export function spreadFourOneTwoThreeInteriorPair(players, { formation } = {}) {
+  if (!isFourOneTwoThreeFormation(formation) || !players?.length) return players ?? [];
+
+  const entries = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'MID') return false;
+      const depth = Number(player.gridX ?? 0);
+      return depth >= 55 && depth <= 76;
+    });
+
+  if (entries.length !== 2) return players;
+
+  const linePlayers = entries.map(({ player }) => player);
+  const sorted = [...entries].sort(
+    (a, b) =>
+      lateralSortKey(a.player, linePlayers) - lateralSortKey(b.player, linePlayers) ||
+      (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+  );
+
+  let result = [...players];
+  result[sorted[0].index] = { ...result[sorted[0].index], gridX: 70, gridY: 20 };
+  result[sorted[1].index] = { ...result[sorted[1].index], gridX: 70, gridY: 70 };
+  return result;
+}
+
+/** 5-4-1: pivote retrasado (40/50) y bandas adelantadas (70/20 + 70/80). */
+export function spreadFiveFourOneMidBlock(players, { formation } = {}) {
+  if (!isFiveFourOneFormation(formation) || !players?.length) return players ?? [];
+
+  const entries = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => {
+      if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'MID') return false;
+      const depth = Number(player.gridX ?? 0);
+      return depth >= 52 && depth <= 72;
+    });
+
+  if (entries.length < 3) return players;
+
+  const linePlayers = entries.map(({ player }) => player);
+  const holding = entries.filter(({ player }) => isHoldingMid(player, linePlayers));
+  const leftWings = entries.filter(({ player }) => isLeftWingMid(player));
+  const centerMids = entries.filter(({ player }) => isCenterMidLike(player, linePlayers));
+
+  let result = [...players];
+
+  if (holding.length >= 1) {
+    const picked = [...holding].sort(
+      (a, b) =>
+        Math.abs(Number(a.player.gridY ?? 50) - 50) - Math.abs(Number(b.player.gridY ?? 50) - 50) ||
+        (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
+    )[0];
+    result[picked.index] = { ...result[picked.index], gridX: 40, gridY: 50 };
+  }
+
+  if (leftWings.length === 1) {
+    const { index } = leftWings[0];
+    result[index] = { ...result[index], gridX: 70, gridY: 20 };
+  }
+
+  const rightTarget = centerMids.find(({ player }) => positionToken(player) === 'MC') ?? centerMids[0];
+  if (rightTarget) {
+    result[rightTarget.index] = { ...result[rightTarget.index], gridX: 70, gridY: 80 };
+  }
+
+  return result;
+}
+
 export function spreadDefenseBackLineShape(players, { formation } = {}) {
   if (!players?.length) return players ?? [];
 
@@ -907,12 +1021,17 @@ export function spreadDefenseBackLineShape(players, { formation } = {}) {
   }
 
   const laterals =
-    DEFENSE_BACK_LINE_LATERALS[sorted.length] ??
-    Array.from({ length: sorted.length }, (_, slot) => lateralForSlot(slot, sorted.length));
+    sorted.length === 4 && isFourOneTwoThreeFormation(formation)
+      ? [20, 30, 70, 80]
+      : (DEFENSE_BACK_LINE_LATERALS[sorted.length] ??
+        Array.from({ length: sorted.length }, (_, slot) => lateralForSlot(slot, sorted.length)));
 
   sorted.forEach(({ index, player }, slot) => {
     const isOuter = slot === 0 || slot === sorted.length - 1;
     let depth = isOuter ? Math.min(44, baseDepth + 10) : baseDepth;
+    if (sorted.length === 4 && !isFourTwoThreeOneFormation(formation)) {
+      depth = isOuter ? 40 : 30;
+    }
     if (!isOuter && sorted.length === 4 && isFourTwoThreeOneFormation(formation)) {
       const innerEntries = sorted.slice(1, -1);
       const allInnerCenterBacks =
@@ -1082,6 +1201,9 @@ export function spreadTacticalLineClusters(players, { formation } = {}) {
   next = expandPitchLateralSpread(next);
   next = spreadDoublePivotPair(next);
   next = spreadDefenseBackLineShape(next, { formation });
+  next = spreadSingleHoldingPivot(next, { formation });
+  next = spreadFourOneTwoThreeInteriorPair(next, { formation });
+  next = spreadFiveFourOneMidBlock(next, { formation });
   next = spreadAttackingMidWingBand(next);
   return spreadForwardStrikerPair(next);
 }

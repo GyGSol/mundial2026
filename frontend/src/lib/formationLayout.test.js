@@ -9,6 +9,9 @@ import {
   spreadDefenseBackLineShape,
   spreadAttackingMidWingBand,
   spreadForwardStrikerPair,
+  spreadFourOneTwoThreeInteriorPair,
+  spreadFiveFourOneMidBlock,
+  spreadSingleHoldingPivot,
   spreadForwardCenterClusters,
   spreadMidCenterClusters,
   spreadMidfieldLineOverlaps,
@@ -301,5 +304,60 @@ describe('formationLayout ECU vs GER manual grid (FBL-9)', () => {
     const next = spreadAttackingMidWingBand(highMid);
     expect(next.find((p) => p.shirtNumber === 13)).toMatchObject({ gridX: 50, gridY: 20 });
     expect(next.find((p) => p.shirtNumber === 19)).toMatchObject({ gridX: 60, gridY: 70 });
+  });
+});
+
+describe('formationLayout TUN vs NED manual grid (FBL-9)', () => {
+  const tunisia = [
+    { name: 'Dahmen', shirtNumber: 16, position: 'POR' },
+    { name: 'Abdi', shirtNumber: 2, position: 'LI' },
+    { name: 'Talbi', shirtNumber: 3, position: 'DFC' },
+    { name: 'Valery', shirtNumber: 20, position: 'DFC' },
+    { name: 'Hamida', shirtNumber: 21, position: 'LD' },
+    { name: 'Back5', shirtNumber: 5, position: 'DFC' },
+    { name: 'Mejbri', shirtNumber: 10, position: 'MI' },
+    { name: 'Slimane', shirtNumber: 25, position: 'MD' },
+    { name: 'Khedira', shirtNumber: 13, position: 'MD' },
+    { name: 'Skhiri', shirtNumber: 17, position: 'MC' },
+    { name: 'Mastouri', shirtNumber: 9, position: 'DC' },
+  ];
+
+  const netherlands = [
+    { name: 'Verbruggen', shirtNumber: 1, position: 'POR' },
+    { name: 'Dumfries', shirtNumber: 22, position: 'LD' },
+    { name: 'Hecke', shirtNumber: 6, position: 'DFC' },
+    { name: 'Aké', shirtNumber: 5, position: 'DFC' },
+    { name: 'Dijk', shirtNumber: 4, position: 'LI' },
+    { name: 'Gravenberch', shirtNumber: 8, position: 'MD' },
+    { name: 'Reijnders', shirtNumber: 14, position: 'MI' },
+    { name: 'Jong', shirtNumber: 21, position: 'MC' },
+    { name: 'Brobbey', shirtNumber: 19, position: 'ED' },
+    { name: 'Malen', shirtNumber: 18, position: 'DC' },
+    { name: 'Gakpo', shirtNumber: 11, position: 'DC' },
+  ];
+
+  function layout(players, formation) {
+    return spreadOverlappingGridPositions(
+      assignPlayersToFormation(players, formation, { includeLeftovers: true }),
+      { formation }
+    );
+  }
+
+  it('5-4-1 Túnez: pivote 40/50 y bandas 70/20 + 70/80', () => {
+    const laid = layout(tunisia, '5-4-1');
+    expect(laid.find((p) => p.shirtNumber === 25)).toMatchObject({ gridX: 40, gridY: 50 });
+    expect(laid.find((p) => p.shirtNumber === 10)).toMatchObject({ gridX: 70, gridY: 20 });
+    expect(laid.find((p) => p.shirtNumber === 17)).toMatchObject({ gridX: 70, gridY: 80 });
+  });
+
+  it('4-1-2-3 Países Bajos: pivote, interior y defensa', () => {
+    const laid = layout(netherlands, '4-1-2-3');
+    expect(laid.find((p) => p.shirtNumber === 8)).toMatchObject({ gridX: 30, gridY: 50 });
+    expect(laid.find((p) => p.shirtNumber === 14)).toMatchObject({ gridX: 70, gridY: 20 });
+    expect(laid.find((p) => p.shirtNumber === 21)).toMatchObject({ gridX: 70, gridY: 70 });
+    expect(laid.find((p) => p.shirtNumber === 22)).toMatchObject({ gridX: 40, gridY: 80 });
+    expect(laid.find((p) => p.shirtNumber === 6)).toMatchObject({ gridX: 30, gridY: 70 });
+    expect(laid.find((p) => p.shirtNumber === 5)).toMatchObject({ gridX: 30, gridY: 30 });
+    expect(laid.find((p) => p.shirtNumber === 4)).toMatchObject({ gridX: 40, gridY: 20 });
   });
 });
