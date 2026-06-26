@@ -1,22 +1,6 @@
 /**
  * Generic in-memory cache with TTL, in-flight deduplication, and optional LRU cap.
- * Use `Number.POSITIVE_INFINITY` for ttl to keep entries until explicit invalidate.
  */
-export const CACHE_TTL_UNTIL_INVALIDATE = Number.POSITIVE_INFINITY;
-
-function resolveExpiresAt(ttlMs, now = Date.now()) {
-  if (ttlMs === CACHE_TTL_UNTIL_INVALIDATE || ttlMs === Infinity || ttlMs == null) {
-    return CACHE_TTL_UNTIL_INVALIDATE;
-  }
-  return now + ttlMs;
-}
-
-function isEntryValid(entry, now = Date.now()) {
-  if (entry?.value === undefined) return false;
-  if (entry.expiresAt === CACHE_TTL_UNTIL_INVALIDATE) return true;
-  return entry.expiresAt > now;
-}
-
 export function createInMemoryCache({ defaultTtlMs = 30_000, maxEntries = 0 } = {}) {
   /** @type {Map<string, { expiresAt: number, value?: unknown, promise?: Promise<unknown> }>} */
   const cacheByKey = new Map();
@@ -32,10 +16,10 @@ export function createInMemoryCache({ defaultTtlMs = 30_000, maxEntries = 0 } = 
 
   function getValidEntry(key, now = Date.now()) {
     const entry = cacheByKey.get(key);
-    if (isEntryValid(entry, now)) {
+    if (entry?.value !== undefined && entry.expiresAt > now) {
       return entry;
     }
-    if (entry?.expiresAt !== undefined && entry.expiresAt !== CACHE_TTL_UNTIL_INVALIDATE) {
+    if (entry?.expiresAt !== undefined && entry.expiresAt <= now) {
       cacheByKey.delete(key);
     }
     return null;
@@ -46,7 +30,7 @@ export function createInMemoryCache({ defaultTtlMs = 30_000, maxEntries = 0 } = 
     cacheByKey.delete(key);
     cacheByKey.set(key, {
       value,
-      expiresAt: resolveExpiresAt(resolvedTtl),
+      expiresAt: Date.now() + resolvedTtl,
     });
     trimToMaxEntries();
   }
@@ -74,7 +58,7 @@ export function createInMemoryCache({ defaultTtlMs = 30_000, maxEntries = 0 } = 
         });
 
       cacheByKey.set(key, {
-        expiresAt: resolveExpiresAt(typeof ttlMs === 'function' ? defaultTtlMs : ttlMs, now),
+        expiresAt: now + (typeof ttlMs === 'function' ? defaultTtlMs : ttlMs),
         promise,
       });
       trimToMaxEntries();

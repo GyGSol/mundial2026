@@ -35,13 +35,13 @@ describe('rankingFinishedMatchesCache', () => {
     vi.clearAllMocks();
   });
 
-  it('reutiliza el archivo enriquecido hasta invalidación explícita', async () => {
+  it('reutiliza el archivo enriquecido dentro del TTL', async () => {
     const first = await getCachedRankingFinishedMatches();
     const second = await getCachedRankingFinishedMatches();
 
     expect(first).toBe(second);
     expect(first).toHaveLength(1);
-    expect(FINISHED_ARCHIVE_CACHE_TTL_MS).toBe(Number.POSITIVE_INFINITY);
+    expect(FINISHED_ARCHIVE_CACHE_TTL_MS).toBeGreaterThanOrEqual(30 * 60 * 1000);
   });
 
   it('recarga tras invalidación', async () => {

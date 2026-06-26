@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createInMemoryCache, CACHE_TTL_UNTIL_INVALIDATE } from '../src/services/inMemoryCache.js';
+import { createInMemoryCache } from '../src/services/inMemoryCache.js';
 
 describe('createInMemoryCache', () => {
   beforeEach(() => {
@@ -29,21 +29,5 @@ describe('createInMemoryCache', () => {
 
     expect(first).toBe(second);
     expect(compute).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps value until explicit invalidate when TTL is infinite', async () => {
-    const cache = createInMemoryCache({ defaultTtlMs: CACHE_TTL_UNTIL_INVALIDATE });
-    const compute = vi.fn(async () => ({ ok: true }));
-
-    const first = await cache.getOrCompute('key', compute);
-    vi.advanceTimersByTime(60 * 60 * 1000);
-    const second = await cache.getOrCompute('key', compute);
-
-    expect(first).toBe(second);
-    expect(compute).toHaveBeenCalledTimes(1);
-
-    cache.invalidate('key');
-    await cache.getOrCompute('key', compute);
-    expect(compute).toHaveBeenCalledTimes(2);
   });
 });
