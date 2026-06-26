@@ -200,19 +200,51 @@ export async function getMatchPredictionDiagnostics(matchNumber) {
     };
   }
 
-  const [predictions, totalUsers] = await Promise.all([
-    Prediction.find({ matchId: match._id }).lean(),
+  const [predictionsSummary, totalUsers] = await Promise.all([
+    Prediction.aggregate([
+      { $match: { matchId: match._id } },
+      {
+        $group: {
+          _id: null,
+          totalPredictions: { $sum: 1 },
+          userSubmitted: {
+            $sum: { $cond: [{ $eq: ['$userSubmitted', true] }, 1, 0] },
+          },
+          valuable: {
+            $sum: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ['$userSubmitted', true] },
+                    { $ne: ['$homeGoals', 0] },
+                    { $ne: ['$awayGoals', 0] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]),
     User.countDocuments(),
   ]);
+
+  const summary = predictionsSummary[0] ?? {
+    totalPredictions: 0,
+    userSubmitted: 0,
+    valuable: 0,
+  };
 
   return {
     externalId,
     found: true,
     matchId: String(match._id),
     status: match.status,
-    userSubmitted: predictions.filter((prediction) => prediction.userSubmitted).length,
-    valuable: predictions.filter(hasUserPrediction).length,
-    totalPredictions: predictions.length,
+    userSubmitted: summary.userSubmitted,
+    valuable: summary.valuable,
+    totalPredictions: summary.totalPredictions,
     totalUsers,
   };
 }

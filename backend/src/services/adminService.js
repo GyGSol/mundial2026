@@ -814,54 +814,16 @@ export async function resolvePredictionMatchIds({ matchId, matchNumber, status, 
   return matching.map((m) => m._id);
 }
 
-export async function listAdminPredictions({
-  userId,
-  matchId,
-  matchNumber,
-  status,
-  group,
-  scored,
-  source,
-} = {}) {
-  const filter = {};
-  if (userId) {
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      const error = new Error('userId inválido');
-      error.status = 400;
-      throw error;
-    }
-    filter.userId = userId;
-  }
+export const ADMIN_PREDICTIONS_DEFAULT_LIMIT = 100;
+export const ADMIN_PREDICTIONS_MAX_LIMIT = 300;
+/** Máximo de filas a materializar en memoria para orden por calendario FIFA. */
+export const ADMIN_PREDICTIONS_SCHEDULE_SORT_MAX = 3000;
 
-  const matchIds = await resolvePredictionMatchIds({ matchId, matchNumber, status, group });
-  if (matchIds !== null) {
-    if (!matchIds.length) return [];
-    filter.matchId = matchIds.length === 1 ? matchIds[0] : { $in: matchIds };
-  }
+function isNarrowAdminPredictionFilter({ userId, matchId, matchNumber, status, group } = {}) {
+  return Boolean(userId || matchId || matchNumber || status || group);
+}
 
-  if (scored === 'true') {
-    filter.pointsEarned = { $ne: null };
-  } else if (scored === 'false') {
-    filter.pointsEarned = null;
-  }
-
-  if (source) {
-    if (!['user', 'ai', 'admin', 'default'].includes(source)) {
-      const error = new Error('source inválido');
-      error.status = 400;
-      throw error;
-    }
-    filter.predictionSource = source;
-  }
-
-  const predictions = await Prediction.find(filter)
-    .populate('userId', 'name email isAiUser')
-    .populate(
-      'matchId',
-      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt localDate externalId'
-    )
-    .lean();
-
+async function mapAdminPredictionDocuments(predictions) {
   const teamIds = new Set();
   for (const p of predictions) {
     if (p.matchId?.homeTeamId) teamIds.add(p.matchId.homeTeamId);
@@ -873,7 +835,7 @@ export async function listAdminPredictions({
     : [];
   const teamMap = Object.fromEntries(teams.map((t) => [t.externalId, t]));
 
-  const rows = predictions.map((p) => {
+  return predictions.map((p) => {
     const match = p.matchId;
     const homeTeam = match ? teamMap[match.homeTeamId] : null;
     const awayTeam = match ? teamMap[match.awayTeamId] : null;
@@ -897,10 +859,128 @@ export async function listAdminPredictions({
       match: adminPredictionMatchSnapshot(match, homeLabel, awayLabel),
     };
   });
+}
 
-  rows.sort(compareAdminPredictionsBySchedule);
+const adminPredictionPopulate = [
+  { path: 'userId', select: 'name email isAiUser' },
+  {
+    path: 'matchId',
+    select:
+      'homeTeamId awayTeamId status homeScore awayScore group kickoffAt localDate externalId',
+  },
+];
 
-  return rows;
+export async function listAdminPredictions({
+  userId,
+  matchId,
+  matchNumber,
+  status,
+  group,
+  scored,
+  source,
+  page = 1,
+  limit = ADMIN_PREDICTIONS_DEFAULT_LIMIT,
+} = {}) {
+  const filter = {};
+  if (userId) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      const error = new Error('userId inválido');
+      error.status = 400;
+      throw error;
+    }
+    filter.userId = userId;
+  }
+
+  const matchIds = await resolvePredictionMatchIds({ matchId, matchNumber, status, group });
+  if (matchIds !== null) {
+    if (!matchIds.length) {
+      return {
+        predictions: [],
+        page: 1,
+        limit: ADMIN_PREDICTIONS_DEFAULT_LIMIT,
+        total: 0,
+        totalPages: 1,
+        sort: 'schedule',
+      };
+    }
+    filter.matchId = matchIds.length === 1 ? matchIds[0] : { $in: matchIds };
+  }
+
+  if (scored === 'true') {
+    filter.pointsEarned = { $ne: null };
+  } else if (scored === 'false') {
+    filter.pointsEarned = null;
+  }
+
+  if (source) {
+    if (!['user', 'ai', 'admin', 'default'].includes(source)) {
+      const error = new Error('source inválido');
+      error.status = 400;
+      throw error;
+    }
+    filter.predictionSource = source;
+  }
+
+  const safeLimit = Math.min(
+    Math.max(Number(limit) || ADMIN_PREDICTIONS_DEFAULT_LIMIT, 1),
+    ADMIN_PREDICTIONS_MAX_LIMIT
+  );
+  const safePage = Math.max(Number(page) || 1, 1);
+  const narrow = isNarrowAdminPredictionFilter({
+    userId,
+    matchId,
+    matchNumber,
+    status,
+    group,
+  });
+
+  const total = await Prediction.countDocuments(filter);
+  const totalPages = Math.max(Math.ceil(total / safeLimit), 1);
+
+  if (safePage > totalPages && total > 0) {
+    const error = new Error('page fuera de rango');
+    error.status = 400;
+    throw error;
+  }
+
+  let sort = 'schedule';
+  let predictions;
+
+  if (!narrow && total > safeLimit) {
+    sort = 'updatedAt';
+    predictions = await Prediction.find(filter)
+      .sort({ updatedAt: -1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .populate(adminPredictionPopulate)
+      .lean();
+  } else {
+    if (total > ADMIN_PREDICTIONS_SCHEDULE_SORT_MAX) {
+      const error = new Error(
+        'Demasiadas predicciones para este filtro. Acotá por usuario o partido.'
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    predictions = await Prediction.find(filter).populate(adminPredictionPopulate).lean();
+  }
+
+  let rows = await mapAdminPredictionDocuments(predictions);
+  if (sort === 'schedule') {
+    rows.sort(compareAdminPredictionsBySchedule);
+    const start = (safePage - 1) * safeLimit;
+    rows = rows.slice(start, start + safeLimit);
+  }
+
+  return {
+    predictions: rows,
+    page: safePage,
+    limit: safeLimit,
+    total,
+    totalPages,
+    sort,
+  };
 }
 
 async function serializeAdminPredictionRow(prediction) {

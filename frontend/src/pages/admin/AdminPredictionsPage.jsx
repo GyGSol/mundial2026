@@ -95,6 +95,7 @@ export default function AdminPredictionsPage() {
   const [scoredFilter, setScoredFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
   const [busyId, setBusyId] = useState(null);
@@ -107,10 +108,15 @@ export default function AdminPredictionsPage() {
     groupFilter,
     scoredFilter,
     sourceFilter,
+    page,
   ];
 
+  useEffect(() => {
+    setPage(1);
+  }, [userFilter, matchFilter, statusFilter, groupFilter, scoredFilter, sourceFilter]);
+
   const fetchPredictions = useCallback(() => {
-    const params = {};
+    const params = { page: String(page), limit: '100' };
     if (userFilter !== 'all') params.userId = userFilter;
     if (matchFilter !== 'all') params.matchNumber = matchFilter;
     if (statusFilter) params.status = statusFilter;
@@ -122,8 +128,8 @@ export default function AdminPredictionsPage() {
   }, filterDeps);
 
   const { data, loading, error, refresh } = useLiveData(fetchPredictions, filterDeps, {
-    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
-    realtimeDebounceMs: 1500,
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED],
+    realtimeDebounceMs: 3000,
   });
 
   const fetchUsers = useCallback(() => adminApi.listUsers({ page: 1, limit: 200 }), []);
@@ -144,6 +150,9 @@ export default function AdminPredictionsPage() {
   });
 
   const predictions = data?.predictions ?? [];
+  const totalPredictions = data?.total ?? predictions.length;
+  const totalPages = data?.totalPages ?? 1;
+  const listSort = data?.sort ?? 'schedule';
   const allUsers = usersData?.users ?? [];
   const matches = matchesData?.matches ?? [];
 
@@ -266,6 +275,7 @@ export default function AdminPredictionsPage() {
     setScoredFilter('all');
     setSourceFilter('all');
     setSearch('');
+    setPage(1);
   }
 
   async function savePrediction(id, patch) {
@@ -447,11 +457,20 @@ export default function AdminPredictionsPage() {
         <p className="text-sm text-slate-500">
           {loading
             ? 'Cargando…'
-            : `${filteredPredictions.length} predicción${filteredPredictions.length === 1 ? '' : 'es'}`}
+            : `${search.trim() ? filteredPredictions.length : totalPredictions} predicción${
+                (search.trim() ? filteredPredictions.length : totalPredictions) === 1 ? '' : 'es'
+              }`}
           {!loading && search.trim() && filteredPredictions.length !== predictions.length
-            ? ` (de ${predictions.length})`
+            ? ` (en esta página de ${predictions.length})`
             : ''}
+          {!loading && totalPages > 1 ? ` · Pág. ${data?.page ?? page}/${totalPages}` : ''}
         </p>
+        {!loading && listSort === 'updatedAt' && !hasActiveFilters ? (
+          <p className="text-xs text-amber-200/80">
+            Sin filtro de partido: orden por última actualización. Filtrá por partido para orden
+            FIFA.
+          </p>
+        ) : null}
       </div>
 
       {showCreate ? (
@@ -541,6 +560,32 @@ export default function AdminPredictionsPage() {
               ))}
             </TableBody>
           </Table>
+          {!loading && totalPages > 1 ? (
+            <div className="flex items-center justify-between border-t border-slate-800 p-2 text-sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Anterior
+              </Button>
+              <span className="text-slate-400">
+                Pág. {data?.page ?? page} / {totalPages}
+                {totalPredictions > predictions.length
+                  ? ` · ${totalPredictions} en total`
+                  : ''}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Siguiente
+              </Button>
+            </div>
+          ) : null}
           {!loading && !filteredPredictions.length && !error ? (
             <div className="space-y-2 p-4 text-sm text-slate-500">
               {hasActiveFilters && activeFilterSummary ? (

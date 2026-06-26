@@ -579,8 +579,8 @@ router.get('/predictions/diagnostics', adminMiddleware, async (req, res, next) =
 
 router.get('/predictions', adminMiddleware, async (req, res, next) => {
   try {
-    res.json({
-      predictions: await listAdminPredictions({
+    res.json(
+      await listAdminPredictions({
         userId: req.query.userId,
         matchId: req.query.matchId,
         matchNumber: req.query.matchNumber,
@@ -588,8 +588,10 @@ router.get('/predictions', adminMiddleware, async (req, res, next) => {
         group: req.query.group,
         scored: req.query.scored,
         source: req.query.source,
-      }),
-    });
+        page: req.query.page,
+        limit: req.query.limit,
+      })
+    );
   } catch (err) {
     next(err);
   }
