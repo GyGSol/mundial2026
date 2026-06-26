@@ -185,6 +185,14 @@ export const adminApi = {
     }),
   recalculateMatch: (id) =>
     adminRequest(`/matches/${id}/recalculate`, { method: 'POST' }),
+  getFormationOverrides: (id) => adminRequest(`/matches/${id}/formation-overrides`),
+  saveFormationOverrides: (id, overrides) =>
+    adminRequest(`/matches/${id}/formation-overrides`, {
+      method: 'PUT',
+      body: JSON.stringify({ overrides }),
+    }),
+  clearFormationOverrides: (id) =>
+    adminRequest(`/matches/${id}/formation-overrides`, { method: 'DELETE' }),
   recalculateAllMatches: () =>
     adminRequest('/matches/recalculate-all', { method: 'POST' }),
   listPredictions: (params = {}) => {

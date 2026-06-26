@@ -31,6 +31,7 @@ import {
 } from '../utils/formationLayout.js';
 import { shirtForName } from '../utils/fifaSquadShirtMap.js';
 import { fetchFifaLiveMatchLineup } from './fifaLineupService.js';
+import { applyFormationGridOverridesToLineup } from './formationGridOverrideService.js';
 
 function extractShirtNumber(entity) {
   for (const value of [
@@ -332,6 +333,11 @@ function enrichSideCoach(coachField, team) {
   return resolveCoachForLineup(coachField, team);
 }
 
+async function finalizeLineupPayload(payload, match, options = {}) {
+  const enriched = await enrichLineupPayloadWithRoster(payload, match, options);
+  return applyFormationGridOverridesToLineup(enriched, match);
+}
+
 async function enrichLineupPayloadWithRoster(payload, match, options = {}) {
   const { fetchExternalShirts = true } = options;
   if (payload?.status === 'unavailable') return payload;
@@ -440,7 +446,7 @@ export async function buildProbableLineupPayload(match, options = {}) {
   }
 
   const payload = formatLineupPayload(snapshot);
-  return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });
+  return finalizeLineupPayload(payload, match, { fetchExternalShirts });
 }
 
 function sideNeedsPositionDetailRefresh(side) {
@@ -532,14 +538,14 @@ export async function buildMatchLineupPayload(match, options = {}) {
     snapshot = await hydrateIncompleteSnapshotSides(snapshot, match);
 
     const payload = formatLineupPayload(snapshot);
-    return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });
+    return finalizeLineupPayload(payload, match, { fetchExternalShirts });
   }
 
   try {
     const fifaSnapshot = await fetchFifaLineupSnapshot(match);
     if (fifaSnapshot?.home?.players?.length || fifaSnapshot?.away?.players?.length) {
       const payload = formatLineupPayload(fifaSnapshot);
-      return enrichLineupPayloadWithRoster(payload, match, { fetchExternalShirts });
+      return finalizeLineupPayload(payload, match, { fetchExternalShirts });
     }
   } catch (err) {
     console.warn(`FIFA lineup payload skip ${match.externalId}:`, err.message);

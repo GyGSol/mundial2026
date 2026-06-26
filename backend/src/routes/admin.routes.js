@@ -490,6 +490,35 @@ router.post('/matches/:id/recalculate', adminMiddleware, async (req, res, next) 
   }
 });
 
+router.get('/matches/:id/formation-overrides', adminMiddleware, async (req, res, next) => {
+  try {
+    const { getAdminFormationGridOverrides } = await import('../services/formationGridOverrideService.js');
+    res.json(await getAdminFormationGridOverrides(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/matches/:id/formation-overrides', adminMiddleware, async (req, res, next) => {
+  try {
+    const { saveAdminFormationGridOverrides } = await import('../services/formationGridOverrideService.js');
+    res.json(
+      await saveAdminFormationGridOverrides(req.params.id, req.body?.overrides ?? req.body?.players ?? {})
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/matches/:id/formation-overrides', adminMiddleware, async (req, res, next) => {
+  try {
+    const { clearAdminFormationGridOverrides } = await import('../services/formationGridOverrideService.js');
+    res.json(await clearAdminFormationGridOverrides(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/stream-links', adminMiddleware, async (req, res, next) => {
   try {
     res.json({ streamLinks: await listAdminStreamLinks() });
