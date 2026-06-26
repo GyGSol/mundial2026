@@ -12,7 +12,7 @@ Convención: `mundial2026/<dominio>/<slug>`. Un slug por tema; re-guardar actual
 | `mundial2026/backup/` | github, heroku, push-models | Post-partido → GyGSol/mundial2026-db-backups |
 | `mundial2026/data-safety/` | test-db-guard, prod-wipe | Nunca `npm test` con Atlas prod |
 | `mundial2026/ai/` | cerebras, consultations, prediction-* | IA predicciones |
-| `mundial2026/economy/` | fubols, prizes | Premios proporcionales por puesto |
+| `mundial2026/economy/` | fubols, prizes, **prize-distribution** | Premios proporcionales por puesto; IA incluida en reparto proyectado (FBL-22, v637) |
 | `mundial2026/deploy/` | heroku | App `mundial2026-pred` |
 | `mundial2026/ops/` | jira-workflow, jira-ticket-authoring, jira-judge-rubric, jira-backfill | Jira FBL + MCP Atlassian + flujo AGNT |
 | `mundial2026/architecture/` | ranking-predictions-separation | Decisiones estructurales |
