@@ -27,13 +27,13 @@ describe('tournamentGoalsFinishedMatchesCache', () => {
     vi.clearAllMocks();
   });
 
-  it('reutiliza bundle de goles dentro del TTL', async () => {
+  it('reutiliza bundle de goles hasta invalidación explícita', async () => {
     const first = await getCachedTournamentGoalCountsBundle();
     const second = await getCachedTournamentGoalCountsBundle();
 
     expect(first).toBe(second);
     expect(first.globalCounts.get('name:a')).toBe(1);
-    expect(TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS).toBe(5 * 60 * 1000);
+    expect(TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS).toBe(Number.POSITIVE_INFINITY);
   });
 
   it('recarga tras invalidación', async () => {

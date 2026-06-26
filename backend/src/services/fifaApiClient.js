@@ -180,13 +180,43 @@ export async function fetchAllCalendarMatches() {
   return matches;
 }
 
-const FIFA_CALENDAR_CACHE_MS = Number(process.env.FIFA_CALENDAR_CACHE_MS || 120_000);
-/** @type {{ matches: unknown[] | null, expiresAt: number, promise: Promise<unknown[]> | null }} */
-const fifaCalendarCache = { matches: null, expiresAt: 0, promise: null };
+/** Solo campos usados por kickoff/sync/alineación — evita retener JSON FIFA completo en RAM. */
+export function compactFifaCalendarEntry(entry) {
+  if (!entry) return entry;
+  const compactSide = (side) =>
+    side
+      ? {
+          IdTeam: side.IdTeam,
+          Abbreviation: side.Abbreviation,
+          IdCountry: side.IdCountry,
+          Score: side.Score,
+          TeamName: side.TeamName,
+        }
+      : undefined;
 
-/** Calendario FIFA compartido (TTL ~90s) para evitar descargas repetidas en el loop en vivo. */
-export async function getCachedAllCalendarMatches(now = Date.now()) {
-  if (fifaCalendarCache.matches && fifaCalendarCache.expiresAt > now) {
+  return {
+    IdMatch: entry.IdMatch,
+    IdStage: entry.IdStage,
+    MatchNumber: entry.MatchNumber,
+    Date: entry.Date,
+    Period: entry.Period,
+    MatchStatus: entry.MatchStatus,
+    HomeTeamScore: entry.HomeTeamScore,
+    AwayTeamScore: entry.AwayTeamScore,
+    Home: compactSide(entry.Home),
+    Away: compactSide(entry.Away),
+  };
+}
+
+/** @type {{ matches: unknown[] | null, promise: Promise<unknown[]> | null }} */
+const fifaCalendarCache = { matches: null, promise: null };
+
+/**
+ * Calendario FIFA compacto en RAM hasta invalidación explícita (p. ej. al finalizar un partido).
+ * No se refresca por TTL durante partidos en vivo.
+ */
+export async function getCachedAllCalendarMatches() {
+  if (fifaCalendarCache.matches) {
     return fifaCalendarCache.matches;
   }
 
@@ -196,10 +226,9 @@ export async function getCachedAllCalendarMatches(now = Date.now()) {
 
   fifaCalendarCache.promise = fetchAllCalendarMatches()
     .then((matches) => {
-      fifaCalendarCache.matches = matches;
-      fifaCalendarCache.expiresAt = Date.now() + FIFA_CALENDAR_CACHE_MS;
+      fifaCalendarCache.matches = matches.map(compactFifaCalendarEntry);
       fifaCalendarCache.promise = null;
-      return matches;
+      return fifaCalendarCache.matches;
     })
     .catch((err) => {
       fifaCalendarCache.promise = null;
@@ -209,10 +238,25 @@ export async function getCachedAllCalendarMatches(now = Date.now()) {
   return fifaCalendarCache.promise;
 }
 
-export function clearFifaCalendarCacheForTests() {
+/** Solo descarga calendario si algún partido no tiene fifaMeta en Mongo. */
+export async function getCachedAllCalendarMatchesIfNeeded(matches, teamMap) {
+  const needsCalendar = matches.some((match) => {
+    if (match?.raw?.fifaMeta?.idMatch && match?.raw?.fifaMeta?.idStage) return false;
+    const home = teamMap?.get?.(match.homeTeamId) ?? teamMap?.[match.homeTeamId];
+    const away = teamMap?.get?.(match.awayTeamId) ?? teamMap?.[match.awayTeamId];
+    return Boolean(home && away);
+  });
+  if (!needsCalendar) return [];
+  return getCachedAllCalendarMatches();
+}
+
+export function invalidateFifaCalendarCache() {
   fifaCalendarCache.matches = null;
-  fifaCalendarCache.expiresAt = 0;
   fifaCalendarCache.promise = null;
+}
+
+export function clearFifaCalendarCacheForTests() {
+  invalidateFifaCalendarCache();
 }
 
 export function findCalendarMatch(calendar, { matchNumber, homeFifaCode, awayFifaCode, kickoffAt }) {

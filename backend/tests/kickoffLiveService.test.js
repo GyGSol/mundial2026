@@ -33,6 +33,7 @@ vi.mock('../src/services/websocketService.js', () => ({
 
 vi.mock('../src/services/matchRelatedCaches.js', () => ({
   invalidateMatchRelatedCaches: vi.fn(),
+  invalidateFinishedMatchArchiveCaches: vi.fn(),
 }));
 
 vi.mock('../src/services/liveStartPushService.js', () => ({
@@ -46,8 +47,7 @@ vi.mock('../src/models/Team.js', () => ({
 }));
 
 vi.mock('../src/services/fifaApiClient.js', () => ({
-  fetchAllCalendarMatches: vi.fn().mockResolvedValue([]),
-  getCachedAllCalendarMatches: vi.fn().mockResolvedValue([]),
+  getCachedAllCalendarMatchesIfNeeded: vi.fn().mockResolvedValue([]),
   resolveFifaMatchEntry: vi.fn().mockResolvedValue(null),
 }));
 

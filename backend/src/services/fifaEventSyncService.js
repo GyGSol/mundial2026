@@ -2,8 +2,7 @@ import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
 import {
   extractTeamAbbreviation,
-  fetchAllCalendarMatches,
-  getCachedAllCalendarMatches,
+  getCachedAllCalendarMatchesIfNeeded,
   fetchLiveMatchFootball,
   fetchMatchTimeline,
   resolveFifaMatchEntry,
@@ -440,9 +439,17 @@ export async function syncStaleLiveFifaMatchEvents({
     };
   }
 
+  const teamIds = [
+    ...new Set(staleMatches.flatMap((match) => [match.homeTeamId, match.awayTeamId]).filter(Boolean)),
+  ];
+  const teams = await Team.find({ externalId: { $in: teamIds } })
+    .select('externalId fifaCode nameEn')
+    .lean();
+  const teamMap = new Map(teams.map((team) => [team.externalId, team]));
+
   let calendar = [];
   try {
-    calendar = await getCachedAllCalendarMatches();
+    calendar = await getCachedAllCalendarMatchesIfNeeded(staleMatches, teamMap);
   } catch (err) {
     console.warn('FIFA calendar unavailable for live refresh:', err.message);
   }
@@ -460,9 +467,8 @@ export async function syncStaleLiveFifaMatchEvents({
 
     try {
       const fifaEntry =
-        (calendar.length
-          ? await resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam)
-          : null) ?? buildFifaEntryFromStoredMeta(match);
+        (await resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam)) ??
+        buildFifaEntryFromStoredMeta(match);
 
       const result = await syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry);
       eventsSynced += result.events;
@@ -527,20 +533,19 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
     };
   }
 
+  const teamIds = [
+    ...new Set(matchesToSync.flatMap((match) => [match.homeTeamId, match.awayTeamId]).filter(Boolean)),
+  ];
+  const teams = await Team.find({ externalId: { $in: teamIds } })
+    .select('externalId fifaCode nameEn')
+    .lean();
+  const teamMap = new Map(teams.map((team) => [team.externalId, team]));
+
   let calendar = [];
   try {
-    calendar = await getCachedAllCalendarMatches();
+    calendar = await getCachedAllCalendarMatchesIfNeeded(matchesToSync, teamMap);
   } catch (err) {
-    console.warn('FIFA calendar sync skipped:', err.message);
-    return {
-      matches: 0,
-      events: 0,
-      reports: 0,
-      scoringIds: [],
-      newlyFinishedIds: [],
-      newlyLiveIds: [],
-      goalUpdates: [],
-    };
+    console.warn('FIFA calendar unavailable for events sync:', err.message);
   }
 
   let eventsSynced = 0;
@@ -555,7 +560,11 @@ export async function syncFifaMatchEvents({ extraMatchIds = [] } = {}) {
     if (!homeTeam || !awayTeam) continue;
 
     try {
-      const fifaEntry = await resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam);
+      const fifaEntry =
+        (await resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam)) ??
+        buildFifaEntryFromStoredMeta(match);
+      if (!fifaEntry) continue;
+
       const result = await syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry);
       eventsSynced += result.events;
       reportsSynced += result.reports;

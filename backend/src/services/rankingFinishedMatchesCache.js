@@ -5,13 +5,13 @@ import {
 } from './matchEnrichmentService.js';
 import { buildMatchLineupPayload } from './matchLineupService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
-import { createInMemoryCache } from './inMemoryCache.js';
+import { createInMemoryCache, CACHE_TTL_UNTIL_INVALIDATE } from './inMemoryCache.js';
 
 /** Partidos finalizados en el archivo colapsable del ranking (más recientes primero). */
 export const FINISHED_ARCHIVE_LIMIT = 25;
 
-/** Partidos finalizados: datos estables; TTL largo salvo invalidación explícita. */
-export const FINISHED_ARCHIVE_CACHE_TTL_MS = 30 * 60 * 1000;
+/** Partidos finalizados: estables hasta que termina otro partido (invalidación explícita). */
+export const FINISHED_ARCHIVE_CACHE_TTL_MS = CACHE_TTL_UNTIL_INVALIDATE;
 
 const CACHE_KEY = 'finished-archive';
 

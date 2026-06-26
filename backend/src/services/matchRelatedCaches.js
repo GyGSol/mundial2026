@@ -1,3 +1,4 @@
+import { invalidateFifaCalendarCache } from './fifaApiClient.js';
 import { invalidateWorldCupOverviewCache } from './worldCupOverviewCache.js';
 import { invalidateLeaderboardCache } from './leaderboardCache.js';
 import { invalidateRankingDashboardCache } from './rankingDashboardCache.js';
@@ -20,6 +21,7 @@ export function invalidateMatchRelatedCaches(groupId) {
 
 /** Solo cuando cambia el archivo de partidos finalizados (marcador, alta/baja en finished). */
 export function invalidateFinishedMatchArchiveCaches(groupId) {
+  invalidateFifaCalendarCache();
   invalidateRankingFinishedMatchesCache();
   invalidateTournamentGoalsFinishedMatchesCache();
   invalidatePlayerTournamentActivityCache();

@@ -1,10 +1,10 @@
 import { Match } from '../models/Match.js';
 import { buildTournamentGoalCountsBundle } from './matchLiveData.js';
-import { createInMemoryCache } from './inMemoryCache.js';
+import { createInMemoryCache, CACHE_TTL_UNTIL_INVALIDATE } from './inMemoryCache.js';
 
 const CACHE_KEY = 'finished-for-tournament-goals';
-/** Goleadores del timeline: datos estables entre eventos en vivo; invalidar al finalizar partido. */
-export const TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS = 5 * 60 * 1000;
+/** Goleadores del torneo: se recalcula solo al invalidar (p. ej. partido finalizado). */
+export const TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS = CACHE_TTL_UNTIL_INVALIDATE;
 
 /** Solo campos necesarios para readMatchTimeline (goles). */
 const FINISHED_GOALS_PROJECTION =

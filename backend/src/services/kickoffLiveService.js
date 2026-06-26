@@ -2,9 +2,7 @@ import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
 import { recalculateMatchScores, ensureLiveScoringBaselines, clearMatchScores } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
-import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
-import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesCache.js';
-import { invalidateTournamentGoalsFinishedMatchesCache } from './tournamentGoalsFinishedMatchesCache.js';
+import { invalidateMatchRelatedCaches, invalidateFinishedMatchArchiveCaches } from './matchRelatedCaches.js';
 import { processGoalUpdates } from './goalPushService.js';
 import { notifyLiveStartForMatchIds } from './liveStartPushService.js';
 import { blocksKickoffPromotion, clearWeatherOpsToNormal, isPreKickoffDelayExpired, normalizeWeatherOps } from './matchWeatherOpsRules.js';
@@ -21,8 +19,7 @@ import {
 } from './weatherRiskService.js';
 import { getVenueWeatherForStadium } from './weatherService.js';
 import {
-  fetchAllCalendarMatches,
-  getCachedAllCalendarMatches,
+  getCachedAllCalendarMatchesIfNeeded,
   resolveFifaMatchEntry,
 } from './fifaApiClient.js';
 import { Team } from '../models/Team.js';
@@ -226,7 +223,7 @@ export async function promoteMatchesAtKickoff() {
 
   let fifaCalendar = [];
   try {
-    fifaCalendar = await getCachedAllCalendarMatches();
+    fifaCalendar = await getCachedAllCalendarMatchesIfNeeded(due, teamMap);
   } catch (err) {
     console.warn('FIFA calendar unavailable for kickoff promotion:', err.message);
   }
@@ -316,13 +313,6 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
 
   if (!candidates.length) return [];
 
-  let fifaCalendar = [];
-  try {
-    fifaCalendar = await getCachedAllCalendarMatches();
-  } catch (err) {
-    console.warn('FIFA calendar unavailable for premature finish reopen:', err.message);
-  }
-
   const teamIds = [
     ...new Set(candidates.flatMap((match) => [match.homeTeamId, match.awayTeamId]).filter(Boolean)),
   ];
@@ -330,6 +320,13 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
     .select('externalId fifaCode nameEn')
     .lean();
   const teamMap = new Map(teams.map((team) => [team.externalId, team]));
+
+  let fifaCalendar = [];
+  try {
+    fifaCalendar = await getCachedAllCalendarMatchesIfNeeded(candidates, teamMap);
+  } catch (err) {
+    console.warn('FIFA calendar unavailable for premature finish reopen:', err.message);
+  }
 
   const reopenedIds = [];
 
@@ -340,9 +337,7 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
       continue;
     }
 
-    const fifaEntry = fifaCalendar.length
-      ? await loadFifaEntryForMatch(match, fifaCalendar, teamMap)
-      : null;
+    const fifaEntry = await loadFifaEntryForMatch(match, fifaCalendar, teamMap);
     const fifaContradictsFinish = Boolean(fifaEntry && !fifaEntryIndicatesFinished(fifaEntry));
 
     const implausibleFinish = matchFinishedImplausibleByWallClock(match, now);
@@ -406,8 +401,7 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
   }
 
   if (reopenedIds.length) {
-    invalidateRankingFinishedMatchesCache();
-    invalidateTournamentGoalsFinishedMatchesCache();
+    invalidateFinishedMatchArchiveCaches();
     invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'premature_finish_reopened',
@@ -425,13 +419,6 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
   const liveMatches = await Match.find({ status: 'live' }).lean();
   if (!liveMatches.length) return [];
 
-  let fifaCalendar = [];
-  try {
-    fifaCalendar = await getCachedAllCalendarMatches();
-  } catch (err) {
-    console.warn('FIFA calendar unavailable for stale live finalize:', err.message);
-  }
-
   const teamIds = [
     ...new Set(liveMatches.flatMap((match) => [match.homeTeamId, match.awayTeamId]).filter(Boolean)),
   ];
@@ -440,12 +427,17 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
     .lean();
   const teamMap = new Map(teams.map((team) => [team.externalId, team]));
 
+  let fifaCalendar = [];
+  try {
+    fifaCalendar = await getCachedAllCalendarMatchesIfNeeded(liveMatches, teamMap);
+  } catch (err) {
+    console.warn('FIFA calendar unavailable for stale live finalize:', err.message);
+  }
+
   const finalizedIds = [];
 
   for (const match of liveMatches) {
-    const fifaEntry = fifaCalendar.length
-      ? await loadFifaEntryForMatch(match, fifaCalendar, teamMap)
-      : null;
+    const fifaEntry = await loadFifaEntryForMatch(match, fifaCalendar, teamMap);
 
     let shouldFinalize = shouldFinalizeStaleLiveMatch(match, now);
 
@@ -497,8 +489,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
   }
 
   if (finalizedIds.length) {
-    invalidateRankingFinishedMatchesCache();
-    invalidateTournamentGoalsFinishedMatchesCache();
+    invalidateFinishedMatchArchiveCaches();
     invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'stale_live_finalized',
@@ -587,8 +578,7 @@ export async function syncLiveMatchScoring() {
   }
 
   if (liveFifaRefresh.newlyFinishedIds?.length) {
-    invalidateRankingFinishedMatchesCache();
-    invalidateTournamentGoalsFinishedMatchesCache();
+    invalidateFinishedMatchArchiveCaches();
     notifyLeaderboardUpdated({ reason: 'live_fifa_finished' });
     try {
       const { scheduleBackupsForFinishedMatches } = await import('./matchFinishBackupService.js');
