@@ -90,7 +90,7 @@ export default function AdminEconomyPage() {
                   ))}
                   {group.bankStatus?.aiRank ? (
                     <p className="text-xs text-amber-200/90">
-                      IA en puesto {group.bankStatus.aiRank} del ranking (excluida del reparto de premios)
+                      IA en puesto {group.bankStatus.aiRank} del ranking
                     </p>
                   ) : null}
                 </CardContent>

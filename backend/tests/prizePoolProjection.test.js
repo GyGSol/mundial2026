@@ -31,29 +31,35 @@ describe('prize pool projection math', () => {
     expect(amounts).toEqual([330, 270, 200, 130, 70]);
   });
 
-  it('excluye IA del reparto y asigna premios a humanos', () => {
+  it('asigna premios según ranking incluyendo IA', () => {
     const total = 1000;
     const percents = [...DEFAULT_PRIZE_SPLITS];
     const leaderboard = [
-      { id: 'ai', name: 'IA', isAiUser: true, rank: 1 },
-      { id: 'u2', name: 'B', isAiUser: false, rank: 2 },
+      { id: 'u1', name: 'A', isAiUser: false, rank: 1 },
+      { id: 'ai', name: 'Predictive-Modeling', isAiUser: true, rank: 2 },
       { id: 'u3', name: 'C', isAiUser: false, rank: 3 },
     ];
-    const humanWinners = leaderboard.filter((entry) => !entry.isAiUser).slice(0, percents.length);
+    const winners = leaderboard.slice(0, percents.length);
 
     const distribution = percents.map((percent, index) => {
       const fubols = Math.floor((total * percent) / 100);
-      const entry = humanWinners[index];
+      const entry = winners[index];
       return {
         userId: entry?.id ?? null,
         fubols: entry ? fubols : 0,
         retainedByHouse: 0,
+        isAiUser: Boolean(entry?.isAiUser),
       };
     });
 
-    expect(distribution[0]).toEqual({ userId: 'u2', fubols: 500, retainedByHouse: 0 });
-    expect(distribution[1]).toEqual({ userId: 'u3', fubols: 330, retainedByHouse: 0 });
-    expect(distribution[2]).toEqual({ userId: null, fubols: 0, retainedByHouse: 0 });
+    expect(distribution[0]).toEqual({ userId: 'u1', fubols: 500, retainedByHouse: 0, isAiUser: false });
+    expect(distribution[1]).toEqual({
+      userId: 'ai',
+      fubols: 330,
+      retainedByHouse: 0,
+      isAiUser: true,
+    });
+    expect(distribution[2]).toEqual({ userId: 'u3', fubols: 170, retainedByHouse: 0, isAiUser: false });
   });
 
   it('adjunta premios proyectados a filas del ranking', () => {

@@ -76,12 +76,12 @@ export async function projectPrizeDistribution(groupId, { leaderboard: precalcul
   const leaderboard =
     precalculatedLeaderboard ??
     (await getLeaderboard(groupId, Math.max(percents.length + 10, 50)));
-  const humanWinners = leaderboard.filter((entry) => !entry.isAiUser).slice(0, percents.length);
+  const winners = leaderboard.slice(0, percents.length);
 
   const distribution = percents.map((percent, index) => {
     const rank = index + 1;
     const fubols = Math.floor((total * percent) / 100);
-    const entry = humanWinners[index];
+    const entry = winners[index];
 
     if (entry) {
       return {
@@ -91,7 +91,7 @@ export async function projectPrizeDistribution(groupId, { leaderboard: precalcul
         percent,
         fubols,
         retainedByHouse: 0,
-        isAiUser: false,
+        isAiUser: Boolean(entry.isAiUser),
         leaderboardRank: entry.rank,
       };
     }
@@ -201,8 +201,8 @@ export async function getEconomyOverview() {
       custodiedFubols: globalCustodied,
       message:
         globalAiRank != null
-          ? `Estado de la Banca: La IA ocupa el puesto ${globalAiRank} en el ranking (no recibe premios del pozo).`
-          : 'Estado de la Banca: La IA no figura en puestos premiados proyectados.',
+          ? `Estado de la Banca: La IA ocupa el puesto ${globalAiRank} en el ranking.`
+          : 'Estado de la Banca: La IA no figura en el ranking de grupos con pozo.',
     },
     groups: groupSummaries,
   };
