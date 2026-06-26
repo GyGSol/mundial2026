@@ -1,1 +1,1 @@
-web: node backend/src/index.js
+web: node --max-old-space-size=384 backend/src/index.js
