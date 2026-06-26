@@ -5,6 +5,7 @@ import { hasUserPrediction } from './predictionLockService.js';
 import {
   extractTeamAbbreviation,
   fetchAllCalendarMatches,
+  getCachedAllCalendarMatches,
 } from './fifaApiClient.js';
 import { resolveFifaCode, fifaCodesForRankingLookup } from '../data/teamFifaAliases.js';
 
@@ -158,7 +159,7 @@ async function remapPredictionsForTeamRotation({
 }
 
 export async function alignMatchesFromFifaCalendar(calendar = null) {
-  const entries = calendar ?? (await fetchAllCalendarMatches());
+  const entries = calendar ?? (await getCachedAllCalendarMatches());
   const teams = await Team.find().select('externalId fifaCode').lean();
   const teamIdByFifaCode = buildTeamIdByFifaCode(teams);
   const targets = buildFifaFixtureTargets(entries, teamIdByFifaCode);

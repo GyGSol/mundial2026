@@ -4,7 +4,7 @@ import { createInMemoryCache } from './inMemoryCache.js';
 
 const CACHE_KEY = 'finished-for-tournament-goals';
 /** Goleadores del timeline: datos estables entre eventos en vivo; invalidar al finalizar partido. */
-export const TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS = 60_000;
+export const TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS = 5 * 60 * 1000;
 
 /** Solo campos necesarios para readMatchTimeline (goles). */
 const FINISHED_GOALS_PROJECTION =

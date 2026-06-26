@@ -180,7 +180,7 @@ export async function fetchAllCalendarMatches() {
   return matches;
 }
 
-const FIFA_CALENDAR_CACHE_MS = Number(process.env.FIFA_CALENDAR_CACHE_MS || 90_000);
+const FIFA_CALENDAR_CACHE_MS = Number(process.env.FIFA_CALENDAR_CACHE_MS || 120_000);
 /** @type {{ matches: unknown[] | null, expiresAt: number, promise: Promise<unknown[]> | null }} */
 const fifaCalendarCache = { matches: null, expiresAt: 0, promise: null };
 

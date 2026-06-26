@@ -5,7 +5,7 @@ import { featuredBarInputsSignature } from './matchEnrichmentRevision.js';
 
 const LIVE_TTL_MS = 10_000;
 
-const cache = createInMemoryCache({ defaultTtlMs: LIVE_TTL_MS });
+const cache = createInMemoryCache({ defaultTtlMs: LIVE_TTL_MS, maxEntries: 48 });
 
 function featuredBarCacheKey(userId, inputsSignature, detailMatchId) {
   const userKey = userId ? String(userId) : 'anon';

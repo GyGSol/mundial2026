@@ -9,9 +9,27 @@ import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { enqueueAiLearningForMatch } from './aiLearningQueueService.js';
 import { recordValidationError } from './trainingBufferService.js';
 
+function pointsBreakdownMatches(a, b) {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  const keys = ['winner', 'homeGoals', 'awayGoals', 'totalGoals', 'exactScore', 'goalDiff'];
+  return keys.every((key) => (a[key] ?? 0) === (b[key] ?? 0));
+}
+
+function predictionScoresUnchanged(prediction, total, breakdown, goalDiff, { saveLiveKickoffSnapshot }) {
+  if (saveLiveKickoffSnapshot) return false;
+  return (
+    prediction.pointsEarned === total &&
+    prediction.goalDiffHome === goalDiff.home &&
+    prediction.goalDiffAway === goalDiff.away &&
+    pointsBreakdownMatches(prediction.pointsBreakdown, breakdown)
+  );
+}
+
 async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickoffSnapshot = false } = {}) {
   const predictions = await Prediction.find({ matchId: match._id });
   const affectedUsers = new Set();
+  let predictionsUpdated = 0;
 
   for (const prediction of predictions) {
     if (prediction.predictionSource === 'admin') continue;
@@ -20,6 +38,12 @@ async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickof
     const actual = { home: scoreHome, away: scoreAway };
     const { total, breakdown } = calculatePoints(predicted, actual);
     const goalDiff = calculateGoalDiff(predicted, actual);
+
+    if (
+      predictionScoresUnchanged(prediction, total, breakdown, goalDiff, { saveLiveKickoffSnapshot })
+    ) {
+      continue;
+    }
 
     prediction.pointsEarned = total;
     prediction.pointsBreakdown = breakdown;
@@ -35,6 +59,7 @@ async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickof
     prediction.bonusReason = null;
     await prediction.save();
 
+    predictionsUpdated += 1;
     affectedUsers.add(prediction.userId.toString());
   }
 
@@ -45,7 +70,7 @@ async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickof
     await recalculateUserTotalPoints(userId);
   }
 
-  return { predictions: predictions.length, users: affectedUsers.size };
+  return { predictions: predictionsUpdated, users: affectedUsers.size };
 }
 
 export async function recalculateMatchScores(matchId) {
@@ -96,6 +121,22 @@ export async function recalculateMatchScores(matchId) {
   }
 
   return { ...result, liveBaseline: needsLiveBaseline };
+}
+
+/** Inicializa baseline 0-0 en partidos live que aún no tienen liveScoringInitialized. */
+export async function ensureLiveScoringBaselines() {
+  const uninitialized = await Match.find({
+    status: 'live',
+    liveScoringInitialized: { $ne: true },
+  }).select('_id');
+
+  let users = 0;
+  for (const match of uninitialized) {
+    const { users: updatedUsers } = await recalculateMatchScores(match._id);
+    users += updatedUsers;
+  }
+
+  return { matches: uninitialized.length, users };
 }
 
 /** Quita puntos provisionales o erróneos cuando un partido vuelve a upcoming. */

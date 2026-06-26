@@ -23,7 +23,7 @@ vi.mock('../src/models/Stadium.js', () => ({
 
 vi.mock('../src/services/matchScoringService.js', () => ({
   recalculateMatchScores: vi.fn().mockResolvedValue({ predictions: 0, users: 0 }),
-  recalculateAllLiveMatches: vi.fn(),
+  ensureLiveScoringBaselines: vi.fn().mockResolvedValue({ matches: 0, users: 0 }),
 }));
 
 vi.mock('../src/services/websocketService.js', () => ({

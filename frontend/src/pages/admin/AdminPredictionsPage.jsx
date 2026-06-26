@@ -123,7 +123,7 @@ export default function AdminPredictionsPage() {
 
   const { data, loading, error, refresh } = useLiveData(fetchPredictions, filterDeps, {
     realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
-    realtimeDebounceMs: 750,
+    realtimeDebounceMs: 1500,
   });
 
   const fetchUsers = useCallback(() => adminApi.listUsers({ page: 1, limit: 200 }), []);

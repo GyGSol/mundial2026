@@ -1,6 +1,6 @@
 import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
-import { recalculateMatchScores, recalculateAllLiveMatches, clearMatchScores } from './matchScoringService.js';
+import { recalculateMatchScores, ensureLiveScoringBaselines, clearMatchScores } from './matchScoringService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
 import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesCache.js';
@@ -557,14 +557,19 @@ export async function syncLiveMatchScoring() {
   const promoted = await promoteMatchesAtKickoff();
   const weatherOpsSync = await syncLiveWeatherOps();
 
+  let scoringUsers = 0;
   for (const matchId of liveFifaRefresh.scoringIds ?? []) {
     const handledByGoalPush = (liveFifaRefresh.goalUpdates ?? []).some(
       (update) => String(update.match?._id) === String(matchId)
     );
     if (!handledByGoalPush) {
-      await recalculateMatchScores(matchId);
+      const { users } = await recalculateMatchScores(matchId);
+      scoringUsers += users;
     }
   }
+
+  const baselineSync = await ensureLiveScoringBaselines();
+  scoringUsers += baselineSync.users;
 
   if (liveFifaRefresh.goalUpdates?.length) {
     processGoalUpdates(liveFifaRefresh.goalUpdates).catch((err) => {
@@ -593,10 +598,10 @@ export async function syncLiveMatchScoring() {
     }
   }
 
-  const { matches, users } = await recalculateAllLiveMatches();
+  const liveMatches = await Match.find({ status: 'live' }).select('_id homeScore awayScore').lean();
+  const liveMatchCount = liveMatches.length;
 
-  if (matches > 0) {
-    const liveMatches = await Match.find({ status: 'live' }).select('_id homeScore awayScore raw').lean();
+  if (liveMatchCount > 0) {
     const { predictLiveAdjustment } = await import('./predictiveModelingService.js');
     for (const liveMatch of liveMatches) {
       void predictLiveAdjustment(liveMatch._id, {
@@ -609,11 +614,25 @@ export async function syncLiveMatchScoring() {
     }
   }
 
-  if (matches > 0 || liveFifaRefresh.events > 0 || finalized.length > 0 || weatherOpsSync.suspended.length || weatherOpsSync.cleared.length) {
+  const shouldInvalidateCaches =
+    scoringUsers > 0 ||
+    baselineSync.matches > 0 ||
+    (liveFifaRefresh.events ?? 0) > 0 ||
+    (liveFifaRefresh.goalUpdates?.length ?? 0) > 0 ||
+    finalized.length > 0 ||
+    reopened.length > 0 ||
+    promoted.length > 0 ||
+    weatherOpsSync.suspended.length > 0 ||
+    weatherOpsSync.cleared.length > 0 ||
+    weatherOpsSync.refreshed.length > 0 ||
+    (fifaRefresh.events ?? 0) > 0 ||
+    (fifaRefresh.scoring ?? 0) > 0;
+
+  if (shouldInvalidateCaches) {
     invalidateMatchRelatedCaches();
     notifyMatchesUpdated({
       reason: 'live_scoring_sync',
-      liveMatches: matches,
+      liveMatches: liveMatchCount,
       fifaEventsRefreshed: liveFifaRefresh.events,
     });
   }
@@ -625,7 +644,7 @@ export async function syncLiveMatchScoring() {
     fifaRefresh,
     promoted: promoted.length,
     weatherOpsSync,
-    liveMatches: matches,
-    users,
+    liveMatches: liveMatchCount,
+    users: scoringUsers,
   };
 }

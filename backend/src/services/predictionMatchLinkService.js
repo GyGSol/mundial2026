@@ -7,7 +7,7 @@ import {
   buildFifaFixtureTargets,
   buildTeamIdByFifaCode,
 } from './fifaFixtureAlignmentService.js';
-import { fetchAllCalendarMatches } from './fifaApiClient.js';
+import { fetchAllCalendarMatches, getCachedAllCalendarMatches } from './fifaApiClient.js';
 
 export function pairKey(homeCode, awayCode) {
   return `${homeCode}-${awayCode}`;
@@ -22,7 +22,7 @@ export function resolvePredictionRemapAction({ sourceValuable, destValuable, des
 }
 
 export async function loadFifaFixtureContext(calendar = null) {
-  const entries = calendar ?? (await fetchAllCalendarMatches());
+  const entries = calendar ?? (await getCachedAllCalendarMatches());
   const teams = await Team.find().select('externalId fifaCode').lean();
   const teamIdByFifaCode = buildTeamIdByFifaCode(teams);
   const targets = buildFifaFixtureTargets(entries, teamIdByFifaCode);

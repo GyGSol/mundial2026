@@ -9,7 +9,10 @@ import { createInMemoryCache } from './inMemoryCache.js';
 import { matchEnrichmentRevision } from './matchEnrichmentRevision.js';
 
 const MATCH_ENRICHMENT_TTL_MS = 10_000;
-const matchEnrichmentCache = createInMemoryCache({ defaultTtlMs: MATCH_ENRICHMENT_TTL_MS });
+const matchEnrichmentCache = createInMemoryCache({
+  defaultTtlMs: MATCH_ENRICHMENT_TTL_MS,
+  maxEntries: 32,
+});
 
 function matchEnrichmentCacheKey(raw, userId, tier) {
   const userKey = userId ? String(userId) : 'anon';
@@ -106,13 +109,13 @@ export async function enrichFeaturedBarPayload({
       if (featured.id !== resolvedDetailId) return;
       const raw = liveRawById.get(featured.id);
       if (!raw) return;
-      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+      featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: false });
     }),
     ...(attachRecentLineups
       ? recentFinishedMatches.map(async (featured) => {
           const raw = recentRawById.get(featured.id);
           if (!raw) return;
-          featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: true });
+          featured.lineup = await buildMatchLineupPayload(raw, { fetchExternalShirts: false });
         })
       : []),
   ]);

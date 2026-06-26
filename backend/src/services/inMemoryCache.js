@@ -1,9 +1,18 @@
 /**
- * Generic in-memory cache with TTL and in-flight request deduplication.
+ * Generic in-memory cache with TTL, in-flight deduplication, and optional LRU cap.
  */
-export function createInMemoryCache({ defaultTtlMs = 30_000 } = {}) {
+export function createInMemoryCache({ defaultTtlMs = 30_000, maxEntries = 0 } = {}) {
   /** @type {Map<string, { expiresAt: number, value?: unknown, promise?: Promise<unknown> }>} */
   const cacheByKey = new Map();
+
+  function trimToMaxEntries() {
+    if (!maxEntries || maxEntries <= 0) return;
+    while (cacheByKey.size > maxEntries) {
+      const oldestKey = cacheByKey.keys().next().value;
+      if (oldestKey === undefined) break;
+      cacheByKey.delete(oldestKey);
+    }
+  }
 
   function getValidEntry(key, now = Date.now()) {
     const entry = cacheByKey.get(key);
@@ -14,6 +23,16 @@ export function createInMemoryCache({ defaultTtlMs = 30_000 } = {}) {
       cacheByKey.delete(key);
     }
     return null;
+  }
+
+  function storeResolvedValue(key, value, ttlMs) {
+    const resolvedTtl = typeof ttlMs === 'function' ? ttlMs(value) : ttlMs;
+    cacheByKey.delete(key);
+    cacheByKey.set(key, {
+      value,
+      expiresAt: Date.now() + resolvedTtl,
+    });
+    trimToMaxEntries();
   }
 
   return {
@@ -30,12 +49,7 @@ export function createInMemoryCache({ defaultTtlMs = 30_000 } = {}) {
       const promise = Promise.resolve()
         .then(compute)
         .then((value) => {
-          const resolvedTtl =
-            typeof ttlMs === 'function' ? ttlMs(value) : ttlMs;
-          cacheByKey.set(key, {
-            value,
-            expiresAt: Date.now() + resolvedTtl,
-          });
+          storeResolvedValue(key, value, ttlMs);
           return value;
         })
         .catch((err) => {
@@ -44,9 +58,10 @@ export function createInMemoryCache({ defaultTtlMs = 30_000 } = {}) {
         });
 
       cacheByKey.set(key, {
-        expiresAt: now + ttlMs,
+        expiresAt: now + (typeof ttlMs === 'function' ? defaultTtlMs : ttlMs),
         promise,
       });
+      trimToMaxEntries();
 
       return promise;
     },

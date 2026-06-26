@@ -8,7 +8,7 @@ import { attachStreamMetaToMatches } from './streamMetaService.js';
 import { createInMemoryCache } from './inMemoryCache.js';
 
 /** Partidos finalizados en el archivo colapsable del ranking (más recientes primero). */
-export const FINISHED_ARCHIVE_LIMIT = 40;
+export const FINISHED_ARCHIVE_LIMIT = 25;
 
 /** Partidos finalizados: datos estables; TTL largo salvo invalidación explícita. */
 export const FINISHED_ARCHIVE_CACHE_TTL_MS = 30 * 60 * 1000;

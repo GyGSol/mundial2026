@@ -33,7 +33,7 @@ describe('tournamentGoalsFinishedMatchesCache', () => {
 
     expect(first).toBe(second);
     expect(first.globalCounts.get('name:a')).toBe(1);
-    expect(TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS).toBe(60_000);
+    expect(TOURNAMENT_GOALS_FINISHED_CACHE_TTL_MS).toBe(5 * 60 * 1000);
   });
 
   it('recarga tras invalidación', async () => {

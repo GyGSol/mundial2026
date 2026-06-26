@@ -3,7 +3,7 @@ import { createInMemoryCache } from './inMemoryCache.js';
 const DEFAULT_TTL_MS = 15_000;
 const LIVE_TTL_MS = 10_000;
 
-const cache = createInMemoryCache({ defaultTtlMs: DEFAULT_TTL_MS });
+const cache = createInMemoryCache({ defaultTtlMs: DEFAULT_TTL_MS, maxEntries: 48 });
 
 function shellCacheKey(groupId, userId, inputsSignature) {
   const userKey = userId ? String(userId) : 'anon';

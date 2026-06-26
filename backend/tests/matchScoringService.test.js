@@ -137,6 +137,43 @@ describe('matchScoringService', () => {
     expect(updatedUser.totalPoints).toBeGreaterThan(0);
   });
 
+  it('recalculateMatchScores no reescribe predicciones cuando el marcador no cambió', async () => {
+    const user = await User.create({
+      name: 'Stable score',
+      email: 'stable-score@example.com',
+      passwordHash: 'hash',
+      totalPoints: 6,
+    });
+    const match = await Match.create({
+      externalId: 'score-stable-live',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 1,
+      awayScore: 0,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-13T01:00:00.000Z'),
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: match._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+      goalDiffHome: 0,
+      goalDiffAway: 0,
+    });
+
+    const result = await recalculateMatchScores(match._id);
+
+    expect(result.users).toBe(0);
+    expect(result.predictions).toBe(0);
+
+    const updatedUser = await User.findById(user._id);
+    expect(updatedUser.totalPoints).toBe(6);
+  });
+
   it('clearStaleUpcomingMatchScores repara partidos upcoming con puntos colgados', async () => {
     const user = await User.create({
       name: 'Tester 3',

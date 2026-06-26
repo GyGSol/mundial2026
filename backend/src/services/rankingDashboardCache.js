@@ -8,7 +8,7 @@ const LIVE_TTL_MS = 10_000;
 /** Mismo TTL que en vivo: el marcador puede cambiar hasta el reporte FIFA final. */
 const RECENT_FINISHED_TTL_MS = LIVE_TTL_MS;
 
-const cache = createInMemoryCache({ defaultTtlMs: DEFAULT_TTL_MS });
+const cache = createInMemoryCache({ defaultTtlMs: DEFAULT_TTL_MS, maxEntries: 48 });
 
 function dashboardCacheKey(groupId, userId, detailMatchId) {
   const userKey = userId ? String(userId) : 'anon';
