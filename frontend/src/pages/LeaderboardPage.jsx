@@ -227,7 +227,6 @@ export default function LeaderboardPage() {
     {
       enabled: canLoadRanking,
       getPollIntervalMs: leaderboardPollIntervalMs,
-      pollWhen: shouldPollLeaderboardLive,
       memoryCacheKey: `ranking:dashboard:${effectiveGroupId}`,
       memoryCacheTtlMs: 5_000,
       mergeOnRefresh: (prev, next) => {
