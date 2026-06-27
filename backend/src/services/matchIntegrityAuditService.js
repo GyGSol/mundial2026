@@ -180,7 +180,10 @@ function assembleDispute({
   };
 }
 
-export async function auditMatchIntegrity({ worldcup26Warnings = [] } = {}) {
+export async function auditMatchIntegrity({
+  worldcup26Warnings = [],
+  predictionLinkAudit = null,
+} = {}) {
   const matches = await Match.find({ externalId: { $not: /^sim-/ } }).lean();
   const predictions = await Prediction.find().lean();
   const matchById = new Map(matches.map((m) => [String(m._id), m]));
@@ -240,7 +243,8 @@ export async function auditMatchIntegrity({ worldcup26Warnings = [] } = {}) {
     }
   }
 
-  const predictionLinks = await auditPredictionMatchLinks();
+  const predictionLinks =
+    predictionLinkAudit ?? (await auditPredictionMatchLinks());
   const { targets: fifaTargets, teamCodeById } = await loadFifaFixtureContext();
   const teams = await Team.find().select('externalId fifaCode nameEn').lean();
 
@@ -315,8 +319,11 @@ export async function attachStadiumContextToDisputes(disputes) {
   });
 }
 
-export async function runPostSyncMatchAudit({ worldcup26Warnings = [] } = {}) {
-  const report = await auditMatchIntegrity({ worldcup26Warnings });
+export async function runPostSyncMatchAudit({
+  worldcup26Warnings = [],
+  predictionLinkAudit = null,
+} = {}) {
+  const report = await auditMatchIntegrity({ worldcup26Warnings, predictionLinkAudit });
   const disputes = await attachStadiumContextToDisputes(report.disputes);
   return { ...report, disputes };
 }

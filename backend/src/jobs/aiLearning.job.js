@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { env } from '../config/env.js';
 import { processAiLearningQueueBatch } from '../services/aiLearningQueueService.js';
+import { enqueueBackgroundWork } from '../services/backgroundWorkQueue.js';
 
 let scheduled = false;
 let running = false;
@@ -9,10 +10,15 @@ export async function runAiLearningQueueJob() {
   if (running) return { skipped: true, reason: 'already_running' };
   running = true;
   try {
-    return await processAiLearningQueueBatch({
-      limit: env.aiLearningJobBatchSize,
-      interStepDelayMs: env.cerebrasMinGapMs,
-    });
+    return await enqueueBackgroundWork(
+      'ai-learning:batch',
+      () =>
+        processAiLearningQueueBatch({
+          limit: env.aiLearningJobBatchSize,
+          interStepDelayMs: env.cerebrasMinGapMs,
+        }),
+      { priority: 'low', memoryHeavy: true, coalesceKey: 'ai-learning:batch' }
+    );
   } finally {
     running = false;
   }

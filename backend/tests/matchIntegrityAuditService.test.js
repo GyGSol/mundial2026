@@ -1,8 +1,35 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   collectWorldCup26SyncWarning,
   buildSourceDisputes,
+  auditMatchIntegrity,
 } from '../src/services/matchIntegrityAuditService.js';
+
+vi.mock('../src/services/predictionMatchLinkService.js', () => ({
+  auditPredictionMatchLinks: vi.fn(),
+  loadFifaFixtureContext: vi.fn(),
+}));
+
+import {
+  auditPredictionMatchLinks,
+  loadFifaFixtureContext,
+} from '../src/services/predictionMatchLinkService.js';
+
+vi.mock('../src/models/Match.js', () => ({
+  Match: { find: vi.fn() },
+}));
+
+vi.mock('../src/models/Prediction.js', () => ({
+  Prediction: { find: vi.fn() },
+}));
+
+vi.mock('../src/models/Team.js', () => ({
+  Team: { find: vi.fn() },
+}));
+
+import { Match } from '../src/models/Match.js';
+import { Prediction } from '../src/models/Prediction.js';
+import { Team } from '../src/models/Team.js';
 
 describe('matchIntegrityAuditService', () => {
   it('detecta teams_mismatch cuando worldcup26 id colisiona con slot FIFA', () => {
@@ -110,5 +137,48 @@ describe('matchIntegrityAuditService', () => {
     expect(disputes[0].type).toBe('teams_mismatch');
     expect(disputes[0].fifa.homeCode).toBe('IRN');
     expect(disputes[0].wc26.homeName).toBe('Belgium');
+  });
+
+  it('reutiliza predictionLinkAudit precalculado sin volver a auditar links', async () => {
+    Match.find.mockReturnValue({
+      lean: vi.fn().mockResolvedValue([
+        {
+          _id: 'm1',
+          externalId: '1',
+          homeTeamId: 'h1',
+          awayTeamId: 'a1',
+          group: 'A',
+          kickoffAt: new Date('2026-06-11T19:00:00.000Z'),
+          status: 'upcoming',
+        },
+      ]),
+    });
+    Prediction.find.mockReturnValue({ lean: vi.fn().mockResolvedValue([]) });
+    Team.find.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        lean: vi.fn().mockResolvedValue([
+          { externalId: 'h1', fifaCode: 'MEX', nameEn: 'Mexico' },
+          { externalId: 'a1', fifaCode: 'RSA', nameEn: 'South Africa' },
+        ]),
+      }),
+    });
+    loadFifaFixtureContext.mockResolvedValue({
+      targets: new Map([
+        ['1', { externalId: '1', homeCode: 'MEX', awayCode: 'RSA', group: 'A' }],
+      ]),
+      teamCodeById: new Map([
+        ['h1', 'MEX'],
+        ['a1', 'RSA'],
+      ]),
+    });
+
+    const precalculated = {
+      summary: { hasIssues: false, orphanCount: 0 },
+      slotMismatches: [],
+    };
+
+    await auditMatchIntegrity({ predictionLinkAudit: precalculated });
+
+    expect(auditPredictionMatchLinks).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,7 @@ import { Match } from '../models/Match.js';
 import { syncLiveMatchScoring } from '../services/kickoffLiveService.js';
 import { env } from '../config/env.js';
 import { findRecentlyFinishedMatchesQuery } from '../services/matchDisplayVisibilityService.js';
+import { enqueueBackgroundWork } from '../services/backgroundWorkQueue.js';
 
 const LIVE_INTERVAL_MS = Number(process.env.KICKOFF_WATCH_LIVE_MS || 15_000);
 
@@ -12,7 +13,11 @@ async function tick() {
   if (running) return;
   running = true;
   try {
-    const result = await syncLiveMatchScoring();
+    const result = await enqueueBackgroundWork(
+      'kickoff:live-scoring',
+      () => syncLiveMatchScoring(),
+      { priority: 'critical', memoryHeavy: true }
+    );
     if (result.promoted > 0) {
       console.log(`Kickoff watch: ${result.promoted} partido(s) pasaron a en vivo`);
     }

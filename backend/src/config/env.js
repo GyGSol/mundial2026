@@ -119,4 +119,9 @@ export const env = {
   backupGithubToken: process.env.BACKUP_GITHUB_TOKEN || '',
   backupGithubRepo: process.env.BACKUP_GITHUB_REPO || '',
   backupGithubBranch: process.env.BACKUP_GITHUB_BRANCH || 'main',
+  /** Presupuesto heap Heroku (Procfile usa 384 MB; no subir sin revisar RAM del dyno). */
+  memoryHeapLimitMb: Number(process.env.MEMORY_HEAP_LIMIT_MB || 384),
+  memorySoftPressureRatio: Number(process.env.MEMORY_SOFT_PRESSURE_RATIO || 0.8),
+  memoryHardPressureRatio: Number(process.env.MEMORY_HARD_PRESSURE_RATIO || 0.9),
+  memoryHeadroomMaxWaitMs: Number(process.env.MEMORY_HEADROOM_MAX_WAIT_MS || 30_000),
 };

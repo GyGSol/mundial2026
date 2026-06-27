@@ -3,6 +3,7 @@ import { applyDefaultPredictionsForLockedMatches } from '../services/predictionL
 import { Match } from '../models/Match.js';
 import { env } from '../config/env.js';
 import { findRecentlyFinishedMatchesQuery } from '../services/matchDisplayVisibilityService.js';
+import { enqueueBackgroundWork } from '../services/backgroundWorkQueue.js';
 
 let timeoutId = null;
 let running = false;
@@ -30,13 +31,24 @@ async function tick() {
     liveCount > 0;
 
   try {
-    await runSync({ includeMetadata });
-    const { created, purgedAiDefaults } = await applyDefaultPredictionsForLockedMatches();
-    if (created > 0) {
-      console.log(`Default 0-0 predictions applied: ${created}`);
-    }
-    if (purgedAiDefaults > 0) {
-      console.log(`AI default 0-0 purged on locked upcoming: ${purgedAiDefaults}`);
+    await enqueueBackgroundWork(
+      'sync:tick',
+      () => runSync({ includeMetadata }),
+      { priority: 'critical', memoryHeavy: true }
+    );
+    const predictionResult = await enqueueBackgroundWork(
+      'sync:default-predictions',
+      () => applyDefaultPredictionsForLockedMatches(),
+      { priority: 'normal', memoryHeavy: false, coalesceKey: 'sync:default-predictions' }
+    );
+    if (!predictionResult?.coalesced) {
+      const { created, purgedAiDefaults } = predictionResult;
+      if (created > 0) {
+        console.log(`Default 0-0 predictions applied: ${created}`);
+      }
+      if (purgedAiDefaults > 0) {
+        console.log(`AI default 0-0 purged on locked upcoming: ${purgedAiDefaults}`);
+      }
     }
   } catch (err) {
     console.error('Sync tick error:', err.message);

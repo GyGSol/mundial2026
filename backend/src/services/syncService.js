@@ -50,6 +50,7 @@ import {
 } from './matchIntegrityAuditService.js';
 import { resolveAndApplySourceDisputes } from './aiMatchSourceResolverService.js';
 import { syncMicroEventsFromMatch } from './matchMicroEventService.js';
+import { enqueueBackgroundWork } from './backgroundWorkQueue.js';
 import {
   mergePlausibleGoalCounts,
   readFifaAuthoritativeScores,
@@ -623,6 +624,210 @@ export async function seedDemoDataIfEmpty() {
   return true;
 }
 
+async function runSyncSlowPath({ worldcup26Warnings = [], includeMetadata = false } = {}) {
+  let fixtureAlignment = {
+    aligned: 0,
+    predictionsMoved: 0,
+    predictionsMerged: 0,
+    predictionsConflicted: 0,
+  };
+
+  try {
+    fixtureAlignment = await alignMatchesFromFifaCalendar();
+    if (
+      fixtureAlignment.aligned > 0 ||
+      fixtureAlignment.predictionsMoved > 0 ||
+      fixtureAlignment.predictionsMerged > 0 ||
+      fixtureAlignment.predictionsConflicted > 0
+    ) {
+      console.log(
+        `FIFA fixture alignment: ${fixtureAlignment.aligned} partidos corregidos, ` +
+          `${fixtureAlignment.predictionsMoved} predicciones movidas, ` +
+          `${fixtureAlignment.predictionsMerged} fusionadas, ` +
+          `${fixtureAlignment.predictionsConflicted} en conflicto`
+      );
+    }
+
+    const linkAudit = await auditPredictionMatchLinks();
+    if (fixtureAlignment.predictionsMoved > 0 || linkAudit.summary.hasIssues) {
+      console.log('Prediction link audit:', JSON.stringify(linkAudit.summary));
+      await SyncMeta.findOneAndUpdate(
+        { key: 'predictionLinkAudit' },
+        {
+          lastSyncAt: new Date(),
+          lastSyncError: linkAudit.summary.hasIssues ? 'issues_detected' : null,
+          raw: {
+            summary: linkAudit.summary,
+            fixtureAlignment: {
+              predictionsMoved: fixtureAlignment.predictionsMoved,
+              predictionsMerged: fixtureAlignment.predictionsMerged,
+              predictionsConflicted: fixtureAlignment.predictionsConflicted,
+            },
+          },
+        },
+        { upsert: true }
+      );
+    }
+
+    const auditReport = await runPostSyncMatchAudit({
+      worldcup26Warnings,
+      predictionLinkAudit: linkAudit,
+    });
+    const disputeResults = await resolveAndApplySourceDisputes(auditReport.disputes);
+
+    const auditHasIssues =
+      auditReport.summary.kickoffMismatchCount > 0 ||
+      auditReport.summary.worldcup26CollisionCount > 0 ||
+      auditReport.summary.sourceDisputeCount > 0 ||
+      auditReport.summary.predictionLinkIssues;
+
+    if (auditHasIssues || disputeResults.length > 0) {
+      console.log(
+        'Match source audit:',
+        JSON.stringify({
+          summary: auditReport.summary,
+          disputesResolved: disputeResults.length,
+          applied: disputeResults.filter((r) => r.applied).length,
+        })
+      );
+      await SyncMeta.findOneAndUpdate(
+        { key: 'matchSourceDisputes' },
+        {
+          lastSyncAt: new Date(),
+          lastSyncError: auditHasIssues ? 'issues_detected' : null,
+          raw: {
+            summary: auditReport.summary,
+            worldcup26Warnings: auditReport.worldcup26Warnings,
+            disputes: auditReport.disputes.map((d) => ({
+              externalId: d.externalId,
+              type: d.type,
+              summary: d.summary,
+            })),
+            disputeResults,
+          },
+        },
+        { upsert: true }
+      );
+    }
+  } catch (err) {
+    console.warn('Match source audit skipped:', err.message);
+  }
+
+  if (includeMetadata) {
+    try {
+      const { ensurePredictionSourceBackfillOnce, backfillPredictionGoalDiffs } =
+        await import('./predictionMigrationService.js');
+      const sourceBackfill = await ensurePredictionSourceBackfillOnce();
+      if (sourceBackfill.updated > 0) {
+        console.log(`Prediction source backfill: ${sourceBackfill.updated} actualizadas`);
+      }
+      const goalDiffBackfill = await backfillPredictionGoalDiffs({ onlyMissing: true });
+      if (goalDiffBackfill.updated > 0) {
+        console.log(
+          `Goal diff backfill: ${goalDiffBackfill.updated} predicciones en ${goalDiffBackfill.matches} partidos`
+        );
+      }
+    } catch (err) {
+      console.warn('Prediction migration backfill skipped:', err.message);
+    }
+
+    await clearStaleUpcomingMatchScores();
+  }
+}
+
+async function runSyncMediumPath({
+  newlyFinishedIds = [],
+  finishedArchiveDirty = false,
+  teamsCount = 0,
+  groupsCount = 0,
+  stadiumsCount = 0,
+  count = 0,
+} = {}) {
+  if (newlyFinishedIds.length) {
+    await syncFifaReportsForMatchIds(newlyFinishedIds);
+  }
+
+  const lineupResult = await syncLiveLineups();
+  const upcomingLineupResult = await syncUpcomingKickoffLineups();
+  const gridLineupResult = await syncUpcomingLineupGrids();
+  const fifaResult = await syncFifaMatchEvents({ extraMatchIds: newlyFinishedIds });
+  const assistResult = await assistLiveMatchEvents();
+
+  if (fifaResult.newlyFinishedIds?.length) {
+    await syncFifaReportsForMatchIds(fifaResult.newlyFinishedIds);
+  }
+
+  for (const matchId of fifaResult.scoringIds ?? []) {
+    await recalculateMatchScores(matchId);
+  }
+
+  const allNewlyFinished = [
+    ...new Set([
+      ...newlyFinishedIds.map((id) => id.toString()),
+      ...(fifaResult.newlyFinishedIds ?? []).map((id) => id.toString()),
+    ]),
+  ];
+  if (allNewlyFinished.length) {
+    try {
+      const { scheduleBackupsForFinishedMatches } = await import('./matchFinishBackupService.js');
+      scheduleBackupsForFinishedMatches(allNewlyFinished);
+    } catch (err) {
+      console.warn('Match finish backup skipped:', err.message);
+    }
+  }
+
+  try {
+    const { reopenPrematurelyFinishedMatches } = await import('./kickoffLiveService.js');
+    await reopenPrematurelyFinishedMatches();
+  } catch (err) {
+    console.warn('Premature finish reopen skipped:', err.message);
+  }
+
+  const { invalidateMatchRelatedCaches, invalidateFinishedMatchArchiveCaches } =
+    await import('./matchRelatedCaches.js');
+  if (
+    finishedArchiveDirty ||
+    newlyFinishedIds.length ||
+    (fifaResult.newlyFinishedIds?.length ?? 0) > 0
+  ) {
+    invalidateFinishedMatchArchiveCaches();
+  }
+  invalidateMatchRelatedCaches();
+
+  notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
+  notifyMatchesUpdated({
+    matchesCount: count,
+    fifaEventsSynced: fifaResult.events ?? 0,
+  });
+  notifyLeaderboardUpdated({ reason: 'sync_complete' });
+
+  if (lineupResult.updated > 0 || lineupResult.events > 0) {
+    console.log(
+      `Lineup/events sync: ${lineupResult.updated} titulares, ${lineupResult.events} partidos con eventos`
+    );
+  }
+  if (upcomingLineupResult.updated > 0 || upcomingLineupResult.matches > 0) {
+    console.log(
+      `Upcoming lineup sync: ${upcomingLineupResult.updated} titulares en ${upcomingLineupResult.matches} partidos`
+    );
+  }
+  if (gridLineupResult.updated > 0) {
+    console.log(`Lineup grid sync: ${gridLineupResult.updated} partidos con grid API-Football`);
+  }
+
+  if (fifaResult.events > 0) {
+    console.log(`FIFA events sync: ${fifaResult.events} partidos con timeline`);
+  }
+
+  if (assistResult.updated > 0) {
+    console.log(
+      `Live event assist: ${assistResult.updated} partidos actualizados (${assistResult.skipped} sin cambios)`
+    );
+  }
+
+  return { lineupResult, upcomingLineupResult, gridLineupResult, fifaResult, assistResult };
+}
+
 export async function runSync({ includeMetadata = true } = {}) {
   try {
     if (env.worldCupSyncEmail && env.worldCupSyncPassword) {
@@ -649,116 +854,9 @@ export async function runSync({ includeMetadata = true } = {}) {
       });
     }
 
-    let fixtureAlignment = {
-      aligned: 0,
-      predictionsMoved: 0,
-      predictionsMerged: 0,
-      predictionsConflicted: 0,
-    };
-    try {
-      fixtureAlignment = await alignMatchesFromFifaCalendar();
-      if (
-        fixtureAlignment.aligned > 0 ||
-        fixtureAlignment.predictionsMoved > 0 ||
-        fixtureAlignment.predictionsMerged > 0 ||
-        fixtureAlignment.predictionsConflicted > 0
-      ) {
-        console.log(
-          `FIFA fixture alignment: ${fixtureAlignment.aligned} partidos corregidos, ` +
-            `${fixtureAlignment.predictionsMoved} predicciones movidas, ` +
-            `${fixtureAlignment.predictionsMerged} fusionadas, ` +
-            `${fixtureAlignment.predictionsConflicted} en conflicto`
-        );
-      }
-
-      const linkAudit = await auditPredictionMatchLinks();
-      if (fixtureAlignment.predictionsMoved > 0 || linkAudit.summary.hasIssues) {
-        console.log('Prediction link audit:', JSON.stringify(linkAudit.summary));
-        await SyncMeta.findOneAndUpdate(
-          { key: 'predictionLinkAudit' },
-          {
-            lastSyncAt: new Date(),
-            lastSyncError: linkAudit.summary.hasIssues ? 'issues_detected' : null,
-            raw: {
-              summary: linkAudit.summary,
-              fixtureAlignment: {
-                predictionsMoved: fixtureAlignment.predictionsMoved,
-                predictionsMerged: fixtureAlignment.predictionsMerged,
-                predictionsConflicted: fixtureAlignment.predictionsConflicted,
-              },
-            },
-          },
-          { upsert: true }
-        );
-      }
-    } catch (err) {
-      console.warn('FIFA fixture alignment skipped:', err.message);
-    }
-
-    try {
-      const auditReport = await runPostSyncMatchAudit({ worldcup26Warnings });
-      const disputeResults = await resolveAndApplySourceDisputes(auditReport.disputes);
-
-      const auditHasIssues =
-        auditReport.summary.kickoffMismatchCount > 0 ||
-        auditReport.summary.worldcup26CollisionCount > 0 ||
-        auditReport.summary.sourceDisputeCount > 0 ||
-        auditReport.summary.predictionLinkIssues;
-
-      if (auditHasIssues || disputeResults.length > 0) {
-        console.log(
-          'Match source audit:',
-          JSON.stringify({
-            summary: auditReport.summary,
-            disputesResolved: disputeResults.length,
-            applied: disputeResults.filter((r) => r.applied).length,
-          })
-        );
-        await SyncMeta.findOneAndUpdate(
-          { key: 'matchSourceDisputes' },
-          {
-            lastSyncAt: new Date(),
-            lastSyncError: auditHasIssues ? 'issues_detected' : null,
-            raw: {
-              summary: auditReport.summary,
-              worldcup26Warnings: auditReport.worldcup26Warnings,
-              disputes: auditReport.disputes.map((d) => ({
-                externalId: d.externalId,
-                type: d.type,
-                summary: d.summary,
-              })),
-              disputeResults,
-            },
-          },
-          { upsert: true }
-        );
-      }
-    } catch (err) {
-      console.warn('Match source audit skipped:', err.message);
-    }
-
-    try {
-      const { ensurePredictionSourceBackfillOnce, backfillPredictionGoalDiffs } =
-        await import('./predictionMigrationService.js');
-      const sourceBackfill = await ensurePredictionSourceBackfillOnce();
-      if (sourceBackfill.updated > 0) {
-        console.log(`Prediction source backfill: ${sourceBackfill.updated} actualizadas`);
-      }
-      const goalDiffBackfill = await backfillPredictionGoalDiffs({ onlyMissing: true });
-      if (goalDiffBackfill.updated > 0) {
-        console.log(
-          `Goal diff backfill: ${goalDiffBackfill.updated} predicciones en ${goalDiffBackfill.matches} partidos`
-        );
-      }
-    } catch (err) {
-      console.warn('Prediction migration backfill skipped:', err.message);
-    }
-
     for (const matchId of clearedScoreIds) {
       await clearMatchScores(matchId);
     }
-
-    await clearStaleUpcomingMatchScores();
 
     for (const matchId of scoringIds) {
       await recalculateMatchScores(matchId);
@@ -766,96 +864,40 @@ export async function runSync({ includeMetadata = true } = {}) {
 
     await recalculateAllLiveMatches();
 
-    if (newlyFinishedIds.length) {
-      await syncFifaReportsForMatchIds(newlyFinishedIds);
-    }
-
     await SyncMeta.findOneAndUpdate(
       { key: 'global' },
       { lastSyncAt: new Date(), lastSyncError: null },
       { upsert: true }
     );
 
-    const lineupResult = await syncLiveLineups();
-    const upcomingLineupResult = await syncUpcomingKickoffLineups();
-    const gridLineupResult = await syncUpcomingLineupGrids();
-    const fifaResult = await syncFifaMatchEvents({ extraMatchIds: newlyFinishedIds });
-    const assistResult = await assistLiveMatchEvents();
+    notifyMatchesUpdated({ matchesCount: count, fifaEventsSynced: 0 });
+    notifyLeaderboardUpdated({ reason: 'sync_scores_updated' });
 
-    if (fifaResult.newlyFinishedIds?.length) {
-      await syncFifaReportsForMatchIds(fifaResult.newlyFinishedIds);
-    }
-
-    for (const matchId of fifaResult.scoringIds ?? []) {
-      await recalculateMatchScores(matchId);
-    }
-
-    const allNewlyFinished = [
-      ...new Set([
-        ...newlyFinishedIds.map((id) => id.toString()),
-        ...(fifaResult.newlyFinishedIds ?? []).map((id) => id.toString()),
-      ]),
-    ];
-    if (allNewlyFinished.length) {
-      try {
-        const { scheduleBackupsForFinishedMatches } = await import('./matchFinishBackupService.js');
-        scheduleBackupsForFinishedMatches(allNewlyFinished);
-      } catch (err) {
-        console.warn('Match finish backup skipped:', err.message);
-      }
-    }
-
-    try {
-      const { reopenPrematurelyFinishedMatches } = await import('./kickoffLiveService.js');
-      await reopenPrematurelyFinishedMatches();
-    } catch (err) {
-      console.warn('Premature finish reopen skipped:', err.message);
-    }
-
-    const { invalidateMatchRelatedCaches, invalidateFinishedMatchArchiveCaches } =
-      await import('./matchRelatedCaches.js');
-    if (
-      finishedArchiveDirty ||
-      newlyFinishedIds.length ||
-      (fifaResult.newlyFinishedIds?.length ?? 0) > 0
-    ) {
-      invalidateFinishedMatchArchiveCaches();
-    }
-    invalidateMatchRelatedCaches();
-
-    notifySyncComplete({ teamsCount, groupsCount, stadiumsCount, matchesCount: count });
-    notifyMatchesUpdated({
-      matchesCount: count,
-      fifaEventsSynced: fifaResult.events ?? 0,
-    });
-    notifyLeaderboardUpdated({ reason: 'sync_complete' });
-
-    if (lineupResult.updated > 0 || lineupResult.events > 0) {
-      console.log(
-        `Lineup/events sync: ${lineupResult.updated} titulares, ${lineupResult.events} partidos con eventos`
+    const shouldRunSlowPath = includeMetadata || worldcup26Warnings.length > 0;
+    if (shouldRunSlowPath) {
+      void enqueueBackgroundWork(
+        'sync:slow',
+        () => runSyncSlowPath({ worldcup26Warnings, includeMetadata }),
+        { priority: 'low', memoryHeavy: true, coalesceKey: 'sync:slow' }
       );
     }
-    if (upcomingLineupResult.updated > 0 || upcomingLineupResult.matches > 0) {
-      console.log(
-        `Upcoming lineup sync: ${upcomingLineupResult.updated} titulares en ${upcomingLineupResult.matches} partidos`
-      );
-    }
-    if (gridLineupResult.updated > 0) {
-      console.log(`Lineup grid sync: ${gridLineupResult.updated} partidos con grid API-Football`);
-    }
 
-    if (fifaResult.events > 0) {
-      console.log(`FIFA events sync: ${fifaResult.events} partidos con timeline`);
-    }
-
-    if (assistResult.updated > 0) {
-      console.log(
-        `Live event assist: ${assistResult.updated} partidos actualizados (${assistResult.skipped} sin cambios)`
-      );
-    }
+    void enqueueBackgroundWork(
+      'sync:medium',
+      () =>
+        runSyncMediumPath({
+          newlyFinishedIds,
+          finishedArchiveDirty,
+          teamsCount,
+          groupsCount,
+          stadiumsCount,
+          count,
+        }),
+      { priority: 'normal', memoryHeavy: true, coalesceKey: 'sync:medium' }
+    );
 
     console.log(
-      `Sync OK: ${teamsCount} teams, ${groupsCount} groups, ${stadiumsCount} stadiums, ${count} matches`
+      `Sync OK (fast): ${teamsCount} teams, ${groupsCount} groups, ${stadiumsCount} stadiums, ${count} matches`
     );
     return { teamsCount, groupsCount, stadiumsCount, matchesCount: count };
   } catch (err) {
