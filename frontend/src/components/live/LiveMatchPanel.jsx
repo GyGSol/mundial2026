@@ -54,7 +54,7 @@ export default function LiveMatchPanel({
         <div className="flex flex-col gap-3">
           <div className="rounded-md border border-dashed border-border/70 bg-muted/20 px-3 py-3 text-center text-sm text-muted-foreground">
             {error}
-            {config?.reason === 'no_la18_mapping' ? (
+            {config?.reason === 'no_stream_mapping' ? (
               <p className="mt-2 text-xs">
                 Todavía no hay señal {USER_STREAM_BRAND} disponible para este partido.
               </p>

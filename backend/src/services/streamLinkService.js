@@ -3,10 +3,7 @@ import { StreamLinkMapping } from '../models/StreamLinkMapping.js';
 import { Team } from '../models/Team.js';
 import { env } from '../config/env.js';
 import { resolveStreamUrl } from '../data/liveStreamSchedule.js';
-import {
-  fetchLa18HlsUrl,
-  resolveLa18StreamsForMatch,
-} from './la18hdScraper.js';
+import { resolveFptStreamsForMatch } from './fptScraper.js';
 import {
   inferStreamSourceKind,
   resolveEffectiveStreamSources,
@@ -44,18 +41,12 @@ function pickStreamSource(sources, sourceId) {
 async function buildPrimaryFromSource(source) {
   if (!source?.url) return null;
 
-  let hlsUrl = null;
-  try {
-    hlsUrl = await fetchLa18HlsUrl(source.pageUrl || source.url);
-  } catch {
-    hlsUrl = null;
-  }
-
   return {
-    provider: 'la18hd',
-    type: hlsUrl ? 'hls' : 'iframe',
+    provider: 'fpt',
+    type: 'iframe',
+    type: 'iframe',
     url: source.embedUrl || source.url,
-    hlsUrl,
+    hlsUrl: null,
     eventId: source.eventId || source.id || null,
     pageUrl: source.pageUrl || source.url,
     label: source.label,
@@ -100,17 +91,17 @@ export async function getMatchStreamConfig(matchExternalId, _userId, options = {
 
   const { homeTeam, awayTeam } = await loadTeamsForMatch(match);
 
-  let la18Event = null;
-  let la18Streams = [];
+  let fptEvent = null;
+  let fptStreams = [];
   try {
-    const resolved = await resolveLa18StreamsForMatch(match, { homeTeam, awayTeam });
-    la18Event = resolved.event;
-    la18Streams = resolved.streams;
+    const resolved = await resolveFptStreamsForMatch(match, { homeTeam, awayTeam });
+    fptEvent = resolved.event;
+    fptStreams = resolved.streams;
   } catch {
-    la18Streams = [];
+    fptStreams = [];
   }
 
-  const sources = resolveEffectiveStreamSources(match, explicitMapping, la18Streams, {
+  const sources = resolveEffectiveStreamSources(match, explicitMapping, fptStreams, {
     homeTeam,
     awayTeam,
   });
@@ -119,7 +110,7 @@ export async function getMatchStreamConfig(matchExternalId, _userId, options = {
   if (!sources.length) {
     return {
       available: false,
-      reason: 'no_la18_mapping',
+      reason: 'no_stream_mapping',
       matchId: match.externalId,
       status: match.status,
       fallback,
@@ -136,14 +127,14 @@ export async function getMatchStreamConfig(matchExternalId, _userId, options = {
     matchId: match.externalId,
     status: match.status,
     source: sourceKind,
-    event: la18Event,
+    event: fptEvent,
     sources: sources.map((source) => ({
       id: source.id,
       label: source.label,
       language: source.language || '',
       url: source.url,
       embeddable: source.embeddable !== false,
-      origin: source.source || 'la18hd',
+      origin: source.source || 'fpt',
     })),
     selectedSourceId: selected?.id || null,
     primary,

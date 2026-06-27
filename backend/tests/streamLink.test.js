@@ -9,30 +9,30 @@ import {
   upsertStreamLinkMapping,
   deleteStreamLinkMapping,
 } from '../src/services/streamLinkService.js';
-import * as la18hdScraper from '../src/services/la18hdScraper.js';
+import * as fptScraper from '../src/services/fptScraper.js';
 
 const SAMPLE_STREAMS = [
   {
     id: 'dsports',
-    label: 'DSports',
-    language: 'Español',
-    url: 'https://la18hd.com/vivo/canales.php?stream=dsports',
-    pageUrl: 'https://la18hd.com/vivo/canales.php?stream=dsports',
-    embedUrl: 'https://la18hd.com/vivo/canales.php?stream=dsports',
+    label: 'DSports (Calidad 1080p)',
+    language: '',
+    url: 'https://futbolparatodos.su/eventos.html?r=dsports1080',
+    pageUrl: 'https://futbolparatodos.su/eventos.html?r=dsports1080',
+    embedUrl: 'https://futbolparatodos.su/eventos.html?r=dsports1080',
     eventId: 'dsports',
     embeddable: true,
-    provider: 'la18hd',
+    provider: 'fpt',
   },
   {
-    id: 'tycsports',
-    label: 'TyC Sports',
-    language: 'Español',
-    url: 'https://la18hd.com/vivo/canales.php?stream=tycsports',
-    pageUrl: 'https://la18hd.com/vivo/canales.php?stream=tycsports',
-    embedUrl: 'https://la18hd.com/vivo/canales.php?stream=tycsports',
-    eventId: 'tycsports',
+    id: 'fox',
+    label: 'FOX (Calidad 1080p)',
+    language: '',
+    url: 'https://futbolparatodos.su/eventos.html?r=fox1080',
+    pageUrl: 'https://futbolparatodos.su/eventos.html?r=fox1080',
+    embedUrl: 'https://futbolparatodos.su/eventos.html?r=fox1080',
+    eventId: 'fox',
     embeddable: true,
-    provider: 'la18hd',
+    provider: 'fpt',
   },
 ];
 
@@ -47,11 +47,10 @@ describe('streamLinkService', () => {
     vi.spyOn(StreamLinkMapping, 'findOne').mockReset();
     vi.spyOn(Team, 'findOne').mockReset();
     vi.spyOn(Team, 'findOne').mockReturnValue({ lean: () => Promise.resolve(null) });
-    vi.spyOn(la18hdScraper, 'fetchLa18HlsUrl').mockResolvedValue(null);
-    vi.spyOn(la18hdScraper, 'resolveLa18StreamsForMatch').mockResolvedValue({
+    vi.spyOn(fptScraper, 'resolveFptStreamsForMatch').mockResolvedValue({
       event: { title: 'Copa del Mundo: Haití vs Escocia' },
       streams: SAMPLE_STREAMS,
-      sourceUrl: 'https://la18hd.com/eventos/json/agenda123.json',
+      sourceUrl: 'https://futbolparatodos.su/agenda.php',
     });
   });
 
@@ -86,7 +85,7 @@ describe('streamLinkService', () => {
     expect(result).toMatchObject({ available: false, reason: 'not_available', status: 'upcoming' });
   });
 
-  it('permite calentamiento y devuelve todas las señales La18HD', async () => {
+  it('permite calentamiento y devuelve todas las señales FPT', async () => {
     Match.findOne.mockReturnValue({
       lean: () =>
         Promise.resolve({
@@ -102,9 +101,9 @@ describe('streamLinkService', () => {
     const result = await getMatchStreamConfig('5');
     expect(result.available).toBe(true);
     expect(result.status).toBe('upcoming');
-    expect(result.source).toBe('la18hd');
+    expect(result.source).toBe('fpt');
     expect(result.sources).toHaveLength(2);
-    expect(result.primary.pageUrl).toContain('stream=dsports');
+    expect(result.primary.pageUrl).toContain('futbolparatodos.su');
   });
 
   it('respeta sourceId al elegir señal', async () => {
@@ -118,9 +117,9 @@ describe('streamLinkService', () => {
     });
     StreamLinkMapping.findOne.mockReturnValue({ lean: () => Promise.resolve(null) });
 
-    const result = await getMatchStreamConfig('5', undefined, { sourceId: 'tycsports' });
-    expect(result.selectedSourceId).toBe('tycsports');
-    expect(result.primary.pageUrl).toContain('stream=tycsports');
+    const result = await getMatchStreamConfig('5', undefined, { sourceId: 'fox' });
+    expect(result.selectedSourceId).toBe('fox');
+    expect(result.primary.pageUrl).toContain('fox1080');
   });
 
   it('respeta mapping admin y mantiene otras señales', async () => {
@@ -138,9 +137,9 @@ describe('streamLinkService', () => {
       lean: () =>
         Promise.resolve({
           matchExternalId: '7',
-          la18PageUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
-          embedUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
-          la18EventId: 'disney6',
+          la18PageUrl: 'https://futbolparatodos.su/canal/espnpremium.html',
+          embedUrl: 'https://futbolparatodos.su/canal/espnpremium.html',
+          la18EventId: 'espnpremium',
           enabled: true,
         }),
     });
@@ -148,7 +147,7 @@ describe('streamLinkService', () => {
     const result = await getMatchStreamConfig('7');
     expect(result.available).toBe(true);
     expect(result.source).toBe('admin');
-    expect(result.sources.some((row) => row.id === 'disney6')).toBe(true);
+    expect(result.sources.some((row) => row.id === 'espnpremium')).toBe(true);
   });
 
   it('rechaza partido que no está en vivo ni en calentamiento', async () => {
@@ -159,8 +158,8 @@ describe('streamLinkService', () => {
     expect(result).toMatchObject({ available: false, reason: 'not_available', status: 'finished' });
   });
 
-  it('rechaza sin streams La18 (simulación)', async () => {
-    la18hdScraper.resolveLa18StreamsForMatch.mockResolvedValueOnce({
+  it('rechaza sin streams FPT (simulación)', async () => {
+    fptScraper.resolveFptStreamsForMatch.mockResolvedValueOnce({
       event: null,
       streams: [],
       sourceUrl: '',
@@ -174,14 +173,14 @@ describe('streamLinkService', () => {
     const result = await getMatchStreamConfig('sim-1');
     expect(result).toMatchObject({
       available: false,
-      reason: 'no_la18_mapping',
+      reason: 'no_stream_mapping',
       matchId: 'sim-1',
     });
     expect(result.fallback?.provider).toBe('fubo');
   });
 
   it('usa canal auto por televisor cuando la agenda no tiene el partido', async () => {
-    la18hdScraper.resolveLa18StreamsForMatch.mockResolvedValueOnce({
+    fptScraper.resolveFptStreamsForMatch.mockResolvedValueOnce({
       event: null,
       streams: [],
       sourceUrl: '',
@@ -203,10 +202,10 @@ describe('streamLinkService', () => {
     expect(result.available).toBe(true);
     expect(result.source).toBe('auto');
     expect(result.sources).toHaveLength(1);
-    expect(result.primary.pageUrl).toContain('stream=dsports');
+    expect(result.primary.pageUrl).toContain('/canal/dsports.html');
   });
 
-  it('devuelve config La18 con fallback Fubo cuando está live', async () => {
+  it('devuelve config FPT con fallback Fubo cuando está live', async () => {
     Match.findOne.mockReturnValue({
       lean: () => Promise.resolve({ externalId: '19', status: 'live' }),
     });
@@ -215,35 +214,12 @@ describe('streamLinkService', () => {
     const result = await getMatchStreamConfig('19');
     expect(result.available).toBe(true);
     expect(result.primary).toMatchObject({
-      provider: 'la18hd',
+      provider: 'fpt',
       type: 'iframe',
       hlsUrl: null,
     });
     expect(result.fallback?.provider).toBe('fubo');
     expect(result.fallback?.type).toBe('youtube');
-  });
-
-  it('devuelve HLS directo cuando La18HD expone m3u8', async () => {
-    la18hdScraper.fetchLa18HlsUrl.mockResolvedValueOnce(
-      'https://cgxheq.fubo18.com/disney6/mono.m3u8?token=test-d0-1-2'
-    );
-
-    Match.findOne.mockReturnValue({
-      lean: () => Promise.resolve({ externalId: '7', status: 'live' }),
-    });
-    StreamLinkMapping.findOne.mockReturnValue({
-      lean: () =>
-        Promise.resolve({
-          matchExternalId: '7',
-          la18PageUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
-          embedUrl: 'https://la18hd.com/vivo/canales.php?stream=disney6',
-          enabled: true,
-        }),
-    });
-
-    const result = await getMatchStreamConfig('7');
-    expect(result.primary.type).toBe('hls');
-    expect(result.primary.hlsUrl).toContain('.m3u8');
   });
 });
 
@@ -267,7 +243,7 @@ describe('streamLinkService admin helpers', () => {
     vi.spyOn(Match, 'findOne').mockReturnValue({ lean: () => Promise.resolve(null) });
 
     await expect(
-      upsertStreamLinkMapping('99', { la18PageUrl: 'https://la18hd.com/x' })
+      upsertStreamLinkMapping('99', { la18PageUrl: 'https://futbolparatodos.su/canal/dsports.html' })
     ).rejects.toThrow(/Partido no encontrado/);
   });
 

@@ -2,11 +2,11 @@ import { StreamLinkMapping } from '../models/StreamLinkMapping.js';
 import { Team } from '../models/Team.js';
 import { env } from '../config/env.js';
 import {
-  fetchLa18AgendaEvents,
+  fetchFptAgendaEvents,
   mergeStreamSources,
-  rankLa18EventsForMatch,
-} from './la18hdScraper.js';
-import { resolveAutoLa18Mapping } from './la18ChannelResolver.js';
+} from './fptScraper.js';
+import { resolveAutoFptMapping } from './fptChannelResolver.js';
+import { rankEventsForMatch } from './streamTeamMatching.js';
 import { canWatchConfiguredStream } from './streamWatchEligibility.js';
 
 function buildTeamMap(teams) {
@@ -19,7 +19,7 @@ function resolveStreamsForMatch(match, teamById, agendaEvents) {
   const homeTeamName = homeTeam?.nameEn || homeTeam?.name || '';
   const awayTeamName = awayTeam?.nameEn || awayTeam?.name || '';
 
-  const ranked = rankLa18EventsForMatch(
+  const ranked = rankEventsForMatch(
     match,
     agendaEvents,
     homeTeamName,
@@ -32,18 +32,18 @@ function resolveStreamsForMatch(match, teamById, agendaEvents) {
 }
 
 /**
- * Admin → agenda La18HD → canal auto por televisor (broadcastSchedule).
+ * Admin → agenda FPT → canal auto por televisor (broadcastSchedule).
  */
 export function resolveEffectiveStreamSources(
   match,
   explicitMapping,
-  la18Streams,
+  fptStreams,
   { homeTeam = null, awayTeam = null } = {}
 ) {
-  const sources = mergeStreamSources(explicitMapping, la18Streams);
+  const sources = mergeStreamSources(explicitMapping, fptStreams);
   if (sources.length) return sources;
 
-  const auto = resolveAutoLa18Mapping(match.externalId, { homeTeam, awayTeam });
+  const auto = resolveAutoFptMapping(match.externalId, { homeTeam, awayTeam });
   if (!auto) return [];
 
   return mergeStreamSources(auto, []);
@@ -52,7 +52,7 @@ export function resolveEffectiveStreamSources(
 export function inferStreamSourceKind(explicitMapping, selectedSource) {
   if (explicitMapping?.enabled !== false && explicitMapping?.embedUrl) return 'admin';
   if (selectedSource?.source === 'auto') return 'auto';
-  return 'la18hd';
+  return 'fpt';
 }
 
 export function buildStreamMeta(match, sources, source) {
@@ -66,7 +66,7 @@ export function buildStreamMeta(match, sources, source) {
     streamCount: sources.length,
     la18EventId: sources[0]?.eventId || sources[0]?.id || null,
     pageUrl: sources[0]?.url || null,
-    source: source || (sources.length ? 'la18hd' : null),
+    source: source || (sources.length ? 'fpt' : null),
     updatedAt: null,
   };
 }
@@ -99,7 +99,7 @@ export async function attachStreamMetaToMatches(matches) {
 
   let agendaEvents = [];
   try {
-    agendaEvents = await fetchLa18AgendaEvents();
+    agendaEvents = await fetchFptAgendaEvents();
   } catch {
     agendaEvents = [];
   }
@@ -108,8 +108,8 @@ export async function attachStreamMetaToMatches(matches) {
     const explicit = mappingById.get(String(match.externalId)) || null;
     const homeTeam = teamById[match.homeTeamId] || null;
     const awayTeam = teamById[match.awayTeamId] || null;
-    const la18Streams = resolveStreamsForMatch(match, teamById, agendaEvents);
-    const sources = resolveEffectiveStreamSources(match, explicit, la18Streams, {
+    const fptStreams = resolveStreamsForMatch(match, teamById, agendaEvents);
+    const sources = resolveEffectiveStreamSources(match, explicit, fptStreams, {
       homeTeam,
       awayTeam,
     });

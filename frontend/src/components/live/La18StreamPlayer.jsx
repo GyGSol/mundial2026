@@ -8,7 +8,7 @@ import StreamAccessNoticeDialog from './StreamAccessNoticeDialog.jsx';
 
 const LiveStreamPlayer = lazy(() => import('./LiveStreamPlayer.jsx'));
 
-const LA18_EVENTS_URL = 'https://la18hd.com/eventos/';
+const FPT_AGENDA_URL = 'https://futbolparatodos.su/agenda.php';
 const LOAD_TIMEOUT_MS = 8000;
 const IOS_LOAD_TIMEOUT_MS = 20000;
 
@@ -351,7 +351,7 @@ export default function La18StreamPlayer({
 
           {iosDevice ? (
             <Button type="button" size="sm" variant="outline" className="col-span-2 justify-center gap-1.5 sm:col-span-1" asChild>
-              <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
+              <a href={FPT_AGENDA_URL} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4 shrink-0" aria-hidden />
                 Más en {USER_STREAM_BRAND}
               </a>

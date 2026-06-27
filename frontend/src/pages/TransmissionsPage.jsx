@@ -20,7 +20,7 @@ import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import { isIosDevice } from '@/lib/device';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 
-const LA18_EVENTS_URL = 'https://la18hd.com/eventos/';
+const FPT_AGENDA_URL = 'https://futbolparatodos.su/agenda.php';
 
 const statusLabels = {
   upcoming: { text: 'Próximo', variant: 'secondary' },
@@ -165,7 +165,7 @@ function TransmissionMatchCard({ match }) {
               <p className="text-sm text-muted-foreground">
                 Todavía no hay señal configurada para este partido. Podés buscarlo en{' '}
                 <a
-                  href={LA18_EVENTS_URL}
+                  href={FPT_AGENDA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-amber-200/90 underline-offset-2 hover:underline"

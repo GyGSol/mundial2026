@@ -61,7 +61,7 @@ export default function AdminStreamLinksPage() {
   async function saveLink(event) {
     event.preventDefault();
     if (!form.matchExternalId.trim() || !form.la18PageUrl.trim()) {
-      setMessage('Completá matchExternalId y URL La18HD');
+      setMessage('Completá matchExternalId y URL FPT');
       return;
     }
 
@@ -147,8 +147,8 @@ export default function AdminStreamLinksPage() {
   return (
     <div className={adminPage}>
       <AdminPageHeader
-        title="Transmisión La18HD"
-        description="Asigná URLs por partido sin redeploy. Solo visible cuando el partido está en vivo."
+        title="Transmisión FPT"
+        description="Asigná URLs de Fútbol para Todos por partido sin redeploy. Solo visible cuando el partido está en vivo."
       />
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
@@ -239,14 +239,14 @@ export default function AdminStreamLinksPage() {
           </div>
           <div className="space-y-2 md:col-span-2">
             <label htmlFor="la18PageUrl" className={`text-sm ${adminMuted}`}>
-              URL La18HD
+              URL FPT (eventos o canal)
             </label>
             <Input
               id="la18PageUrl"
               className={adminInput}
               value={form.la18PageUrl}
               onChange={(e) => updateForm('la18PageUrl', e.target.value)}
-              placeholder="https://la18hd.com/evento/..."
+              placeholder="https://futbolparatodos.su/eventos.html?r=… o /canal/dsports.html"
             />
           </div>
           <div className="space-y-2 md:col-span-2">
@@ -282,7 +282,7 @@ export default function AdminStreamLinksPage() {
               disabled={busyId === 'suggest'}
               onClick={loadSuggestions}
             >
-              Cargar señales La18HD
+              Cargar señales FPT
             </Button>
           </div>
         </form>
@@ -310,7 +310,7 @@ export default function AdminStreamLinksPage() {
           <div className="mt-6">
             <p className={`mb-2 ${adminMuted}`}>Preview iframe</p>
             <iframe
-              title="Preview La18HD"
+              title="Preview FPT"
               src={form.embedUrl || form.la18PageUrl}
               className="aspect-video w-full max-w-xl rounded border border-slate-700 bg-black"
               sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"

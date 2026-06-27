@@ -10,7 +10,7 @@ const navItems = [
   { to: '/admin/sync', label: 'Sync' },
   { to: '/admin/matches', label: 'Partidos' },
   { to: '/admin/formaciones', label: 'Formaciones' },
-  { to: '/admin/stream-links', label: 'La18HD' },
+  { to: '/admin/stream-links', label: 'Transmisiones FPT' },
   { to: '/admin/users', label: 'Usuarios' },
   { to: '/admin/groups', label: 'Grupos' },
   { to: '/admin/predictions', label: 'Predicciones' },

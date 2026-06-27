@@ -33,7 +33,7 @@ export function useMatchStream(matchId, { enabled = true } = {}) {
             setError(
               data.reason === 'not_available' || data.reason === 'not_live'
                 ? 'La transmisión todavía no está disponible.'
-                : data.reason === 'no_la18_mapping'
+                : data.reason === 'no_stream_mapping'
                   ? `No hay transmisión ${USER_STREAM_BRAND} configurada para este partido.`
                   : data.reason === 'disabled'
                     ? 'El módulo de transmisión está desactivado.'

@@ -1,2 +1,2 @@
-/** Marca visible para usuarios (admin sigue usando La18HD). */
+/** Marca visible para usuarios (admin usa FPT internamente). */
 export const USER_STREAM_BRAND = 'LiveTV';

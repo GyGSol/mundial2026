@@ -1,7 +1,8 @@
 /**
- * Uso: node src/scripts/upsertStreamLink.js <matchExternalId> <la18PageUrl> [la18EventId]
+ * Uso: node src/scripts/upsertStreamLink.js <matchExternalId> <pageUrl> [eventId]
  * Ejemplo:
- *   node src/scripts/upsertStreamLink.js 7 "https://la18hd.com/vivo/canales.php?stream=disney6" disney6
+ *   node src/scripts/upsertStreamLink.js 7 "https://futbolparatodos.su/eventos.html?r=..." dsports
+ *   node src/scripts/upsertStreamLink.js 7 "https://futbolparatodos.su/canal/dsports.html" dsports
  */
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
@@ -10,7 +11,7 @@ import { upsertStreamLinkMapping } from '../services/streamLinkService.js';
 const [matchExternalId, la18PageUrl, la18EventId = ''] = process.argv.slice(2);
 
 if (!matchExternalId || !la18PageUrl) {
-  console.error('Uso: node src/scripts/upsertStreamLink.js <matchExternalId> <la18PageUrl> [la18EventId]');
+  console.error('Uso: node src/scripts/upsertStreamLink.js <matchExternalId> <pageUrl> [eventId]');
   process.exit(1);
 }
 
@@ -26,9 +27,9 @@ try {
       enabled: true,
       notes: 'Cargado vía upsertStreamLink.js',
     },
-    'script'
+    'cli'
   );
-  console.log(JSON.stringify(doc, null, 2));
+  console.log('OK', doc.matchExternalId, doc.embedUrl);
 } finally {
   await mongoose.disconnect();
 }

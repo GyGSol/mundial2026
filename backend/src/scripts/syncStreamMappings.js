@@ -1,5 +1,5 @@
 /**
- * Sincroniza mappings de transmisión desde la agenda La18HD (/eventos/json/agenda123.json)
+ * Sincroniza mappings de transmisión desde la agenda FPT (/agenda.php)
  * hacia StreamLinkMapping para los partidos del día.
  *
  * Uso: node src/scripts/syncStreamMappings.js [--dry-run]
@@ -8,16 +8,14 @@ import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import { Match } from '../models/Match.js';
 import { Team } from '../models/Team.js';
-import { resolveLa18StreamsForMatch } from '../services/la18hdScraper.js';
+import {
+  pickPreferredFptStream,
+  resolveFptStreamsForMatch,
+} from '../services/fptScraper.js';
 import { upsertStreamLinkMapping } from '../services/streamLinkService.js';
 import { formatDayKey, TRANSMISSIONS_TIMEZONE } from '../services/transmissionService.js';
 
 const dryRun = process.argv.includes('--dry-run');
-
-function pickPreferredStream(streams) {
-  if (!streams?.length) return null;
-  return streams.find((s) => s.url.includes('/vivo/canales.php')) || streams[0];
-}
 
 await mongoose.connect(env.mongodbUri);
 
@@ -60,13 +58,13 @@ try {
     const awayTeam = teamById[match.awayTeamId] || null;
     const label = `${homeTeam?.nameEn || match.homeTeamId} vs ${awayTeam?.nameEn || match.awayTeamId}`;
 
-    const { event, streams } = await resolveLa18StreamsForMatch(match, {
+    const { event, streams } = await resolveFptStreamsForMatch(match, {
       homeTeam,
       awayTeam,
       fetchImpl: fetch,
     });
 
-    const stream = pickPreferredStream(streams);
+    const stream = pickPreferredFptStream(streams);
     if (!stream?.url) {
       skipped += 1;
       console.log(`  · ${match.externalId} ${label} — sin señal en agenda`);
@@ -74,7 +72,7 @@ try {
     }
 
     mapped += 1;
-    const notes = event?.title ? `Auto: ${event.title}` : 'Auto: agenda La18HD';
+    const notes = event?.title ? `Auto: ${event.title}` : 'Auto: agenda FPT';
     console.log(`  ✓ ${match.externalId} ${label} → ${stream.label} (${stream.id})`);
 
     if (!dryRun) {

@@ -12,7 +12,7 @@ import {
 import { isIosDevice } from '@/lib/device';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
 
-const LA18_EVENTS_URL = 'https://la18hd.com/eventos/';
+const FPT_AGENDA_URL = 'https://futbolparatodos.su/agenda.php';
 
 export default function StreamAccessNoticeDialog({
   open,
@@ -100,7 +100,7 @@ export default function StreamAccessNoticeDialog({
               Reintentar señal
             </Button>
             <Button type="button" variant="ghost" className="w-full gap-2" asChild>
-              <a href={LA18_EVENTS_URL} target="_blank" rel="noopener noreferrer">
+              <a href={FPT_AGENDA_URL} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4 shrink-0" aria-hidden />
                 Más opciones en {USER_STREAM_BRAND}
               </a>

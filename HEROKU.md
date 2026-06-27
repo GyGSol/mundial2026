@@ -140,7 +140,7 @@ Endpoint: `GET /api/stream-config?matchId=<externalId>&channelId=<opcional>` —
 
 **Nota:** Fubo no publica un `.m3u8` libre; la señal en apps usa DRM/login. No hay `LIVE_STREAM_URL` mágica que saque el partido del Mundial desde Fubo automáticamente.
 
-### Transmisión La18HD (admin, sin redeploy)
+### Transmisión FPT — Fútbol para Todos (admin, sin redeploy)
 
 Fuente primaria configurable por partido desde el panel admin (`/admin/stream-links`). Solo se muestra cuando el partido está `live` y el usuario tiene sesión iniciada.
 
@@ -150,7 +150,7 @@ Fuente primaria configurable por partido desde el panel admin (`/admin/stream-li
 
 **Endpoint listado:** `GET /api/transmissions/today` (Bearer JWT de usuario).
 
-**Fallback automático:** si el iframe La18HD falla o tarda, la UI muestra Fubo Sports (YouTube `@FuboSports/live`).
+**Fallback automático:** si el iframe FPT falla o tarda, la UI muestra Fubo Sports (YouTube `@FuboSports/live`).
 
 **Admin API:**
 
@@ -166,22 +166,22 @@ Variables opcionales:
 
 ```bash
 heroku config:set \
-  LA18HD_BASE_URL="https://la18hd.com" \
-  LA18HD_SCRAPER_ENABLED=false \
+  FPT_BASE_URL="https://futbolparatodos.su" \
+  FPT_SCRAPER_ENABLED=true \
   -a mundial2026-pred
 ```
 
 Flujo operativo:
 
-1. En `/admin/stream-links`, tabla **Partidos de hoy** o formulario manual: asignar `matchExternalId` + URL del evento en [la18hd.com](https://la18hd.com/eventos/).
-2. **Auto-mapeo diario:** `npm run sync:streams` lee `/eventos/json/agenda123.json` y upsertea mappings para los partidos de hoy (alias de equipos en español).
+1. En `/admin/stream-links`, tabla **Partidos de hoy** o formulario manual: asignar `matchExternalId` + URL del evento en [futbolparatodos.su](https://futbolparatodos.su/agenda.php) (`/eventos.html?r=…`) o canal (`/canal/dsports.html`).
+2. **Auto-mapeo diario:** `npm run sync:streams` lee `/agenda.php` y upsertea mappings para los partidos de hoy (alias de equipos en español).
 3. Los usuarios ven el calendario del día en `/transmissions` (menú **Más → Transmisiones**).
 4. Cuando el sync marque el partido como `live`, aparece "Ver transmisión" si hay URL configurada.
 5. Actualizar URLs desde admin **no requiere redeploy**.
 
-**Hooks Cursor:** `.cursor/hooks.json` recuerda mapear La18HD al iniciar sesión y sugiere `sync:streams` al terminar cambios en transmisiones.
+**Hooks Cursor:** `.cursor/hooks.json` recuerda mapear FPT al iniciar sesión y sugiere `sync:streams` al terminar cambios en transmisiones.
 
-**Nota:** no guardar URLs `blob:` ni manifests MPD con token expirable; usar la página/evento estable de La18HD.
+**Nota:** guardar URLs estables de FPT (`eventos.html?r=…` o `/canal/*.html`), no URLs decodificadas de terceros ni manifests con token expirable.
 
 ### Notificaciones push (Web Push / FCM)
 

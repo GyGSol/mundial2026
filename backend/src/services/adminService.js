@@ -1261,8 +1261,8 @@ export async function suggestAdminStreamLinks(matchExternalId) {
     Team.findOne({ externalId: match.awayTeamId }).lean(),
   ]);
 
-  const { fetchLa18EventSuggestions } = await import('./la18hdScraper.js');
-  const result = await fetchLa18EventSuggestions(
+  const { fetchFptEventSuggestions } = await import('./fptScraper.js');
+  const result = await fetchFptEventSuggestions(
     match,
     homeTeam?.nameEn || homeTeam?.name || '',
     awayTeam?.nameEn || awayTeam?.name || '',

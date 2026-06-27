@@ -84,8 +84,17 @@ export const env = {
   apiFootballUrl: process.env.API_FOOTBALL_URL || 'https://v3.football.api-sports.io',
   apiFootballSeason: process.env.API_FOOTBALL_SEASON || '2026',
   liveStreamEnabled: process.env.LIVE_STREAM_ENABLED !== 'false',
-  la18hdBaseUrl: (process.env.LA18HD_BASE_URL || 'https://la18hd.com').replace(/\/$/, ''),
-  la18hdScraperEnabled: process.env.LA18HD_SCRAPER_ENABLED === 'true',
+  fptBaseUrl: (
+    process.env.FPT_BASE_URL ||
+    process.env.LA18HD_BASE_URL ||
+    'https://futbolparatodos.su'
+  ).replace(/\/$/, ''),
+  fptScraperEnabled:
+    process.env.FPT_SCRAPER_ENABLED !== undefined
+      ? process.env.FPT_SCRAPER_ENABLED !== 'false'
+      : process.env.LA18HD_SCRAPER_ENABLED !== undefined
+        ? process.env.LA18HD_SCRAPER_ENABLED === 'true'
+        : process.env.LIVE_STREAM_ENABLED !== 'false',
   liveStreamUrls: {
     'fubo-youtube': process.env.LIVE_STREAM_URL_FUBO_YOUTUBE || '',
     'fubo-web': process.env.LIVE_STREAM_URL_FUBO_WEB || '',

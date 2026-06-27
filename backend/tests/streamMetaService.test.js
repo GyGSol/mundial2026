@@ -7,19 +7,19 @@ import {
 describe('streamMetaService', () => {
   it('prioriza señales de la agenda sobre el canal auto', () => {
     const match = { externalId: '42' };
-    const la18Streams = [
+    const fptStreams = [
       {
         id: 'dsports',
         label: 'DSports',
-        url: 'https://la18hd.com/vivo/canales.php?stream=dsports',
-        source: 'la18hd',
+        url: 'https://futbolparatodos.su/eventos.html?r=abc',
+        source: 'fpt',
       },
     ];
 
-    const sources = resolveEffectiveStreamSources(match, null, la18Streams);
+    const sources = resolveEffectiveStreamSources(match, null, fptStreams);
     expect(sources).toHaveLength(1);
     expect(sources[0].id).toBe('dsports');
-    expect(inferStreamSourceKind(null, sources[0])).toBe('la18hd');
+    expect(inferStreamSourceKind(null, sources[0])).toBe('fpt');
   });
 
   it('usa canal auto cuando la agenda no devuelve señales', () => {
@@ -27,7 +27,7 @@ describe('streamMetaService', () => {
     const sources = resolveEffectiveStreamSources(match, null, []);
 
     expect(sources).toHaveLength(1);
-    expect(sources[0].url).toContain('stream=disney6');
+    expect(sources[0].url).toContain('/canal/espnpremium.html');
     expect(sources[0].source).toBe('auto');
     expect(inferStreamSourceKind(null, sources[0])).toBe('auto');
   });

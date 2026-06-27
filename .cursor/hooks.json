@@ -3,13 +3,13 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": ".cursor/hooks/la18-stream-map-reminder.sh"
+        "command": ".cursor/hooks/fpt-stream-map-reminder.sh"
       }
     ],
     "stop": [
       {
-        "command": ".cursor/hooks/la18-stream-map-on-stop.sh",
-        "matcher": "la18hd|streamLink|stream-mapping|transmis|La18Stream|syncStream"
+        "command": ".cursor/hooks/fpt-stream-map-on-stop.sh",
+        "matcher": "fptScraper|futbolparatodos|streamLink|stream-mapping|transmis|La18Stream|syncStream"
       }
     ]
   }
