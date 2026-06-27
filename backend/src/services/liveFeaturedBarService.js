@@ -79,7 +79,7 @@ export async function enrichFeaturedBarPayload({
       : Promise.resolve([]),
     recentFeaturedRaw.length
       ? Promise.all(
-          recentFeaturedRaw.map((raw) => enrichSingleMatchCached(raw, userId, 'full'))
+          recentFeaturedRaw.map((raw) => enrichSingleMatchCached(raw, userId, 'summary'))
         )
       : Promise.resolve([]),
   ]);

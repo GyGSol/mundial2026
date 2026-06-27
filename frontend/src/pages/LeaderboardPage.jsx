@@ -13,7 +13,7 @@ import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/lea
 import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
 import { mergeLiveDashboard, mergeLiveSnapshot } from '../lib/patchLiveMatchSnapshot.js';
-import { mergeLeaderboardDashboardRefresh, LIVE_PATCH_SKIP_POLL_MS } from '../lib/mergeDashboardShell.js';
+import { LIVE_PATCH_SKIP_POLL_MS } from '../lib/mergeDashboardShell.js';
 import { sortLiveMatchesForFeaturedBar } from '../lib/liveMatchFeaturedSort.js';
 import { writeStoredExpandedId } from '../hooks/useFeaturedLiveExpansion.js';
 import {
@@ -195,23 +195,15 @@ export default function LeaderboardPage() {
   });
   const expandedLiveMatchIdRef = useRef(expandedLiveMatchId);
   expandedLiveMatchIdRef.current = expandedLiveMatchId;
-  const dashboardLoadedRef = useRef(false);
   const lastLivePatchAtRef = useRef(0);
 
-  const fetchLeaderboard = useCallback(async () => {
-    if (dashboardLoadedRef.current) {
-      return leaderboardApi.dashboardShell(effectiveGroupId);
-    }
-    const payload = await leaderboardApi.dashboard(effectiveGroupId, {
-      detailMatchId: expandedLiveMatchIdRef.current ?? undefined,
-    });
-    dashboardLoadedRef.current = true;
-    return payload;
-  }, [effectiveGroupId]);
-
-  useEffect(() => {
-    dashboardLoadedRef.current = false;
-  }, [effectiveGroupId]);
+  const fetchLeaderboard = useCallback(
+    () =>
+      leaderboardApi.dashboard(effectiveGroupId, {
+        detailMatchId: expandedLiveMatchIdRef.current ?? undefined,
+      }),
+    [effectiveGroupId]
+  );
 
   const fetchLiveSnapshot = useCallback(
     () =>
@@ -253,7 +245,7 @@ export default function LeaderboardPage() {
       getPollIntervalMs: leaderboardPollIntervalMs,
       memoryCacheKey: `ranking:dashboard:${effectiveGroupId}`,
       memoryCacheTtlMs: 5_000,
-      mergeOnRefresh: mergeLeaderboardDashboardRefresh,
+      mergeOnRefresh: mergeLiveDashboard,
       pollWhen: pollWhenLeaderboard,
       realtimeDebounceMs: 750,
       realtimeEvents: [
