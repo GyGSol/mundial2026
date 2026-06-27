@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { teamsApi } from '../api/client.js';
+import { loadTeamKitFromClientCache } from '../lib/teamKitsClientCache.js';
 import { Skeleton } from '@/components/ui/skeleton.jsx';
 import { cn } from '@/lib/utils';
 
@@ -24,10 +25,16 @@ export default function PlayerKitBack({ fifaCode, shirtNumber, className }) {
     let cancelled = false;
     setLoading(true);
 
-    teamsApi
-      .getKit(code)
-      .then((data) => {
-        if (!cancelled) setKit(data?.kit ?? null);
+    loadTeamKitFromClientCache(code)
+      .then((cachedKit) => {
+        if (cancelled) return;
+        if (cachedKit) {
+          setKit(cachedKit);
+          return;
+        }
+        return teamsApi.getKit(code).then((data) => {
+          if (!cancelled) setKit(data?.kit ?? null);
+        });
       })
       .catch(() => {
         if (!cancelled) setKit(null);

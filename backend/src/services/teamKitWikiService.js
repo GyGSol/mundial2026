@@ -247,16 +247,15 @@ export async function getTeamKit(fifaCode, { fetchImpl = fetch } = {}) {
   const code = String(fifaCode ?? '').trim().toUpperCase();
   if (!code) return null;
 
-  const cached = memoryCache.get(code);
-  if (cached && Date.now() - cached.fetchedAt < MEMORY_TTL_MS) {
-    return cached.data;
-  }
-
   const doc = loadStaticKitDoc();
   const fromJson = doc.kits?.[code] ?? null;
   if (fromJson?.parts?.body) {
-    memoryCache.set(code, { data: fromJson, fetchedAt: Date.now() });
     return fromJson;
+  }
+
+  const cached = memoryCache.get(code);
+  if (cached && Date.now() - cached.fetchedAt < MEMORY_TTL_MS) {
+    return cached.data;
   }
 
   try {
@@ -267,6 +266,15 @@ export async function getTeamKit(fifaCode, { fetchImpl = fetch } = {}) {
     memoryCache.set(code, { data: null, fetchedAt: Date.now() });
     return null;
   }
+}
+
+export function getStaticTeamKitsBundle() {
+  const doc = loadStaticKitDoc();
+  return {
+    source: doc.source ?? 'wikipedia',
+    fetchedAt: doc.fetchedAt ?? null,
+    kits: doc.kits ?? {},
+  };
 }
 
 export function getTeamKitSyncMeta() {

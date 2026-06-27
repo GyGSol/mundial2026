@@ -61,6 +61,12 @@ describe('userAvatarService', () => {
       resolvePublicAvatarUrl({ isAiUser: false, avatarDataUrl: VALID_AVATAR, userId: 'u1' })
     ).toBe('/api/users/u1/avatar');
   });
+
+  it('resolvePublicAvatarUrl usa API con hasAvatar sin cargar base64', () => {
+    expect(
+      resolvePublicAvatarUrl({ isAiUser: false, hasAvatar: true, userId: 'u2' })
+    ).toBe('/api/users/u2/avatar');
+  });
 });
 
 describe('PATCH /api/auth/me avatar', () => {

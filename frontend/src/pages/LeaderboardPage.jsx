@@ -13,6 +13,7 @@ import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/lea
 import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
 import { mergeLiveDashboard, mergeLiveSnapshot } from '../lib/patchLiveMatchSnapshot.js';
+import { mergeDashboardShell, LIVE_PATCH_SKIP_POLL_MS } from '../lib/mergeDashboardShell.js';
 import { sortLiveMatchesForFeaturedBar } from '../lib/liveMatchFeaturedSort.js';
 import { writeStoredExpandedId } from '../hooks/useFeaturedLiveExpansion.js';
 import {
@@ -192,14 +193,23 @@ export default function LeaderboardPage() {
   });
   const expandedLiveMatchIdRef = useRef(expandedLiveMatchId);
   expandedLiveMatchIdRef.current = expandedLiveMatchId;
+  const dashboardLoadedRef = useRef(false);
+  const lastLivePatchAtRef = useRef(0);
 
-  const fetchLeaderboard = useCallback(
-    () =>
-      leaderboardApi.dashboard(effectiveGroupId, {
-        detailMatchId: expandedLiveMatchIdRef.current ?? undefined,
-      }),
-    [effectiveGroupId]
-  );
+  const fetchLeaderboard = useCallback(async () => {
+    if (dashboardLoadedRef.current) {
+      return leaderboardApi.dashboardShell(effectiveGroupId);
+    }
+    const payload = await leaderboardApi.dashboard(effectiveGroupId, {
+      detailMatchId: expandedLiveMatchIdRef.current ?? undefined,
+    });
+    dashboardLoadedRef.current = true;
+    return payload;
+  }, [effectiveGroupId]);
+
+  useEffect(() => {
+    dashboardLoadedRef.current = false;
+  }, [effectiveGroupId]);
 
   const fetchLiveSnapshot = useCallback(
     () =>
@@ -220,19 +230,38 @@ export default function LeaderboardPage() {
       pollWhen: shouldPollLeaderboardLive,
       memoryCacheKey: `ranking:dashboard:${effectiveGroupId}`,
       memoryCacheTtlMs: 5_000,
-      mergeOnRefresh: mergeLiveDashboard,
+      mergeOnRefresh: (prev, next) => {
+        if (next && !('liveMatches' in next)) {
+          return mergeDashboardShell(prev, next);
+        }
+        return mergeLiveDashboard(prev, next);
+      },
+      pollWhen: (payload) => {
+        if (
+          (payload?.liveMatches?.length ?? 0) > 0 &&
+          Date.now() - lastLivePatchAtRef.current < LIVE_PATCH_SKIP_POLL_MS
+        ) {
+          return false;
+        }
+        return shouldPollLeaderboardLive(payload);
+      },
       realtimeDebounceMs: 750,
       realtimeEvents: [
         REALTIME_EVENTS.MATCHES_UPDATED,
         REALTIME_EVENTS.LEADERBOARD_UPDATED,
         REALTIME_EVENTS.SYNC_COMPLETE,
       ],
-      onRealtimeMessage: (msg, ctx) =>
-        handleLiveSnapshotRealtime(msg, {
+      onRealtimeMessage: (msg, ctx) => {
+        const consumed = handleLiveSnapshotRealtime(msg, {
           patchData: ctx.patchData,
           fetchSnapshot: fetchLiveSnapshot,
           getData: ctx.getData,
-        }),
+        });
+        if (consumed) {
+          lastLivePatchAtRef.current = Date.now();
+        }
+        return consumed;
+      },
     }
   );
 

@@ -126,11 +126,13 @@ npx vitest run \
 
 - **H15 en `/ws` (~55 s):** idle timeout normal en Heroku; el cliente reconecta.
 - **Caché por dyno:** tras restart o múltiples dynos, primera request puede ser más lenta (cold).
-- **R14 memoria:** considerar upgrade dyno o perfilado aparte si persiste con pocos usuarios concurrentes.
-
----
-
-## Referencias en código
+- **R14 memoria (FBL-23):** offload al navegador para reducir RSS del dyno web:
+  - Leaderboard: agregación Mongo con `hasAvatar` (sin base64 en Node); respuestas exponen solo `avatarUrl`.
+  - Evolución de puntos: `GET /api/leaderboard/:groupId/points-evolution/raw` + `shared/leaderboardEvolution.js` (cálculo en cliente en `/charts`).
+  - Poll del ranking: primera carga = dashboard completo; refrescos = `GET /api/leaderboard/dashboard/shell` + merge en cliente (`mergeDashboardShell.js`); pausa poll 8 s tras snapshot WS.
+  - Camisetas: `GET /api/teams/kits-bundle` con `Cache-Control` + caché `sessionStorage` en `PlayerKitBack`.
+  - Monitorear R14 en Heroku durante ventanas en vivo; si persiste → FBL-24 (worker/backup fuera del web).
+- **Caché por dyno:** tras restart o múltiples dynos, primera request puede ser más lenta (cold).
 
 | Archivo | Rol |
 |---------|-----|
@@ -142,3 +144,6 @@ npx vitest run \
 | `backend/src/services/liveBarMatchProjection.js` | Proyección Mongo liviana |
 | `frontend/src/lib/patchLiveMatchSnapshot.js` | Merge snapshot en cliente |
 | `frontend/src/pages/LeaderboardPage.jsx` | Acordeón + poll |
+| `shared/leaderboardEvolution.js` | Evolución de puntos en cliente (FBL-23) |
+| `frontend/src/lib/mergeDashboardShell.js` | Merge shell + live bar (FBL-23) |
+| `frontend/src/lib/teamKitsClientCache.js` | Caché kits en sessionStorage (FBL-23) |

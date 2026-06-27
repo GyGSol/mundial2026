@@ -6,13 +6,7 @@ import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import { resolvePublicAvatarUrl } from './userAvatarService.js';
-import {
-  accumulateLeaderboardStats,
-  compareLeaderboardEntries,
-  createEmptyLeaderboardStats,
-} from './leaderboardService.js';
-import { calculateGoalDiff } from './scoringService.js';
-import { assignPlayerChartColors } from '../../../shared/playerChartColors.js';
+import { buildPointsEvolutionFromRaw } from '../../../shared/leaderboardEvolution.js';
 
 async function resolveGroup(groupId) {
   if (!groupId) {
@@ -42,22 +36,18 @@ async function getGroupMemberUsers(competitionGroupId) {
     return [];
   }
 
-  return User.find(filter)
-    .select('name isAiUser avatarDataUrl')
-    .lean();
-}
-
-function teamCode(team) {
-  if (!team) return null;
-  return team.fifaCode?.trim() || team.nameEn?.slice(0, 3).toUpperCase() || null;
-}
-
-function formatCheckpointLabel(match, teamByExternalId) {
-  const homeTeam = teamByExternalId.get(match.homeTeamId);
-  const awayTeam = teamByExternalId.get(match.awayTeamId);
-  const home = teamCode(homeTeam) ?? match.homeTeamId;
-  const away = teamCode(awayTeam) ?? match.awayTeamId;
-  return `${home} · ${away}`;
+  return User.aggregate([
+    { $match: filter },
+    {
+      $project: {
+        name: 1,
+        isAiUser: 1,
+        hasAvatar: {
+          $gt: [{ $strLenCP: { $ifNull: ['$avatarDataUrl', ''] } }, 0],
+        },
+      },
+    },
+  ]);
 }
 
 function compareMatchesChronologically(a, b) {
@@ -67,38 +57,7 @@ function compareMatchesChronologically(a, b) {
   return String(a.externalId).localeCompare(String(b.externalId));
 }
 
-function computeRanksByUserId(users, statsByUserId) {
-  const rows = users.map((user) => {
-    const userId = user._id.toString();
-    const stats = statsByUserId.get(userId) ?? createEmptyLeaderboardStats();
-    return { userId, name: user.name, ...stats };
-  });
-  rows.sort(compareLeaderboardEntries);
-  return new Map(rows.map((row, index) => [row.userId, index + 1]));
-}
-
-function appendRankSnapshot(users, statsByUserId, ranksSeriesByUserId) {
-  const ranksByUserId = computeRanksByUserId(users, statsByUserId);
-  for (const user of users) {
-    const userId = user._id.toString();
-    ranksSeriesByUserId.get(userId).push(ranksByUserId.get(userId));
-  }
-}
-
-function goalDiffForPrediction(prediction, match) {
-  if (prediction.goalDiffHome != null || prediction.goalDiffAway != null) {
-    return {
-      home: prediction.goalDiffHome ?? 0,
-      away: prediction.goalDiffAway ?? 0,
-    };
-  }
-  return calculateGoalDiff(
-    { home: prediction.homeGoals, away: prediction.awayGoals },
-    { home: match.homeScore ?? 0, away: match.awayScore ?? 0 }
-  );
-}
-
-export async function getLeaderboardPointsEvolution(competitionGroupId) {
+export async function getLeaderboardPointsEvolutionRaw(competitionGroupId) {
   const groupResult = await resolveGroup(competitionGroupId);
   if (groupResult.notFound) {
     return { notFound: true };
@@ -108,10 +67,11 @@ export async function getLeaderboardPointsEvolution(competitionGroupId) {
   if (!users.length) {
     return {
       group: groupResult.group,
-      checkpoints: [{ index: 0, label: 'Inicio', matchId: null }],
-      series: [],
+      users: [],
+      matches: [],
+      predictions: [],
+      teams: [],
       hasLiveMatches: false,
-      lastUpdatedAt: new Date().toISOString(),
     };
   }
 
@@ -128,7 +88,9 @@ export async function getLeaderboardPointsEvolution(competitionGroupId) {
   const matchIds = [...new Set(predictions.map((prediction) => prediction.matchId.toString()))];
   const matches =
     matchIds.length > 0
-      ? await Match.find({ _id: { $in: matchIds } }).lean()
+      ? await Match.find({ _id: { $in: matchIds } })
+          .select('externalId kickoffAt homeTeamId awayTeamId homeScore awayScore')
+          .lean()
       : [];
   matches.sort(compareMatchesChronologically);
 
@@ -136,82 +98,57 @@ export async function getLeaderboardPointsEvolution(competitionGroupId) {
   const teams = teamIds.length
     ? await Team.find({ externalId: { $in: teamIds } }).select('externalId fifaCode nameEn').lean()
     : [];
-  const teamByExternalId = new Map(teams.map((team) => [team.externalId, team]));
-
-  const predictionByUserMatch = new Map(
-    predictions.map((prediction) => [
-      `${prediction.userId.toString()}:${prediction.matchId.toString()}`,
-      prediction,
-    ])
-  );
-
-  const checkpoints = [
-    { index: 0, label: 'Inicio', matchId: null },
-    ...matches.map((match, idx) => ({
-      index: idx + 1,
-      label: formatCheckpointLabel(match, teamByExternalId),
-      matchId: match._id.toString(),
-    })),
-  ];
-
-  const statsByUserId = new Map(
-    users.map((user) => [user._id.toString(), createEmptyLeaderboardStats()])
-  );
-  const ranksSeriesByUserId = new Map(
-    users.map((user) => [user._id.toString(), [0]])
-  );
-
-  for (const match of matches) {
-    for (const user of users) {
-      const userId = user._id.toString();
-      const prediction = predictionByUserMatch.get(`${userId}:${match._id.toString()}`);
-      if (!prediction) continue;
-
-      const stats = statsByUserId.get(userId);
-      accumulateLeaderboardStats(
-        stats,
-        prediction.pointsBreakdown,
-        prediction.pointsEarned,
-        prediction.bonusPoint ?? 0,
-        goalDiffForPrediction(prediction, match)
-      );
-    }
-    appendRankSnapshot(users, statsByUserId, ranksSeriesByUserId);
-  }
-
-  const finalRanks = computeRanksByUserId(users, statsByUserId);
-  const sortedUsers = [...users].sort((a, b) => {
-    const rankA = finalRanks.get(a._id.toString()) ?? users.length;
-    const rankB = finalRanks.get(b._id.toString()) ?? users.length;
-    if (rankA !== rankB) return rankA - rankB;
-    return a.name.localeCompare(b.name, 'es');
-  });
-
-  const colorByUserId = assignPlayerChartColors(users.map((user) => user._id.toString()));
-
-  const series = sortedUsers.map((user) => {
-    const userId = user._id.toString();
-    return {
-      userId,
-      name: user.name,
-      avatarUrl: resolvePublicAvatarUrl({
-        isAiUser: user.isAiUser,
-        avatarDataUrl: user.avatarDataUrl,
-        userId,
-      }),
-      isAiUser: Boolean(user.isAiUser),
-      color: colorByUserId.get(userId),
-      ranks: ranksSeriesByUserId.get(userId) ?? [],
-    };
-  });
 
   const liveCount = await Match.countDocuments({ status: 'live' });
 
   return {
     group: groupResult.group,
-    checkpoints,
-    series,
+    users: users.map((user) => {
+      const userId = user._id.toString();
+      return {
+        id: userId,
+        name: user.name,
+        isAiUser: Boolean(user.isAiUser),
+        avatarUrl: resolvePublicAvatarUrl({
+          isAiUser: user.isAiUser,
+          hasAvatar: user.hasAvatar,
+          userId,
+        }),
+      };
+    }),
+    matches: matches.map((match) => ({
+      id: match._id.toString(),
+      externalId: match.externalId,
+      kickoffAt: match.kickoffAt?.toISOString?.() ?? match.kickoffAt ?? null,
+      homeTeamId: match.homeTeamId,
+      awayTeamId: match.awayTeamId,
+      homeScore: match.homeScore,
+      awayScore: match.awayScore,
+    })),
+    predictions: predictions.map((prediction) => ({
+      userId: prediction.userId.toString(),
+      matchId: prediction.matchId.toString(),
+      pointsEarned: prediction.pointsEarned,
+      bonusPoint: prediction.bonusPoint ?? 0,
+      pointsBreakdown: prediction.pointsBreakdown,
+      goalDiffHome: prediction.goalDiffHome,
+      goalDiffAway: prediction.goalDiffAway,
+      homeGoals: prediction.homeGoals,
+      awayGoals: prediction.awayGoals,
+    })),
+    teams: teams.map((team) => ({
+      externalId: team.externalId,
+      fifaCode: team.fifaCode,
+      nameEn: team.nameEn,
+    })),
     hasLiveMatches: liveCount > 0,
-    lastUpdatedAt: new Date().toISOString(),
   };
+}
+
+export async function getLeaderboardPointsEvolution(competitionGroupId) {
+  const raw = await getLeaderboardPointsEvolutionRaw(competitionGroupId);
+  if (raw.notFound) {
+    return { notFound: true };
+  }
+  return buildPointsEvolutionFromRaw(raw);
 }

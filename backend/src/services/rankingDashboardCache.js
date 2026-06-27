@@ -1,4 +1,4 @@
-import { getRankingDashboard } from './rankingDashboardService.js';
+import { getRankingDashboard, getRankingDashboardShell } from './rankingDashboardService.js';
 import { createInMemoryCache } from './inMemoryCache.js';
 import { invalidateRankingDashboardShellCache } from './rankingDashboardShellCache.js';
 import { invalidateLiveFeaturedBarCache } from './liveFeaturedBarCache.js';
@@ -31,6 +31,10 @@ export function invalidateRankingDashboardCache(groupId) {
   }
   cache.invalidatePrefix(`${groupId}:`);
   invalidateRankingDashboardShellCache(groupId);
+}
+
+export async function getCachedRankingDashboardShellOnly(groupId, userId) {
+  return getRankingDashboardShell(groupId, userId);
 }
 
 export async function getCachedRankingDashboard(groupId, userId, detailMatchId) {

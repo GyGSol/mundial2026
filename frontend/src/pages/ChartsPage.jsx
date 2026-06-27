@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { LineChart } from 'lucide-react';
+import { buildPointsEvolutionFromRaw } from '../../../shared/leaderboardEvolution.js';
 import { leaderboardApi } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { isSevereError } from '../lib/apiError.js';
@@ -90,7 +91,8 @@ export default function ChartsPage() {
     let cancelled = false;
 
     leaderboardApi
-      .pointsEvolution(selectedGroupId)
+      .pointsEvolutionRaw(selectedGroupId)
+      .then((raw) => buildPointsEvolutionFromRaw(raw))
       .then((payload) => {
         if (cancelled) return;
         sessionCacheRef.current.set(selectedGroupId, payload);

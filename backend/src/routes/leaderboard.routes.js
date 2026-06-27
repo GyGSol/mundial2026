@@ -2,12 +2,30 @@ import { Router } from 'express';
 import { getLeaderboard } from '../services/leaderboardService.js';
 import { getLastSyncAt } from '../services/syncService.js';
 import { getCompetitionGroupById } from '../services/competitionGroupService.js';
-import { getCachedRankingDashboard } from '../services/rankingDashboardCache.js';
-import { getCachedLeaderboardPointsEvolution } from '../services/leaderboardPointsEvolutionCache.js';
+import { getCachedRankingDashboard, getCachedRankingDashboardShellOnly } from '../services/rankingDashboardCache.js';
+import { getLeaderboardPointsEvolutionRaw, getLeaderboardPointsEvolution } from '../services/leaderboardPointsEvolutionService.js';
 import { getRankingFinishedArchive } from '../services/rankingDashboardService.js';
 import { optionalAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
+
+router.get('/dashboard/shell', optionalAuth, async (req, res, next) => {
+  try {
+    const groupId = req.query.groupId || null;
+    if (!groupId) {
+      return res.status(400).json({ error: 'groupId es obligatorio' });
+    }
+
+    const payload = await getCachedRankingDashboardShellOnly(groupId, req.user?._id);
+    if (payload.notFound) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
+    res.json(payload);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/dashboard', optionalAuth, async (req, res, next) => {
   try {
@@ -38,6 +56,24 @@ router.get('/finished-archive', optionalAuth, async (req, res, next) => {
   }
 });
 
+router.get('/:groupId/points-evolution/raw', optionalAuth, async (req, res, next) => {
+  try {
+    const { groupId } = req.params;
+    if (!groupId) {
+      return res.status(400).json({ error: 'groupId es obligatorio' });
+    }
+
+    const payload = await getLeaderboardPointsEvolutionRaw(groupId);
+    if (payload.notFound) {
+      return res.status(404).json({ error: 'Grupo no encontrado' });
+    }
+
+    res.json(payload);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/:groupId/points-evolution', optionalAuth, async (req, res, next) => {
   try {
     const { groupId } = req.params;
@@ -45,7 +81,7 @@ router.get('/:groupId/points-evolution', optionalAuth, async (req, res, next) =>
       return res.status(400).json({ error: 'groupId es obligatorio' });
     }
 
-    const payload = await getCachedLeaderboardPointsEvolution(groupId);
+    const payload = await getLeaderboardPointsEvolution(groupId);
     if (payload.notFound) {
       return res.status(404).json({ error: 'Grupo no encontrado' });
     }

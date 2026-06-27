@@ -214,8 +214,14 @@ export const leaderboardApi = {
     if (detailMatchId) params.set('detailMatchId', String(detailMatchId));
     return request(`/leaderboard/dashboard?${params.toString()}`);
   },
+  dashboardShell: (groupId) => {
+    const params = new URLSearchParams({ groupId: String(groupId) });
+    return request(`/leaderboard/dashboard/shell?${params.toString()}`);
+  },
   pointsEvolution: (groupId) =>
     request(`/leaderboard/${encodeURIComponent(groupId)}/points-evolution`),
+  pointsEvolutionRaw: (groupId) =>
+    request(`/leaderboard/${encodeURIComponent(groupId)}/points-evolution/raw`),
   finishedArchive: () => request('/leaderboard/finished-archive'),
 };
 

@@ -428,9 +428,22 @@ export async function getLeaderboard(competitionGroupId, limit = 100, options = 
     filter = { _id: { $in: memberUserIds } };
   }
 
-  const users = await User.find(filter).select(
-    'name totalPoints createdAt activeCompetitionGroupId competitionGroupId isAiUser avatarDataUrl'
-  );
+  const users = await User.aggregate([
+    { $match: filter },
+    {
+      $project: {
+        name: 1,
+        totalPoints: 1,
+        createdAt: 1,
+        activeCompetitionGroupId: 1,
+        competitionGroupId: 1,
+        isAiUser: 1,
+        hasAvatar: {
+          $gt: [{ $strLenCP: { $ifNull: ['$avatarDataUrl', ''] } }, 0],
+        },
+      },
+    },
+  ]);
   const statsMap = await getPredictionStatsByUser(users.map((u) => u._id), {
     liveKickoffBaselineMatchIds,
     excludeMatchIds,
@@ -453,7 +466,7 @@ export async function getLeaderboard(competitionGroupId, limit = 100, options = 
       name: user.name,
       avatarUrl: resolvePublicAvatarUrl({
         isAiUser: user.isAiUser,
-        avatarDataUrl: user.avatarDataUrl,
+        hasAvatar: user.hasAvatar,
         userId: user._id.toString(),
       }),
       isAiUser: Boolean(user.isAiUser),

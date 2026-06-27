@@ -63,8 +63,8 @@ export function getUserAvatarPublicPath(userId) {
 }
 
 /** URL pública para ranking/header: moneda Fubol en IA, API en humanos con foto. */
-export function resolvePublicAvatarUrl({ isAiUser, avatarDataUrl, userId }) {
+export function resolvePublicAvatarUrl({ isAiUser, avatarDataUrl, hasAvatar, userId }) {
   if (isAiUser) return AI_USER_AVATAR_URL;
-  if (avatarDataUrl) return getUserAvatarPublicPath(userId);
+  if (avatarDataUrl || hasAvatar) return getUserAvatarPublicPath(userId);
   return null;
 }

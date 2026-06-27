@@ -1,9 +1,21 @@
 import { Router } from 'express';
 import { Team } from '../models/Team.js';
 import { fetchCoachWiki } from '../services/coachWikiService.js';
-import { getTeamKit } from '../services/teamKitWikiService.js';
+import { getTeamKit, getStaticTeamKitsBundle } from '../services/teamKitWikiService.js';
 
 const router = Router();
+
+const KITS_BUNDLE_CACHE_SEC = 86_400;
+
+router.get('/teams/kits-bundle', async (req, res, next) => {
+  try {
+    const bundle = getStaticTeamKitsBundle();
+    res.set('Cache-Control', `public, max-age=${KITS_BUNDLE_CACHE_SEC}`);
+    res.json(bundle);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/teams', async (req, res, next) => {
   try {
@@ -39,6 +51,7 @@ router.get('/teams/:fifaCode/kit', async (req, res, next) => {
       return res.status(404).json({ error: 'Indumentaria no disponible para esta selección' });
     }
 
+    res.set('Cache-Control', 'public, max-age=86400');
     res.json({ kit });
   } catch (err) {
     next(err);

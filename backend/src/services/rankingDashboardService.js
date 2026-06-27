@@ -200,6 +200,29 @@ async function buildRankingDashboardShell(groupId, userId, inputs, groupResult) 
   };
 }
 
+export async function getRankingDashboardShell(groupId, userId) {
+  const groupResult = await resolveGroup(groupId);
+  if (groupResult.notFound) {
+    return { notFound: true };
+  }
+
+  const inputs = await fetchRankingDashboardMatchInputs();
+  const inputsSignature = featuredBarInputsSignature(
+    inputs.activeLiveRaw,
+    inputs.recentFeaturedRaw
+  );
+  const hasLiveOrRecent =
+    inputs.activeLiveRaw.length > 0 || inputs.recentFeaturedRaw.length > 0;
+
+  return getCachedRankingDashboardShell(
+    groupId,
+    userId,
+    inputsSignature,
+    () => buildRankingDashboardShell(groupId, userId, inputs, groupResult),
+    { hasLiveOrRecent }
+  );
+}
+
 export async function getRankingDashboard(groupId, userId, detailMatchId) {
   const groupResult = await resolveGroup(groupId);
   if (groupResult.notFound) {
