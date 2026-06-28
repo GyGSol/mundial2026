@@ -52,6 +52,15 @@ describe('calculatePoints', () => {
     expect(result.total).toBe(4);
   });
 
+  it('empate 1-1 tras alargue con penales: 6 pts si predicción 1-1 (marcador de juego)', () => {
+    const result = calculatePoints({ home: 1, away: 1 }, { home: 1, away: 1 });
+    expect(result.breakdown.winner).toBe(3);
+    expect(result.breakdown.homeGoals).toBe(1);
+    expect(result.breakdown.awayGoals).toBe(1);
+    expect(result.breakdown.totalGoals).toBe(1);
+    expect(result.total).toBe(6);
+  });
+
   it('ganador incorrecto pero volumen acertado: +1', () => {
     const result = calculatePoints({ home: 2, away: 0 }, { home: 0, away: 2 });
     expect(result.breakdown.winner).toBe(0);

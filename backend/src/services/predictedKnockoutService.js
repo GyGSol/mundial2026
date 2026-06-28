@@ -3,6 +3,7 @@ import { buildLoserMatchSlotDisplay, buildWinnerMatchSlotDisplay, formatKnockout
 import { KNOCKOUT_ROUNDS } from './simulationTournamentService.js';
 import { hasUserPrediction } from './predictionLockService.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
+import { resolvePenaltyShootoutForMatch } from './penaltyShootoutService.js';
 
 /** Partidos R32 donde un 3.º clasificado enfrenta al ganador del grupo indicado. */
 const THIRD_PLACE_MATCH_WINNER_SLOTS = {
@@ -194,6 +195,23 @@ function resolveSlotLabel({
   return { team: null, slotLabel: formatKnockoutSlotLabelEs(label) || label, slotSourceMatch: null };
 }
 
+function resolveFinishedKnockoutWinnerFromPenalties(match, teamMap) {
+  const shootout = resolvePenaltyShootoutForMatch(match.raw ?? {});
+  if (!shootout?.winnerSide) return null;
+
+  const winnerId =
+    shootout.winnerSide === 'home' ? match.homeTeamId : match.awayTeamId;
+  const loserId =
+    shootout.winnerSide === 'home' ? match.awayTeamId : match.homeTeamId;
+  const winnerTeam = teamMap[winnerId];
+  const loserTeam = teamMap[loserId];
+
+  return {
+    winner: winnerTeam ? formatTeamRef(winnerTeam) : null,
+    loser: loserTeam ? formatTeamRef(loserTeam) : null,
+  };
+}
+
 function getSimulatedOutcome(match, prediction, teamMap) {
   let homeGoals;
   let awayGoals;
@@ -209,6 +227,10 @@ function getSimulatedOutcome(match, prediction, teamMap) {
   }
 
   if (homeGoals === awayGoals) {
+    if (match.status === 'finished') {
+      const fromPenalties = resolveFinishedKnockoutWinnerFromPenalties(match, teamMap);
+      if (fromPenalties?.winner) return fromPenalties;
+    }
     return { winner: null, loser: null };
   }
 

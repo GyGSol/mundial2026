@@ -18,6 +18,11 @@ import {
   serializeMatchPlayStateForClient,
   resolvePausedDisplayClock,
 } from './matchPlayStateService.js';
+import {
+  isTimelineShootoutKick,
+  partitionTimelineForShootout,
+  resolvePenaltyShootoutForMatch,
+} from './penaltyShootoutService.js';
 
 /** Máximo goles plausibles en un partido (incluye prórroga). */
 export const MAX_PLAUSIBLE_MATCH_GOALS = 15;
@@ -915,13 +920,13 @@ export function readMatchTimeline(raw = {}) {
   return buildTimelineFromLegacy(raw, events);
 }
 
-/** @param {Array<{ type?: string, side?: string }>} timeline */
+/** @param {Array<{ type?: string, side?: string, isShootoutKick?: boolean }>} timeline */
 export function goalCountsFromTimeline(timeline = []) {
   let home = 0;
   let away = 0;
 
   for (const event of timeline) {
-    if (event.type !== 'goal') continue;
+    if (event.type !== 'goal' || isTimelineShootoutKick(event)) continue;
     if (event.side === 'home') home += 1;
     else if (event.side === 'away') away += 1;
   }
@@ -935,7 +940,7 @@ export function scorersFromTimeline(timeline = []) {
   const away = [];
 
   for (const event of timeline) {
-    if (event.type !== 'goal' || !event.player) continue;
+    if (event.type !== 'goal' || isTimelineShootoutKick(event) || !event.player) continue;
     const entry = {
       name: String(event.player).trim(),
       minute: event.minute ?? null,
@@ -943,6 +948,7 @@ export function scorersFromTimeline(timeline = []) {
       shirtNumber: event.playerShirtNumber ?? null,
       positionX: event.positionX ?? null,
       positionY: event.positionY ?? null,
+      ...(event.isPenalty ? { isPenalty: true } : {}),
     };
     if (event.side === 'home') home.push(entry);
     else if (event.side === 'away') away.push(entry);
@@ -1485,6 +1491,7 @@ export function enrichMatchLiveFields(match, options = {}) {
       ),
       matchTimeline: [],
       fifaReportStats: null,
+      penaltyShootout: null,
     };
   }
 
@@ -1524,6 +1531,11 @@ export function enrichMatchLiveFields(match, options = {}) {
         awayScore: scoreSeed.awayScore,
       })
     : [];
+
+  const { fieldEvents: fieldTimeline } = partitionTimelineForShootout(matchTimeline);
+  matchTimeline = fieldTimeline;
+
+  const penaltyShootout = showResults ? resolvePenaltyShootoutForMatch(raw) : null;
 
   if (showResults && matchTimeline.length > 0 && priorTournamentGoalCounts) {
     matchTimeline = attachTimelineTournamentGoals(matchTimeline, priorTournamentGoalCounts);
@@ -1586,5 +1598,6 @@ export function enrichMatchLiveFields(match, options = {}) {
     awaySubstitutions,
     matchTimeline,
     fifaReportStats: showResults ? (raw.fifaReportStats ?? null) : null,
+    penaltyShootout,
   };
 }

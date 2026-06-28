@@ -31,6 +31,7 @@ import { env } from '../config/env.js';
 import { buildFifaLineupSides } from './fifaLineupService.js';
 import { buildLineupSnapshotFromSources } from './matchLineupService.js';
 import { extractFifaLiveState } from './matchPlayStateService.js';
+import { readFifaPenaltyShootoutScores } from './penaltyShootoutService.js';
 
 /** Máxima antigüedad de raw.fifaEvents.syncedAt antes de refrescar en el loop en vivo. */
 export const LIVE_FIFA_EVENTS_MAX_AGE_MS = env.liveFifaRefreshMs;
@@ -272,6 +273,9 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
     ? mergedScores.awayScore
     : mergePlausibleGoalCounts(match.awayScore, mergedScores.awayScore);
 
+  const penaltyScores = readFifaPenaltyShootoutScores(fifaEntry);
+  const winnerTeamId = fifaEntry?.Winner != null ? String(fifaEntry.Winner) : null;
+
   rawUpdate['raw.fifaMeta'] = {
     idMatch: String(fifaEntry.IdMatch),
     idStage: String(fifaEntry.IdStage),
@@ -285,6 +289,14 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
     ...(hasFifaScore || timelineGoals.home + timelineGoals.away > 0
       ? { homeScore: mergedScores.homeScore, awayScore: mergedScores.awayScore }
       : {}),
+    ...(penaltyScores
+      ? {
+          homePenaltyScore: penaltyScores.homeScore,
+          awayPenaltyScore: penaltyScores.awayScore,
+        }
+      : {}),
+    ...(winnerTeamId ? { winnerTeamId } : {}),
+    ...(fifaEntry?.Period != null ? { period: String(fifaEntry.Period) } : {}),
     syncedAt: new Date().toISOString(),
   };
   rawUpdate['raw.fifaEvents'] = {

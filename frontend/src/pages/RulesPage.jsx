@@ -17,6 +17,13 @@ const gameRules = [
   'Punto consuelo (PB): si no sumás puntos en 3 partidos consecutivos, recibís +1 PB al finalizar el tercero. El contador se reinicia y podés volver a ganarlo.',
 ];
 
+const knockoutRules = [
+  'En fase eliminatoria (octavos en adelante), la predicción es el marcador tras el alargue (90 minutos + prórroga si la hay).',
+  'Podés predecir empate: es válido si el partido termina empatado tras el alargue.',
+  'Los goles de la tanda de penales no cuentan para puntuar ni para el marcador de comparación.',
+  'En la app, el marcador en vivo muestra el resultado de juego y, si hubo tanda, los penales por separado.',
+];
+
 const tiebreakerRules = [
   'Puntos totales',
   'PA (aciertos de resultado)',
@@ -63,6 +70,21 @@ export default function RulesPage() {
               >
                 <span>{rule.label}</span>
                 <span className="font-semibold">{rule.points}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Fase eliminatoria (alargue y penales)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="flex flex-col gap-3 text-sm text-muted-foreground">
+            {knockoutRules.map((rule) => (
+              <li key={rule} className="border-b border-border pb-3 last:border-0 last:pb-0">
+                {rule}
               </li>
             ))}
           </ul>

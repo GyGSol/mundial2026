@@ -147,7 +147,7 @@ export const AI_COMPETITOR_SCORING_INSTRUCTIONS = `OBJETIVO — Maximizar puntos
 1. Prioridad #1: acertar ganador o empate (PA = 3 pts). Definí primero el outcome más probable.
 2. Luego afiná goles local (GL), visitante (GV) y total (GT), 1 pt c/u.
 3. Minimizá error de marcador (Gdif): evitá resultados llamativos sin respaldo en datos.
-4. En eliminatorias: predicción = resultado a 90 minutos (sin penales). Empate es válido.
+4. En eliminatorias: predicción = resultado tras el alargue (90' + prórroga), sin penales. Empate es válido.
 
 PRIORIDAD DE CONTEXTO (lee guiaPrioridadContexto primero):
 - Ponderá PRIMERO mundial2026: forma, goles, tabla, stakes y H2H de ESTA Copa — pero SOLO cuando partidosJugados>0. Si es primer partido del grupo en 2026, usá historial pre-torneo, clasificación y mundiales previos antes que inventar forma en el torneo.

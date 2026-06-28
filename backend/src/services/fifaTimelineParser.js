@@ -1,6 +1,12 @@
-/** @typedef {'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'shot_attempt' | 'goal_disallowed' | 'yellow_card_reassigned' | 'var_decision' | 'hydration_break' | 'period_start' | 'period_end' | 'match_end'} TimelineEventType */
+/** @typedef {'goal' | 'penalty_shootout_kick' | 'yellow_card' | 'red_card' | 'substitution' | 'foul' | 'shot_attempt' | 'goal_disallowed' | 'yellow_card_reassigned' | 'var_decision' | 'hydration_break' | 'period_start' | 'period_end' | 'match_end'} TimelineEventType */
 
-export const FIFA_INCLUDED_EVENT_TYPES = new Set([0, 2, 3, 5, 7, 8, 12, 18, 26, 71, 83]);
+import {
+  isFifaShootoutPeriod,
+  isInGamePenaltyDescription,
+  isShootoutKickDescription,
+} from './penaltyShootoutService.js';
+
+export const FIFA_INCLUDED_EVENT_TYPES = new Set([0, 2, 3, 5, 7, 8, 12, 18, 26, 41, 71, 83]);
 
 const INCLUDED_TYPES = FIFA_INCLUDED_EVENT_TYPES;
 
@@ -87,7 +93,9 @@ function extractPlayerName(description, fallback = '') {
 
   const patterns = [
     /^(.+?)\s*\([^)]+\)\s+(?:scores!!|scores a goal|is booked|is sent off!|commits a foul\.|attempts an effort on goal)/i,
-    /^(.+?)\s+scores(?:!!| a goal| for\b)/i,
+    /^(.+?)\s*\([^)]+\)\s+(?:scores|misses|successfully converts)/i,
+    /^(.+?)\s+scores(?:!!| a goal| for\b| in the penalty shoot-out)/i,
+    /^(.+?)\s+(?:misses|successfully converts)/i,
     /^(.+?)\s*\(in\)/i,
     /^(.+?)\s*\(out\)/i,
   ];
@@ -168,8 +176,17 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
 
   const description = localizedDescription(event);
   const timing = parseFifaMinute(event.MatchMinute);
+  const fifaPeriod = event.Period != null ? event.Period : null;
+  const shootoutPeriod = isFifaShootoutPeriod(fifaPeriod);
+  const shootoutKick =
+    shootoutPeriod || (event.Type === 0 && isShootoutKickDescription(description));
+
   let type = /** @type {TimelineEventType} */ (TYPE_MAP[event.Type]);
-  if (event.Type === 71) {
+  if (event.Type === 41 || (event.Type === 0 && isInGamePenaltyDescription(description))) {
+    type = 'goal';
+  } else if (shootoutKick) {
+    type = 'penalty_shootout_kick';
+  } else if (event.Type === 71) {
     type = resolveVarEventType(description);
   }
   const neutral = isNeutralTimelineEvent(type);
@@ -191,6 +208,8 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     extraMinute: timing.extraMinute,
     type,
     side: neutral ? null : side,
+    fifaPeriod,
+    isShootoutKick: shootoutKick && !neutral,
     phase: inferPeriodPhase(type, description, timing.minute),
     player: null,
     playerIn: null,
@@ -227,8 +246,24 @@ export function buildFifaTimelineEntry(event, homeTeamId, awayTeamId) {
     entry.idPlayerIn = event.IdPlayer != null ? String(event.IdPlayer) : null;
     entry.idPlayerOut = event.IdSubPlayer != null ? String(event.IdSubPlayer) : null;
     if (!entry.playerIn || !entry.playerOut) return entry;
-  } else if (!entry.player) {
+  } else if (!entry.player && type !== 'penalty_shootout_kick' && event.Type !== 41) {
     return entry;
+  }
+
+  if (type === 'goal' && (event.Type === 41 || isInGamePenaltyDescription(description))) {
+    entry.isPenalty = true;
+  }
+
+  if (type === 'penalty_shootout_kick') {
+    const desc = description.toLowerCase();
+    entry.scored =
+      event.Type === 0 &&
+      !desc.includes('misses') &&
+      !desc.includes('saved') &&
+      !desc.includes('not scored');
+    if (desc.includes('misses') || desc.includes('saved') || desc.includes('not scored')) {
+      entry.scored = false;
+    }
   }
 
   return entry;
@@ -251,6 +286,11 @@ export function parseFifaTimeline(timelineJson, homeTeamId, awayTeamId) {
     }
 
     if (entry.type === 'substitution' && (!entry.playerIn || !entry.playerOut)) continue;
+
+    if (entry.type === 'penalty_shootout_kick') {
+      parsed.push(entry);
+      continue;
+    }
 
     parsed.push(entry);
   }

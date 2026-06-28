@@ -52,6 +52,7 @@ import VenueCurrentWeatherCorner from '@/components/VenueCurrentWeatherCorner.js
 import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchPlayStateBadge.jsx';
 import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 import { sortLiveMatchesForFeaturedBar } from '@/lib/liveMatchFeaturedSort.js';
+import PenaltyShootoutDisplay, { PenaltyShootoutScoreLine } from '@/components/PenaltyShootoutDisplay.jsx';
 
 const matchDateLabel = (match) =>
   formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
@@ -97,7 +98,22 @@ function normalizeScorerList(scorers) {
 function formatScorerLine(scorer) {
   if (!scorer?.name) return null;
   const label = formatSummaryPlayer(scorer);
-  return scorer.minute != null ? `${scorer.minute}' ${label}` : label;
+  const penaltySuffix = scorer.isPenalty ? ' (p)' : '';
+  const base = scorer.minute != null ? `${scorer.minute}' ${label}` : label;
+  return `${base}${penaltySuffix}`;
+}
+
+function MatchScoreCenter({ match, scoreClassName = 'text-xl' }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div className={cn('match-live-score flex items-center gap-1 font-bold tabular-nums', scoreClassName)}>
+        <span>{match.homeScore}</span>
+        <span className="text-muted-foreground">-</span>
+        <span>{match.awayScore}</span>
+      </div>
+      <PenaltyShootoutScoreLine penaltyShootout={match.penaltyShootout} />
+    </div>
+  );
 }
 
 function cardSymbol(card) {
@@ -966,13 +982,7 @@ function ResultMatchCard({ match, variant = 'live' }) {
           awayBookings={match.awayBookings}
           homeSubstitutions={match.homeSubstitutions}
           awaySubstitutions={match.awaySubstitutions}
-          center={
-            <div className="match-live-score flex items-center gap-1 text-xl font-bold tabular-nums">
-              <span>{match.homeScore}</span>
-              <span className="text-muted-foreground">-</span>
-              <span>{match.awayScore}</span>
-            </div>
-          }
+          center={<MatchScoreCenter match={match} />}
         />
 
         <span className="match-live-text-meta text-[11px] text-muted-foreground">
@@ -1044,11 +1054,7 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             homeSubstitutions={match.homeSubstitutions}
             awaySubstitutions={match.awaySubstitutions}
             center={
-              <div className="match-live-score flex items-center gap-1 text-xl font-bold tabular-nums">
-                <span>{match.homeScore}</span>
-                <span className="text-muted-foreground">-</span>
-                <span>{match.awayScore}</span>
-              </div>
+              <MatchScoreCenter match={match} />
             }
           />
 
@@ -1058,6 +1064,12 @@ function TimelineMatchCard({ match, variant = 'finished' }) {
             awayTeamCode={awayCode}
             highlightKey={isInteractivePitch ? highlightKey : null}
             onHighlightKeyChange={isInteractivePitch ? setHighlightKey : undefined}
+          />
+
+          <PenaltyShootoutDisplay
+            penaltyShootout={match.penaltyShootout}
+            homeCode={homeCode}
+            awayCode={awayCode}
           />
         </div>
 

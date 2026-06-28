@@ -144,6 +144,16 @@ function PredictionActions({ children, match }) {
   );
 }
 
+function KnockoutPredictionHint({ visible }) {
+  if (!visible) return null;
+  return (
+    <p className="max-w-md text-center text-xs text-muted-foreground">
+      Fase eliminatoria: predicción = marcador tras el alargue (empate válido). Los penales no cuentan
+      para puntos.
+    </p>
+  );
+}
+
 function BroadcastRow({ broadcasters }) {
   if (!broadcasters?.length) return null;
   return (
@@ -204,6 +214,9 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
 
   const showActualScores = match.status !== 'upcoming';
   const prediction = match.prediction;
+  const isKnockout =
+    match.isKnockout ||
+    (Number(match.externalId) >= 73 && Number(match.externalId) <= 104);
 
   const inputProps = (side) => ({
     type: 'number',
@@ -254,6 +267,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           awayPrediction={prediction.awayGoals}
         />
         <PredictionLockNotice match={match} />
+        <KnockoutPredictionHint visible={isKnockout} />
         <PredictionUpdatedAt updatedAt={prediction.updatedAt} />
         <PredictionActions match={match}>
           <Button
@@ -286,6 +300,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
       />
 
       <PredictionLockNotice match={match} />
+      <KnockoutPredictionHint visible={isKnockout} />
 
       <div className="flex flex-col items-center gap-2">
         <PredictionActions match={match}>

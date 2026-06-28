@@ -205,6 +205,43 @@ describe('predictedKnockoutService', () => {
     expect(m90.homeTeam?.externalId).toBe('B2');
   });
 
+  it('propaga ganador real tras penales cuando el marcador queda empatado', () => {
+    const teams = mockTeams();
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const knockoutMatches = [
+      {
+        ...knockoutMatch(73, 'Runner-up Group A', 'Runner-up Group B'),
+        homeTeamId: 'A2',
+        awayTeamId: 'B2',
+        homeScore: 1,
+        awayScore: 1,
+        status: 'finished',
+        raw: {
+          home_team_label: 'Runner-up Group A',
+          away_team_label: 'Runner-up Group B',
+          fifaMeta: {
+            homeTeamId: 'A2',
+            awayTeamId: 'B2',
+            homePenaltyScore: 4,
+            awayPenaltyScore: 3,
+            winnerTeamId: 'A2',
+          },
+        },
+      },
+      knockoutMatch(90, 'Winner Match 73', 'Winner Match 75', 'r16'),
+    ];
+
+    const { phases } = buildPredictedKnockoutPhases({
+      groupStandings: completeGroupStandings(),
+      knockoutMatches,
+      predictionsByMatchId: new Map(),
+      teamMap,
+    });
+
+    const m90 = findMatch(phases, 90);
+    expect(m90.homeTeam?.externalId).toBe('A2');
+  });
+
   it('muestra etiquetas cuando faltan datos de grupo', () => {
     const teams = mockTeams();
     const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
