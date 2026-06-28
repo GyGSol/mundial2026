@@ -73,7 +73,7 @@ export function getInitials(name) {
     .toUpperCase();
 }
 
-export const AI_USER_AVATAR_URL = '/fubol-coin.png';
+export const AI_USER_AVATAR_URL = '/ai-skynet.png';
 
 const AI_USER_NAME_PATTERN = /^(?:@predictivemodeling|predictive[-\s]?modeling)$/i;
 

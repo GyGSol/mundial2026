@@ -5,7 +5,7 @@ export const AI_USER_DEFAULT_EMAIL = 'predictivemodeling@mundial2026.bot';
 export const AI_USER_DISPLAY_NAME = '@predictivemodeling';
 
 /** Avatar estático del competidor IA (PNG en frontend/public). */
-export const AI_USER_AVATAR_URL = '/fubol-coin.png';
+export const AI_USER_AVATAR_URL = '/ai-skynet.png';
 
 /** Email legacy antes del cambio de identidad. */
 export const AI_USER_LEGACY_EMAIL = 'predictivemodeling@gmail.com';
