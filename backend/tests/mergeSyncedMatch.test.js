@@ -397,4 +397,36 @@ describe('mergeSyncedMatch', () => {
       });
     }
   });
+
+  it('reabre finished→live en KO empatado aunque el kickoff supere 120 min', () => {
+    const kickoffAt = new Date(Date.now() - 150 * 60 * 1000);
+    const merged = mergeSyncedMatch(
+      {
+        status: 'finished',
+        externalId: '74',
+        group: 'R32',
+        homeScore: 1,
+        awayScore: 1,
+        kickoffAt,
+        raw: {
+          finished: 'FALSE',
+          time_elapsed: 'live',
+          fifaLiveState: { period: 7 },
+          fifaEvents: {
+            timeline: [{ type: 'goal', minute: 110, sortKey: 110 }],
+          },
+        },
+      },
+      {
+        status: 'finished',
+        externalId: '74',
+        group: 'R32',
+        homeScore: 1,
+        awayScore: 1,
+        kickoffAt,
+        raw: { finished: 'FALSE', time_elapsed: 'live' },
+      }
+    );
+    expect(merged.status).toBe('live');
+  });
 });

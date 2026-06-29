@@ -68,4 +68,17 @@ describe('matchStatus viewer policy', () => {
     };
     expect(liveCardBadgeLabel(match)).toBe("Suspendido · 45+4'");
   });
+
+  it('no muestra Final en KO empatado con status finished y raw.finished FALSE sin timeline', () => {
+    const match = {
+      externalId: '74',
+      status: 'finished',
+      homeScore: 1,
+      awayScore: 1,
+      kickoffAt: kickoff,
+      raw: { finished: 'FALSE', time_elapsed: 'live', fifaLiveState: { period: 7 } },
+    };
+    expect(shouldKeepLiveViewerOpen(match, now)).toBe(true);
+    expect(liveCardBadgeLabel(match)).not.toBe('Final');
+  });
 });

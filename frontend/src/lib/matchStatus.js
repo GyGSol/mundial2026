@@ -17,8 +17,16 @@ function knockoutTieBlocksFinishClient(match) {
   if (finishedFlag === 'TRUE' || finishedFlag === true || finishedFlag === 'true') return true;
   if (elapsedTokenIndicatesFinished(readElapsedToken(match))) return true;
 
+  // Sin timeline en el payload: DB en finished pero API aún no confirma pitido (alargue/penales).
+  if (match?.status === 'finished' && (finishedFlag === 'FALSE' || finishedFlag === false)) {
+    return true;
+  }
+
   const timelineKey = maxTimelineSortKey(match);
   if (timelineKey > 90) return true;
+
+  const period = Number(raw.fifaLiveState?.period ?? raw.fifaMeta?.period);
+  if (period === 6 || period === 7 || period === 9) return true;
 
   return false;
 }

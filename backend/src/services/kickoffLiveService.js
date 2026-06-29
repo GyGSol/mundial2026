@@ -335,15 +335,20 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
   const reopenedIds = [];
 
   for (const match of candidates) {
-    if (isMatchKickoffStale(match.kickoffAt, now)) continue;
-
-    if (matchFifaTimelineIndicatesFinished(match) && wallClockAllowsMatchFinished(match, now)) {
-      continue;
-    }
-
     const fifaEntry = fifaCalendar.length
       ? await loadFifaEntryForMatch(match, fifaCalendar, teamMap)
       : null;
+    const knockoutStillPlaying = knockoutTieBlocksMatchFinish(match, fifaEntry);
+
+    if (isMatchKickoffStale(match.kickoffAt, now) && !knockoutStillPlaying) continue;
+
+    if (
+      matchFifaTimelineIndicatesFinished(match) &&
+      wallClockAllowsMatchFinished(match, now) &&
+      !knockoutStillPlaying
+    ) {
+      continue;
+    }
     const fifaContradictsFinish = Boolean(
       fifaEntry && !fifaEntryIndicatesFinished(fifaEntry, match)
     );

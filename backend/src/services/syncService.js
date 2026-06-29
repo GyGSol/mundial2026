@@ -277,8 +277,8 @@ export function mergeSyncedMatch(existing, incoming) {
   if (
     existing.status === 'finished' &&
     kickoffPassed &&
-    !isMatchKickoffStale(kickoffAt) &&
-    (matchEvidenceShowsInProgress(merged) || knockoutTieBlocksMatchFinish(merged))
+    (matchEvidenceShowsInProgress(merged) || knockoutTieBlocksMatchFinish(merged)) &&
+    (!isMatchKickoffStale(kickoffAt) || knockoutTieBlocksMatchFinish(merged))
   ) {
     merged.status = 'live';
     const timeline = merged.raw?.fifaEvents?.timeline;
