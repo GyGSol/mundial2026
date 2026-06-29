@@ -4,6 +4,8 @@ export const FIFA_PERIOD_FIRST_HALF = 3;
 export const FIFA_PERIOD_HALFTIME = 4;
 export const FIFA_PERIOD_SECOND_HALF = 5;
 /** Prórroga / tanda de penales (FIFA usa 9 en tanda; 6–7 en alargue según partido). */
+export const FIFA_PERIOD_EXTRA_TIME_FIRST = 6;
+export const FIFA_PERIOD_EXTRA_TIME_SECOND = 7;
 export const FIFA_PERIOD_PENALTY_SHOOTOUT = 9;
 export const FIFA_PERIOD_MATCH_END = 10;
 
@@ -32,6 +34,21 @@ function extractPlayerName(description, fallback = '') {
 export function normalizeFifaPeriodToken(period) {
   if (period == null || period === '') return '';
   return String(period).trim().toLowerCase();
+}
+
+/** Periodo FIFA de tiempo suplementario (1.er o 2.º alargue). */
+export function isFifaExtraTimePeriod(period) {
+  const numeric = Number(period);
+  if (
+    Number.isFinite(numeric) &&
+    (numeric === FIFA_PERIOD_EXTRA_TIME_FIRST || numeric === FIFA_PERIOD_EXTRA_TIME_SECOND)
+  ) {
+    return true;
+  }
+
+  const token = normalizeFifaPeriodToken(period);
+  if (!token) return false;
+  return token.includes('extra') && !token.includes('afterextra') && !token.includes('afterpenalt');
 }
 
 /** Periodo FIFA de tanda de penales (numérico o texto). */

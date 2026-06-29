@@ -27,6 +27,7 @@ import {
 } from '../utils/fifaSquadShirtMap.js';
 import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 import { wallClockAllowsMatchFinished, fifaEntryIndicatesFinished } from './matchStatusRules.js';
+import { knockoutTieBlocksMatchFinish } from './knockoutExtraTimeRules.js';
 import { env } from '../config/env.js';
 import { buildFifaLineupSides } from './fifaLineupService.js';
 import { buildLineupSnapshotFromSources } from './matchLineupService.js';
@@ -348,7 +349,12 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
       newlyFinishedIds.push(match._id);
       scoringIds.push(match._id);
     }
-  } else if (match.status === 'live' && fifaEntry && fifaEntryIndicatesFinished(fifaEntry)) {
+  } else if (
+    match.status === 'live' &&
+    fifaEntry &&
+    fifaEntryIndicatesFinished(fifaEntry, match) &&
+    !knockoutTieBlocksMatchFinish(match, fifaEntry)
+  ) {
     const finishedCandidate = {
       ...match,
       status: 'finished',

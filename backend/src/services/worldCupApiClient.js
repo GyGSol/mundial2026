@@ -9,6 +9,7 @@ import {
   shouldFinalizeStaleLiveMatch,
   wallClockAllowsMatchFinished,
 } from './matchStatusRules.js';
+import { knockoutTieBlocksMatchFinish } from './knockoutExtraTimeRules.js';
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -215,6 +216,10 @@ export function resolveGameStatus(game, kickoffAt, { now = Date.now() } = {}) {
     !isMatchKickoffStale(kickoffAt, now) &&
     matchEvidenceShowsInProgress(pseudoMatch)
   ) {
+    return 'live';
+  }
+
+  if (status === 'finished' && knockoutTieBlocksMatchFinish(pseudoMatch)) {
     return 'live';
   }
 

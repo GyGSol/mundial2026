@@ -1,5 +1,7 @@
 import { normalizeWeatherOps } from './matchWeatherOpsRules.js';
 import { parsedTimelineHasMatchEnd } from './fifaTimelineParser.js';
+import { matchIndicatesExtraTimePlay } from './knockoutExtraTimeRules.js';
+import { isFifaExtraTimePeriod } from './penaltyShootoutService.js';
 import {
   clockSortKeyFromParts,
   formatTimeElapsed,
@@ -343,6 +345,23 @@ export function resolveMatchPlayState(match, options = {}) {
       label: 'Entretiempo',
       source: 'fifa_timeline',
       frozenClock: 'Entretiempo',
+      match,
+      timeline,
+      raw,
+    });
+  }
+
+  if (
+    isFifaExtraTimePeriod(periodToken) ||
+    isFifaExtraTimePeriod(statusToken) ||
+    matchIndicatesExtraTimePlay(match)
+  ) {
+    return buildPlayState({
+      phase: 'extra_time',
+      reason: null,
+      label: 'Suplementario',
+      source: 'fifa_live',
+      since: fifaLive.syncedAt ?? null,
       match,
       timeline,
       raw,

@@ -5,6 +5,7 @@ import {
   parseScorersField,
 } from './matchLiveData.js';
 import { resolveDisplayKickoffAt } from './kickoffTimeService.js';
+import { knockoutTieBlocksMatchFinish } from './knockoutExtraTimeRules.js';
 
 /** Tiempo máximo desde kickoff para cerrar un partido que quedó en `live` (90' + descanso + margen). */
 export const MATCH_STALE_AFTER_KICKOFF_MS = 120 * 60 * 1000;
@@ -46,8 +47,9 @@ export function matchEvidentlyStarted(matchOrGame) {
   return true;
 }
 
-export function fifaEntryIndicatesFinished(fifaEntry) {
+export function fifaEntryIndicatesFinished(fifaEntry, match = null) {
   if (!fifaEntry) return false;
+  if (match && knockoutTieBlocksMatchFinish(match, fifaEntry)) return false;
   const period = String(fifaEntry.Period ?? fifaEntry.MatchStatus ?? '').toLowerCase();
   if (!period) return false;
   return (
@@ -224,6 +226,8 @@ function elapsedIndicatesStoppageTime(elapsed) {
 /** Cierra partidos `live` cuando la API quedó en live/finished=FALSE tras el pitido final. */
 export function shouldFinalizeStaleLiveMatch(match, now = Date.now()) {
   if (match?.status !== 'live') return false;
+
+  if (knockoutTieBlocksMatchFinish(match)) return false;
 
   if (isMatchClearlyInProgress(match)) return false;
 

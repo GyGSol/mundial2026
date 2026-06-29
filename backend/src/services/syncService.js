@@ -31,6 +31,7 @@ import {
   shouldFinalizeStaleLiveMatch,
   wallClockAllowsMatchFinished,
 } from './matchStatusRules.js';
+import { knockoutTieBlocksMatchFinish } from './knockoutExtraTimeRules.js';
 import { applyStatusTransitionFields } from './matchDisplayVisibilityService.js';
 import { latestClockFromTimeline } from './matchLiveData.js';
 import { env } from '../config/env.js';
@@ -207,7 +208,12 @@ export async function resolveExistingMatchForWorldCup26Sync(doc) {
 
 function downgradeImplausibleFinishedStatus(merged, kickoffAt, kickoffInFuture) {
   if (merged.status !== 'finished') return;
-  if (wallClockAllowsMatchFinished({ ...merged, kickoffAt })) return;
+  if (
+    !knockoutTieBlocksMatchFinish(merged) &&
+    wallClockAllowsMatchFinished({ ...merged, kickoffAt })
+  ) {
+    return;
+  }
 
   merged.status = kickoffInFuture ? 'upcoming' : 'live';
   const timeline = merged.raw?.fifaEvents?.timeline;
@@ -272,7 +278,7 @@ export function mergeSyncedMatch(existing, incoming) {
     existing.status === 'finished' &&
     kickoffPassed &&
     !isMatchKickoffStale(kickoffAt) &&
-    matchEvidenceShowsInProgress(merged)
+    (matchEvidenceShowsInProgress(merged) || knockoutTieBlocksMatchFinish(merged))
   ) {
     merged.status = 'live';
     const timeline = merged.raw?.fifaEvents?.timeline;
@@ -311,7 +317,11 @@ export function mergeSyncedMatch(existing, incoming) {
 
   if (existing.status === 'live' && incoming.status === 'finished') {
     const liveState = { ...existing, kickoffAt, raw: merged.raw };
-    if (isMatchClearlyInProgress(liveState) || matchEvidenceShowsInProgress(liveState)) {
+    if (
+      isMatchClearlyInProgress(liveState) ||
+      matchEvidenceShowsInProgress(liveState) ||
+      knockoutTieBlocksMatchFinish(liveState)
+    ) {
       merged.status = 'live';
       const timeline = merged.raw?.fifaEvents?.timeline;
       const clock =

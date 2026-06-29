@@ -1,5 +1,28 @@
 const MATCH_CLEARLY_IN_PROGRESS_MAX_MINUTE = 85;
 
+function isKnockoutExternalId(externalId) {
+  const id = Number(externalId);
+  return Number.isFinite(id) && id >= 73 && id <= 104;
+}
+
+function knockoutTieBlocksFinishClient(match) {
+  if (!isKnockoutExternalId(match?.externalId)) return false;
+  const home = Number(match?.homeScore) || 0;
+  const away = Number(match?.awayScore) || 0;
+  if (home !== away) return false;
+  if (match?.penaltyShootout?.winnerSide) return false;
+
+  const raw = match?.raw ?? {};
+  const finishedFlag = raw.finished ?? raw.Finished;
+  if (finishedFlag === 'TRUE' || finishedFlag === true || finishedFlag === 'true') return true;
+  if (elapsedTokenIndicatesFinished(readElapsedToken(match))) return true;
+
+  const timelineKey = maxTimelineSortKey(match);
+  if (timelineKey > 90) return true;
+
+  return false;
+}
+
 function readElapsedToken(match) {
   const raw = match?.raw ?? match ?? {};
   return String(raw.time_elapsed ?? raw.timeElapsed ?? match?.timeElapsed ?? '')
@@ -118,6 +141,7 @@ export function wallClockAllowsMatchFinished(match, now = Date.now()) {
 
 export function matchHasCreibleFinishEvidence(match, now = Date.now()) {
   if (match?.status !== 'finished') return false;
+  if (knockoutTieBlocksFinishClient(match)) return false;
   if (matchEvidenceShowsInProgress(match)) return false;
   if (matchTimelineHasMatchEnd(match)) return wallClockAllowsMatchFinished(match, now);
   return elapsedTokenIndicatesFinished(readElapsedToken(match)) && wallClockAllowsMatchFinished(match, now);
@@ -126,6 +150,7 @@ export function matchHasCreibleFinishEvidence(match, now = Date.now()) {
 /** Mantener el visor abierto: live, falso final, o suspendido. */
 export function shouldKeepLiveViewerOpen(match, now = Date.now()) {
   if (!match) return false;
+  if (knockoutTieBlocksFinishClient(match)) return true;
   if (match.status === 'live') {
     if (matchEvidenceShowsInProgress(match)) return true;
     if (elapsedTokenIndicatesFinished(readElapsedToken(match)) || matchTimelineHasMatchEnd(match)) {
@@ -141,6 +166,7 @@ export function shouldKeepLiveViewerOpen(match, now = Date.now()) {
 
 export function isLiveCardFinalizing(match) {
   if (match?.status !== 'live') return false;
+  if (knockoutTieBlocksFinishClient(match)) return false;
   const elapsed = readElapsedToken(match);
   return elapsedTokenIndicatesFinished(elapsed) || matchTimelineHasMatchEnd(match);
 }
@@ -148,9 +174,10 @@ export function isLiveCardFinalizing(match) {
 import { getEffectiveMatchPlayState, isMatchPlayPaused } from './matchPlayState.js';
 
 export function liveCardBadgeLabel(match, { displayClock } = {}) {
-  if (match?.status === 'finished') return 'Final';
+  const knockoutStillPlaying = knockoutTieBlocksFinishClient(match);
+  if (match?.status === 'finished' && !knockoutStillPlaying) return 'Final';
   if (isLiveCardFinalizing(match)) return 'Finalizando…';
-  if (match?.status === 'live') {
+  if (match?.status === 'live' || knockoutStillPlaying) {
     const playState = getEffectiveMatchPlayState(match);
     if (isMatchPlayPaused(playState)) {
       const clock =
@@ -160,7 +187,9 @@ export function liveCardBadgeLabel(match, { displayClock } = {}) {
             ? playState.frozenClock
             : displayClock ?? match?.timeElapsed;
       const label = playState.label ?? 'En pausa';
-      return clock && playState.phase !== 'halftime' ? `${label} · ${clock}` : label;
+      return clock && playState.phase !== 'halftime' && playState.phase !== 'extra_time'
+        ? `${label} · ${clock}`
+        : label;
     }
     const clock = displayClock ?? match?.timeElapsed;
     return clock ? `En vivo · ${clock}` : 'En vivo';

@@ -145,6 +145,10 @@ describe('matchStatusRules', () => {
     const match = {
       status: 'live',
       kickoffAt: kickoff,
+      homeScore: 2,
+      awayScore: 1,
+      externalId: '80',
+      type: 'r32',
       raw: {
         finished: 'FALSE',
         time_elapsed: '90+9',
@@ -158,6 +162,29 @@ describe('matchStatusRules', () => {
     };
     const now = kickoff.getTime() + 105 * 60 * 1000;
     expect(shouldFinalizeStaleLiveMatch(match, now)).toBe(true);
+  });
+
+  it('no cierra live en 90+ si eliminatoria queda empatada (va a alargue)', () => {
+    const match = {
+      status: 'live',
+      kickoffAt: kickoff,
+      homeScore: 1,
+      awayScore: 1,
+      externalId: '80',
+      type: 'r32',
+      raw: {
+        finished: 'TRUE',
+        time_elapsed: 'finished',
+        fifaEvents: {
+          timeline: [
+            { type: 'goal', minute: 42, side: 'away', sortKey: 42 },
+            { type: 'goal', minute: 54, side: 'home', sortKey: 54 },
+          ],
+        },
+      },
+    };
+    const now = kickoff.getTime() + 105 * 60 * 1000;
+    expect(shouldFinalizeStaleLiveMatch(match, now)).toBe(false);
   });
 
   it('prioriza liveStartedPushSentAt sobre kickoff programado temprano', () => {

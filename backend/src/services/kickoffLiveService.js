@@ -41,6 +41,7 @@ import {
   resolveKickoffMs,
   wallClockAllowsMatchFinished,
 } from './matchStatusRules.js';
+import { knockoutTieBlocksMatchFinish } from './knockoutExtraTimeRules.js';
 import { applyStatusTransitionFields, findRecentlyFinishedMatchesQuery } from './matchDisplayVisibilityService.js';
 
 function matchEvidentlyStartedOnField(match) {
@@ -343,11 +344,14 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
     const fifaEntry = fifaCalendar.length
       ? await loadFifaEntryForMatch(match, fifaCalendar, teamMap)
       : null;
-    const fifaContradictsFinish = Boolean(fifaEntry && !fifaEntryIndicatesFinished(fifaEntry));
+    const fifaContradictsFinish = Boolean(
+      fifaEntry && !fifaEntryIndicatesFinished(fifaEntry, match)
+    );
 
     const implausibleFinish = matchFinishedImplausibleByWallClock(match, now);
     const inProgress = !implausibleFinish && matchEvidenceShowsInProgress(match);
-    if (!implausibleFinish && !inProgress && !fifaContradictsFinish) continue;
+    const knockoutExtraTime = knockoutTieBlocksMatchFinish(match, fifaEntry);
+    if (!implausibleFinish && !inProgress && !fifaContradictsFinish && !knockoutExtraTime) continue;
 
     const timeline = match.raw?.fifaEvents?.timeline;
     const clock =
@@ -357,7 +361,7 @@ export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
       match.raw?.finished === 'TRUE' ||
       match.raw?.finished === true ||
       match.raw?.finished === 'true';
-    const stripMatchEnd = implausibleFinish || fifaContradictsFinish;
+    const stripMatchEnd = implausibleFinish || fifaContradictsFinish || knockoutExtraTime;
 
     const kickoffMs = resolveKickoffMs(match);
     const nextStatus =
@@ -450,7 +454,7 @@ export async function finalizeStaleLiveMatches(now = Date.now()) {
     let shouldFinalize = shouldFinalizeStaleLiveMatch(match, now);
 
     if (!shouldFinalize && fifaEntry) {
-      if (fifaEntryIndicatesFinished(fifaEntry) && !isMatchClearlyInProgress(match)) {
+      if (fifaEntryIndicatesFinished(fifaEntry, match) && !isMatchClearlyInProgress(match)) {
         shouldFinalize = true;
       }
     }
