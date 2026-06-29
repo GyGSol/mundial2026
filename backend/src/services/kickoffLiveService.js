@@ -307,9 +307,12 @@ export async function promoteMatchesAtKickoff() {
   return promotedIds;
 }
 
+/** Ventana de kickoff para buscar cierres prematuros (KO con alargue + penales puede superar 120'). */
+export const REOPEN_FINISHED_KICKOFF_LOOKBACK_MS = 180 * 60 * 1000;
+
 /** Reabre partidos marcados `finished` con evidencia de juego en curso (cierre prematuro). */
 export async function reopenPrematurelyFinishedMatches(now = Date.now()) {
-  const recentKickoffCutoff = new Date(now - 120 * 60 * 1000);
+  const recentKickoffCutoff = new Date(now - REOPEN_FINISHED_KICKOFF_LOOKBACK_MS);
   const candidates = await Match.find({
     status: 'finished',
     kickoffAt: { $gte: recentKickoffCutoff },
