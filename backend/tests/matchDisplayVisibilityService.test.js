@@ -57,13 +57,27 @@ describe('matchDisplayVisibilityService', () => {
     expect(update.finishedAt).toEqual(prior);
   });
 
-  it('findRecentlyFinishedMatchesQuery acota por kickoff reciente', () => {
+  it('findRecentlyFinishedMatchesQuery incluye finalizados en gracia aunque el kickoff sea antiguo (alargue)', () => {
     const query = findRecentlyFinishedMatchesQuery(now.getTime());
     expect(query.status).toBe('finished');
-    expect(query.kickoffAt.$gte).toEqual(
-      new Date(now.getTime() - RECENTLY_FINISHED_GRACE_MS - MAX_MATCH_DURATION_MS)
-    );
-    expect(query.kickoffAt.$lte).toEqual(new Date(now.getTime()));
+    const graceStart = new Date(now.getTime() - RECENTLY_FINISHED_GRACE_MS);
+    expect(query.$or[0].finishedAt.$gte).toEqual(graceStart);
+    const kickoffFloor = new Date(now.getTime() - RECENTLY_FINISHED_GRACE_MS - MAX_MATCH_DURATION_MS);
+    expect(query.$or[1].kickoffAt.$gte).toEqual(kickoffFloor);
+  });
+
+  it('findRecentlyFinishedMatchesQuery encuentra Alemania–Paraguay tras alargue largo', () => {
+    const nowMs = new Date('2026-06-29T23:00:00.000Z').getTime();
+    const query = findRecentlyFinishedMatchesQuery(nowMs);
+    const match = {
+      status: 'finished',
+      kickoffAt: new Date('2026-06-29T20:30:00.000Z'),
+      finishedAt: new Date('2026-06-29T22:43:01.335Z'),
+    };
+    const graceStart = new Date(nowMs - RECENTLY_FINISHED_GRACE_MS);
+    const inGrace = match.finishedAt >= graceStart;
+    expect(inGrace).toBe(true);
+    expect(query.$or[0].finishedAt.$gte.getTime()).toBeLessThanOrEqual(match.finishedAt.getTime());
   });
 
   it('findRecentlyFinishedMatchesQueryWithGroup filtra por grupo', () => {

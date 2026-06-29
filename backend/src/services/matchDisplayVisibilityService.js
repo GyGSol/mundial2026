@@ -9,8 +9,8 @@ import {
 /** Ventana en la que un partido finalizado sigue visible en ranking/predicciones. */
 export const RECENTLY_FINISHED_GRACE_MS = 30 * 60 * 1000;
 
-/** 90' + descanso + margen de alargue para acotar candidatos en Mongo. */
-export const MAX_MATCH_DURATION_MS = 105 * 60 * 1000;
+/** 90' + descanso + alargue + margen (eliminatorias pueden superar 105'). */
+export const MAX_MATCH_DURATION_MS = 150 * 60 * 1000;
 
 /** Máximo de partidos en la barra destacada "recién finalizados" (el más reciente). */
 export const RECENT_FINISHED_FEATURED_MAX = 1;
@@ -63,10 +63,17 @@ export function resolveEffectiveFinishedAtMs(match) {
 
 /** Query Mongo para partidos finalizados candidatos a gracia (filtrado fino en app). */
 export function findRecentlyFinishedMatchesQuery(now = Date.now()) {
-  const kickoffCutoff = new Date(now - RECENTLY_FINISHED_GRACE_MS - MAX_MATCH_DURATION_MS);
+  const graceStart = new Date(now - RECENTLY_FINISHED_GRACE_MS);
+  const kickoffFloor = new Date(now - RECENTLY_FINISHED_GRACE_MS - MAX_MATCH_DURATION_MS);
   return {
     status: 'finished',
-    kickoffAt: { $gte: kickoffCutoff, $lte: new Date(now) },
+    $or: [
+      { finishedAt: { $gte: graceStart } },
+      {
+        $or: [{ finishedAt: { $exists: false } }, { finishedAt: null }],
+        kickoffAt: { $gte: kickoffFloor, $lte: new Date(now) },
+      },
+    ],
   };
 }
 
