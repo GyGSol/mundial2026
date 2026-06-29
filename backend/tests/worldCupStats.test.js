@@ -8,7 +8,9 @@ import {
   computeTournamentStats,
   formatKnockoutSlotLabelEs,
   resolveGroupStandingsSource,
+  WORLD_CUP_MATCH_SELECT,
 } from '../src/services/worldCupStatsService.js';
+import { buildPredictedKnockoutPhases } from '../src/services/predictedKnockoutService.js';
 
 const teams = [
   { externalId: '1', nameEn: 'Mexico', fifaCode: 'MEX', group: 'A', flag: '🇲🇽' },
@@ -358,6 +360,65 @@ describe('worldCupStatsService', () => {
     expect(stats.goals.total).toBe(6);
     expect(stats.goals.averagePerMatch).toBe(3);
     expect(stats.goals.topScoringTeams[0].teamId).toBe('1');
+  });
+
+  it('WORLD_CUP_MATCH_SELECT incluye fifaMeta para ganadores KO por penales', () => {
+    expect(WORLD_CUP_MATCH_SELECT).toContain('raw.fifaMeta');
+  });
+
+  it('propaga ganador por penales en octavos con datos mínimos del overview', () => {
+    const teams = [
+      { externalId: 'ger', nameEn: 'Germany', fifaCode: 'GER', group: 'E', flag: '🇩🇪' },
+      { externalId: 'par', nameEn: 'Paraguay', fifaCode: 'PAR', group: 'D', flag: '🇵🇾' },
+    ];
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const knockoutMatches = [
+      {
+        externalId: '74',
+        homeTeamId: 'ger',
+        awayTeamId: 'par',
+        homeScore: 1,
+        awayScore: 1,
+        type: 'r32',
+        status: 'finished',
+        raw: {
+          home_team_label: 'Winner Group E',
+          away_team_label: 'Runner-up Group D',
+          fifaMeta: {
+            homeTeamId: 'ger',
+            awayTeamId: 'par',
+            homePenaltyScore: 2,
+            awayPenaltyScore: 3,
+            winnerTeamId: 'par',
+          },
+        },
+      },
+      {
+        externalId: '89',
+        homeTeamId: '0',
+        awayTeamId: '0',
+        homeScore: 0,
+        awayScore: 0,
+        type: 'round_of_16',
+        status: 'upcoming',
+        raw: {
+          home_team_label: 'Winner Match 74',
+          away_team_label: 'Winner Match 77',
+        },
+      },
+    ];
+
+    const { phases } = buildPredictedKnockoutPhases({
+      groupStandings: [],
+      knockoutMatches,
+      predictionsByMatchId: new Map(),
+      teamMap,
+    });
+
+    const r16 = phases.find((phase) => phase.label === 'Octavos de final');
+    const m89 = r16.matches.find((match) => match.externalId === '89');
+    expect(m89.homeTeam?.externalId).toBe('par');
+    expect(m89.homeTeam?.fifaCode).toBe('PAR');
   });
 
   it('marca zonas de clasificación por puesto en el grupo', () => {

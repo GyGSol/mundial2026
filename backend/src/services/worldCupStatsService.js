@@ -417,7 +417,7 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}, rankings = n
 
 /** Campos mínimos de partido para overview (sin blob `raw` completo). */
 export const WORLD_CUP_MATCH_SELECT =
-  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate status kickoffAt kickoffTimezone type stadiumId raw.home_team_label raw.away_team_label raw.homeTeamLabel raw.awayTeamLabel';
+  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate status kickoffAt kickoffTimezone type stadiumId raw.home_team_label raw.away_team_label raw.homeTeamLabel raw.awayTeamLabel raw.fifaMeta';
 
 export function buildKnockoutPhases(matches, teamMap, stadiumMap = {}, rankings = null) {
   const buckets = new Map();
