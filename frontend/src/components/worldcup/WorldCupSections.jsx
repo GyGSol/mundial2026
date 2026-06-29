@@ -20,6 +20,8 @@ const matchDateLabel = (match) =>
   formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import MatchTeamSide from '@/components/worldcup/MatchTeamSide.jsx';
+import { PenaltyShootoutScoreLine } from '@/components/PenaltyShootoutDisplay.jsx';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
 function TeamCell({ team, fallback = '—' }) {
   const name = team?.nameEn || fallback;
@@ -46,8 +48,9 @@ function MatchScore({ match }) {
         ? 'text-foreground'
         : 'text-muted-foreground';
 
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
   const scoreText =
-    match.status === 'upcoming' ? 'vs' : `${match.homeScore} - ${match.awayScore}`;
+    match.status === 'upcoming' ? 'vs' : `${homeScore} - ${awayScore}`;
 
   return (
     <div className="flex flex-col items-start gap-1 rounded-lg border border-border/70 bg-card px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
@@ -58,8 +61,9 @@ function MatchScore({ match }) {
           slotSourceMatch={match.homeTeamSlotSourceMatch}
         />
       </div>
-      <div className={cn('font-semibold tabular-nums sm:px-2 sm:text-center', statusClass)}>
-        {scoreText}
+      <div className={cn('flex flex-col items-center font-semibold tabular-nums sm:px-2 sm:text-center', statusClass)}>
+        <span>{scoreText}</span>
+        <PenaltyShootoutScoreLine penaltyShootout={match.penaltyShootout} className="font-normal" />
       </div>
       <div className="min-w-0 sm:min-w-[140px] sm:flex-1 sm:text-right">
         <div className="sm:hidden">

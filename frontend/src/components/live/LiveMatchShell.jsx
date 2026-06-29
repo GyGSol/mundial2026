@@ -23,6 +23,7 @@ import {
 import { getEffectiveMatchPlayState, isMatchPlayPaused } from '@/lib/matchPlayState.js';
 import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchPlayStateBadge.jsx';
 import { PenaltyShootoutScoreLine } from '@/components/PenaltyShootoutDisplay.jsx';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 import TeamFlag from '../TeamFlag.jsx';
 import LiveMatchPanel from './LiveMatchPanel.jsx';
 import LiveMatchSwitcher from './LiveMatchSwitcher.jsx';
@@ -50,6 +51,7 @@ function LiveMatchSummary({ match }) {
   const playState = getEffectiveMatchPlayState(match);
   const paused = isMatchPlayPaused(playState);
   const playStateLabel = getMatchPlayStateLabel(match);
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
 
   return (
     <div className="flex flex-col gap-3">
@@ -61,7 +63,7 @@ function LiveMatchSummary({ match }) {
         </span>
         <div className="flex shrink-0 flex-col items-center gap-0.5">
           <span className="font-bold tabular-nums">
-            {match?.homeScore ?? 0} - {match?.awayScore ?? 0}
+            {homeScore} - {awayScore}
           </span>
           <PenaltyShootoutScoreLine penaltyShootout={match?.penaltyShootout} className="text-[10px]" />
         </div>

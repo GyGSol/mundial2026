@@ -4,6 +4,7 @@ import LoadingSpinner from './LoadingSpinner.jsx';
 import FubolCoinIcon from './FubolCoinIcon.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
 const STATUS_LABELS = {
   inactive: 'Sin activar',
@@ -15,11 +16,15 @@ const STATUS_LABELS = {
 function formatMatchLine(match) {
   const home = match.homeTeam?.name ?? match.homeTeam?.nameEn ?? 'Local';
   const away = match.awayTeam?.name ?? match.awayTeam?.nameEn ?? 'Visitante';
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
   const score =
-    match.homeScore != null && match.awayScore != null
-      ? ` · ${match.homeScore}-${match.awayScore}`
+    homeScore != null && awayScore != null ? ` · ${homeScore}-${awayScore}` : '';
+  const penalties = match.penaltyShootout;
+  const penaltySuffix =
+    penalties?.homeScore != null && penalties?.awayScore != null
+      ? ` (pen. ${penalties.homeScore}-${penalties.awayScore})`
       : '';
-  return `${home} vs ${away}${score}`;
+  return `${home} vs ${away}${score}${penaltySuffix}`;
 }
 
 export default function EliminationTournamentPanel({

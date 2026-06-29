@@ -53,6 +53,7 @@ import MatchPlayStateBadge, { getMatchPlayStateLabel } from '@/components/MatchP
 import { matchBarGridClass } from '@/lib/matchBarLayout.js';
 import { sortLiveMatchesForFeaturedBar } from '@/lib/liveMatchFeaturedSort.js';
 import PenaltyShootoutDisplay, { PenaltyShootoutScoreLine } from '@/components/PenaltyShootoutDisplay.jsx';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
 const matchDateLabel = (match) =>
   formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
@@ -104,12 +105,13 @@ function formatScorerLine(scorer) {
 }
 
 function MatchScoreCenter({ match, scoreClassName = 'text-xl' }) {
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
   return (
     <div className="flex flex-col items-center gap-0.5">
       <div className={cn('match-live-score flex items-center gap-1 font-bold tabular-nums', scoreClassName)}>
-        <span>{match.homeScore}</span>
+        <span>{homeScore}</span>
         <span className="text-muted-foreground">-</span>
-        <span>{match.awayScore}</span>
+        <span>{awayScore}</span>
       </div>
       <PenaltyShootoutScoreLine penaltyShootout={match.penaltyShootout} />
     </div>

@@ -19,6 +19,8 @@ import WeatherOpsBadge, { LiveScheduleAlert } from '@/components/WeatherOpsBadge
 import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import { isIosDevice } from '@/lib/device';
 import { USER_STREAM_BRAND } from '@/lib/streamBrand.js';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
+import { PenaltyShootoutScoreLine } from '@/components/PenaltyShootoutDisplay.jsx';
 
 const FPT_AGENDA_URL = 'https://futbolparatodos.su/agenda.php';
 
@@ -89,11 +91,10 @@ function TransmissionMatchCard({ match }) {
   const kickoff = formatMatchDate(match, { showTimezone: true, timeZone: ARGENTINA_TIMEZONE });
   const iosDevice = isIosDevice();
   const streamPageUrl = match.stream?.pageUrl;
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
   const scoreLine =
-    match.status !== 'upcoming' &&
-    match.homeScore != null &&
-    match.awayScore != null
-      ? `${match.homeScore} – ${match.awayScore}`
+    match.status !== 'upcoming' && homeScore != null && awayScore != null
+      ? `${homeScore} – ${awayScore}`
       : null;
 
   return (
@@ -126,7 +127,10 @@ function TransmissionMatchCard({ match }) {
           <TeamHeader team={match.homeTeam} slotLabel={match.homeTeamSlotLabel} />
           <div className="flex flex-col items-center gap-1 px-1 text-center">
             {scoreLine ? (
-              <p className="text-xl font-bold tabular-nums md:text-2xl">{scoreLine}</p>
+              <>
+                <p className="text-xl font-bold tabular-nums md:text-2xl">{scoreLine}</p>
+                <PenaltyShootoutScoreLine penaltyShootout={match.penaltyShootout} />
+              </>
             ) : (
               <span className="text-sm font-medium text-muted-foreground">vs</span>
             )}

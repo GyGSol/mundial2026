@@ -9,6 +9,8 @@ import { formatPredictionUpdatedAt } from '@/lib/dateFormat.js';
 import TeamHeader from './TeamHeader.jsx';
 import BroadcastBadges from '@/components/BroadcastBadges.jsx';
 import PredictionLockCountdown from '@/components/PredictionLockCountdown.jsx';
+import { PenaltyShootoutScoreLine } from '@/components/PenaltyShootoutDisplay.jsx';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
 /** Mismo ancho/alto en web y móvil para Guardar y Editar */
 const PREDICTION_ACTION_BUTTON_CLASS = 'min-w-28 px-4';
@@ -62,6 +64,7 @@ function MatchScoreboard({
   showActualScores,
   homeScore,
   awayScore,
+  penaltyShootout,
   homePrediction,
   awayPrediction,
   homeInput,
@@ -75,14 +78,17 @@ function MatchScoreboard({
       </div>
 
       {showActualScores && (
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-3">
-          <ScoreCell>
-            <ScoreValue value={homeScore} label="Resultado" />
-          </ScoreCell>
-          <span className="text-lg font-medium text-muted-foreground md:text-xl lg:text-2xl">-</span>
-          <ScoreCell>
-            <ScoreValue value={awayScore} label="Resultado" />
-          </ScoreCell>
+        <div className="flex flex-col items-center gap-1">
+          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 md:gap-3">
+            <ScoreCell>
+              <ScoreValue value={homeScore} label="Resultado" />
+            </ScoreCell>
+            <span className="text-lg font-medium text-muted-foreground md:text-xl lg:text-2xl">-</span>
+            <ScoreCell>
+              <ScoreValue value={awayScore} label="Resultado" />
+            </ScoreCell>
+          </div>
+          <PenaltyShootoutScoreLine penaltyShootout={penaltyShootout} />
         </div>
       )}
 
@@ -214,6 +220,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
 
   const showActualScores = match.status !== 'upcoming';
   const prediction = match.prediction;
+  const fieldScores = resolveFieldMatchScores(match);
   const isKnockout =
     match.isKnockout ||
     (Number(match.externalId) >= 73 && Number(match.externalId) <= 104);
@@ -237,8 +244,9 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homeTeamSlotLabel={match.homeTeamSlotLabel}
           awayTeamSlotLabel={match.awayTeamSlotLabel}
           showActualScores={showActualScores}
-          homeScore={match.homeScore}
-          awayScore={match.awayScore}
+          homeScore={fieldScores.homeScore}
+          awayScore={fieldScores.awayScore}
+          penaltyShootout={match.penaltyShootout}
           homePrediction={hasPrediction ? prediction?.homeGoals : undefined}
           awayPrediction={hasPrediction ? prediction?.awayGoals : undefined}
         />
@@ -261,8 +269,9 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
           homeTeamSlotLabel={match.homeTeamSlotLabel}
           awayTeamSlotLabel={match.awayTeamSlotLabel}
           showActualScores={showActualScores}
-          homeScore={match.homeScore}
-          awayScore={match.awayScore}
+          homeScore={fieldScores.homeScore}
+          awayScore={fieldScores.awayScore}
+          penaltyShootout={match.penaltyShootout}
           homePrediction={prediction.homeGoals}
           awayPrediction={prediction.awayGoals}
         />
@@ -293,8 +302,9 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
         homeTeamSlotLabel={match.homeTeamSlotLabel}
         awayTeamSlotLabel={match.awayTeamSlotLabel}
         showActualScores={showActualScores}
-        homeScore={match.homeScore}
-        awayScore={match.awayScore}
+        homeScore={fieldScores.homeScore}
+        awayScore={fieldScores.awayScore}
+        penaltyShootout={match.penaltyShootout}
         homeInput={<Input {...inputProps('home')} />}
         awayInput={<Input {...inputProps('away')} />}
       />

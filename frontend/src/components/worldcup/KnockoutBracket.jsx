@@ -15,6 +15,8 @@ import {
   indexKnockoutMatches,
   isOfficialKnockoutBracket,
 } from '@/lib/worldCupBracketLayout.js';
+import { resolveFieldMatchScores, resolveKnockoutDisplayWinner } from '@/lib/matchDisplayScore.js';
+import { PenaltyShootoutScoreLine } from '@/components/PenaltyShootoutDisplay.jsx';
 
 const MIN_CELL_W = 108;
 /** Dieciseisavos ocupan 2 filas; con el estilo completo hace falta más alto que 64px. */
@@ -157,12 +159,14 @@ function BracketMatchCell({ match, highlight = false }) {
   const isLive = match?.status === 'live';
   const isFinished = match?.status === 'finished';
   const hasScore = isFinished || isLive;
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
+  const winnerSide = hasScore ? resolveKnockoutDisplayWinner(match) : null;
 
   const homeTitle = match?.homeTeam?.nameEn || match?.homeTeamSlotLabel || 'Por definir';
   const awayTitle = match?.awayTeam?.nameEn || match?.awayTeamSlotLabel || 'Por definir';
 
-  const homeWinner = hasScore && match.homeScore > match.awayScore;
-  const awayWinner = hasScore && match.awayScore > match.homeScore;
+  const homeWinner = winnerSide === 'home';
+  const awayWinner = winnerSide === 'away';
 
   return (
     <div
@@ -179,7 +183,7 @@ function BracketMatchCell({ match, highlight = false }) {
         team={match?.homeTeam}
         slotLabel={match?.homeTeamSlotLabel}
         slotSourceMatch={match?.homeTeamSlotSourceMatch}
-        score={hasScore ? match.homeScore : null}
+        score={hasScore ? homeScore : null}
         isWinner={homeWinner}
         isLive={isLive}
       />
@@ -190,10 +194,14 @@ function BracketMatchCell({ match, highlight = false }) {
         team={match?.awayTeam}
         slotLabel={match?.awayTeamSlotLabel}
         slotSourceMatch={match?.awayTeamSlotSourceMatch}
-        score={hasScore ? match.awayScore : null}
+        score={hasScore ? awayScore : null}
         isWinner={awayWinner}
         isLive={isLive}
       />
+
+      {hasScore ? (
+        <PenaltyShootoutScoreLine penaltyShootout={match.penaltyShootout} className="text-[9px]" />
+      ) : null}
     </div>
   );
 }

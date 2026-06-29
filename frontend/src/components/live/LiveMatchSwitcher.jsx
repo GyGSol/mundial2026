@@ -1,9 +1,11 @@
 import { cn } from '@/lib/utils';
 import TeamFlag from '@/components/TeamFlag.jsx';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
 function SwitcherChip({ match, active, onSelect }) {
   const homeName = match?.homeTeam?.nameEn || 'Local';
   const awayName = match?.awayTeam?.nameEn || 'Visitante';
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
 
   return (
     <button
@@ -19,7 +21,7 @@ function SwitcherChip({ match, active, onSelect }) {
       <TeamFlag team={match?.homeTeam} className="!size-3.5" sizeClass="size-3.5" />
       <span className="truncate font-medium">{homeName}</span>
       <span className="shrink-0 tabular-nums">
-        {match?.homeScore ?? 0}-{match?.awayScore ?? 0}
+        {homeScore}-{awayScore}
       </span>
       <span className="truncate font-medium">{awayName}</span>
       <TeamFlag team={match?.awayTeam} className="!size-3.5" sizeClass="size-3.5" />

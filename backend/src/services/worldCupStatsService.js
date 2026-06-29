@@ -5,6 +5,7 @@ import {
   totalPlayedInStandings,
 } from './groupStandingsUtils.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
+import { resolveFieldMatchScores, resolvePenaltyShootoutFromMatch } from '../../../shared/matchDisplayScore.js';
 
 const GROUP_LETTERS = 'ABCDEFGHIJKL'.split('');
 
@@ -379,12 +380,20 @@ export function formatMatchSummary(match, teamMap, stadiumMap = {}, rankings = n
   const stadium = stadiumMap[match.stadiumId];
   const homeSlot = resolveTeamSlot(match, 'home', teamMap, context);
   const awaySlot = resolveTeamSlot(match, 'away', teamMap, context);
+  const penaltyShootout = resolvePenaltyShootoutFromMatch(match);
+  const fieldScores = resolveFieldMatchScores({
+    homeScore: match.homeScore,
+    awayScore: match.awayScore,
+    raw: match.raw,
+    penaltyShootout,
+  });
 
   return {
     id: match._id?.toString?.() ?? match.id,
     externalId: match.externalId,
-    homeScore: match.homeScore,
-    awayScore: match.awayScore,
+    homeScore: fieldScores.homeScore,
+    awayScore: fieldScores.awayScore,
+    penaltyShootout,
     group: match.group,
     matchday: match.matchday,
     localDate: match.localDate,

@@ -23,6 +23,7 @@ import {
   partitionTimelineForShootout,
   resolvePenaltyShootoutForMatch,
 } from './penaltyShootoutService.js';
+import { resolveFieldMatchScores } from '../../../shared/matchDisplayScore.js';
 
 /** Máximo goles plausibles en un partido (incluye prórroga). */
 export const MAX_PLAUSIBLE_MATCH_GOALS = 15;
@@ -1462,6 +1463,13 @@ export function enrichMatchLiveFields(match, options = {}) {
 
   if (showResults && !includeFullTimeline) {
     const scoreSeed = resolveEffectiveLiveScores(match, [], raw);
+    const penaltyShootout = resolvePenaltyShootoutForMatch(raw);
+    const fieldScores = resolveFieldMatchScores({
+      homeScore: scoreSeed.homeScore,
+      awayScore: scoreSeed.awayScore,
+      raw,
+      penaltyShootout,
+    });
     const matchPlayState = serializeMatchPlayStateForClient(
       resolveMatchPlayState(match, { timeline: [], raw })
     );
@@ -1475,8 +1483,8 @@ export function enrichMatchLiveFields(match, options = {}) {
     return {
       timeElapsed,
       matchPlayState,
-      homeScore: scoreSeed.homeScore,
-      awayScore: scoreSeed.awayScore,
+      homeScore: fieldScores.homeScore,
+      awayScore: fieldScores.awayScore,
       homeScorers: parsedHomeScorers,
       awayScorers: parsedAwayScorers,
       homeBookings: events.homeBookings ?? [],
@@ -1491,7 +1499,7 @@ export function enrichMatchLiveFields(match, options = {}) {
       ),
       matchTimeline: [],
       fifaReportStats: null,
-      penaltyShootout: null,
+      penaltyShootout,
     };
   }
 
@@ -1544,6 +1552,12 @@ export function enrichMatchLiveFields(match, options = {}) {
   const effectiveScores = showResults
     ? resolveEffectiveLiveScores(match, matchTimeline, raw)
     : scoreSeed;
+  const fieldScores = resolveFieldMatchScores({
+    homeScore: effectiveScores.homeScore,
+    awayScore: effectiveScores.awayScore,
+    raw,
+    penaltyShootout,
+  });
   const timelineScorers = scorersFromTimeline(matchTimeline);
   const timelineBookings = bookingsFromTimeline(matchTimeline);
   const timelineSubstitutions = substitutionsFromTimeline(matchTimeline);
@@ -1588,8 +1602,8 @@ export function enrichMatchLiveFields(match, options = {}) {
   return {
     timeElapsed,
     matchPlayState,
-    homeScore: effectiveScores.homeScore,
-    awayScore: effectiveScores.awayScore,
+    homeScore: fieldScores.homeScore,
+    awayScore: fieldScores.awayScore,
     homeScorers,
     awayScorers,
     homeBookings,
