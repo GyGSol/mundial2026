@@ -30,6 +30,41 @@ import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTime
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 import { unifyRawTeamPlayers } from './playerRosterUnifyService.js';
 import { buildMatchLineupPayload } from './matchLineupService.js';
+import {
+  resolveFieldMatchScores,
+  resolvePenaltyShootoutFromMatch,
+} from '../../../shared/matchDisplayScore.js';
+
+function resolveDisplayScoresForEnrichedMatch(match, liveFields = {}) {
+  if (match.status !== 'live' && match.status !== 'finished') {
+    return {
+      homeScore: match.homeScore ?? 0,
+      awayScore: match.awayScore ?? 0,
+      penaltyShootout: liveFields.penaltyShootout ?? null,
+    };
+  }
+
+  const penaltyShootout =
+    liveFields.penaltyShootout ??
+    resolvePenaltyShootoutFromMatch({
+      homeScore: liveFields.homeScore ?? match.homeScore,
+      awayScore: liveFields.awayScore ?? match.awayScore,
+      raw: match.raw,
+    });
+
+  const fieldScores = resolveFieldMatchScores({
+    homeScore: liveFields.homeScore ?? match.homeScore,
+    awayScore: liveFields.awayScore ?? match.awayScore,
+    raw: match.raw,
+    penaltyShootout,
+  });
+
+  return {
+    homeScore: fieldScores.homeScore,
+    awayScore: fieldScores.awayScore,
+    penaltyShootout,
+  };
+}
 
 /**
  * @param {import('mongoose').LeanDocument[]} matches
@@ -166,14 +201,15 @@ export async function enrichMatches(matches, userId, options = {}) {
 
     const displayKickoff = resolveDisplayKickoffAt(m) ?? m.kickoffAt;
     const scheduleKickoff = resolveScheduleKickoffAt(m);
+    const displayScores = resolveDisplayScoresForEnrichedMatch(m, liveFields);
 
     const base = {
       id: m._id.toString(),
       externalId: m.externalId,
       homeTeamId: m.homeTeamId,
       awayTeamId: m.awayTeamId,
-      homeScore: m.homeScore,
-      awayScore: m.awayScore,
+      homeScore: displayScores.homeScore,
+      awayScore: displayScores.awayScore,
       group: m.group,
       matchday: m.matchday,
       localDate: m.localDate,
@@ -198,6 +234,9 @@ export async function enrichMatches(matches, userId, options = {}) {
       prediction,
       ...liveFields,
       ...meta,
+      homeScore: displayScores.homeScore,
+      awayScore: displayScores.awayScore,
+      ...(displayScores.penaltyShootout ? { penaltyShootout: displayScores.penaltyShootout } : {}),
     };
 
     const enriched = applyResolvedKnockoutToMatch(

@@ -6,6 +6,7 @@ vi.mock('../src/models/Team.js', () => ({
 
 vi.mock('../src/models/Player.js', () => ({
   Player: { find: vi.fn(() => ({ lean: vi.fn().mockResolvedValue([]) })) },
+  HEALTH_STATUSES: ['available', 'injured', 'doubt'],
 }));
 
 vi.mock('../src/models/Stadium.js', () => ({
@@ -192,5 +193,37 @@ describe('enrichMatchesForPredictionsList', () => {
 
     expect(enriched).toHaveLength(4);
     expect(enrichMatchLiveFields).toHaveBeenCalledTimes(2);
+  });
+
+  it('expone marcador de 120 min y penales en finalizados sin timeline en vivo', async () => {
+    const [match] = await enrichMatchesForPredictionsList(
+      [
+        {
+          _id: 'mongo74',
+          externalId: '74',
+          homeTeamId: 1,
+          awayTeamId: 2,
+          status: 'finished',
+          homeScore: 4,
+          awayScore: 5,
+          raw: {
+            fifaMeta: {
+              homeScore: 4,
+              awayScore: 5,
+              homePenaltyScore: 3,
+              awayPenaltyScore: 4,
+            },
+          },
+        },
+      ],
+      'user-id',
+      { liveBarMatchIds: new Set() }
+    );
+
+    expect(match.homeScore).toBe(1);
+    expect(match.awayScore).toBe(1);
+    expect(match.penaltyShootout?.homeScore).toBe(3);
+    expect(match.penaltyShootout?.awayScore).toBe(4);
+    expect(enrichMatchLiveFields).not.toHaveBeenCalled();
   });
 });

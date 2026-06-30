@@ -13,7 +13,7 @@ import {
   buildFeaturedRecentFinishedRaw,
   sortLiveMatchesForFeaturedBar,
 } from './liveMatchPartitionService.js';
-import { LIVE_BAR_MATCH_PROJECTION } from './liveBarMatchProjection.js';
+import { LIVE_BAR_MATCH_PROJECTION, PREDICTIONS_LIST_MATCH_PROJECTION } from './liveBarMatchProjection.js';
 
 export async function listPredictionsMatches({ status, group }, userId) {
   const filter = {};
@@ -24,7 +24,7 @@ export async function listPredictionsMatches({ status, group }, userId) {
 
   const [matches, liveRaw, recentFinishedRaw] = await Promise.all([
     sortMatchesBySchedule(
-      await Match.find(filter).select('-raw').lean()
+      await Match.find(filter).select(PREDICTIONS_LIST_MATCH_PROJECTION).lean()
     ),
     Match.find(findLiveMatchesQueryWithGroup(barGroup))
       .select(LIVE_BAR_MATCH_PROJECTION)
