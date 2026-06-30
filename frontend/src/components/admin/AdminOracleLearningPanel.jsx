@@ -39,6 +39,11 @@ function downloadJsonl(filename, jsonl) {
   URL.revokeObjectURL(url);
 }
 
+function formatScorePair(score) {
+  if (score?.home == null || score?.away == null) return '—';
+  return `${score.home}-${score.away}`;
+}
+
 export default function AdminOracleLearningPanel({ onRefreshOverview }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -201,12 +206,8 @@ export default function AdminOracleLearningPanel({ onRefreshOverview }) {
                           {row.matchId.slice(-6)}
                           <div className="text-[10px] text-slate-500">{formatDate(row.createdAt)}</div>
                         </TableCell>
-                        <TableCell>
-                          {row.predictedScore.home}-{row.predictedScore.away}
-                        </TableCell>
-                        <TableCell>
-                          {row.actualScore.home}-{row.actualScore.away}
-                        </TableCell>
+                        <TableCell>{formatScorePair(row.predictedScore)}</TableCell>
+                        <TableCell>{formatScorePair(row.actualScore)}</TableCell>
                         <TableCell>{row.mseError}</TableCell>
                         <TableCell>
                           {row.exportedAt ? (

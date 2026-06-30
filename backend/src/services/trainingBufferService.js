@@ -25,6 +25,34 @@ export function computeScoreMse(predicted, actual) {
   return (ph - ah) ** 2 + (pa - aa) ** 2;
 }
 
+function parseScoreKey(scoreKey) {
+  if (!scoreKey || typeof scoreKey !== 'string') return null;
+  const [homeRaw, awayRaw] = scoreKey.split('-');
+  const home = Number(homeRaw);
+  const away = Number(awayRaw);
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+  return { home, away };
+}
+
+function normalizeTrainingScorePair(score) {
+  if (score?.home == null || score?.away == null) return null;
+  const home = Number(score.home);
+  const away = Number(score.away);
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+  return { home, away };
+}
+
+export function resolveTrainingBufferScores(row = {}) {
+  const predictedScore =
+    normalizeTrainingScorePair(row.predictedScore) ??
+    normalizeTrainingScorePair(row.shadowOracle?.predictedScore);
+
+  const actualScore =
+    normalizeTrainingScorePair(row.actualScore) ?? parseScoreKey(row.actualScoreKey);
+
+  return { predictedScore, actualScore };
+}
+
 /** Registra desviación al finalizar partido (idempotente por matchId + marcador real). */
 export async function recordValidationError(matchId) {
   const aiUser = await getAiUser();
@@ -378,18 +406,21 @@ export async function listTrainingBufferRows({ limit = 25, onlyUnexported = fals
     .limit(Math.min(limit, 200))
     .lean();
 
-  return rows.map((row) => ({
-    id: row._id.toString(),
-    matchId: row.matchId?.toString?.() ?? String(row.matchId),
-    predictedScore: row.predictedScore,
-    actualScore: row.actualScore,
-    mseError: row.mseError,
-    goalDiffCombined: row.goalDiffCombined,
-    weekBucket: row.weekBucket,
-    exportedAt: row.exportedAt,
-    createdAt: row.createdAt,
-    oracleMeta: row.oracleMeta ?? null,
-  }));
+  return rows.map((row) => {
+    const { predictedScore, actualScore } = resolveTrainingBufferScores(row);
+    return {
+      id: row._id.toString(),
+      matchId: row.matchId?.toString?.() ?? String(row.matchId),
+      predictedScore,
+      actualScore,
+      mseError: row.mseError,
+      goalDiffCombined: row.goalDiffCombined,
+      weekBucket: row.weekBucket,
+      exportedAt: row.exportedAt,
+      createdAt: row.createdAt,
+      oracleMeta: row.oracleMeta ?? null,
+    };
+  });
 }
 
 /** Exporta filas no exportadas; devuelve JSONL para descarga admin (Heroku-safe). */
