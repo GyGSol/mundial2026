@@ -168,6 +168,39 @@ describe('mergeLiveSnapshot', () => {
     expect(next.liveMatches).toHaveLength(1);
     expect(next.recentFinishedMatches).toHaveLength(1);
   });
+
+  it('elimina de recién finalizados un partido que reaparece en live', () => {
+    const sharedId = 'civ-nor';
+    const data = {
+      liveMatches: [],
+      recentFinishedMatches: [
+        {
+          id: sharedId,
+          homeScore: 1,
+          awayScore: 1,
+          status: 'finished',
+          timeElapsed: 'Suplementario 110+1',
+        },
+      ],
+    };
+    const snapshot = {
+      liveMatches: [
+        {
+          id: sharedId,
+          homeScore: 1,
+          awayScore: 1,
+          status: 'live',
+          timeElapsed: "90+2'",
+        },
+      ],
+      recentFinishedMatches: [],
+    };
+
+    const next = mergeLiveSnapshot(data, snapshot);
+    expect(next.liveMatches).toHaveLength(1);
+    expect(next.liveMatches[0].id).toBe(sharedId);
+    expect(next.recentFinishedMatches).toHaveLength(0);
+  });
 });
 
 describe('mergeLiveDashboard', () => {
@@ -221,6 +254,24 @@ describe('mergeLiveDashboard', () => {
     expect(merged.leaderboard[0].points).toBe(12);
     expect(merged.liveMatches[0].matchTimeline).toHaveLength(2);
     expect(merged.liveMatches[0].timeElapsed).toBe("59'");
+  });
+
+  it('quita de recién finalizados los ids que están en live tras el merge', () => {
+    const sharedId = 'civ-nor';
+    const prev = {
+      liveMatches: [],
+      recentFinishedMatches: [
+        { id: sharedId, homeScore: 1, awayScore: 1, status: 'finished' },
+      ],
+    };
+    const next = {
+      liveMatches: [{ id: sharedId, homeScore: 1, awayScore: 1, status: 'live', timeElapsed: "105'" }],
+      recentFinishedMatches: [{ id: sharedId, homeScore: 1, awayScore: 1, status: 'finished' }],
+    };
+
+    const merged = mergeLiveDashboard(prev, next);
+    expect(merged.liveMatches).toHaveLength(1);
+    expect(merged.recentFinishedMatches).toHaveLength(0);
   });
 });
 

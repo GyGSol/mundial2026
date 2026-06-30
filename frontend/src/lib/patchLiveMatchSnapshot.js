@@ -245,6 +245,11 @@ export function mergeLiveDashboard(prev, next) {
     merged.matches = mergeLiveMatchLists(prev.matches, next.matches);
   }
 
+  merged.recentFinishedMatches = excludeRecentDuplicatesOfLive(
+    merged.liveMatches,
+    merged.recentFinishedMatches
+  );
+
   return merged;
 }
 
@@ -262,6 +267,13 @@ function collectIds(...lists) {
     }
   }
   return ids;
+}
+
+/** Un partido activo en live no debe aparecer también en recién finalizados. */
+function excludeRecentDuplicatesOfLive(liveMatches = [], recentFinishedMatches = []) {
+  const liveIds = collectIds(liveMatches);
+  if (!liveIds.size) return recentFinishedMatches;
+  return (recentFinishedMatches ?? []).filter((m) => !m?.id || !liveIds.has(m.id));
 }
 
 /**
@@ -284,6 +296,7 @@ export function mergeLiveSnapshot(data, snapshot) {
 
   const liveWithNew = appendNewMatches(nextLive, liveIncoming, existingLiveIds);
   const recentWithNew = appendNewMatches(nextRecent, recentIncoming, existingRecentIds);
+  const dedupedRecent = excludeRecentDuplicatesOfLive(liveWithNew, recentWithNew);
 
   let nextMatches = data.matches;
   if (Array.isArray(data.matches)) {
@@ -295,6 +308,6 @@ export function mergeLiveSnapshot(data, snapshot) {
     ...data,
     matches: nextMatches ?? data.matches,
     liveMatches: liveWithNew,
-    recentFinishedMatches: recentWithNew,
+    recentFinishedMatches: dedupedRecent,
   };
 }

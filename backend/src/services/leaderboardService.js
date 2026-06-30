@@ -5,7 +5,7 @@ import { Prediction } from '../models/Prediction.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { resolvePublicAvatarUrl } from './userAvatarService.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
-import { calculatePoints, calculateGoalDiff } from './scoringService.js';
+import { calculatePoints, calculateGoalDiff, resolveScoringActual } from './scoringService.js';
 import { compareAvgGoalDiff, compareGoalDiffScore } from './goalDiffStats.js';
 
 function goalDiffHomeExpr(matchScoreField = '$matchDoc.homeScore') {
@@ -111,7 +111,14 @@ function goalStatCreditsCredited(breakdown) {
 }
 
 function isScoreStillNil(match) {
-  return (match?.homeScore ?? 0) === 0 && (match?.awayScore ?? 0) === 0;
+  const actual = match ? resolveScoringActual(match) : { home: 0, away: 0 };
+  return actual.home === 0 && actual.away === 0;
+}
+
+function normalizeMatchForIndicators(match) {
+  if (!match) return null;
+  const actual = resolveScoringActual(match);
+  return { ...match, homeScore: actual.home, awayScore: actual.away };
 }
 
 /**
@@ -178,11 +185,13 @@ export async function getLiveMatchStatIndicatorsByUser(userIds, liveMatchIds = [
       )
       .lean(),
     Match.find({ _id: { $in: liveMatchObjectIds } })
-      .select('homeScore awayScore')
+      .select('homeScore awayScore raw penaltyShootout')
       .lean(),
   ]);
 
-  const matchById = Object.fromEntries(matches.map((match) => [match._id.toString(), match]));
+  const matchById = Object.fromEntries(
+    matches.map((match) => [match._id.toString(), normalizeMatchForIndicators(match)])
+  );
 
   const predictionByUserMatch = new Map(
     predictions.map((prediction) => [

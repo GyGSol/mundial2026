@@ -105,7 +105,9 @@ async function fetchRankingDashboardMatchInputs() {
   ]);
 
   const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
-  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
+  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw, Date.now(), {
+    activeLiveRaw,
+  });
   const nextSlotRaw = findNextUpcomingMatches(upcomingRaw);
 
   return {

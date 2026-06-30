@@ -21,6 +21,12 @@ import {
 import { resolveOfficialKickoffAt } from '../services/kickoffTimeService.js';
 import { getRankingDashboard } from '../services/rankingDashboardService.js';
 import { listPredictionsMatches } from '../services/predictionsMatchesService.js';
+import { resolveScoringActual } from '../services/scoringService.js';
+import {
+  partitionLiveMatchesByActivity,
+  buildFeaturedRecentFinishedRaw,
+} from '../services/liveMatchPartitionService.js';
+import { buildStatIndicatorMatchIds } from '../services/rankingDashboardService.js';
 
 dotenv.config();
 
@@ -43,12 +49,19 @@ function summarizeMatch(match, now = Date.now()) {
   const graceRemainingMs =
     finishedMs != null ? RECENTLY_FINISHED_GRACE_MS - (now - finishedMs) : null;
 
+  const scoringActual = resolveScoringActual(match);
+  const scoringDrift =
+    match.homeScore !== scoringActual.home || match.awayScore !== scoringActual.away;
+
   return {
     externalId: match.externalId,
     id: match._id.toString(),
     status: match.status,
     homeScoreDb: match.homeScore,
     awayScoreDb: match.awayScore,
+    scoringActualHome: scoringActual.home,
+    scoringActualAway: scoringActual.away,
+    scoringDrift,
     homeScoreEffective: effective.homeScore,
     awayScoreEffective: effective.awayScore,
     scoreMismatch:
@@ -94,6 +107,17 @@ async function main() {
   const liveMatches = await Match.find({ status: 'live' }).lean();
   const recentRaw = await Match.find(findRecentlyFinishedMatchesQuery(now)).lean();
   const featured = pickFeaturedRecentFinishedMatches(recentRaw, now);
+  const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveMatches, now);
+  const featuredAfterDedup = buildFeaturedRecentFinishedRaw(recentRaw, staleLiveRaw, now, {
+    activeLiveRaw,
+  });
+  const activeLiveIds = new Set(activeLiveRaw.map((m) => m._id.toString()));
+  const featuredIds = new Set(featuredAfterDedup.map((m) => m._id.toString()));
+  const duplicateLiveRecentIds = [...activeLiveIds].filter((id) => featuredIds.has(id));
+  const indicatorBaselineMatchIds = buildStatIndicatorMatchIds(
+    activeLiveRaw.map((m) => m._id.toString()),
+    featuredAfterDedup.map((m) => m._id.toString())
+  );
 
   const requested = await Match.find({ externalId: { $in: externalIds } }).lean();
   const byExternalId = new Map(requested.map((m) => [String(m.externalId), m]));
@@ -104,6 +128,19 @@ async function main() {
     liveCount: liveMatches.length,
     recentFinishedInQuery: recentRaw.map((m) => m.externalId),
     featuredExternalIds: featured.map((m) => m.externalId),
+    featuredAfterDedupExternalIds: featuredAfterDedup.map((m) => m.externalId),
+    duplicateLiveRecentIds,
+    duplicateLiveRecentExternalIds: duplicateLiveRecentIds
+      .map((id) => liveMatches.find((m) => m._id.toString() === id)?.externalId)
+      .filter(Boolean),
+    indicatorBaselineMatchIds,
+    indicatorBaselineExternalIds: indicatorBaselineMatchIds
+      .map((id) => {
+        const fromLive = liveMatches.find((m) => m._id.toString() === id);
+        if (fromLive) return fromLive.externalId;
+        const fromRecent = recentRaw.find((m) => m._id.toString() === id);
+        return fromRecent?.externalId ?? id;
+      }),
     featuredExplanation:
       featured.length === 0
         ? 'Ningún partido elegible en gracia (o todos expirados / wall clock)'
@@ -127,8 +164,16 @@ async function main() {
     ...(dashboard.liveMatches ?? []).map((m) => m.id),
     ...(dashboard.recentFinishedMatches ?? []).map((m) => m.id),
   ]);
+  const liveBarIds = new Set((dashboard.liveMatches ?? []).map((m) => m.id));
+  const recentBarIds = new Set((dashboard.recentFinishedMatches ?? []).map((m) => m.id));
+  const duplicateInRankingBar = [...liveBarIds].filter((id) => recentBarIds.has(id));
+  const duplicateInPredictionsBar = [
+    ...new Set((predictions.liveMatches ?? []).map((m) => m.id)),
+  ].filter((id) => new Set((predictions.recentFinishedMatches ?? []).map((m) => m.id)).has(id));
 
   report.apiSnapshot = {
+    duplicateInRankingBar,
+    duplicateInPredictionsBar,
     ranking: {
       live: (dashboard.liveMatches ?? []).map((m) => ({
         externalId: m.externalId,

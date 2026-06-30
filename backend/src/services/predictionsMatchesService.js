@@ -37,7 +37,9 @@ export async function listPredictionsMatches({ status, group }, userId) {
   ]);
 
   const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
-  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
+  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw, Date.now(), {
+    activeLiveRaw,
+  });
 
   const barMatches = [...activeLiveRaw, ...recentFeaturedRaw];
   const liveBarMatchIds = new Set(barMatches.map((m) => m._id.toString()));

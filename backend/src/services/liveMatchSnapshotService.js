@@ -26,7 +26,9 @@ async function computeLiveMatchSnapshot(userId, detailMatchId) {
   ]);
 
   const { activeLiveRaw, staleLiveRaw } = partitionLiveMatchesByActivity(liveRaw);
-  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw);
+  const recentFeaturedRaw = buildFeaturedRecentFinishedRaw(recentFinishedRaw, staleLiveRaw, Date.now(), {
+    activeLiveRaw,
+  });
 
   return enrichFeaturedBarPayload({
     activeLiveRaw,

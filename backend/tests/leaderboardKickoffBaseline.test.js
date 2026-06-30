@@ -709,6 +709,58 @@ describe('leaderboard kickoff baseline', () => {
     expect(row.gt).toEqual([true]);
   });
 
+  it('KO con penales en agregado FIFA: flechas usan marcador de 120 min (1-1), no ganador por penales', async () => {
+    const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST14' });
+    const user = await User.create({
+      name: 'KO penales',
+      email: 'ko-pens@example.com',
+      passwordHash: 'hash',
+      totalPoints: 4,
+      competitionGroupId: group._id,
+    });
+    await UserGroupMembership.create({ userId: user._id, groupId: group._id, role: 'member' });
+
+    const live = await Match.create({
+      externalId: 'ko-pens-ind',
+      homeTeamId: 'ger',
+      awayTeamId: 'par',
+      homeScore: 4,
+      awayScore: 5,
+      status: 'live',
+      liveScoringInitialized: true,
+      kickoffAt: new Date('2026-06-29T20:00:00.000Z'),
+      raw: {
+        fifaMeta: {
+          homeScore: 4,
+          awayScore: 5,
+          homePenaltyScore: 3,
+          awayPenaltyScore: 4,
+        },
+      },
+    });
+
+    await Prediction.create({
+      userId: user._id,
+      matchId: live._id,
+      homeGoals: 0,
+      awayGoals: 1,
+      pointsEarned: 1,
+      pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 1, totalGoals: 0 },
+      liveKickoffBreakdown: { winner: 0, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+      liveKickoffPointsEarned: 1,
+    });
+
+    const indicators = await getLiveMatchStatIndicatorsByUser(
+      [user._id.toString()],
+      [live._id.toString()]
+    );
+    const row = indicators.byUser[user._id.toString()];
+
+    expect(row.pa).toEqual([false]);
+    expect(row.gv).toEqual([true]);
+    expect(row.gl).toEqual([false]);
+  });
+
   it('ranking actual usa puntos agregados de predicciones, no user.totalPoints desactualizado', async () => {
     const group = await CompetitionGroup.create({ name: 'Test', inviteCode: 'TEST06' });
     const user = await User.create({

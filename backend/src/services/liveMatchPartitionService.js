@@ -47,12 +47,23 @@ export function sortLiveMatchesForFeaturedBar(matches = []) {
 }
 
 /** Recién finalizados de DB + live-zombies para la barra destacada. */
-export function buildFeaturedRecentFinishedRaw(recentFinishedRaw = [], staleLiveRaw = [], now = Date.now()) {
-  const featuredFinished = pickFeaturedRecentFinishedMatches(recentFinishedRaw, now);
+export function buildFeaturedRecentFinishedRaw(
+  recentFinishedRaw = [],
+  staleLiveRaw = [],
+  now = Date.now(),
+  { activeLiveRaw = [] } = {}
+) {
+  const activeLiveIds = new Set(
+    activeLiveRaw.map((m) => m._id?.toString() ?? m.id).filter(Boolean)
+  );
+  const featuredFinished = pickFeaturedRecentFinishedMatches(recentFinishedRaw, now).filter((m) => {
+    const id = m._id?.toString() ?? m.id;
+    return !id || !activeLiveIds.has(id);
+  });
   const seen = new Set(featuredFinished.map((m) => m._id?.toString() ?? m.id));
   const staleUnique = staleLiveRaw.filter((m) => {
     const id = m._id?.toString() ?? m.id;
-    if (!id || seen.has(id)) return false;
+    if (!id || seen.has(id) || activeLiveIds.has(id)) return false;
     seen.add(id);
     return true;
   });

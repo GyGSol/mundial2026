@@ -64,6 +64,31 @@ describe('liveMatchPartitionService', () => {
     expect(buildFeaturedRecentFinishedRaw([], staleLiveRaw, now)).toHaveLength(1);
   });
 
+  it('excluye de recién finalizados los ids que siguen en live activo', () => {
+    const now = kickoff.getTime() + 110 * 60 * 1000;
+    const sharedId = 'reopened-ko';
+    const activeLive = {
+      _id: sharedId,
+      status: 'live',
+      kickoffAt: kickoff,
+      raw: { time_elapsed: "105+1'", finished: 'FALSE' },
+    };
+    const recentFinished = {
+      _id: sharedId,
+      status: 'finished',
+      kickoffAt: kickoff,
+      finishedAt: new Date(now - 5 * 60 * 1000),
+      homeScore: 1,
+      awayScore: 1,
+      raw: { time_elapsed: 'final', finished: 'TRUE' },
+    };
+
+    const featured = buildFeaturedRecentFinishedRaw([recentFinished], [], now, {
+      activeLiveRaw: [activeLive],
+    });
+    expect(featured).toHaveLength(0);
+  });
+
   it('ordena activos arriba y suspendidos abajo en partidos en curso', () => {
     const active = {
       id: 'nor-sen',
