@@ -4,7 +4,7 @@ import { Prediction } from '../models/Prediction.js';
 import { getCompetitionGroupById } from './competitionGroupService.js';
 import { compareRankingEntries } from './leaderboardService.js';
 import { compareAvgGoalDiff, compareGoalDiffScore } from './goalDiffStats.js';
-import { calculateGoalDiff, calculatePoints } from './scoringService.js';
+import { calculateGoalDiff, calculatePoints, resolveScoringActual } from './scoringService.js';
 import { recalculateMatchScores } from './syncService.js';
 
 function breakdownHits(breakdown) {
@@ -62,9 +62,7 @@ export function compareEliminationRoundRank(a, b) {
 function scorePredictionForMatch(prediction, match, { zeroPoints = false } = {}) {
   const predicted = { home: prediction.homeGoals ?? 0, away: prediction.awayGoals ?? 0 };
   const hasActual = match.status === 'live' || match.status === 'finished';
-  const actual = hasActual
-    ? { home: match.homeScore ?? 0, away: match.awayScore ?? 0 }
-    : { home: 0, away: 0 };
+  const actual = hasActual ? resolveScoringActual(match) : { home: 0, away: 0 };
 
   const goalDiff = resolveGoalDiff(prediction, actual);
   const hits = hasActual && !zeroPoints

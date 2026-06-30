@@ -578,7 +578,7 @@ function needsRescore(before, after) {
   );
 }
 
-export { recalculateMatchScores, recalculateAllLiveMatches, clearMatchScores, clearStaleUpcomingMatchScores } from './matchScoringService.js';
+export { recalculateMatchScores, recalculateAllLiveMatches, recalculateAllFinishedMatches, clearMatchScores, clearStaleUpcomingMatchScores } from './matchScoringService.js';
 
 export async function seedDemoDataIfEmpty() {
   const count = await Match.countDocuments();

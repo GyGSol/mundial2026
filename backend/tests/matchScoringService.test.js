@@ -208,4 +208,49 @@ describe('matchScoringService', () => {
     const updatedUser = await User.findById(user._id);
     expect(updatedUser.totalPoints).toBe(0);
   });
+
+  it('puntúa con marcador de 120 min cuando el agregado FIFA incluye penales', async () => {
+    const user = await User.create({
+      name: 'Penalty KO',
+      email: 'penalty-ko@example.com',
+      passwordHash: 'hash',
+      totalPoints: 0,
+    });
+    const match = await Match.create({
+      externalId: 'score-penalty-74',
+      homeTeamId: '1',
+      awayTeamId: '2',
+      homeScore: 4,
+      awayScore: 5,
+      status: 'finished',
+      kickoffAt: new Date('2026-06-29T20:30:00.000Z'),
+      raw: {
+        fifaMeta: {
+          homeScore: 4,
+          awayScore: 5,
+          homePenaltyScore: 3,
+          awayPenaltyScore: 4,
+        },
+      },
+    });
+    await Prediction.create({
+      userId: user._id,
+      matchId: match._id,
+      homeGoals: 0,
+      awayGoals: 1,
+      pointsEarned: 3,
+      pointsBreakdown: { winner: 3, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+      goalDiffHome: 0,
+      goalDiffAway: 4,
+    });
+
+    await recalculateMatchScores(match._id);
+
+    const prediction = await Prediction.findOne({ matchId: match._id });
+    expect(prediction.pointsEarned).toBe(1);
+    expect(prediction.pointsBreakdown.winner).toBe(0);
+    expect(prediction.pointsBreakdown.awayGoals).toBe(1);
+    expect(prediction.goalDiffHome).toBe(1);
+    expect(prediction.goalDiffAway).toBe(0);
+  });
 });

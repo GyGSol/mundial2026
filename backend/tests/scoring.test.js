@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { calculatePoints, calculateGoalDiff } from '../src/services/scoringService.js';
+import {
+  calculatePoints,
+  calculateGoalDiff,
+  resolveScoringActual,
+} from '../src/services/scoringService.js';
 
 describe('calculatePoints', () => {
   it('predicción 2-2 vs resultado 4-0: solo bonus volumen (+1)', () => {
@@ -65,6 +69,28 @@ describe('calculatePoints', () => {
     const result = calculatePoints({ home: 2, away: 0 }, { home: 0, away: 2 });
     expect(result.breakdown.winner).toBe(0);
     expect(result.breakdown.totalGoals).toBe(1);
+    expect(result.total).toBe(1);
+  });
+
+  it('KO con penales: predicción 0-1 vs marcador de juego 1-1 → solo visitante (+1)', () => {
+    const match = {
+      homeScore: 4,
+      awayScore: 5,
+      raw: {
+        fifaMeta: {
+          homeScore: 4,
+          awayScore: 5,
+          homePenaltyScore: 3,
+          awayPenaltyScore: 4,
+        },
+      },
+    };
+    const actual = resolveScoringActual(match);
+    expect(actual).toEqual({ home: 1, away: 1 });
+
+    const result = calculatePoints({ home: 0, away: 1 }, actual);
+    expect(result.breakdown.winner).toBe(0);
+    expect(result.breakdown.awayGoals).toBe(1);
     expect(result.total).toBe(1);
   });
 });

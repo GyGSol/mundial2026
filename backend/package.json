@@ -21,6 +21,7 @@
     "repair-predictions": "node src/scripts/repairPredictionMatchLinks.js",
     "backfill-prediction-source": "node src/scripts/backfillPredictionSource.js",
     "backfill-goal-diffs": "node src/scripts/backfillGoalDiffs.js",
+    "rescore:finished": "node src/scripts/rescoreFinishedMatches.js",
     "simulate": "node src/scripts/runSimulation.js",
     "reset-db": "node src/scripts/resetDatabase.js",
     "mark-ai-user": "node src/scripts/markAiUser.js",

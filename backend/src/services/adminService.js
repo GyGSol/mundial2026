@@ -19,7 +19,7 @@ import {
   removeGroupMember,
   updateCompetitionGroup,
 } from './competitionGroupService.js';
-import { recalculateMatchScores, clearMatchScores } from './syncService.js';
+import { recalculateMatchScores, clearMatchScores, recalculateAllFinishedMatches } from './syncService.js';
 import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { revokeAllUserSessions } from './sessionService.js';
 import { notifyLeaderboardUpdated, notifyMatchesUpdated } from './websocketService.js';
@@ -747,13 +747,7 @@ export async function recalculateAdminMatch(matchId) {
   return { recalculated: true, matchId: match._id.toString() };
 }
 
-export async function recalculateAllFinishedMatches() {
-  const finished = await Match.find({ status: 'finished' }).select('_id').lean();
-  for (const m of finished) {
-    await recalculateMatchScores(m._id);
-  }
-  return { recalculated: finished.length };
-}
+export { recalculateAllFinishedMatches };
 
 function teamLabel(team, fallbackId) {
   if (!team) return fallbackId || '—';

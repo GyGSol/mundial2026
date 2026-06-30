@@ -1,3 +1,5 @@
+import { resolveFieldMatchScores } from '../../../shared/matchDisplayScore.js';
+
 function getOutcome({ home, away }) {
   if (home > away) return 'home';
   if (home < away) return 'away';
@@ -41,6 +43,20 @@ export function calculatePoints(prediction, actual) {
     breakdown.totalGoals;
 
   return { total, breakdown };
+}
+
+/**
+ * Marcador real para puntuar predicciones (120' sin penales).
+ * @param {{ homeScore?: number | null, awayScore?: number | null, raw?: Record<string, unknown>, penaltyShootout?: object | null }} match
+ */
+export function resolveScoringActual(match = {}) {
+  const field = resolveFieldMatchScores({
+    homeScore: match.homeScore,
+    awayScore: match.awayScore,
+    raw: match.raw,
+    penaltyShootout: match.penaltyShootout,
+  });
+  return { home: field.homeScore, away: field.awayScore };
 }
 
 /** Diferencia absoluta entre predicción y resultado real por equipo. */

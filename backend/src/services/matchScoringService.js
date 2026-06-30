@@ -1,6 +1,6 @@
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
-import { calculatePoints, calculateGoalDiff } from './scoringService.js';
+import { calculatePoints, calculateGoalDiff, resolveScoringActual } from './scoringService.js';
 import { recalculateConsolationBonuses } from './consolationBonusService.js';
 import { recalculateUserTotalPoints } from './leaderboardService.js';
 import { ensurePredictionsForMatch } from './predictionLockService.js';
@@ -81,8 +81,7 @@ export async function recalculateMatchScores(matchId) {
 
   await ensurePredictionsForMatch(matchId);
 
-  const actualHome = match.homeScore ?? 0;
-  const actualAway = match.awayScore ?? 0;
+  const { home: actualHome, away: actualAway } = resolveScoringActual(match);
   const needsLiveBaseline = match.status === 'live' && !match.liveScoringInitialized;
 
   if (needsLiveBaseline) {
@@ -214,6 +213,17 @@ export async function clearStaleUpcomingMatchScores() {
   }
 
   return { clearedMatches, clearedPredictions };
+}
+
+/** Recalcula puntos de todos los partidos finalizados (p. ej. tras corregir marcador KO). */
+export async function recalculateAllFinishedMatches() {
+  const finished = await Match.find({ status: 'finished' }).select('_id').lean();
+  let predictionsUpdated = 0;
+  for (const m of finished) {
+    const { predictions } = await recalculateMatchScores(m._id);
+    predictionsUpdated += predictions;
+  }
+  return { matches: finished.length, predictionsUpdated };
 }
 
 /** Recalcula puntos provisionales de todos los partidos en vivo. */
