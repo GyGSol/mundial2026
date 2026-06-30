@@ -13,6 +13,25 @@ describe('matchDisplayScore', () => {
     });
   });
 
+  it('con penales prefiere restar agregado aunque fifaMeta traiga 4-5', () => {
+    expect(
+      resolveFieldMatchScores({
+        homeScore: 4,
+        awayScore: 5,
+        raw: {
+          fifaMeta: {
+            syncedAt: '2026-06-29T00:00:00.000Z',
+            homeScore: 4,
+            awayScore: 5,
+            homePenaltyScore: 3,
+            awayPenaltyScore: 4,
+          },
+        },
+        penaltyShootout: { homeScore: 3, awayScore: 4 },
+      })
+    ).toEqual({ homeScore: 1, awayScore: 1 });
+  });
+
   it('con penales prefiere fifaMeta de campo (120 min)', () => {
     expect(
       resolveFieldMatchScores({

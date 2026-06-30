@@ -64,11 +64,6 @@ export function resolveFieldMatchScores(input = {}) {
     return { homeScore: safeHome, awayScore: safeAway };
   }
 
-  const fifaField = readFifaFieldScores(input.raw ?? {});
-  if (fifaField) {
-    return fifaField;
-  }
-
   const penHome = Number(penaltyShootout.homeScore) || 0;
   const penAway = Number(penaltyShootout.awayScore) || 0;
   const fromAggregateHome = safeHome - penHome;
@@ -77,15 +72,24 @@ export function resolveFieldMatchScores(input = {}) {
   if (
     isPlausibleGoalCount(fromAggregateHome) &&
     isPlausibleGoalCount(fromAggregateAway) &&
-    fromAggregateHome === fromAggregateAway &&
     fromAggregateHome >= 0 &&
-    fromAggregateAway >= 0
+    fromAggregateAway >= 0 &&
+    fromAggregateHome === fromAggregateAway
   ) {
     return { homeScore: fromAggregateHome, awayScore: fromAggregateAway };
   }
 
+  const fifaField = readFifaFieldScores(input.raw ?? {});
+  if (fifaField && fifaField.homeScore === fifaField.awayScore) {
+    return fifaField;
+  }
+
   if (safeHome === safeAway) {
     return { homeScore: safeHome, awayScore: safeAway };
+  }
+
+  if (fifaField) {
+    return fifaField;
   }
 
   return { homeScore: safeHome, awayScore: safeAway };
