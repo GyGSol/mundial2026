@@ -2,7 +2,7 @@ import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { calculatePoints, calculateGoalDiff, resolveScoringActual } from './scoringService.js';
 import { recalculateConsolationBonuses } from './consolationBonusService.js';
-import { recalculateUserTotalPoints } from './leaderboardService.js';
+import { recalculateUserTotalPoints, recalculateAllUserTotals } from './leaderboardService.js';
 import { ensurePredictionsForMatch } from './predictionLockService.js';
 import { notifyLeaderboardUpdated } from './websocketService.js';
 import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
@@ -26,7 +26,7 @@ function predictionScoresUnchanged(prediction, total, breakdown, goalDiff, { sav
   );
 }
 
-async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickoffSnapshot = false } = {}) {
+async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickoffSnapshot = false, deferUserRecalc = false } = {}) {
   const predictions = await Prediction.find({ matchId: match._id });
   const affectedUsers = new Set();
   let predictionsUpdated = 0;
@@ -63,14 +63,16 @@ async function applyScoresForMatch(match, scoreHome, scoreAway, { saveLiveKickof
     affectedUsers.add(prediction.userId.toString());
   }
 
-  for (const userId of affectedUsers) {
-    if (match.status === 'finished') {
-      await recalculateConsolationBonuses(userId);
+  if (!deferUserRecalc) {
+    for (const userId of affectedUsers) {
+      if (match.status === 'finished') {
+        await recalculateConsolationBonuses(userId);
+      }
+      await recalculateUserTotalPoints(userId);
     }
-    await recalculateUserTotalPoints(userId);
   }
 
-  return { predictions: predictionsUpdated, users: affectedUsers.size };
+  return { predictions: predictionsUpdated, users: affectedUsers.size, affectedUsers };
 }
 
 export async function recalculateMatchScores(matchId) {
@@ -217,13 +219,36 @@ export async function clearStaleUpcomingMatchScores() {
 
 /** Recalcula puntos de todos los partidos finalizados (p. ej. tras corregir marcador KO). */
 export async function recalculateAllFinishedMatches() {
-  const finished = await Match.find({ status: 'finished' }).select('_id').lean();
+  const finished = await Match.find({ status: 'finished' }).select('_id externalId').lean();
   let predictionsUpdated = 0;
-  for (const m of finished) {
-    const { predictions } = await recalculateMatchScores(m._id);
-    predictionsUpdated += predictions;
+  const affectedUsers = new Set();
+
+  for (const row of finished) {
+    const match = await Match.findById(row._id);
+    if (!match) continue;
+    await ensurePredictionsForMatch(match._id);
+    const { home: actualHome, away: actualAway } = resolveScoringActual(match);
+    const result = await applyScoresForMatch(match, actualHome, actualAway, {
+      deferUserRecalc: true,
+    });
+    predictionsUpdated += result.predictions;
+    for (const userId of result.affectedUsers ?? []) {
+      affectedUsers.add(userId);
+    }
+    if (result.predictions > 0) {
+      console.log(`Rescore partido ${match.externalId}: ${result.predictions} predicciones`);
+    }
   }
-  return { matches: finished.length, predictionsUpdated };
+
+  for (const userId of affectedUsers) {
+    await recalculateConsolationBonuses(userId);
+  }
+  await recalculateAllUserTotals();
+
+  invalidateMatchRelatedCaches();
+  notifyLeaderboardUpdated({ reason: 'scores_recalculated_bulk' });
+
+  return { matches: finished.length, predictionsUpdated, users: affectedUsers.size };
 }
 
 /** Recalcula puntos provisionales de todos los partidos en vivo. */
