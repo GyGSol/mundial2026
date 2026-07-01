@@ -3,8 +3,7 @@ import { syncLiveMatchScoring } from '../services/kickoffLiveService.js';
 import { env } from '../config/env.js';
 import { findRecentlyFinishedMatchesQuery } from '../services/matchDisplayVisibilityService.js';
 import { enqueueBackgroundWork } from '../services/backgroundWorkQueue.js';
-
-const LIVE_INTERVAL_MS = Number(process.env.KICKOFF_WATCH_LIVE_MS || 15_000);
+import { getLiveSyncCadence } from '../services/liveSyncCadenceService.js';
 
 let timeoutId = null;
 let running = false;
@@ -44,8 +43,11 @@ async function scheduleNext() {
   const hasRecentFinished = Boolean(
     await Match.exists(findRecentlyFinishedMatchesQuery())
   );
-  const delayMs =
-    hasLive || hasRecentFinished ? LIVE_INTERVAL_MS : env.kickoffWatchIntervalMs;
+  let delayMs = env.kickoffWatchIntervalMs;
+  if (hasLive || hasRecentFinished) {
+    const cadence = await getLiveSyncCadence();
+    delayMs = cadence.kickoffWatchLiveMs;
+  }
   timeoutId = setTimeout(async () => {
     await tick();
     scheduleNext();
@@ -55,8 +57,7 @@ async function scheduleNext() {
 export function startKickoffWatchJob() {
   void tick().then(() => scheduleNext());
   const idleSeconds = env.kickoffWatchIntervalMs / 1000;
-  const liveSeconds = LIVE_INTERVAL_MS / 1000;
-  console.log(`Kickoff watch started (adaptive ${liveSeconds}s live / ${idleSeconds}s idle)`);
+  console.log(`Kickoff watch started (adaptive live cadence / ${idleSeconds}s idle)`);
 }
 
 export function stopKickoffWatchJob() {

@@ -4,6 +4,7 @@ import { Match } from '../models/Match.js';
 import { env } from '../config/env.js';
 import { findRecentlyFinishedMatchesQuery } from '../services/matchDisplayVisibilityService.js';
 import { enqueueBackgroundWork } from '../services/backgroundWorkQueue.js';
+import { resolveLiveSyncCadence } from '../services/liveSyncCadenceService.js';
 
 let timeoutId = null;
 let running = false;
@@ -14,7 +15,9 @@ const METADATA_SYNC_EVERY_TICKS = 60;
 
 async function resolveSyncDelayMs() {
   const liveCount = await Match.countDocuments({ status: 'live' });
-  if (liveCount > 0) return env.syncIntervalLiveMs;
+  if (liveCount > 0) {
+    return resolveLiveSyncCadence(liveCount).syncIntervalLiveMs;
+  }
   const recentFinishedCount = await Match.countDocuments(findRecentlyFinishedMatchesQuery());
   if (recentFinishedCount > 0) return env.syncIntervalLiveMs;
   return env.syncIntervalMs;

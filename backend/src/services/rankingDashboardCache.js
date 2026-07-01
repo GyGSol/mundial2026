@@ -2,6 +2,7 @@ import { getRankingDashboard, getRankingDashboardShell } from './rankingDashboar
 import { createInMemoryCache } from './inMemoryCache.js';
 import { invalidateRankingDashboardShellCache } from './rankingDashboardShellCache.js';
 import { invalidateLiveFeaturedBarCache } from './liveFeaturedBarCache.js';
+import { resolveLiveSyncCadence } from './liveSyncCadenceService.js';
 
 const DEFAULT_TTL_MS = 15_000;
 const LIVE_TTL_MS = 10_000;
@@ -17,7 +18,10 @@ function dashboardCacheKey(groupId, userId, detailMatchId) {
 }
 
 export function dashboardCacheTtlMs(payload) {
-  if ((payload?.liveMatches?.length ?? 0) > 0) return LIVE_TTL_MS;
+  const liveCount = payload?.liveMatches?.length ?? 0;
+  if (liveCount > 0) {
+    return resolveLiveSyncCadence(liveCount).dashboardCacheLiveTtlMs;
+  }
   if ((payload?.recentFinishedMatches?.length ?? 0) > 0) return RECENT_FINISHED_TTL_MS;
   return DEFAULT_TTL_MS;
 }

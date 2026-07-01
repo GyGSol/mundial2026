@@ -215,13 +215,14 @@ export async function getRankingDashboardShell(groupId, userId) {
   );
   const hasLiveOrRecent =
     inputs.activeLiveRaw.length > 0 || inputs.recentFeaturedRaw.length > 0;
+  const activeLiveCount = inputs.activeLiveRaw.length;
 
   return getCachedRankingDashboardShell(
     groupId,
     userId,
     inputsSignature,
     () => buildRankingDashboardShell(groupId, userId, inputs, groupResult),
-    { hasLiveOrRecent }
+    { hasLiveOrRecent, activeLiveCount }
   );
 }
 
@@ -238,6 +239,7 @@ export async function getRankingDashboard(groupId, userId, detailMatchId) {
   );
   const hasLiveOrRecent =
     inputs.activeLiveRaw.length > 0 || inputs.recentFeaturedRaw.length > 0;
+  const activeLiveCount = inputs.activeLiveRaw.length;
 
   const [featuredBar, shell] = await Promise.all([
     getCachedFeaturedBarPayload({
@@ -251,7 +253,7 @@ export async function getRankingDashboard(groupId, userId, detailMatchId) {
       userId,
       inputsSignature,
       () => buildRankingDashboardShell(groupId, userId, inputs, groupResult),
-      { hasLiveOrRecent }
+      { hasLiveOrRecent, activeLiveCount }
     ),
   ]);
 

@@ -2,6 +2,7 @@ import { createInMemoryCache } from './inMemoryCache.js';
 import { enrichFeaturedBarPayload } from './liveFeaturedBarService.js';
 import { attachStreamMetaToMatches } from './streamMetaService.js';
 import { featuredBarInputsSignature } from './matchEnrichmentRevision.js';
+import { resolveLiveSyncCadence } from './liveSyncCadenceService.js';
 
 const LIVE_TTL_MS = 10_000;
 
@@ -29,6 +30,9 @@ export async function getCachedFeaturedBarPayload({
 }) {
   const inputsSignature = featuredBarInputsSignature(activeLiveRaw, recentFeaturedRaw);
   const key = featuredBarCacheKey(userId, inputsSignature, detailMatchId);
+  const liveCount = activeLiveRaw?.length ?? 0;
+  const ttlMs =
+    liveCount > 0 ? resolveLiveSyncCadence(liveCount).dashboardCacheLiveTtlMs : LIVE_TTL_MS;
 
   return cache.getOrCompute(
     key,
@@ -41,7 +45,7 @@ export async function getCachedFeaturedBarPayload({
       });
       return finalizeFeaturedBar(featured);
     },
-    LIVE_TTL_MS
+    ttlMs
   );
 }
 

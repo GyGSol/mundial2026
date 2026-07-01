@@ -1,4 +1,5 @@
 import { createInMemoryCache } from './inMemoryCache.js';
+import { resolveLiveSyncCadence } from './liveSyncCadenceService.js';
 
 const DEFAULT_TTL_MS = 15_000;
 const LIVE_TTL_MS = 10_000;
@@ -10,8 +11,12 @@ function shellCacheKey(groupId, userId, inputsSignature) {
   return `shell:${groupId}:${userKey}:${inputsSignature}`;
 }
 
-export function rankingShellCacheTtlMs(hasLiveOrRecent) {
-  return hasLiveOrRecent ? LIVE_TTL_MS : DEFAULT_TTL_MS;
+export function rankingShellCacheTtlMs({ hasLiveOrRecent = false, activeLiveCount = 0 } = {}) {
+  if (!hasLiveOrRecent) return DEFAULT_TTL_MS;
+  if (activeLiveCount > 0) {
+    return resolveLiveSyncCadence(activeLiveCount).dashboardCacheLiveTtlMs;
+  }
+  return LIVE_TTL_MS;
 }
 
 export async function getCachedRankingDashboardShell(
@@ -19,13 +24,13 @@ export async function getCachedRankingDashboardShell(
   userId,
   inputsSignature,
   compute,
-  { hasLiveOrRecent = false } = {}
+  { hasLiveOrRecent = false, activeLiveCount = 0 } = {}
 ) {
   const key = shellCacheKey(groupId, userId, inputsSignature);
   return cache.getOrCompute(
     key,
     compute,
-    () => rankingShellCacheTtlMs(hasLiveOrRecent)
+    () => rankingShellCacheTtlMs({ hasLiveOrRecent, activeLiveCount })
   );
 }
 

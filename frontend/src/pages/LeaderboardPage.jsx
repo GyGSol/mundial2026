@@ -13,7 +13,7 @@ import { leaderboardPollIntervalMs, shouldPollLeaderboardLive } from '../lib/lea
 import { REALTIME_EVENTS } from '../lib/realtimeSectors.js';
 import { handleLiveSnapshotRealtime } from '../lib/liveRealtimeHandlers.js';
 import { mergeLiveDashboard, mergeLiveSnapshot } from '../lib/patchLiveMatchSnapshot.js';
-import { LIVE_PATCH_SKIP_POLL_MS } from '../lib/mergeDashboardShell.js';
+import { livePatchSkipPollMs } from '../lib/mergeDashboardShell.js';
 import { sortLiveMatchesForFeaturedBar } from '../lib/liveMatchFeaturedSort.js';
 import { writeStoredExpandedId } from '../hooks/useFeaturedLiveExpansion.js';
 import {
@@ -157,7 +157,7 @@ export default function LeaderboardPage() {
     getPollIntervalMs: () => 15_000,
     pollWhen: (data) => data?.tournament?.status === 'running',
     realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
-    realtimeDebounceMs: 750,
+    realtimeDebounceMs: 500,
   });
 
   useEffect(() => {
@@ -214,9 +214,10 @@ export default function LeaderboardPage() {
   );
 
   const pollWhenLeaderboard = useCallback((payload) => {
+    const liveCount = payload?.liveMatches?.length ?? 0;
     if (
-      (payload?.liveMatches?.length ?? 0) > 0 &&
-      Date.now() - lastLivePatchAtRef.current < LIVE_PATCH_SKIP_POLL_MS
+      liveCount > 0 &&
+      Date.now() - lastLivePatchAtRef.current < livePatchSkipPollMs(liveCount)
     ) {
       return false;
     }
@@ -247,7 +248,7 @@ export default function LeaderboardPage() {
       memoryCacheTtlMs: 5_000,
       mergeOnRefresh: mergeLiveDashboard,
       pollWhen: pollWhenLeaderboard,
-      realtimeDebounceMs: 750,
+      realtimeDebounceMs: 500,
       realtimeEvents: [
         REALTIME_EVENTS.MATCHES_UPDATED,
         REALTIME_EVENTS.LEADERBOARD_UPDATED,

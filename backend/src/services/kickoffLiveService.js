@@ -564,7 +564,11 @@ export async function syncLiveMatchScoring() {
   const reopened = await reopenPrematurelyFinishedMatches();
   const finalized = await finalizeStaleLiveMatches();
   const { syncStaleLiveFifaMatchEvents } = await import('./fifaEventSyncService.js');
-  const liveFifaRefresh = await syncStaleLiveFifaMatchEvents();
+  const { getLiveSyncCadence } = await import('./liveSyncCadenceService.js');
+  const cadence = await getLiveSyncCadence();
+  const liveFifaRefresh = await syncStaleLiveFifaMatchEvents({
+    maxAgeMs: cadence.liveFifaRefreshMs,
+  });
   const fifaRefresh = await refreshRecentlyFinishedFifaEvents();
   const { syncFifaKickoffReschedules } = await import('./fifaKickoffRescheduleService.js');
   await syncFifaKickoffReschedules();

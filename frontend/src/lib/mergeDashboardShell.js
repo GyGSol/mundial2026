@@ -25,3 +25,8 @@ export function mergeLeaderboardDashboardRefresh(prev, next) {
 
 /** Milisegundos tras un parche WS/snapshot durante los cuales se evita poll HTTP. */
 export const LIVE_PATCH_SKIP_POLL_MS = 8_000;
+export const LIVE_PATCH_SKIP_POLL_SINGLE_MS = 5_000;
+
+export function livePatchSkipPollMs(liveMatchCount = 0) {
+  return liveMatchCount === 1 ? LIVE_PATCH_SKIP_POLL_SINGLE_MS : LIVE_PATCH_SKIP_POLL_MS;
+}

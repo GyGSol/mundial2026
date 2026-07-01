@@ -4,6 +4,7 @@ import {
   LEADERBOARD_ACTIVE_POLL_MS,
   LEADERBOARD_IDLE_POLL_MS,
   LEADERBOARD_LIVE_POLL_MS,
+  LEADERBOARD_SINGLE_LIVE_POLL_MS,
   shouldPollLeaderboardLive,
 } from './leaderboardPolling.js';
 
@@ -36,8 +37,16 @@ describe('shouldPollLeaderboardLive', () => {
 });
 
 describe('leaderboardPollIntervalMs', () => {
-  it('5s con partidos en vivo', () => {
-    expect(leaderboardPollIntervalMs({ liveMatches: [{ id: '1' }] })).toBe(LEADERBOARD_LIVE_POLL_MS);
+  it('10s con un solo partido en vivo', () => {
+    expect(leaderboardPollIntervalMs({ liveMatches: [{ id: '1' }] })).toBe(
+      LEADERBOARD_SINGLE_LIVE_POLL_MS
+    );
+  });
+
+  it('15s con dos o más partidos en vivo', () => {
+    expect(
+      leaderboardPollIntervalMs({ liveMatches: [{ id: '1' }, { id: '2' }] })
+    ).toBe(LEADERBOARD_LIVE_POLL_MS);
   });
 
   it('10s con recién finalizados sin live', () => {
