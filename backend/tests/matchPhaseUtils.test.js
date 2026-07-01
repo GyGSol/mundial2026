@@ -20,4 +20,17 @@ describe('matchPhaseUtils', () => {
     expect(fields.knockoutPhase).toBe('Dieciseisavos de final');
     expect(fields.knockoutPhaseKey).toBe('round_of_32');
   });
+
+  it('prioriza externalId oficial sobre type incorrecto del sync', () => {
+    const fields = enrichMatchPhaseFields({ externalId: '80', type: 'final' });
+    expect(fields.isKnockout).toBe(true);
+    expect(fields.knockoutPhase).toBe('Dieciseisavos de final');
+    expect(fields.knockoutPhaseKey).toBe('round_of_32');
+  });
+
+  it('resuelve octavos por externalId 90', () => {
+    const fields = enrichMatchPhaseFields({ externalId: '90', type: 'r32' });
+    expect(fields.knockoutPhase).toBe('Octavos de final');
+    expect(fields.knockoutPhaseKey).toBe('round_of_16');
+  });
 });

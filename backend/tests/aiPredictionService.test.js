@@ -471,6 +471,13 @@ describe('aiPredictionService', () => {
       expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/SOLO la posición en el fixture/i);
       expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/temperatura/i);
     });
+
+    it('documenta formato 2026 y dieciseisavos vs octavos', () => {
+      expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/48 equipos/i);
+      expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/dieciseisavos/i);
+      expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/73–88/);
+      expect(WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS).toMatch(/faseEliminatoria/i);
+    });
   });
 
   describe('AI_COMPETITOR_SCORING_INSTRUCTIONS', () => {
@@ -480,6 +487,7 @@ describe('aiPredictionService', () => {
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/mundial2026/i);
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/calibracionReciente/i);
       expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/parejaSimultaneaGrupo/i);
+      expect(AI_COMPETITOR_SCORING_INSTRUCTIONS).toMatch(/faseEliminatoria/i);
     });
   });
 

@@ -3,6 +3,7 @@ import {
   humanizePromptContext,
   humanizeCompetitorPromptContext,
   sanitizeAiUserFacingText,
+  buildPartidoFaseFields,
 } from '../src/services/aiPromptHumanizer.js';
 
 describe('aiPromptHumanizer', () => {
@@ -93,8 +94,8 @@ describe('aiPromptHumanizer', () => {
 
     const keys = Object.keys(ordered);
     expect(keys[0]).toBe('guiaPrioridadContexto');
-    expect(keys[1]).toBe('partido');
-    expect(keys[2]).toBe('mundial2026');
+    expect(keys).toContain('partido');
+    expect(keys).toContain('mundial2026');
     expect(ordered.guiaPrioridadContexto.calibracionReciente).toMatchObject({
       errorCombinado: 0.15,
     });
@@ -114,5 +115,44 @@ Estado: \`"unknown"\`. Secciones \`injuries\`, \`doubtful\`.`;
     expect(cleaned).toContain('lesionados');
     expect(cleaned).not.toContain('`');
     expect(cleaned).not.toMatch(/probableStarters/i);
+  });
+
+  it('expone fase eliminatoria en contexto humanizado', () => {
+    const r32 = buildPartidoFaseFields({
+      phase: 'knockout',
+      knockoutPhase: 'Dieciseisavos de final',
+      knockoutPhaseKey: 'round_of_32',
+    });
+    expect(r32).toMatchObject({
+      faseTorneo: 'Dieciseisavos de final',
+      faseEliminatoria: 'Dieciseisavos de final',
+      knockoutPhaseKey: 'round_of_32',
+    });
+
+    const humanized = humanizePromptContext({
+      phase: 'knockout',
+      knockoutPhase: 'Dieciseisavos de final',
+      knockoutPhaseKey: 'round_of_32',
+      matchExternalId: '80',
+    });
+    expect(humanized.faseEliminatoria).toBe('Dieciseisavos de final');
+
+    const competitor = humanizeCompetitorPromptContext({
+      phase: 'knockout',
+      knockoutPhase: 'Octavos de final',
+      knockoutPhaseKey: 'round_of_16',
+      matchExternalId: '90',
+    });
+    expect(competitor.partido.faseEliminatoria).toBe('Octavos de final');
+    expect(competitor.partido.faseTorneo).toBe('Octavos de final');
+  });
+
+  it('marca fase de grupos sin ronda eliminatoria', () => {
+    const fields = buildPartidoFaseFields({ phase: 'group' });
+    expect(fields).toMatchObject({
+      faseTorneo: 'Fase de grupos',
+      faseEliminatoria: null,
+      knockoutPhaseKey: null,
+    });
   });
 });

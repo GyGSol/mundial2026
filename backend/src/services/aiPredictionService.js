@@ -71,6 +71,7 @@ import {
 } from './externalMatchIntelService.js';
 import { refreshTeamPlayerIntel, applyOracleAvailabilityFilter } from './aiPlayerIntelService.js';
 import { buildMicroEventsContextBlock } from './matchMicroEventService.js';
+import { enrichMatchPhaseFields } from './matchPhaseUtils.js';
 
 const MAX_GOALS = 10;
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -140,14 +141,17 @@ export const WORLD_CUP_MATCH_ANALYSIS_INSTRUCTIONS = `IMPORTANTE — Copa del Mu
 - Usá análisisPlantilla (o squadAnalysis en contexto crudo): titulares probables, lesionados, en duda, suspendidos y riesgo de tarjetas.
 - Usá duelosPorPuesto (o positionMatchups): compará portería, defensa, mediocampo y delantera para ponderar el marcador.
 - Usá venue.matchWeather.kickoffForecast para ponderar ritmo, desgaste, errores técnicos y adaptación de cada selección al calor/humedad/viento/lluvia del kickoff.
-- Usá weatherOps y weatherRisk: si phase=pre_kickoff_delay o suspended, el partido está demorado por clima. En sedes USA aplica protocolo NOAA (8 mi / 30 min); en Canadá alertas MSC; en México protocolo local SMN con señal Open-Meteo. Si liveScheduleContext.integrityWarning existe, advertí desbalance en parejas de grupo simultáneas.`;
+- Usá weatherOps y weatherRisk: si phase=pre_kickoff_delay o suspended, el partido está demorado por clima. En sedes USA aplica protocolo NOAA (8 mi / 30 min); en Canadá alertas MSC; en México protocolo local SMN con señal Open-Meteo. Si liveScheduleContext.integrityWarning existe, advertí desbalance en parejas de grupo simultáneas.
+- FORMATO MUNDIAL 2026 (48 equipos): la primera eliminatoria son dieciseisavos de final (partidos FIFA 73–88), NO octavos. Octavos = partidos 89–96; cuartos 97–100; semifinales 101–102; tercer puesto 103; final 104.
+- Usá SIEMPRE knockoutPhase, faseEliminatoria o partido.faseEliminatoria del contexto para nombrar la ronda. NO infieras la fase por fecha ni por ediciones anteriores (32 equipos).
+- Si phase=group, no nombres ronda eliminatoria.`;
 
 /** Solo para predicción automática del competidor IA (maximizar puntos). */
 export const AI_COMPETITOR_SCORING_INSTRUCTIONS = `OBJETIVO — Maximizar puntos en el juego de predicciones (máx. 6 pts base por partido):
 1. Prioridad #1: acertar ganador o empate (PA = 3 pts). Definí primero el outcome más probable.
 2. Luego afiná goles local (GL), visitante (GV) y total (GT), 1 pt c/u.
 3. Minimizá error de marcador (Gdif): evitá resultados llamativos sin respaldo en datos.
-4. En eliminatorias: predicción = resultado tras el alargue (90' + prórroga), sin penales. Empate es válido.
+4. En eliminatorias: predicción = resultado tras el alargue (90' + prórroga), sin penales. Empate es válido. Citá la ronda concreta (partido.faseEliminatoria / knockoutPhase) cuando exista.
 
 PRIORIDAD DE CONTEXTO (lee guiaPrioridadContexto primero):
 - Ponderá PRIMERO mundial2026: forma, goles, tabla, stakes y H2H de ESTA Copa — pero SOLO cuando partidosJugados>0. Si es primer partido del grupo en 2026, usá historial pre-torneo, clasificación y mundiales previos antes que inventar forma en el torneo.
@@ -449,6 +453,7 @@ export async function buildPromptContext(match, aiUserId, { adminOnDemand = fals
 
   const groupStandings = computeGroupStandings(teams, allMatches, groups);
   const isKnockout = isOfficialKnockoutMatch(match);
+  const phaseFields = enrichMatchPhaseFields(match);
 
   let resolvedHome = homeTeam;
   let resolvedAway = awayTeam;
@@ -529,6 +534,8 @@ export async function buildPromptContext(match, aiUserId, { adminOnDemand = fals
   return {
     matchExternalId: match.externalId,
     phase: isKnockout ? 'knockout' : 'group',
+    knockoutPhase: phaseFields.knockoutPhase,
+    knockoutPhaseKey: phaseFields.knockoutPhaseKey,
     group: match.group ?? null,
     matchday: match.matchday ?? null,
     kickoffAt: match.kickoffAt?.toISOString?.() ?? match.kickoffAt,

@@ -127,6 +127,35 @@ function humanizeNationSide(side) {
   };
 }
 
+/** Campos de fase del torneo en español para prompts de IA. */
+export function buildPartidoFaseFields(context) {
+  const phase = context?.phase ?? null;
+  const knockoutPhase = context?.knockoutPhase ?? null;
+  const knockoutPhaseKey = context?.knockoutPhaseKey ?? null;
+
+  if (phase === 'group') {
+    return {
+      faseTorneo: 'Fase de grupos',
+      faseEliminatoria: null,
+      knockoutPhaseKey: null,
+    };
+  }
+
+  if (phase === 'knockout' && knockoutPhase) {
+    return {
+      faseTorneo: knockoutPhase,
+      faseEliminatoria: knockoutPhase,
+      knockoutPhaseKey,
+    };
+  }
+
+  return {
+    faseTorneo: null,
+    faseEliminatoria: null,
+    knockoutPhaseKey: null,
+  };
+}
+
 /** Contexto legible para prompts de IA orientados al usuario final. */
 export function humanizePromptContext(context) {
   if (!context || typeof context !== 'object') return context;
@@ -140,8 +169,11 @@ export function humanizePromptContext(context) {
     ...rest
   } = context;
 
+  const faseFields = buildPartidoFaseFields(context);
+
   return {
     ...rest,
+    ...faseFields,
     equipoLocal: homeTeam ?? null,
     equipoVisitante: awayTeam ?? null,
     análisisPlantilla: {
@@ -210,6 +242,9 @@ export function humanizeCompetitorPromptContext(context) {
     group,
     matchday,
     kickoffAt,
+    faseTorneo,
+    faseEliminatoria,
+    knockoutPhaseKey,
     fifaRankingsAsOf,
     venue,
     weatherOps,
@@ -255,6 +290,9 @@ export function humanizeCompetitorPromptContext(context) {
     partido: {
       matchExternalId,
       phase,
+      faseTorneo,
+      faseEliminatoria,
+      knockoutPhaseKey,
       group,
       matchday,
       kickoffAt,

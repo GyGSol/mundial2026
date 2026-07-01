@@ -42,9 +42,9 @@ export function resolveKnockoutPhaseFromExternalId(externalId) {
 }
 
 export function enrichMatchPhaseFields(match) {
-  const fromType = resolveKnockoutPhaseFromType(match.type);
   const fromId = resolveKnockoutPhaseFromExternalId(match.externalId);
-  const phase = fromType ?? fromId;
+  const fromType = resolveKnockoutPhaseFromType(match.type);
+  const phase = fromId ?? fromType;
 
   if (!phase) {
     return {
