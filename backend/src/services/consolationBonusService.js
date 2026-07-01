@@ -1,5 +1,6 @@
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
+import { User } from '../models/User.js';
 
 export const CONSOLATION_STREAK = 3;
 export const CONSOLATION_BONUS = 1;
@@ -7,6 +8,17 @@ export const CONSOLATION_REASON =
   'Punto consuelo (PB): 3 partidos seguidos sin sumar puntos';
 
 export async function recalculateConsolationBonuses(userId) {
+  const user = await User.findById(userId).select('isAiUser').lean();
+
+  await Prediction.updateMany(
+    { userId },
+    { $set: { bonusPoint: 0, bonusReason: null } }
+  );
+
+  if (user?.isAiUser) {
+    return;
+  }
+
   const predictions = await Prediction.find({
     userId,
     pointsEarned: { $ne: null },
@@ -33,11 +45,6 @@ export async function recalculateConsolationBonuses(userId) {
       }
       return a.matchId.toString().localeCompare(b.matchId.toString());
     });
-
-  await Prediction.updateMany(
-    { userId },
-    { $set: { bonusPoint: 0, bonusReason: null } }
-  );
 
   let streak = 0;
   for (const prediction of scored) {
