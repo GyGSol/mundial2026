@@ -592,6 +592,24 @@ function pickMaxClockLabel(...labels) {
   return bestLabel;
 }
 
+/** Reloj en vivo de FIFA (`fetchLiveMatchFootball`); suele ir adelantado vs cronología. */
+export function formatFifaLiveMatchTime(fifaLiveState) {
+  const matchTime = fifaLiveState?.matchTime ?? fifaLiveState?.MatchTime;
+  if (matchTime == null) return null;
+  return formatTimeElapsed({ time_elapsed: matchTime });
+}
+
+/** Mejor minuto para persistir en raw.time_elapsed tras sync FIFA. */
+export function resolveStoredTimeElapsed({ fifaLiveState, timeline = [], raw } = {}) {
+  const best = pickMaxClockLabel(
+    formatFifaLiveMatchTime(fifaLiveState),
+    latestClockFromTimeline(timeline),
+    formatTimeElapsed(raw)
+  );
+  if (!best) return null;
+  return String(best).replace(/'+$/, '');
+}
+
 /**
  * @param {Record<string, unknown>} match
  * @param {Array<{ minute?: number | null, extraMinute?: number | null, sortKey?: number }>} timeline
@@ -611,8 +629,9 @@ export function resolveLiveMatchDisplayClock(match, timeline = [], raw = {}) {
     parseScorersField(effectiveRaw.home_scorers ?? effectiveRaw.homeScorers),
     parseScorersField(effectiveRaw.away_scorers ?? effectiveRaw.awayScorers)
   );
+  const fromFifaLive = formatFifaLiveMatchTime(effectiveRaw.fifaLiveState);
 
-  return pickMaxClockLabel(fromResolved, fromScorers) ?? fromResolved;
+  return pickMaxClockLabel(fromResolved, fromScorers, fromFifaLive) ?? fromResolved;
 }
 
 

@@ -157,6 +157,13 @@ function normalizeClockLabel(value) {
   return formatTimeElapsed({ time_elapsed: asString });
 }
 
+/** Reloj en vivo de FIFA; suele ir adelantado vs eventos de la cronología. */
+export function formatFifaLiveMatchTime(fifaLiveState) {
+  const matchTime = fifaLiveState?.matchTime ?? fifaLiveState?.MatchTime;
+  if (matchTime == null) return null;
+  return formatTimeElapsed({ time_elapsed: matchTime });
+}
+
 /** Último minuto en listas de goleadores enriquecidas (p. ej. raw.home_scorers). */
 export function latestMinuteFromScorerLists(...lists) {
   let best = null;
@@ -208,7 +215,8 @@ export function resolveLiveMatchDisplayClock(match, timeline = match?.matchTimel
       raw?.time_elapsed ?? raw?.timeElapsed,
       resolveLiveTimeElapsed(raw, timeline),
       latestClockFromTimeline(timeline),
-      latestMinuteFromScorerLists(match?.homeScorers, match?.awayScorers)
+      latestMinuteFromScorerLists(match?.homeScorers, match?.awayScorers),
+      formatFifaLiveMatchTime(raw?.fifaLiveState)
     ) ?? resolveLiveTimeElapsed(raw, timeline)
   );
 }

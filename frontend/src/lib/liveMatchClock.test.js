@@ -66,4 +66,20 @@ describe('liveMatchClock', () => {
     };
     expect(resolveLiveMatchDisplayClock(match)).toBe('Entretiempo');
   });
+
+  it('usa fifaLiveState.matchTime cuando la cronología FIFA va atrasada', () => {
+    const match = {
+      status: 'live',
+      matchTimeline: [
+        { type: 'foul', minute: 48, sortKey: 48 },
+        { type: 'period_start', minute: 45, sortKey: 45 },
+      ],
+      raw: {
+        time_elapsed: 'live',
+        fifaLiveState: { matchTime: "58'", period: '5' },
+      },
+    };
+
+    expect(resolveLiveMatchDisplayClock(match)).toBe("58'");
+  });
 });

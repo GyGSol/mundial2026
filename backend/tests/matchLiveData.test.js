@@ -14,6 +14,9 @@ import {
   parseElapsedClockToSortKey,
   playerGoalCountKey,
   resolveLiveTimeElapsed,
+  formatFifaLiveMatchTime,
+  resolveStoredTimeElapsed,
+  resolveLiveMatchDisplayClock,
   goalCountsFromTimeline,
   isPlausibleMatchGoalCount,
   mergePlausibleGoalCounts,
@@ -86,6 +89,42 @@ describe('matchLiveData', () => {
       expect(
         resolveLiveTimeElapsed({ time_elapsed: 'finished' }, [{ minute: 4, sortKey: 4 }])
       ).toBe("4'");
+    });
+  });
+
+  describe('formatFifaLiveMatchTime', () => {
+    it('formatea matchTime de FIFA live', () => {
+      expect(formatFifaLiveMatchTime({ matchTime: "58'" })).toBe("58'");
+      expect(formatFifaLiveMatchTime({ matchTime: '63' })).toBe("63'");
+    });
+  });
+
+  describe('resolveLiveMatchDisplayClock', () => {
+    it('usa fifaLiveState.matchTime cuando la cronología va atrasada', () => {
+      const clock = resolveLiveMatchDisplayClock(
+        { status: 'live', matchPlayState: { phase: 'in_play' } },
+        [
+          { minute: 48, sortKey: 48 },
+          { minute: 45, sortKey: 45 },
+        ],
+        {
+          time_elapsed: 'live',
+          fifaLiveState: { matchTime: "58'" },
+        }
+      );
+      expect(clock).toBe("58'");
+    });
+  });
+
+  describe('resolveStoredTimeElapsed', () => {
+    it('persiste el mayor entre FIFA live y cronología', () => {
+      expect(
+        resolveStoredTimeElapsed({
+          fifaLiveState: { matchTime: "58'" },
+          timeline: [{ minute: 48, sortKey: 48 }],
+          raw: { time_elapsed: 'live' },
+        })
+      ).toBe('58');
     });
   });
 

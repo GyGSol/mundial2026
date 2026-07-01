@@ -20,6 +20,7 @@ import {
   mergeFifaApiScoreWithTimeline,
   mergePlausibleGoalCounts,
   findNewTimelineGoals,
+  resolveStoredTimeElapsed,
 } from './matchLiveData.js';
 import {
   applyShirtNumbersToTimeline,
@@ -213,20 +214,35 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
     }
   }
 
+  if (match.status === 'live') {
+    const syncedClock = resolveStoredTimeElapsed({
+      fifaLiveState: rawUpdate['raw.fifaLiveState'] ?? match.raw?.fifaLiveState,
+      timeline,
+      raw: match.raw,
+    });
+    if (syncedClock) {
+      rawUpdate['raw.time_elapsed'] = syncedClock;
+    }
+  }
+
   if (timeline.length === 0) {
-    if (rawUpdate['raw.lineupSnapshot']) {
-      rawUpdate['raw.fifaMeta'] = {
-        idMatch: String(fifaEntry.IdMatch),
-        idStage: String(fifaEntry.IdStage),
-        matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
-        homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
-        awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
-        ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId, shirtBySideName } : {}),
-        ...(Object.keys(shirtByPlayerId).length > 0
-          ? { shirtMapSyncedAt: new Date().toISOString() }
-          : {}),
-        syncedAt: new Date().toISOString(),
-      };
+    const shouldPersistLiveClock =
+      rawUpdate['raw.fifaLiveState'] || rawUpdate['raw.time_elapsed'] || rawUpdate['raw.lineupSnapshot'];
+    if (shouldPersistLiveClock) {
+      if (rawUpdate['raw.lineupSnapshot']) {
+        rawUpdate['raw.fifaMeta'] = {
+          idMatch: String(fifaEntry.IdMatch),
+          idStage: String(fifaEntry.IdStage),
+          matchNumber: Number(fifaEntry.MatchNumber ?? match.externalId),
+          homeTeamId: String(fifaEntry.Home?.IdTeam ?? ''),
+          awayTeamId: String(fifaEntry.Away?.IdTeam ?? ''),
+          ...(Object.keys(shirtByPlayerId).length > 0 ? { shirtByPlayerId, shirtBySideName } : {}),
+          ...(Object.keys(shirtByPlayerId).length > 0
+            ? { shirtMapSyncedAt: new Date().toISOString() }
+            : {}),
+          syncedAt: new Date().toISOString(),
+        };
+      }
       await Match.updateOne({ _id: match._id }, { $set: rawUpdate });
       return {
         events: 0,
