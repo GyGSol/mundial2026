@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   fifaDateToArtIso,
+  fifaLocalDateToMdy,
   parseFifaLocalDateWallClock,
   validateFifaKickoffConsistency,
 } from '../src/services/fifaApiClient.js';
@@ -14,6 +15,10 @@ describe('fifaKickoffTimezone', () => {
       hour: 21,
       minute: 0,
     });
+  });
+
+  it('convierte FIFA LocalDate a MDY para Match.localDate', () => {
+    expect(fifaLocalDateToMdy('2026-06-30T20:00:00Z')).toBe('06/30/2026 20:00');
   });
 
   it('convierte FIFA Date UTC a ART', () => {

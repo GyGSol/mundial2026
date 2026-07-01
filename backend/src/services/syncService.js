@@ -450,7 +450,21 @@ async function upsertWorldCup26GameItems(list, { stadiumTimezones = null } = {})
       updatePayload.externalId = existing.externalId;
     }
     if (existing?.kickoffAt) {
-      updatePayload.kickoffAt = existing.kickoffAt;
+      const weatherPhase = existing.weatherOps?.phase;
+      const hasWeatherDelay =
+        weatherPhase === 'pre_kickoff_delay' ||
+        weatherPhase === 'postponed' ||
+        weatherPhase === 'suspended';
+      const incomingMs = merged.kickoffAt ? new Date(merged.kickoffAt).getTime() : NaN;
+      const existingMs = new Date(existing.kickoffAt).getTime();
+      const kickoffDriftMs =
+        Number.isFinite(incomingMs) && Number.isFinite(existingMs)
+          ? Math.abs(incomingMs - existingMs)
+          : 0;
+
+      if (hasWeatherDelay || kickoffDriftMs <= 60_000 || existing.status === 'finished') {
+        updatePayload.kickoffAt = existing.kickoffAt;
+      }
     }
     if (existing?.kickoffTimezone) {
       updatePayload.kickoffTimezone = existing.kickoffTimezone;

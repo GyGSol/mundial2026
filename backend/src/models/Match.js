@@ -43,7 +43,7 @@ const matchSchema = new mongoose.Schema(
       nwsAlertId: String,
       source: {
         type: String,
-        enum: ['nws', 'msc', 'open-meteo', 'admin', 'sync', null],
+        enum: ['nws', 'msc', 'open-meteo', 'admin', 'sync', 'fifa-calendar', null],
         default: null,
       },
       overlapGroupKey: String,

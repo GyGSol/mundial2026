@@ -566,6 +566,8 @@ export async function syncLiveMatchScoring() {
   const { syncStaleLiveFifaMatchEvents } = await import('./fifaEventSyncService.js');
   const liveFifaRefresh = await syncStaleLiveFifaMatchEvents();
   const fifaRefresh = await refreshRecentlyFinishedFifaEvents();
+  const { syncFifaKickoffReschedules } = await import('./fifaKickoffRescheduleService.js');
+  await syncFifaKickoffReschedules();
   const promoted = await promoteMatchesAtKickoff();
   const weatherOpsSync = await syncLiveWeatherOps();
 

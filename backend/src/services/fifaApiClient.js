@@ -101,6 +101,14 @@ export function readWallClockInTimezone(utcMs, timeZone) {
   };
 }
 
+/** FIFA LocalDate (wall clock sede) → formato MDY usado en Match.localDate. */
+export function fifaLocalDateToMdy(localDateStr) {
+  const parts = parseFifaLocalDateWallClock(localDateStr);
+  if (!parts) return null;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(parts.month)}/${pad(parts.day)}/${parts.year} ${pad(parts.hour)}:${pad(parts.minute)}`;
+}
+
 /** FIFA Date (UTC) → ART wall clock "YYYY-MM-DDTHH:mm". */
 export function fifaDateToArtIso(dateUtc, timeZone = ARGENTINA_TIMEZONE) {
   const date = dateUtc instanceof Date ? dateUtc : new Date(dateUtc);
@@ -254,23 +262,24 @@ export async function fetchLiveMatchFootball({ idStage, idMatch }) {
 }
 
 export async function resolveFifaMatchEntry(calendar, match, homeTeam, awayTeam) {
-  if (match.raw?.fifaMeta?.idMatch && match.raw?.fifaMeta?.idStage) {
+  if (match.raw?.fifaMeta?.idMatch) {
     const cached = calendar.find((entry) => String(entry.IdMatch) === String(match.raw.fifaMeta.idMatch));
-    if (cached) return cached;
-
-    return {
-      IdMatch: match.raw.fifaMeta.idMatch,
-      IdStage: match.raw.fifaMeta.idStage,
-      MatchNumber: match.raw.fifaMeta.matchNumber ?? Number(match.externalId),
-      Home: { IdTeam: match.raw.fifaMeta.homeTeamId },
-      Away: { IdTeam: match.raw.fifaMeta.awayTeamId },
-    };
+    if (cached?.Date) return cached;
   }
 
-  return findCalendarMatch(calendar, {
+  const byKickoff = findCalendarMatch(calendar, {
     matchNumber: match.externalId,
     homeFifaCode: homeTeam?.fifaCode,
     awayFifaCode: awayTeam?.fifaCode,
     kickoffAt: match.kickoffAt,
   });
+  if (byKickoff?.Date) return byKickoff;
+
+  return (
+    findCalendarMatch(calendar, {
+      matchNumber: match.externalId,
+      homeFifaCode: homeTeam?.fifaCode,
+      awayFifaCode: awayTeam?.fifaCode,
+    }) ?? null
+  );
 }
