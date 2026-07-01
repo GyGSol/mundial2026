@@ -722,6 +722,14 @@ export function deduplicateTimelineGoals(timeline = []) {
   return result;
 }
 
+function goalMinutesNearMatch(a, b, maxDelta = 1) {
+  if (a == null || b == null) return false;
+  const na = Number(a);
+  const nb = Number(b);
+  if (!Number.isFinite(na) || !Number.isFinite(nb)) return false;
+  return Math.abs(na - nb) <= maxDelta;
+}
+
 function timelineIncludesGoal(timeline, { side, minute, extraMinute = null, player }) {
   return timeline.some((event) => {
     if (event.type !== 'goal' || event.side !== side) return false;
@@ -732,12 +740,16 @@ function timelineIncludesGoal(timeline, { side, minute, extraMinute = null, play
       goalPlayerNamesMatch(event.player, player);
 
     if (minute != null && event.minute != null) {
-      if (Number(event.minute) !== Number(minute)) return false;
-      const exA = Number(event.extraMinute ?? 0);
-      const exB = Number(extraMinute ?? 0);
-      if (exA === exB) return true;
-      // Mismo jugador y minuto base: FIFA vs goleadores suelen diferir en descuento (+1).
-      return playerMatch;
+      if (Number(event.minute) === Number(minute)) {
+        const exA = Number(event.extraMinute ?? 0);
+        const exB = Number(extraMinute ?? 0);
+        if (exA === exB) return true;
+        // Mismo jugador y minuto base: FIFA vs goleadores suelen diferir en descuento (+1).
+        return playerMatch;
+      }
+      // FIFA vs worldcup26: mismo jugador ±1 min (p. ej. 24' vs 25').
+      if (playerMatch && goalMinutesNearMatch(event.minute, minute)) return true;
+      return false;
     }
 
     if (minute != null || event.minute != null) {
@@ -757,12 +769,17 @@ function findGoalIndexForMerge(result, event) {
 
   return result.findIndex((existing) => {
     if (existing.type !== 'goal' || existing.side !== event.side) return false;
-    if (existing.minute == null || Number(existing.minute) !== Number(event.minute)) return false;
+    if (existing.minute == null) return false;
     if (!existing.player || !goalPlayerNamesMatch(existing.player, event.player)) return false;
 
-    const exA = Number(existing.extraMinute ?? 0);
-    const exB = Number(event.extraMinute ?? 0);
-    return exA !== exB;
+    const minuteDiff = Math.abs(Number(existing.minute) - Number(event.minute));
+    if (minuteDiff === 0) {
+      const exA = Number(existing.extraMinute ?? 0);
+      const exB = Number(event.extraMinute ?? 0);
+      return exA !== exB;
+    }
+
+    return minuteDiff <= 1;
   });
 }
 

@@ -636,6 +636,33 @@ describe('matchLiveData', () => {
       expect(homeGoals[0].playerShirtNumber).toBe(23);
     });
 
+    it('no duplica gol FIFA min 24 y goleador worldcup min 25 mismo jugador (BEL-SEN #82)', () => {
+      const timeline = completeTimelineEvents(
+        [
+          { type: 'goal', side: 'away', minute: 24, player: 'Habib DIARRA', sortKey: 24 },
+          { type: 'goal', side: 'away', minute: 51, player: 'Ismaila SARR', sortKey: 51 },
+        ],
+        {
+          awayScorers: [
+            { name: 'Habib Diarra', minute: 25 },
+            { name: 'Ismaïla Sarr', minute: 51 },
+          ],
+          homeScore: 0,
+          awayScore: 2,
+        }
+      );
+
+      expect(goalCountsFromTimeline(timeline)).toEqual({ home: 0, away: 2 });
+      expect(timeline.filter((event) => event.type === 'goal')).toHaveLength(2);
+      expect(
+        resolveEffectiveLiveScores(
+          { status: 'live', homeScore: 0, awayScore: 2 },
+          timeline,
+          { fifaMeta: { homeScore: 0, awayScore: 2, syncedAt: '2026-07-01T21:00:00.000Z' } }
+        )
+      ).toEqual({ homeScore: 0, awayScore: 2 });
+    });
+
     it('parsea 90+4 en goleadores worldcup y no duplica gol FIFA (GER–CIV)', () => {
       const timeline = completeTimelineEvents(
         [
