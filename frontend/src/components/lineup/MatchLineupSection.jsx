@@ -8,8 +8,8 @@ import {
   pitchHighlightKeyForTimeline,
 } from '@/components/lineup/PitchEventLayer.jsx';
 import { eventHasPitchCoords } from '@/lib/pitchCoordinates.js';
-import { applyLiveLineupState, normalizeLineupForPitch } from '@/lib/lineupLiveState.js';
 import { applyGridOverridesToLineup } from '@/lib/adminFormationDebug.js';
+import { applyLiveLineupState, normalizeLineupForPitch } from '@/lib/lineupLiveState.js';
 import { formatSummaryPlayer } from '@/lib/playerPositionLabel.js';
 import {
   resolveSubstitutionsForSide,
@@ -353,11 +353,18 @@ export default function MatchLineupSection({
     return applyLiveLineupState(lineup, hydratedHomeSubs, hydratedAwaySubs, timelineEvents);
   }, [isInteractivePitch, lineup, status, hydratedHomeSubs, hydratedAwaySubs, timelineEvents]);
 
+  const effectiveGridOverrides = useMemo(() => {
+    if (gridOverrides && Object.keys(gridOverrides).length) return gridOverrides;
+    const fromLineup = lineup?.formationGridOverrides;
+    if (fromLineup && Object.keys(fromLineup).length) return fromLineup;
+    return null;
+  }, [gridOverrides, lineup?.formationGridOverrides]);
+
   const pitchLineup = useMemo(() => {
     const base = normalizeLineupForPitch(liveLineup ?? lineup);
-    if (!gridOverrides || !Object.keys(gridOverrides).length) return base;
-    return applyGridOverridesToLineup(base, gridOverrides);
-  }, [liveLineup, lineup, gridOverrides]);
+    if (!effectiveGridOverrides || !Object.keys(effectiveGridOverrides).length) return base;
+    return applyGridOverridesToLineup(base, effectiveGridOverrides);
+  }, [liveLineup, lineup, effectiveGridOverrides]);
 
   const homeExpulsions = liveLineup?.home?.expelledPlayers ?? [];
   const awayExpulsions = liveLineup?.away?.expelledPlayers ?? [];

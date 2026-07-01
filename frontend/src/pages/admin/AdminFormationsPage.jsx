@@ -5,7 +5,7 @@ import AdminCard from '@/components/admin/AdminCard.jsx';
 import AdminPageHeader from '@/components/admin/AdminPageHeader.jsx';
 import MatchLineupSection, { shouldShowMatchLineup } from '@/components/lineup/MatchLineupSection.jsx';
 import { adminInput, adminMuted, adminPage } from '@/components/admin/adminTheme.js';
-import { logFormationPlayerMove } from '@/lib/adminFormationDebug.js';
+import { logFormationPlayerMove, formationOverrideKey } from '@/lib/adminFormationDebug.js';
 import { useLiveData } from '@/hooks/useLiveData.js';
 import { REALTIME_EVENTS } from '@/lib/realtimeSectors.js';
 import { Button } from '@/components/ui/button.jsx';
@@ -75,7 +75,7 @@ async function fetchFormationMatchDetail(selectedMatchId) {
 }
 
 function overrideKey(side, shirtNumber, name) {
-  return `${side}:${shirtNumber ?? name}`;
+  return formationOverrideKey(side, shirtNumber, name) ?? '';
 }
 
 export default function AdminFormationsPage() {
@@ -195,9 +195,17 @@ export default function AdminFormationsPage() {
 
   function handlePlayerGridChange(payload) {
     const key = overrideKey(payload.side, payload.shirtNumber, payload.name);
+    if (!key) return;
     setGridOverrides((prev) => ({
       ...prev,
-      [key]: payload.to,
+      [key]: {
+        gridX: payload.to.gridX,
+        gridY: payload.to.gridY,
+        ...(payload.shirtNumber != null && payload.shirtNumber !== ''
+          ? { shirtNumber: payload.shirtNumber }
+          : {}),
+        ...(payload.name ? { name: payload.name } : {}),
+      },
     }));
 
     const logEntry = logFormationPlayerMove({

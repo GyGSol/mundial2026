@@ -2,15 +2,15 @@ import mongoose from 'mongoose';
 import { Match } from '../models/Match.js';
 import { invalidateMatchRelatedCaches } from './matchRelatedCaches.js';
 import { invalidateRankingFinishedMatchesCache } from './rankingFinishedMatchesCache.js';
+import {
+  applyFormationGridOverridesToLineupPlayers,
+  formationOverrideKey,
+} from '../../../shared/formationGridOverrides.js';
 
 export const FORMATION_OVERRIDE_SCHEMA_VERSION = 1;
 
-/** Clave estable: side + dorsal o nombre (igual que admin frontend). */
-export function formationOverrideKey(side, shirtNumber, name) {
-  const sideNorm = side === 'away' ? 'away' : 'home';
-  const id = shirtNumber != null && shirtNumber !== '' ? String(shirtNumber) : String(name ?? '').trim();
-  return `${sideNorm}:${id}`;
-}
+/** @deprecated use formationOverrideKey from shared */
+export { formationOverrideKey };
 
 function clampGrid(value) {
   const n = Number(value);
@@ -67,29 +67,12 @@ export function applyFormationGridOverridesToLineup(lineup, matchOrOverrides) {
 
   if (!players || !Object.keys(players).length) return lineup;
 
-  const patchSide = (sideKey) => {
-    const side = lineup[sideKey];
-    if (!side?.players?.length) return side;
-    return {
-      ...side,
-      players: side.players.map((player) => {
-        const key = formationOverrideKey(sideKey, player.shirtNumber, player.name);
-        const override = players[key];
-        if (!override) return player;
-        return {
-          ...player,
-          gridX: override.gridX,
-          gridY: override.gridY,
-        };
-      }),
-    };
-  };
+  const patched = applyFormationGridOverridesToLineupPlayers(lineup, players);
 
   return {
-    ...lineup,
+    ...patched,
     formationOverridesApplied: true,
-    home: patchSide('home'),
-    away: patchSide('away'),
+    formationGridOverrides: players,
   };
 }
 
@@ -119,13 +102,16 @@ export async function getAdminFormationGridOverrides(matchId) {
 }
 
 export async function saveAdminFormationGridOverrides(matchId, overridesInput, { updatedBy = 'admin' } = {}) {
-  const players = normalizeFormationOverrideMap(overridesInput);
+  const incoming = normalizeFormationOverrideMap(overridesInput);
   const match = await Match.findById(matchId);
   if (!match) {
     const error = new Error('Partido no encontrado');
     error.status = 404;
     throw error;
   }
+
+  const existing = readFormationGridOverridesFromMatch(match).players;
+  const players = { ...existing, ...incoming };
 
   const payload = {
     version: FORMATION_OVERRIDE_SCHEMA_VERSION,
