@@ -1,6 +1,6 @@
-import LoadingSpinner from '../LoadingSpinner.jsx';
-import FubolCoinIcon from '../FubolCoinIcon.jsx';
-import FubolsCupRankingLink from '../FubolsCupRankingLink.jsx';
+import LoadingSpinner from './LoadingSpinner.jsx';
+import FubolCoinIcon from './FubolCoinIcon.jsx';
+import FubolsCupRankingLink from './FubolsCupRankingLink.jsx';
 import FubolsCupBracket from './worldcup/FubolsCupBracket.jsx';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 
