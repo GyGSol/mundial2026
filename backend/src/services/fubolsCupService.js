@@ -724,7 +724,7 @@ function mergeProfileWithLeaderboardStats(profileMap, statsMap, userId) {
   };
 }
 
-function serializeDemoPlayer(user, profile) {
+function serializeDemoPlayer(user, profile, prediction, matchPoints) {
   if (!user) return null;
   const id = user._id.toString();
   return {
@@ -733,10 +733,10 @@ function serializeDemoPlayer(user, profile) {
     seed: null,
     avatarUrl: profile.avatarUrl ?? null,
     isAiUser: profile.isAiUser ?? Boolean(user.isAiUser),
-    totalPoints: profile.totalPoints ?? 0,
-    pj: profile.pj ?? 0,
-    difGl: profile.difGl ?? 0,
-    difGv: profile.difGv ?? 0,
+    matchPoints,
+    prediction: prediction
+      ? { homeGoals: prediction.homeGoals, awayGoals: prediction.awayGoals }
+      : null,
   };
 }
 
@@ -792,8 +792,13 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
     duelId: DEMO_DUEL_ID,
     duelIndex: 0,
     isDemo: true,
-    playerA: serializeDemoPlayer(aiUser, profileA),
-    playerB: serializeDemoPlayer(humanOpponent, profileB),
+    playerA: serializeDemoPlayer(aiUser, profileA, predictionByUserId[playerAId], pointsA),
+    playerB: serializeDemoPlayer(
+      humanOpponent,
+      profileB,
+      predictionByUserId[playerBId],
+      pointsB
+    ),
     winnerId: duelSlice.winnerId,
     matchResults: [duelSlice],
     worldCupExternalIds: [externalId],

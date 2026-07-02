@@ -10,6 +10,9 @@ const CUARTOS_RIGHT_DUEL_INDEXES = [0, 3];
 const playerRowGridClass =
   'grid grid-cols-[1.75rem_minmax(0,1fr)_2.5rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-2';
 
+const demoPlayerRowGridClass =
+  'grid grid-cols-[minmax(0,1fr)_3.5rem_3rem] items-center gap-x-2 sm:grid-cols-[minmax(0,1fr)_4rem_3.5rem] sm:gap-x-3';
+
 const playerRowPaddingClass = 'px-2.5 sm:px-3';
 
 function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
@@ -23,6 +26,7 @@ function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
       playerBName={duel.playerB?.name}
       playerAId={duel.playerA?.id}
       playerBId={duel.playerB?.id}
+      hideViewerPrediction={Boolean(duel.isDemo)}
     />
   );
 }
@@ -42,6 +46,33 @@ function PlayerLineHeader() {
       <span className="text-right">Pts</span>
     </div>
   );
+}
+
+function DemoPlayerLineHeader() {
+  return (
+    <div
+      className={cn(
+        demoPlayerRowGridClass,
+        playerRowPaddingClass,
+        'text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]'
+      )}
+    >
+      <span className="min-w-0">Jugador</span>
+      <span className="text-center">Pred.</span>
+      <span className="text-right">Pts</span>
+    </div>
+  );
+}
+
+function formatDemoPrediction(prediction) {
+  if (!prediction || prediction.homeGoals == null || prediction.awayGoals == null) {
+    return 'Sin pred.';
+  }
+  return `${prediction.homeGoals}–${prediction.awayGoals}`;
+}
+
+function formatDemoMatchPoints(points) {
+  return points == null ? '—' : String(points);
 }
 
 function PlayerLine({ player, isWinner }) {
@@ -89,6 +120,48 @@ function PlayerLine({ player, isWinner }) {
   );
 }
 
+function DemoPlayerLine({ player, isWinner }) {
+  if (!player?.name) {
+    return (
+      <div className="rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground">
+        Por definir
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        demoPlayerRowGridClass,
+        playerRowPaddingClass,
+        'rounded-lg border py-2 sm:py-2.5',
+        isWinner === true && 'border-primary bg-primary/10 font-semibold',
+        isWinner === false && 'opacity-60'
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+        <LeaderboardUserAvatar
+          name={player.name}
+          avatarUrl={player.avatarUrl}
+          isAiUser={player.isAiUser}
+        />
+        <span className="truncate text-sm font-medium sm:text-base">{player.name}</span>
+      </span>
+      <span className="text-center text-xs tabular-nums text-muted-foreground sm:text-sm">
+        {formatDemoPrediction(player.prediction)}
+      </span>
+      <span
+        className={cn(
+          'text-right text-sm font-semibold tabular-nums sm:text-base',
+          isWinner === true && 'text-primary'
+        )}
+      >
+        {formatDemoMatchPoints(player.matchPoints)}
+      </span>
+    </div>
+  );
+}
+
 function DuelCard({ duel, className }) {
   const worldCupMatches = duel.worldCupMatches ?? [];
   const sliceByExternalId = Object.fromEntries(
@@ -96,6 +169,7 @@ function DuelCard({ duel, className }) {
       .filter((row) => row.externalId)
       .map((row) => [String(row.externalId), row])
   );
+  const isDemo = Boolean(duel.isDemo);
 
   return (
     <article
@@ -105,36 +179,70 @@ function DuelCard({ duel, className }) {
       )}
     >
       <div className="min-w-0">
-        <PlayerLineHeader />
+        {isDemo ? <DemoPlayerLineHeader /> : <PlayerLineHeader />}
       </div>
       <div className="flex flex-col gap-2">
-        <PlayerLine
-          player={duel.playerA}
-          isWinner={
-            duel.winnerId && duel.playerA?.id
-              ? duel.playerA.id === duel.winnerId
-                ? true
-                : duel.winnerId
-                  ? false
+        {isDemo ? (
+          <>
+            <DemoPlayerLine
+              player={duel.playerA}
+              isWinner={
+                duel.winnerId && duel.playerA?.id
+                  ? duel.playerA.id === duel.winnerId
+                    ? true
+                    : duel.winnerId
+                      ? false
+                      : null
                   : null
-              : null
-          }
-        />
-        <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          vs
-        </p>
-        <PlayerLine
-          player={duel.playerB}
-          isWinner={
-            duel.winnerId && duel.playerB?.id
-              ? duel.playerB.id === duel.winnerId
-                ? true
-                : duel.winnerId
-                  ? false
+              }
+            />
+            <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              vs
+            </p>
+            <DemoPlayerLine
+              player={duel.playerB}
+              isWinner={
+                duel.winnerId && duel.playerB?.id
+                  ? duel.playerB.id === duel.winnerId
+                    ? true
+                    : duel.winnerId
+                      ? false
+                      : null
                   : null
-              : null
-          }
-        />
+              }
+            />
+          </>
+        ) : (
+          <>
+            <PlayerLine
+              player={duel.playerA}
+              isWinner={
+                duel.winnerId && duel.playerA?.id
+                  ? duel.playerA.id === duel.winnerId
+                    ? true
+                    : duel.winnerId
+                      ? false
+                      : null
+                  : null
+              }
+            />
+            <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              vs
+            </p>
+            <PlayerLine
+              player={duel.playerB}
+              isWinner={
+                duel.winnerId && duel.playerB?.id
+                  ? duel.playerB.id === duel.winnerId
+                    ? true
+                    : duel.winnerId
+                      ? false
+                      : null
+                  : null
+              }
+            />
+          </>
+        )}
       </div>
 
       {worldCupMatches.length ? (
@@ -230,7 +338,8 @@ export default function FubolsCupBracket({ rounds = [], demoDuel = null }) {
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Vista de prueba: puntos del cruce según el marcador actual del partido España–Austria.
+            Puntos del cruce según las predicciones de Futbot y vos en España–Austria (se actualizan
+            con el marcador en vivo).
           </p>
           <DuelCard duel={demoDuel} />
         </section>

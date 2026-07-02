@@ -386,6 +386,10 @@ describe('fubolsCupService', () => {
     expect(dashboard.demoDuel.playerA.name).toBe('Futbot');
     expect(dashboard.demoDuel.playerA.id).toBe(String(aiUser._id));
     expect(dashboard.demoDuel.playerB.id).toBe(String(gonzalo._id));
+    expect(dashboard.demoDuel.playerA.prediction).toEqual({ homeGoals: 2, awayGoals: 1 });
+    expect(dashboard.demoDuel.playerB.prediction).toEqual({ homeGoals: 1, awayGoals: 0 });
+    expect(dashboard.demoDuel.playerA.matchPoints).toBe(6);
+    expect(dashboard.demoDuel.playerB.matchPoints).toBe(0);
     expect(dashboard.demoDuel.worldCupMatches).toHaveLength(1);
     expect(dashboard.demoDuel.worldCupMatches[0].duelSlice.pointsA).toBe(6);
     expect(dashboard.demoDuel.worldCupMatches[0].duelSlice.pointsB).toBe(0);
@@ -400,6 +404,8 @@ describe('fubolsCupService', () => {
 
     const demoDuel = await buildLiveDemoDuel(groupId, gonzalo._id);
     expect(demoDuel?.worldCupMatches[0].match?.status).toBe('live');
+    expect(demoDuel?.playerA.matchPoints).toBe(4);
+    expect(demoDuel?.playerB.matchPoints).toBe(2);
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsA).toBe(4);
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsB).toBe(2);
   });

@@ -101,6 +101,7 @@ export default function FubolsCupMatchTile({
   playerBName = null,
   playerAId = null,
   playerBId = null,
+  hideViewerPrediction = false,
 }) {
   if (!match?.id) {
     return (
@@ -208,14 +209,16 @@ export default function FubolsCupMatchTile({
         </p>
       ) : null}
 
-      <p
-        className={cn(
-          'mt-2 text-xs',
-          prediction.hasPrediction ? 'text-amber-200/90' : 'text-muted-foreground'
-        )}
-      >
-        {prediction.text}
-      </p>
+      {!hideViewerPrediction ? (
+        <p
+          className={cn(
+            'mt-2 text-xs',
+            prediction.hasPrediction ? 'text-amber-200/90' : 'text-muted-foreground'
+          )}
+        >
+          {prediction.text}
+        </p>
+      ) : null}
 
       <p className="mt-1 text-[10px] text-primary/70 opacity-0 transition-opacity group-hover:opacity-100">
         Ir a Predicciones →
