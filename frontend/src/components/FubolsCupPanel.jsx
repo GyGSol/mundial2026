@@ -75,6 +75,7 @@ export default function FubolsCupPanel({ data, loading, error, groupId, onRetry 
             <li>Cada partido del cruce se juega por separado: gana quien hace más puntos en ese partido.</li>
             <li>Si cada uno gana un partido, pasa quien tuvo mayor diferencia en el partido que ganó.</li>
             <li>Si el cruce queda igualado, gana quien tiene más puntos en el torneo.</li>
+            <li>Tocá un partido del cuadro para ir a Predicciones y cargar tu pronóstico.</li>
           </ul>
           <FubolsCupBracket rounds={rounds} />
         </>

@@ -81,7 +81,7 @@ export default function FubolsCupSection() {
         <div>
           <h2 className="text-lg font-semibold">Copa Fubols</h2>
           <p className="text-sm text-muted-foreground">
-            Playoff del top 8 humanos del grupo, alineado a octavos → final del Mundial.
+            Playoff del top 8 humanos del grupo: cuartos → semifinales → tercer puesto y final.
           </p>
         </div>
         <Select value={groupId} onValueChange={setGroupId}>
@@ -142,6 +142,7 @@ export default function FubolsCupSection() {
                 <li>Los PB no suman en la Copa Fubols.</li>
                 <li>Cada partido del cruce es individual (sin sumar entre partidos).</li>
                 <li>Empate 1-1 en victorias: gana quien tuvo mayor diferencia en su partido ganado.</li>
+                <li>Tocá un partido del cuadro para ir a Predicciones y cargar tu pronóstico.</li>
               </ul>
               <FubolsCupBracket rounds={data.rounds} />
             </>

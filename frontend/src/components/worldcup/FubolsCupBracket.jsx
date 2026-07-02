@@ -1,130 +1,159 @@
+import FubolsCupMatchTile from '@/components/worldcup/FubolsCupMatchTile.jsx';
 import { cn } from '@/lib/utils';
-import {
-  FUBOLS_CUP_BRACKET_COLS,
-  FUBOLS_CUP_BRACKET_NODES,
-  FUBOLS_CUP_BRACKET_ROWS,
-  getFubolsCupConnectors,
-  getFubolsCupNodeCenter,
-  duelNodeId,
-} from '@/lib/fubolsCupBracketLayout.js';
 
-const MIN_CELL_W = 120;
-const MIN_CELL_H = 72;
+/** Cuartos: izquierda 2v7 + 3v6; derecha 1v8 + 4v5 */
+const CUARTOS_LEFT_DUEL_INDEXES = [1, 2];
+const CUARTOS_RIGHT_DUEL_INDEXES = [0, 3];
 
-function nodeCenterPx(node, cellW, cellH) {
-  const center = getFubolsCupNodeCenter(node);
-  return {
-    x: (center.col - 1) * cellW + cellW / 2,
-    y: (center.row - 1) * cellH + cellH / 2,
-  };
+function WorldCupMatchBlock({ wc }) {
+  return <FubolsCupMatchTile match={wc.match} externalId={wc.externalId} />;
 }
 
-function buildConnectorPath(fromId, toId, cellW, cellH) {
-  const fromNode = FUBOLS_CUP_BRACKET_NODES[fromId];
-  const toNode = FUBOLS_CUP_BRACKET_NODES[toId];
-  if (!fromNode || !toNode) return '';
-
-  const from = nodeCenterPx(fromNode, cellW, cellH);
-  const to = nodeCenterPx(toNode, cellW, cellH);
-  const fromEdgeX = from.x + (to.x >= from.x ? cellW * 0.28 : -cellW * 0.28);
-  const toEdgeX = to.x + (to.x >= from.x ? -cellW * 0.28 : cellW * 0.28);
-  const midX = (fromEdgeX + toEdgeX) / 2;
-
-  return `M ${fromEdgeX} ${from.y} H ${midX} V ${to.y} H ${toEdgeX}`;
-}
-
-function formatMatchScores(matchResults) {
-  if (!matchResults?.length) return null;
-  return matchResults.map((row) => `${row.pointsA}-${row.pointsB}`).join(' · ');
-}
-
-function DuelCard({ duel, isWinnerSide, side }) {
-  const player = side === 'A' ? duel.playerA : duel.playerB;
+function PlayerLine({ player, isWinner }) {
   if (!player?.name) {
-    return <span className="text-xs text-muted-foreground">Por definir</span>;
+    return (
+      <div className="rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground">
+        Por definir
+      </div>
+    );
   }
-
-  const won =
-    duel.winnerId && player.id === duel.winnerId ? true : duel.winnerId ? false : null;
 
   return (
     <div
       className={cn(
-        'flex flex-col gap-0.5 rounded-md border px-2 py-1.5 text-xs',
-        won === true && 'border-primary bg-primary/10 font-semibold',
-        won === false && 'opacity-70'
+        'rounded-lg border px-4 py-3',
+        isWinner === true && 'border-primary bg-primary/10 font-semibold',
+        isWinner === false && 'opacity-60'
       )}
     >
-      <span className="truncate" title={player.name}>
-        {player.seed ? `${player.seed}. ` : ''}
+      <span className="text-base sm:text-lg">
+        {player.seed ? (
+          <span className="mr-1.5 font-bold text-primary">{player.seed}.</span>
+        ) : null}
         {player.name}
       </span>
-      {isWinnerSide && duel.matchResults?.length ? (
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {formatMatchScores(duel.matchResults)}
-        </span>
-      ) : null}
     </div>
   );
 }
 
-function DuelNode({ duel, nodeId, cellW, cellH }) {
-  const node = FUBOLS_CUP_BRACKET_NODES[nodeId];
-  if (!node || !duel) return null;
-
-  const top = (node.rowStart - 1) * cellH;
-  const height = node.rowSpan * cellH;
-  const left = (node.col - 1) * cellW;
+function DuelCard({ duel, className }) {
+  const worldCupMatches = duel.worldCupMatches ?? [];
 
   return (
-    <div
-      className="absolute px-1"
-      style={{ left, top, width: cellW, height, display: 'flex', flexDirection: 'column', gap: 4, justifyContent: 'center' }}
+    <article
+      className={cn(
+        'flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:p-5',
+        className
+      )}
     >
-      <DuelCard duel={duel} side="A" isWinnerSide />
-      <DuelCard duel={duel} side="B" isWinnerSide />
-    </div>
+      <div className="flex flex-col gap-2">
+        <PlayerLine
+          player={duel.playerA}
+          isWinner={
+            duel.winnerId && duel.playerA?.id
+              ? duel.playerA.id === duel.winnerId
+                ? true
+                : duel.winnerId
+                  ? false
+                  : null
+              : null
+          }
+        />
+        <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          vs
+        </p>
+        <PlayerLine
+          player={duel.playerB}
+          isWinner={
+            duel.winnerId && duel.playerB?.id
+              ? duel.playerB.id === duel.winnerId
+                ? true
+                : duel.winnerId
+                  ? false
+                  : null
+              : null
+          }
+        />
+      </div>
+
+      {worldCupMatches.length ? (
+        <div className="flex flex-col gap-3 border-t border-border/60 pt-3">
+          {worldCupMatches.map((wc) => (
+            <WorldCupMatchBlock key={wc.externalId} wc={wc} />
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function CuartosSplitBracket({ round }) {
+  const duels = round?.duels ?? [];
+  const pick = (indexes) => indexes.map((i) => duels[i]).filter(Boolean);
+
+  const leftDuels = pick(CUARTOS_LEFT_DUEL_INDEXES);
+  const rightDuels = pick(CUARTOS_RIGHT_DUEL_INDEXES);
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h3 className="text-base font-semibold sm:text-lg">{round?.label ?? 'Cuartos de final'}</h3>
+      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm font-medium text-muted-foreground">Lado izquierdo</p>
+          {leftDuels.map((duel) => (
+            <DuelCard key={duel.duelId} duel={duel} />
+          ))}
+        </div>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm font-medium text-muted-foreground">Lado derecho</p>
+          {rightDuels.map((duel) => (
+            <DuelCard key={duel.duelId} duel={duel} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RoundSection({ round, gridClassName }) {
+  if (!round?.duels?.length) return null;
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h3 className="text-base font-semibold sm:text-lg">{round.label}</h3>
+      <div className={cn('grid gap-4', gridClassName)}>
+        {round.duels.map((duel) => (
+          <DuelCard key={duel.duelId} duel={duel} />
+        ))}
+      </div>
+    </section>
   );
 }
 
 export default function FubolsCupBracket({ rounds = [] }) {
-  const cellW = MIN_CELL_W;
-  const cellH = MIN_CELL_H;
-  const width = FUBOLS_CUP_BRACKET_COLS * cellW;
-  const height = FUBOLS_CUP_BRACKET_ROWS * cellH;
-  const connectors = getFubolsCupConnectors();
+  if (!rounds.length) return null;
+
+  const roundByKey = Object.fromEntries(rounds.map((round) => [round.roundKey, round]));
+  const cuartos = roundByKey.quarter_final;
+  const semis = roundByKey.semi_final;
+  const thirdPlace = roundByKey.third_place;
+  const final = roundByKey.final;
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card/40 p-2">
-      <div className="relative mx-auto" style={{ width, height, minWidth: width }}>
-        <svg
-          className="pointer-events-none absolute inset-0 text-border"
-          width={width}
-          height={height}
-          aria-hidden
-        >
-          {connectors.map(({ from, to }) => (
-            <path
-              key={`${from}-${to}`}
-              d={buildConnectorPath(from, to, cellW, cellH)}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1}
-            />
-          ))}
-        </svg>
-        {rounds.map((round, roundIndex) =>
-          round.duels.map((duel, duelIndex) => (
-            <DuelNode
-              key={duel.duelId}
-              duel={duel}
-              nodeId={duelNodeId(roundIndex, duelIndex)}
-              cellW={cellW}
-              cellH={cellH}
-            />
-          ))
-        )}
-      </div>
+    <div className="flex flex-col gap-8 rounded-lg border bg-card/40 p-4 sm:p-6">
+      {cuartos ? <CuartosSplitBracket round={cuartos} /> : null}
+
+      {semis ? <RoundSection round={semis} gridClassName="md:grid-cols-2" /> : null}
+
+      {thirdPlace || final ? (
+        <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
+          <h3 className="text-base font-semibold sm:text-lg">Cierre del torneo</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {thirdPlace ? <RoundSection round={thirdPlace} /> : null}
+            {final ? <RoundSection round={final} /> : null}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

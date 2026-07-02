@@ -103,9 +103,16 @@ export function GroupColorDotList({ groups, position = 3, size = 'xs' }) {
   );
 }
 
-export function KnockoutSlotLabel({ label, slotSourceMatch, className }) {
+export function KnockoutSlotLabel({ label, slotSourceMatch, className, compact = false }) {
   if (slotSourceMatch) {
-    return <MatchWinnerSlotLabel slotSourceMatch={slotSourceMatch} label={label} className={className} />;
+    return (
+      <MatchWinnerSlotLabel
+        slotSourceMatch={slotSourceMatch}
+        label={label}
+        className={className}
+        compact={compact}
+      />
+    );
   }
 
   const parsed = parseKnockoutSlotLabel(label);

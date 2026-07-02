@@ -137,6 +137,54 @@ describe('enrichMatchesForPredictions', () => {
     expect(match.awayTeamSlotLabel).toBe('2.º del grupo B');
     expect(match.isKnockout).toBe(true);
   });
+
+  it('propaga slotSourceMatch para Ganador de con banderas', async () => {
+    getCachedUserPredictedMatchContext.mockResolvedValue({
+      resolvedKnockoutByExternalId: new Map([
+        [
+          '97',
+          {
+            homeTeam: null,
+            awayTeam: null,
+            homeTeamSlotLabel: 'Ganador de ARG vs FRA',
+            awayTeamSlotLabel: 'Ganador de BRA vs GER',
+            homeTeamSlotSourceMatch: {
+              homeTeam: { externalId: 'ARG', fifaCode: 'ARG', nameEn: 'Argentina' },
+              awayTeam: { externalId: 'FRA', fifaCode: 'FRA', nameEn: 'France' },
+              homeTeamSlotLabel: null,
+              awayTeamSlotLabel: null,
+            },
+            awayTeamSlotSourceMatch: {
+              homeTeam: { externalId: 'BRA', fifaCode: 'BRA', nameEn: 'Brazil' },
+              awayTeam: { externalId: 'GER', fifaCode: 'GER', nameEn: 'Germany' },
+              homeTeamSlotLabel: null,
+              awayTeamSlotLabel: null,
+            },
+            knockoutPhase: 'Cuartos de final',
+            knockoutPhaseKey: 'quarter_final',
+          },
+        ],
+      ]),
+    });
+
+    const [match] = await enrichMatchesForPredictions(
+      [
+        {
+          _id: 'mongo97',
+          externalId: '97',
+          homeTeamId: 0,
+          awayTeamId: 0,
+          status: 'upcoming',
+          homeScore: 0,
+          awayScore: 0,
+        },
+      ],
+      'user-id'
+    );
+
+    expect(match.homeTeamSlotSourceMatch?.homeTeam?.fifaCode).toBe('ARG');
+    expect(match.awayTeamSlotSourceMatch?.awayTeam?.fifaCode).toBe('GER');
+  });
 });
 
 describe('enrichMatchesForPredictionsList', () => {

@@ -41,10 +41,8 @@ export function resolveDuelWinner({
     margins[slice.winner] = Math.max(margins[slice.winner], slice.margin);
   }
 
-  if (wins.A === 2) return String(playerAId);
-  if (wins.B === 2) return String(playerBId);
-  if (wins.A === 1 && wins.B === 0) return String(playerAId);
-  if (wins.B === 1 && wins.A === 0) return String(playerBId);
+  if (wins.A > wins.B) return String(playerAId);
+  if (wins.B > wins.A) return String(playerBId);
   if (wins.A === 1 && wins.B === 1) {
     if (margins.A > margins.B) return String(playerAId);
     if (margins.B > margins.A) return String(playerBId);

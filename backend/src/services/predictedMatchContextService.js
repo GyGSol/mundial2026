@@ -22,6 +22,8 @@ export function indexResolvedKnockoutPhases(phases = []) {
         awayTeam: match.awayTeam,
         homeTeamSlotLabel: match.homeTeamSlotLabel,
         awayTeamSlotLabel: match.awayTeamSlotLabel,
+        homeTeamSlotSourceMatch: match.homeTeamSlotSourceMatch,
+        awayTeamSlotSourceMatch: match.awayTeamSlotSourceMatch,
         knockoutPhase: phase.label,
         knockoutPhaseKey: phase.key,
       });
@@ -103,5 +105,7 @@ export function applyResolvedKnockoutToMatch(match, resolved) {
     awayTeam: resolved.awayTeam ?? match.awayTeam,
     homeTeamSlotLabel: resolved.homeTeam ? null : resolved.homeTeamSlotLabel,
     awayTeamSlotLabel: resolved.awayTeam ? null : resolved.awayTeamSlotLabel,
+    homeTeamSlotSourceMatch: resolved.homeTeam ? null : resolved.homeTeamSlotSourceMatch,
+    awayTeamSlotSourceMatch: resolved.awayTeam ? null : resolved.awayTeamSlotSourceMatch,
   };
 }

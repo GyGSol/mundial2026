@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import crypto from 'node:crypto';
 import {
   FUBOLS_CUP_BRACKET_ADVANCEMENT,
   FUBOLS_CUP_FIRST_ROUND_PAIRINGS,
@@ -6,9 +7,11 @@ import {
   FUBOLS_CUP_ROUNDS,
   FUBOLS_CUP_ROUND_OF_32_MAX,
   FUBOLS_CUP_ROUND_OF_32_MIN,
+  applyShuffledMatchAssignmentsToRounds,
   buildEmptyBracketRounds,
-  getWorldCupExternalIdsForDuel,
+  getDuelWorldCupExternalIds,
   isRoundOf32Complete,
+  reconcileWorldCupMatchAssignments,
 } from '../../../shared/fubolsCupBracket.js';
 import {
   buildMatchResultSlice,
@@ -23,13 +26,20 @@ import { FubolsCupTournament } from '../models/FubolsCupTournament.js';
 import { Match } from '../models/Match.js';
 import { Prediction } from '../models/Prediction.js';
 import { Team } from '../models/Team.js';
+import { Stadium } from '../models/Stadium.js';
 import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { payoutFubolsCupAdvance, payoutFubolsCupChampion } from './fubolService.js';
 import { getLeaderboard } from './leaderboardService.js';
 import { resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { recalculateMatchScores } from './syncService.js';
-import { kickoffSlotKey, matchesInFirstKickoffSlot } from '../utils/kickoffSlot.js';
+import { enrichMatches } from './matchEnrichmentService.js';
+import { PREDICTIONS_LIST_MATCH_PROJECTION } from './liveBarMatchProjection.js';
+import { getFifaWorldRankings } from './aiTeamMatchContextService.js';
+import {
+  buildKnockoutPhases,
+  WORLD_CUP_MATCH_SELECT,
+} from './worldCupStatsService.js';
 
 function cupError(message, status = 400) {
   const error = new Error(message);
@@ -88,6 +98,13 @@ function assignBracketFromWinners(tournament) {
         return semi?.playerBId ? String(semi.playerBId) : null;
       }
       const prev = findDuel(tournament, source.roundIndex, source.duelIndex);
+      if (!prev?.playerAId || !prev?.playerBId) return null;
+      if (source.slot === 'loser') {
+        if (!prev.winnerId) return null;
+        return String(prev.winnerId) === String(prev.playerAId)
+          ? String(prev.playerBId)
+          : String(prev.playerAId);
+      }
       return prev?.winnerId ? String(prev.winnerId) : null;
     };
 
@@ -120,8 +137,20 @@ async function attachTeamsToMatches(matches = []) {
     const awayName = away?.nameEn ?? m.awayTeamId;
     return {
       ...m,
-      homeTeam: { name: homeName, nameEn: homeName, externalId: m.homeTeamId },
-      awayTeam: { name: awayName, nameEn: awayName, externalId: m.awayTeamId },
+      homeTeam: {
+        name: homeName,
+        nameEn: homeName,
+        externalId: m.homeTeamId,
+        fifaCode: home?.fifaCode ?? m.homeTeamId,
+        flag: home?.flag ?? null,
+      },
+      awayTeam: {
+        name: awayName,
+        nameEn: awayName,
+        externalId: m.awayTeamId,
+        fifaCode: away?.fifaCode ?? m.awayTeamId,
+        flag: away?.flag ?? null,
+      },
     };
   });
 }
@@ -145,6 +174,15 @@ async function getRoundOf32FinishedExternalIds() {
     .select('externalId')
     .lean();
   return matches.map((m) => String(m.externalId));
+}
+
+function markRoundsDirty(tournament) {
+  tournament.markModified('rounds');
+}
+
+async function saveTournament(tournament) {
+  markRoundsDirty(tournament);
+  return tournament.save();
 }
 
 async function ensureTournamentDocument(groupId) {
@@ -204,14 +242,16 @@ function kickoffSlotQuery(kickoffAt) {
 }
 
 async function findMatchesInKickoffSlot(referenceMatch) {
+  if (!referenceMatch) return [];
   const kickoff = resolveScheduleKickoffAt(referenceMatch);
   const query = kickoffSlotQuery(kickoff);
   if (!query) return [referenceMatch];
-  return Match.find(query).sort({ externalId: 1 }).lean();
+  const slot = await Match.find(query).sort({ externalId: 1 }).lean();
+  return slot.length ? slot : [referenceMatch];
 }
 
-function duelWorldCupExternalIds(roundKey, duelIndex) {
-  return getWorldCupExternalIdsForDuel(roundKey, duelIndex);
+function duelWorldCupExternalIds(round, duelIndex) {
+  return getDuelWorldCupExternalIds(round, duelIndex);
 }
 
 async function resolveDuelIfReady(tournament, roundIndex, duelIndex, tournamentStats) {
@@ -219,13 +259,17 @@ async function resolveDuelIfReady(tournament, roundIndex, duelIndex, tournamentS
   const duel = round?.duels?.[duelIndex];
   if (!duel || duel.resolvedAt || !duel.playerAId || !duel.playerBId) return;
 
-  const externalIds = duelWorldCupExternalIds(round.roundKey, duelIndex);
+  const externalIds = duelWorldCupExternalIds(round, duelIndex);
   const matches = await getMatchesByExternalIds(externalIds);
 
-  if (!matches.every((m) => m.status === 'finished')) return;
+  if (matches.length !== externalIds.length) return;
+  if (!matches.every((m) => m?.status === 'finished')) return;
 
-  const firstUnfinishedSlot = await findMatchesInKickoffSlot(matches[0]);
-  const pendingInSlot = firstUnfinishedSlot.some(
+  const firstMatch = matches.find(Boolean);
+  if (!firstMatch) return;
+
+  const firstUnfinishedSlot = await findMatchesInKickoffSlot(firstMatch);
+  const pendingInSlot = firstUnfinishedSlot.filter(Boolean).some(
     (m) => m.status === 'upcoming' || m.status === 'live'
   );
   if (pendingInSlot) return;
@@ -258,16 +302,6 @@ async function resolveDuelIfReady(tournament, roundIndex, duelIndex, tournamentS
   duel.matchResults = matchResults;
   duel.winnerId = winnerId;
   duel.resolvedAt = new Date();
-
-  const roundMeta = FUBOLS_CUP_ROUNDS[roundIndex];
-  if (roundMeta?.bothAdvanceToNextRound && roundIndex + 1 < tournament.rounds.length) {
-    const finalDuel = tournament.rounds[roundIndex + 1].duels[0];
-    finalDuel.playerAId = playerAId;
-    finalDuel.playerBId = playerBId;
-    const userMap = await loadUserNameMap([playerAId, playerBId]);
-    finalDuel.playerAName = userMap[playerAId] ?? null;
-    finalDuel.playerBName = userMap[playerBId] ?? null;
-  }
 
   if (!duel.advancePaidAt) {
     await payoutFubolsCupAdvance({
@@ -304,6 +338,8 @@ export async function trySeedFubolsCup(groupId) {
     tournamentPointsAtSeed: row.totalPoints ?? row.points ?? 0,
   }));
   tournament.rounds = buildEmptyBracketRounds();
+  tournament.matchShuffleSeed = crypto.randomBytes(16).toString('hex');
+  applyShuffledMatchAssignmentsToRounds(tournament.rounds, tournament.matchShuffleSeed);
   const userMap = await loadUserNameMap(top8.map((r) => r.id));
   assignFirstRoundPlayers(tournament.rounds, tournament.seeds, userMap);
   for (const row of tournament.rounds) {
@@ -314,7 +350,7 @@ export async function trySeedFubolsCup(groupId) {
   }
   tournament.seededAt = new Date();
   tournament.status = 'running';
-  await tournament.save();
+  await saveTournament(tournament);
   return tournament;
 }
 
@@ -370,6 +406,12 @@ export async function processFubolsCupForGroup(groupId) {
     return tournament;
   }
 
+  if (tournament.matchShuffleSeed) {
+    reconcileWorldCupMatchAssignments(tournament.rounds, tournament.matchShuffleSeed, {
+      onlyUnresolved: true,
+    });
+  }
+
   const tournamentStats = await buildTournamentStatsMap(groupId);
 
   for (let roundIndex = 0; roundIndex < tournament.rounds.length; roundIndex += 1) {
@@ -392,13 +434,13 @@ export async function processFubolsCupForGroup(groupId) {
     }
   }
 
-  const finalRound = tournament.rounds[tournament.rounds.length - 1];
+  const finalRound = tournament.rounds.find((row) => row.roundKey === 'final');
   const finalDuel = finalRound?.duels?.[0];
   if (finalDuel?.resolvedAt && finalDuel.winnerId && tournament.status !== 'completed') {
     tournament.status = 'completed';
     tournament.completedAt = new Date();
     tournament.championId = finalDuel.winnerId;
-    await tournament.save();
+    await saveTournament(tournament);
     if (!tournament.championPrizePaidAt) {
       await payoutFubolsCupChampion({
         userId: finalDuel.winnerId,
@@ -406,29 +448,117 @@ export async function processFubolsCupForGroup(groupId) {
       });
     }
   } else {
-    await tournament.save();
+    await saveTournament(tournament);
   }
 
   return tournament;
 }
 
-function serializeMatch(match) {
-  if (!match) return null;
+function compareWorldCupMatchChronology(a, b) {
+  const timeA = a.match?.kickoffAt ? new Date(a.match.kickoffAt).getTime() : NaN;
+  const timeB = b.match?.kickoffAt ? new Date(b.match.kickoffAt).getTime() : NaN;
+  if (Number.isFinite(timeA) && Number.isFinite(timeB) && timeA !== timeB) {
+    return timeA - timeB;
+  }
+  return Number(a.externalId) - Number(b.externalId);
+}
+
+function enrichDuelsWithWorldCupMatches(duels, matchByExternalId) {
+  return duels.map((duel) => {
+    const worldCupMatches = (duel.worldCupExternalIds ?? [])
+      .map((externalId) => ({
+        externalId: String(externalId),
+        match: matchByExternalId[String(externalId)] ?? null,
+      }))
+      .sort(compareWorldCupMatchChronology);
+    return {
+      ...duel,
+      worldCupMatches,
+    };
+  });
+}
+
+function applyOfficialKnockoutDisplay(enriched, official) {
+  if (!official) return enriched;
+
   return {
-    id: match._id?.toString?.() ?? String(match._id),
-    externalId: String(match.externalId),
-    homeTeam: match.homeTeam,
-    awayTeam: match.awayTeam,
-    homeScore: match.homeScore,
-    awayScore: match.awayScore,
-    status: match.status,
-    kickoffAt: match.kickoffAt,
-    scheduleKickoffAt: match.scheduleKickoffAt,
+    ...enriched,
+    homeTeam: official.homeTeam ?? enriched.homeTeam,
+    awayTeam: official.awayTeam ?? enriched.awayTeam,
+    homeTeamSlotLabel: official.homeTeam ? null : official.homeTeamSlotLabel,
+    awayTeamSlotLabel: official.awayTeam ? null : official.awayTeamSlotLabel,
+    homeTeamSlotSourceMatch: official.homeTeam ? null : official.homeTeamSlotSourceMatch,
+    awayTeamSlotSourceMatch: official.awayTeam ? null : official.awayTeamSlotSourceMatch,
+    knockoutPhase: official.phaseLabel ?? enriched.knockoutPhase,
   };
 }
 
-function serializeDuel(duel, roundKey) {
-  const externalIds = duelWorldCupExternalIds(roundKey, duel.duelIndex);
+const KNOCKOUT_EXTERNAL_IDS = Array.from({ length: 32 }, (_, index) => String(73 + index));
+
+async function loadOfficialKnockoutDisplayByExternalId(targetExternalIds) {
+  const targetSet = new Set(targetExternalIds.map(String));
+  const needsKnockout = [...targetSet].some((id) => {
+    const n = Number(id);
+    return Number.isFinite(n) && n >= 73 && n <= 104;
+  });
+  if (!needsKnockout) return {};
+
+  const [knockoutMatches, teams, stadiums, rankings] = await Promise.all([
+    Match.find({ externalId: { $in: KNOCKOUT_EXTERNAL_IDS } })
+      .select(WORLD_CUP_MATCH_SELECT)
+      .lean(),
+    Team.find({}).lean(),
+    Stadium.find({}).lean(),
+    getFifaWorldRankings(),
+  ]);
+
+  const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+  const stadiumMap = Object.fromEntries(stadiums.map((stadium) => [stadium.externalId, stadium]));
+  const phases = buildKnockoutPhases(knockoutMatches, teamMap, stadiumMap, rankings);
+
+  const byExternalId = {};
+  for (const phase of phases) {
+    for (const match of phase.matches) {
+      const key = String(match.externalId);
+      if (targetSet.has(key)) {
+        byExternalId[key] = match;
+      }
+    }
+  }
+  return byExternalId;
+}
+
+async function loadEnrichedMatchesByExternalId(externalIds, viewerUserId) {
+  const ids = [...new Set(externalIds.map(String))].filter(Boolean);
+  if (!ids.length) return {};
+
+  const rawMatches = await Match.find({ externalId: { $in: ids } })
+    .select(PREDICTIONS_LIST_MATCH_PROJECTION)
+    .sort({ externalId: 1 })
+    .lean();
+
+  const viewerId = viewerUserId ? toObjectId(viewerUserId) : null;
+  const [enrichedMatches, officialByExternalId] = await Promise.all([
+    enrichMatches(rawMatches, viewerId, {
+      includePlayers: false,
+      includeKnockoutContext: false,
+      ensureUserDefaults: false,
+      includeWeather: false,
+      includeLiveFields: false,
+    }),
+    loadOfficialKnockoutDisplayByExternalId(ids),
+  ]);
+
+  return Object.fromEntries(
+    enrichedMatches.map((match) => [
+      String(match.externalId),
+      applyOfficialKnockoutDisplay(match, officialByExternalId[String(match.externalId)]),
+    ])
+  );
+}
+
+function serializeDuel(duel, round) {
+  const externalIds = duelWorldCupExternalIds(round, duel.duelIndex);
   return {
     duelId: duel.duelId,
     duelIndex: duel.duelIndex,
@@ -471,6 +601,7 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
   if (tournament.status === 'preview') {
     const previewDoc = { rounds: buildEmptyBracketRounds() };
     applyPreviewPairings(previewDoc, previewTop8);
+    applyShuffledMatchAssignmentsToRounds(previewDoc.rounds, `preview:${groupId}`);
     roundsPayload = previewDoc.rounds;
   }
 
@@ -480,20 +611,20 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
     champion = user ? { id: user._id.toString(), name: user.name } : null;
   }
 
-  const rounds = await Promise.all(
-    roundsPayload.map(async (round) => {
-      const matches = await getMatchesByExternalIds(round.worldCupExternalIds ?? []);
-      const matchByExternalId = Object.fromEntries(
-        matches.map((m) => [String(m.externalId), serializeMatch(m)])
-      );
-      return {
-        roundKey: round.roundKey,
-        label: round.label,
-        duels: (round.duels ?? []).map((duel) => serializeDuel(duel, round.roundKey)),
-        matchesByExternalId: matchByExternalId,
-      };
-    })
-  );
+  const allExternalIds = [
+    ...new Set(roundsPayload.flatMap((round) => round.worldCupExternalIds ?? [])),
+  ];
+  const matchByExternalId = await loadEnrichedMatchesByExternalId(allExternalIds, viewerUserId);
+
+  const rounds = roundsPayload.map((round) => {
+    const serializedDuels = (round.duels ?? []).map((duel) => serializeDuel(duel, round));
+    const duels = enrichDuelsWithWorldCupMatches(serializedDuels, matchByExternalId);
+    return {
+      roundKey: round.roundKey,
+      label: round.label,
+      duels,
+    };
+  });
 
   return {
     tournament: {

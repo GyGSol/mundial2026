@@ -68,6 +68,34 @@ describe('fubolsCupScoring', () => {
     expect(winner).toBe('b');
   });
 
+  it('final a 3 partidos: 2-1 en victorias → gana A', () => {
+    const winner = resolveDuelWinner({
+      matchResults: [
+        { pointsA: 5, pointsB: 1 },
+        { pointsA: 1, pointsB: 3 },
+        { pointsA: 4, pointsB: 2 },
+      ],
+      playerAId: 'a',
+      playerBId: 'b',
+      tournamentStatsByUserId: new Map(),
+    });
+    expect(winner).toBe('a');
+  });
+
+  it('final a 3 partidos: 3-0 en victorias → gana A', () => {
+    const winner = resolveDuelWinner({
+      matchResults: [
+        { pointsA: 5, pointsB: 1 },
+        { pointsA: 3, pointsB: 0 },
+        { pointsA: 4, pointsB: 2 },
+      ],
+      playerAId: 'a',
+      playerBId: 'b',
+      tournamentStatsByUserId: new Map(),
+    });
+    expect(winner).toBe('a');
+  });
+
   it('buildMatchResultSlice sin PB', () => {
     const row = buildMatchResultSlice({
       matchId: 'm1',
