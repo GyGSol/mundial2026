@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildMatchResultSlice,
+  describeTournamentTiebreak,
   resolveDisplayDuelWinnerId,
   resolveDuelWinner,
   scoreMatchDuel,
@@ -139,5 +140,18 @@ describe('fubolsCupScoring', () => {
         allowTiebreak: true,
       })
     ).toBe('b');
+  });
+
+  it('describeTournamentTiebreak explica desempate por Gdif', () => {
+    const stats = new Map([
+      ['a', { totalPoints: 20, pa: 5, gl: 2, gv: 1, gt: 1, pb: 0, difGl: 8, difGv: 6, pj: 10, name: 'Futbot' }],
+      ['b', { totalPoints: 20, pa: 5, gl: 2, gv: 1, gt: 1, pb: 0, difGl: 12, difGv: 10, pj: 10, name: 'Gonzalo' }],
+    ]);
+    const tiebreak = describeTournamentTiebreak('a', 'b', stats);
+    expect(tiebreak.winnerId).toBe('a');
+    expect(tiebreak.criterion).toBe('goal_diff_score');
+    expect(tiebreak.label).toBe('Gdif del torneo');
+    expect(tiebreak.summary).toContain('Gdif del torneo');
+    expect(tiebreak.summary).toContain('Futbot');
   });
 });

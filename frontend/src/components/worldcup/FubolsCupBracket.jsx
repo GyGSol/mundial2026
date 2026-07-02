@@ -11,7 +11,7 @@ const playerRowGridClass =
   'grid grid-cols-[1.75rem_minmax(0,1fr)_2.5rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-2';
 
 const liveDuelPlayerRowGridClass =
-  'grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-x-2 sm:grid-cols-[minmax(0,1fr)_3.5rem] sm:gap-x-3';
+  'grid grid-cols-[minmax(0,1fr)_2.5rem_3rem] items-center gap-x-2 sm:grid-cols-[minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-3';
 
 const playerRowPaddingClass = 'px-2.5 sm:px-3';
 
@@ -62,6 +62,7 @@ function LiveDuelPlayerLineHeader() {
       )}
     >
       <span className="min-w-0">Jugador</span>
+      <span className="text-center">Gdif</span>
       <span className="text-right">Pts</span>
     </div>
   );
@@ -116,7 +117,7 @@ function PlayerLine({ player, isWinner }) {
   );
 }
 
-function LiveDuelPlayerLine({ player, isWinner }) {
+function LiveDuelPlayerLine({ player, isWinner, highlightGoalDiff = false }) {
   if (!player?.name) {
     return (
       <div className="rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground">
@@ -145,6 +146,16 @@ function LiveDuelPlayerLine({ player, isWinner }) {
       </span>
       <span
         className={cn(
+          'text-center tabular-nums text-[11px] sm:text-xs',
+          highlightGoalDiff && isWinner === true && 'font-semibold text-primary',
+          highlightGoalDiff && isWinner === false && 'text-muted-foreground',
+          !highlightGoalDiff && 'text-muted-foreground'
+        )}
+      >
+        {formatGoalDiffScore(player.difGl, player.difGv, player.pj)}
+      </span>
+      <span
+        className={cn(
           'text-right text-sm font-semibold tabular-nums sm:text-base',
           isWinner === true && 'text-primary'
         )}
@@ -167,6 +178,7 @@ function DuelCard({ duel, className }) {
       .map((row) => [String(row.externalId), row])
   );
   const isLiveLayout = usesLiveDuelLayout(duel);
+  const highlightGoalDiff = duel.tiebreak?.criterion === 'goal_diff_score';
 
   return (
     <article
@@ -193,6 +205,7 @@ function DuelCard({ duel, className }) {
                       : null
                   : null
               }
+              highlightGoalDiff={highlightGoalDiff}
             />
             <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
               vs
@@ -208,6 +221,7 @@ function DuelCard({ duel, className }) {
                       : null
                   : null
               }
+              highlightGoalDiff={highlightGoalDiff}
             />
           </>
         ) : (
@@ -242,14 +256,8 @@ function DuelCard({ duel, className }) {
           </>
         )}
       </div>
-      {isLiveLayout &&
-      duel.winnerId &&
-      duel.playerA?.matchPoints != null &&
-      duel.playerB?.matchPoints != null &&
-      duel.playerA.matchPoints === duel.playerB.matchPoints ? (
-        <p className="text-center text-xs text-muted-foreground">
-          Empate en puntos del partido — pasa quien sumó más en el torneo.
-        </p>
+      {duel.tiebreak?.summary ? (
+        <p className="text-center text-xs text-muted-foreground">{duel.tiebreak.summary}</p>
       ) : null}
 
       {worldCupMatches.length ? (
@@ -346,6 +354,7 @@ export default function FubolsCupBracket({ rounds = [], demoDuel = null }) {
           </div>
           <p className="text-xs text-muted-foreground">
             Puntos del cruce según el marcador en vivo de España–Austria (sin mostrar pronósticos).
+            La columna Gdif es del torneo y define el desempate si empatan en puntos del partido.
           </p>
           <DuelCard duel={demoDuel} />
         </section>

@@ -15,6 +15,7 @@ import {
 } from '../../../shared/fubolsCupBracket.js';
 import {
   buildMatchResultSlice,
+  describeTournamentTiebreak,
   resolveDisplayDuelWinnerId,
   resolveDuelWinner,
 } from '../../../shared/fubolsCupScoring.js';
@@ -647,14 +648,27 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
       tournamentStatsByUserId,
       allowTiebreak: allDuelMatchesFinished,
     });
+    const playerA = { ...duel.playerA, matchPoints: primarySlice.pointsA };
+    const playerB = { ...duel.playerB, matchPoints: primarySlice.pointsB };
+    const tiebreak = buildMatchPointsTiebreak({
+      pointsA: primarySlice.pointsA,
+      pointsB: primarySlice.pointsB,
+      playerA,
+      playerB,
+      playerAId,
+      playerBId,
+      winnerId,
+      tournamentStatsByUserId,
+    });
 
     enriched.push({
       ...duel,
       isLiveDuel: true,
       worldCupMatches,
-      playerA: { ...duel.playerA, matchPoints: primarySlice.pointsA },
-      playerB: { ...duel.playerB, matchPoints: primarySlice.pointsB },
+      playerA,
+      playerB,
       winnerId: winnerId ?? duel.winnerId ?? null,
+      tiebreak,
     });
   }
 
@@ -859,7 +873,28 @@ function serializeDemoPlayer(user, profile, matchPoints) {
     avatarUrl: profile.avatarUrl ?? null,
     isAiUser: profile.isAiUser ?? Boolean(user.isAiUser),
     matchPoints,
+    totalPoints: profile.totalPoints ?? 0,
+    pj: profile.pj ?? 0,
+    difGl: profile.difGl ?? 0,
+    difGv: profile.difGv ?? 0,
   };
+}
+
+function buildMatchPointsTiebreak({
+  pointsA,
+  pointsB,
+  playerA,
+  playerB,
+  playerAId,
+  playerBId,
+  winnerId,
+  tournamentStatsByUserId,
+}) {
+  if (pointsA == null || pointsB == null || pointsA !== pointsB || !winnerId) return null;
+  return describeTournamentTiebreak(playerAId, playerBId, tournamentStatsByUserId, {
+    nameA: playerA?.name ?? '',
+    nameB: playerB?.name ?? '',
+  });
 }
 
 export async function buildLiveDemoDuel(groupId, viewerUserId) {
@@ -919,14 +954,27 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
     tournamentStatsByUserId: tournamentStats,
     allowTiebreak: matchFinished,
   });
+  const playerA = serializeDemoPlayer(aiUser, profileA, pointsA);
+  const playerB = serializeDemoPlayer(humanOpponent, profileB, pointsB);
+  const tiebreak = buildMatchPointsTiebreak({
+    pointsA,
+    pointsB,
+    playerA,
+    playerB,
+    playerAId,
+    playerBId,
+    winnerId,
+    tournamentStatsByUserId: tournamentStats,
+  });
 
   return {
     duelId: DEMO_DUEL_ID,
     duelIndex: 0,
     isDemo: true,
-    playerA: serializeDemoPlayer(aiUser, profileA, pointsA),
-    playerB: serializeDemoPlayer(humanOpponent, profileB, pointsB),
+    playerA,
+    playerB,
     winnerId,
+    tiebreak,
     matchResults: [duelSlice],
     worldCupExternalIds: [externalId],
     worldCupMatches: [

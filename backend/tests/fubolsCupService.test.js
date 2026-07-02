@@ -448,6 +448,9 @@ describe('fubolsCupService', () => {
     expect(demoDuel?.playerB.matchPoints).toBe(4);
     expect(demoDuel?.winnerId).toBe(String(gonzalo._id));
     expect(demoDuel?.resolvedAt).toBeTruthy();
+    expect(demoDuel?.tiebreak?.criterion).toBe('tournament_points');
+    expect(demoDuel?.playerA.difGl).toBeDefined();
+    expect(demoDuel?.playerB.difGl).toBeDefined();
   });
 
   it('demoDuel en vivo con empate en puntos no define ganador hasta terminar', async () => {
@@ -471,6 +474,7 @@ describe('fubolsCupService', () => {
     expect(demoDuel?.playerB.matchPoints).toBe(4);
     expect(demoDuel?.winnerId).toBeNull();
     expect(demoDuel?.resolvedAt).toBeNull();
+    expect(demoDuel?.tiebreak).toBeNull();
   });
 
   it('demoDuel encuentra España–Austria con IDs numéricos de equipo (prod)', async () => {

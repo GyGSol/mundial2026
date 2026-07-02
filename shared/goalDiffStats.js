@@ -43,3 +43,12 @@ export function compareGoalDiffScore(aDifGl, aDifGv, aPj, bDifGl, bDifGv, bPj) {
   if (aErr !== bErr) return aErr - bErr;
   return 0;
 }
+
+/** .042 = mejor; 1.000 = peor. Sin partidos → null. */
+export function formatGoalDiffScore(difGl, difGv, pj) {
+  const games = pj ?? 0;
+  if (games <= 0) return null;
+  const score = goalDiffScore(difGl, difGv, pj);
+  const fixed = score.toFixed(3);
+  return fixed.startsWith('0.') ? fixed.slice(1) : fixed;
+}

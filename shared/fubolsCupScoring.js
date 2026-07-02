@@ -1,4 +1,181 @@
 import { compareRankingEntries } from './leaderboardStats.js';
+import {
+  compareAvgGoalDiff,
+  compareGoalDiffScore,
+  formatGoalDiffScore,
+} from './goalDiffStats.js';
+
+function tournamentStatsRow(tournamentStatsByUserId, playerId, name = '') {
+  const raw = tournamentStatsByUserId.get(String(playerId)) ?? {};
+  return {
+    ...raw,
+    points: raw.totalPoints ?? raw.points ?? 0,
+    pa: raw.pa ?? 0,
+    gl: raw.gl ?? 0,
+    gv: raw.gv ?? 0,
+    gt: raw.gt ?? 0,
+    pb: raw.pb ?? 0,
+    difGl: raw.difGl ?? 0,
+    difGv: raw.difGv ?? 0,
+    pj: raw.pj ?? 0,
+    name: name || raw.name || '',
+  };
+}
+
+function buildTiebreakResult({
+  winnerId,
+  criterion,
+  label,
+  winnerName,
+  loserName,
+  winnerDisplay,
+  loserDisplay,
+}) {
+  return {
+    winnerId,
+    criterion,
+    label,
+    winnerName,
+    loserName,
+    winnerDisplay,
+    loserDisplay,
+    summary: `Empate en puntos del partido — desempate por ${label} (${winnerDisplay} ${winnerName} vs ${loserDisplay} ${loserName}).`,
+  };
+}
+
+/**
+ * Explica qué criterio del ranking del torneo definió el ganador del cruce.
+ * Misma cadena que pickByTournamentTiebreak / compareRankingEntries.
+ */
+export function describeTournamentTiebreak(
+  playerAId,
+  playerBId,
+  tournamentStatsByUserId,
+  { nameA = '', nameB = '' } = {}
+) {
+  const a = tournamentStatsRow(tournamentStatsByUserId, playerAId, nameA);
+  const b = tournamentStatsRow(tournamentStatsByUserId, playerBId, nameB);
+  const winnerId = pickByTournamentTiebreak(playerAId, playerBId, tournamentStatsByUserId);
+  const winnerIsA = winnerId === String(playerAId);
+  const winner = winnerIsA ? a : b;
+  const loser = winnerIsA ? b : a;
+  const winnerName = winner.name || (winnerIsA ? nameA : nameB) || 'Jugador A';
+  const loserName = loser.name || (winnerIsA ? nameB : nameA) || 'Jugador B';
+
+  if (b.points !== a.points) {
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'tournament_points',
+      label: 'puntos del torneo',
+      winnerName,
+      loserName,
+      winnerDisplay: String(winner.points),
+      loserDisplay: String(loser.points),
+    });
+  }
+  if (b.pa !== a.pa) {
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'winner_picks',
+      label: 'aciertos de ganador',
+      winnerName,
+      loserName,
+      winnerDisplay: String(winner.pa),
+      loserDisplay: String(loser.pa),
+    });
+  }
+
+  const glgvA = (a.gl ?? 0) + (a.gv ?? 0);
+  const glgvB = (b.gl ?? 0) + (b.gv ?? 0);
+  if (glgvB !== glgvA) {
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'exact_scores',
+      label: 'marcadores exactos',
+      winnerName,
+      loserName,
+      winnerDisplay: String(winner.gl + winner.gv),
+      loserDisplay: String(loser.gl + loser.gv),
+    });
+  }
+
+  if (b.gt !== a.gt) {
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'total_goals',
+      label: 'aciertos de goles totales',
+      winnerName,
+      loserName,
+      winnerDisplay: String(winner.gt),
+      loserDisplay: String(loser.gt),
+    });
+  }
+
+  if (a.pb !== b.pb) {
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'bonus_points',
+      label: 'puntos bonus',
+      winnerName,
+      loserName,
+      winnerDisplay: String(winner.pb),
+      loserDisplay: String(loser.pb),
+    });
+  }
+
+  const gdifCmp = compareGoalDiffScore(a.difGl, a.difGv, a.pj, b.difGl, b.difGv, b.pj);
+  if (gdifCmp !== 0) {
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'goal_diff_score',
+      label: 'Gdif del torneo',
+      winnerName,
+      loserName,
+      winnerDisplay: formatGoalDiffScore(winner.difGl, winner.difGv, winner.pj) ?? '—',
+      loserDisplay: formatGoalDiffScore(loser.difGl, loser.difGv, loser.pj) ?? '—',
+    });
+  }
+
+  const difLocalCmp = compareAvgGoalDiff(a.difGl, a.pj, b.difGl, b.pj);
+  if (difLocalCmp !== 0) {
+    const winnerAvg = a.pj > 0 ? (winner.difGl / winner.pj).toFixed(3) : '0';
+    const loserAvg = loser.pj > 0 ? (loser.difGl / loser.pj).toFixed(3) : '0';
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'avg_goal_diff_local',
+      label: 'error promedio como local',
+      winnerName,
+      loserName,
+      winnerDisplay: winnerAvg,
+      loserDisplay: loserAvg,
+    });
+  }
+
+  const difVisitCmp = compareAvgGoalDiff(a.difGv, a.pj, b.difGv, b.pj);
+  if (difVisitCmp !== 0) {
+    const winnerAvg = a.pj > 0 ? (winner.difGv / winner.pj).toFixed(3) : '0';
+    const loserAvg = loser.pj > 0 ? (loser.difGv / loser.pj).toFixed(3) : '0';
+    return buildTiebreakResult({
+      winnerId,
+      criterion: 'avg_goal_diff_away',
+      label: 'error promedio como visitante',
+      winnerName,
+      loserName,
+      winnerDisplay: winnerAvg,
+      loserDisplay: loserAvg,
+    });
+  }
+
+  return buildTiebreakResult({
+    winnerId,
+    criterion: 'name',
+    label: 'orden alfabético',
+    winnerName,
+    loserName,
+    winnerDisplay: winnerName,
+    loserDisplay: loserName,
+  });
+}
 
 export function scoreMatchDuel(pointsA, pointsB) {
   const a = Number(pointsA) || 0;
