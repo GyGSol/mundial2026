@@ -81,7 +81,7 @@ export default function FubolsCupSection() {
         <div>
           <h2 className="text-lg font-semibold">Copa Fubols</h2>
           <p className="text-sm text-muted-foreground">
-            Playoff del top 8 humanos del grupo: cuartos → semifinales → tercer puesto y final.
+            Playoff del top 8 jugadores del grupo: cuartos → semifinales → tercer puesto y final.
           </p>
         </div>
         <Select value={groupId} onValueChange={setGroupId}>
@@ -133,7 +133,7 @@ export default function FubolsCupSection() {
           {data.tournament.status === 'cancelled' ? (
             <Card>
               <CardContent className="py-6 text-center text-sm text-muted-foreground">
-                Menos de 8 jugadores humanos en el grupo: la Copa no se disputa.
+                Menos de 8 jugadores en el grupo: la Copa no se disputa.
               </CardContent>
             </Card>
           ) : (

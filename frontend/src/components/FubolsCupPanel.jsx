@@ -65,7 +65,7 @@ export default function FubolsCupPanel({ data, loading, error, groupId, onRetry 
       {cancelled ? (
         <Card>
           <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            Este grupo no alcanzó los 8 jugadores humanos necesarios para la Copa Fubols.
+            Este grupo no alcanzó los 8 jugadores necesarios para la Copa Fubols.
           </CardContent>
         </Card>
       ) : (
