@@ -324,7 +324,13 @@ describe('fubolsCupService', () => {
     expect(top.length).toBeLessThanOrEqual(8);
   });
 
-  async function setupDemoDuelFixture({ matchStatus = 'finished', liveScores } = {}) {
+  async function setupDemoDuelFixture({
+    matchStatus = 'finished',
+    liveScores,
+    includePorCro = false,
+    porCroStatus = 'live',
+    porCroScores,
+  } = {}) {
     await User.deleteMany({ isAiUser: true });
 
     const aiUser = await User.create({
@@ -342,6 +348,8 @@ describe('fubolsCupService', () => {
     for (const team of [
       { externalId: 'ESP', nameEn: 'Spain', fifaCode: 'ESP', group: 'E' },
       { externalId: 'AUT', nameEn: 'Austria', fifaCode: 'AUT', group: 'E' },
+      { externalId: 'POR', nameEn: 'Portugal', fifaCode: 'POR', group: 'F' },
+      { externalId: 'CRO', nameEn: 'Croatia', fifaCode: 'CRO', group: 'F' },
     ]) {
       await Team.findOneAndUpdate({ externalId: team.externalId }, team, { upsert: true });
     }
@@ -375,7 +383,38 @@ describe('fubolsCupService', () => {
       pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
     });
 
-    return { groupId, admin, aiUser, gonzalo, espAut };
+    let porCro = null;
+    if (includePorCro) {
+      porCro = await Match.create({
+        externalId: `demo-por-cro-${Date.now()}`,
+        homeTeamId: 'POR',
+        awayTeamId: 'CRO',
+        status: porCroStatus,
+        homeScore: porCroScores?.homeScore ?? 0,
+        awayScore: porCroScores?.awayScore ?? 0,
+        type: 'round_of_16',
+        finishedAt: porCroStatus === 'finished' ? new Date() : null,
+      });
+      cleanup.matchIds.push(porCro._id);
+      await Prediction.create({
+        userId: aiUser._id,
+        matchId: porCro._id,
+        homeGoals: 2,
+        awayGoals: 1,
+        pointsEarned: porCroStatus === 'live' ? 3 : 5,
+        pointsBreakdown: { winner: 3, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+      });
+      await Prediction.create({
+        userId: gonzalo._id,
+        matchId: porCro._id,
+        homeGoals: 1,
+        awayGoals: 1,
+        pointsEarned: porCroStatus === 'live' ? 1 : 2,
+        pointsBreakdown: { winner: 0, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+      });
+    }
+
+    return { groupId, admin, aiUser, gonzalo, espAut, porCro };
   }
 
   it('demoDuel expone Futbot vs el usuario logueado con puntos del partido España–Austria', async () => {
@@ -408,6 +447,34 @@ describe('fubolsCupService', () => {
     expect(demoDuel?.playerB.matchPoints).toBe(2);
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsA).toBe(4);
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsB).toBe(2);
+  });
+
+  it('demoDuel incluye Portugal–Croacia como segundo partido del cruce de prueba', async () => {
+    const { groupId, gonzalo, espAut, porCro } = await setupDemoDuelFixture({
+      matchStatus: 'finished',
+      liveScores: { homeScore: 2, awayScore: 1 },
+      includePorCro: true,
+      porCroStatus: 'live',
+      porCroScores: { homeScore: 1, awayScore: 0 },
+    });
+
+    const demoDuel = await buildLiveDemoDuel(groupId, gonzalo._id);
+    expect(demoDuel?.worldCupMatches).toHaveLength(2);
+    expect(demoDuel?.worldCupExternalIds).toHaveLength(2);
+
+    const espTile = demoDuel.worldCupMatches.find(
+      (wc) => String(wc.externalId) === String(espAut.externalId)
+    );
+    const porTile = demoDuel.worldCupMatches.find(
+      (wc) => String(wc.externalId) === String(porCro.externalId)
+    );
+    expect(espTile?.match?.status).toBe('finished');
+    expect(porTile?.match?.status).toBe('live');
+    expect(porTile?.duelSlice.pointsA).toBe(3);
+    expect(porTile?.duelSlice.pointsB).toBe(1);
+    expect(demoDuel?.playerA.matchPoints).toBe(3);
+    expect(demoDuel?.playerB.matchPoints).toBe(1);
+    expect(demoDuel?.resolvedAt).toBeNull();
   });
 
   it('demoDuel con empate en puntos del partido terminado define ganador por Gdif', async () => {

@@ -353,7 +353,7 @@ export default function FubolsCupBracket({ rounds = [], demoDuel = null }) {
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Puntos del cruce según el marcador en vivo de España–Austria (sin mostrar pronósticos).
+            Puntos del cruce según el marcador en vivo de los partidos del duelo (España–Austria y Portugal–Croacia; sin mostrar pronósticos).
             La columna Gdif es del torneo: si empatan en puntos del partido, gana quien tiene menor Gdif.
           </p>
           <DuelCard duel={demoDuel} />

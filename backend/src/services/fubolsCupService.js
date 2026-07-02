@@ -758,41 +758,42 @@ async function loadEnrichedMatchesByExternalId(
   );
 }
 
-const DEMO_DUEL_ID = 'demo-live-esp-aut';
+const DEMO_DUEL_ID = 'demo-live-prueba';
 
-async function findSpainAustriaMatch() {
+/** Pares del cruce de prueba (como cuartos Copa: 2 partidos WC). */
+const DEMO_DUEL_TEAM_PAIRS = [
+  ['ESP', 'AUT'],
+  ['POR', 'CRO'],
+];
+
+async function findTeamPairMatch(fifaA, fifaB) {
   const teams = await Team.find({
     $or: [
-      { fifaCode: 'ESP' },
-      { fifaCode: 'AUT' },
-      { externalId: 'ESP' },
-      { externalId: 'AUT' },
+      { fifaCode: fifaA },
+      { fifaCode: fifaB },
+      { externalId: fifaA },
+      { externalId: fifaB },
     ],
   })
     .select('externalId fifaCode')
     .lean();
 
-  const espTeamIds = [
+  const teamIdsFor = (fifa) => [
     ...new Set(
       teams
-        .filter((team) => team.fifaCode === 'ESP' || team.externalId === 'ESP')
+        .filter((team) => team.fifaCode === fifa || team.externalId === fifa)
         .map((team) => team.externalId)
     ),
   ];
-  const autTeamIds = [
-    ...new Set(
-      teams
-        .filter((team) => team.fifaCode === 'AUT' || team.externalId === 'AUT')
-        .map((team) => team.externalId)
-    ),
-  ];
-  if (!espTeamIds.length || !autTeamIds.length) return null;
+  const aTeamIds = teamIdsFor(fifaA);
+  const bTeamIds = teamIdsFor(fifaB);
+  if (!aTeamIds.length || !bTeamIds.length) return null;
 
   const pairQueries = [];
-  for (const espTeamId of espTeamIds) {
-    for (const autTeamId of autTeamIds) {
-      pairQueries.push({ homeTeamId: espTeamId, awayTeamId: autTeamId });
-      pairQueries.push({ homeTeamId: autTeamId, awayTeamId: espTeamId });
+  for (const aTeamId of aTeamIds) {
+    for (const bTeamId of bTeamIds) {
+      pairQueries.push({ homeTeamId: aTeamId, awayTeamId: bTeamId });
+      pairQueries.push({ homeTeamId: bTeamId, awayTeamId: aTeamId });
     }
   }
 
@@ -807,6 +808,22 @@ async function findSpainAustriaMatch() {
     return Number(a.externalId) - Number(b.externalId);
   });
   return candidates[0];
+}
+
+async function findDemoDuelMatches() {
+  const espAut = await findTeamPairMatch('ESP', 'AUT');
+  if (!espAut) return null;
+
+  const matches = [espAut];
+  for (const [fifaA, fifaB] of DEMO_DUEL_TEAM_PAIRS.slice(1)) {
+    const match = await findTeamPairMatch(fifaA, fifaB);
+    if (match && String(match._id) !== String(espAut._id)) {
+      matches.push(match);
+    }
+  }
+
+  matches.sort((a, b) => Number(a.externalId) - Number(b.externalId));
+  return matches;
 }
 
 async function findDemoHumanOpponent(groupId, viewerUserId) {
@@ -898,45 +915,56 @@ function buildMatchPointsTiebreak({
 }
 
 export async function buildLiveDemoDuel(groupId, viewerUserId) {
-  const [aiUser, humanOpponent, match] = await Promise.all([
+  const [aiUser, humanOpponent, matches] = await Promise.all([
     getAiUser(),
     findDemoHumanOpponent(groupId, viewerUserId),
-    findSpainAustriaMatch(),
+    findDemoDuelMatches(),
   ]);
-  if (!aiUser || !humanOpponent || !match) return null;
+  if (!aiUser || !humanOpponent || !matches?.length) return null;
 
   const playerAId = String(aiUser._id);
   const playerBId = String(humanOpponent._id);
-  const predictions = await Prediction.find({
-    userId: { $in: [aiUser._id, humanOpponent._id] },
-    matchId: match._id,
-  }).lean();
-  const predictionByUserId = Object.fromEntries(
-    predictions.map((row) => [row.userId.toString(), row])
-  );
+  const externalIds = matches.map((row) => String(row.externalId));
 
-  const pointsA = pointsForDuelPlayer(predictionByUserId[playerAId], match);
-  const pointsB = pointsForDuelPlayer(predictionByUserId[playerBId], match);
-  const duelSlice = buildMatchResultSlice({
-    matchId: match._id,
-    externalId: match.externalId,
-    pointsA: pointsA ?? 0,
-    pointsB: pointsB ?? 0,
-    playerAId,
-    playerBId,
-  });
-  duelSlice.pointsA = pointsA;
-  duelSlice.pointsB = pointsB;
-  if (pointsA == null || pointsB == null) {
-    duelSlice.winnerId = null;
-    duelSlice.margin = 0;
+  const matchResults = [];
+  const duelSlices = [];
+  const worldCupMatches = [];
+  let hasLive = false;
+  let allDuelMatchesFinished = true;
+  let primarySlice = null;
+
+  for (const match of matches) {
+    const { duelSlice, pointsA, pointsB } = await buildDuelMatchSlice(
+      match,
+      playerAId,
+      playerBId
+    );
+
+    if (match.status === 'live') hasLive = true;
+    if (match.status !== 'finished') allDuelMatchesFinished = false;
+
+    if (pointsA != null && pointsB != null) {
+      matchResults.push({ pointsA, pointsB });
+    }
+
+    if (!primarySlice || match.status === 'live') {
+      primarySlice = duelSlice;
+    }
+
+    duelSlices.push(duelSlice);
+    worldCupMatches.push({
+      externalId: String(match.externalId),
+      match: null,
+      duelSlice,
+    });
   }
 
-  const externalId = String(match.externalId);
-  const matchByExternalId = await loadEnrichedMatchesByExternalId([externalId], viewerUserId, {
+  const matchByExternalId = await loadEnrichedMatchesByExternalId(externalIds, viewerUserId, {
     includeLiveFields: true,
   });
-  const enrichedMatch = matchByExternalId[externalId] ?? null;
+  for (const wc of worldCupMatches) {
+    wc.match = matchByExternalId[wc.externalId] ?? null;
+  }
 
   const [profileMap, tournamentStats] = await Promise.all([
     loadUserProfileMap([playerAId, playerBId]),
@@ -945,20 +973,18 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
   const profileA = mergeProfileWithLeaderboardStats(profileMap, tournamentStats, playerAId);
   const profileB = mergeProfileWithLeaderboardStats(profileMap, tournamentStats, playerBId);
 
-  const matchFinished = match.status === 'finished';
   const winnerId = resolveDisplayDuelWinnerId({
-    matchResults:
-      pointsA != null && pointsB != null ? [{ pointsA, pointsB }] : [],
+    matchResults,
     playerAId,
     playerBId,
     tournamentStatsByUserId: tournamentStats,
-    allowTiebreak: matchFinished,
+    allowTiebreak: allDuelMatchesFinished,
   });
-  const playerA = serializeDemoPlayer(aiUser, profileA, pointsA);
-  const playerB = serializeDemoPlayer(humanOpponent, profileB, pointsB);
+  const playerA = serializeDemoPlayer(aiUser, profileA, primarySlice?.pointsA ?? null);
+  const playerB = serializeDemoPlayer(humanOpponent, profileB, primarySlice?.pointsB ?? null);
   const tiebreak = buildMatchPointsTiebreak({
-    pointsA,
-    pointsB,
+    pointsA: primarySlice?.pointsA,
+    pointsB: primarySlice?.pointsB,
     playerA,
     playerB,
     playerAId,
@@ -971,20 +997,15 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
     duelId: DEMO_DUEL_ID,
     duelIndex: 0,
     isDemo: true,
+    isLiveDuel: hasLive || allDuelMatchesFinished,
     playerA,
     playerB,
     winnerId,
     tiebreak,
-    matchResults: [duelSlice],
-    worldCupExternalIds: [externalId],
-    worldCupMatches: [
-      {
-        externalId,
-        match: enrichedMatch,
-        duelSlice,
-      },
-    ],
-    resolvedAt: matchFinished ? new Date().toISOString() : null,
+    matchResults: duelSlices,
+    worldCupExternalIds: externalIds,
+    worldCupMatches,
+    resolvedAt: allDuelMatchesFinished ? new Date().toISOString() : null,
   };
 }
 
