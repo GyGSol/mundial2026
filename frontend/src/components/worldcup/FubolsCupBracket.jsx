@@ -52,7 +52,7 @@ function PlayerLineHeader() {
   );
 }
 
-function LiveDuelPlayerLineHeader() {
+function LiveDuelPlayerLineHeader({ partial = false }) {
   return (
     <div
       className={cn(
@@ -63,7 +63,7 @@ function LiveDuelPlayerLineHeader() {
     >
       <span className="min-w-0">Jugador</span>
       <span className="text-center">Gdif</span>
-      <span className="text-right">Pts</span>
+      <span className="text-right">{partial ? 'Pts parcial' : 'Pts'}</span>
     </div>
   );
 }
@@ -189,7 +189,11 @@ function DuelCard({ duel, className }) {
       )}
     >
       <div className="min-w-0">
-        {isLiveLayout ? <LiveDuelPlayerLineHeader /> : <PlayerLineHeader />}
+        {isLiveLayout ? (
+          <LiveDuelPlayerLineHeader partial={Boolean(duel.partialHeaderPoints)} />
+        ) : (
+          <PlayerLineHeader />
+        )}
       </div>
       <div className="flex flex-col gap-2">
         {isLiveLayout ? (

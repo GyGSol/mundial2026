@@ -648,8 +648,15 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
       tournamentStatsByUserId,
       allowTiebreak: allDuelMatchesFinished,
     });
-    const playerA = { ...duel.playerA, matchPoints: primarySlice.pointsA };
-    const playerB = { ...duel.playerB, matchPoints: primarySlice.pointsB };
+    const headerPoints = pickLiveDuelHeaderPoints(worldCupMatches);
+    const playerA = {
+      ...duel.playerA,
+      matchPoints: headerPoints?.pointsA ?? null,
+    };
+    const playerB = {
+      ...duel.playerB,
+      matchPoints: headerPoints?.pointsB ?? null,
+    };
     const tiebreak = buildMatchPointsTiebreak({
       pointsA: primarySlice.pointsA,
       pointsB: primarySlice.pointsB,
@@ -664,6 +671,7 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
     enriched.push({
       ...duel,
       isLiveDuel: true,
+      partialHeaderPoints: Boolean(headerPoints?.isPartial),
       worldCupMatches,
       playerA,
       playerB,
@@ -914,6 +922,38 @@ function buildMatchPointsTiebreak({
   });
 }
 
+/** Puntos en la fila de jugadores: partido en vivo si ya hay score; si no, el último terminado. */
+function pickLiveDuelHeaderPoints(worldCupMatches) {
+  let livePoints = null;
+  let latestFinished = null;
+  const rows = worldCupMatches ?? [];
+  const hasPendingMatch = rows.some(
+    (wc) => wc.match?.status === 'live' || wc.match?.status === 'upcoming'
+  );
+
+  for (const wc of rows) {
+    const slice = wc.duelSlice;
+    if (!slice || slice.pointsA == null || slice.pointsB == null) continue;
+
+    const status = wc.match?.status;
+    if (status === 'live') {
+      livePoints = { pointsA: slice.pointsA, pointsB: slice.pointsB };
+    }
+    if (status === 'finished') {
+      latestFinished = { pointsA: slice.pointsA, pointsB: slice.pointsB };
+    }
+  }
+
+  if (livePoints) return { ...livePoints, isPartial: false };
+  if (latestFinished) {
+    return {
+      ...latestFinished,
+      isPartial: hasPendingMatch,
+    };
+  }
+  return null;
+}
+
 export async function buildLiveDemoDuel(groupId, viewerUserId) {
   const [aiUser, humanOpponent, matches] = await Promise.all([
     getAiUser(),
@@ -980,8 +1020,9 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
     tournamentStatsByUserId: tournamentStats,
     allowTiebreak: allDuelMatchesFinished,
   });
-  const playerA = serializeDemoPlayer(aiUser, profileA, primarySlice?.pointsA ?? null);
-  const playerB = serializeDemoPlayer(humanOpponent, profileB, primarySlice?.pointsB ?? null);
+  const headerPoints = pickLiveDuelHeaderPoints(worldCupMatches);
+  const playerA = serializeDemoPlayer(aiUser, profileA, headerPoints?.pointsA ?? null);
+  const playerB = serializeDemoPlayer(humanOpponent, profileB, headerPoints?.pointsB ?? null);
   const tiebreak = buildMatchPointsTiebreak({
     pointsA: primarySlice?.pointsA,
     pointsB: primarySlice?.pointsB,
@@ -998,6 +1039,7 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
     duelIndex: 0,
     isDemo: true,
     isLiveDuel: hasLive || allDuelMatchesFinished,
+    partialHeaderPoints: Boolean(headerPoints?.isPartial),
     playerA,
     playerB,
     winnerId,

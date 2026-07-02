@@ -474,6 +474,33 @@ describe('fubolsCupService', () => {
     expect(porTile?.duelSlice.pointsB).toBe(1);
     expect(demoDuel?.playerA.matchPoints).toBe(3);
     expect(demoDuel?.playerB.matchPoints).toBe(1);
+    expect(demoDuel?.partialHeaderPoints).toBe(false);
+    expect(demoDuel?.resolvedAt).toBeNull();
+  });
+
+  it('demoDuel muestra puntos parciales del partido terminado si el otro aún no tiene score', async () => {
+    const { groupId, gonzalo, aiUser, espAut, porCro } = await setupDemoDuelFixture({
+      matchStatus: 'finished',
+      liveScores: { homeScore: 3, awayScore: 0 },
+      includePorCro: true,
+      porCroStatus: 'upcoming',
+      porCroScores: { homeScore: 0, awayScore: 0 },
+    });
+
+    await Prediction.updateOne(
+      { userId: aiUser._id, matchId: espAut._id },
+      { $set: { pointsEarned: 4, homeGoals: 2, awayGoals: 1 } }
+    );
+    await Prediction.updateOne(
+      { userId: gonzalo._id, matchId: espAut._id },
+      { $set: { pointsEarned: 4, homeGoals: 2, awayGoals: 1 } }
+    );
+    await Prediction.deleteMany({ matchId: porCro._id });
+
+    const demoDuel = await buildLiveDemoDuel(groupId, gonzalo._id);
+    expect(demoDuel?.playerA.matchPoints).toBe(4);
+    expect(demoDuel?.playerB.matchPoints).toBe(4);
+    expect(demoDuel?.partialHeaderPoints).toBe(true);
     expect(demoDuel?.resolvedAt).toBeNull();
   });
 
