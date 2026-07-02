@@ -622,12 +622,42 @@ async function loadEnrichedMatchesByExternalId(
 const DEMO_DUEL_ID = 'demo-live-esp-aut';
 
 async function findSpainAustriaMatch() {
-  const candidates = await Match.find({
+  const teams = await Team.find({
     $or: [
-      { homeTeamId: 'ESP', awayTeamId: 'AUT' },
-      { homeTeamId: 'AUT', awayTeamId: 'ESP' },
+      { fifaCode: 'ESP' },
+      { fifaCode: 'AUT' },
+      { externalId: 'ESP' },
+      { externalId: 'AUT' },
     ],
-  }).lean();
+  })
+    .select('externalId fifaCode')
+    .lean();
+
+  const espTeamIds = [
+    ...new Set(
+      teams
+        .filter((team) => team.fifaCode === 'ESP' || team.externalId === 'ESP')
+        .map((team) => team.externalId)
+    ),
+  ];
+  const autTeamIds = [
+    ...new Set(
+      teams
+        .filter((team) => team.fifaCode === 'AUT' || team.externalId === 'AUT')
+        .map((team) => team.externalId)
+    ),
+  ];
+  if (!espTeamIds.length || !autTeamIds.length) return null;
+
+  const pairQueries = [];
+  for (const espTeamId of espTeamIds) {
+    for (const autTeamId of autTeamIds) {
+      pairQueries.push({ homeTeamId: espTeamId, awayTeamId: autTeamId });
+      pairQueries.push({ homeTeamId: autTeamId, awayTeamId: espTeamId });
+    }
+  }
+
+  const candidates = await Match.find({ $or: pairQueries }).lean();
   if (!candidates.length) return null;
 
   const priority = { live: 0, upcoming: 1, finished: 2 };

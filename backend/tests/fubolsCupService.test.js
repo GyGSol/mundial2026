@@ -404,6 +404,63 @@ describe('fubolsCupService', () => {
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsB).toBe(2);
   });
 
+  it('demoDuel encuentra España–Austria con IDs numéricos de equipo (prod)', async () => {
+    await User.deleteMany({ isAiUser: true });
+
+    const aiUser = await User.create({
+      name: 'Futbot',
+      email: `ai-demo-numeric-${Date.now()}@test.local`,
+      passwordHash: 'hash',
+      isAiUser: true,
+    });
+    cleanup.userIds.push(aiUser._id);
+
+    const { groupId } = await setupGroupWithHumans(8);
+    const gonzalo = await createHuman('Gonzalo Numeric', 15);
+    await UserGroupMembership.create({ userId: gonzalo._id, groupId, role: 'member' });
+
+    for (const team of [
+      { externalId: '29', nameEn: 'Spain', fifaCode: 'ESP', group: 'E' },
+      { externalId: '39', nameEn: 'Austria', fifaCode: 'AUT', group: 'E' },
+    ]) {
+      await Team.findOneAndUpdate({ externalId: team.externalId }, team, { upsert: true });
+    }
+
+    const espAut = await Match.create({
+      externalId: `demo-esp-aut-numeric-${Date.now()}`,
+      homeTeamId: '29',
+      awayTeamId: '39',
+      status: 'live',
+      homeScore: 1,
+      awayScore: 0,
+      type: 'round_of_16',
+    });
+    cleanup.matchIds.push(espAut._id);
+
+    await Prediction.create({
+      userId: aiUser._id,
+      matchId: espAut._id,
+      homeGoals: 2,
+      awayGoals: 1,
+      pointsEarned: 4,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+    });
+    await Prediction.create({
+      userId: gonzalo._id,
+      matchId: espAut._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 2,
+      pointsBreakdown: { winner: 0, homeGoals: 1, awayGoals: 1, totalGoals: 0 },
+    });
+
+    const demoDuel = await buildLiveDemoDuel(groupId, gonzalo._id);
+    expect(demoDuel).toBeTruthy();
+    expect(demoDuel.worldCupMatches[0].match?.status).toBe('live');
+    expect(demoDuel.worldCupMatches[0].duelSlice.pointsA).toBe(4);
+    expect(demoDuel.worldCupMatches[0].duelSlice.pointsB).toBe(2);
+  });
+
   it('demoDuel resuelve Futbot por nombre si falta isAiUser', async () => {
     await User.deleteMany({ isAiUser: true });
     const aiUser = await User.create({
