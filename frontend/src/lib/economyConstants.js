@@ -3,6 +3,7 @@ export const MOCK_CHECKOUT_DELAY_MS = 2000;
 export const GROUP_ENTRY_FEE = 100;
 export const ELIMINATION_TOURNAMENT_PRIZE_FUBOLS = 100;
 export const FUBOLS_CUP_CHAMPION_PRIZE = 1000;
+export const FUBOLS_CUP_CHAMPION_EXTRA_PRIZE = 'Una picada para 2 a domicilio';
 export const FUBOLS_CUP_ROUND_ADVANCE_PRIZE = 100;
 
 export function computeEliminationEntryFee(memberCount) {

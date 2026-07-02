@@ -545,12 +545,20 @@ export default function LeaderboardPage() {
               </ul>
             )}
             {selectedGroupId && selectedGroupId !== '__nogroup' ? (
-              <Button asChild variant="outline" className="mt-4 w-full sm:w-auto">
-                <Link to={`/graficos?grupo=${encodeURIComponent(selectedGroupId)}`}>
-                  <LineChart className="mr-2 size-4" aria-hidden />
-                  Ver evolución de posiciones
-                </Link>
-              </Button>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                  <Link to={`/graficos?grupo=${encodeURIComponent(selectedGroupId)}`}>
+                    <LineChart className="mr-2 size-4" aria-hidden />
+                    Ver evolución de posiciones
+                  </Link>
+                </Button>
+                <FubolsCupRankingLink
+                  groupId={effectiveGroupId}
+                  disabled={fubolsCupData?.tournament?.status === 'cancelled'}
+                  prominent
+                  className="w-full sm:min-w-[16rem] sm:flex-1"
+                />
+              </div>
             ) : null}
           </CardContent>
         </Card>
@@ -575,10 +583,6 @@ export default function LeaderboardPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <FubolsCupRankingLink
-                groupId={effectiveGroupId}
-                disabled={fubolsCupData?.tournament?.status === 'cancelled'}
-              />
             </div>
           </div>
           {hasLiveMatches && isCommonTournament ? (
