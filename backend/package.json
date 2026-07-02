@@ -41,6 +41,7 @@
     "migrate:fubols-entry-fees": "node src/scripts/migrateBackfillEntryFees.js",
     "migrate:ensure-ai-groups": "node src/scripts/migrateEnsureAiInGroups.js",
     "migrate:fubols-ai-bonus": "node src/scripts/migrateAiPlayBonusFubols.js",
+    "email:fubols-cup-qualification": "node src/scripts/sendFubolsCupQualificationEmails.js",
     "sync:streams": "node src/scripts/syncStreamMappings.js",
     "sync:player-photos": "node src/scripts/runPlayerPhotoSync.js",
     "sync:player-wiki": "node src/scripts/runPlayerWikiSync.js"

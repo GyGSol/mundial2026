@@ -42,6 +42,8 @@ const userSchema = new mongoose.Schema(
       matchLiveStart: { type: Boolean, default: true },
       goals: { type: Boolean, default: true },
     },
+    /** Mail único de clasificación a Copa Fubols (idempotencia). */
+    fubolsCupQualificationEmailSentAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
