@@ -75,7 +75,7 @@ export function getInitials(name) {
 
 export const AI_USER_AVATAR_URL = '/ai-skynet.png';
 
-const AI_USER_NAME_PATTERN = /^(?:@predictivemodeling|predictive[-\s]?modeling)$/i;
+const AI_USER_NAME_PATTERN = /^(?:Futbot|@predictivemodeling|predictive[-\s]?modeling)$/i;
 
 export function isAiCompetitorUser({ isAiUser, name } = {}) {
   if (isAiUser) return true;

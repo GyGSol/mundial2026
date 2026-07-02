@@ -327,7 +327,7 @@ describe('fubolsCupService', () => {
     await User.deleteMany({ isAiUser: true });
 
     const aiUser = await User.create({
-      name: '@predictivemodeling',
+      name: 'Futbot',
       email: `ai-demo-${Date.now()}@test.local`,
       passwordHash: 'hash',
       isAiUser: true,
@@ -377,12 +377,13 @@ describe('fubolsCupService', () => {
     return { groupId, admin, aiUser, gonzalo, espAut };
   }
 
-  it('demoDuel expone IA vs Gonzalo con puntos del partido España–Austria', async () => {
-    const { groupId, admin, aiUser, gonzalo } = await setupDemoDuelFixture();
+  it('demoDuel expone Futbot vs el usuario logueado con puntos del partido España–Austria', async () => {
+    const { groupId, aiUser, gonzalo } = await setupDemoDuelFixture();
 
-    const dashboard = await getFubolsCupDashboard(groupId, admin._id);
+    const dashboard = await getFubolsCupDashboard(groupId, gonzalo._id);
     expect(dashboard.demoDuel).toBeTruthy();
     expect(dashboard.demoDuel.isDemo).toBe(true);
+    expect(dashboard.demoDuel.playerA.name).toBe('Futbot');
     expect(dashboard.demoDuel.playerA.id).toBe(String(aiUser._id));
     expect(dashboard.demoDuel.playerB.id).toBe(String(gonzalo._id));
     expect(dashboard.demoDuel.worldCupMatches).toHaveLength(1);
@@ -392,15 +393,69 @@ describe('fubolsCupService', () => {
   });
 
   it('demoDuel refleja puntos en vivo cuando el partido está live', async () => {
-    const { groupId, admin } = await setupDemoDuelFixture({
+    const { groupId, gonzalo } = await setupDemoDuelFixture({
       matchStatus: 'live',
       liveScores: { homeScore: 1, awayScore: 0 },
     });
 
-    const demoDuel = await buildLiveDemoDuel(groupId, admin._id);
+    const demoDuel = await buildLiveDemoDuel(groupId, gonzalo._id);
     expect(demoDuel?.worldCupMatches[0].match?.status).toBe('live');
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsA).toBe(4);
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsB).toBe(2);
+  });
+
+  it('demoDuel resuelve Futbot por nombre si falta isAiUser', async () => {
+    await User.deleteMany({ isAiUser: true });
+    const aiUser = await User.create({
+      name: 'Futbot',
+      email: `ai-futbot-${Date.now()}@test.local`,
+      passwordHash: 'hash',
+      isAiUser: false,
+    });
+    cleanup.userIds.push(aiUser._id);
+
+    const { groupId } = await setupGroupWithHumans(8);
+    const gonzalo = await createHuman('Gonzalo Test', 15);
+    await UserGroupMembership.create({ userId: gonzalo._id, groupId, role: 'member' });
+
+    for (const team of [
+      { externalId: 'ESP', nameEn: 'Spain', fifaCode: 'ESP', group: 'E' },
+      { externalId: 'AUT', nameEn: 'Austria', fifaCode: 'AUT', group: 'E' },
+    ]) {
+      await Team.findOneAndUpdate({ externalId: team.externalId }, team, { upsert: true });
+    }
+
+    const espAut = await Match.create({
+      externalId: `demo-futbot-name-${Date.now()}`,
+      homeTeamId: 'ESP',
+      awayTeamId: 'AUT',
+      status: 'finished',
+      homeScore: 2,
+      awayScore: 1,
+      finishedAt: new Date(),
+    });
+    cleanup.matchIds.push(espAut._id);
+
+    await Prediction.create({
+      userId: aiUser._id,
+      matchId: espAut._id,
+      homeGoals: 2,
+      awayGoals: 1,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+    await Prediction.create({
+      userId: gonzalo._id,
+      matchId: espAut._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 0,
+      pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+    });
+
+    const demoDuel = await buildLiveDemoDuel(groupId, gonzalo._id);
+    expect(demoDuel?.playerA.id).toBe(String(aiUser._id));
+    expect(demoDuel?.playerA.name).toBe('Futbot');
   });
 
   it('demoDuel es null sin partido España–Austria', async () => {
@@ -409,7 +464,7 @@ describe('fubolsCupService', () => {
     const gonzalo = await createHuman('Gonzalo Solo', 12);
     await UserGroupMembership.create({ userId: gonzalo._id, groupId, role: 'member' });
     await User.create({
-      name: '@predictivemodeling',
+      name: 'Futbot',
       email: `ai-null-${Date.now()}@test.local`,
       passwordHash: 'hash',
       isAiUser: true,
@@ -419,17 +474,17 @@ describe('fubolsCupService', () => {
     expect(demoDuel).toBeNull();
   });
 
-  it('demoDuel es null sin Gonzalo en el grupo', async () => {
+  it('demoDuel es null sin oponente humano ni sesión', async () => {
     await User.deleteMany({ isAiUser: true });
     const aiUser = await User.create({
-      name: '@predictivemodeling',
+      name: 'Futbot',
       email: `ai-no-gon-${Date.now()}@test.local`,
       passwordHash: 'hash',
       isAiUser: true,
     });
     cleanup.userIds.push(aiUser._id);
 
-    const { groupId, admin } = await setupGroupWithHumans(8);
+    const { groupId } = await setupGroupWithHumans(8);
     for (const team of [
       { externalId: 'ESP', nameEn: 'Spain', fifaCode: 'ESP', group: 'E' },
       { externalId: 'AUT', nameEn: 'Austria', fifaCode: 'AUT', group: 'E' },
@@ -446,7 +501,7 @@ describe('fubolsCupService', () => {
     });
     cleanup.matchIds.push(espAut._id);
 
-    const demoDuel = await buildLiveDemoDuel(groupId, admin._id);
+    const demoDuel = await buildLiveDemoDuel(groupId, null);
     expect(demoDuel).toBeNull();
   });
 });

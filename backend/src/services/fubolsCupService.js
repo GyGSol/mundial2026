@@ -622,15 +622,32 @@ async function loadEnrichedMatchesByExternalId(
 const DEMO_DUEL_ID = 'demo-live-esp-aut';
 
 async function findSpainAustriaMatch() {
-  return Match.findOne({
+  const candidates = await Match.find({
     $or: [
       { homeTeamId: 'ESP', awayTeamId: 'AUT' },
       { homeTeamId: 'AUT', awayTeamId: 'ESP' },
     ],
   }).lean();
+  if (!candidates.length) return null;
+
+  const priority = { live: 0, upcoming: 1, finished: 2 };
+  candidates.sort((a, b) => {
+    const pa = priority[a.status] ?? 9;
+    const pb = priority[b.status] ?? 9;
+    if (pa !== pb) return pa - pb;
+    return Number(a.externalId) - Number(b.externalId);
+  });
+  return candidates[0];
 }
 
-async function findDemoOpponentGonzalo(groupId) {
+async function findDemoHumanOpponent(groupId, viewerUserId) {
+  if (viewerUserId) {
+    const viewer = await User.findById(viewerUserId)
+      .select('name isAiUser avatarDataUrl')
+      .lean();
+    if (viewer && !viewer.isAiUser) return viewer;
+  }
+
   const oid = toObjectId(groupId);
   const memberships = await UserGroupMembership.find({ groupId: oid }).select('userId').lean();
   const memberIds = memberships.map((row) => row.userId);
@@ -644,6 +661,7 @@ async function findDemoOpponentGonzalo(groupId) {
       .lean();
     if (inGroup) return inGroup;
   }
+
   return User.findOne({ name: /Gonzalo/i, isAiUser: { $ne: true } })
     .select('name isAiUser avatarDataUrl')
     .lean();
@@ -693,17 +711,17 @@ function serializeDemoPlayer(user, profile) {
 }
 
 export async function buildLiveDemoDuel(groupId, viewerUserId) {
-  const [aiUser, gonzalo, match] = await Promise.all([
+  const [aiUser, humanOpponent, match] = await Promise.all([
     getAiUser(),
-    findDemoOpponentGonzalo(groupId),
+    findDemoHumanOpponent(groupId, viewerUserId),
     findSpainAustriaMatch(),
   ]);
-  if (!aiUser || !gonzalo || !match) return null;
+  if (!aiUser || !humanOpponent || !match) return null;
 
   const playerAId = String(aiUser._id);
-  const playerBId = String(gonzalo._id);
+  const playerBId = String(humanOpponent._id);
   const predictions = await Prediction.find({
-    userId: { $in: [aiUser._id, gonzalo._id] },
+    userId: { $in: [aiUser._id, humanOpponent._id] },
     matchId: match._id,
   }).lean();
   const predictionByUserId = Object.fromEntries(
@@ -745,7 +763,7 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
     duelIndex: 0,
     isDemo: true,
     playerA: serializeDemoPlayer(aiUser, profileA),
-    playerB: serializeDemoPlayer(gonzalo, profileB),
+    playerB: serializeDemoPlayer(humanOpponent, profileB),
     winnerId: duelSlice.winnerId,
     matchResults: [duelSlice],
     worldCupExternalIds: [externalId],
