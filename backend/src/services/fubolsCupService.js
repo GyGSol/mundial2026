@@ -31,6 +31,7 @@ import { User } from '../models/User.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
 import { payoutFubolsCupAdvance, payoutFubolsCupChampion } from './fubolService.js';
 import { getLeaderboard } from './leaderboardService.js';
+import { resolvePublicAvatarUrl } from './userAvatarService.js';
 import { resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { recalculateMatchScores } from './syncService.js';
 import { enrichMatches } from './matchEnrichmentService.js';
@@ -116,10 +117,61 @@ function assignBracketFromWinners(tournament) {
 }
 
 async function loadUserNameMap(userIds = []) {
+  const profileMap = await loadUserProfileMap(userIds);
+  return Object.fromEntries(Object.entries(profileMap).map(([id, row]) => [id, row.name]));
+}
+
+async function loadUserProfileMap(userIds = []) {
   const ids = [...new Set(userIds.filter(Boolean))];
   if (!ids.length) return {};
-  const users = await User.find({ _id: { $in: ids } }).select('name').lean();
-  return Object.fromEntries(users.map((u) => [u._id.toString(), u.name]));
+  const users = await User.find({ _id: { $in: ids } })
+    .select('name isAiUser avatarDataUrl')
+    .lean();
+  return Object.fromEntries(
+    users.map((u) => {
+      const id = u._id.toString();
+      const hasAvatar = Boolean(u.avatarDataUrl?.length);
+      return [
+        id,
+        {
+          name: u.name,
+          isAiUser: Boolean(u.isAiUser),
+          avatarUrl: resolvePublicAvatarUrl({
+            isAiUser: u.isAiUser,
+            avatarDataUrl: u.avatarDataUrl,
+            hasAvatar,
+            userId: id,
+          }),
+        },
+      ];
+    })
+  );
+}
+
+function collectBracketPlayerIds(rounds = []) {
+  return [
+    ...new Set(
+      rounds.flatMap((round) =>
+        (round.duels ?? [])
+          .flatMap((duel) => [duel.playerAId, duel.playerBId])
+          .filter(Boolean)
+          .map((id) => String(id))
+      )
+    ),
+  ];
+}
+
+function buildProfileMapFromPreview(previewTop8 = []) {
+  return Object.fromEntries(
+    previewTop8.map((row) => [
+      String(row.id),
+      {
+        name: row.name,
+        isAiUser: Boolean(row.isAiUser),
+        avatarUrl: row.avatarUrl ?? null,
+      },
+    ])
+  );
 }
 
 async function attachTeamsToMatches(matches = []) {
@@ -557,16 +609,30 @@ async function loadEnrichedMatchesByExternalId(externalIds, viewerUserId) {
   );
 }
 
-function serializeDuel(duel, round) {
+function serializeDuel(duel, round, profileMap = {}) {
   const externalIds = duelWorldCupExternalIds(round, duel.duelIndex);
+  const profileA = duel.playerAId ? profileMap[String(duel.playerAId)] : null;
+  const profileB = duel.playerBId ? profileMap[String(duel.playerBId)] : null;
   return {
     duelId: duel.duelId,
     duelIndex: duel.duelIndex,
     playerA: duel.playerAId
-      ? { id: String(duel.playerAId), name: duel.playerAName, seed: duel.seedA }
+      ? {
+          id: String(duel.playerAId),
+          name: duel.playerAName ?? profileA?.name ?? null,
+          seed: duel.seedA,
+          avatarUrl: profileA?.avatarUrl ?? null,
+          isAiUser: profileA?.isAiUser ?? false,
+        }
       : null,
     playerB: duel.playerBId
-      ? { id: String(duel.playerBId), name: duel.playerBName, seed: duel.seedB }
+      ? {
+          id: String(duel.playerBId),
+          name: duel.playerBName ?? profileB?.name ?? null,
+          seed: duel.seedB,
+          avatarUrl: profileB?.avatarUrl ?? null,
+          isAiUser: profileB?.isAiUser ?? false,
+        }
       : null,
     winnerId: duel.winnerId ? String(duel.winnerId) : null,
     matchResults: (duel.matchResults ?? []).map((row) => ({
@@ -616,8 +682,13 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
   ];
   const matchByExternalId = await loadEnrichedMatchesByExternalId(allExternalIds, viewerUserId);
 
+  const profileMap = {
+    ...buildProfileMapFromPreview(previewTop8),
+    ...(await loadUserProfileMap(collectBracketPlayerIds(roundsPayload))),
+  };
+
   const rounds = roundsPayload.map((round) => {
-    const serializedDuels = (round.duels ?? []).map((duel) => serializeDuel(duel, round));
+    const serializedDuels = (round.duels ?? []).map((duel) => serializeDuel(duel, round, profileMap));
     const duels = enrichDuelsWithWorldCupMatches(serializedDuels, matchByExternalId);
     return {
       roundKey: round.roundKey,

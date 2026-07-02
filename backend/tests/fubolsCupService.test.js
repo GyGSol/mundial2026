@@ -137,6 +137,8 @@ describe('fubolsCupService', () => {
     expect(dashboard.tournament.status).toBe('preview');
     expect(dashboard.previewTop8).toHaveLength(8);
     expect(dashboard.rounds[0].duels[0].playerA?.name).toBeTruthy();
+    expect(dashboard.rounds[0].duels[0].playerA).toHaveProperty('avatarUrl');
+    expect(dashboard.rounds[0].duels[0].playerA).toHaveProperty('isAiUser');
   });
 
   it('cancela si hay menos de 8 humanos al cerrar dieciseisavos', async () => {

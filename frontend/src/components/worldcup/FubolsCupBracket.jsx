@@ -1,4 +1,5 @@
 import FubolsCupMatchTile from '@/components/worldcup/FubolsCupMatchTile.jsx';
+import LeaderboardUserAvatar from '@/components/LeaderboardUserAvatar.jsx';
 import { cn } from '@/lib/utils';
 
 /** Cuartos: izquierda 2v7 + 3v6; derecha 1v8 + 4v5 */
@@ -21,12 +22,17 @@ function PlayerLine({ player, isWinner }) {
   return (
     <div
       className={cn(
-        'rounded-lg border px-4 py-3',
+        'flex items-center gap-2 rounded-lg border px-4 py-3',
         isWinner === true && 'border-primary bg-primary/10 font-semibold',
         isWinner === false && 'opacity-60'
       )}
     >
-      <span className="text-base sm:text-lg">
+      <LeaderboardUserAvatar
+        name={player.name}
+        avatarUrl={player.avatarUrl}
+        isAiUser={player.isAiUser}
+      />
+      <span className="min-w-0 truncate text-base sm:text-lg">
         {player.seed ? (
           <span className="mr-1.5 font-bold text-primary">{player.seed}.</span>
         ) : null}
