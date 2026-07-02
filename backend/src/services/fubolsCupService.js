@@ -35,6 +35,8 @@ import { resolvePublicAvatarUrl } from './userAvatarService.js';
 import { resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { recalculateMatchScores } from './syncService.js';
 import { enrichMatches } from './matchEnrichmentService.js';
+import { getAiUser } from './aiUserService.js';
+import { calculatePoints, resolveScoringActual } from './scoringService.js';
 import { PREDICTIONS_LIST_MATCH_PROJECTION } from './liveBarMatchProjection.js';
 import { getFifaWorldRankings } from './aiTeamMatchContextService.js';
 import {
@@ -584,7 +586,11 @@ async function loadOfficialKnockoutDisplayByExternalId(targetExternalIds) {
   return byExternalId;
 }
 
-async function loadEnrichedMatchesByExternalId(externalIds, viewerUserId) {
+async function loadEnrichedMatchesByExternalId(
+  externalIds,
+  viewerUserId,
+  { includeLiveFields = false } = {}
+) {
   const ids = [...new Set(externalIds.map(String))].filter(Boolean);
   if (!ids.length) return {};
 
@@ -600,7 +606,7 @@ async function loadEnrichedMatchesByExternalId(externalIds, viewerUserId) {
       includeKnockoutContext: false,
       ensureUserDefaults: false,
       includeWeather: false,
-      includeLiveFields: false,
+      includeLiveFields,
     }),
     loadOfficialKnockoutDisplayByExternalId(ids),
   ]);
@@ -611,6 +617,147 @@ async function loadEnrichedMatchesByExternalId(externalIds, viewerUserId) {
       applyOfficialKnockoutDisplay(match, officialByExternalId[String(match.externalId)]),
     ])
   );
+}
+
+const DEMO_DUEL_ID = 'demo-live-esp-aut';
+
+async function findSpainAustriaMatch() {
+  return Match.findOne({
+    $or: [
+      { homeTeamId: 'ESP', awayTeamId: 'AUT' },
+      { homeTeamId: 'AUT', awayTeamId: 'ESP' },
+    ],
+  }).lean();
+}
+
+async function findDemoOpponentGonzalo(groupId) {
+  const oid = toObjectId(groupId);
+  const memberships = await UserGroupMembership.find({ groupId: oid }).select('userId').lean();
+  const memberIds = memberships.map((row) => row.userId);
+  if (memberIds.length) {
+    const inGroup = await User.findOne({
+      _id: { $in: memberIds },
+      name: /Gonzalo/i,
+      isAiUser: { $ne: true },
+    })
+      .select('name isAiUser avatarDataUrl')
+      .lean();
+    if (inGroup) return inGroup;
+  }
+  return User.findOne({ name: /Gonzalo/i, isAiUser: { $ne: true } })
+    .select('name isAiUser avatarDataUrl')
+    .lean();
+}
+
+function pointsForDuelPlayer(prediction, match) {
+  if (!prediction) return null;
+  if (prediction.pointsEarned != null) return prediction.pointsEarned;
+  if (match?.status === 'live' || match?.status === 'finished') {
+    const actual = resolveScoringActual(match);
+    const { total } = calculatePoints(
+      { home: prediction.homeGoals, away: prediction.awayGoals },
+      actual
+    );
+    return total;
+  }
+  return null;
+}
+
+function mergeProfileWithLeaderboardStats(profileMap, statsMap, userId) {
+  const id = String(userId);
+  const profile = profileMap[id] ?? {};
+  const stats = statsMap.get(id) ?? {};
+  return {
+    ...profile,
+    totalPoints: stats.totalPoints ?? stats.points ?? profile.totalPoints ?? 0,
+    pj: stats.pj ?? profile.pj ?? 0,
+    difGl: stats.difGl ?? profile.difGl ?? 0,
+    difGv: stats.difGv ?? profile.difGv ?? 0,
+  };
+}
+
+function serializeDemoPlayer(user, profile) {
+  if (!user) return null;
+  const id = user._id.toString();
+  return {
+    id,
+    name: profile.name ?? user.name,
+    seed: null,
+    avatarUrl: profile.avatarUrl ?? null,
+    isAiUser: profile.isAiUser ?? Boolean(user.isAiUser),
+    totalPoints: profile.totalPoints ?? 0,
+    pj: profile.pj ?? 0,
+    difGl: profile.difGl ?? 0,
+    difGv: profile.difGv ?? 0,
+  };
+}
+
+export async function buildLiveDemoDuel(groupId, viewerUserId) {
+  const [aiUser, gonzalo, match] = await Promise.all([
+    getAiUser(),
+    findDemoOpponentGonzalo(groupId),
+    findSpainAustriaMatch(),
+  ]);
+  if (!aiUser || !gonzalo || !match) return null;
+
+  const playerAId = String(aiUser._id);
+  const playerBId = String(gonzalo._id);
+  const predictions = await Prediction.find({
+    userId: { $in: [aiUser._id, gonzalo._id] },
+    matchId: match._id,
+  }).lean();
+  const predictionByUserId = Object.fromEntries(
+    predictions.map((row) => [row.userId.toString(), row])
+  );
+
+  const pointsA = pointsForDuelPlayer(predictionByUserId[playerAId], match);
+  const pointsB = pointsForDuelPlayer(predictionByUserId[playerBId], match);
+  const duelSlice = buildMatchResultSlice({
+    matchId: match._id,
+    externalId: match.externalId,
+    pointsA: pointsA ?? 0,
+    pointsB: pointsB ?? 0,
+    playerAId,
+    playerBId,
+  });
+  duelSlice.pointsA = pointsA;
+  duelSlice.pointsB = pointsB;
+  if (pointsA == null || pointsB == null) {
+    duelSlice.winnerId = null;
+    duelSlice.margin = 0;
+  }
+
+  const externalId = String(match.externalId);
+  const matchByExternalId = await loadEnrichedMatchesByExternalId([externalId], viewerUserId, {
+    includeLiveFields: true,
+  });
+  const enrichedMatch = matchByExternalId[externalId] ?? null;
+
+  const [profileMap, tournamentStats] = await Promise.all([
+    loadUserProfileMap([playerAId, playerBId]),
+    buildTournamentStatsMap(groupId),
+  ]);
+  const profileA = mergeProfileWithLeaderboardStats(profileMap, tournamentStats, playerAId);
+  const profileB = mergeProfileWithLeaderboardStats(profileMap, tournamentStats, playerBId);
+
+  return {
+    duelId: DEMO_DUEL_ID,
+    duelIndex: 0,
+    isDemo: true,
+    playerA: serializeDemoPlayer(aiUser, profileA),
+    playerB: serializeDemoPlayer(gonzalo, profileB),
+    winnerId: duelSlice.winnerId,
+    matchResults: [duelSlice],
+    worldCupExternalIds: [externalId],
+    worldCupMatches: [
+      {
+        externalId,
+        match: enrichedMatch,
+        duelSlice,
+      },
+    ],
+    resolvedAt: null,
+  };
 }
 
 function serializeDuel(duel, round, profileMap = {}) {
@@ -709,6 +856,8 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
     };
   });
 
+  const demoDuel = await buildLiveDemoDuel(groupId, viewerUserId);
+
   return {
     tournament: {
       status: tournament.status,
@@ -730,6 +879,7 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
       totalPoints: row.totalPoints ?? row.points ?? 0,
     })),
     rounds,
+    demoDuel,
     champion,
     prizes: {
       championFubols: FUBOLS_CUP_CHAMPION_PRIZE,

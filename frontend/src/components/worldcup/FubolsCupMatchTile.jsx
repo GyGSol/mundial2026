@@ -4,6 +4,7 @@ import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat';
 import { getTeamFlag } from '@/lib/teamMeta';
 import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
 import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
+import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
 function TileCountryLine({ team, slotLabel, slotSourceMatch }) {
   const flagUrl = team ? getTeamFlag(team) : null;
@@ -71,7 +72,36 @@ function buildPredictionSummary(match) {
   return { text: `Tu predicción: ${home}–${away}`, hasPrediction: true };
 }
 
-export default function FubolsCupMatchTile({ match, externalId }) {
+function buildDuelPointsSummary(duelSlice, playerAName, playerBName) {
+  if (!duelSlice || !playerAName || !playerBName) return null;
+
+  const { pointsA, pointsB, winnerId } = duelSlice;
+  if (pointsA == null && pointsB == null) {
+    return { text: 'Puntos pendientes', leaderId: null };
+  }
+  if (pointsA == null || pointsB == null) {
+    return { text: 'Sin predicción de uno de los duelistas', leaderId: null };
+  }
+
+  const labelA = `${playerAName} ${pointsA} pts`;
+  const labelB = `${playerBName} ${pointsB} pts`;
+  return {
+    text: `${labelA} · ${labelB}`,
+    leaderId: winnerId,
+    pointsA,
+    pointsB,
+  };
+}
+
+export default function FubolsCupMatchTile({
+  match,
+  externalId,
+  duelSlice = null,
+  playerAName = null,
+  playerBName = null,
+  playerAId = null,
+  playerBId = null,
+}) {
   if (!match?.id) {
     return (
       <div className="rounded-lg border border-dashed border-border/60 bg-muted/10 px-3 py-4 text-center">
@@ -90,6 +120,10 @@ export default function FubolsCupMatchTile({ match, externalId }) {
   const homeTitle = match.homeTeam?.nameEn || match.homeTeamSlotLabel || 'Por definir';
   const awayTitle = match.awayTeam?.nameEn || match.awayTeamSlotLabel || 'Por definir';
   const ariaLabel = `Ir a predicciones: ${homeTitle} vs ${awayTitle}`;
+  const isLive = match.status === 'live';
+  const { homeScore, awayScore } = resolveFieldMatchScores(match);
+  const hasScore = homeScore != null && awayScore != null;
+  const duelPoints = buildDuelPointsSummary(duelSlice, playerAName, playerBName);
 
   const headerParts = [`Partido ${match.externalId ?? externalId}`, phase, dateTime].filter(Boolean);
 
@@ -98,12 +132,20 @@ export default function FubolsCupMatchTile({ match, externalId }) {
       to={`/predictions?match=${encodeURIComponent(match.id)}`}
       className={cn(
         'group block rounded-lg border border-border/70 bg-card px-3 py-3 shadow-sm transition-colors',
-        'hover:border-primary/50 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+        'hover:border-primary/50 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        isLive && 'border-emerald-500/40'
       )}
       aria-label={ariaLabel}
     >
       <div className="space-y-0.5 text-xs text-muted-foreground">
-        <p className="font-medium text-foreground/90">{headerParts.join(' · ')}</p>
+        <p className="flex flex-wrap items-center gap-2 font-medium text-foreground/90">
+          <span>{headerParts.join(' · ')}</span>
+          {isLive ? (
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+              En vivo
+            </span>
+          ) : null}
+        </p>
         {stadiumLine ? (
           <p className="truncate" title={stadiumLine}>
             {stadiumLine}
@@ -117,15 +159,54 @@ export default function FubolsCupMatchTile({ match, externalId }) {
           slotLabel={match.homeTeamSlotLabel}
           slotSourceMatch={match.homeTeamSlotSourceMatch}
         />
-        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          vs
-        </span>
+        {hasScore ? (
+          <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
+            {homeScore}–{awayScore}
+          </span>
+        ) : (
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            vs
+          </span>
+        )}
         <TileCountryLine
           team={match.awayTeam}
           slotLabel={match.awayTeamSlotLabel}
           slotSourceMatch={match.awayTeamSlotSourceMatch}
         />
       </div>
+
+      {duelPoints ? (
+        <p className="mt-2 text-xs text-foreground/90">
+          <span className="font-medium text-muted-foreground">Puntos del cruce: </span>
+          {duelPoints.pointsA != null && duelPoints.pointsB != null ? (
+            <>
+              <span
+                className={cn(
+                  duelPoints.leaderId &&
+                    playerAId &&
+                    duelPoints.leaderId === playerAId &&
+                    'font-semibold text-primary'
+                )}
+              >
+                {playerAName} {duelPoints.pointsA} pts
+              </span>
+              <span className="text-muted-foreground"> · </span>
+              <span
+                className={cn(
+                  duelPoints.leaderId &&
+                    playerBId &&
+                    duelPoints.leaderId === playerBId &&
+                    'font-semibold text-primary'
+                )}
+              >
+                {playerBName} {duelPoints.pointsB} pts
+              </span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">{duelPoints.text}</span>
+          )}
+        </p>
+      ) : null}
 
       <p
         className={cn(

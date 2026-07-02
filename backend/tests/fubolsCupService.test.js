@@ -10,6 +10,7 @@ import { FubolsCupTournament } from '../src/models/FubolsCupTournament.js';
 import { FubolTransaction } from '../src/models/FubolTransaction.js';
 import { AppTreasury } from '../src/models/AppTreasury.js';
 import {
+  buildLiveDemoDuel,
   getFubolsCupDashboard,
   getHumanLeaderboardTop8,
   processFubolsCupForGroup,
@@ -320,5 +321,132 @@ describe('fubolsCupService', () => {
     const top = await getHumanLeaderboardTop8(groupId);
     expect(top.every((row) => !row.isAiUser)).toBe(true);
     expect(top.length).toBeLessThanOrEqual(8);
+  });
+
+  async function setupDemoDuelFixture({ matchStatus = 'finished', liveScores } = {}) {
+    await User.deleteMany({ isAiUser: true });
+
+    const aiUser = await User.create({
+      name: '@predictivemodeling',
+      email: `ai-demo-${Date.now()}@test.local`,
+      passwordHash: 'hash',
+      isAiUser: true,
+    });
+    cleanup.userIds.push(aiUser._id);
+
+    const { groupId, admin } = await setupGroupWithHumans(8);
+    const gonzalo = await createHuman('Gonzalo Test', 15);
+    await UserGroupMembership.create({ userId: gonzalo._id, groupId, role: 'member' });
+
+    for (const team of [
+      { externalId: 'ESP', nameEn: 'Spain', fifaCode: 'ESP', group: 'E' },
+      { externalId: 'AUT', nameEn: 'Austria', fifaCode: 'AUT', group: 'E' },
+    ]) {
+      await Team.findOneAndUpdate({ externalId: team.externalId }, team, { upsert: true });
+    }
+
+    const espAut = await Match.create({
+      externalId: `demo-esp-aut-${Date.now()}`,
+      homeTeamId: 'ESP',
+      awayTeamId: 'AUT',
+      status: matchStatus,
+      homeScore: liveScores?.homeScore ?? 2,
+      awayScore: liveScores?.awayScore ?? 1,
+      type: 'round_of_16',
+      finishedAt: matchStatus === 'finished' ? new Date() : null,
+    });
+    cleanup.matchIds.push(espAut._id);
+
+    await Prediction.create({
+      userId: aiUser._id,
+      matchId: espAut._id,
+      homeGoals: 2,
+      awayGoals: 1,
+      pointsEarned: matchStatus === 'live' ? 4 : 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
+    });
+    await Prediction.create({
+      userId: gonzalo._id,
+      matchId: espAut._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: matchStatus === 'live' ? 2 : 0,
+      pointsBreakdown: { winner: 0, homeGoals: 0, awayGoals: 0, totalGoals: 0 },
+    });
+
+    return { groupId, admin, aiUser, gonzalo, espAut };
+  }
+
+  it('demoDuel expone IA vs Gonzalo con puntos del partido España–Austria', async () => {
+    const { groupId, admin, aiUser, gonzalo } = await setupDemoDuelFixture();
+
+    const dashboard = await getFubolsCupDashboard(groupId, admin._id);
+    expect(dashboard.demoDuel).toBeTruthy();
+    expect(dashboard.demoDuel.isDemo).toBe(true);
+    expect(dashboard.demoDuel.playerA.id).toBe(String(aiUser._id));
+    expect(dashboard.demoDuel.playerB.id).toBe(String(gonzalo._id));
+    expect(dashboard.demoDuel.worldCupMatches).toHaveLength(1);
+    expect(dashboard.demoDuel.worldCupMatches[0].duelSlice.pointsA).toBe(6);
+    expect(dashboard.demoDuel.worldCupMatches[0].duelSlice.pointsB).toBe(0);
+    expect(dashboard.demoDuel.worldCupMatches[0].match?.homeTeam?.fifaCode).toBe('ESP');
+  });
+
+  it('demoDuel refleja puntos en vivo cuando el partido está live', async () => {
+    const { groupId, admin } = await setupDemoDuelFixture({
+      matchStatus: 'live',
+      liveScores: { homeScore: 1, awayScore: 0 },
+    });
+
+    const demoDuel = await buildLiveDemoDuel(groupId, admin._id);
+    expect(demoDuel?.worldCupMatches[0].match?.status).toBe('live');
+    expect(demoDuel?.worldCupMatches[0].duelSlice.pointsA).toBe(4);
+    expect(demoDuel?.worldCupMatches[0].duelSlice.pointsB).toBe(2);
+  });
+
+  it('demoDuel es null sin partido España–Austria', async () => {
+    await User.deleteMany({ isAiUser: true });
+    const { groupId, admin } = await setupGroupWithHumans(8);
+    const gonzalo = await createHuman('Gonzalo Solo', 12);
+    await UserGroupMembership.create({ userId: gonzalo._id, groupId, role: 'member' });
+    await User.create({
+      name: '@predictivemodeling',
+      email: `ai-null-${Date.now()}@test.local`,
+      passwordHash: 'hash',
+      isAiUser: true,
+    }).then((u) => cleanup.userIds.push(u._id));
+
+    const demoDuel = await buildLiveDemoDuel(groupId, admin._id);
+    expect(demoDuel).toBeNull();
+  });
+
+  it('demoDuel es null sin Gonzalo en el grupo', async () => {
+    await User.deleteMany({ isAiUser: true });
+    const aiUser = await User.create({
+      name: '@predictivemodeling',
+      email: `ai-no-gon-${Date.now()}@test.local`,
+      passwordHash: 'hash',
+      isAiUser: true,
+    });
+    cleanup.userIds.push(aiUser._id);
+
+    const { groupId, admin } = await setupGroupWithHumans(8);
+    for (const team of [
+      { externalId: 'ESP', nameEn: 'Spain', fifaCode: 'ESP', group: 'E' },
+      { externalId: 'AUT', nameEn: 'Austria', fifaCode: 'AUT', group: 'E' },
+    ]) {
+      await Team.findOneAndUpdate({ externalId: team.externalId }, team, { upsert: true });
+    }
+    const espAut = await Match.create({
+      externalId: `demo-no-gon-${Date.now()}`,
+      homeTeamId: 'ESP',
+      awayTeamId: 'AUT',
+      status: 'upcoming',
+      homeScore: 0,
+      awayScore: 0,
+    });
+    cleanup.matchIds.push(espAut._id);
+
+    const demoDuel = await buildLiveDemoDuel(groupId, admin._id);
+    expect(demoDuel).toBeNull();
   });
 });

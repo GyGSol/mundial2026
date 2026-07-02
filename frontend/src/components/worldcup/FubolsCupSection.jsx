@@ -144,7 +144,7 @@ export default function FubolsCupSection() {
                 <li>Empate 1-1 en victorias: gana quien tuvo mayor diferencia en su partido ganado.</li>
                 <li>Tocá un partido del cuadro para ir a Predicciones y cargar tu pronóstico.</li>
               </ul>
-              <FubolsCupBracket rounds={data.rounds} />
+              <FubolsCupBracket rounds={data.rounds} demoDuel={data.demoDuel} />
             </>
           )}
         </>

@@ -12,8 +12,19 @@ const playerRowGridClass =
 
 const playerRowPaddingClass = 'px-2.5 sm:px-3';
 
-function WorldCupMatchBlock({ wc }) {
-  return <FubolsCupMatchTile match={wc.match} externalId={wc.externalId} />;
+function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
+  const duelSlice = wc.duelSlice ?? sliceByExternalId?.[wc.externalId] ?? null;
+  return (
+    <FubolsCupMatchTile
+      match={wc.match}
+      externalId={wc.externalId}
+      duelSlice={duelSlice}
+      playerAName={duel.playerA?.name}
+      playerBName={duel.playerB?.name}
+      playerAId={duel.playerA?.id}
+      playerBId={duel.playerB?.id}
+    />
+  );
 }
 
 function PlayerLineHeader() {
@@ -80,6 +91,11 @@ function PlayerLine({ player, isWinner }) {
 
 function DuelCard({ duel, className }) {
   const worldCupMatches = duel.worldCupMatches ?? [];
+  const sliceByExternalId = Object.fromEntries(
+    (duel.matchResults ?? [])
+      .filter((row) => row.externalId)
+      .map((row) => [String(row.externalId), row])
+  );
 
   return (
     <article
@@ -124,7 +140,12 @@ function DuelCard({ duel, className }) {
       {worldCupMatches.length ? (
         <div className="flex flex-col gap-3 border-t border-border/60 pt-3">
           {worldCupMatches.map((wc) => (
-            <WorldCupMatchBlock key={wc.externalId} wc={wc} />
+            <WorldCupMatchBlock
+              key={wc.externalId}
+              wc={wc}
+              duel={duel}
+              sliceByExternalId={sliceByExternalId}
+            />
           ))}
         </div>
       ) : null}
@@ -175,8 +196,8 @@ function RoundSection({ round, gridClassName }) {
   );
 }
 
-export default function FubolsCupBracket({ rounds = [] }) {
-  if (!rounds.length) return null;
+export default function FubolsCupBracket({ rounds = [], demoDuel = null }) {
+  if (!rounds.length && !demoDuel) return null;
 
   const roundByKey = Object.fromEntries(rounds.map((round) => [round.roundKey, round]));
   const cuartos = roundByKey.quarter_final;
@@ -197,6 +218,21 @@ export default function FubolsCupBracket({ rounds = [] }) {
             {thirdPlace ? <RoundSection round={thirdPlace} /> : null}
             {final ? <RoundSection round={final} /> : null}
           </div>
+        </section>
+      ) : null}
+
+      {demoDuel ? (
+        <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-base font-semibold sm:text-lg">Prueba · resultado en vivo</h3>
+            <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+              Prueba
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Vista de prueba: puntos del cruce según el marcador actual del partido España–Austria.
+          </p>
+          <DuelCard duel={demoDuel} />
         </section>
       ) : null}
     </div>

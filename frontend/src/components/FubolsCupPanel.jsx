@@ -77,7 +77,7 @@ export default function FubolsCupPanel({ data, loading, error, groupId, onRetry 
             <li>Si el cruce queda igualado, gana quien tiene más puntos en el torneo.</li>
             <li>Tocá un partido del cuadro para ir a Predicciones y cargar tu pronóstico.</li>
           </ul>
-          <FubolsCupBracket rounds={rounds} />
+          <FubolsCupBracket rounds={rounds} demoDuel={data.demoDuel} />
         </>
       )}
     </div>
