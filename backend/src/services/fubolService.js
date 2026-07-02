@@ -3,9 +3,21 @@ import { User } from '../models/User.js';
 import { FubolTransaction } from '../models/FubolTransaction.js';
 import { AppTreasury } from '../models/AppTreasury.js';
 import { EliminationTournament } from '../models/EliminationTournament.js';
+import { FubolsCupTournament } from '../models/FubolsCupTournament.js';
 import { PrizePool } from '../models/PrizePool.js';
 import { UserGroupMembership } from '../models/UserGroupMembership.js';
-import { GROUP_ENTRY_FEE, DEFAULT_PRIZE_SPLITS, WELCOME_BONUS_FUBOLS, AI_PLAY_BONUS_FUBOLS, AI_CONSULTATION_FEE, AI_QUESTIONS_PER_FEE, ELIMINATION_TOURNAMENT_PRIZE_FUBOLS, computeEliminationEntryFee } from '../config/economy.js';
+import {
+  GROUP_ENTRY_FEE,
+  DEFAULT_PRIZE_SPLITS,
+  WELCOME_BONUS_FUBOLS,
+  AI_PLAY_BONUS_FUBOLS,
+  AI_CONSULTATION_FEE,
+  AI_QUESTIONS_PER_FEE,
+  ELIMINATION_TOURNAMENT_PRIZE_FUBOLS,
+  FUBOLS_CUP_CHAMPION_PRIZE,
+  FUBOLS_CUP_ROUND_ADVANCE_PRIZE,
+  computeEliminationEntryFee,
+} from '../config/economy.js';
 
 function economyError(message, status = 400) {
   const error = new Error(message);
@@ -663,5 +675,94 @@ export async function payoutEliminationChampion({ userId, groupId }) {
     });
 
     return { paid: true, ...credit, fromPool, fromHouse };
+  });
+}
+
+async function payoutFromHouse({ userId, groupId, amount, idempotencyKey, metadata, session }) {
+  const existing = await findIdempotentTx(idempotencyKey, session);
+  if (existing) {
+    return { paid: false, duplicate: true, transaction: existing };
+  }
+
+  const treasury = await getTreasury(session);
+  treasury.houseBalanceFubols = Math.max(0, (treasury.houseBalanceFubols || 0) - amount);
+  await treasury.save(session ? { session } : undefined);
+
+  const credit = await creditUser({
+    userId,
+    amount,
+    type: 'prize_payout',
+    groupId,
+    idempotencyKey,
+    metadata,
+    skipTreasuryDeposit: true,
+    session,
+  });
+
+  return { paid: true, ...credit, fromHouse: amount };
+}
+
+export async function payoutFubolsCupAdvance({ userId, groupId, roundKey, duelId }) {
+  const prize = FUBOLS_CUP_ROUND_ADVANCE_PRIZE;
+  const idempotencyKey = `fubols-cup-advance:${groupId}:${roundKey}:${duelId}`;
+
+  return runInTransaction(async (session) => {
+    const tournamentQuery = FubolsCupTournament.findOne({ groupId });
+    if (session) tournamentQuery.session(session);
+    const tournament = await tournamentQuery;
+    if (!tournament) throw economyError('Copa Fubols no encontrada', 404);
+
+    const result = await payoutFromHouse({
+      userId,
+      groupId,
+      amount: prize,
+      idempotencyKey,
+      metadata: {
+        tournamentType: 'fubols_cup',
+        roundKey,
+        duelId,
+        prizeFubols: prize,
+      },
+      session,
+    });
+
+    return result;
+  });
+}
+
+export async function payoutFubolsCupChampion({ userId, groupId }) {
+  const prize = FUBOLS_CUP_CHAMPION_PRIZE;
+  const idempotencyKey = `fubols-cup-champion:${groupId}`;
+
+  return runInTransaction(async (session) => {
+    const existing = await findIdempotentTx(idempotencyKey, session);
+    if (existing) {
+      return { paid: false, duplicate: true, transaction: existing };
+    }
+
+    const tournamentQuery = FubolsCupTournament.findOne({ groupId });
+    if (session) tournamentQuery.session(session);
+    const tournament = await tournamentQuery;
+    if (!tournament) throw economyError('Copa Fubols no encontrada', 404);
+
+    const result = await payoutFromHouse({
+      userId,
+      groupId,
+      amount: prize,
+      idempotencyKey,
+      metadata: {
+        tournamentType: 'fubols_cup',
+        trophy: 'La Copa FUBOLS',
+        prizeFubols: prize,
+      },
+      session,
+    });
+
+    if (result.paid) {
+      tournament.championPrizePaidAt = new Date();
+      await tournament.save(session ? { session } : undefined);
+    }
+
+    return result;
   });
 }

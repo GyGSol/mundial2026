@@ -34,6 +34,7 @@ const TeamsSection = lazy(() =>
   }))
 );
 const FixtureSection = lazy(() => import('@/components/worldcup/FixtureSection.jsx'));
+const FubolsCupSection = lazy(() => import('@/components/worldcup/FubolsCupSection.jsx'));
 const DataCenterSection = lazy(() => import('@/components/worldcup/datacenter/DataCenterSection.jsx'));
 const PlayersSection = lazy(() => import('@/components/worldcup/PlayersSection.jsx'));
 const AiStatsBriefing = lazy(() => import('@/components/worldcup/AiStatsBriefing.jsx'));
@@ -41,6 +42,7 @@ const AiStatsBriefing = lazy(() => import('@/components/worldcup/AiStatsBriefing
 const tabs = [
   { id: 'groups', label: 'Grupos' },
   { id: 'knockout', label: 'Fase final' },
+  { id: 'fubols-cup', label: 'Copa Fubols' },
   { id: 'matches', label: 'Partidos' },
   { id: 'stats', label: 'Estadísticas', ai: true },
   { id: 'teams', label: 'Equipos' },
@@ -141,6 +143,7 @@ export default function WorldCupPage() {
                 />
               )}
               {activeTab === 'knockout' && <KnockoutSection phases={data?.knockout} />}
+              {activeTab === 'fubols-cup' && <FubolsCupSection />}
               {activeTab === 'matches' && <GroupMatchesSection matches={data?.groupMatches} />}
               {activeTab === 'stats' && (
                 <div className="flex flex-col gap-6">

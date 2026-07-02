@@ -6,6 +6,8 @@ import TechnicalDifficulties from '../components/TechnicalDifficulties.jsx';
 import { isSevereError } from '../lib/apiError.js';
 import LeaderboardTable from '../components/LeaderboardTable.jsx';
 import EliminationTournamentPanel from '../components/EliminationTournamentPanel.jsx';
+import FubolsCupPanel from '../components/FubolsCupPanel.jsx';
+import FubolsCupRankingLink from '../components/FubolsCupRankingLink.jsx';
 import TournamentLeaderboardPlaceholder from '../components/TournamentLeaderboardPlaceholder.jsx';
 import { useLiveData } from '../hooks/useLiveData.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -20,6 +22,7 @@ import {
   DEFAULT_TOURNAMENT_TYPE,
   TOURNAMENT_TYPE_COMMON,
   TOURNAMENT_TYPE_ELIMINATION,
+  TOURNAMENT_TYPE_FUBOLS_CUP,
   TOURNAMENT_TYPES,
   isValidTournamentType,
 } from '../lib/tournamentTypes.js';
@@ -141,6 +144,7 @@ export default function LeaderboardPage() {
   const canLoadRanking = Boolean(effectiveGroupId);
   const isCommonTournament = selectedTournamentType === TOURNAMENT_TYPE_COMMON;
   const isEliminationTournament = selectedTournamentType === TOURNAMENT_TYPE_ELIMINATION;
+  const isFubolsCupTournament = selectedTournamentType === TOURNAMENT_TYPE_FUBOLS_CUP;
 
   const fetchEliminationDashboard = useCallback(
     () => competitionGroupsApi.eliminationTournament.get(effectiveGroupId),
@@ -155,6 +159,24 @@ export default function LeaderboardPage() {
   } = useLiveData(fetchEliminationDashboard, [effectiveGroupId, isEliminationTournament], {
     enabled: canLoadRanking && isEliminationTournament && isAuthenticated,
     getPollIntervalMs: () => 15_000,
+    pollWhen: (data) => data?.tournament?.status === 'running',
+    realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
+    realtimeDebounceMs: 500,
+  });
+
+  const fetchFubolsCupDashboard = useCallback(
+    () => competitionGroupsApi.fubolsCup.get(effectiveGroupId),
+    [effectiveGroupId]
+  );
+
+  const {
+    data: fubolsCupData,
+    loading: fubolsCupLoading,
+    error: fubolsCupError,
+    refresh: refreshFubolsCup,
+  } = useLiveData(fetchFubolsCupDashboard, [effectiveGroupId, isFubolsCupTournament], {
+    enabled: canLoadRanking && isFubolsCupTournament && isAuthenticated,
+    getPollIntervalMs: () => 20_000,
     pollWhen: (data) => data?.tournament?.status === 'running',
     realtimeEvents: [REALTIME_EVENTS.MATCHES_UPDATED, REALTIME_EVENTS.LEADERBOARD_UPDATED],
     realtimeDebounceMs: 500,
@@ -540,18 +562,24 @@ export default function LeaderboardPage() {
             <label htmlFor="ranking-tournament-type" className="text-sm font-medium">
               Torneo
             </label>
-            <Select value={selectedTournamentType} onValueChange={handleTournamentTypeChange}>
-              <SelectTrigger id="ranking-tournament-type" className="w-full sm:w-[240px]">
-                <SelectValue placeholder="Elegir torneo" />
-              </SelectTrigger>
-              <SelectContent>
-                {TOURNAMENT_TYPES.map((tournament) => (
-                  <SelectItem key={tournament.id} value={tournament.id}>
-                    {tournament.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={selectedTournamentType} onValueChange={handleTournamentTypeChange}>
+                <SelectTrigger id="ranking-tournament-type" className="w-full sm:w-[240px]">
+                  <SelectValue placeholder="Elegir torneo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TOURNAMENT_TYPES.map((tournament) => (
+                    <SelectItem key={tournament.id} value={tournament.id}>
+                      {tournament.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FubolsCupRankingLink
+                groupId={effectiveGroupId}
+                disabled={fubolsCupData?.tournament?.status === 'cancelled'}
+              />
+            </div>
           </div>
           {hasLiveMatches && isCommonTournament ? (
             <p className="mb-2 text-xs text-muted-foreground">
@@ -576,6 +604,14 @@ export default function LeaderboardPage() {
               error={eliminationError}
               isAuthenticated={isAuthenticated}
               onRetry={refreshElimination}
+            />
+          ) : isFubolsCupTournament ? (
+            <FubolsCupPanel
+              data={fubolsCupData}
+              loading={fubolsCupLoading}
+              error={fubolsCupError}
+              groupId={effectiveGroupId}
+              onRetry={refreshFubolsCup}
             />
           ) : (
             <TournamentLeaderboardPlaceholder

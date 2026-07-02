@@ -111,6 +111,11 @@ export async function recalculateMatchScores(matchId) {
     void enqueueAiLearningForMatch(match._id).catch((err) => {
       console.warn(`AI learning enqueue failed (${match.externalId}):`, err.message);
     });
+    void import('./fubolsCupService.js')
+      .then(({ processFubolsCupAfterMatchFinished }) => processFubolsCupAfterMatchFinished(match))
+      .catch((err) => {
+        console.warn(`Copa Fubols hook failed (${match.externalId}):`, err.message);
+      });
   }
 
   if (result.users > 0 || needsLiveBaseline) {

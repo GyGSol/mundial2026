@@ -2,6 +2,8 @@
 export const FUBOLS_PER_USD = 10;
 export const GROUP_ENTRY_FEE = 100;
 export const ELIMINATION_TOURNAMENT_PRIZE_FUBOLS = 100;
+export const FUBOLS_CUP_CHAMPION_PRIZE = 1000;
+export const FUBOLS_CUP_ROUND_ADVANCE_PRIZE = 100;
 
 export function computeEliminationEntryFee(memberCount) {
   const members = Math.max(1, Math.floor(Number(memberCount) || 0));

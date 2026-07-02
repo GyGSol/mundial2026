@@ -136,6 +136,9 @@ export const competitionGroupsApi = {
         method: 'POST',
       }),
   },
+  fubolsCup: {
+    get: (groupId) => request(`/competition-groups/${groupId}/fubols-cup`),
+  },
 };
 
 export const matchesApi = {
