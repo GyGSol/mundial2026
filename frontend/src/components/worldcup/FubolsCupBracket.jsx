@@ -27,17 +27,15 @@ function PlayerLine({ player, isWinner }) {
         isWinner === false && 'opacity-60'
       )}
     >
+      <span className="min-w-0 flex-1 truncate text-base sm:text-lg">{player.name}</span>
       <LeaderboardUserAvatar
         name={player.name}
         avatarUrl={player.avatarUrl}
         isAiUser={player.isAiUser}
       />
-      <span className="min-w-0 truncate text-base sm:text-lg">
-        {player.seed ? (
-          <span className="mr-1.5 font-bold text-primary">{player.seed}.</span>
-        ) : null}
-        {player.name}
-      </span>
+      {player.seed ? (
+        <span className="shrink-0 text-base font-bold text-primary sm:text-lg">{player.seed}.</span>
+      ) : null}
     </div>
   );
 }
