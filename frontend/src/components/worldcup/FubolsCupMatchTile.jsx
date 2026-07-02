@@ -72,7 +72,7 @@ function buildPredictionSummary(match) {
   return { text: `Tu predicción: ${home}–${away}`, hasPrediction: true };
 }
 
-function buildDuelPointsSummary(duelSlice, playerAName, playerBName) {
+function buildDuelPointsSummary(duelSlice, playerAName, playerBName, duelWinnerId = null) {
   if (!duelSlice || !playerAName || !playerBName) return null;
 
   const { pointsA, pointsB, winnerId } = duelSlice;
@@ -87,7 +87,7 @@ function buildDuelPointsSummary(duelSlice, playerAName, playerBName) {
   const labelB = `${playerBName} ${pointsB} pts`;
   return {
     text: `${labelA} · ${labelB}`,
-    leaderId: winnerId,
+    leaderId: winnerId ?? duelWinnerId,
     pointsA,
     pointsB,
   };
@@ -101,6 +101,7 @@ export default function FubolsCupMatchTile({
   playerBName = null,
   playerAId = null,
   playerBId = null,
+  duelWinnerId = null,
   hideViewerPrediction = false,
 }) {
   if (!match?.id) {
@@ -124,7 +125,12 @@ export default function FubolsCupMatchTile({
   const isLive = match.status === 'live';
   const { homeScore, awayScore } = resolveFieldMatchScores(match);
   const hasScore = homeScore != null && awayScore != null;
-  const duelPoints = buildDuelPointsSummary(duelSlice, playerAName, playerBName);
+  const duelPoints = buildDuelPointsSummary(
+    duelSlice,
+    playerAName,
+    playerBName,
+    duelWinnerId
+  );
 
   const headerParts = [`Partido ${match.externalId ?? externalId}`, phase, dateTime].filter(Boolean);
 

@@ -15,6 +15,7 @@ import {
 } from '../../../shared/fubolsCupBracket.js';
 import {
   buildMatchResultSlice,
+  resolveDisplayDuelWinnerId,
   resolveDuelWinner,
 } from '../../../shared/fubolsCupScoring.js';
 import {
@@ -545,7 +546,35 @@ function enrichDuelsWithWorldCupMatches(duels, matchByExternalId) {
   });
 }
 
-async function enrichDuelsWithLiveSlices(duels) {
+async function buildDuelMatchSlice(rawMatch, playerAId, playerBId) {
+  const predictions = await Prediction.find({
+    userId: { $in: [playerAId, playerBId] },
+    matchId: rawMatch._id,
+  }).lean();
+  const predictionByUserId = Object.fromEntries(
+    predictions.map((row) => [row.userId.toString(), row])
+  );
+
+  const pointsA = pointsForDuelPlayer(predictionByUserId[playerAId], rawMatch);
+  const pointsB = pointsForDuelPlayer(predictionByUserId[playerBId], rawMatch);
+  const duelSlice = buildMatchResultSlice({
+    matchId: rawMatch._id,
+    externalId: rawMatch.externalId,
+    pointsA: pointsA ?? 0,
+    pointsB: pointsB ?? 0,
+    playerAId,
+    playerBId,
+  });
+  duelSlice.pointsA = pointsA;
+  duelSlice.pointsB = pointsB;
+  if (pointsA == null || pointsB == null) {
+    duelSlice.winnerId = null;
+    duelSlice.margin = 0;
+  }
+  return { duelSlice, pointsA, pointsB };
+}
+
+async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
   const enriched = [];
 
   for (const duel of duels) {
@@ -556,12 +585,21 @@ async function enrichDuelsWithLiveSlices(duels) {
       continue;
     }
 
-    let liveSlice = null;
+    if (duel.resolvedAt && duel.winnerId) {
+      enriched.push(duel);
+      continue;
+    }
+
     const worldCupMatches = [];
+    const matchResults = [];
+    let hasLive = false;
+    let allDuelMatchesFinished = true;
+    let primarySlice = null;
 
     for (const wc of duel.worldCupMatches ?? []) {
       const matchPayload = wc.match;
-      if (matchPayload?.status !== 'live') {
+      if (!matchPayload || (matchPayload.status !== 'live' && matchPayload.status !== 'finished')) {
+        if (matchPayload?.status === 'upcoming') allDuelMatchesFinished = false;
         worldCupMatches.push(wc);
         continue;
       }
@@ -569,50 +607,54 @@ async function enrichDuelsWithLiveSlices(duels) {
       const rawMatch = await Match.findOne({ externalId: wc.externalId }).lean();
       if (!rawMatch) {
         worldCupMatches.push(wc);
+        allDuelMatchesFinished = false;
         continue;
       }
 
-      const predictions = await Prediction.find({
-        userId: { $in: [playerAId, playerBId] },
-        matchId: rawMatch._id,
-      }).lean();
-      const predictionByUserId = Object.fromEntries(
-        predictions.map((row) => [row.userId.toString(), row])
-      );
+      if (rawMatch.status === 'live') hasLive = true;
+      if (rawMatch.status !== 'finished') allDuelMatchesFinished = false;
 
-      const pointsA = pointsForDuelPlayer(predictionByUserId[playerAId], rawMatch);
-      const pointsB = pointsForDuelPlayer(predictionByUserId[playerBId], rawMatch);
-      const duelSlice = buildMatchResultSlice({
-        matchId: rawMatch._id,
-        externalId: rawMatch.externalId,
-        pointsA: pointsA ?? 0,
-        pointsB: pointsB ?? 0,
+      const { duelSlice, pointsA, pointsB } = await buildDuelMatchSlice(
+        rawMatch,
         playerAId,
-        playerBId,
-      });
-      duelSlice.pointsA = pointsA;
-      duelSlice.pointsB = pointsB;
-      if (pointsA == null || pointsB == null) {
-        duelSlice.winnerId = null;
-        duelSlice.margin = 0;
+        playerBId
+      );
+      if (pointsA != null && pointsB != null) {
+        matchResults.push({ pointsA, pointsB });
       }
 
-      if (!liveSlice) liveSlice = duelSlice;
+      if (!primarySlice || rawMatch.status === 'live') {
+        primarySlice = duelSlice;
+      }
+
       worldCupMatches.push({ ...wc, match: matchPayload, duelSlice });
     }
 
-    if (!liveSlice) {
+    if (!hasLive && !allDuelMatchesFinished) {
       enriched.push(duel);
       continue;
     }
+
+    if (!primarySlice || !matchResults.length) {
+      enriched.push(duel);
+      continue;
+    }
+
+    const winnerId = resolveDisplayDuelWinnerId({
+      matchResults,
+      playerAId,
+      playerBId,
+      tournamentStatsByUserId,
+      allowTiebreak: allDuelMatchesFinished,
+    });
 
     enriched.push({
       ...duel,
       isLiveDuel: true,
       worldCupMatches,
-      playerA: { ...duel.playerA, matchPoints: liveSlice.pointsA },
-      playerB: { ...duel.playerB, matchPoints: liveSlice.pointsB },
-      winnerId: liveSlice.winnerId ?? duel.winnerId ?? null,
+      playerA: { ...duel.playerA, matchPoints: primarySlice.pointsA },
+      playerB: { ...duel.playerB, matchPoints: primarySlice.pointsB },
+      winnerId: winnerId ?? duel.winnerId ?? null,
     });
   }
 
@@ -868,13 +910,23 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
   const profileA = mergeProfileWithLeaderboardStats(profileMap, tournamentStats, playerAId);
   const profileB = mergeProfileWithLeaderboardStats(profileMap, tournamentStats, playerBId);
 
+  const matchFinished = match.status === 'finished';
+  const winnerId = resolveDisplayDuelWinnerId({
+    matchResults:
+      pointsA != null && pointsB != null ? [{ pointsA, pointsB }] : [],
+    playerAId,
+    playerBId,
+    tournamentStatsByUserId: tournamentStats,
+    allowTiebreak: matchFinished,
+  });
+
   return {
     duelId: DEMO_DUEL_ID,
     duelIndex: 0,
     isDemo: true,
     playerA: serializeDemoPlayer(aiUser, profileA, pointsA),
     playerB: serializeDemoPlayer(humanOpponent, profileB, pointsB),
-    winnerId: duelSlice.winnerId,
+    winnerId,
     matchResults: [duelSlice],
     worldCupExternalIds: [externalId],
     worldCupMatches: [
@@ -884,7 +936,7 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
         duelSlice,
       },
     ],
-    resolvedAt: null,
+    resolvedAt: matchFinished ? new Date().toISOString() : null,
   };
 }
 
@@ -975,12 +1027,13 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
     ...(await loadUserProfileMap(collectBracketPlayerIds(roundsPayload))),
     ...buildProfileMapFromPreview(previewTop8),
   };
+  const tournamentStats = await buildTournamentStatsMap(groupId);
 
   const rounds = [];
   for (const round of roundsPayload) {
     const serializedDuels = (round.duels ?? []).map((duel) => serializeDuel(duel, round, profileMap));
     const duelsWithMatches = enrichDuelsWithWorldCupMatches(serializedDuels, matchByExternalId);
-    const duels = await enrichDuelsWithLiveSlices(duelsWithMatches);
+    const duels = await enrichDuelsWithLiveSlices(duelsWithMatches, tournamentStats);
     rounds.push({
       roundKey: round.roundKey,
       label: round.label,

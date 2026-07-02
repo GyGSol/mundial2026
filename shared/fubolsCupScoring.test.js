@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildMatchResultSlice,
+  resolveDisplayDuelWinnerId,
   resolveDuelWinner,
   scoreMatchDuel,
 } from './fubolsCupScoring.js';
@@ -107,5 +108,36 @@ describe('fubolsCupScoring', () => {
     });
     expect(row.winnerId).toBe('a');
     expect(row.margin).toBe(1);
+  });
+
+  it('resolveDisplayDuelWinnerId en vivo con empate no define ganador', () => {
+    expect(
+      resolveDisplayDuelWinnerId({
+        matchResults: [{ pointsA: 4, pointsB: 4 }],
+        playerAId: 'a',
+        playerBId: 'b',
+        tournamentStatsByUserId: new Map([
+          ['a', { totalPoints: 10 }],
+          ['b', { totalPoints: 25 }],
+        ]),
+        allowTiebreak: false,
+      })
+    ).toBeNull();
+  });
+
+  it('resolveDisplayDuelWinnerId con partido terminado aplica desempate del torneo', () => {
+    const stats = new Map([
+      ['a', { totalPoints: 10 }],
+      ['b', { totalPoints: 25 }],
+    ]);
+    expect(
+      resolveDisplayDuelWinnerId({
+        matchResults: [{ pointsA: 4, pointsB: 4 }],
+        playerAId: 'a',
+        playerBId: 'b',
+        tournamentStatsByUserId: stats,
+        allowTiebreak: true,
+      })
+    ).toBe('b');
   });
 });

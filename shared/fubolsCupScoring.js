@@ -51,6 +51,52 @@ export function resolveDuelWinner({
   return pickByTournamentTiebreak(playerAId, playerBId, tournamentStatsByUserId);
 }
 
+/**
+ * Ganador para mostrar en cruces en vivo / demo.
+ * Con allowTiebreak=false (partido aún en juego): solo gana quien va arriba en puntos del partido.
+ * Con allowTiebreak=true (partido(s) terminado(s)): misma lógica que resolveDuelWinner (incl. torneo).
+ */
+export function resolveDisplayDuelWinnerId({
+  matchResults,
+  playerAId,
+  playerBId,
+  tournamentStatsByUserId,
+  allowTiebreak = false,
+}) {
+  const results = (matchResults ?? []).filter(
+    (row) => row.pointsA != null && row.pointsB != null
+  );
+  if (!results.length) return null;
+
+  if (allowTiebreak) {
+    return resolveDuelWinner({
+      matchResults: results.map((row) => ({
+        pointsA: row.pointsA,
+        pointsB: row.pointsB,
+      })),
+      playerAId,
+      playerBId,
+      tournamentStatsByUserId,
+    });
+  }
+
+  if (results.length === 1) {
+    const slice = scoreMatchDuel(results[0].pointsA, results[0].pointsB);
+    if (slice.winner === 'A') return String(playerAId);
+    if (slice.winner === 'B') return String(playerBId);
+    return null;
+  }
+
+  const wins = { A: 0, B: 0 };
+  for (const row of results) {
+    const slice = scoreMatchDuel(row.pointsA, row.pointsB);
+    if (slice.winner) wins[slice.winner] += 1;
+  }
+  if (wins.A > wins.B) return String(playerAId);
+  if (wins.B > wins.A) return String(playerBId);
+  return null;
+}
+
 export function buildMatchResultSlice({ matchId, externalId, pointsA, pointsB, playerAId, playerBId }) {
   const slice = scoreMatchDuel(pointsA, pointsB);
   let winnerId = null;

@@ -29,6 +29,7 @@ function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
       playerBName={duel.playerB?.name}
       playerAId={duel.playerA?.id}
       playerBId={duel.playerB?.id}
+      duelWinnerId={duel.winnerId}
       hideViewerPrediction={hideViewerPrediction}
     />
   );
@@ -241,6 +242,15 @@ function DuelCard({ duel, className }) {
           </>
         )}
       </div>
+      {isLiveLayout &&
+      duel.winnerId &&
+      duel.playerA?.matchPoints != null &&
+      duel.playerB?.matchPoints != null &&
+      duel.playerA.matchPoints === duel.playerB.matchPoints ? (
+        <p className="text-center text-xs text-muted-foreground">
+          Empate en puntos del partido — pasa quien sumó más en el torneo.
+        </p>
+      ) : null}
 
       {worldCupMatches.length ? (
         <div className="flex flex-col gap-3 border-t border-border/60 pt-3">
