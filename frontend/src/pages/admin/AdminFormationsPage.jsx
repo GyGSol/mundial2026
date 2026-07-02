@@ -6,6 +6,8 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader.jsx';
 import MatchLineupSection, { shouldShowMatchLineup } from '@/components/lineup/MatchLineupSection.jsx';
 import { adminInput, adminMuted, adminPage } from '@/components/admin/adminTheme.js';
 import { logFormationPlayerMove, formationOverrideKey } from '@/lib/adminFormationDebug.js';
+import { ARGENTINA_TIMEZONE, formatMatchDate } from '@/lib/dateFormat.js';
+import { findNextUpcomingMatches } from '@/lib/nextLockedMatch.js';
 import { useLiveData } from '@/hooks/useLiveData.js';
 import { REALTIME_EVENTS } from '@/lib/realtimeSectors.js';
 import { Button } from '@/components/ui/button.jsx';
@@ -31,15 +33,22 @@ function matchLabel(match) {
     const awayScore = match.awayScore ?? '–';
     return `${home} vs ${away} · Final ${homeScore}–${awayScore}`;
   }
+  if (match?.status === 'upcoming') {
+    const when = match.kickoffAt
+      ? formatMatchDate(match, { showTimezone: false, timeZone: ARGENTINA_TIMEZONE })
+      : '';
+    return `${home} vs ${away}${when ? ` · ${when}` : ''} · Próximo`;
+  }
   const minute = match?.timeElapsed ?? match?.minute;
   const clock = minute ? ` · ${minute}'` : '';
   return `${home} vs ${away}${clock} · En vivo`;
 }
 
 async function fetchFormationMatchList() {
-  const [snapshot, archive] = await Promise.all([
+  const [snapshot, archive, upcomingRes] = await Promise.all([
     matchesApi.liveSnapshot(),
     leaderboardApi.finishedArchive(),
+    matchesApi.list({ status: 'upcoming' }),
   ]);
   const liveMatches = snapshot?.liveMatches ?? [];
   const liveIds = new Set(liveMatches.map(matchId));
@@ -51,9 +60,12 @@ async function fetchFormationMatchList() {
     const id = matchId(item);
     if (!liveIds.has(id)) finishedById.set(id, item);
   }
+  const nextUpcomingMatches = findNextUpcomingMatches(upcomingRes?.matches ?? []);
+  const nextIds = new Set(nextUpcomingMatches.map(matchId));
   return {
     liveMatches,
-    finishedMatches: [...finishedById.values()],
+    nextUpcomingMatches,
+    finishedMatches: [...finishedById.values()].filter((item) => !nextIds.has(matchId(item))),
   };
 }
 
@@ -71,6 +83,18 @@ async function fetchFormationMatchDetail(selectedMatchId) {
   }
   const archive = await leaderboardApi.finishedArchive();
   const fromArchive = (archive?.finishedMatches ?? []).find((item) => matchId(item) === id);
+  if (
+    fromArchive?.lineup?.home?.players?.length ||
+    fromArchive?.lineup?.away?.players?.length
+  ) {
+    return { match: fromArchive };
+  }
+  try {
+    const detail = await matchesApi.getById(selectedMatchId);
+    if (detail?.match) return { match: detail.match };
+  } catch {
+    // upcoming sin detalle o partido inexistente
+  }
   return { match: fromArchive ?? fromSnapshot ?? null };
 }
 
@@ -101,8 +125,10 @@ export default function AdminFormationsPage() {
   });
 
   const liveMatches = matchListData?.liveMatches ?? [];
+  const nextUpcomingMatches = matchListData?.nextUpcomingMatches ?? [];
   const finishedMatches = matchListData?.finishedMatches ?? [];
-  const hasSelectableMatches = liveMatches.length > 0 || finishedMatches.length > 0;
+  const hasSelectableMatches =
+    liveMatches.length > 0 || nextUpcomingMatches.length > 0 || finishedMatches.length > 0;
 
   const fetchMatchDetail = useCallback(async () => {
     if (!selectedMatchId) return { match: null };
@@ -299,6 +325,15 @@ export default function AdminFormationsPage() {
                 <SelectValue placeholder={matchListLoading ? 'Cargando…' : 'Elegí un partido'} />
               </SelectTrigger>
               <SelectContent>
+                {nextUpcomingMatches.length > 0 ? (
+                  <SelectGroup>
+                    {nextUpcomingMatches.map((item) => (
+                      <SelectItem key={matchId(item)} value={matchId(item)}>
+                        {matchLabel(item)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ) : null}
                 {liveMatches.length > 0 ? (
                   <SelectGroup>
                     {liveMatches.map((item) => (
@@ -332,11 +367,19 @@ export default function AdminFormationsPage() {
 
         {matchListError ? <p className="text-sm text-red-400">{matchListError.message}</p> : null}
         {!matchListLoading && !hasSelectableMatches ? (
-          <p className={adminMuted}>No hay partidos en vivo ni finalizados disponibles.</p>
+          <p className={adminMuted}>No hay partidos próximos, en vivo ni finalizados disponibles.</p>
         ) : null}
-        {!matchListLoading && liveMatches.length === 0 && finishedMatches.length > 0 ? (
+        {!matchListLoading && nextUpcomingMatches.length > 0 ? (
           <p className={cn(adminMuted, 'text-xs')}>
-            No hay partidos en vivo; podés elegir uno finalizado del listado.
+            El próximo partido aparece arriba del listado para ajustar posiciones antes del kickoff.
+          </p>
+        ) : null}
+        {!matchListLoading &&
+        liveMatches.length === 0 &&
+        nextUpcomingMatches.length === 0 &&
+        finishedMatches.length > 0 ? (
+          <p className={cn(adminMuted, 'text-xs')}>
+            No hay partidos en vivo ni próximos; podés elegir uno finalizado del listado.
           </p>
         ) : null}
       </AdminCard>
