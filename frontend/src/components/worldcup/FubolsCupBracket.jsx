@@ -10,13 +10,16 @@ const CUARTOS_RIGHT_DUEL_INDEXES = [0, 3];
 const playerRowGridClass =
   'grid grid-cols-[1.75rem_minmax(0,1fr)_2.5rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-2';
 
-const demoPlayerRowGridClass =
+const liveDuelPlayerRowGridClass =
   'grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-x-2 sm:grid-cols-[minmax(0,1fr)_3.5rem] sm:gap-x-3';
 
 const playerRowPaddingClass = 'px-2.5 sm:px-3';
 
 function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
   const duelSlice = wc.duelSlice ?? sliceByExternalId?.[wc.externalId] ?? null;
+  const hideViewerPrediction = Boolean(
+    duel.isDemo || duel.isLiveDuel || wc.match?.status === 'live'
+  );
   return (
     <FubolsCupMatchTile
       match={wc.match}
@@ -26,7 +29,7 @@ function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
       playerBName={duel.playerB?.name}
       playerAId={duel.playerA?.id}
       playerBId={duel.playerB?.id}
-      hideViewerPrediction={Boolean(duel.isDemo)}
+      hideViewerPrediction={hideViewerPrediction}
     />
   );
 }
@@ -48,11 +51,11 @@ function PlayerLineHeader() {
   );
 }
 
-function DemoPlayerLineHeader() {
+function LiveDuelPlayerLineHeader() {
   return (
     <div
       className={cn(
-        demoPlayerRowGridClass,
+        liveDuelPlayerRowGridClass,
         playerRowPaddingClass,
         'text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]'
       )}
@@ -63,7 +66,7 @@ function DemoPlayerLineHeader() {
   );
 }
 
-function formatDemoMatchPoints(points) {
+function formatLiveMatchPoints(points) {
   return points == null ? '—' : String(points);
 }
 
@@ -112,7 +115,7 @@ function PlayerLine({ player, isWinner }) {
   );
 }
 
-function DemoPlayerLine({ player, isWinner }) {
+function LiveDuelPlayerLine({ player, isWinner }) {
   if (!player?.name) {
     return (
       <div className="rounded-lg border border-dashed px-4 py-3 text-sm text-muted-foreground">
@@ -124,7 +127,7 @@ function DemoPlayerLine({ player, isWinner }) {
   return (
     <div
       className={cn(
-        demoPlayerRowGridClass,
+        liveDuelPlayerRowGridClass,
         playerRowPaddingClass,
         'rounded-lg border py-2 sm:py-2.5',
         isWinner === true && 'border-primary bg-primary/10 font-semibold',
@@ -145,10 +148,14 @@ function DemoPlayerLine({ player, isWinner }) {
           isWinner === true && 'text-primary'
         )}
       >
-        {formatDemoMatchPoints(player.matchPoints)}
+        {formatLiveMatchPoints(player.matchPoints)}
       </span>
     </div>
   );
+}
+
+function usesLiveDuelLayout(duel) {
+  return Boolean(duel?.isDemo || duel?.isLiveDuel);
 }
 
 function DuelCard({ duel, className }) {
@@ -158,22 +165,23 @@ function DuelCard({ duel, className }) {
       .filter((row) => row.externalId)
       .map((row) => [String(row.externalId), row])
   );
-  const isDemo = Boolean(duel.isDemo);
+  const isLiveLayout = usesLiveDuelLayout(duel);
 
   return (
     <article
       className={cn(
         'flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-3 shadow-sm sm:gap-3 sm:p-5',
+        isLiveLayout && 'border-emerald-500/30',
         className
       )}
     >
       <div className="min-w-0">
-        {isDemo ? <DemoPlayerLineHeader /> : <PlayerLineHeader />}
+        {isLiveLayout ? <LiveDuelPlayerLineHeader /> : <PlayerLineHeader />}
       </div>
       <div className="flex flex-col gap-2">
-        {isDemo ? (
+        {isLiveLayout ? (
           <>
-            <DemoPlayerLine
+            <LiveDuelPlayerLine
               player={duel.playerA}
               isWinner={
                 duel.winnerId && duel.playerA?.id
@@ -188,7 +196,7 @@ function DuelCard({ duel, className }) {
             <p className="text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
               vs
             </p>
-            <DemoPlayerLine
+            <LiveDuelPlayerLine
               player={duel.playerB}
               isWinner={
                 duel.winnerId && duel.playerB?.id

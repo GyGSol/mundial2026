@@ -523,17 +523,100 @@ function compareWorldCupMatchChronology(a, b) {
 
 function enrichDuelsWithWorldCupMatches(duels, matchByExternalId) {
   return duels.map((duel) => {
+    const sliceByExternalId = Object.fromEntries(
+      (duel.matchResults ?? [])
+        .filter((row) => row.externalId)
+        .map((row) => [String(row.externalId), row])
+    );
     const worldCupMatches = (duel.worldCupExternalIds ?? [])
-      .map((externalId) => ({
-        externalId: String(externalId),
-        match: matchByExternalId[String(externalId)] ?? null,
-      }))
+      .map((externalId) => {
+        const id = String(externalId);
+        return {
+          externalId: id,
+          match: matchByExternalId[id] ?? null,
+          duelSlice: sliceByExternalId[id] ?? null,
+        };
+      })
       .sort(compareWorldCupMatchChronology);
     return {
       ...duel,
       worldCupMatches,
     };
   });
+}
+
+async function enrichDuelsWithLiveSlices(duels) {
+  const enriched = [];
+
+  for (const duel of duels) {
+    const playerAId = duel.playerA?.id;
+    const playerBId = duel.playerB?.id;
+    if (!playerAId || !playerBId) {
+      enriched.push(duel);
+      continue;
+    }
+
+    let liveSlice = null;
+    const worldCupMatches = [];
+
+    for (const wc of duel.worldCupMatches ?? []) {
+      const matchPayload = wc.match;
+      if (matchPayload?.status !== 'live') {
+        worldCupMatches.push(wc);
+        continue;
+      }
+
+      const rawMatch = await Match.findOne({ externalId: wc.externalId }).lean();
+      if (!rawMatch) {
+        worldCupMatches.push(wc);
+        continue;
+      }
+
+      const predictions = await Prediction.find({
+        userId: { $in: [playerAId, playerBId] },
+        matchId: rawMatch._id,
+      }).lean();
+      const predictionByUserId = Object.fromEntries(
+        predictions.map((row) => [row.userId.toString(), row])
+      );
+
+      const pointsA = pointsForDuelPlayer(predictionByUserId[playerAId], rawMatch);
+      const pointsB = pointsForDuelPlayer(predictionByUserId[playerBId], rawMatch);
+      const duelSlice = buildMatchResultSlice({
+        matchId: rawMatch._id,
+        externalId: rawMatch.externalId,
+        pointsA: pointsA ?? 0,
+        pointsB: pointsB ?? 0,
+        playerAId,
+        playerBId,
+      });
+      duelSlice.pointsA = pointsA;
+      duelSlice.pointsB = pointsB;
+      if (pointsA == null || pointsB == null) {
+        duelSlice.winnerId = null;
+        duelSlice.margin = 0;
+      }
+
+      if (!liveSlice) liveSlice = duelSlice;
+      worldCupMatches.push({ ...wc, match: matchPayload, duelSlice });
+    }
+
+    if (!liveSlice) {
+      enriched.push(duel);
+      continue;
+    }
+
+    enriched.push({
+      ...duel,
+      isLiveDuel: true,
+      worldCupMatches,
+      playerA: { ...duel.playerA, matchPoints: liveSlice.pointsA },
+      playerB: { ...duel.playerB, matchPoints: liveSlice.pointsB },
+      winnerId: liveSlice.winnerId ?? duel.winnerId ?? null,
+    });
+  }
+
+  return enriched;
 }
 
 function applyOfficialKnockoutDisplay(enriched, official) {
@@ -884,22 +967,26 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
   const allExternalIds = [
     ...new Set(roundsPayload.flatMap((round) => round.worldCupExternalIds ?? [])),
   ];
-  const matchByExternalId = await loadEnrichedMatchesByExternalId(allExternalIds, viewerUserId);
+  const matchByExternalId = await loadEnrichedMatchesByExternalId(allExternalIds, viewerUserId, {
+    includeLiveFields: true,
+  });
 
   const profileMap = {
     ...(await loadUserProfileMap(collectBracketPlayerIds(roundsPayload))),
     ...buildProfileMapFromPreview(previewTop8),
   };
 
-  const rounds = roundsPayload.map((round) => {
+  const rounds = [];
+  for (const round of roundsPayload) {
     const serializedDuels = (round.duels ?? []).map((duel) => serializeDuel(duel, round, profileMap));
-    const duels = enrichDuelsWithWorldCupMatches(serializedDuels, matchByExternalId);
-    return {
+    const duelsWithMatches = enrichDuelsWithWorldCupMatches(serializedDuels, matchByExternalId);
+    const duels = await enrichDuelsWithLiveSlices(duelsWithMatches);
+    rounds.push({
       roundKey: round.roundKey,
       label: round.label,
       duels,
-    };
-  });
+    });
+  }
 
   const demoDuel = await buildLiveDemoDuel(groupId, viewerUserId);
 

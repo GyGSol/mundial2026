@@ -520,6 +520,64 @@ describe('fubolsCupService', () => {
     expect(demoDuel?.playerA.name).toBe('Futbot');
   });
 
+  it('cruce en vivo expone isLiveDuel con puntos del partido en dashboard', async () => {
+    await finishRoundOf32();
+    const { groupId, admin } = await setupGroupWithHumans(8);
+    await trySeedFubolsCup(groupId);
+
+    const tournament = await FubolsCupTournament.findOne({ groupId }).lean();
+    const duel = tournament.rounds[0].duels[0];
+    const playerAId = duel.playerAId;
+    const playerBId = duel.playerBId;
+    const externalId = duel.worldCupExternalIds[0];
+
+    const liveMatch = await Match.findOneAndUpdate(
+      { externalId },
+      {
+        externalId,
+        homeTeamId: 'ARG',
+        awayTeamId: 'BRA',
+        status: 'live',
+        homeScore: 1,
+        awayScore: 0,
+        type: 'round_of_16',
+        liveScoringInitialized: true,
+      },
+      { upsert: true, new: true }
+    );
+    cleanup.matchIds.push(liveMatch._id);
+
+    for (const [userId, pointsEarned, homeGoals, awayGoals] of [
+      [playerAId, 4, 2, 1],
+      [playerBId, 2, 1, 0],
+    ]) {
+      await Prediction.findOneAndUpdate(
+        { userId, matchId: liveMatch._id },
+        {
+          userId,
+          matchId: liveMatch._id,
+          homeGoals,
+          awayGoals,
+          pointsEarned,
+          pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+        },
+        { upsert: true }
+      );
+    }
+
+    const dashboard = await getFubolsCupDashboard(groupId, admin._id);
+    const qfRound = dashboard.rounds.find((round) => round.roundKey === 'quarter_final');
+    const liveDuel = qfRound.duels.find((row) => row.duelId === duel.duelId);
+
+    expect(liveDuel.isLiveDuel).toBe(true);
+    expect(liveDuel.playerA.matchPoints).toBe(4);
+    expect(liveDuel.playerB.matchPoints).toBe(2);
+    const liveTile = liveDuel.worldCupMatches.find((wc) => wc.externalId === String(externalId));
+    expect(liveTile?.match?.status).toBe('live');
+    expect(liveTile?.duelSlice?.pointsA).toBe(4);
+    expect(liveTile?.duelSlice?.pointsB).toBe(2);
+  });
+
   it('demoDuel es null sin partido España–Austria', async () => {
     await User.deleteMany({ isAiUser: true });
     const { groupId, admin } = await setupGroupWithHumans(8);
