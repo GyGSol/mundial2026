@@ -8,7 +8,9 @@ const CUARTOS_LEFT_DUEL_INDEXES = [1, 2];
 const CUARTOS_RIGHT_DUEL_INDEXES = [0, 3];
 
 const playerRowGridClass =
-  'grid grid-cols-[2rem_minmax(0,1fr)_3rem_3rem] items-center gap-2 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem]';
+  'grid grid-cols-[1.75rem_minmax(0,1fr)_2.5rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-2';
+
+const playerRowPaddingClass = 'px-2.5 sm:px-3';
 
 function WorldCupMatchBlock({ wc }) {
   return <FubolsCupMatchTile match={wc.match} externalId={wc.externalId} />;
@@ -19,11 +21,12 @@ function PlayerLineHeader() {
     <div
       className={cn(
         playerRowGridClass,
-        'px-3 text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:px-4'
+        playerRowPaddingClass,
+        'text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]'
       )}
     >
       <span>#</span>
-      <span>Jugador</span>
+      <span className="min-w-0">Jugador</span>
       <span className="text-center">Gdif</span>
       <span className="text-right">Pts</span>
     </div>
@@ -43,26 +46,27 @@ function PlayerLine({ player, isWinner }) {
     <div
       className={cn(
         playerRowGridClass,
-        'rounded-lg border px-3 py-2.5 sm:px-4 sm:py-3',
+        playerRowPaddingClass,
+        'rounded-lg border py-2 sm:py-2.5',
         isWinner === true && 'border-primary bg-primary/10 font-semibold',
         isWinner === false && 'opacity-60'
       )}
     >
       <span
         className={cn(
-          'text-base font-bold tabular-nums leading-none sm:text-lg',
+          'text-sm font-bold tabular-nums leading-none sm:text-lg',
           isWinner === true ? 'text-primary' : 'text-muted-foreground'
         )}
       >
         {player.seed ?? '—'}
       </span>
-      <span className="flex min-w-0 items-center gap-1.5">
+      <span className="flex min-w-0 items-center gap-1 sm:gap-1.5">
         <LeaderboardUserAvatar
           name={player.name}
           avatarUrl={player.avatarUrl}
           isAiUser={player.isAiUser}
         />
-        <span className="truncate text-base sm:text-lg">{player.name}</span>
+        <span className="truncate text-sm font-medium sm:text-base">{player.name}</span>
       </span>
       <span className="text-center tabular-nums text-[11px] text-muted-foreground sm:text-xs">
         {formatGoalDiffScore(player.difGl, player.difGv, player.pj)}
@@ -80,11 +84,13 @@ function DuelCard({ duel, className }) {
   return (
     <article
       className={cn(
-        'flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-sm sm:gap-3 sm:p-5',
+        'flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-3 shadow-sm sm:gap-3 sm:p-5',
         className
       )}
     >
-      <PlayerLineHeader />
+      <div className="min-w-0">
+        <PlayerLineHeader />
+      </div>
       <div className="flex flex-col gap-2">
         <PlayerLine
           player={duel.playerA}
@@ -179,7 +185,7 @@ export default function FubolsCupBracket({ rounds = [] }) {
   const final = roundByKey.final;
 
   return (
-    <div className="flex flex-col gap-8 rounded-lg border bg-card/40 p-4 sm:p-6">
+    <div className="flex flex-col gap-8 rounded-lg border bg-card/40 p-3 sm:p-6">
       {cuartos ? <CuartosSplitBracket round={cuartos} /> : null}
 
       {semis ? <RoundSection round={semis} gridClassName="md:grid-cols-2" /> : null}

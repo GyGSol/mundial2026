@@ -9,7 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const prominentButtonClass =
-  'inline-flex h-auto items-center border-amber-400/80 bg-gradient-to-r from-amber-600/30 via-amber-500/25 to-yellow-600/30 px-4 py-3 text-amber-50 shadow-[0_0_28px_rgba(245,158,11,0.35)] hover:border-amber-300 hover:from-amber-500/40 hover:to-amber-600/40 hover:shadow-[0_0_36px_rgba(245,158,11,0.45)]';
+  'inline-flex h-auto w-full items-center justify-start border-amber-400/80 bg-gradient-to-r from-amber-600/30 via-amber-500/25 to-yellow-600/30 px-4 py-3 text-amber-50 shadow-[0_0_28px_rgba(245,158,11,0.35)] hover:border-amber-300 hover:from-amber-500/40 hover:to-amber-600/40 hover:shadow-[0_0_36px_rgba(245,158,11,0.45)] sm:w-auto';
 
 function CupButtonContent({ prominent }) {
   if (!prominent) {

@@ -545,7 +545,7 @@ export default function LeaderboardPage() {
               </ul>
             )}
             {selectedGroupId && selectedGroupId !== '__nogroup' ? (
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
+              <div className="mt-4 flex flex-col gap-3">
                 <Button asChild variant="outline" className="w-full sm:w-auto">
                   <Link to={`/graficos?grupo=${encodeURIComponent(selectedGroupId)}`}>
                     <LineChart className="mr-2 size-4" aria-hidden />
@@ -556,7 +556,7 @@ export default function LeaderboardPage() {
                   groupId={effectiveGroupId}
                   disabled={fubolsCupData?.tournament?.status === 'cancelled'}
                   prominent
-                  className="w-full sm:min-w-[16rem] sm:flex-1"
+                  className="w-full sm:max-w-md"
                 />
               </div>
             ) : null}
