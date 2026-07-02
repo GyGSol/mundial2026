@@ -169,6 +169,10 @@ function buildProfileMapFromPreview(previewTop8 = []) {
         name: row.name,
         isAiUser: Boolean(row.isAiUser),
         avatarUrl: row.avatarUrl ?? null,
+        totalPoints: row.totalPoints ?? 0,
+        pj: row.pj ?? 0,
+        difGl: row.difGl ?? 0,
+        difGv: row.difGv ?? 0,
       },
     ])
   );
@@ -623,6 +627,10 @@ function serializeDuel(duel, round, profileMap = {}) {
           seed: duel.seedA,
           avatarUrl: profileA?.avatarUrl ?? null,
           isAiUser: profileA?.isAiUser ?? false,
+          totalPoints: profileA?.totalPoints ?? 0,
+          pj: profileA?.pj ?? 0,
+          difGl: profileA?.difGl ?? 0,
+          difGv: profileA?.difGv ?? 0,
         }
       : null,
     playerB: duel.playerBId
@@ -632,6 +640,10 @@ function serializeDuel(duel, round, profileMap = {}) {
           seed: duel.seedB,
           avatarUrl: profileB?.avatarUrl ?? null,
           isAiUser: profileB?.isAiUser ?? false,
+          totalPoints: profileB?.totalPoints ?? 0,
+          pj: profileB?.pj ?? 0,
+          difGl: profileB?.difGl ?? 0,
+          difGv: profileB?.difGv ?? 0,
         }
       : null,
     winnerId: duel.winnerId ? String(duel.winnerId) : null,
@@ -683,8 +695,8 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
   const matchByExternalId = await loadEnrichedMatchesByExternalId(allExternalIds, viewerUserId);
 
   const profileMap = {
-    ...buildProfileMapFromPreview(previewTop8),
     ...(await loadUserProfileMap(collectBracketPlayerIds(roundsPayload))),
+    ...buildProfileMapFromPreview(previewTop8),
   };
 
   const rounds = roundsPayload.map((round) => {
