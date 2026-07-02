@@ -11,7 +11,7 @@ const playerRowGridClass =
   'grid grid-cols-[1.75rem_minmax(0,1fr)_2.5rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-2';
 
 const demoPlayerRowGridClass =
-  'grid grid-cols-[minmax(0,1fr)_3.5rem_3rem] items-center gap-x-2 sm:grid-cols-[minmax(0,1fr)_4rem_3.5rem] sm:gap-x-3';
+  'grid grid-cols-[minmax(0,1fr)_3rem] items-center gap-x-2 sm:grid-cols-[minmax(0,1fr)_3.5rem] sm:gap-x-3';
 
 const playerRowPaddingClass = 'px-2.5 sm:px-3';
 
@@ -58,17 +58,9 @@ function DemoPlayerLineHeader() {
       )}
     >
       <span className="min-w-0">Jugador</span>
-      <span className="text-center">Pred.</span>
       <span className="text-right">Pts</span>
     </div>
   );
-}
-
-function formatDemoPrediction(prediction) {
-  if (!prediction || prediction.homeGoals == null || prediction.awayGoals == null) {
-    return 'Sin pred.';
-  }
-  return `${prediction.homeGoals}–${prediction.awayGoals}`;
 }
 
 function formatDemoMatchPoints(points) {
@@ -146,9 +138,6 @@ function DemoPlayerLine({ player, isWinner }) {
           isAiUser={player.isAiUser}
         />
         <span className="truncate text-sm font-medium sm:text-base">{player.name}</span>
-      </span>
-      <span className="text-center text-xs tabular-nums text-muted-foreground sm:text-sm">
-        {formatDemoPrediction(player.prediction)}
       </span>
       <span
         className={cn(
@@ -338,8 +327,7 @@ export default function FubolsCupBracket({ rounds = [], demoDuel = null }) {
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Puntos del cruce según las predicciones de Futbot y vos en España–Austria (se actualizan
-            con el marcador en vivo).
+            Puntos del cruce según el marcador en vivo de España–Austria (sin mostrar pronósticos).
           </p>
           <DuelCard duel={demoDuel} />
         </section>

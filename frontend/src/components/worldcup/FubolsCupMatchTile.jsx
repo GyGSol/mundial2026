@@ -80,7 +80,7 @@ function buildDuelPointsSummary(duelSlice, playerAName, playerBName) {
     return { text: 'Puntos pendientes', leaderId: null };
   }
   if (pointsA == null || pointsB == null) {
-    return { text: 'Sin predicción de uno de los duelistas', leaderId: null };
+    return { text: 'Puntos pendientes', leaderId: null };
   }
 
   const labelA = `${playerAName} ${pointsA} pts`;
