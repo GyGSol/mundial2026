@@ -1,4 +1,8 @@
 import { getEffectiveMatchPlayState, resolvePausedDisplayClock } from './matchPlayState.js';
+import {
+  estimateLiveClockFromKickoff,
+  kickoffClockShouldOverride,
+} from '../../../shared/liveMatchKickoffClock.js';
 
 /** @param {Record<string, unknown> | string | null | undefined} rawOrElapsed */
 export function formatTimeElapsed(rawOrElapsed) {
@@ -208,7 +212,7 @@ export function resolveLiveMatchDisplayClock(match, timeline = match?.matchTimel
   }
 
   const raw = match?.raw ?? {};
-  return (
+  const best =
     pickLiveDisplayClock(
       match?.timeElapsed,
       match?.minute,
@@ -217,8 +221,16 @@ export function resolveLiveMatchDisplayClock(match, timeline = match?.matchTimel
       latestClockFromTimeline(timeline),
       latestMinuteFromScorerLists(match?.homeScorers, match?.awayScorers),
       formatFifaLiveMatchTime(raw?.fifaLiveState)
-    ) ?? resolveLiveTimeElapsed(raw, timeline)
-  );
+    ) ?? resolveLiveTimeElapsed(raw, timeline);
+
+  if (match?.status === 'live' && playState.phase === 'in_play' && match?.kickoffAt) {
+    const kickoffClock = estimateLiveClockFromKickoff(match.kickoffAt);
+    if (kickoffClockShouldOverride(best, kickoffClock)) {
+      return pickLiveDisplayClock(best, kickoffClock) ?? kickoffClock;
+    }
+  }
+
+  return best;
 }
 
 export function goalCountsFromTimeline(timeline = []) {

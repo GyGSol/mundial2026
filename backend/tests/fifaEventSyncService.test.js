@@ -23,6 +23,7 @@ describe('fifaEventSyncService live refresh', () => {
       status: 'live',
       raw: {
         fifaEvents: { syncedAt: '2026-06-20T20:30:00.000Z' },
+        fifaLiveState: { syncedAt: '2026-06-20T20:30:05.000Z', matchTime: "12'" },
       },
     };
     expect(isLiveFifaEventsStale(match, LIVE_FIFA_EVENTS_MAX_AGE_MS, now)).toBe(false);
@@ -35,5 +36,32 @@ describe('fifaEventSyncService live refresh', () => {
       },
     };
     expect(readFifaEventsSyncedAtMs(match)).toBe(Date.parse('2026-06-20T20:00:00.000Z'));
+  });
+
+  it('sin cronología usa antigüedad de fifaLiveState.syncedAt', () => {
+    const now = Date.parse('2026-06-20T20:30:00.000Z');
+    const match = {
+      status: 'live',
+      raw: {
+        fifaMeta: { syncedAt: '2026-06-20T20:00:00.000Z' },
+        fifaLiveState: { syncedAt: '2026-06-20T20:29:00.000Z', matchTime: "0'" },
+      },
+    };
+    expect(isLiveFifaEventsStale(match, LIVE_FIFA_EVENTS_MAX_AGE_MS, now)).toBe(true);
+  });
+
+  it('con cronología ignora fifaLiveState y usa fifaEvents.syncedAt', () => {
+    const now = Date.parse('2026-06-20T20:30:10.000Z');
+    const match = {
+      status: 'live',
+      raw: {
+        fifaEvents: {
+          syncedAt: '2026-06-20T20:30:00.000Z',
+          timeline: [{ minute: 10 }],
+        },
+        fifaLiveState: { syncedAt: '2026-06-20T20:00:00.000Z' },
+      },
+    };
+    expect(isLiveFifaEventsStale(match, LIVE_FIFA_EVENTS_MAX_AGE_MS, now)).toBe(false);
   });
 });

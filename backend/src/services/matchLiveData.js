@@ -24,6 +24,10 @@ import {
   resolvePenaltyShootoutForMatch,
 } from './penaltyShootoutService.js';
 import { resolveFieldMatchScores } from '../../../shared/matchDisplayScore.js';
+import {
+  estimateLiveClockFromKickoff,
+  kickoffClockShouldOverride,
+} from '../../../shared/liveMatchKickoffClock.js';
 
 /** Máximo goles plausibles en un partido (incluye prórroga). */
 export const MAX_PLAUSIBLE_MATCH_GOALS = 15;
@@ -631,7 +635,17 @@ export function resolveLiveMatchDisplayClock(match, timeline = [], raw = {}) {
   );
   const fromFifaLive = formatFifaLiveMatchTime(effectiveRaw.fifaLiveState);
 
-  return pickMaxClockLabel(fromResolved, fromScorers, fromFifaLive) ?? fromResolved;
+  const best =
+    pickMaxClockLabel(fromResolved, fromScorers, fromFifaLive) ?? fromResolved;
+
+  if (match?.status === 'live' && playState.phase === 'in_play' && match?.kickoffAt) {
+    const kickoffClock = estimateLiveClockFromKickoff(match.kickoffAt);
+    if (kickoffClockShouldOverride(best, kickoffClock)) {
+      return pickMaxClockLabel(best, kickoffClock) ?? kickoffClock;
+    }
+  }
+
+  return best;
 }
 
 

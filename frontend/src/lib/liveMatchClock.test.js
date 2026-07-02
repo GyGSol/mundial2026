@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   latestClockFromTimeline,
   latestMinuteFromScorerLists,
@@ -81,5 +81,24 @@ describe('liveMatchClock', () => {
     };
 
     expect(resolveLiveMatchDisplayClock(match)).toBe("58'");
+  });
+
+  it('usa kickoff cuando FIFA marca 0 y no hay cronología (USA–BIH #81)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-02T00:20:00.000Z'));
+
+    const match = {
+      status: 'live',
+      kickoffAt: '2026-07-02T00:00:00.000Z',
+      matchPlayState: { phase: 'in_play' },
+      raw: {
+        time_elapsed: '0',
+        fifaLiveState: { matchTime: "0'", period: '2' },
+      },
+    };
+
+    expect(resolveLiveMatchDisplayClock(match)).toBe("20'");
+
+    vi.useRealTimers();
   });
 });

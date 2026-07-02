@@ -45,11 +45,26 @@ export function readFifaEventsSyncedAtMs(match) {
   return Number.isFinite(ms) ? ms : null;
 }
 
+export function readFifaLiveStateSyncedAtMs(match) {
+  const syncedAt = match?.raw?.fifaLiveState?.syncedAt;
+  if (!syncedAt) return null;
+  const ms = new Date(syncedAt).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
 export function isLiveFifaEventsStale(match, maxAgeMs = LIVE_FIFA_EVENTS_MAX_AGE_MS, now = Date.now()) {
   if (match?.status !== 'live') return false;
-  const syncedMs = readFifaEventsSyncedAtMs(match);
-  if (syncedMs == null) return true;
-  return now - syncedMs >= maxAgeMs;
+
+  const timelineCount = match?.raw?.fifaEvents?.timeline?.length ?? 0;
+  if (timelineCount > 0) {
+    const syncedMs = readFifaEventsSyncedAtMs(match);
+    if (syncedMs == null) return true;
+    return now - syncedMs >= maxAgeMs;
+  }
+
+  const liveStateMs = readFifaLiveStateSyncedAtMs(match);
+  if (liveStateMs == null) return true;
+  return now - liveStateMs >= maxAgeMs;
 }
 
 function buildFifaEntryFromStoredMeta(match) {
