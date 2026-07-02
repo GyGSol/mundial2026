@@ -309,6 +309,25 @@ export async function enrichMatchesForRankingUpcoming(matches, userId) {
   });
 }
 
+/** Detalle GET /matches/:id — alineación confirmada o probable + timeline en vivo/finalizado. */
+export async function enrichMatchesForMatchDetail(matches, userId) {
+  const onlyUpcoming = matches.length > 0 && matches.every((m) => m.status === 'upcoming');
+  if (onlyUpcoming) {
+    return enrichMatchesForRankingUpcoming(matches, userId);
+  }
+  const hasLive = matches.some((m) => m.status === 'live');
+  return enrichMatches(matches, userId, {
+    includePlayers: false,
+    includeKnockoutContext: false,
+    ensureUserDefaults: false,
+    includeWeather: hasLive,
+    includeLiveFields: true,
+    includeTimelineTournamentGoals: true,
+    includeFullTimeline: true,
+    includeLineup: true,
+  });
+}
+
 /** Archivo colapsable: timeline básico sin goles torneo ni roster. */
 export async function enrichMatchesForRankingArchive(matches, userId) {
   return enrichMatches(matches, userId, {

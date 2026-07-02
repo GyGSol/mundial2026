@@ -69,31 +69,41 @@ async function fetchFormationMatchList() {
   };
 }
 
-async function fetchFormationMatchDetail(selectedMatchId) {
+function matchHasLineupPlayers(match) {
+  return Boolean(
+    match?.lineup?.home?.players?.length || match?.lineup?.away?.players?.length
+  );
+}
+
+async function fetchFormationMatchDetail(selectedMatchId, { preferDetailApi = false } = {}) {
   const id = String(selectedMatchId);
+
+  if (preferDetailApi) {
+    try {
+      const detail = await matchesApi.getById(selectedMatchId);
+      if (detail?.match) return { match: detail.match };
+    } catch {
+      // fallback a snapshot/archivo
+    }
+  }
+
   const snapshot = await matchesApi.liveSnapshot({ detailMatchId: selectedMatchId });
   const fromSnapshot =
     (snapshot?.liveMatches ?? []).find((item) => matchId(item) === id) ??
     (snapshot?.recentFinishedMatches ?? []).find((item) => matchId(item) === id);
-  if (
-    fromSnapshot?.lineup?.home?.players?.length ||
-    fromSnapshot?.lineup?.away?.players?.length
-  ) {
+  if (matchHasLineupPlayers(fromSnapshot)) {
     return { match: fromSnapshot };
   }
   const archive = await leaderboardApi.finishedArchive();
   const fromArchive = (archive?.finishedMatches ?? []).find((item) => matchId(item) === id);
-  if (
-    fromArchive?.lineup?.home?.players?.length ||
-    fromArchive?.lineup?.away?.players?.length
-  ) {
+  if (matchHasLineupPlayers(fromArchive)) {
     return { match: fromArchive };
   }
   try {
     const detail = await matchesApi.getById(selectedMatchId);
     if (detail?.match) return { match: detail.match };
   } catch {
-    // upcoming sin detalle o partido inexistente
+    // partido inexistente
   }
   return { match: fromArchive ?? fromSnapshot ?? null };
 }
@@ -130,10 +140,15 @@ export default function AdminFormationsPage() {
   const hasSelectableMatches =
     liveMatches.length > 0 || nextUpcomingMatches.length > 0 || finishedMatches.length > 0;
 
+  const selectedIsUpcoming = useMemo(
+    () => nextUpcomingMatches.some((item) => matchId(item) === selectedMatchId),
+    [nextUpcomingMatches, selectedMatchId]
+  );
+
   const fetchMatchDetail = useCallback(async () => {
     if (!selectedMatchId) return { match: null };
-    return fetchFormationMatchDetail(selectedMatchId);
-  }, [selectedMatchId]);
+    return fetchFormationMatchDetail(selectedMatchId, { preferDetailApi: selectedIsUpcoming });
+  }, [selectedMatchId, selectedIsUpcoming]);
 
   const {
     data: matchDetailData,

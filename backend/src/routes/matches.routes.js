@@ -5,7 +5,7 @@ import { getMatchStreamConfig } from '../services/streamLinkService.js';
 import {
   enrichMatchesFull,
   enrichMatchesLight,
-  enrichMatchesForRankingDashboard,
+  enrichMatchesForMatchDetail,
   prepareFifaShirtMapsForMatches,
 } from '../services/matchEnrichmentService.js';
 import { attachStreamMetaToMatches } from '../services/streamMetaService.js';
@@ -50,7 +50,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     }
 
     await prepareFifaShirtMapsForMatches([match]);
-    const enriched = await enrichMatchesForRankingDashboard([match], req.user?._id);
+    const enriched = await enrichMatchesForMatchDetail([match], req.user?._id);
     const [withStream] = await attachStreamMetaToMatches(enriched);
     if (!withStream) {
       return res.status(404).json({ error: 'Partido no encontrado' });
