@@ -546,7 +546,7 @@ export default function LeaderboardPage() {
             )}
             {selectedGroupId && selectedGroupId !== '__nogroup' ? (
               <div className="mt-4 flex flex-col gap-3">
-                <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Button asChild variant="outline" className="w-auto self-start">
                   <Link to={`/graficos?grupo=${encodeURIComponent(selectedGroupId)}`}>
                     <LineChart className="mr-2 size-4" aria-hidden />
                     Ver evolución de posiciones
@@ -556,7 +556,7 @@ export default function LeaderboardPage() {
                   groupId={effectiveGroupId}
                   disabled={fubolsCupData?.tournament?.status === 'cancelled'}
                   prominent
-                  className="w-full sm:max-w-md"
+                  className="w-full"
                 />
               </div>
             ) : null}
