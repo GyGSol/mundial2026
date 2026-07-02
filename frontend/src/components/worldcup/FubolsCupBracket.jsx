@@ -63,7 +63,7 @@ function LiveDuelPlayerLineHeader({ partial = false }) {
     >
       <span className="min-w-0">Jugador</span>
       <span className="text-center">Gdif</span>
-      <span className="text-right">{partial ? 'Pts parcial' : 'Pts'}</span>
+      <span className="text-right">{partial ? 'Pts tot. parcial' : 'Pts tot.'}</span>
     </div>
   );
 }

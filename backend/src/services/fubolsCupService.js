@@ -922,36 +922,32 @@ function buildMatchPointsTiebreak({
   });
 }
 
-/** Puntos en la fila de jugadores: partido en vivo si ya hay score; si no, el último terminado. */
+/** Suma puntos del cruce en partidos con score (totales parciales hasta cerrar el duelo). */
 function pickLiveDuelHeaderPoints(worldCupMatches) {
-  let livePoints = null;
-  let latestFinished = null;
   const rows = worldCupMatches ?? [];
   const hasPendingMatch = rows.some(
     (wc) => wc.match?.status === 'live' || wc.match?.status === 'upcoming'
   );
 
+  let pointsA = 0;
+  let pointsB = 0;
+  let scoredMatches = 0;
+
   for (const wc of rows) {
     const slice = wc.duelSlice;
     if (!slice || slice.pointsA == null || slice.pointsB == null) continue;
-
-    const status = wc.match?.status;
-    if (status === 'live') {
-      livePoints = { pointsA: slice.pointsA, pointsB: slice.pointsB };
-    }
-    if (status === 'finished') {
-      latestFinished = { pointsA: slice.pointsA, pointsB: slice.pointsB };
-    }
+    pointsA += slice.pointsA;
+    pointsB += slice.pointsB;
+    scoredMatches += 1;
   }
 
-  if (livePoints) return { ...livePoints, isPartial: false };
-  if (latestFinished) {
-    return {
-      ...latestFinished,
-      isPartial: hasPendingMatch,
-    };
-  }
-  return null;
+  if (scoredMatches === 0) return null;
+
+  return {
+    pointsA,
+    pointsB,
+    isPartial: hasPendingMatch,
+  };
 }
 
 export async function buildLiveDemoDuel(groupId, viewerUserId) {
