@@ -25,10 +25,10 @@ describe('fubolsCupScoring (shared)', () => {
     expect(winner).toBe('b');
   });
 
-  it('desempate por puntos del torneo', () => {
+  it('desempate por Gdif del torneo (menor gana)', () => {
     const stats = new Map([
-      ['a', { totalPoints: 10, name: 'A' }],
-      ['b', { totalPoints: 25, name: 'B' }],
+      ['a', { totalPoints: 10, difGl: 8, difGv: 6, pj: 10, name: 'A' }],
+      ['b', { totalPoints: 25, difGl: 12, difGv: 10, pj: 10, name: 'B' }],
     ]);
     const winner = resolveDuelWinner({
       matchResults: [
@@ -39,7 +39,7 @@ describe('fubolsCupScoring (shared)', () => {
       playerBId: 'b',
       tournamentStatsByUserId: stats,
     });
-    expect(winner).toBe('b');
+    expect(winner).toBe('a');
   });
 
   it('buildMatchResultSlice', () => {

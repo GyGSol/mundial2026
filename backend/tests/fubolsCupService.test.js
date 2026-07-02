@@ -18,6 +18,7 @@ import {
 } from '../src/services/fubolsCupService.js';
 import { getTestMongoUri } from '../src/config/testDbGuard.js';
 import { FUBOLS_CUP_CHAMPION_PRIZE, FUBOLS_CUP_ROUND_ADVANCE_PRIZE } from '../src/config/economy.js';
+import { goalDiffScore } from '../../shared/goalDiffStats.js';
 
 function sortExternalIds(ids) {
   return [...ids].sort((a, b) => Number(a) - Number(b));
@@ -409,7 +410,7 @@ describe('fubolsCupService', () => {
     expect(demoDuel?.worldCupMatches[0].duelSlice.pointsB).toBe(2);
   });
 
-  it('demoDuel con empate en puntos del partido terminado define ganador por torneo', async () => {
+  it('demoDuel con empate en puntos del partido terminado define ganador por Gdif', async () => {
     const { groupId, aiUser, gonzalo, espAut } = await setupDemoDuelFixture({
       matchStatus: 'finished',
       liveScores: { homeScore: 3, awayScore: 0 },
@@ -434,21 +435,54 @@ describe('fubolsCupService', () => {
       finishedAt: new Date(),
     });
     cleanup.matchIds.push(seedMatch._id);
+    await UserGroupMembership.create({ userId: aiUser._id, groupId, role: 'member' });
     await Prediction.create({
       userId: gonzalo._id,
       matchId: seedMatch._id,
-      homeGoals: 2,
+      homeGoals: 5,
       awayGoals: 0,
       pointsEarned: 50,
       pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 0, totalGoals: 1 },
+    });
+    const futbotSeed = await Match.create({
+      externalId: `demo-tie-futbot-${Date.now()}`,
+      homeTeamId: 'FRA',
+      awayTeamId: 'GER',
+      status: 'finished',
+      homeScore: 1,
+      awayScore: 0,
+      finishedAt: new Date(),
+    });
+    cleanup.matchIds.push(futbotSeed._id);
+    await Prediction.create({
+      userId: aiUser._id,
+      matchId: futbotSeed._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
     });
 
     const demoDuel = await buildLiveDemoDuel(groupId, gonzalo._id);
     expect(demoDuel?.playerA.matchPoints).toBe(4);
     expect(demoDuel?.playerB.matchPoints).toBe(4);
-    expect(demoDuel?.winnerId).toBe(String(gonzalo._id));
     expect(demoDuel?.resolvedAt).toBeTruthy();
-    expect(demoDuel?.tiebreak?.criterion).toBe('tournament_points');
+    expect(demoDuel?.tiebreak?.criterion).toBe('goal_diff_score');
+    expect(demoDuel?.tiebreak?.summary).toContain('gana quien tiene menor Gdif del torneo');
+    const scoreA = goalDiffScore(
+      demoDuel.playerA.difGl,
+      demoDuel.playerA.difGv,
+      demoDuel.playerA.pj
+    );
+    const scoreB = goalDiffScore(
+      demoDuel.playerB.difGl,
+      demoDuel.playerB.difGv,
+      demoDuel.playerB.pj
+    );
+    expect(scoreA).not.toBe(scoreB);
+    expect(demoDuel?.winnerId).toBe(
+      scoreA < scoreB ? String(aiUser._id) : String(gonzalo._id)
+    );
     expect(demoDuel?.playerA.difGl).toBeDefined();
     expect(demoDuel?.playerB.difGl).toBeDefined();
   });
@@ -646,7 +680,7 @@ describe('fubolsCupService', () => {
     expect(liveTile?.duelSlice?.pointsB).toBe(2);
   });
 
-  it('cruce con partido terminado y empate en puntos define ganador por torneo', async () => {
+  it('cruce con partido terminado y empate en puntos define ganador por Gdif', async () => {
     await finishRoundOf32();
     const { groupId, admin } = await setupGroupWithHumans(8);
     await trySeedFubolsCup(groupId);
@@ -704,10 +738,28 @@ describe('fubolsCupService', () => {
     await Prediction.create({
       userId: playerBId,
       matchId: seedMatch._id,
-      homeGoals: 1,
+      homeGoals: 5,
       awayGoals: 0,
       pointsEarned: 40,
       pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 0, totalGoals: 0 },
+    });
+    const playerASeed = await Match.create({
+      externalId: `cup-tie-seed-a-${Date.now()}`,
+      homeTeamId: 'FRA',
+      awayTeamId: 'GER',
+      status: 'finished',
+      homeScore: 1,
+      awayScore: 0,
+      finishedAt: new Date(),
+    });
+    cleanup.matchIds.push(playerASeed._id);
+    await Prediction.create({
+      userId: playerAId,
+      matchId: playerASeed._id,
+      homeGoals: 1,
+      awayGoals: 0,
+      pointsEarned: 6,
+      pointsBreakdown: { winner: 3, homeGoals: 1, awayGoals: 1, totalGoals: 1 },
     });
 
     const dashboard = await getFubolsCupDashboard(groupId, admin._id);
@@ -717,7 +769,8 @@ describe('fubolsCupService', () => {
     expect(tiedDuel.isLiveDuel).toBe(true);
     expect(tiedDuel.playerA.matchPoints).toBe(4);
     expect(tiedDuel.playerB.matchPoints).toBe(4);
-    expect(tiedDuel.winnerId).toBe(String(playerBId));
+    expect(tiedDuel.tiebreak?.criterion).toBe('goal_diff_score');
+    expect(tiedDuel.winnerId).toBe(String(playerAId));
   });
 
   it('demoDuel es null sin partido España–Austria', async () => {

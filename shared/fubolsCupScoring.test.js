@@ -53,10 +53,10 @@ describe('fubolsCupScoring', () => {
     expect(winner).toBe('a');
   });
 
-  it('desempate por puntos del torneo', () => {
+  it('desempate por Gdif del torneo (menor gana, no puntos totales)', () => {
     const stats = new Map([
-      ['a', { totalPoints: 10, name: 'A' }],
-      ['b', { totalPoints: 25, name: 'B' }],
+      ['a', { totalPoints: 10, difGl: 8, difGv: 6, pj: 10, name: 'A' }],
+      ['b', { totalPoints: 25, difGl: 12, difGv: 10, pj: 10, name: 'B' }],
     ]);
     const winner = resolveDuelWinner({
       matchResults: [
@@ -67,7 +67,7 @@ describe('fubolsCupScoring', () => {
       playerBId: 'b',
       tournamentStatsByUserId: stats,
     });
-    expect(winner).toBe('b');
+    expect(winner).toBe('a');
   });
 
   it('final a 3 partidos: 2-1 en victorias → gana A', () => {
@@ -126,10 +126,10 @@ describe('fubolsCupScoring', () => {
     ).toBeNull();
   });
 
-  it('resolveDisplayDuelWinnerId con partido terminado aplica desempate del torneo', () => {
+  it('resolveDisplayDuelWinnerId con partido terminado aplica desempate por Gdif', () => {
     const stats = new Map([
-      ['a', { totalPoints: 10 }],
-      ['b', { totalPoints: 25 }],
+      ['a', { totalPoints: 10, difGl: 8, difGv: 6, pj: 10 }],
+      ['b', { totalPoints: 25, difGl: 12, difGv: 10, pj: 10 }],
     ]);
     expect(
       resolveDisplayDuelWinnerId({
@@ -139,7 +139,7 @@ describe('fubolsCupScoring', () => {
         tournamentStatsByUserId: stats,
         allowTiebreak: true,
       })
-    ).toBe('b');
+    ).toBe('a');
   });
 
   it('describeTournamentTiebreak explica desempate por Gdif', () => {
@@ -151,7 +151,7 @@ describe('fubolsCupScoring', () => {
     expect(tiebreak.winnerId).toBe('a');
     expect(tiebreak.criterion).toBe('goal_diff_score');
     expect(tiebreak.label).toBe('Gdif del torneo');
-    expect(tiebreak.summary).toContain('Gdif del torneo');
+    expect(tiebreak.summary).toContain('gana quien tiene menor Gdif del torneo');
     expect(tiebreak.summary).toContain('Futbot');
   });
 });

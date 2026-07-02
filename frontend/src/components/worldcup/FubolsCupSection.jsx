@@ -142,6 +142,7 @@ export default function FubolsCupSection() {
                 <li>Los PB no suman en la Copa Fubols.</li>
                 <li>Cada partido del cruce es individual (sin sumar entre partidos).</li>
                 <li>Empate 1-1 en victorias: gana quien tuvo mayor diferencia en su partido ganado.</li>
+                <li>Empate en puntos del partido en un cruce: gana quien tiene menor Gdif del torneo.</li>
                 <li>Tocá un partido del cuadro para ir a Predicciones y cargar tu pronóstico.</li>
               </ul>
               <FubolsCupBracket rounds={data.rounds} demoDuel={data.demoDuel} />

@@ -1,4 +1,3 @@
-import { compareRankingEntries } from './leaderboardStats.js';
 import {
   compareAvgGoalDiff,
   compareGoalDiffScore,
@@ -39,13 +38,52 @@ function buildTiebreakResult({
     loserName,
     winnerDisplay,
     loserDisplay,
-    summary: `Empate en puntos del partido — desempate por ${label} (${winnerDisplay} ${winnerName} vs ${loserDisplay} ${loserName}).`,
+    summary: `Empate en puntos del partido — gana quien tiene menor ${label} (${winnerDisplay} ${winnerName} vs ${loserDisplay} ${loserName}).`,
   };
 }
 
+function pickWinnerByLowerComparison(cmp, playerAId, playerBId) {
+  if (cmp === 0) return null;
+  return cmp < 0 ? String(playerAId) : String(playerBId);
+}
+
 /**
- * Explica qué criterio del ranking del torneo definió el ganador del cruce.
- * Misma cadena que pickByTournamentTiebreak / compareRankingEntries.
+ * Desempate de cruce Copa Fubols: menor Gdif del torneo gana (no puntos totales).
+ * Si persiste el empate: error promedio local, visitante, orden alfabético.
+ */
+export function pickByGoalDiffTiebreak(playerAId, playerBId, tournamentStatsByUserId) {
+  const a = tournamentStatsRow(tournamentStatsByUserId, playerAId);
+  const b = tournamentStatsRow(tournamentStatsByUserId, playerBId);
+
+  const winnerByGdif = pickWinnerByLowerComparison(
+    compareGoalDiffScore(a.difGl, a.difGv, a.pj, b.difGl, b.difGv, b.pj),
+    playerAId,
+    playerBId
+  );
+  if (winnerByGdif) return winnerByGdif;
+
+  const winnerByLocal = pickWinnerByLowerComparison(
+    compareAvgGoalDiff(a.difGl, a.pj, b.difGl, b.pj),
+    playerAId,
+    playerBId
+  );
+  if (winnerByLocal) return winnerByLocal;
+
+  const winnerByVisit = pickWinnerByLowerComparison(
+    compareAvgGoalDiff(a.difGv, a.pj, b.difGv, b.pj),
+    playerAId,
+    playerBId
+  );
+  if (winnerByVisit) return winnerByVisit;
+
+  return a.name.localeCompare(b.name, 'es') <= 0 ? String(playerAId) : String(playerBId);
+}
+
+/** @deprecated Usar pickByGoalDiffTiebreak — alias por compatibilidad interna. */
+export const pickByTournamentTiebreak = pickByGoalDiffTiebreak;
+
+/**
+ * Explica el criterio de desempate del cruce (Gdif del torneo, menor gana).
  */
 export function describeTournamentTiebreak(
   playerAId,
@@ -55,73 +93,12 @@ export function describeTournamentTiebreak(
 ) {
   const a = tournamentStatsRow(tournamentStatsByUserId, playerAId, nameA);
   const b = tournamentStatsRow(tournamentStatsByUserId, playerBId, nameB);
-  const winnerId = pickByTournamentTiebreak(playerAId, playerBId, tournamentStatsByUserId);
+  const winnerId = pickByGoalDiffTiebreak(playerAId, playerBId, tournamentStatsByUserId);
   const winnerIsA = winnerId === String(playerAId);
   const winner = winnerIsA ? a : b;
   const loser = winnerIsA ? b : a;
   const winnerName = winner.name || (winnerIsA ? nameA : nameB) || 'Jugador A';
   const loserName = loser.name || (winnerIsA ? nameB : nameA) || 'Jugador B';
-
-  if (b.points !== a.points) {
-    return buildTiebreakResult({
-      winnerId,
-      criterion: 'tournament_points',
-      label: 'puntos del torneo',
-      winnerName,
-      loserName,
-      winnerDisplay: String(winner.points),
-      loserDisplay: String(loser.points),
-    });
-  }
-  if (b.pa !== a.pa) {
-    return buildTiebreakResult({
-      winnerId,
-      criterion: 'winner_picks',
-      label: 'aciertos de ganador',
-      winnerName,
-      loserName,
-      winnerDisplay: String(winner.pa),
-      loserDisplay: String(loser.pa),
-    });
-  }
-
-  const glgvA = (a.gl ?? 0) + (a.gv ?? 0);
-  const glgvB = (b.gl ?? 0) + (b.gv ?? 0);
-  if (glgvB !== glgvA) {
-    return buildTiebreakResult({
-      winnerId,
-      criterion: 'exact_scores',
-      label: 'marcadores exactos',
-      winnerName,
-      loserName,
-      winnerDisplay: String(winner.gl + winner.gv),
-      loserDisplay: String(loser.gl + loser.gv),
-    });
-  }
-
-  if (b.gt !== a.gt) {
-    return buildTiebreakResult({
-      winnerId,
-      criterion: 'total_goals',
-      label: 'aciertos de goles totales',
-      winnerName,
-      loserName,
-      winnerDisplay: String(winner.gt),
-      loserDisplay: String(loser.gt),
-    });
-  }
-
-  if (a.pb !== b.pb) {
-    return buildTiebreakResult({
-      winnerId,
-      criterion: 'bonus_points',
-      label: 'puntos bonus',
-      winnerName,
-      loserName,
-      winnerDisplay: String(winner.pb),
-      loserDisplay: String(loser.pb),
-    });
-  }
 
   const gdifCmp = compareGoalDiffScore(a.difGl, a.difGv, a.pj, b.difGl, b.difGv, b.pj);
   if (gdifCmp !== 0) {
@@ -138,7 +115,7 @@ export function describeTournamentTiebreak(
 
   const difLocalCmp = compareAvgGoalDiff(a.difGl, a.pj, b.difGl, b.pj);
   if (difLocalCmp !== 0) {
-    const winnerAvg = a.pj > 0 ? (winner.difGl / winner.pj).toFixed(3) : '0';
+    const winnerAvg = winner.pj > 0 ? (winner.difGl / winner.pj).toFixed(3) : '0';
     const loserAvg = loser.pj > 0 ? (loser.difGl / loser.pj).toFixed(3) : '0';
     return buildTiebreakResult({
       winnerId,
@@ -153,7 +130,7 @@ export function describeTournamentTiebreak(
 
   const difVisitCmp = compareAvgGoalDiff(a.difGv, a.pj, b.difGv, b.pj);
   if (difVisitCmp !== 0) {
-    const winnerAvg = a.pj > 0 ? (winner.difGv / winner.pj).toFixed(3) : '0';
+    const winnerAvg = winner.pj > 0 ? (winner.difGv / winner.pj).toFixed(3) : '0';
     const loserAvg = loser.pj > 0 ? (loser.difGv / loser.pj).toFixed(3) : '0';
     return buildTiebreakResult({
       winnerId,
@@ -183,16 +160,6 @@ export function scoreMatchDuel(pointsA, pointsB) {
   if (a === b) return { winner: null, margin: 0 };
   if (a > b) return { winner: 'A', margin: a - b };
   return { winner: 'B', margin: b - a };
-}
-
-export function pickByTournamentTiebreak(playerAId, playerBId, tournamentStatsByUserId) {
-  const tourA = tournamentStatsByUserId.get(String(playerAId)) ?? {};
-  const tourB = tournamentStatsByUserId.get(String(playerBId)) ?? {};
-  const cmp = compareRankingEntries(
-    { ...tourA, points: tourA.totalPoints ?? tourA.points ?? 0 },
-    { ...tourB, points: tourB.totalPoints ?? tourB.points ?? 0 }
-  );
-  return cmp < 0 ? String(playerAId) : String(playerBId);
 }
 
 /**
@@ -225,13 +192,13 @@ export function resolveDuelWinner({
     if (margins.B > margins.A) return String(playerBId);
   }
 
-  return pickByTournamentTiebreak(playerAId, playerBId, tournamentStatsByUserId);
+  return pickByGoalDiffTiebreak(playerAId, playerBId, tournamentStatsByUserId);
 }
 
 /**
  * Ganador para mostrar en cruces en vivo / demo.
  * Con allowTiebreak=false (partido aún en juego): solo gana quien va arriba en puntos del partido.
- * Con allowTiebreak=true (partido(s) terminado(s)): misma lógica que resolveDuelWinner (incl. torneo).
+ * Con allowTiebreak=true (partido(s) terminado(s)): misma lógica que resolveDuelWinner (Gdif si empatan).
  */
 export function resolveDisplayDuelWinnerId({
   matchResults,
