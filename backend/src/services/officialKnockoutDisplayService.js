@@ -1,8 +1,17 @@
+import { Group } from '../models/Group.js';
 import { Match } from '../models/Match.js';
 import { Stadium } from '../models/Stadium.js';
 import { Team } from '../models/Team.js';
-import { getFifaWorldRankings } from './aiTeamMatchContextService.js';
-import { buildKnockoutPhases, WORLD_CUP_MATCH_SELECT } from './worldCupStatsService.js';
+import { isGroupPhaseMatch } from './groupStandingsUtils.js';
+import { buildPredictedKnockoutPhases } from './predictedKnockoutService.js';
+import {
+  annotateGroupQualification,
+  computeGroupStandings,
+  WORLD_CUP_MATCH_SELECT,
+} from './worldCupStatsService.js';
+
+const GROUP_STANDINGS_MATCH_SELECT =
+  'externalId homeTeamId awayTeamId homeScore awayScore group type status';
 
 export const KNOCKOUT_EXTERNAL_IDS = Array.from({ length: 32 }, (_, index) => String(73 + index));
 
@@ -78,6 +87,32 @@ function knockoutSideNeedsOfficialFallback(match) {
   return homeEmpty && awayEmpty;
 }
 
+/**
+ * Bracket oficial para /predicciones: standings reales + resultados finalizados,
+ * sin predicciones del usuario (a diferencia de buildUserPredictedMatchContext).
+ */
+export function buildOfficialKnockoutDisplayPhases({
+  knockoutMatches,
+  groupMatches,
+  teams,
+  groups = [],
+  teamMap,
+  stadiumMap,
+}) {
+  const rawStandings = computeGroupStandings(teams, groupMatches, groups);
+  const groupStandings = annotateGroupQualification(rawStandings);
+
+  const { phases } = buildPredictedKnockoutPhases({
+    groupStandings,
+    knockoutMatches,
+    predictionsByMatchId: new Map(),
+    teamMap,
+    stadiumMap,
+  });
+
+  return phases;
+}
+
 export async function loadOfficialKnockoutDisplayByExternalId(targetExternalIds) {
   const targetSet = new Set(targetExternalIds.map(String));
   const needsKnockout = [...targetSet].some((id) => {
@@ -86,18 +121,29 @@ export async function loadOfficialKnockoutDisplayByExternalId(targetExternalIds)
   });
   if (!needsKnockout) return {};
 
-  const [knockoutMatches, teams, stadiums, rankings] = await Promise.all([
+  const [knockoutMatches, groupCandidates, teams, groups, stadiums] = await Promise.all([
     Match.find({ externalId: { $in: KNOCKOUT_EXTERNAL_IDS } })
       .select(WORLD_CUP_MATCH_SELECT)
       .lean(),
+    Match.find({ group: { $exists: true, $ne: '' } })
+      .select(GROUP_STANDINGS_MATCH_SELECT)
+      .lean(),
     Team.find({}).lean(),
+    Group.find({}).select('name raw').lean(),
     Stadium.find({}).lean(),
-    getFifaWorldRankings(),
   ]);
 
+  const groupMatches = groupCandidates.filter(isGroupPhaseMatch);
   const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
   const stadiumMap = Object.fromEntries(stadiums.map((stadium) => [stadium.externalId, stadium]));
-  const phases = buildKnockoutPhases(knockoutMatches, teamMap, stadiumMap, rankings);
+  const phases = buildOfficialKnockoutDisplayPhases({
+    knockoutMatches,
+    groupMatches,
+    teams,
+    groups,
+    teamMap,
+    stadiumMap,
+  });
 
   const byExternalId = {};
   for (const phase of phases) {
