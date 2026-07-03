@@ -39,6 +39,14 @@ describe('officialKnockoutDisplayService', () => {
     expect(groupMatch.homeTeam?.externalId).toBe('A1');
   });
 
+  it('KNOCKOUT_CONTEXT_MATCH_SELECT no mezcla exclusión e inclusión de raw', async () => {
+    const { KNOCKOUT_CONTEXT_MATCH_SELECT } = await import(
+      '../src/services/officialKnockoutDisplayService.js'
+    );
+    expect(KNOCKOUT_CONTEXT_MATCH_SELECT).not.toMatch(/-raw/);
+    expect(KNOCKOUT_CONTEXT_MATCH_SELECT).toContain('raw.home_team_label');
+  });
+
   it('applyOfficialKnockoutDisplay prioriza equipos asignados oficialmente', () => {
     const result = applyOfficialKnockoutDisplay(
       { homeTeam: null, awayTeam: null, homeTeamSlotLabel: 'placeholder' },

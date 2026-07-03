@@ -6,9 +6,12 @@ import { buildKnockoutPhases, WORLD_CUP_MATCH_SELECT } from './worldCupStatsServ
 
 export const KNOCKOUT_EXTERNAL_IDS = Array.from({ length: 32 }, (_, index) => String(73 + index));
 
-/** Proyección mínima de raw para resolver slots knockout sin cargar el blob completo. */
-export const KNOCKOUT_SLOT_RAW_SELECT =
-  '-raw +raw.home_team_label +raw.away_team_label +raw.homeTeamLabel +raw.awayTeamLabel +raw.fifaMeta';
+/**
+ * Proyección por inclusión para contexto de predicciones knockout.
+ * No mezclar `-raw` con `raw.*` (MongoDB: "Cannot do exclusion on field raw in inclusion projection").
+ */
+export const KNOCKOUT_CONTEXT_MATCH_SELECT =
+  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.home_team_label raw.away_team_label raw.homeTeamLabel raw.awayTeamLabel raw.fifaMeta';
 
 export function applyOfficialKnockoutDisplay(enriched, official) {
   if (!official) return enriched;

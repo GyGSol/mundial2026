@@ -7,7 +7,7 @@ import { buildPredictedKnockoutPhases } from './predictedKnockoutService.js';
 import { annotateGroupQualification } from './worldCupStatsService.js';
 import { rankBestThirdPlaceTeams } from './thirdPlaceRanking.js';
 import { isGroupPhaseMatch } from './groupStandingsUtils.js';
-import { KNOCKOUT_SLOT_RAW_SELECT } from './officialKnockoutDisplayService.js';
+import { KNOCKOUT_CONTEXT_MATCH_SELECT } from './officialKnockoutDisplayService.js';
 
 export function isOfficialKnockoutMatch(match) {
   const id = String(match.externalId || '');
@@ -36,7 +36,7 @@ export function indexResolvedKnockoutPhases(phases = []) {
 export async function buildUserPredictedMatchContext(userId, { excludeMatchIds = null } = {}) {
   const [teams, allMatches, stadiums] = await Promise.all([
     Team.find({ group: { $exists: true, $ne: '' } }).lean(),
-    Match.find().select(KNOCKOUT_SLOT_RAW_SELECT).sort({ kickoffAt: 1 }).lean(),
+    Match.find().select(KNOCKOUT_CONTEXT_MATCH_SELECT).sort({ kickoffAt: 1 }).lean(),
     Stadium.find().lean(),
   ]);
 
