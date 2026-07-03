@@ -61,6 +61,75 @@ describe('matchDisplayScore', () => {
     ).toEqual({ homeScore: 1, awayScore: 1 });
   });
 
+  it('agregado 2-5 con penales 2-4 usa homeFieldScore/awayFieldScore en fifaMeta', () => {
+    expect(
+      resolveFieldMatchScores({
+        homeScore: 2,
+        awayScore: 5,
+        raw: {
+          fifaMeta: {
+            syncedAt: '2026-07-03T00:00:00.000Z',
+            homeScore: 2,
+            awayScore: 5,
+            homePenaltyScore: 2,
+            awayPenaltyScore: 4,
+            homeFieldScore: 1,
+            awayFieldScore: 1,
+          },
+        },
+        penaltyShootout: { homeScore: 2, awayScore: 4 },
+      })
+    ).toEqual({ homeScore: 1, awayScore: 1 });
+  });
+
+  it('agregado 2-5 con penales 2-4 deriva 1-1 desde goleadores parseados', () => {
+    expect(
+      resolveFieldMatchScores({
+        homeScore: 2,
+        awayScore: 5,
+        raw: {
+          fifaMeta: {
+            syncedAt: '2026-07-03T00:00:00.000Z',
+            homeScore: 2,
+            awayScore: 5,
+            homePenaltyScore: 2,
+            awayPenaltyScore: 4,
+          },
+          home_scorers: '{"Mohamed Hany 55\'"}',
+          away_scorers: '{"Emam Ashour 13\'"}',
+        },
+        penaltyShootout: { homeScore: 2, awayScore: 4 },
+      })
+    ).toEqual({ homeScore: 1, awayScore: 1 });
+  });
+
+  it('agregado 2-5 con penales 2-4 deriva 1-1 desde cronología limpia', () => {
+    expect(
+      resolveFieldMatchScores({
+        homeScore: 2,
+        awayScore: 5,
+        raw: {
+          fifaMeta: {
+            syncedAt: '2026-07-03T00:00:00.000Z',
+            homeScore: 2,
+            awayScore: 5,
+            homePenaltyScore: 2,
+            awayPenaltyScore: 4,
+          },
+          fifaEvents: {
+            timeline: [
+              { type: 'goal', side: 'home', minute: 12 },
+              { type: 'goal', side: 'away', minute: 67 },
+              { type: 'penalty_shootout_kick', side: 'home', isShootoutKick: true },
+              { type: 'penalty_shootout_kick', side: 'away', isShootoutKick: true },
+            ],
+          },
+        },
+        penaltyShootout: { homeScore: 2, awayScore: 4 },
+      })
+    ).toEqual({ homeScore: 1, awayScore: 1 });
+  });
+
   it('resuelve penales desde raw.fifaMeta en overview', () => {
     const shootout = resolvePenaltyShootoutFromMatch({
       homeScore: 4,

@@ -21,6 +21,7 @@ import {
   mergePlausibleGoalCounts,
   findNewTimelineGoals,
   resolveStoredTimeElapsed,
+  parseScorersField,
 } from './matchLiveData.js';
 import {
   applyShirtNumbersToTimeline,
@@ -308,6 +309,28 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
   const penaltyScores = readFifaPenaltyShootoutScores(fifaEntry);
   const winnerTeamId = fifaEntry?.Winner != null ? String(fifaEntry.Winner) : null;
 
+  const scorerFieldHome = parseScorersField(match.raw?.home_scorers ?? match.raw?.homeScorers ?? '').length;
+  const scorerFieldAway = parseScorersField(match.raw?.away_scorers ?? match.raw?.awayScorers ?? '').length;
+  const hasScorerField =
+    penaltyScores &&
+    isPlausibleMatchGoalCount(scorerFieldHome) &&
+    isPlausibleMatchGoalCount(scorerFieldAway) &&
+    (scorerFieldHome > 0 || scorerFieldAway > 0);
+
+  const fieldScoresForMeta =
+    penaltyScores &&
+    hasFifaScore &&
+    fifaHomeScore === fifaAwayScore
+      ? { homeFieldScore: fifaHomeScore, awayFieldScore: fifaAwayScore }
+      : hasScorerField
+        ? { homeFieldScore: scorerFieldHome, awayFieldScore: scorerFieldAway }
+        : penaltyScores &&
+            isPlausibleMatchGoalCount(timelineGoals.home) &&
+            isPlausibleMatchGoalCount(timelineGoals.away) &&
+            (timelineGoals.home > 0 || timelineGoals.away > 0)
+          ? { homeFieldScore: timelineGoals.home, awayFieldScore: timelineGoals.away }
+          : null;
+
   rawUpdate['raw.fifaMeta'] = {
     idMatch: String(fifaEntry.IdMatch),
     idStage: String(fifaEntry.IdStage),
@@ -327,6 +350,7 @@ async function syncSingleMatchFifaEvents(match, homeTeam, awayTeam, fifaEntry) {
           awayPenaltyScore: penaltyScores.awayScore,
         }
       : {}),
+    ...(fieldScoresForMeta ?? {}),
     ...(winnerTeamId ? { winnerTeamId } : {}),
     ...(fifaEntry?.Period != null ? { period: String(fifaEntry.Period) } : {}),
     syncedAt: new Date().toISOString(),

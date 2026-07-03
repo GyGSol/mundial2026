@@ -21,6 +21,7 @@
     "repair-predictions": "node src/scripts/repairPredictionMatchLinks.js",
     "backfill-prediction-source": "node src/scripts/backfillPredictionSource.js",
     "backfill-goal-diffs": "node src/scripts/backfillGoalDiffs.js",
+    "backfill-field-scores": "node src/scripts/backfillFieldScoresFromTimeline.js",
     "rescore:finished": "node src/scripts/rescoreFinishedMatches.js",
     "rescore:matches": "node src/scripts/rescoreMatchesByExternalId.js",
     "rescore:ai-pb": "node src/scripts/recalculateAiConsolation.js",

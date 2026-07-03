@@ -16,6 +16,68 @@ function readFifaFieldScores(raw = {}) {
   return { homeScore, awayScore };
 }
 
+/** Marcador de 120' persistido en sync FIFA (prioritario cuando hay penales). */
+function readFifaStoredFieldScores(raw = {}) {
+  const meta = raw.fifaMeta ?? {};
+  const homeScore = Number(meta.homeFieldScore);
+  const awayScore = Number(meta.awayFieldScore);
+  if (!meta.syncedAt || !isPlausibleGoalCount(homeScore) || !isPlausibleGoalCount(awayScore)) {
+    return null;
+  }
+  return { homeScore, awayScore };
+}
+
+function isTimelineShootoutGoal(event = {}) {
+  if (event.isShootoutKick) return true;
+  const type = String(event.type ?? '').toLowerCase();
+  return type === 'penalty_shootout_kick' || type === 'penalty_shootout';
+}
+
+/** Goles de juego desde cronología almacenada (excluye tanda de penales). */
+function goalCountsFromStoredTimeline(raw = {}) {
+  const timeline = raw.fifaEvents?.timeline;
+  if (!Array.isArray(timeline) || timeline.length === 0) return null;
+
+  let homeScore = 0;
+  let awayScore = 0;
+  for (const event of timeline) {
+    if (event.type !== 'goal' || isTimelineShootoutGoal(event)) continue;
+    if (event.side === 'home') homeScore += 1;
+    else if (event.side === 'away') awayScore += 1;
+  }
+
+  if (!isPlausibleGoalCount(homeScore) || !isPlausibleGoalCount(awayScore)) return null;
+  return { homeScore, awayScore };
+}
+
+function countParsedScorerEntries(value) {
+  if (value == null || value === '') return 0;
+  const trimmed = String(value).trim();
+  if (!trimmed) return 0;
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    const matches = trimmed.match(/"([^"\\]|\\.)*"/g);
+    return matches ? matches.length : 0;
+  }
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed.filter(Boolean).length : 0;
+    } catch {
+      return 0;
+    }
+  }
+  return trimmed.split(/[,;|]/).map((part) => part.trim()).filter(Boolean).length;
+}
+
+/** Marcador de campo desde raw.home_scorers / raw.away_scorers (worldcup26). */
+function goalCountsFromParsedScorers(raw = {}) {
+  const homeScore = countParsedScorerEntries(raw.home_scorers ?? raw.homeScorers);
+  const awayScore = countParsedScorerEntries(raw.away_scorers ?? raw.awayScorers);
+  if (homeScore === 0 && awayScore === 0) return null;
+  if (!isPlausibleGoalCount(homeScore) || !isPlausibleGoalCount(awayScore)) return null;
+  return { homeScore, awayScore };
+}
+
 function readPenaltyScoresFromRaw(raw = {}) {
   const meta = raw.fifaMeta ?? {};
   const home = Number(meta.homePenaltyScore);
@@ -64,6 +126,11 @@ export function resolveFieldMatchScores(input = {}) {
     return { homeScore: safeHome, awayScore: safeAway };
   }
 
+  const storedField = readFifaStoredFieldScores(input.raw ?? {});
+  if (storedField) {
+    return storedField;
+  }
+
   const penHome = Number(penaltyShootout.homeScore) || 0;
   const penAway = Number(penaltyShootout.awayScore) || 0;
   const fromAggregateHome = safeHome - penHome;
@@ -77,6 +144,16 @@ export function resolveFieldMatchScores(input = {}) {
     fromAggregateHome === fromAggregateAway
   ) {
     return { homeScore: fromAggregateHome, awayScore: fromAggregateAway };
+  }
+
+  const scorerField = goalCountsFromParsedScorers(input.raw ?? {});
+  if (scorerField) {
+    return scorerField;
+  }
+
+  const timelineField = goalCountsFromStoredTimeline(input.raw ?? {});
+  if (timelineField) {
+    return timelineField;
   }
 
   const fifaField = readFifaFieldScores(input.raw ?? {});

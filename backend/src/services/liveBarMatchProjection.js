@@ -4,4 +4,4 @@ export const LIVE_BAR_MATCH_PROJECTION =
 
 /** Lista /predicciones: sin blob raw completo; fifaMeta basta para marcador 120' y penales. */
 export const PREDICTIONS_LIST_MATCH_PROJECTION =
-  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.fifaMeta';
+  'externalId homeTeamId awayTeamId homeScore awayScore group matchday localDate stadiumId type status finishedAt kickoffAt kickoffTimezone liveStartedPushSentAt weatherOps raw.fifaMeta raw.home_scorers raw.away_scorers';

@@ -93,6 +93,32 @@ describe('calculatePoints', () => {
     expect(result.breakdown.awayGoals).toBe(1);
     expect(result.total).toBe(1);
   });
+
+  it('agregado 2-5 con penales 2-4: predicción 1-2 vs campo 1-1 → solo local (+1)', () => {
+    const match = {
+      homeScore: 2,
+      awayScore: 5,
+      raw: {
+        fifaMeta: {
+          syncedAt: '2026-07-03T00:00:00.000Z',
+          homeScore: 2,
+          awayScore: 5,
+          homePenaltyScore: 2,
+          awayPenaltyScore: 4,
+        },
+        home_scorers: '{"Mohamed Hany 55\'"}',
+        away_scorers: '{"Emam Ashour 13\'"}',
+      },
+    };
+    const actual = resolveScoringActual(match);
+    expect(actual).toEqual({ home: 1, away: 1 });
+
+    const result = calculatePoints({ home: 1, away: 2 }, actual);
+    expect(result.breakdown.winner).toBe(0);
+    expect(result.breakdown.homeGoals).toBe(1);
+    expect(result.breakdown.awayGoals).toBe(0);
+    expect(result.total).toBe(1);
+  });
 });
 
 describe('calculateGoalDiff', () => {
