@@ -61,4 +61,44 @@ describe('officialKnockoutDisplayService', () => {
     expect(result.awayTeam?.externalId).toBe('ESP');
     expect(result.homeTeamSlotLabel).toBeNull();
   });
+
+  it('applyOfficialKnockoutDisplayForUnassignedDbSlots ignora ganadores simulados del usuario', async () => {
+    const { applyOfficialKnockoutDisplayForUnassignedDbSlots } = await import(
+      '../src/services/officialKnockoutDisplayService.js'
+    );
+
+    const enriched = {
+      externalId: '95',
+      homeTeamId: '0',
+      awayTeamId: '0',
+      homeTeam: { externalId: 'ARG', fifaCode: 'ARG', nameEn: 'Argentina' },
+      awayTeam: { externalId: 'EGY', fifaCode: 'EGY', nameEn: 'Egypt' },
+      homeTeamSlotLabel: null,
+      awayTeamSlotLabel: null,
+    };
+
+    const official = {
+      homeTeam: null,
+      awayTeam: null,
+      homeTeamSlotLabel: 'Ganador de ARG vs CPV',
+      awayTeamSlotLabel: 'Ganador de AUS vs EGY',
+      homeTeamSlotSourceMatch: {
+        homeTeam: { fifaCode: 'ARG' },
+        awayTeam: { fifaCode: 'CPV' },
+      },
+      awayTeamSlotSourceMatch: {
+        homeTeam: { fifaCode: 'AUS' },
+        awayTeam: { fifaCode: 'EGY' },
+      },
+      phaseLabel: 'Octavos de final',
+    };
+
+    const result = applyOfficialKnockoutDisplayForUnassignedDbSlots(enriched, official);
+
+    expect(result.homeTeam).toBeNull();
+    expect(result.awayTeam).toBeNull();
+    expect(result.homeTeamSlotLabel).toBe('Ganador de ARG vs CPV');
+    expect(result.homeTeamSlotSourceMatch?.awayTeam?.fifaCode).toBe('CPV');
+    expect(result.knockoutPhase).toBe('Octavos de final');
+  });
 });

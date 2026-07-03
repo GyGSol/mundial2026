@@ -28,6 +28,50 @@ export function applyOfficialKnockoutDisplay(enriched, official) {
   };
 }
 
+export function isKnockoutDbSlotUnassigned(teamId) {
+  const id = String(teamId ?? '').trim();
+  return !id || id === '0';
+}
+
+/**
+ * En /predicciones: mientras FIFA no asignó equipos (id 0), mostrar slots oficiales
+ * "Ganador de …" y no los ganadores simulados por las predicciones del usuario.
+ */
+export function applyOfficialKnockoutDisplayForUnassignedDbSlots(enriched, official) {
+  if (!official) return enriched;
+
+  const homeUnassigned = isKnockoutDbSlotUnassigned(enriched.homeTeamId);
+  const awayUnassigned = isKnockoutDbSlotUnassigned(enriched.awayTeamId);
+  if (!homeUnassigned && !awayUnassigned) return enriched;
+
+  return {
+    ...enriched,
+    knockoutPhase: official.phaseLabel ?? enriched.knockoutPhase,
+    homeTeam: homeUnassigned ? (official.homeTeam ?? null) : enriched.homeTeam,
+    awayTeam: awayUnassigned ? (official.awayTeam ?? null) : enriched.awayTeam,
+    homeTeamSlotLabel: homeUnassigned
+      ? official.homeTeam
+        ? null
+        : (official.homeTeamSlotLabel ?? null)
+      : enriched.homeTeamSlotLabel,
+    awayTeamSlotLabel: awayUnassigned
+      ? official.awayTeam
+        ? null
+        : (official.awayTeamSlotLabel ?? null)
+      : enriched.awayTeamSlotLabel,
+    homeTeamSlotSourceMatch: homeUnassigned
+      ? official.homeTeam
+        ? null
+        : (official.homeTeamSlotSourceMatch ?? null)
+      : enriched.homeTeamSlotSourceMatch,
+    awayTeamSlotSourceMatch: awayUnassigned
+      ? official.awayTeam
+        ? null
+        : (official.awayTeamSlotSourceMatch ?? null)
+      : enriched.awayTeamSlotSourceMatch,
+  };
+}
+
 function knockoutSideNeedsOfficialFallback(match) {
   const homeEmpty = !match.homeTeam && !match.homeTeamSlotLabel && !match.homeTeamSlotSourceMatch;
   const awayEmpty = !match.awayTeam && !match.awayTeamSlotLabel && !match.awayTeamSlotSourceMatch;

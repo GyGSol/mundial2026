@@ -327,4 +327,64 @@ describe('enrichMatchesForPredictionsList', () => {
     expect(match.homeTeamSlotSourceMatch?.homeTeam?.fifaCode).toBe('POR');
     expect(match.awayTeamSlotSourceMatch?.awayTeam?.fifaCode).toBe('AUT');
   });
+
+  it('prioriza slots oficiales sobre ganadores simulados cuando el partido sigue 0/0 en DB', async () => {
+    getCachedUserPredictedMatchContext.mockResolvedValue({
+      resolvedKnockoutByExternalId: new Map([
+        [
+          '95',
+          {
+            homeTeam: { externalId: 'ARG', fifaCode: 'ARG', nameEn: 'Argentina' },
+            awayTeam: { externalId: 'EGY', fifaCode: 'EGY', nameEn: 'Egypt' },
+            homeTeamSlotLabel: null,
+            awayTeamSlotLabel: null,
+            homeTeamSlotSourceMatch: null,
+            awayTeamSlotSourceMatch: null,
+            knockoutPhase: 'Octavos de final',
+            knockoutPhaseKey: 'round_of_16',
+          },
+        ],
+      ]),
+    });
+
+    loadOfficialKnockoutDisplayByExternalIdMock.mockResolvedValue({
+      95: {
+        homeTeam: null,
+        awayTeam: null,
+        homeTeamSlotLabel: 'Ganador de ARG vs CPV',
+        awayTeamSlotLabel: 'Ganador de AUS vs EGY',
+        homeTeamSlotSourceMatch: {
+          homeTeam: { externalId: 'ARG', fifaCode: 'ARG', nameEn: 'Argentina' },
+          awayTeam: { externalId: 'CPV', fifaCode: 'CPV', nameEn: 'Cape Verde' },
+        },
+        awayTeamSlotSourceMatch: {
+          homeTeam: { externalId: 'AUS', fifaCode: 'AUS', nameEn: 'Australia' },
+          awayTeam: { externalId: 'EGY', fifaCode: 'EGY', nameEn: 'Egypt' },
+        },
+        phaseLabel: 'Octavos de final',
+      },
+    });
+
+    const [match] = await enrichMatchesForPredictionsList(
+      [
+        {
+          _id: 'mongo95',
+          externalId: '95',
+          homeTeamId: '0',
+          awayTeamId: '0',
+          status: 'upcoming',
+          homeScore: 0,
+          awayScore: 0,
+        },
+      ],
+      'user-id',
+      { liveBarMatchIds: new Set() }
+    );
+
+    expect(loadOfficialKnockoutDisplayByExternalIdMock).toHaveBeenCalledWith(['95']);
+    expect(match.homeTeam).toBeNull();
+    expect(match.awayTeam).toBeNull();
+    expect(match.homeTeamSlotLabel).toBe('Ganador de ARG vs CPV');
+    expect(match.homeTeamSlotSourceMatch?.awayTeam?.fifaCode).toBe('CPV');
+  });
 });

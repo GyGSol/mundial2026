@@ -27,6 +27,8 @@ import {
   attachWeatherAndScheduleToEnrichedMatches,
 } from './matchWeatherEnrichmentService.js';
 import {
+  applyOfficialKnockoutDisplayForUnassignedDbSlots,
+  isKnockoutDbSlotUnassigned,
   loadOfficialKnockoutDisplayByExternalId,
   mergeOfficialKnockoutFallback,
 } from './officialKnockoutDisplayService.js';
@@ -413,6 +415,47 @@ export async function enrichMatchesForPredictionsList(
   const ordered = matches
     .map((match) => enrichedById.get(match._id.toString()))
     .filter(Boolean);
+
+  const unassignedKnockoutIds = ordered
+    .filter(
+      (match) =>
+        isOfficialKnockoutMatch(match) &&
+        (isKnockoutDbSlotUnassigned(match.homeTeamId) ||
+          isKnockoutDbSlotUnassigned(match.awayTeamId))
+    )
+    .map((match) => String(match.externalId));
+
+  if (unassignedKnockoutIds.length) {
+    const officialByExternalId = await loadOfficialKnockoutDisplayByExternalId(
+      unassignedKnockoutIds
+    );
+    const withOfficialSlots = ordered.map((match) => {
+      const externalId = String(match.externalId);
+      if (!unassignedKnockoutIds.includes(externalId)) return match;
+      return applyOfficialKnockoutDisplayForUnassignedDbSlots(
+        match,
+        officialByExternalId[externalId]
+      );
+    });
+
+    const stillEmptyIds = withOfficialSlots
+      .filter(
+        (match) =>
+          isOfficialKnockoutMatch(match) &&
+          !match.homeTeam &&
+          !match.homeTeamSlotLabel &&
+          !match.homeTeamSlotSourceMatch &&
+          !match.awayTeam &&
+          !match.awayTeamSlotLabel &&
+          !match.awayTeamSlotSourceMatch
+      )
+      .map((match) => String(match.externalId));
+
+    if (!stillEmptyIds.length) return withOfficialSlots;
+
+    const fallbackOfficial = await loadOfficialKnockoutDisplayByExternalId(stillEmptyIds);
+    return mergeOfficialKnockoutFallback(withOfficialSlots, fallbackOfficial);
+  }
 
   const knockoutIdsNeedingFallback = ordered
     .filter(
