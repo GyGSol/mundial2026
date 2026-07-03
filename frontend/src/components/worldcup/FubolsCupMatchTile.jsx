@@ -132,27 +132,28 @@ export default function FubolsCupMatchTile({
     duelWinnerId
   );
 
-  const headerParts = [`Partido ${match.externalId ?? externalId}`, phase, dateTime].filter(Boolean);
+  const headerParts = [`Partido ${match.externalId ?? externalId}`, phase].filter(Boolean);
 
   return (
     <Link
       to={`/predictions?match=${encodeURIComponent(match.id)}`}
       className={cn(
-        'group block rounded-lg border border-border/70 bg-card px-3 py-3 shadow-sm transition-colors',
+        'group block min-w-0 overflow-hidden rounded-lg border border-border/70 bg-card px-2.5 py-2.5 shadow-sm transition-colors sm:px-3 sm:py-3',
         'hover:border-primary/50 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
         isLive && 'border-emerald-500/40'
       )}
       aria-label={ariaLabel}
     >
-      <div className="space-y-0.5 text-xs text-muted-foreground">
-        <p className="flex flex-wrap items-center gap-2 font-medium text-foreground/90">
-          <span>{headerParts.join(' · ')}</span>
+      <div className="space-y-1 text-[11px] text-muted-foreground sm:text-xs">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="font-medium text-foreground/90">{headerParts.join(' · ')}</span>
           {isLive ? (
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
               En vivo
             </span>
           ) : null}
-        </p>
+        </div>
+        {dateTime ? <p className="text-foreground/80">{dateTime}</p> : null}
         {stadiumLine ? (
           <p className="truncate" title={stadiumLine}>
             {stadiumLine}
@@ -160,30 +161,32 @@ export default function FubolsCupMatchTile({
         ) : null}
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-1.5 gap-y-1 sm:flex sm:gap-2">
         <TileCountryLine
           team={match.homeTeam}
           slotLabel={match.homeTeamSlotLabel}
           slotSourceMatch={match.homeTeamSlotSourceMatch}
         />
         {hasScore ? (
-          <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
+          <span className="shrink-0 justify-self-center text-sm font-bold tabular-nums text-foreground">
             {homeScore}–{awayScore}
           </span>
         ) : (
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="shrink-0 justify-self-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             vs
           </span>
         )}
-        <TileCountryLine
-          team={match.awayTeam}
-          slotLabel={match.awayTeamSlotLabel}
-          slotSourceMatch={match.awayTeamSlotSourceMatch}
-        />
+        <div className="flex min-w-0 justify-end">
+          <TileCountryLine
+            team={match.awayTeam}
+            slotLabel={match.awayTeamSlotLabel}
+            slotSourceMatch={match.awayTeamSlotSourceMatch}
+          />
+        </div>
       </div>
 
       {duelPoints ? (
-        <p className="mt-2 text-xs text-foreground/90">
+        <p className="mt-2 text-[11px] leading-snug text-foreground/90 sm:text-xs">
           <span className="font-medium text-muted-foreground">Puntos del cruce: </span>
           {duelPoints.pointsA != null && duelPoints.pointsB != null ? (
             <>

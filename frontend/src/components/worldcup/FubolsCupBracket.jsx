@@ -7,13 +7,26 @@ import { cn } from '@/lib/utils';
 const CUARTOS_LEFT_DUEL_INDEXES = [1, 2];
 const CUARTOS_RIGHT_DUEL_INDEXES = [0, 3];
 
+/** Mobile: columnas más anchas para Gdif/Pts; encabezado PTS abreviado en pantallas chicas. */
 const playerRowGridClass =
-  'grid grid-cols-[1.75rem_minmax(0,1fr)_2.5rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-2';
+  'grid grid-cols-[1.5rem_minmax(0,1fr)_2.75rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[2.5rem_minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-2';
 
 const liveDuelPlayerRowGridClass =
-  'grid grid-cols-[minmax(0,1fr)_2.5rem_3rem] items-center gap-x-2 sm:grid-cols-[minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-3';
+  'grid grid-cols-[minmax(0,1fr)_2.75rem_2.25rem] items-center gap-x-1.5 sm:grid-cols-[minmax(0,1fr)_3.5rem_3.5rem] sm:gap-x-3';
 
-const playerRowPaddingClass = 'px-2.5 sm:px-3';
+const playerRowPaddingClass = 'px-2 sm:px-3';
+
+function PtsColumnHeader({ partial = false }) {
+  const fullLabel = partial ? 'Puntos totales parciales del cruce' : 'Puntos totales del cruce';
+  return (
+    <span className="text-right leading-tight" title={fullLabel}>
+      <span className="sm:hidden">Pts</span>
+      <span className="hidden whitespace-nowrap sm:inline">
+        {partial ? 'Pts tot. parcial' : 'Pts tot.'}
+      </span>
+    </span>
+  );
+}
 
 function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
   const duelSlice = wc.duelSlice ?? sliceByExternalId?.[wc.externalId] ?? null;
@@ -47,7 +60,7 @@ function PlayerLineHeader({ partial = false }) {
       <span>#</span>
       <span className="min-w-0">Jugador</span>
       <span className="text-center">Gdif</span>
-      <span className="text-right">{partial ? 'Pts tot. parcial' : 'Pts tot.'}</span>
+      <PtsColumnHeader partial={partial} />
     </div>
   );
 }
@@ -63,7 +76,7 @@ function LiveDuelPlayerLineHeader({ partial = false }) {
     >
       <span className="min-w-0">Jugador</span>
       <span className="text-center">Gdif</span>
-      <span className="text-right">{partial ? 'Pts tot. parcial' : 'Pts tot.'}</span>
+      <PtsColumnHeader partial={partial} />
     </div>
   );
 }
@@ -183,7 +196,7 @@ function DuelCard({ duel, className }) {
   return (
     <article
       className={cn(
-        'flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-3 shadow-sm sm:gap-3 sm:p-5',
+        'flex min-w-0 flex-col gap-2 overflow-hidden rounded-xl border bg-card p-2.5 shadow-sm sm:gap-3 sm:p-5',
         isLiveLayout && 'border-emerald-500/30',
         className
       )}
@@ -333,7 +346,7 @@ export default function FubolsCupBracket({ rounds = [], demoDuel = null }) {
   const final = roundByKey.final;
 
   return (
-    <div className="flex flex-col gap-8 rounded-lg border bg-card/40 p-3 sm:p-6">
+    <div className="flex min-w-0 flex-col gap-6 overflow-x-hidden rounded-lg border bg-card/40 p-2 sm:gap-8 sm:p-6">
       {cuartos ? <CuartosSplitBracket round={cuartos} /> : null}
 
       {semis ? <RoundSection round={semis} gridClassName="md:grid-cols-2" /> : null}
