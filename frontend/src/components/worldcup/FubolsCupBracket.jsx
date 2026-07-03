@@ -35,7 +35,7 @@ function WorldCupMatchBlock({ wc, duel, sliceByExternalId }) {
   );
 }
 
-function PlayerLineHeader() {
+function PlayerLineHeader({ partial = false }) {
   return (
     <div
       className={cn(
@@ -47,7 +47,7 @@ function PlayerLineHeader() {
       <span>#</span>
       <span className="min-w-0">Jugador</span>
       <span className="text-center">Gdif</span>
-      <span className="text-right">Pts</span>
+      <span className="text-right">{partial ? 'Pts tot. parcial' : 'Pts tot.'}</span>
     </div>
   );
 }
@@ -69,7 +69,7 @@ function LiveDuelPlayerLineHeader({ partial = false }) {
 }
 
 function formatLiveMatchPoints(points) {
-  return points == null ? '—' : String(points);
+  return String(points ?? 0);
 }
 
 function PlayerLine({ player, isWinner }) {
@@ -111,7 +111,7 @@ function PlayerLine({ player, isWinner }) {
         {formatGoalDiffScore(player.difGl, player.difGv, player.pj)}
       </span>
       <span className="text-right text-xs font-semibold tabular-nums sm:text-sm">
-        {player.totalPoints ?? 0}
+        {formatLiveMatchPoints(player.matchPoints)}
       </span>
     </div>
   );
@@ -192,7 +192,7 @@ function DuelCard({ duel, className }) {
         {isLiveLayout ? (
           <LiveDuelPlayerLineHeader partial={Boolean(duel.partialHeaderPoints)} />
         ) : (
-          <PlayerLineHeader />
+          <PlayerLineHeader partial={Boolean(duel.partialHeaderPoints)} />
         )}
       </div>
       <div className="flex flex-col gap-2">

@@ -587,7 +587,13 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
     }
 
     if (duel.resolvedAt && duel.winnerId) {
-      enriched.push(duel);
+      const totals = sumDuelMatchPointsFromResults(duel.matchResults);
+      enriched.push({
+        ...duel,
+        partialHeaderPoints: false,
+        playerA: { ...duel.playerA, matchPoints: totals.pointsA },
+        playerB: { ...duel.playerB, matchPoints: totals.pointsB },
+      });
       continue;
     }
 
@@ -631,13 +637,28 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
       worldCupMatches.push({ ...wc, match: matchPayload, duelSlice });
     }
 
-    if (!hasLive && !allDuelMatchesFinished) {
-      enriched.push(duel);
-      continue;
-    }
+    const headerPoints = pickLiveDuelHeaderPoints(worldCupMatches);
+    const playerA = {
+      ...duel.playerA,
+      matchPoints: headerPoints?.pointsA ?? 0,
+    };
+    const playerB = {
+      ...duel.playerB,
+      matchPoints: headerPoints?.pointsB ?? 0,
+    };
+    const partialHeaderPoints = Boolean(headerPoints?.isPartial);
 
-    if (!primarySlice || !matchResults.length) {
-      enriched.push(duel);
+    const canResolveLive =
+      (hasLive || allDuelMatchesFinished) && primarySlice && matchResults.length;
+
+    if (!canResolveLive) {
+      enriched.push({
+        ...duel,
+        partialHeaderPoints,
+        worldCupMatches,
+        playerA,
+        playerB,
+      });
       continue;
     }
 
@@ -648,15 +669,6 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
       tournamentStatsByUserId,
       allowTiebreak: allDuelMatchesFinished,
     });
-    const headerPoints = pickLiveDuelHeaderPoints(worldCupMatches);
-    const playerA = {
-      ...duel.playerA,
-      matchPoints: headerPoints?.pointsA ?? null,
-    };
-    const playerB = {
-      ...duel.playerB,
-      matchPoints: headerPoints?.pointsB ?? null,
-    };
     const tiebreak = buildMatchPointsTiebreak({
       pointsA: primarySlice.pointsA,
       pointsB: primarySlice.pointsB,
@@ -671,7 +683,7 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
     enriched.push({
       ...duel,
       isLiveDuel: true,
-      partialHeaderPoints: Boolean(headerPoints?.isPartial),
+      partialHeaderPoints,
       worldCupMatches,
       playerA,
       playerB,
@@ -875,6 +887,8 @@ function buildMatchPointsTiebreak({
 /** Suma puntos del cruce en partidos con score (totales parciales hasta cerrar el duelo). */
 function pickLiveDuelHeaderPoints(worldCupMatches) {
   const rows = worldCupMatches ?? [];
+  if (!rows.length) return null;
+
   const hasPendingMatch = rows.some(
     (wc) => wc.match?.status === 'live' || wc.match?.status === 'upcoming'
   );
@@ -891,13 +905,22 @@ function pickLiveDuelHeaderPoints(worldCupMatches) {
     scoredMatches += 1;
   }
 
-  if (scoredMatches === 0) return null;
-
   return {
     pointsA,
     pointsB,
-    isPartial: hasPendingMatch,
+    isPartial: hasPendingMatch || scoredMatches === 0,
   };
+}
+
+function sumDuelMatchPointsFromResults(matchResults) {
+  let pointsA = 0;
+  let pointsB = 0;
+  for (const row of matchResults ?? []) {
+    if (row.pointsA == null || row.pointsB == null) continue;
+    pointsA += row.pointsA;
+    pointsB += row.pointsB;
+  }
+  return { pointsA, pointsB };
 }
 
 export async function buildLiveDemoDuel(groupId, viewerUserId) {
@@ -967,8 +990,8 @@ export async function buildLiveDemoDuel(groupId, viewerUserId) {
     allowTiebreak: allDuelMatchesFinished,
   });
   const headerPoints = pickLiveDuelHeaderPoints(worldCupMatches);
-  const playerA = serializeDemoPlayer(aiUser, profileA, headerPoints?.pointsA ?? null);
-  const playerB = serializeDemoPlayer(humanOpponent, profileB, headerPoints?.pointsB ?? null);
+  const playerA = serializeDemoPlayer(aiUser, profileA, headerPoints?.pointsA ?? 0);
+  const playerB = serializeDemoPlayer(humanOpponent, profileB, headerPoints?.pointsB ?? 0);
   const tiebreak = buildMatchPointsTiebreak({
     pointsA: primarySlice?.pointsA,
     pointsB: primarySlice?.pointsB,

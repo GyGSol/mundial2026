@@ -750,6 +750,23 @@ describe('fubolsCupService', () => {
     expect(demoDuel?.playerA.name).toBe('Futbot');
   });
 
+  it('cruce pendiente muestra 0 pts del enfrentamiento, no totales del torneo', async () => {
+    await finishRoundOf32();
+    const { groupId, admin } = await setupGroupWithHumans(8);
+    await trySeedFubolsCup(groupId);
+
+    const dashboard = await getFubolsCupDashboard(groupId, admin._id);
+    const qfRound = dashboard.rounds.find((round) => round.roundKey === 'quarter_final');
+    const pendingDuel = qfRound.duels.find(
+      (row) => row.playerA?.totalPoints > 0 && row.playerB?.totalPoints > 0
+    );
+    expect(pendingDuel).toBeTruthy();
+    expect(pendingDuel.playerA.matchPoints).toBe(0);
+    expect(pendingDuel.playerB.matchPoints).toBe(0);
+    expect(pendingDuel.partialHeaderPoints).toBe(true);
+    expect(pendingDuel.playerA.totalPoints).toBeGreaterThan(0);
+  });
+
   it('cruce en vivo expone isLiveDuel con puntos del partido en dashboard', async () => {
     await finishRoundOf32();
     const { groupId, admin } = await setupGroupWithHumans(8);
