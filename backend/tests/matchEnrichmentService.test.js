@@ -65,6 +65,17 @@ vi.mock('../src/services/tournamentGoalsFinishedMatchesCache.js', () => ({
   }),
 }));
 
+const loadOfficialKnockoutDisplayByExternalIdMock = vi.fn();
+
+vi.mock('../src/services/officialKnockoutDisplayService.js', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    loadOfficialKnockoutDisplayByExternalId: (...args) =>
+      loadOfficialKnockoutDisplayByExternalIdMock(...args),
+  };
+});
+
 import { Player } from '../src/models/Player.js';
 import { ensureDefaultPredictionsForUser } from '../src/services/predictionLockService.js';
 import { getCachedUserPredictedMatchContext } from '../src/services/userPredictedMatchContextCache.js';
@@ -190,6 +201,7 @@ describe('enrichMatchesForPredictions', () => {
 describe('enrichMatchesForPredictionsList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    loadOfficialKnockoutDisplayByExternalIdMock.mockResolvedValue({});
     getCachedUserPredictedMatchContext.mockResolvedValue({
       resolvedKnockoutByExternalId: new Map(),
     });
@@ -273,5 +285,46 @@ describe('enrichMatchesForPredictionsList', () => {
     expect(match.penaltyShootout?.homeScore).toBe(3);
     expect(match.penaltyShootout?.awayScore).toBe(4);
     expect(enrichMatchLiveFields).not.toHaveBeenCalled();
+  });
+
+  it('aplica fallback oficial cuando el contexto de usuario no resuelve slots knockout', async () => {
+    loadOfficialKnockoutDisplayByExternalIdMock.mockResolvedValue({
+      93: {
+        homeTeam: null,
+        awayTeam: null,
+        homeTeamSlotLabel: 'Ganador de POR vs CRO',
+        awayTeamSlotLabel: 'Ganador de ESP vs AUT',
+        homeTeamSlotSourceMatch: {
+          homeTeam: { externalId: 'POR', fifaCode: 'POR', nameEn: 'Portugal' },
+          awayTeam: { externalId: 'CRO', fifaCode: 'CRO', nameEn: 'Croatia' },
+        },
+        awayTeamSlotSourceMatch: {
+          homeTeam: { externalId: 'ESP', fifaCode: 'ESP', nameEn: 'Spain' },
+          awayTeam: { externalId: 'AUT', fifaCode: 'AUT', nameEn: 'Austria' },
+        },
+        phaseLabel: 'Octavos de final',
+      },
+    });
+
+    const [match] = await enrichMatchesForPredictionsList(
+      [
+        {
+          _id: 'mongo93',
+          externalId: '93',
+          homeTeamId: '0',
+          awayTeamId: '0',
+          status: 'upcoming',
+          homeScore: 0,
+          awayScore: 0,
+        },
+      ],
+      'user-id',
+      { liveBarMatchIds: new Set() }
+    );
+
+    expect(loadOfficialKnockoutDisplayByExternalIdMock).toHaveBeenCalledWith(['93']);
+    expect(match.homeTeamSlotLabel).toBe('Ganador de POR vs CRO');
+    expect(match.homeTeamSlotSourceMatch?.homeTeam?.fifaCode).toBe('POR');
+    expect(match.awayTeamSlotSourceMatch?.awayTeam?.fifaCode).toBe('AUT');
   });
 });

@@ -26,6 +26,10 @@ import { getBroadcastersForMatch } from '../data/broadcastSchedule.js';
 import {
   attachWeatherAndScheduleToEnrichedMatches,
 } from './matchWeatherEnrichmentService.js';
+import {
+  loadOfficialKnockoutDisplayByExternalId,
+  mergeOfficialKnockoutFallback,
+} from './officialKnockoutDisplayService.js';
 import { resolveDisplayKickoffAt, resolveScheduleKickoffAt } from './kickoffTimeService.js';
 import { serializeWeatherOpsForClient } from './matchWeatherOpsRules.js';
 import { unifyRawTeamPlayers } from './playerRosterUnifyService.js';
@@ -406,9 +410,29 @@ export async function enrichMatchesForPredictionsList(
   const enrichedById = new Map(
     [...lightEnriched, ...liveEnriched].map((match) => [match.id, match])
   );
-  return matches
+  const ordered = matches
     .map((match) => enrichedById.get(match._id.toString()))
     .filter(Boolean);
+
+  const knockoutIdsNeedingFallback = ordered
+    .filter(
+      (match) =>
+        isOfficialKnockoutMatch(match) &&
+        !match.homeTeam &&
+        !match.homeTeamSlotLabel &&
+        !match.homeTeamSlotSourceMatch &&
+        !match.awayTeam &&
+        !match.awayTeamSlotLabel &&
+        !match.awayTeamSlotSourceMatch
+    )
+    .map((match) => String(match.externalId));
+
+  if (!knockoutIdsNeedingFallback.length) return ordered;
+
+  const officialByExternalId = await loadOfficialKnockoutDisplayByExternalId(
+    knockoutIdsNeedingFallback
+  );
+  return mergeOfficialKnockoutFallback(ordered, officialByExternalId);
 }
 
 export async function prepareFifaShirtMapsForMatches(matches) {

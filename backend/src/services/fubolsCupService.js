@@ -40,11 +40,11 @@ import { enrichMatches } from './matchEnrichmentService.js';
 import { getAiUser } from './aiUserService.js';
 import { calculatePoints, resolveScoringActual } from './scoringService.js';
 import { PREDICTIONS_LIST_MATCH_PROJECTION } from './liveBarMatchProjection.js';
-import { getFifaWorldRankings } from './aiTeamMatchContextService.js';
 import {
-  buildKnockoutPhases,
-  WORLD_CUP_MATCH_SELECT,
-} from './worldCupStatsService.js';
+  applyOfficialKnockoutDisplay,
+  loadOfficialKnockoutDisplayByExternalId,
+  mergeOfficialKnockoutFallback,
+} from './officialKnockoutDisplayService.js';
 
 function cupError(message, status = 400) {
   const error = new Error(message);
@@ -681,56 +681,6 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
   }
 
   return enriched;
-}
-
-function applyOfficialKnockoutDisplay(enriched, official) {
-  if (!official) return enriched;
-
-  return {
-    ...enriched,
-    homeTeam: official.homeTeam ?? enriched.homeTeam,
-    awayTeam: official.awayTeam ?? enriched.awayTeam,
-    homeTeamSlotLabel: official.homeTeam ? null : official.homeTeamSlotLabel,
-    awayTeamSlotLabel: official.awayTeam ? null : official.awayTeamSlotLabel,
-    homeTeamSlotSourceMatch: official.homeTeam ? null : official.homeTeamSlotSourceMatch,
-    awayTeamSlotSourceMatch: official.awayTeam ? null : official.awayTeamSlotSourceMatch,
-    knockoutPhase: official.phaseLabel ?? enriched.knockoutPhase,
-  };
-}
-
-const KNOCKOUT_EXTERNAL_IDS = Array.from({ length: 32 }, (_, index) => String(73 + index));
-
-async function loadOfficialKnockoutDisplayByExternalId(targetExternalIds) {
-  const targetSet = new Set(targetExternalIds.map(String));
-  const needsKnockout = [...targetSet].some((id) => {
-    const n = Number(id);
-    return Number.isFinite(n) && n >= 73 && n <= 104;
-  });
-  if (!needsKnockout) return {};
-
-  const [knockoutMatches, teams, stadiums, rankings] = await Promise.all([
-    Match.find({ externalId: { $in: KNOCKOUT_EXTERNAL_IDS } })
-      .select(WORLD_CUP_MATCH_SELECT)
-      .lean(),
-    Team.find({}).lean(),
-    Stadium.find({}).lean(),
-    getFifaWorldRankings(),
-  ]);
-
-  const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
-  const stadiumMap = Object.fromEntries(stadiums.map((stadium) => [stadium.externalId, stadium]));
-  const phases = buildKnockoutPhases(knockoutMatches, teamMap, stadiumMap, rankings);
-
-  const byExternalId = {};
-  for (const phase of phases) {
-    for (const match of phase.matches) {
-      const key = String(match.externalId);
-      if (targetSet.has(key)) {
-        byExternalId[key] = match;
-      }
-    }
-  }
-  return byExternalId;
 }
 
 async function loadEnrichedMatchesByExternalId(

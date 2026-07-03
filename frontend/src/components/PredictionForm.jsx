@@ -61,6 +61,8 @@ function MatchScoreboard({
   awayTeam,
   homeTeamSlotLabel,
   awayTeamSlotLabel,
+  homeTeamSlotSourceMatch,
+  awayTeamSlotSourceMatch,
   showActualScores,
   homeScore,
   awayScore,
@@ -73,8 +75,16 @@ function MatchScoreboard({
   return (
     <div className="flex w-full flex-col gap-3 md:gap-4 lg:gap-5">
       <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6">
-        <TeamHeader team={homeTeam} slotLabel={homeTeamSlotLabel} />
-        <TeamHeader team={awayTeam} slotLabel={awayTeamSlotLabel} />
+        <TeamHeader
+          team={homeTeam}
+          slotLabel={homeTeamSlotLabel}
+          slotSourceMatch={homeTeamSlotSourceMatch}
+        />
+        <TeamHeader
+          team={awayTeam}
+          slotLabel={awayTeamSlotLabel}
+          slotSourceMatch={awayTeamSlotSourceMatch}
+        />
       </div>
 
       {showActualScores && (
@@ -235,14 +245,20 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
     'aria-label': side === 'home' ? 'Goles local' : 'Goles visitante',
   });
 
+  const teamDisplayProps = {
+    homeTeam: match.homeTeam,
+    awayTeam: match.awayTeam,
+    homeTeamSlotLabel: match.homeTeamSlotLabel,
+    awayTeamSlotLabel: match.awayTeamSlotLabel,
+    homeTeamSlotSourceMatch: match.homeTeamSlotSourceMatch,
+    awayTeamSlotSourceMatch: match.awayTeamSlotSourceMatch,
+  };
+
   if (locked) {
     return (
       <div className="flex flex-col items-center gap-3">
         <MatchScoreboard
-          homeTeam={match.homeTeam}
-          awayTeam={match.awayTeam}
-          homeTeamSlotLabel={match.homeTeamSlotLabel}
-          awayTeamSlotLabel={match.awayTeamSlotLabel}
+          {...teamDisplayProps}
           showActualScores={showActualScores}
           homeScore={fieldScores.homeScore}
           awayScore={fieldScores.awayScore}
@@ -264,10 +280,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
     return (
       <div className="flex flex-col items-center gap-4">
         <MatchScoreboard
-          homeTeam={match.homeTeam}
-          awayTeam={match.awayTeam}
-          homeTeamSlotLabel={match.homeTeamSlotLabel}
-          awayTeamSlotLabel={match.awayTeamSlotLabel}
+          {...teamDisplayProps}
           showActualScores={showActualScores}
           homeScore={fieldScores.homeScore}
           awayScore={fieldScores.awayScore}
@@ -297,10 +310,7 @@ export default function PredictionForm({ match, onSave, saving, broadcasters = [
   return (
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
       <MatchScoreboard
-        homeTeam={match.homeTeam}
-        awayTeam={match.awayTeam}
-        homeTeamSlotLabel={match.homeTeamSlotLabel}
-        awayTeamSlotLabel={match.awayTeamSlotLabel}
+        {...teamDisplayProps}
         showActualScores={showActualScores}
         homeScore={fieldScores.homeScore}
         awayScore={fieldScores.awayScore}

@@ -332,4 +332,77 @@ describe('predictedKnockoutService', () => {
     expect(m103.homeTeamSlotSourceMatch.awayTeam?.externalId).toBe('B1');
     expect(m103.awayTeamSlotLabel).toBe('Perdedor de C1 vs D1');
   });
+
+  it('resuelve octavos 93 desde partidos 83 y 84 con slotSourceMatch', () => {
+    const teams = [
+      { externalId: 'POR', nameEn: 'Portugal', fifaCode: 'POR', flag: '' },
+      { externalId: 'CRO', nameEn: 'Croatia', fifaCode: 'CRO', flag: '' },
+      { externalId: 'ESP', nameEn: 'Spain', fifaCode: 'ESP', flag: '' },
+      { externalId: 'AUT', nameEn: 'Austria', fifaCode: 'AUT', flag: '' },
+    ];
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const knockoutMatches = [
+      {
+        ...knockoutMatch(83, 'Winner Group E', 'Runner-up Group F'),
+        homeTeamId: 'POR',
+        awayTeamId: 'CRO',
+        status: 'upcoming',
+      },
+      {
+        ...knockoutMatch(84, 'Winner Group G', 'Runner-up Group H'),
+        homeTeamId: 'ESP',
+        awayTeamId: 'AUT',
+        status: 'upcoming',
+      },
+      knockoutMatch(93, 'Winner Match 83', 'Winner Match 84', 'r16'),
+    ];
+
+    const { phases } = buildPredictedKnockoutPhases({
+      groupStandings: [],
+      knockoutMatches,
+      predictionsByMatchId: new Map(),
+      teamMap,
+    });
+
+    const m93 = findMatch(phases, 93);
+    expect(m93.homeTeam).toBeNull();
+    expect(m93.awayTeam).toBeNull();
+    expect(m93.homeTeamSlotLabel).toContain('Ganador de');
+    expect(m93.homeTeamSlotSourceMatch?.homeTeam?.fifaCode).toBe('POR');
+    expect(m93.homeTeamSlotSourceMatch?.awayTeam?.fifaCode).toBe('CRO');
+    expect(m93.awayTeamSlotSourceMatch?.homeTeam?.fifaCode).toBe('ESP');
+    expect(m93.awayTeamSlotSourceMatch?.awayTeam?.fifaCode).toBe('AUT');
+  });
+
+  it('no resuelve partido 93 sin raw labels en feeders', () => {
+    const teams = [
+      { externalId: 'POR', nameEn: 'Portugal', fifaCode: 'POR', flag: '' },
+      { externalId: 'CRO', nameEn: 'Croatia', fifaCode: 'CRO', flag: '' },
+    ];
+    const teamMap = Object.fromEntries(teams.map((team) => [team.externalId, team]));
+    const knockoutMatches = [
+      {
+        _id: 'm93',
+        externalId: '93',
+        homeTeamId: '0',
+        awayTeamId: '0',
+        homeScore: 0,
+        awayScore: 0,
+        type: 'r16',
+        status: 'upcoming',
+        raw: {},
+      },
+    ];
+
+    const { phases } = buildPredictedKnockoutPhases({
+      groupStandings: [],
+      knockoutMatches,
+      predictionsByMatchId: new Map(),
+      teamMap,
+    });
+
+    const m93 = findMatch(phases, 93);
+    expect(m93.homeTeamSlotLabel).toBeNull();
+    expect(m93.awayTeamSlotLabel).toBeNull();
+  });
 });

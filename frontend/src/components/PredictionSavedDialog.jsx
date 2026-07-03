@@ -73,8 +73,16 @@ export default function PredictionSavedDialog({ match, homeGoals, awayGoals, ope
         </CardHeader>
         <CardContent className="flex flex-col gap-4 pt-0">
           <div className="grid grid-cols-2 gap-3">
-            <TeamHeader team={match.homeTeam} slotLabel={match.homeTeamSlotLabel} />
-            <TeamHeader team={match.awayTeam} slotLabel={match.awayTeamSlotLabel} />
+            <TeamHeader
+              team={match.homeTeam}
+              slotLabel={match.homeTeamSlotLabel}
+              slotSourceMatch={match.homeTeamSlotSourceMatch}
+            />
+            <TeamHeader
+              team={match.awayTeam}
+              slotLabel={match.awayTeamSlotLabel}
+              slotSourceMatch={match.awayTeamSlotSourceMatch}
+            />
           </div>
           <SavedScoreboard homeGoals={homeGoals} awayGoals={awayGoals} />
           <p className="text-center text-sm text-muted-foreground">Tu predicción quedó registrada.</p>
