@@ -9,6 +9,7 @@ Aplicación web para predecir resultados del Mundial FIFA 2026 (48 equipos, 104 
 | **Deploy** | [HEROKU.md](./HEROKU.md) · [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) (QA local → prod) |
 | **Backup y seguridad DB** | [docs/DATABASE_BACKUP_AND_RECOVERY.md](./docs/DATABASE_BACKUP_AND_RECOVERY.md) |
 | **Ranking en vivo (perf)** | [docs/RANKING_DASHBOARD_LIVE_PERFORMANCE.md](./docs/RANKING_DASHBOARD_LIVE_PERFORMANCE.md) (FBL-17/18/19) |
+| **Copa Fubols (playoff)** | [docs/FUBOLS_CUP.md](./docs/FUBOLS_CUP.md) (FBL-25) |
 
 ## Stack
 
