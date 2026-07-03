@@ -29,17 +29,18 @@ export function estimateLiveClockFromKickoff(kickoffAt, now = Date.now()) {
 }
 
 /**
+ * Solo usar kickoff cuando FIFA/cronología no publican reloj (0', live, null).
+ * Nunca reemplazar un reloj fiable aunque kickoffAt esté desfasado (demora pre-inicio).
+ *
  * @param {string | null | undefined} clockLabel
- * @param {number} lagMinutes — cuántos minutos de atraso toleramos vs kickoff
  */
-export function kickoffClockShouldOverride(clockLabel, kickoffClock, lagMinutes = 3) {
+export function kickoffClockShouldOverride(clockLabel, kickoffClock) {
   if (!kickoffClock) return false;
   const kickoffKey = parseKickoffClockSortKey(kickoffClock);
   if (kickoffKey < 1) return false;
 
   const bestKey = parseKickoffClockSortKey(clockLabel);
-  if (bestKey < 1) return true;
-  return kickoffKey >= bestKey + lagMinutes;
+  return bestKey < 1;
 }
 
 function parseKickoffClockSortKey(clock) {

@@ -22,10 +22,15 @@ describe('liveMatchKickoffClock', () => {
     );
   });
 
-  it('override cuando FIFA queda en 0', () => {
+  it('override solo cuando no hay reloj fiable (FIFA/cronología en 0 o vacío)', () => {
     expect(kickoffClockShouldOverride("0'", "20'")).toBe(true);
     expect(kickoffClockShouldOverride(null, "20'")).toBe(true);
     expect(kickoffClockShouldOverride("58'", "20'")).toBe(false);
     expect(kickoffClockShouldOverride("48'", "50'")).toBe(false);
+  });
+
+  it('no infla reloj si FIFA ya publica minuto (POR–CRO #83)', () => {
+    expect(kickoffClockShouldOverride("52'", "82'")).toBe(false);
+    expect(kickoffClockShouldOverride("51'", "79'")).toBe(false);
   });
 });

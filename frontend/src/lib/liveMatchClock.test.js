@@ -101,4 +101,24 @@ describe('liveMatchClock', () => {
 
     vi.useRealTimers();
   });
+
+  it('no usa kickoff si FIFA ya publica minuto (POR–CRO #83)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-03T00:22:00.000Z'));
+
+    const match = {
+      status: 'live',
+      kickoffAt: '2026-07-02T23:00:00.000Z',
+      matchPlayState: { phase: 'in_play' },
+      matchTimeline: [{ type: 'foul', minute: 51, sortKey: 51 }],
+      raw: {
+        time_elapsed: '52',
+        fifaLiveState: { matchTime: "52'" },
+      },
+    };
+
+    expect(resolveLiveMatchDisplayClock(match)).toBe("52'");
+
+    vi.useRealTimers();
+  });
 });
