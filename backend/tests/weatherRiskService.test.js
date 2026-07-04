@@ -3,6 +3,7 @@ import {
   assessMscAlerts,
   assessNwsAlerts,
   assessOpenMeteoRisk,
+  fifaLiveContradictsWeatherSuspension,
   mergeRiskLevels,
   shouldAllowOpenMeteoInPlaySuspension,
   shouldClearContradictedInPlaySuspension,
@@ -36,7 +37,51 @@ describe('weatherRiskService', () => {
       },
     ]);
     expect(result.contribution).toBe('stop');
+    expect(result.inPlayContribution).toBe('stop');
     expect(result.primaryAlert?.event).toBe('Severe Thunderstorm Warning');
+  });
+
+  it('assessNwsAlerts Watch eleva pre-kickoff pero no in-play stop', () => {
+    const result = assessNwsAlerts([
+      {
+        properties: {
+          id: 'watch-1',
+          event: 'Severe Thunderstorm Watch',
+          headline: 'Vigilancia de tormenta',
+          sent: '2026-07-04T21:00:00+00:00',
+        },
+      },
+    ]);
+    expect(result.contribution).toBe('stop');
+    expect(result.inPlayContribution).toBe('elevated');
+  });
+
+  it('shouldSuggestInPlaySuspension no suspende in-play solo por NWS Watch', () => {
+    const match = {
+      status: 'live',
+      weatherOps: { phase: 'normal' },
+      raw: { time_elapsed: "32'" },
+    };
+    const watchRisk = {
+      available: true,
+      riskLevel: 'stop',
+      inPlayRiskLevel: 'elevated',
+      authorityAlertSource: 'nws',
+    };
+    expect(shouldSuggestInPlaySuspension(watchRisk, match, { externalId: '6', country: 'USA' })).toBe(
+      false
+    );
+  });
+
+  it('fifaLiveContradictsWeatherSuspension detecta juego al min 35 sin token suspend', () => {
+    const match = {
+      status: 'live',
+      raw: {
+        time_elapsed: "35'",
+        fifaLiveState: { matchTime: "35'", period: '3', matchStatus: '3' },
+      },
+    };
+    expect(fifaLiveContradictsWeatherSuspension(match)).toBe(true);
   });
 
   it('assessMscAlerts eleva riesgo con thunderstorm warning', () => {
@@ -162,8 +207,22 @@ describe('weatherRiskService', () => {
         {
           ...suspended,
           weatherOps: { phase: 'suspended', source: 'nws' },
+          raw: {
+            time_elapsed: "15'",
+            fifaLiveState: { matchTime: "35'", period: '3', matchStatus: '3' },
+          },
         },
-        { authorityAlertSource: 'nws', riskLevel: 'stop' },
+        { authorityAlertSource: 'nws', riskLevel: 'stop', inPlayRiskLevel: 'elevated' },
+        stadiumRoof
+      )
+    ).toBe(true);
+    expect(
+      shouldClearContradictedInPlaySuspension(
+        {
+          ...suspended,
+          weatherOps: { phase: 'suspended', source: 'nws' },
+        },
+        { authorityAlertSource: 'nws', riskLevel: 'stop', inPlayRiskLevel: 'stop' },
         stadiumRoof
       )
     ).toBe(false);

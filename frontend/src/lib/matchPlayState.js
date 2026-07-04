@@ -5,6 +5,55 @@ const STRUCTURAL_TIMELINE_TYPES = new Set([
   'match_end',
 ]);
 
+function pickMaxClockLabel(...labels) {
+  let bestKey = Number.NEGATIVE_INFINITY;
+  let bestLabel = null;
+
+  for (const label of labels.flat()) {
+    if (!label) continue;
+    const normalized = String(label).trim().replace(/'+$/, '').toLowerCase();
+    if (normalized === 'ht' || normalized === 'halftime' || normalized === 'entretiempo') {
+      if (45 > bestKey) {
+        bestKey = 45;
+        bestLabel = 'Entretiempo';
+      }
+      continue;
+    }
+    const extraMatch = normalized.match(/^(\d+)\+(\d+)$/);
+    const key = extraMatch
+      ? Number(extraMatch[1]) + Number(extraMatch[2]) / 100
+      : Number(normalized);
+    if (Number.isFinite(key) && key > bestKey) {
+      bestKey = key;
+      bestLabel = String(label).includes("'") ? label : `${label}'`;
+    }
+  }
+
+  return bestLabel;
+}
+
+function latestClockFromTimeline(timeline = []) {
+  let best = null;
+  let bestKey = Number.NEGATIVE_INFINITY;
+
+  for (const event of timeline) {
+    if (STRUCTURAL_TIMELINE_TYPES.has(event?.type)) continue;
+    const key = timelineEventSortKey(event);
+    if (key <= bestKey) continue;
+    bestKey = key;
+    const minute = Number(event?.minute);
+    const extra = Number(event?.extraMinute ?? 0);
+    if (!Number.isFinite(minute)) continue;
+    best = extra > 0 ? `${minute}+${extra}'` : `${minute}'`;
+  }
+
+  return best;
+}
+
+function resolveWeatherFrozenClock(match) {
+  return pickMaxClockLabel(match?.timeElapsed, latestClockFromTimeline(match?.matchTimeline ?? []));
+}
+
 export function isMatchPlayPaused(playState) {
   return Boolean(playState?.phase && playState.phase !== 'in_play');
 }
@@ -12,8 +61,12 @@ export function isMatchPlayPaused(playState) {
 export function getEffectiveMatchPlayState(match) {
   if (match?.matchPlayState?.phase && match.matchPlayState.phase !== 'in_play') {
     const playState = match.matchPlayState;
-    if (!playState.frozenClock && match?.timeElapsed) {
-      return { ...playState, frozenClock: match.timeElapsed };
+    const frozenClock = pickMaxClockLabel(
+      playState.frozenClock,
+      resolveWeatherFrozenClock(match)
+    );
+    if (frozenClock && frozenClock !== playState.frozenClock) {
+      return { ...playState, frozenClock };
     }
     return playState;
   }
@@ -28,7 +81,7 @@ export function getEffectiveMatchPlayState(match) {
       phase: 'suspended',
       reason: 'weather',
       label: 'Suspendido por clima',
-      frozenClock: match?.timeElapsed ?? null,
+      frozenClock: resolveWeatherFrozenClock(match),
       source: 'weather_ops',
     };
   }
@@ -37,7 +90,7 @@ export function getEffectiveMatchPlayState(match) {
       phase: 'delayed',
       reason: 'weather',
       label: 'Demorado pre-kickoff',
-      frozenClock: match?.timeElapsed ?? null,
+      frozenClock: resolveWeatherFrozenClock(match),
       source: 'weather_ops',
     };
   }

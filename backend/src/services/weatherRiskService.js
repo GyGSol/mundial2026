@@ -10,25 +10,30 @@ import {
 } from './matchWeatherOpsRules.js';
 import { matchEvidenceShowsInProgress, maxEffectivePlayMinute } from './matchStatusRules.js';
 import { parseElapsedClockToSortKey } from './matchLiveData.js';
+import { fifaTokenIndicatesSuspended } from './matchPlayStateService.js';
 import { localizeAuthorityAlertsBlock } from '../../../shared/weatherAlertI18n.js';
 
 const AUTHORITY_ALERTS_CACHE_TTL_LIVE_MS = 3 * 60 * 1000;
 const AUTHORITY_ALERTS_CACHE_TTL_DEFAULT_MS = 30 * 60 * 1000;
 const authorityAlertsCache = new Map();
 
-const STOP_EVENT_TYPES = new Set([
+/** Warning-level NWS alerts — únicas que pueden suspender partido in-play. */
+const NWS_IN_PLAY_STOP_EVENT_TYPES = new Set([
   'Tornado Warning',
   'Severe Thunderstorm Warning',
-  'Severe Thunderstorm Watch',
-  'Tornado Watch',
   'Flash Flood Warning',
 ]);
+
+/** Watch-level — demora pre-kickoff, no suspensión in-play. */
+const NWS_WATCH_EVENT_TYPES = new Set(['Severe Thunderstorm Watch', 'Tornado Watch']);
 
 const ELEVATED_EVENT_TYPES = new Set([
   'Special Weather Statement',
   'Severe Weather Statement',
   'Flood Advisory',
   'Wind Advisory',
+  'Severe Thunderstorm Watch',
+  'Tornado Watch',
 ]);
 
 const STORM_WMO_CODES = new Set([95, 96, 99]);
@@ -102,13 +107,20 @@ export function assessNwsAlerts(alerts = []) {
     expires: a.properties?.expires ?? a.expires ?? null,
   }));
 
-  const hasStop = parsed.some((a) => STOP_EVENT_TYPES.has(a.event));
-  const hasElevated = parsed.some((a) => ELEVATED_EVENT_TYPES.has(a.event));
+  const hasInPlayStop = parsed.some((a) => NWS_IN_PLAY_STOP_EVENT_TYPES.has(a.event));
+  const hasWatch = parsed.some((a) => NWS_WATCH_EVENT_TYPES.has(a.event));
+  const hasElevated =
+    parsed.some((a) => ELEVATED_EVENT_TYPES.has(a.event)) || hasWatch;
 
-  const contribution = hasStop ? 'stop' : hasElevated ? 'elevated' : 'low';
-  const primaryAlert = parsed.find((a) => STOP_EVENT_TYPES.has(a.event)) ?? parsed[0] ?? null;
+  const contribution = hasInPlayStop || hasWatch ? 'stop' : hasElevated ? 'elevated' : 'low';
+  const inPlayContribution = hasInPlayStop ? 'stop' : hasElevated ? 'elevated' : 'low';
+  const primaryAlert =
+    parsed.find((a) => NWS_IN_PLAY_STOP_EVENT_TYPES.has(a.event)) ??
+    parsed.find((a) => NWS_WATCH_EVENT_TYPES.has(a.event)) ??
+    parsed[0] ??
+    null;
 
-  return { contribution, alerts: parsed, primaryAlert };
+  return { contribution, inPlayContribution, alerts: parsed, primaryAlert };
 }
 
 const MSC_STOP_NAME_RE =
@@ -260,6 +272,10 @@ export async function assessVenueWeatherRisk(
   }
 
   const riskLevel = mergeRiskLevels(openMeteo.contribution, authorityResult.contribution);
+  const inPlayRiskLevel = mergeRiskLevels(
+    openMeteo.contribution,
+    authorityResult.inPlayContribution ?? authorityResult.contribution
+  );
   const now = Date.now();
   const lastAlertAt = authorityResult.primaryAlert?.sent ?? null;
   const authorityAlertId = authorityResult.primaryAlert?.id ?? null;
@@ -291,6 +307,7 @@ export async function assessVenueWeatherRisk(
   return {
     available: true,
     riskLevel,
+    inPlayRiskLevel,
     withinWindow,
     profile,
     protocol,
@@ -373,9 +390,33 @@ function playMinuteForWeatherOps(match) {
   return key > Number.NEGATIVE_INFINITY ? key : null;
 }
 
+function resolveInPlayRiskLevel(risk) {
+  return risk?.inPlayRiskLevel ?? risk?.riskLevel ?? 'low';
+}
+
+/** FIFA sigue corriendo el reloj sin token de suspensión oficial. */
+export function fifaLiveContradictsWeatherSuspension(match, { minMinute = 20 } = {}) {
+  const fifaLive = match?.raw?.fifaLiveState ?? {};
+  const periodToken = String(fifaLive.period ?? fifaLive.Period ?? '').trim();
+  const statusToken = String(fifaLive.matchStatus ?? fifaLive.MatchStatus ?? '').trim();
+
+  if (fifaTokenIndicatesSuspended(periodToken) || fifaTokenIndicatesSuspended(statusToken)) {
+    return false;
+  }
+
+  const matchTime = String(fifaLive.matchTime ?? fifaLive.MatchTime ?? '').trim();
+  if (matchTime) {
+    const key = parseElapsedClockToSortKey(matchTime);
+    if (key >= minMinute) return true;
+  }
+
+  const playMinute = playMinuteForWeatherOps(match);
+  return playMinute != null && playMinute >= minMinute && matchEvidenceShowsInProgress(match);
+}
+
 /** Escenario B — partido ya `live` con riesgo `stop` (rayos / tormenta severa). */
 export function shouldSuggestInPlaySuspension(risk, match, stadium = {}) {
-  if (!risk?.available || risk.riskLevel !== 'stop') return false;
+  if (!risk?.available || resolveInPlayRiskLevel(risk) !== 'stop') return false;
   if (match?.status !== 'live') return false;
   if (!matchEvidentlyStartedOnField(match)) return false;
 
@@ -392,7 +433,7 @@ export function shouldSuggestInPlaySuspension(risk, match, stadium = {}) {
 
 /** Renueva lastAlertAt / resumeEarliestAt mientras sigue el riesgo `stop`. */
 export function shouldRefreshInPlaySuspension(risk, match, stadium = {}) {
-  if (!risk?.available || risk.riskLevel !== 'stop') return false;
+  if (!risk?.available || resolveInPlayRiskLevel(risk) !== 'stop') return false;
   if (match?.status !== 'live') return false;
   const ops = normalizeWeatherOps(match.weatherOps);
   if (ops.phase !== 'suspended' || ops.source === 'admin') return false;
@@ -410,7 +451,13 @@ export function shouldRefreshInPlaySuspension(risk, match, stadium = {}) {
 export function shouldClearContradictedInPlaySuspension(match, risk, stadium = {}) {
   const ops = normalizeWeatherOps(match.weatherOps);
   if (match?.status !== 'live' || ops.phase !== 'suspended') return false;
-  if (ops.source === 'admin' || ops.source === 'nws' || ops.source === 'msc') return false;
+  if (ops.source === 'admin') return false;
+
+  if (ops.source === 'nws' || ops.source === 'msc') {
+    if (fifaLiveContradictsWeatherSuspension(match)) return true;
+    if (resolveInPlayRiskLevel(risk) !== 'stop') return true;
+    return false;
+  }
 
   const openMeteoSuspension =
     ops.source === 'open-meteo' || isOpenMeteoOnlyWeatherAuthority(risk);
@@ -438,6 +485,6 @@ export function shouldClearInPlaySuspension(risk, match, now = Date.now()) {
   const ops = normalizeWeatherOps(match.weatherOps);
   if (match?.status !== 'live' || ops.phase !== 'suspended') return false;
   if (ops.source === 'admin') return false;
-  if (risk?.riskLevel === 'stop') return false;
+  if (resolveInPlayRiskLevel(risk) === 'stop') return false;
   return isWeatherSuspensionExpired(ops, now);
 }

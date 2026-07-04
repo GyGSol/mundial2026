@@ -5,6 +5,10 @@ import { Stadium } from '../src/models/Stadium.js';
 import { promoteMatchesAtKickoff, finalizeStaleLiveMatches, syncLiveWeatherOps } from '../src/services/kickoffLiveService.js';
 import { recalculateMatchScores } from '../src/services/matchScoringService.js';
 import { applyInPlayWeatherSuspension } from '../src/services/matchWeatherEnrichmentService.js';
+import {
+  shouldClearContradictedInPlaySuspension,
+  shouldClearInPlaySuspension,
+} from '../src/services/weatherRiskService.js';
 import { notifyMatchesUpdated } from '../src/services/websocketService.js';
 import { notifyLiveStartForMatchIds } from '../src/services/liveStartPushService.js';
 
@@ -255,6 +259,38 @@ describe('kickoffLiveService', () => {
     expect(recalculateMatchScores).toHaveBeenCalledWith('live-final');
   });
 
+  it('syncLiveWeatherOps limpia suspensión NWS cuando FIFA contradice', async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    const liveMatch = {
+      _id: 'live-false-suspend',
+      stadiumId: '5',
+      kickoffAt: new Date(Date.now() - 60 * 60 * 1000),
+      status: 'live',
+      weatherOps: { phase: 'suspended', source: 'nws' },
+      raw: {
+        time_elapsed: "15'",
+        fifaLiveState: { matchTime: "35'", period: '3', matchStatus: '3' },
+      },
+      save,
+    };
+
+    Match.find.mockResolvedValue([liveMatch]);
+    Stadium.find.mockReturnValue({
+      lean: vi.fn().mockResolvedValue([{ externalId: '5', country: 'USA' }]),
+    });
+    shouldClearContradictedInPlaySuspension.mockReturnValue(true);
+    shouldClearInPlaySuspension.mockReturnValue(false);
+    applyInPlayWeatherSuspension.mockReturnValue(null);
+
+    const result = await syncLiveWeatherOps();
+
+    expect(result.cleared).toEqual(['live-false-suspend']);
+    expect(liveMatch.weatherOps.phase).toBe('normal');
+    expect(notifyMatchesUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'weather_in_play_resumed' })
+    );
+  });
+
   it('syncLiveWeatherOps persiste suspensión climática en partidos live', async () => {
     const save = vi.fn().mockResolvedValue(undefined);
     const liveMatch = {
@@ -271,6 +307,8 @@ describe('kickoffLiveService', () => {
     Stadium.find.mockReturnValue({
       lean: vi.fn().mockResolvedValue([{ externalId: '5', country: 'USA' }]),
     });
+    shouldClearContradictedInPlaySuspension.mockReturnValue(false);
+    shouldClearInPlaySuspension.mockReturnValue(false);
 
     applyInPlayWeatherSuspension.mockReturnValue({
       phase: 'suspended',

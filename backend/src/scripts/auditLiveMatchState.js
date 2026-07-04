@@ -19,6 +19,9 @@ import {
   resolveEffectiveLiveScores,
 } from '../services/matchLiveData.js';
 import { resolveOfficialKickoffAt } from '../services/kickoffTimeService.js';
+import { parseElapsedClockToSortKey } from '../services/matchLiveData.js';
+import { fifaLiveContradictsWeatherSuspension } from '../services/weatherRiskService.js';
+import { normalizeWeatherOps } from '../services/matchWeatherOpsRules.js';
 import { getRankingDashboard } from '../services/rankingDashboardService.js';
 import { listPredictionsMatches } from '../services/predictionsMatchesService.js';
 import { resolveScoringActual } from '../services/scoringService.js';
@@ -31,6 +34,75 @@ import { buildStatIndicatorMatchIds } from '../services/rankingDashboardService.
 dotenv.config();
 
 const DEFAULT_IDS = ['25', '26'];
+
+function maxTimelinePlayMinute(timeline = []) {
+  const STRUCTURAL = new Set(['period_start', 'period_end', 'hydration_break', 'match_end']);
+  let best = Number.NEGATIVE_INFINITY;
+  for (const event of timeline) {
+    if (STRUCTURAL.has(event?.type)) continue;
+    const sortKey =
+      event?.sortKey != null && Number.isFinite(Number(event.sortKey))
+        ? Number(event.sortKey)
+        : null;
+    if (sortKey != null) {
+      if (sortKey > best) best = sortKey;
+      continue;
+    }
+    const minute = Number(event?.minute);
+    const extra = Number(event?.extraMinute ?? 0);
+    if (!Number.isFinite(minute)) continue;
+    const key = extra > 0 ? minute + extra / 100 : minute;
+    if (key > best) best = key;
+  }
+  return best > Number.NEGATIVE_INFINITY ? best : null;
+}
+
+function auditWeatherLiveConsistency(match, timeline, enriched) {
+  const ops = normalizeWeatherOps(match.weatherOps);
+  const raw = match.raw ?? {};
+  const fifaLive = raw.fifaLiveState ?? {};
+  const timeElapsedKey = enriched.timeElapsed
+    ? parseElapsedClockToSortKey(String(enriched.timeElapsed))
+    : null;
+  const timelineMax = maxTimelinePlayMinute(timeline);
+  const fifaMatchTime = String(fifaLive.matchTime ?? fifaLive.MatchTime ?? '').trim();
+  const fifaTimeKey = fifaMatchTime ? parseElapsedClockToSortKey(fifaMatchTime) : null;
+
+  const weatherSuspensionContradiction =
+    ops.phase === 'suspended' &&
+    ops.source !== 'admin' &&
+    fifaLiveContradictsWeatherSuspension(match);
+
+  const frozenKey = timeElapsedKey ?? Number.NEGATIVE_INFINITY;
+  const weatherVsFifa =
+    ops.phase === 'suspended' &&
+    fifaTimeKey != null &&
+    fifaTimeKey > frozenKey + 15;
+
+  const staleLiveClock =
+    match.status === 'live' &&
+    timelineMax != null &&
+    timeElapsedKey != null &&
+    timelineMax - timeElapsedKey >= 5;
+
+  return {
+    weatherOps: {
+      phase: ops.phase,
+      source: ops.source,
+      since: ops.since ?? null,
+      nwsAlertId: ops.nwsAlertId ?? null,
+    },
+    fifaLive: {
+      period: fifaLive.period ?? fifaLive.Period ?? null,
+      matchStatus: fifaLive.matchStatus ?? fifaLive.MatchStatus ?? null,
+      matchTime: fifaMatchTime || null,
+    },
+    timelineMaxMinute: timelineMax,
+    weatherSuspensionContradiction,
+    weatherVsFifa,
+    staleLiveClock,
+  };
+}
 
 function summarizeMatch(match, now = Date.now()) {
   const raw = match.raw ?? {};
@@ -94,6 +166,14 @@ function summarizeMatch(match, now = Date.now()) {
         timeElapsed: e.timeElapsed,
       };
     })(),
+    weatherAudit: auditWeatherLiveConsistency(
+      match,
+      timeline,
+      (() => {
+        const e = enrichMatchLiveFields(match);
+        return { timeElapsed: e.timeElapsed };
+      })()
+    ),
   };
 }
 
