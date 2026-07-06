@@ -262,6 +262,53 @@ describe('fubolsCupService', () => {
     expect(losersFinal.duels[1].duelId).toBe('losers_final:1');
   });
 
+  it('getFubolsCupDashboard migra esquema viejo al cargar', async () => {
+    const { groupId, admin } = await setupGroupWithHumans(8);
+    await finishRoundOf32();
+    await trySeedFubolsCup(groupId);
+    const seeded = await FubolsCupTournament.findOne({ groupId });
+    const qf = seeded.rounds.find((r) => r.roundKey === 'quarter_final');
+    const sf = seeded.rounds.find((r) => r.roundKey === 'semi_final');
+    const fin = seeded.rounds.find((r) => r.roundKey === 'final');
+    seeded.rounds = [
+      qf,
+      sf,
+      {
+        roundKey: 'third_place',
+        label: 'Tercer puesto',
+        worldCupExternalIds: ['103'],
+        duels: [
+          {
+            duelId: 'third_place:0',
+            duelIndex: 0,
+            playerAId: null,
+            playerBId: null,
+            playerAName: null,
+            playerBName: null,
+            seedA: null,
+            seedB: null,
+            winnerId: null,
+            worldCupExternalIds: ['103'],
+            matchResults: [],
+            resolvedAt: null,
+            advancePaidAt: null,
+          },
+        ],
+      },
+      fin,
+    ];
+    await seeded.save();
+
+    const dashboard = await getFubolsCupDashboard(groupId, admin._id);
+    expect(dashboard.rounds.map((r) => r.roundKey)).toEqual([
+      'quarter_final',
+      'semi_final',
+      'losers_semifinal',
+      'losers_final',
+      'final',
+    ]);
+  });
+
   it('resuelve cruce 4-3 y 1-3 a favor de B', async () => {
     const { groupId, humans } = await setupGroupWithHumans(8);
     await finishRoundOf32();

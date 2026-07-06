@@ -188,6 +188,21 @@ function migrateFubolsCupBracketSchema(tournament) {
   return true;
 }
 
+async function maybeMigrateBracketSchema(tournament) {
+  if (tournament.status !== 'running') return false;
+  if (!migrateFubolsCupBracketSchema(tournament)) return false;
+  assignBracketFromWinners(tournament);
+  if (tournament.matchShuffleSeed) {
+    reconcileWorldCupMatchAssignments(tournament.rounds, tournament.matchShuffleSeed, {
+      onlyUnresolved: true,
+    });
+  }
+  await saveTournament(tournament);
+  const { invalidateFubolsCupDashboardCache } = await import('./fubolsCupDashboardCache.js');
+  invalidateFubolsCupDashboardCache(tournament.groupId.toString());
+  return true;
+}
+
 async function loadUserNameMap(userIds = []) {
   const profileMap = await loadUserProfileMap(userIds);
   return Object.fromEntries(Object.entries(profileMap).map(([id, row]) => [id, row.name]));
@@ -329,14 +344,16 @@ async function ensureTournamentDocument(groupId) {
 /** Lectura para dashboard: sin resolver duelos ni pagos (eso va en processFubolsCupForGroup). */
 async function loadTournamentForDashboard(groupId) {
   const oid = toObjectId(groupId);
-  const existing = await FubolsCupTournament.findOne({ groupId: oid }).lean();
-  if (existing) return existing;
-  const created = await FubolsCupTournament.create({
-    groupId: oid,
-    status: 'preview',
-    rounds: buildEmptyBracketRounds(),
-  });
-  return created.toObject();
+  let tournament = await FubolsCupTournament.findOne({ groupId: oid });
+  if (!tournament) {
+    tournament = await FubolsCupTournament.create({
+      groupId: oid,
+      status: 'preview',
+      rounds: buildEmptyBracketRounds(),
+    });
+  }
+  await maybeMigrateBracketSchema(tournament);
+  return tournament.toObject();
 }
 
 async function buildTournamentStatsMap(groupId) {
@@ -547,15 +564,7 @@ export async function processFubolsCupForGroup(groupId) {
     return tournament;
   }
 
-  if (migrateFubolsCupBracketSchema(tournament)) {
-    assignBracketFromWinners(tournament);
-    if (tournament.matchShuffleSeed) {
-      reconcileWorldCupMatchAssignments(tournament.rounds, tournament.matchShuffleSeed, {
-        onlyUnresolved: true,
-      });
-    }
-    await saveTournament(tournament);
-  }
+  await maybeMigrateBracketSchema(tournament);
 
   if (tournament.matchShuffleSeed) {
     reconcileWorldCupMatchAssignments(tournament.rounds, tournament.matchShuffleSeed, {
