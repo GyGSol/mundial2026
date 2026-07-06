@@ -1,4 +1,4 @@
-/** Copa Fubols — 8 humanos: cuartos (WC octavos 89–96) → semis (WC cuartos 97–100) → 3.er (103) + final (101+102+104). */
+/** Copa Fubols — cuartos (89–96) → semis ganadores (97–100) → final (101+102+104); perdedores cuartos → semis perdedores (97–100) → dos cruces en 103. */
 
 export const FUBOLS_CUP_ROUND_OF_32_MIN = 73;
 export const FUBOLS_CUP_ROUND_OF_32_MAX = 88;
@@ -33,11 +33,29 @@ export const FUBOLS_CUP_BRACKET_ADVANCEMENT = [
   {
     roundIndex: 2,
     duelIndex: 0,
+    playerASource: { roundIndex: 0, duelIndex: 0, slot: 'loser' },
+    playerBSource: { roundIndex: 0, duelIndex: 3, slot: 'loser' },
+  },
+  {
+    roundIndex: 2,
+    duelIndex: 1,
+    playerASource: { roundIndex: 0, duelIndex: 1, slot: 'loser' },
+    playerBSource: { roundIndex: 0, duelIndex: 2, slot: 'loser' },
+  },
+  {
+    roundIndex: 3,
+    duelIndex: 0,
+    playerASource: { roundIndex: 2, duelIndex: 0 },
+    playerBSource: { roundIndex: 2, duelIndex: 1 },
+  },
+  {
+    roundIndex: 3,
+    duelIndex: 1,
     playerASource: { roundIndex: 1, duelIndex: 0, slot: 'loser' },
     playerBSource: { roundIndex: 1, duelIndex: 1, slot: 'loser' },
   },
   {
-    roundIndex: 3,
+    roundIndex: 4,
     duelIndex: 0,
     playerASource: { roundIndex: 1, duelIndex: 0 },
     playerBSource: { roundIndex: 1, duelIndex: 1 },
@@ -60,10 +78,17 @@ export const FUBOLS_CUP_ROUNDS = [
     matchesPerDuel: 2,
   },
   {
-    roundKey: 'third_place',
-    label: 'Tercer puesto',
+    roundKey: 'losers_semifinal',
+    label: 'Semifinal de perdedores',
+    externalIds: ['97', '98', '99', '100'],
+    duelCount: 2,
+    matchesPerDuel: 2,
+  },
+  {
+    roundKey: 'losers_final',
+    label: 'Partido por el tercer puesto',
     externalIds: ['103'],
-    duelCount: 1,
+    duelCount: 2,
     matchesPerDuel: 1,
   },
   {
@@ -86,6 +111,9 @@ export function getWorldCupExternalIdsForDuel(roundKey, duelIndex) {
   const round = FUBOLS_CUP_ROUNDS.find((row) => row.roundKey === roundKey);
   if (!round) return [];
   const perDuel = round.matchesPerDuel ?? 2;
+  if (perDuel === 1 && round.duelCount > round.externalIds.length && round.externalIds.length > 0) {
+    return [String(round.externalIds[0])];
+  }
   const start = duelIndex * perDuel;
   return round.externalIds.slice(start, start + perDuel);
 }
@@ -176,6 +204,11 @@ export function shuffleWorldCupMatchAssignmentsForRound(roundKey, seed) {
     return shuffled.map((id) => [String(id)]);
   }
 
+  if (perDuel === 1 && round.duelCount > round.externalIds.length && round.externalIds.length > 0) {
+    const matchId = String(round.externalIds[0]);
+    return Array.from({ length: round.duelCount }, () => [matchId]);
+  }
+
   if (perDuel >= 2) {
     return shuffleNonConsecutiveDuelPairs(round.externalIds, round.duelCount, `${seed}:${roundKey}`);
   }
@@ -212,6 +245,28 @@ export function reconcileWorldCupMatchAssignments(rounds, seed, { onlyUnresolved
       }
     }
   }
+
+  const semiRound = rounds.find((row) => row.roundKey === 'semi_final');
+  const losersSemiRound = rounds.find((row) => row.roundKey === 'losers_semifinal');
+  if (semiRound && losersSemiRound) {
+    for (let i = 0; i < losersSemiRound.duels.length; i += 1) {
+      const loserDuel = losersSemiRound.duels[i];
+      if (onlyUnresolved && loserDuel.resolvedAt) continue;
+      const winnerDuel = semiRound.duels[i];
+      if (winnerDuel?.worldCupExternalIds?.length) {
+        loserDuel.worldCupExternalIds = winnerDuel.worldCupExternalIds.map(String);
+      }
+    }
+  }
+
+  const losersFinalRound = rounds.find((row) => row.roundKey === 'losers_final');
+  if (losersFinalRound) {
+    for (const duel of losersFinalRound.duels) {
+      if (onlyUnresolved && duel.resolvedAt) continue;
+      duel.worldCupExternalIds = ['103'];
+    }
+  }
+
   return rounds;
 }
 

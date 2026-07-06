@@ -81,7 +81,7 @@ export default function FubolsCupSection() {
         <div>
           <h2 className="text-lg font-semibold">Copa Fubols</h2>
           <p className="text-sm text-muted-foreground">
-            Playoff del top 8 jugadores del grupo: cuartos → semifinales → tercer puesto y final.
+            Playoff del top 8 jugadores del grupo: cuartos → semifinales → partido por el tercer puesto (dos cruces) y final.
           </p>
         </div>
         <Select value={groupId} onValueChange={setGroupId}>

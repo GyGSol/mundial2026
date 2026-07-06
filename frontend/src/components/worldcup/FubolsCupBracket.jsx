@@ -321,7 +321,12 @@ function CuartosSplitBracket({ round }) {
   );
 }
 
-function RoundSection({ round, gridClassName }) {
+const LOSERS_FINAL_DUEL_LABELS = {
+  0: 'Final del cuadro de perdedores',
+  1: 'Tercer puesto del cuadro ganador',
+};
+
+function RoundSection({ round, gridClassName, duelLabels = null }) {
   if (!round?.duels?.length) return null;
 
   return (
@@ -329,7 +334,14 @@ function RoundSection({ round, gridClassName }) {
       <h3 className="text-base font-semibold sm:text-lg">{round.label}</h3>
       <div className={cn('grid gap-4', gridClassName)}>
         {round.duels.map((duel) => (
-          <DuelCard key={duel.duelId} duel={duel} />
+          <div key={duel.duelId} className="flex flex-col gap-2">
+            {duelLabels?.[duel.duelIndex] ? (
+              <p className="text-sm font-medium text-muted-foreground">
+                {duelLabels[duel.duelIndex]}
+              </p>
+            ) : null}
+            <DuelCard duel={duel} />
+          </div>
         ))}
       </div>
     </section>
@@ -342,20 +354,46 @@ export default function FubolsCupBracket({ rounds = [], demoDuel = null }) {
   const roundByKey = Object.fromEntries(rounds.map((round) => [round.roundKey, round]));
   const cuartos = roundByKey.quarter_final;
   const semis = roundByKey.semi_final;
-  const thirdPlace = roundByKey.third_place;
+  const losersSemis = roundByKey.losers_semifinal;
+  const losersFinal =
+    roundByKey.losers_final ??
+    (roundByKey.third_place
+      ? {
+          ...roundByKey.third_place,
+          roundKey: 'losers_final',
+          label: 'Partido por el tercer puesto',
+          duels: [
+            ...(roundByKey.third_place.duels ?? []).map((duel, duelIndex) => ({
+              ...duel,
+              duelIndex,
+              duelId: `losers_final:${duelIndex}`,
+            })),
+          ],
+        }
+      : null);
   const final = roundByKey.final;
 
   return (
     <div className="flex min-w-0 flex-col gap-6 overflow-x-hidden rounded-lg border bg-card/40 p-2 sm:gap-8 sm:p-6">
       {cuartos ? <CuartosSplitBracket round={cuartos} /> : null}
 
-      {semis ? <RoundSection round={semis} gridClassName="md:grid-cols-2" /> : null}
+      {semis || losersSemis ? (
+        <section className="grid gap-6 md:grid-cols-2 md:gap-8">
+          {semis ? <RoundSection round={semis} /> : null}
+          {losersSemis ? <RoundSection round={losersSemis} /> : null}
+        </section>
+      ) : null}
 
-      {thirdPlace || final ? (
+      {losersFinal || final ? (
         <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
           <h3 className="text-base font-semibold sm:text-lg">Cierre del torneo</h3>
           <div className="grid gap-4 md:grid-cols-2">
-            {thirdPlace ? <RoundSection round={thirdPlace} /> : null}
+            {losersFinal ? (
+              <RoundSection
+                round={losersFinal}
+                duelLabels={LOSERS_FINAL_DUEL_LABELS}
+              />
+            ) : null}
             {final ? <RoundSection round={final} /> : null}
           </div>
         </section>

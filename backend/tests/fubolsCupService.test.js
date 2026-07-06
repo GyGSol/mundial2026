@@ -169,9 +169,20 @@ describe('fubolsCupService', () => {
     expect(tournament.seeds).toHaveLength(8);
 
     const semiRound = tournament.rounds.find((r) => r.roundKey === 'semi_final');
+    const losersSemiRound = tournament.rounds.find((r) => r.roundKey === 'losers_semifinal');
+    const losersFinalRound = tournament.rounds.find((r) => r.roundKey === 'losers_final');
     const finalRound = tournament.rounds.find((r) => r.roundKey === 'final');
+    expect(tournament.rounds.map((r) => r.roundKey)).toEqual([
+      'quarter_final',
+      'semi_final',
+      'losers_semifinal',
+      'losers_final',
+      'final',
+    ]);
     expect(sortExternalIds(semiRound.worldCupExternalIds)).toEqual(['97', '98', '99', '100']);
     expect(semiRound.duels.every((d) => d.worldCupExternalIds?.length === 2)).toBe(true);
+    expect(losersSemiRound.duels).toHaveLength(2);
+    expect(losersFinalRound.duels).toHaveLength(2);
     expect(sortExternalIds(finalRound.worldCupExternalIds)).toEqual(['101', '102', '104']);
     expect(finalRound.duels[0].worldCupExternalIds).toEqual(['101', '102', '104']);
   });
@@ -188,11 +199,67 @@ describe('fubolsCupService', () => {
     await processFubolsCupForGroup(groupId);
     const tournament = await FubolsCupTournament.findOne({ groupId });
     const semiAfter = tournament.rounds.find((r) => r.roundKey === 'semi_final');
+    const losersSemiAfter = tournament.rounds.find((r) => r.roundKey === 'losers_semifinal');
     expect(semiAfter.duels[0].worldCupExternalIds).toHaveLength(2);
     expect(semiAfter.duels[1].worldCupExternalIds).toHaveLength(2);
     expect(sortExternalIds(semiAfter.duels.flatMap((d) => d.worldCupExternalIds))).toEqual([
       '97', '98', '99', '100',
     ]);
+    expect(losersSemiAfter.duels[0].worldCupExternalIds).toEqual(semiAfter.duels[0].worldCupExternalIds);
+    expect(losersSemiAfter.duels[1].worldCupExternalIds).toEqual(semiAfter.duels[1].worldCupExternalIds);
+    const losersFinalAfter = tournament.rounds.find((r) => r.roundKey === 'losers_final');
+    expect(losersFinalAfter.duels.every((d) => d.worldCupExternalIds?.join() === '103')).toBe(true);
+  });
+
+  it('migra torneo con third_place al esquema de cuadro perdedores', async () => {
+    const { groupId } = await setupGroupWithHumans(8);
+    await finishRoundOf32();
+    await trySeedFubolsCup(groupId);
+    const seeded = await FubolsCupTournament.findOne({ groupId });
+    const qf = seeded.rounds.find((r) => r.roundKey === 'quarter_final');
+    const sf = seeded.rounds.find((r) => r.roundKey === 'semi_final');
+    const fin = seeded.rounds.find((r) => r.roundKey === 'final');
+    seeded.rounds = [
+      qf,
+      sf,
+      {
+        roundKey: 'third_place',
+        label: 'Tercer puesto',
+        worldCupExternalIds: ['103'],
+        duels: [
+          {
+            duelId: 'third_place:0',
+            duelIndex: 0,
+            playerAId: null,
+            playerBId: null,
+            playerAName: null,
+            playerBName: null,
+            seedA: null,
+            seedB: null,
+            winnerId: null,
+            worldCupExternalIds: ['103'],
+            matchResults: [],
+            resolvedAt: null,
+            advancePaidAt: null,
+          },
+        ],
+      },
+      fin,
+    ];
+    await seeded.save();
+
+    await processFubolsCupForGroup(groupId);
+    const tournament = await FubolsCupTournament.findOne({ groupId });
+    expect(tournament.rounds.map((r) => r.roundKey)).toEqual([
+      'quarter_final',
+      'semi_final',
+      'losers_semifinal',
+      'losers_final',
+      'final',
+    ]);
+    const losersFinal = tournament.rounds.find((r) => r.roundKey === 'losers_final');
+    expect(losersFinal.duels).toHaveLength(2);
+    expect(losersFinal.duels[1].duelId).toBe('losers_final:1');
   });
 
   it('resuelve cruce 4-3 y 1-3 a favor de B', async () => {
@@ -247,6 +314,9 @@ describe('fubolsCupService', () => {
     const tournament = await FubolsCupTournament.findOne({ groupId });
     const duel = tournament.rounds[0].duels[0];
     expect(String(duel.winnerId)).toBe(String(playerB._id));
+
+    const losersSemi = tournament.rounds.find((r) => r.roundKey === 'losers_semifinal');
+    expect(String(losersSemi.duels[0].playerAId)).toBe(String(playerA._id));
 
     const advanceTx = await FubolTransaction.findOne({
       userId: playerB._id,

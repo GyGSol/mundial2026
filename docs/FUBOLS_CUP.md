@@ -6,8 +6,23 @@ Playoff de los **8 mejores humanos** de cada grupo de predicciones, cruzado con 
 - **Backend:** `backend/src/services/fubolsCupService.js`
 - **Caché dashboard:** `backend/src/services/fubolsCupDashboardCache.js`
 - **Scoring / desempate:** `shared/fubolsCupScoring.js`
+- **Config del cuadro:** `shared/fubolsCupBracket.js`
 - **Frontend bracket:** `frontend/src/components/worldcup/FubolsCupBracket.jsx`
 - **Tiles de partido:** `frontend/src/components/worldcup/FubolsCupMatchTile.jsx`
+
+## Estructura del cuadro
+
+| Ronda | `roundKey` | Partidos WC | Cruces |
+|-------|------------|-------------|--------|
+| Cuartos | `quarter_final` | 89–96 | Seeds 1v8, 2v7, 3v6, 4v5 |
+| Semifinales (ganadores) | `semi_final` | 97–100 | W(QF0) vs W(QF3), W(QF1) vs W(QF2) |
+| Semifinal de perdedores | `losers_semifinal` | **mismos 97–100** por cruce | L(QF0) vs L(QF3), L(QF1) vs L(QF2) |
+| Partido por el tercer puesto | `losers_final` | **103** (dos cruces) | **Cruce 1:** W(LSF0) vs W(LSF1) · **Cruce 2:** L(SF0) vs L(SF1) |
+| Final | `final` | 101+102+104 | W(SF0) vs W(SF1) |
+
+Los perdedores de semifinal del cuadro ganador juegan el cruce 2 del partido 103. Los ganadores de la semifinal de perdedores de cuartos juegan el cruce 1 del mismo partido FIFA. La final de campeón es independiente.
+
+Torneos en curso con esquema viejo (`third_place`) se migran automáticamente al procesar el grupo (`migrateFubolsCupBracketSchema`).
 
 ## Puntos mostrados en el cruce
 

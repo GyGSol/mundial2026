@@ -120,6 +120,74 @@ function assignBracketFromWinners(tournament) {
   }
 }
 
+function buildEmptyDuelForRound(roundKey, duelIndex) {
+  return {
+    duelId: `${roundKey}:${duelIndex}`,
+    duelIndex,
+    playerAId: null,
+    playerBId: null,
+    playerAName: null,
+    playerBName: null,
+    seedA: null,
+    seedB: null,
+    winnerId: null,
+    worldCupExternalIds: null,
+    matchResults: [],
+    resolvedAt: null,
+    advancePaidAt: null,
+  };
+}
+
+/** Migra torneos con esquema viejo (third_place) al cuadro de perdedores v2. */
+function migrateFubolsCupBracketSchema(tournament) {
+  if (!tournament.rounds?.length) return false;
+  if (tournament.rounds.some((row) => row.roundKey === 'losers_semifinal')) return false;
+
+  const semiIndex = tournament.rounds.findIndex((row) => row.roundKey === 'semi_final');
+  if (semiIndex < 0) return false;
+
+  const losersSemiConfig = FUBOLS_CUP_ROUNDS.find((row) => row.roundKey === 'losers_semifinal');
+  const losersFinalConfig = FUBOLS_CUP_ROUNDS.find((row) => row.roundKey === 'losers_final');
+  if (!losersSemiConfig || !losersFinalConfig) return false;
+
+  const losersSemiRound = {
+    roundKey: 'losers_semifinal',
+    label: losersSemiConfig.label,
+    worldCupExternalIds: [...losersSemiConfig.externalIds],
+    duels: Array.from({ length: losersSemiConfig.duelCount }, (_, duelIndex) =>
+      buildEmptyDuelForRound('losers_semifinal', duelIndex)
+    ),
+  };
+
+  const thirdIndex = tournament.rounds.findIndex((row) => row.roundKey === 'third_place');
+  let sfLosersDuel = buildEmptyDuelForRound('losers_final', 1);
+  if (thirdIndex >= 0) {
+    const oldThirdDuel = tournament.rounds[thirdIndex].duels?.[0];
+    if (oldThirdDuel) {
+      sfLosersDuel = {
+        ...oldThirdDuel,
+        duelId: 'losers_final:1',
+        duelIndex: 1,
+      };
+    }
+    tournament.rounds.splice(thirdIndex, 1);
+  }
+
+  const losersFinalRound = {
+    roundKey: 'losers_final',
+    label: losersFinalConfig.label,
+    worldCupExternalIds: [...losersFinalConfig.externalIds],
+    duels: [buildEmptyDuelForRound('losers_final', 0), sfLosersDuel],
+  };
+
+  const finalIndex = tournament.rounds.findIndex((row) => row.roundKey === 'final');
+  const insertFinalAt = finalIndex >= 0 ? finalIndex : tournament.rounds.length;
+  tournament.rounds.splice(insertFinalAt, 0, losersFinalRound);
+  tournament.rounds.splice(semiIndex + 1, 0, losersSemiRound);
+
+  return true;
+}
+
 async function loadUserNameMap(userIds = []) {
   const profileMap = await loadUserProfileMap(userIds);
   return Object.fromEntries(Object.entries(profileMap).map(([id, row]) => [id, row.name]));
@@ -477,6 +545,16 @@ export async function processFubolsCupForGroup(groupId) {
   tournament = await trySeedFubolsCup(groupId);
   if (tournament.status !== 'running') {
     return tournament;
+  }
+
+  if (migrateFubolsCupBracketSchema(tournament)) {
+    assignBracketFromWinners(tournament);
+    if (tournament.matchShuffleSeed) {
+      reconcileWorldCupMatchAssignments(tournament.rounds, tournament.matchShuffleSeed, {
+        onlyUnresolved: true,
+      });
+    }
+    await saveTournament(tournament);
   }
 
   if (tournament.matchShuffleSeed) {

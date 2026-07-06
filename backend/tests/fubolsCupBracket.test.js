@@ -4,6 +4,7 @@ import {
   areConsecutiveExternalIds,
   buildEmptyBracketRounds,
   getDuelWorldCupExternalIds,
+  reconcileWorldCupMatchAssignments,
   shuffleNonConsecutiveDuelPairs,
   shuffleWorldCupMatchAssignmentsForRound,
 } from '../../shared/fubolsCupBracket.js';
@@ -59,12 +60,13 @@ describe('fubolsCupBracket shuffle', () => {
     expect(getDuelWorldCupExternalIds(cuartos, 0)).toEqual(cuartos.duels[0].worldCupExternalIds);
   });
 
-  it('define cuartos, semis, tercer puesto y final', () => {
+  it('define cuartos, semis, cuadro perdedores y final', () => {
     const rounds = buildEmptyBracketRounds();
     expect(rounds.map((r) => r.roundKey)).toEqual([
       'quarter_final',
       'semi_final',
-      'third_place',
+      'losers_semifinal',
+      'losers_final',
       'final',
     ]);
     expect(rounds[0].duels).toHaveLength(4);
@@ -73,10 +75,13 @@ describe('fubolsCupBracket shuffle', () => {
     ]);
     expect(rounds[1].duels).toHaveLength(2);
     expect(rounds[1].worldCupExternalIds).toEqual(['97', '98', '99', '100']);
-    expect(rounds[2].duels).toHaveLength(1);
-    expect(rounds[2].worldCupExternalIds).toEqual(['103']);
-    expect(rounds[3].duels).toHaveLength(1);
-    expect(rounds[3].worldCupExternalIds).toEqual(['101', '102', '104']);
+    expect(rounds[2].duels).toHaveLength(2);
+    expect(rounds[2].worldCupExternalIds).toEqual(['97', '98', '99', '100']);
+    expect(rounds[3].duels).toHaveLength(2);
+    expect(rounds[3].worldCupExternalIds).toEqual(['103']);
+    expect(rounds[3].duels.every((d) => d.worldCupExternalIds === null)).toBe(true);
+    expect(rounds[4].duels).toHaveLength(1);
+    expect(rounds[4].worldCupExternalIds).toEqual(['101', '102', '104']);
   });
 
   it('semifinales usan cuartos WC 97-100 con 2 partidos por duelo', () => {
@@ -95,5 +100,21 @@ describe('fubolsCupBracket shuffle', () => {
     expect(a).toEqual(b);
     expect(a).toHaveLength(1);
     expect(a[0]).toEqual(['101', '102', '104']);
+  });
+
+  it('losers_final asigna partido 103 a ambos cruces', () => {
+    const assignments = shuffleWorldCupMatchAssignmentsForRound('losers_final', 'seed-lf');
+    expect(assignments).toEqual([['103'], ['103']]);
+  });
+
+  it('sincroniza partidos de semifinal de perdedores con semifinales ganadoras', () => {
+    const rounds = buildEmptyBracketRounds();
+    reconcileWorldCupMatchAssignments(rounds, 'sync-test', { onlyUnresolved: false });
+    const semis = rounds.find((r) => r.roundKey === 'semi_final');
+    const losersSemis = rounds.find((r) => r.roundKey === 'losers_semifinal');
+    const losersFinal = rounds.find((r) => r.roundKey === 'losers_final');
+    expect(losersSemis.duels[0].worldCupExternalIds).toEqual(semis.duels[0].worldCupExternalIds);
+    expect(losersSemis.duels[1].worldCupExternalIds).toEqual(semis.duels[1].worldCupExternalIds);
+    expect(losersFinal.duels.every((d) => d.worldCupExternalIds?.join() === '103')).toBe(true);
   });
 });
