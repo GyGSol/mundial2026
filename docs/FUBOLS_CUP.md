@@ -2,8 +2,9 @@
 
 Playoff de los **8 mejores humanos** de cada grupo de predicciones, cruzado con partidos reales del Mundial (dieciseisavos en adelante). Ticket Jira: **FBL-25**.
 
-- **UI:** Mundial → pestaña **Copa Fubols** (`/mundial?tab=fubols-cup`)
+- **UI:** Mundial → pestaña **Copa Fubols** (`/mundial?tab=fubols-cup`) · Ranking → selector **Torneo → Copa Fubols**
 - **Backend:** `backend/src/services/fubolsCupService.js`
+- **Caché dashboard:** `backend/src/services/fubolsCupDashboardCache.js`
 - **Scoring / desempate:** `shared/fubolsCupScoring.js`
 - **Frontend bracket:** `frontend/src/components/worldcup/FubolsCupBracket.jsx`
 - **Tiles de partido:** `frontend/src/components/worldcup/FubolsCupMatchTile.jsx`
@@ -81,10 +82,48 @@ Contenedor bracket: `overflow-x-hidden` en el wrapper principal para evitar scro
 
 ## API
 
-`GET /api/groups/:groupId/fubols-cup` (vía dashboard) devuelve `rounds[].duels[]` con:
+`GET /api/competition-groups/:groupId/fubols-cup` (auth) devuelve `rounds[].duels[]` con:
 
 - `playerA` / `playerB`: `id`, `name`, `seed`, `avatarUrl`, `matchPoints`, `totalPoints` (interno; **no** usar en PTS del bracket), stats Gdif.
 - `partialHeaderPoints`, `isLiveDuel`, `worldCupMatches`, `tiebreak`, `demoDuel` (raíz del payload).
+
+Ruta consumida por `LeaderboardPage` (`competitionGroupsApi.fubolsCup.get`) y `FubolsCupSection` en Mundial.
+
+## Rendimiento y caché (H12 en prod, jul-2026)
+
+### Problema
+
+En prod, al elegir **Torneo → Copa Fubols** en el ranking, el panel mostraba *"El servidor no está disponible temporalmente"* (HTTP **503**). Logs Heroku: **H12 Request timeout** a los 30 s en `GET .../fubols-cup`. El ranking general cargaba; solo fallaba el cuadro de la Copa.
+
+Causa: `getFubolsCupDashboard` llamaba **`processFubolsCupForGroup` en cada GET** (resolver duelos, rescoring, pagos Fubols, saves) más **N+1** (`Match.findOne` + `Prediction.find` por partido en `enrichDuelsWithLiveSlices`). Sin caché in-memory (a diferencia del ranking en vivo, FBL-19).
+
+### Arquitectura actual
+
+```
+GET /api/competition-groups/:groupId/fubols-cup
+        │
+        ▼
+ fubolsCupDashboardCache.js     (TTL: 10 s con WC live, 15 s running, 30 s preview, 60 s completed)
+        │
+        ▼
+ getFubolsCupDashboard()
+        │
+        ├─ loadTournamentForDashboard()     ← solo lectura (sin process)
+        ├─ loadEnrichedMatchesByExternalId()
+        ├─ enrichDuelsWithLiveSlices()      ← batch Match + Prediction (2 queries)
+        └─ buildLiveDemoDuel()
+```
+
+**Escritura / avance del torneo** (seeds, resolver cruces, pagos): solo vía `processFubolsCupForGroup`, invocado desde:
+
+- `processFubolsCupAfterMatchFinished` (hook al finalizar partido WC relevante)
+- no en cada vista del dashboard
+
+Tras `processFubolsCupForGroup` se invalida `invalidateFubolsCupDashboardCache(groupId)`. También se invalida desde `invalidateMatchRelatedCaches` / `invalidateFinishedMatchArchiveCaches` cuando cambian partidos o puntuación.
+
+### Objetivo de latencia
+
+Respuesta **&lt; 3 s** p95 en Heroku Basic (límite duro 30 s). Smoke post-deploy: Ranking → Copa Fubols sin error; logs sin H12 en `fubols-cup`.
 
 ## Tests
 
@@ -94,12 +133,15 @@ Contenedor bracket: `overflow-x-hidden` en el wrapper principal para evitar scro
 - `demoDuel suma puntos parciales de todos los partidos con score`
 - `cruce en vivo expone isLiveDuel con puntos del partido en dashboard`
 - Desempate Gdif en empate de puntos del partido/cruce
+- `getFubolsCupDashboard no ejecuta processFubolsCupForGroup (solo lectura)`
+
+`backend/tests/fubolsCupDashboardCache.test.js`: deduplicación, invalidación por grupo, TTL con partidos live.
 
 Ejecutar con DB local de test (nunca Atlas prod):
 
 ```bash
 unset MONGODB_URI
-cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/mundial2026_test npx vitest run tests/fubolsCupService.test.js
+cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/mundial2026_test npx vitest run tests/fubolsCupService.test.js tests/fubolsCupDashboardCache.test.js
 ```
 
 ## Deploys relevantes (FBL-25)
@@ -112,5 +154,6 @@ cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/mundial2026_test npx vitest 
 | v686 | `82a1d2e` | Suma parcial de todos los partidos con score |
 | v692 | `1c8aa02` | PTS del enfrentamiento (0 antes del partido), no `totalPoints` |
 | v693 | `48f685d` | Vista mobile: PTS abreviado, tiles con fecha y grilla de equipos |
+| v697 | `28d5b12` | Fix H12: lectura sin `processFubolsCupForGroup` en GET, caché dashboard, batch queries live |
 
 App: `mundial2026-pred` · [DEPLOYMENT.md](./DEPLOYMENT.md)
