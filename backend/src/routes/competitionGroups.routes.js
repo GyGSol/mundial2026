@@ -32,7 +32,7 @@ import {
   getEliminationDashboard,
   startTournament,
 } from '../services/eliminationTournamentService.js';
-import { getFubolsCupDashboard } from '../services/fubolsCupService.js';
+import { getCachedFubolsCupDashboard } from '../services/fubolsCupDashboardCache.js';
 import { CompetitionGroup } from '../models/CompetitionGroup.js';
 
 const router = Router();
@@ -285,7 +285,7 @@ router.post('/:groupId/elimination-tournament/start', authMiddleware, async (req
 
 router.get('/:groupId/fubols-cup', authMiddleware, async (req, res, next) => {
   try {
-    const dashboard = await getFubolsCupDashboard(req.params.groupId, req.user._id);
+    const dashboard = await getCachedFubolsCupDashboard(req.params.groupId, req.user._id);
     res.json(dashboard);
   } catch (err) {
     next(err);

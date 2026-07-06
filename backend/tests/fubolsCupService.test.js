@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import mongoose from 'mongoose';
 import { User } from '../src/models/User.js';
 import { CompetitionGroup } from '../src/models/CompetitionGroup.js';
@@ -16,6 +16,7 @@ import {
   processFubolsCupForGroup,
   trySeedFubolsCup,
 } from '../src/services/fubolsCupService.js';
+import * as fubolsCupService from '../src/services/fubolsCupService.js';
 import { getTestMongoUri } from '../src/config/testDbGuard.js';
 import { FUBOLS_CUP_CHAMPION_PRIZE, FUBOLS_CUP_ROUND_ADVANCE_PRIZE } from '../src/config/economy.js';
 import { goalDiffScore } from '../../shared/goalDiffStats.js';
@@ -143,6 +144,14 @@ describe('fubolsCupService', () => {
     expect(dashboard.rounds[0].duels[0].playerA).toHaveProperty('isAiUser');
     expect(dashboard.rounds[0].duels[0].playerA).toHaveProperty('totalPoints');
     expect(dashboard.rounds[0].duels[0].playerA).toHaveProperty('difGl');
+  });
+
+  it('getFubolsCupDashboard no ejecuta processFubolsCupForGroup (solo lectura)', async () => {
+    const processSpy = vi.spyOn(fubolsCupService, 'processFubolsCupForGroup');
+    const { groupId, admin } = await setupGroupWithHumans(8);
+    await getFubolsCupDashboard(groupId, admin._id);
+    expect(processSpy).not.toHaveBeenCalled();
+    processSpy.mockRestore();
   });
 
   it('cancela si hay menos de 8 humanos al cerrar dieciseisavos', async () => {

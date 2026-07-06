@@ -8,6 +8,7 @@ import { invalidatePlayerTournamentActivityCache } from './playerTournamentActiv
 import { invalidateAdminMatchesCache } from './adminMatchesCache.js';
 import { invalidateLiveMatchSnapshotCache } from './liveMatchSnapshotService.js';
 import { clearLiveFeaturedBarMatchEnrichmentCache } from './liveFeaturedBarService.js';
+import { invalidateFubolsCupDashboardCache } from './fubolsCupDashboardCache.js';
 
 /** Invalida cachés de ranking, dashboard y admin ligadas a partidos. */
 export function invalidateMatchRelatedCaches(groupId) {
@@ -15,6 +16,7 @@ export function invalidateMatchRelatedCaches(groupId) {
   invalidateLeaderboardCache(groupId);
   invalidateRankingDashboardCache(groupId);
   invalidateLeaderboardPointsEvolutionCache(groupId);
+  invalidateFubolsCupDashboardCache(groupId);
   invalidateAdminMatchesCache();
   invalidateLiveMatchSnapshotCache();
   clearLiveFeaturedBarMatchEnrichmentCache();
@@ -27,6 +29,7 @@ export function invalidateFinishedMatchArchiveCaches(groupId) {
   invalidatePlayerTournamentActivityCache();
   invalidateRankingDashboardCache(groupId);
   invalidateLeaderboardPointsEvolutionCache(groupId);
+  invalidateFubolsCupDashboardCache(groupId);
   invalidateWorldCupOverviewCache();
   invalidateLiveMatchSnapshotCache();
 }

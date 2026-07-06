@@ -258,6 +258,19 @@ async function ensureTournamentDocument(groupId) {
   return tournament;
 }
 
+/** Lectura para dashboard: sin resolver duelos ni pagos (eso va en processFubolsCupForGroup). */
+async function loadTournamentForDashboard(groupId) {
+  const oid = toObjectId(groupId);
+  const existing = await FubolsCupTournament.findOne({ groupId: oid }).lean();
+  if (existing) return existing;
+  const created = await FubolsCupTournament.create({
+    groupId: oid,
+    status: 'preview',
+    rounds: buildEmptyBracketRounds(),
+  });
+  return created.toObject();
+}
+
 async function buildTournamentStatsMap(groupId) {
   const leaderboard = await getLeaderboard(groupId, 100);
   return new Map(leaderboard.map((row) => [String(row.id), row]));
@@ -511,6 +524,9 @@ export async function processFubolsCupForGroup(groupId) {
     await saveTournament(tournament);
   }
 
+  const { invalidateFubolsCupDashboardCache } = await import('./fubolsCupDashboardCache.js');
+  invalidateFubolsCupDashboardCache(groupId);
+
   return tournament;
 }
 
@@ -547,17 +563,13 @@ function enrichDuelsWithWorldCupMatches(duels, matchByExternalId) {
   });
 }
 
-async function buildDuelMatchSlice(rawMatch, playerAId, playerBId) {
-  const predictions = await Prediction.find({
-    userId: { $in: [playerAId, playerBId] },
-    matchId: rawMatch._id,
-  }).lean();
-  const predictionByUserId = Object.fromEntries(
-    predictions.map((row) => [row.userId.toString(), row])
-  );
+function buildDuelMatchSliceFromPredictions(rawMatch, playerAId, playerBId, predictionByUserMatch) {
+  const matchId = rawMatch._id.toString();
+  const predictionA = predictionByUserMatch.get(`${playerAId}:${matchId}`);
+  const predictionB = predictionByUserMatch.get(`${playerBId}:${matchId}`);
 
-  const pointsA = pointsForDuelPlayer(predictionByUserId[playerAId], rawMatch);
-  const pointsB = pointsForDuelPlayer(predictionByUserId[playerBId], rawMatch);
+  const pointsA = pointsForDuelPlayer(predictionA, rawMatch);
+  const pointsB = pointsForDuelPlayer(predictionB, rawMatch);
   const duelSlice = buildMatchResultSlice({
     matchId: rawMatch._id,
     externalId: rawMatch.externalId,
@@ -575,7 +587,80 @@ async function buildDuelMatchSlice(rawMatch, playerAId, playerBId) {
   return { duelSlice, pointsA, pointsB };
 }
 
+async function buildDuelMatchSlice(rawMatch, playerAId, playerBId) {
+  const predictions = await Prediction.find({
+    userId: { $in: [playerAId, playerBId] },
+    matchId: rawMatch._id,
+  }).lean();
+  const predictionByUserMatch = new Map(
+    predictions.map((row) => [`${row.userId.toString()}:${row.matchId.toString()}`, row])
+  );
+  return buildDuelMatchSliceFromPredictions(
+    rawMatch,
+    playerAId,
+    playerBId,
+    predictionByUserMatch
+  );
+}
+
+function collectLiveEnrichmentInputs(duels) {
+  const externalIds = new Set();
+  const playerIds = new Set();
+
+  for (const duel of duels) {
+    const playerAId = duel.playerA?.id;
+    const playerBId = duel.playerB?.id;
+    if (!playerAId || !playerBId || (duel.resolvedAt && duel.winnerId)) continue;
+
+    playerIds.add(String(playerAId));
+    playerIds.add(String(playerBId));
+
+    for (const wc of duel.worldCupMatches ?? []) {
+      const matchPayload = wc.match;
+      if (!matchPayload || (matchPayload.status !== 'live' && matchPayload.status !== 'finished')) {
+        continue;
+      }
+      if (wc.externalId) externalIds.add(String(wc.externalId));
+    }
+  }
+
+  return { externalIds: [...externalIds], playerIds: [...playerIds] };
+}
+
+async function loadDuelPredictionMap(externalIds, playerIds) {
+  if (!externalIds.length || !playerIds.length) {
+    return { rawMatchByExternalId: new Map(), predictionByUserMatch: new Map() };
+  }
+
+  const rawMatches = await Match.find({ externalId: { $in: externalIds } }).lean();
+  const rawMatchByExternalId = new Map(
+    rawMatches.map((match) => [String(match.externalId), match])
+  );
+  const matchIds = rawMatches.map((match) => match._id);
+
+  if (!matchIds.length) {
+    return { rawMatchByExternalId, predictionByUserMatch: new Map() };
+  }
+
+  const predictions = await Prediction.find({
+    userId: { $in: playerIds },
+    matchId: { $in: matchIds },
+  }).lean();
+
+  const predictionByUserMatch = new Map(
+    predictions.map((row) => [`${row.userId.toString()}:${row.matchId.toString()}`, row])
+  );
+
+  return { rawMatchByExternalId, predictionByUserMatch };
+}
+
 async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
+  const { externalIds, playerIds } = collectLiveEnrichmentInputs(duels);
+  const { rawMatchByExternalId, predictionByUserMatch } = await loadDuelPredictionMap(
+    externalIds,
+    playerIds
+  );
+
   const enriched = [];
 
   for (const duel of duels) {
@@ -611,7 +696,7 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
         continue;
       }
 
-      const rawMatch = await Match.findOne({ externalId: wc.externalId }).lean();
+      const rawMatch = rawMatchByExternalId.get(String(wc.externalId));
       if (!rawMatch) {
         worldCupMatches.push(wc);
         allDuelMatchesFinished = false;
@@ -621,10 +706,11 @@ async function enrichDuelsWithLiveSlices(duels, tournamentStatsByUserId) {
       if (rawMatch.status === 'live') hasLive = true;
       if (rawMatch.status !== 'finished') allDuelMatchesFinished = false;
 
-      const { duelSlice, pointsA, pointsB } = await buildDuelMatchSlice(
+      const { duelSlice, pointsA, pointsB } = buildDuelMatchSliceFromPredictions(
         rawMatch,
         playerAId,
-        playerBId
+        playerBId,
+        predictionByUserMatch
       );
       if (pointsA != null && pointsB != null) {
         matchResults.push({ pointsA, pointsB });
@@ -1077,7 +1163,7 @@ export async function getFubolsCupDashboard(groupId, viewerUserId) {
     if (!membership) throw cupError('Debés ser miembro del grupo', 403);
   }
 
-  const tournament = await processFubolsCupForGroup(groupId);
+  const tournament = await loadTournamentForDashboard(groupId);
   const previewTop8 = await getHumanLeaderboardTop8(groupId);
   const r32Finished = await getRoundOf32FinishedExternalIds();
   const r32Complete = isRoundOf32Complete(r32Finished);
