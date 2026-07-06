@@ -22,7 +22,20 @@ Playoff de los **8 mejores humanos** de cada grupo de predicciones, cruzado con 
 
 Los perdedores de semifinal del cuadro ganador juegan el cruce 2 del partido 103. Los ganadores de la semifinal de perdedores de cuartos juegan el cruce 1 del mismo partido FIFA. La final de campeón es independiente.
 
-Torneos en curso con esquema viejo (`third_place`) se migran automáticamente al procesar el grupo (`migrateFubolsCupBracketSchema`).
+### Migración de esquema (`third_place` → cuadro perdedores)
+
+Torneos `running` creados antes de jul-2026 guardaban 4 rondas (`quarter_final`, `semi_final`, `third_place`, `final`). El esquema actual tiene 5 rondas (`losers_semifinal`, `losers_final` con 2 duelos en 103).
+
+| Función | Rol |
+|---------|-----|
+| `migrateFubolsCupBracketSchema` | [`shared/fubolsCupBracket.js`](../../shared/fubolsCupBracket.js) no — está en [`fubolsCupService.js`](../../backend/src/services/fubolsCupService.js): inserta `losers_semifinal`, convierte `third_place` → `losers_final` (duel 1 = perdedores SF ganadoras; duel 0 = ganadores LSF) |
+| `maybeMigrateBracketSchema` | Aplica migración + `assignBracketFromWinners` + `reconcileWorldCupMatchAssignments` + `save` + invalida caché dashboard |
+| `processFubolsCupForGroup` | Llama `maybeMigrateBracketSchema` al procesar partidos |
+| `loadTournamentForDashboard` | **También** llama `maybeMigrateBracketSchema` al abrir la Copa (fix v699) |
+
+**Gotcha (prod jul-2026):** el deploy del frontend/backend nuevo no alcanza si Mongo sigue con `third_place`; la UI no muestra `losers_semifinal` hasta migrar el documento. Tras deploy de estructura nueva, verificar en Atlas/Heroku que `rounds[].roundKey` incluya `losers_semifinal` y `losers_final`, o ejecutar `processFubolsCupForGroup` para cada grupo `running`.
+
+Sincronización WC en `reconcileWorldCupMatchAssignments`: `losers_semifinal.duels[i]` copia los mismos `worldCupExternalIds` que `semi_final.duels[i]`; cada duelo de `losers_final` recibe `['103']`.
 
 ## Puntos mostrados en el cruce
 
@@ -149,8 +162,12 @@ Respuesta **&lt; 3 s** p95 en Heroku Basic (límite duro 30 s). Smoke post-deplo
 - `cruce en vivo expone isLiveDuel con puntos del partido en dashboard`
 - Desempate Gdif en empate de puntos del partido/cruce
 - `getFubolsCupDashboard no ejecuta processFubolsCupForGroup (solo lectura)`
+- `getFubolsCupDashboard migra esquema viejo al cargar`
+- `migra torneo con third_place al esquema de cuadro perdedores`
 
 `backend/tests/fubolsCupDashboardCache.test.js`: deduplicación, invalidación por grupo, TTL con partidos live.
+
+`backend/tests/fubolsCupBracket.test.js`: shuffle, sync 97–100, dos cruces en 103.
 
 Ejecutar con DB local de test (nunca Atlas prod):
 
@@ -170,5 +187,7 @@ cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/mundial2026_test npx vitest 
 | v692 | `1c8aa02` | PTS del enfrentamiento (0 antes del partido), no `totalPoints` |
 | v693 | `48f685d` | Vista mobile: PTS abreviado, tiles con fecha y grilla de equipos |
 | v697 | `28d5b12` | Fix H12: lectura sin `processFubolsCupForGroup` en GET, caché dashboard, batch queries live |
+| v698 | `bb44659` | Cuadro perdedores: `losers_semifinal` (97–100) + dos cruces en 103 + final |
+| v699 | `ced05be` | Migración de esquema al cargar dashboard (`loadTournamentForDashboard`) |
 
 App: `mundial2026-pred` · [DEPLOYMENT.md](./DEPLOYMENT.md)
