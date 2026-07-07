@@ -6,7 +6,7 @@ import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
 import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
 import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
-function TileCountryLine({ team, slotLabel, slotSourceMatch }) {
+function TileCountryLine({ team, slotLabel, slotSourceMatch, className }) {
   const flagUrl = team ? getTeamFlag(team) : null;
   const title = team?.nameEn || team?.fifaCode || slotLabel || 'Por definir';
   const parsed = !team && slotLabel ? parseKnockoutSlotLabel(slotLabel) : null;
@@ -18,8 +18,9 @@ function TileCountryLine({ team, slotLabel, slotSourceMatch }) {
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-1 items-center gap-1.5',
-        accentColor && 'border-l-[3px] border-solid pl-1.5'
+        'flex min-w-0 items-center gap-1.5',
+        accentColor && 'border-l-[3px] border-solid pl-1.5',
+        className
       )}
       style={accentColor ? { borderLeftColor: accentColor } : undefined}
       title={title}
@@ -161,26 +162,28 @@ export default function FubolsCupMatchTile({
         ) : null}
       </div>
 
-      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-1.5 gap-y-1 sm:flex sm:gap-2">
+      <div className="mt-2 flex items-center justify-between gap-2">
         <TileCountryLine
           team={match.homeTeam}
           slotLabel={match.homeTeamSlotLabel}
           slotSourceMatch={match.homeTeamSlotSourceMatch}
+          className="min-w-0 max-w-[55%] shrink"
         />
-        {hasScore ? (
-          <span className="shrink-0 justify-self-center text-sm font-bold tabular-nums text-foreground">
-            {homeScore}–{awayScore}
-          </span>
-        ) : (
-          <span className="shrink-0 justify-self-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            vs
-          </span>
-        )}
-        <div className="flex min-w-0 justify-end">
+        <div className="flex min-w-0 items-center justify-end gap-1.5">
+          {hasScore ? (
+            <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
+              {homeScore}–{awayScore}
+            </span>
+          ) : (
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              vs
+            </span>
+          )}
           <TileCountryLine
             team={match.awayTeam}
             slotLabel={match.awayTeamSlotLabel}
             slotSourceMatch={match.awayTeamSlotSourceMatch}
+            className="min-w-0 shrink"
           />
         </div>
       </div>
