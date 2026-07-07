@@ -1166,8 +1166,12 @@ export function spreadDefenseBackLineShape(players, { formation } = {}) {
 
   if (entries.length < 4) return players;
 
+  const linePlayers = entries.map(({ player }) => player);
   const sorted = [...entries].sort(
-    (a, b) => Number(a.player.gridY ?? 50) - Number(b.player.gridY ?? 50)
+    (a, b) =>
+      lateralSortKey(a.player, linePlayers) - lateralSortKey(b.player, linePlayers) ||
+      Number(a.player.gridY ?? 50) - Number(b.player.gridY ?? 50) ||
+      (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
   );
   const inner = sorted.length > 2 ? sorted.slice(1, -1) : sorted;
   const baseDepth = Number(inner[Math.floor(inner.length / 2)]?.player.gridX ?? 30);

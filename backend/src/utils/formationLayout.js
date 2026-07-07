@@ -334,6 +334,107 @@ function gridDepthForLine(player, spec, rowCount) {
   return depth;
 }
 
+function isCentralMid(player, linePlayers = []) {
+  if (isLeftWingMid(player) || isRightWingMid(player, linePlayers)) return false;
+  const token = positionToken(player);
+  if (token === 'MC' || token === 'MCD' || token === 'MCO') return true;
+  if (token === 'MD' && mdMeansCenterInMidLine(linePlayers)) return true;
+
+  const text = `${player?.positionDetail ?? ''} ${player?.position ?? ''}`.toLowerCase();
+  if (mapFootballDataPositionText(player.positionDetail ?? player.position) !== 'MID') return false;
+  if (text.includes('left') || text.includes('right') || text.includes('wing')) return false;
+  return text.includes('defensive') || text.includes('attacking') || text.includes('central');
+}
+
+function midfieldLateralSlots(players) {
+  if (!players?.length) return [];
+  if (players.length === 1) return [Number(lateralSortKey(players[0], players).toFixed(1))];
+
+  const leftWings = players.filter((p) => isLeftWingMid(p));
+  const rightWings = players.filter((p) => isRightWingMid(p, players));
+  const centerMids = players.filter((p) => isCentralMid(p, players));
+  const unassigned = players.filter(
+    (p) => !leftWings.includes(p) && !rightWings.includes(p) && !centerMids.includes(p)
+  );
+
+  const slotsByPlayer = new Map();
+
+  if (leftWings.length === 1) {
+    slotsByPlayer.set(leftWings[0], 8);
+  } else if (leftWings.length > 1) {
+    anchoredLateralSlots(leftWings.length, 8, { minStep: 14 }).forEach((y, index) => {
+      slotsByPlayer.set(leftWings[index], y);
+    });
+  }
+
+  if (rightWings.length === 1) {
+    slotsByPlayer.set(rightWings[0], 92);
+  } else if (rightWings.length > 1) {
+    anchoredLateralSlots(rightWings.length, 92, { minStep: 14 }).forEach((y, index) => {
+      slotsByPlayer.set(rightWings[index], y);
+    });
+  }
+
+  const centerSorted = [...centerMids, ...unassigned].sort(
+    (a, b) =>
+      midfieldDepthBias(a) - midfieldDepthBias(b) ||
+      lateralSortKey(a, players) - lateralSortKey(b, players) ||
+      (Number(a.shirtNumber) || 99) - (Number(b.shirtNumber) || 99)
+  );
+  const centerSlots = centerClusterLateralSlots(centerSorted.length);
+  centerSorted.forEach((player, index) => {
+    slotsByPlayer.set(player, centerSlots[index]);
+  });
+
+  return players.map((player) => Number((slotsByPlayer.get(player) ?? 50).toFixed(1)));
+}
+
+function lateralPositionsForLine(players, count, pool) {
+  if (count <= 0) return [];
+
+  if (pool === 'MID' && count >= 2) {
+    return midfieldLateralSlots(players);
+  }
+
+  const keys = players.map((player) => lateralSortKey(player, players));
+  if (count >= 2 && new Set(keys).size < keys.length) {
+    const anchor = keys.reduce((sum, key) => sum + key, 0) / keys.length;
+    return anchoredLateralSlots(count, anchor, { minStep: count === 2 ? 22 : 16 });
+  }
+
+  if (pool === 'MID' || pool === 'DEF') {
+    const keySpread = Math.max(...keys) - Math.min(...keys);
+    const uniqueKeys = new Set(keys);
+    if (keySpread >= 16 && uniqueKeys.size === keys.length) {
+      return keys.map((key) => Number(key.toFixed(1)));
+    }
+    if (pool === 'DEF' && count >= 3) {
+      return Array.from({ length: count }, (_, slotIndex) => lateralForSlot(slotIndex, count));
+    }
+  }
+
+  if (pool === 'FWD') {
+    const centerLike = players.filter(isCenterForwardLike);
+    if (centerLike.length === count) return centerClusterLateralSlots(count);
+  }
+
+  if (pool === 'DEF') {
+    const centerBacks = players.filter(isCenterBackLike);
+    if (centerBacks.length >= 2 && centerBacks.length === count) {
+      return centerClusterLateralSlots(count);
+    }
+  }
+
+  if (pool === 'MID') {
+    const centerMids = players.filter((p) => isCenterMidLike(p, players));
+    if (centerMids.length >= 2 && centerMids.length === count) {
+      return centerClusterLateralSlots(count);
+    }
+  }
+
+  return Array.from({ length: count }, (_, slotIndex) => lateralForSlot(slotIndex, count));
+}
+
 /**
  * API-Football grid "fila:cola" — fila 1 = portería, columna izq→der del equipo.
  * @returns {{ gridX: number, gridY: number } | null}
@@ -385,7 +486,11 @@ export function assignFormationGrid(formation, playerCount = 11) {
  * Agrupa jugadores por líneas tácticas y asigna coordenadas estilo Wikipedia.
  * La profundidad (gridX) siempre sale de la formación; el grid API solo ayuda en el eje lateral.
  */
-export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION) {
+export function assignPlayersToFormation(
+  players,
+  formation = DEFAULT_FORMATION,
+  { includeLeftovers = true } = {}
+) {
   const rows = parseFormationString(formation);
   const rowCount = rows.length;
 
@@ -418,27 +523,37 @@ export function assignPlayersToFormation(players, formation = DEFAULT_FORMATION)
       totalRows: rowCount,
     });
 
+    const lateralSlots = lateralPositionsForLine(picked, picked.length, spec.pool);
     picked.forEach((player, slotIndex) => {
-      const apiLateral = player.gridRaw
-        ? lateralFromApiGrid(player.gridRaw, picked.length)
-        : null;
       const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = player;
       assigned.push({
         ...rest,
         gridX: Number(gridDepthForLine(player, spec, rowCount).toFixed(1)),
-        gridY: Number((apiLateral ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)),
+        gridY: Number(
+          (lateralSlots[slotIndex] ?? lateralForSlot(slotIndex, picked.length)).toFixed(1)
+        ),
       });
     });
   }
 
-  for (const pool of LINE_POSITIONS) {
-    for (const leftover of pools[pool]) {
+  if (includeLeftovers) {
+    for (const pool of LINE_POSITIONS) {
+      const leftovers = pools[pool];
+      if (!leftovers.length) continue;
+
       const fallbackDepth = DEPTH_BY_POOL[pool] ?? DEPTH_BY_POOL.MID;
-      const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = leftover;
-      assigned.push({
-        ...rest,
-        gridX: fallbackDepth,
-        gridY: lateralSortKey(leftover),
+      const lateralSlots = lateralPositionsForLine(leftovers, leftovers.length, pool);
+      leftovers.forEach((leftover, slotIndex) => {
+        const { gridRaw: _gridRaw, gridX: _gridX, gridY: _gridY, ...rest } = leftover;
+        assigned.push({
+          ...rest,
+          gridX: fallbackDepth,
+          gridY: Number(
+            (lateralSlots[slotIndex] ??
+              lateralSortKey(leftover) ??
+              lateralForSlot(slotIndex, leftovers.length)).toFixed(1)
+          ),
+        });
       });
     }
   }
@@ -1001,8 +1116,12 @@ export function spreadDefenseBackLineShape(players, { formation } = {}) {
 
   if (entries.length < 4) return players;
 
+  const linePlayers = entries.map(({ player }) => player);
   const sorted = [...entries].sort(
-    (a, b) => Number(a.player.gridY ?? 50) - Number(b.player.gridY ?? 50)
+    (a, b) =>
+      lateralSortKey(a.player, linePlayers) - lateralSortKey(b.player, linePlayers) ||
+      Number(a.player.gridY ?? 50) - Number(b.player.gridY ?? 50) ||
+      (Number(a.player.shirtNumber) || 99) - (Number(b.player.shirtNumber) || 99)
   );
   const inner = sorted.length > 2 ? sorted.slice(1, -1) : sorted;
   const baseDepth = Number(inner[Math.floor(inner.length / 2)]?.player.gridX ?? 30);

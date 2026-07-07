@@ -30,7 +30,29 @@ function shortName(fullName) {
   return parts[parts.length - 1].slice(0, 11);
 }
 
+const TACTICAL_POSITION_TOKENS = new Set([
+  'POR',
+  'GK',
+  'LI',
+  'LD',
+  'DFC',
+  'MI',
+  'MD',
+  'MCD',
+  'MCO',
+  'MC',
+  'EI',
+  'ED',
+  'DC',
+  'CF',
+  'ST',
+]);
+
 function lineupPositionLabel(player) {
+  const detail = String(player?.positionDetail ?? '').trim();
+  const token = detail ? detail.split(/\s+/)[0].toUpperCase() : '';
+  if (TACTICAL_POSITION_TOKENS.has(token)) return token;
+
   return (
     inferTacticalPosition({
       position: player.position,

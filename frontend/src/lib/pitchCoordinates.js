@@ -70,7 +70,7 @@ export function halfPitchPercentToLineupGrid(leftPercent, topPercent, side) {
 /** Goles y tiros: coords FIFA relativas al ataque → orientación fija local/visitante. */
 const ATTACK_RELATIVE_EVENT_TYPES = new Set(['shot_attempt', 'goal']);
 
-/** Faltas/tarjetas: X absoluto de estadio; Y se normaliza por equipo en getPitchEventFifaCoords. */
+/** Faltas/tarjetas: coords absolutas de estadio (X y Y); sin espejo lateral. */
 export const ABSOLUTE_PITCH_EVENT_TYPES = new Set(['foul', 'yellow_card', 'red_card']);
 
 /**
@@ -121,9 +121,14 @@ export function getPitchEventFifaCoords(event) {
   }
 
   if (event?.side) {
+    const mirrorLateralY =
+      ATTACK_RELATIVE_EVENT_TYPES.has(event?.type) ||
+      !ABSOLUTE_PITCH_EVENT_TYPES.has(event?.type);
     coords = {
       ...coords,
-      y: clampFifaCoord(teamLateralToStadiumY(coords.y, event.side)),
+      y: mirrorLateralY
+        ? clampFifaCoord(teamLateralToStadiumY(coords.y, event.side))
+        : coords.y,
     };
   }
 

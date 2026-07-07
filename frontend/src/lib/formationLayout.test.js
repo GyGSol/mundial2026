@@ -361,3 +361,67 @@ describe('formationLayout TUN vs NED manual grid (FBL-9)', () => {
     expect(laid.find((p) => p.shirtNumber === 4)).toMatchObject({ gridX: 40, gridY: 20 });
   });
 });
+
+describe('formationLayout Argentina vs Egipto (perspectiva lateral FBL-9)', () => {
+  const argDef = [
+    { name: 'Martínez', shirtNumber: 23, position: 'GK', positionDetail: 'GK' },
+    { name: 'Tagliafico', shirtNumber: 3, position: 'DEF', positionDetail: 'LI' },
+    { name: 'Romero', shirtNumber: 13, position: 'DEF', positionDetail: 'DFC' },
+    { name: 'Otamendi', shirtNumber: 19, position: 'DEF', positionDetail: 'DFC' },
+    { name: 'Molina', shirtNumber: 26, position: 'DEF', positionDetail: 'LD' },
+    { name: 'De Paul', shirtNumber: 7, position: 'MID', positionDetail: 'MC' },
+    { name: 'Fernández', shirtNumber: 24, position: 'MID', positionDetail: 'MC' },
+    { name: 'Mac Allister', shirtNumber: 20, position: 'MID', positionDetail: 'MC' },
+    { name: 'Garnacho', shirtNumber: 11, position: 'FWD', positionDetail: 'EI' },
+    { name: 'Messi', shirtNumber: 10, position: 'FWD', positionDetail: 'DC' },
+    { name: 'Lautaro', shirtNumber: 22, position: 'FWD', positionDetail: 'DC' },
+  ];
+
+  const egyDef = [
+    { name: 'El Shenawy', shirtNumber: 1, position: 'GK', positionDetail: 'GK' },
+    { name: 'Ibrahim', shirtNumber: 2, position: 'DEF', positionDetail: 'LI' },
+    { name: 'Hany', shirtNumber: 6, position: 'DEF', positionDetail: 'DFC' },
+    { name: 'Rabia', shirtNumber: 4, position: 'DEF', positionDetail: 'DFC' },
+    { name: 'Hafez', shirtNumber: 15, position: 'DEF', positionDetail: 'LD' },
+    { name: 'Fathy', shirtNumber: 13, position: 'MID', positionDetail: 'MD' },
+    { name: 'Hamdi', shirtNumber: 17, position: 'MID', positionDetail: 'MD' },
+    { name: 'Trezeguet', shirtNumber: 7, position: 'MID', positionDetail: 'MI' },
+    { name: 'Salah', shirtNumber: 10, position: 'MID', positionDetail: 'MCO' },
+    { name: 'Marmoush', shirtNumber: 22, position: 'MID', positionDetail: 'MD' },
+    { name: 'Mostafa', shirtNumber: 9, position: 'FWD', positionDetail: 'DC' },
+  ];
+
+  function layout(players, formation) {
+    return spreadOverlappingGridPositions(
+      assignPlayersToFormation(players, formation, { includeLeftovers: true }),
+      { formation }
+    );
+  }
+
+  it('Argentina 4-1-3-2: LI gridY < LD gridY', () => {
+    const laid = layout(argDef, '4-1-3-2');
+    const li = laid.find((p) => p.shirtNumber === 3);
+    const ld = laid.find((p) => p.shirtNumber === 26);
+    expect(li?.gridY).toBeLessThan(ld?.gridY ?? 0);
+  });
+
+  it('Egipto 4-2-3-1: LI gridY < LD gridY (coords de equipo)', () => {
+    const laid = layout(egyDef, '4-2-3-1');
+    const li = laid.find((p) => p.shirtNumber === 2);
+    const ld = laid.find((p) => p.shirtNumber === 15);
+    expect(li?.gridY).toBeLessThan(ld?.gridY ?? 0);
+  });
+
+  it('spreadDefenseBackLineShape corrige laterales invertidos por gridY', () => {
+    const inverted = [
+      { name: 'LI', shirtNumber: 3, position: 'DEF', positionDetail: 'LI', gridX: 30, gridY: 96 },
+      { name: 'CB1', shirtNumber: 4, position: 'DEF', positionDetail: 'DFC', gridX: 30, gridY: 50 },
+      { name: 'CB2', shirtNumber: 5, position: 'DEF', positionDetail: 'DFC', gridX: 30, gridY: 50 },
+      { name: 'LD', shirtNumber: 26, position: 'DEF', positionDetail: 'LD', gridX: 30, gridY: 4 },
+    ];
+    const next = spreadDefenseBackLineShape(inverted, { formation: '4-1-3-2' });
+    const li = next.find((p) => p.shirtNumber === 3);
+    const ld = next.find((p) => p.shirtNumber === 26);
+    expect(li?.gridY).toBeLessThan(ld?.gridY ?? 0);
+  });
+});

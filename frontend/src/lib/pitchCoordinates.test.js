@@ -167,16 +167,16 @@ describe('pitchCoordinates', () => {
         positionX: 30,
         positionY: 10,
       })
-    ).toEqual({ x: 30, y: 90 });
+    ).toEqual({ x: 30, y: 10 });
   });
 
-  it('evento visitante comparte espejo lateral con alineación', () => {
+  it('tiros del visitante comparten espejo lateral con alineación', () => {
     const gridY = 4;
     const eventY = teamLateralToStadiumY(gridY, 'away');
     const lineupTop = Number.parseFloat(lateralTopPercent(gridY, 'away'));
     const eventTop = Number.parseFloat(
       fifaEventToPitchPercent({
-        type: 'foul',
+        type: 'shot_attempt',
         side: 'away',
         positionX: 50,
         positionY: gridY,
@@ -210,5 +210,56 @@ describe('pitchCoordinates', () => {
   it('snapLineupGridPosition alinea a pasos de 10', () => {
     expect(snapLineupGridPosition(44.3, 36.7)).toEqual({ gridX: 40, gridY: 40 });
     expect(snapLineupGridPosition(85, 4)).toEqual({ gridX: 90, gridY: 0 });
+  });
+});
+
+describe('pitchCoordinates Argentina vs Egipto (FBL-9)', () => {
+  const argDef = [
+    { shirtNumber: 3, positionDetail: 'LI', gridX: 30, gridY: 20 },
+    { shirtNumber: 26, positionDetail: 'LD', gridX: 30, gridY: 80 },
+  ];
+  const egyDef = [
+    { shirtNumber: 2, positionDetail: 'LI', gridX: 30, gridY: 20 },
+    { shirtNumber: 15, positionDetail: 'LD', gridX: 30, gridY: 80 },
+  ];
+
+  it('Argentina local: Tagliafico arriba, Molina abajo', () => {
+    const liTop = Number.parseFloat(lateralTopPercent(argDef[0].gridY, 'home'));
+    const ldTop = Number.parseFloat(lateralTopPercent(argDef[1].gridY, 'home'));
+    expect(liTop).toBeLessThan(ldTop);
+  });
+
+  it('Egipto visitante: Hafez arriba, Ibrahim abajo', () => {
+    const liTop = Number.parseFloat(lateralTopPercent(egyDef[0].gridY, 'away'));
+    const ldTop = Number.parseFloat(lateralTopPercent(egyDef[1].gridY, 'away'));
+    expect(ldTop).toBeLessThan(liTop);
+  });
+
+  it('round-trip visitante dorsales 2/15 (Ibrahim/Hafez)', () => {
+    for (const gridY of [20, 80]) {
+      const pct = lineupGridToHalfPitchPercent(30, gridY, 'away');
+      const back = halfPitchPercentToLineupGrid(pct.left, pct.top, 'away');
+      expect(back.gridY).toBeCloseTo(gridY, 0);
+    }
+  });
+
+  it('tiros y goles espejan Y; faltas mantienen Y absoluto de estadio', () => {
+    expect(
+      getPitchEventFifaCoords({
+        type: 'goal',
+        side: 'away',
+        positionX: 98,
+        positionY: 20,
+      })
+    ).toEqual({ x: 2, y: 80 });
+
+    expect(
+      getPitchEventFifaCoords({
+        type: 'foul',
+        side: 'away',
+        positionX: 30,
+        positionY: 20,
+      })
+    ).toEqual({ x: 30, y: 20 });
   });
 });

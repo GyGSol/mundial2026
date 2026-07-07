@@ -209,4 +209,44 @@ describe('formationLayout', () => {
     expect(assigned.filter((p) => p.gridX >= 52 && p.gridX <= 64)).toHaveLength(4);
     expect(assigned).toHaveLength(11);
   });
+
+  it('Argentina 4-1-3-2: LI gridY < LD gridY', () => {
+    const players = [
+      { name: 'Martínez', shirtNumber: 23, position: 'GK', positionDetail: 'GK' },
+      { name: 'Tagliafico', shirtNumber: 3, position: 'DEF', positionDetail: 'LI' },
+      { name: 'Romero', shirtNumber: 13, position: 'DEF', positionDetail: 'DFC' },
+      { name: 'Otamendi', shirtNumber: 19, position: 'DEF', positionDetail: 'DFC' },
+      { name: 'Molina', shirtNumber: 26, position: 'DEF', positionDetail: 'LD' },
+      { name: 'De Paul', shirtNumber: 7, position: 'MID', positionDetail: 'MC' },
+      { name: 'Fernández', shirtNumber: 24, position: 'MID', positionDetail: 'MC' },
+      { name: 'Mac Allister', shirtNumber: 20, position: 'MID', positionDetail: 'MC' },
+      { name: 'Garnacho', shirtNumber: 11, position: 'FWD', positionDetail: 'EI' },
+      { name: 'Messi', shirtNumber: 10, position: 'FWD', positionDetail: 'DC' },
+      { name: 'Lautaro', shirtNumber: 22, position: 'FWD', positionDetail: 'DC' },
+    ];
+    const assigned = assignPlayersToFormation(players, '4-1-3-2');
+    expect(assigned.find((p) => p.shirtNumber === 3).gridY).toBeLessThan(
+      assigned.find((p) => p.shirtNumber === 26).gridY
+    );
+  });
+
+  it('Egipto 4-2-3-1: LI gridY < LD gridY', () => {
+    const players = [
+      { name: 'El Shenawy', shirtNumber: 1, position: 'GK', positionDetail: 'GK' },
+      { name: 'Ibrahim', shirtNumber: 2, position: 'DEF', positionDetail: 'LI' },
+      { name: 'Hany', shirtNumber: 6, position: 'DEF', positionDetail: 'DFC' },
+      { name: 'Rabia', shirtNumber: 4, position: 'DEF', positionDetail: 'DFC' },
+      { name: 'Hafez', shirtNumber: 15, position: 'DEF', positionDetail: 'LD' },
+      { name: 'Fathy', shirtNumber: 13, position: 'MID', positionDetail: 'MD' },
+      { name: 'Hamdi', shirtNumber: 17, position: 'MID', positionDetail: 'MD' },
+      { name: 'Trezeguet', shirtNumber: 7, position: 'MID', positionDetail: 'MI' },
+      { name: 'Salah', shirtNumber: 10, position: 'MID', positionDetail: 'MCO' },
+      { name: 'Marmoush', shirtNumber: 22, position: 'MID', positionDetail: 'MD' },
+      { name: 'Mostafa', shirtNumber: 9, position: 'FWD', positionDetail: 'DC' },
+    ];
+    const assigned = assignPlayersToFormation(players, '4-2-3-1');
+    expect(assigned.find((p) => p.shirtNumber === 2).gridY).toBeLessThan(
+      assigned.find((p) => p.shirtNumber === 15).gridY
+    );
+  });
 });
