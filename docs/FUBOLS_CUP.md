@@ -98,13 +98,29 @@ Componentes: `FubolsCupBracket.jsx` (cruces) y `FubolsCupMatchTile.jsx` (partido
 
 Helper: `PtsColumnHeader` — evita que **"Pts tot. parcial"** se parta en dos líneas en pantallas estrechas.
 
-### Tiles de partido
+### Tiles de partido (`FubolsCupMatchTile.jsx`)
 
-| Aspecto | Comportamiento mobile |
-|---------|----------------------|
+| Aspecto | Comportamiento |
+|---------|----------------|
 | Encabezado | Línea 1: partido + fase (+ badge En vivo). Línea 2: fecha/hora (ART). Línea 3: estadio (truncate) |
-| Equipos | Una fila: **bandera + nombre** (local) · marcador · **nombre + bandera** (visitante); grilla `1fr auto 1fr` |
+| Equipos | **Una sola fila** en grilla `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]` |
+| Local | **Bandera + nombre** (`justify-self-start`) |
+| Marcador | Centrado: `1–2` o `vs` |
+| Visitante | **Nombre + bandera** (`reverse` en `TileCountryLine`, `justify-self-end`) |
 | Texto | `text-[11px]` en metadata; `sm:text-xs` en desktop |
+
+Ejemplo visual:
+
+```text
+🇺🇸 United States          1–2          Belgium 🇧🇪
+```
+
+**Gotchas de layout (jul-2026):**
+
+- No usar `sm:flex` en la fila de equipos: en desktop el visitante deja de alinearse y parece que “los dos países quedan a la derecha”.
+- No apilar local y visitante en columna con marcador a la derecha: el usuario pidió explícitamente **una fila**.
+- El visitante usa `flex-row-reverse` (nombre antes que bandera); slots de fase final mantienen borde de color en el lado exterior (`border-r` si `reverse`).
+- Clic en el tile → `/predictions?match={id}` (sin formulario inline).
 
 Contenedor bracket: `overflow-x-hidden` en el wrapper principal para evitar scroll horizontal.
 
@@ -189,5 +205,9 @@ cd backend && MONGODB_URI=mongodb://127.0.0.1:27017/mundial2026_test npx vitest 
 | v697 | `28d5b12` | Fix H12: lectura sin `processFubolsCupForGroup` en GET, caché dashboard, batch queries live |
 | v698 | `bb44659` | Cuadro perdedores: `losers_semifinal` (97–100) + dos cruces en 103 + final |
 | v699 | `ced05be` | Migración de esquema al cargar dashboard (`loadTournamentForDashboard`) |
+| v700 | `cd3002d` | Docs migración cuadro perdedores |
+| v701 | `11028af` | Intento layout: marcador+visitante agrupados a la derecha (revertido) |
+| v702 | `366de5e` | Intento layout: equipos apilados a la izquierda (revertido) |
+| v703 | `8a342ce` | **Layout final tiles:** fila única bandera-nombre · marcador · nombre-bandera |
 
 App: `mundial2026-pred` · [DEPLOYMENT.md](./DEPLOYMENT.md)
