@@ -103,7 +103,7 @@ Helper: `PtsColumnHeader` — evita que **"Pts tot. parcial"** se parta en dos l
 | Aspecto | Comportamiento mobile |
 |---------|----------------------|
 | Encabezado | Línea 1: partido + fase (+ badge En vivo). Línea 2: fecha/hora (ART). Línea 3: estadio (truncate) |
-| Equipos | Columna izquierda: **bandera + nombre** de local y visitante (dos filas). Columna derecha: marcador (`1–2`) o `vs` centrado verticalmente |
+| Equipos | Una fila: **bandera + nombre** (local) · marcador · **nombre + bandera** (visitante); grilla `1fr auto 1fr` |
 | Texto | `text-[11px]` en metadata; `sm:text-xs` en desktop |
 
 Contenedor bracket: `overflow-x-hidden` en el wrapper principal para evitar scroll horizontal.

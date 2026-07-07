@@ -6,7 +6,7 @@ import { getGroupColor, parseKnockoutSlotLabel } from '@/lib/groupColors.js';
 import { KnockoutSlotLabel } from '@/components/worldcup/GroupColorUi.jsx';
 import { resolveFieldMatchScores } from '@/lib/matchDisplayScore.js';
 
-function TileCountryLine({ team, slotLabel, slotSourceMatch, className }) {
+function TileCountryLine({ team, slotLabel, slotSourceMatch, className, reverse = false }) {
   const flagUrl = team ? getTeamFlag(team) : null;
   const title = team?.nameEn || team?.fifaCode || slotLabel || 'Por definir';
   const parsed = !team && slotLabel ? parseKnockoutSlotLabel(slotLabel) : null;
@@ -15,41 +15,47 @@ function TileCountryLine({ team, slotLabel, slotSourceMatch, className }) {
       ? getGroupColor(parsed.group, parsed.position)
       : null;
 
+  const flagNode = team ? (
+    flagUrl ? (
+      <img
+        src={flagUrl}
+        alt=""
+        className="size-5 shrink-0 rounded-sm border border-border/60 object-cover"
+      />
+    ) : team.flag ? (
+      <span className="shrink-0 text-sm leading-none">{team.flag}</span>
+    ) : (
+      <span className="size-5 shrink-0 rounded-sm border border-dashed border-primary/30 bg-primary/5" />
+    )
+  ) : null;
+
+  const nameNode = team ? (
+    <span className="min-w-0 truncate text-sm font-medium">{team.nameEn || team.fifaCode}</span>
+  ) : slotLabel || slotSourceMatch ? (
+    <KnockoutSlotLabel
+      label={slotLabel}
+      slotSourceMatch={slotSourceMatch}
+      className="min-w-0 text-xs font-medium"
+      compact
+    />
+  ) : (
+    <span className="text-xs text-muted-foreground">Por definir</span>
+  );
+
   return (
     <div
       className={cn(
         'flex min-w-0 items-center gap-1.5',
-        accentColor && 'border-l-[3px] border-solid pl-1.5',
+        reverse && 'flex-row-reverse',
+        !reverse && accentColor && 'border-l-[3px] border-solid pl-1.5',
+        reverse && accentColor && 'border-r-[3px] border-solid pr-1.5',
         className
       )}
-      style={accentColor ? { borderLeftColor: accentColor } : undefined}
+      style={accentColor ? { [reverse ? 'borderRightColor' : 'borderLeftColor']: accentColor } : undefined}
       title={title}
     >
-      {team ? (
-        flagUrl ? (
-          <img
-            src={flagUrl}
-            alt=""
-            className="size-5 shrink-0 rounded-sm border border-border/60 object-cover"
-          />
-        ) : team.flag ? (
-          <span className="shrink-0 text-sm leading-none">{team.flag}</span>
-        ) : (
-          <span className="size-5 shrink-0 rounded-sm border border-dashed border-primary/30 bg-primary/5" />
-        )
-      ) : null}
-      {team ? (
-        <span className="min-w-0 truncate text-sm font-medium">{team.nameEn || team.fifaCode}</span>
-      ) : slotLabel || slotSourceMatch ? (
-        <KnockoutSlotLabel
-          label={slotLabel}
-          slotSourceMatch={slotSourceMatch}
-          className="min-w-0 text-xs font-medium"
-          compact
-        />
-      ) : (
-        <span className="text-xs text-muted-foreground">Por definir</span>
-      )}
+      {flagNode}
+      {nameNode}
     </div>
   );
 }
@@ -162,30 +168,29 @@ export default function FubolsCupMatchTile({
         ) : null}
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <TileCountryLine
-            team={match.homeTeam}
-            slotLabel={match.homeTeamSlotLabel}
-            slotSourceMatch={match.homeTeamSlotSourceMatch}
-            className="min-w-0"
-          />
-          <TileCountryLine
-            team={match.awayTeam}
-            slotLabel={match.awayTeamSlotLabel}
-            slotSourceMatch={match.awayTeamSlotSourceMatch}
-            className="min-w-0"
-          />
-        </div>
+      <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2">
+        <TileCountryLine
+          team={match.homeTeam}
+          slotLabel={match.homeTeamSlotLabel}
+          slotSourceMatch={match.homeTeamSlotSourceMatch}
+          className="justify-self-start"
+        />
         {hasScore ? (
-          <span className="shrink-0 self-center text-sm font-bold tabular-nums text-foreground">
+          <span className="shrink-0 justify-self-center px-1 text-sm font-bold tabular-nums text-foreground">
             {homeScore}–{awayScore}
           </span>
         ) : (
-          <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="shrink-0 justify-self-center px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             vs
           </span>
         )}
+        <TileCountryLine
+          team={match.awayTeam}
+          slotLabel={match.awayTeamSlotLabel}
+          slotSourceMatch={match.awayTeamSlotSourceMatch}
+          reverse
+          className="justify-self-end"
+        />
       </div>
 
       {duelPoints ? (
