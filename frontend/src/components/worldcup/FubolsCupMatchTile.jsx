@@ -162,30 +162,30 @@ export default function FubolsCupMatchTile({
         ) : null}
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <TileCountryLine
-          team={match.homeTeam}
-          slotLabel={match.homeTeamSlotLabel}
-          slotSourceMatch={match.homeTeamSlotSourceMatch}
-          className="min-w-0 max-w-[55%] shrink"
-        />
-        <div className="flex min-w-0 items-center justify-end gap-1.5">
-          {hasScore ? (
-            <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
-              {homeScore}–{awayScore}
-            </span>
-          ) : (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              vs
-            </span>
-          )}
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <TileCountryLine
+            team={match.homeTeam}
+            slotLabel={match.homeTeamSlotLabel}
+            slotSourceMatch={match.homeTeamSlotSourceMatch}
+            className="min-w-0"
+          />
           <TileCountryLine
             team={match.awayTeam}
             slotLabel={match.awayTeamSlotLabel}
             slotSourceMatch={match.awayTeamSlotSourceMatch}
-            className="min-w-0 shrink"
+            className="min-w-0"
           />
         </div>
+        {hasScore ? (
+          <span className="shrink-0 self-center text-sm font-bold tabular-nums text-foreground">
+            {homeScore}–{awayScore}
+          </span>
+        ) : (
+          <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            vs
+          </span>
+        )}
       </div>
 
       {duelPoints ? (
